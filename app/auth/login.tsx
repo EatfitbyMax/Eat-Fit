@@ -27,7 +27,7 @@ export default function LoginScreen() {
             if (user.userType === 'coach') {
               router.push('/(coach)/programmes');
             } else {
-              router.push('/client');
+              router.push('/(client)');
             }
           } else {
             Alert.alert('Erreur', 'Mot de passe incorrect.');

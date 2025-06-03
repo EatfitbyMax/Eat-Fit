@@ -33,7 +33,7 @@ export default function RootLayout() {
         if (user.userType === 'coach') {
           router.replace('/(coach)/programmes');
         } else {
-          router.replace('/client');
+          router.replace('/(client)');
         }
       }
     } catch (error) {
@@ -50,8 +50,8 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="auth" />
-        <Stack.Screen name="client" />
-        <Stack.Screen name="coach" />
+        <Stack.Screen name="(client)" />
+        <Stack.Screen name="(coach)" />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="light" />
