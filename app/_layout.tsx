@@ -7,7 +7,7 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { getCurrentUser } from '@/utils/auth';
+import { getCurrentUser, initializeAdminAccount } from '@/utils/auth';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -27,6 +27,9 @@ export default function RootLayout() {
 
   const checkAuthStatus = async () => {
     try {
+      // Initialiser le compte admin
+      await initializeAdminAccount();
+      
       const user = await getCurrentUser();
       if (user) {
         // Rediriger selon le type d'utilisateur

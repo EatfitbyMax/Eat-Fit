@@ -38,3 +38,45 @@ export const isLoggedIn = async (): Promise<boolean> => {
   const user = await getCurrentUser();
   return user !== null;
 };
+
+export const initializeAdminAccount = async (): Promise<void> => {
+  try {
+    // Vérifier si le compte admin existe déjà
+    const adminExists = await AsyncStorage.getItem('user_eatfitbymax@gmail.com');
+    
+    if (!adminExists) {
+      // Créer le compte admin/coach
+      const adminUser: User = {
+        email: 'eatfitbymax@gmail.com',
+        password: 'admin123',
+        userType: 'coach',
+        firstName: 'Max',
+        lastName: 'Admin',
+        createdAt: new Date().toISOString()
+      };
+      
+      await AsyncStorage.setItem('user_eatfitbymax@gmail.com', JSON.stringify(adminUser));
+      
+      // Créer quelques clients de démonstration
+      const demoClients = [
+        {
+          email: 'm.pacullmarquie@gmail.com',
+          password: 'client123',
+          userType: 'client',
+          firstName: 'Maxandre',
+          lastName: 'Pacull-Marquié',
+          age: '23',
+          weight: '75',
+          height: '175',
+          createdAt: new Date().toISOString()
+        }
+      ];
+      
+      for (const client of demoClients) {
+        await AsyncStorage.setItem(`user_${client.email}`, JSON.stringify(client));
+      }
+    }
+  } catch (error) {
+    console.error('Erreur initialisation compte admin:', error);
+  }
+};
