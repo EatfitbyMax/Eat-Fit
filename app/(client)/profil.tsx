@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -21,7 +20,7 @@ export default function ProfilScreen() {
           style: 'destructive',
           onPress: async () => {
             await logout();
-            router.replace('/');
+            router.replace('/auth/login');
           },
         },
       ]
@@ -48,17 +47,17 @@ export default function ProfilScreen() {
         {/* Personal Information */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Informations personnelles</Text>
-          
+
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuItemText}>👤 Informations personnelles</Text>
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuItemText}>🎯 Mes objectifs</Text>
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuItemText}>🔔 Notifications</Text>
             <Text style={styles.menuItemArrow}>›</Text>
@@ -68,7 +67,7 @@ export default function ProfilScreen() {
         {/* Integrations */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Intégrations</Text>
-          
+
           <View style={styles.integrationItem}>
             <View style={styles.integrationInfo}>
               <Text style={styles.integrationName}>⌚ Strava</Text>
@@ -80,13 +79,13 @@ export default function ProfilScreen() {
               <Text style={styles.connectButtonText}>Connecté</Text>
             </TouchableOpacity>
           </View>
-          
+
           <View style={styles.integrationItem}>
             <View style={styles.integrationInfo}>
               <Text style={styles.integrationName}>🍎 Apple Health</Text>
             </View>
           </View>
-          
+
           <View style={styles.stravaConnection}>
             <Text style={styles.stravaTitle}>🏃‍♂️ Connexion Strava</Text>
             <Text style={styles.stravaDescription}>
@@ -96,7 +95,7 @@ export default function ProfilScreen() {
               Votre compte Strava (Athlete #24854648) est connecté à EatFitByMax. 
               Vous pouvez synchroniser vos activités Strava avec vos entraînements.
             </Text>
-            
+
             <View style={styles.stravaActions}>
               <TouchableOpacity style={styles.disconnectButton}>
                 <Text style={styles.disconnectButtonText}>Déconnecter</Text>
@@ -111,17 +110,17 @@ export default function ProfilScreen() {
         {/* Settings */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Paramètres</Text>
-          
+
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuItemText}>⚙️ Paramètres de l'application</Text>
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuItemText}>🔒 Sécurité et confidentialité</Text>
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuItemText}>💬 Aide et feedback</Text>
             <Text style={styles.menuItemArrow}>›</Text>
