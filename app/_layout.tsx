@@ -3,11 +3,12 @@ import { useFonts } from 'expo-font';
 import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { getCurrentUser, initializeAdminAccount } from '@/utils/auth';
+import SplashScreenComponent from '@/components/SplashScreen';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -15,37 +16,44 @@ export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
+  const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
-
-      // Vérifier si l'utilisateur est connecté au démarrage
-      checkAuthStatus();
+      // Initialiser le compte admin dès le chargement
+      initializeAdminAccount();
     }
   }, [loaded]);
 
-  const checkAuthStatus = async () => {
+  const handleSplashFinish = async () => {
     try {
-      // Initialiser le compte admin
-      await initializeAdminAccount();
-      
       const user = await getCurrentUser();
       if (user) {
-        // Rediriger selon le type d'utilisateur
+        // Rediriger selon le type d'utilisateur connecté
         if (user.userType === 'coach') {
           router.replace('/(coach)/programmes');
         } else {
           router.replace('/(client)');
         }
+      } else {
+        // Aucun utilisateur connecté, aller à l'écran d'accueil
+        router.replace('/(tabs)');
       }
     } catch (error) {
       console.error('Erreur vérification auth:', error);
+      router.replace('/(tabs)');
+    } finally {
+      setShowSplash(false);
     }
   };
 
   if (!loaded) {
     return null;
+  }
+
+  if (showSplash) {
+    return <SplashScreenComponent onFinish={handleSplashFinish} />;
   }
 
   return (

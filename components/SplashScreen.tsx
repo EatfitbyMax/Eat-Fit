@@ -36,10 +36,10 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
       }),
     ]).start();
 
-    // Redirection après 3 secondes
+    // Redirection après 3.5 secondes
     const timer = setTimeout(() => {
       onFinish();
-    }, 3000);
+    }, 3500);
 
     return () => clearTimeout(timer);
   }, []);
@@ -78,6 +78,8 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
             },
           ]}
         >
+          <Text style={styles.appTitle}>Eat Fit</Text>
+          <Text style={styles.byMax}>BY MAX</Text>
           <Text style={styles.motto}>
             Soit la meilleure version de toi jour après jour !
           </Text>
@@ -106,13 +108,32 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     paddingHorizontal: 40,
+    alignItems: 'center',
   },
-  motto: {
-    fontSize: 18,
+  appTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 5,
+    letterSpacing: 2,
+  },
+  byMax: {
+    fontSize: 12,
     fontWeight: '600',
     color: '#FFFFFF',
     textAlign: 'center',
-    lineHeight: 24,
+    marginBottom: 20,
+    letterSpacing: 4,
+    opacity: 0.8,
+  },
+  motto: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    lineHeight: 22,
     fontStyle: 'italic',
+    opacity: 0.9,
   },
 });
