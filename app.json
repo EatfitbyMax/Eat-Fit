@@ -1,3 +1,4 @@
+
 {
   "expo": {
     "name": "eatfitbymax",
@@ -6,18 +7,18 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "eatfitbymax",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.eatfitbymax.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#000000"
       },
-      "edgeToEdgeEnabled": true
+      "package": "com.eatfitbymax.app"
     },
     "web": {
       "bundler": "metro",
@@ -32,7 +33,7 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#000000"
         }
       ]
     ],
