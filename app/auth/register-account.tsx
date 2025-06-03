@@ -31,7 +31,7 @@ export default function RegisterAccountScreen() {
           [
             {
               text: 'OK',
-              onPress: () => router.push('/client')
+              onPress: () => router.replace('/(client)')
             }
           ]
         );
