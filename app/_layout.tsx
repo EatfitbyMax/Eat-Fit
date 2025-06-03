@@ -1,16 +1,45 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import { useEffect } from 'react';
+import 'react-native-reanimated/lib/reanimated2/js-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { getCurrentUser } from '@/utils/auth';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const router = useRouter();
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
+
+  useEffect(() => {
+    if (loaded) {
+      SplashScreen.hideAsync();
+
+      // Vérifier si l'utilisateur est connecté au démarrage
+      checkAuthStatus();
+    }
+  }, [loaded]);
+
+  const checkAuthStatus = async () => {
+    try {
+      const user = await getCurrentUser();
+      if (user) {
+        // Rediriger selon le type d'utilisateur
+        if (user.userType === 'coach') {
+          router.replace('/(coach)/programmes');
+        } else {
+          router.replace('/client');
+        }
+      }
+    } catch (error) {
+      console.error('Erreur vérification auth:', error);
+    }
+  };
 
   if (!loaded) {
     return null;

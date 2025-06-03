@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function RegisterAccountScreen() {
   const router = useRouter();
@@ -9,10 +10,38 @@ export default function RegisterAccountScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     if (email.trim() && password.trim() && password === confirmPassword) {
-      // TODO: Implement account creation logic
-      router.push('/client');
+      try {
+        // Créer l'objet utilisateur
+        const userData = {
+          email: email.trim().toLowerCase(),
+          password: password, // En production, il faudrait hasher le mot de passe
+          createdAt: new Date().toISOString(),
+          userType: 'client'
+        };
+
+        // Sauvegarder dans AsyncStorage
+        await AsyncStorage.setItem(`user_${email.trim().toLowerCase()}`, JSON.stringify(userData));
+        await AsyncStorage.setItem('currentUser', JSON.stringify(userData));
+
+        Alert.alert(
+          'Compte créé !',
+          'Votre compte a été créé avec succès.',
+          [
+            {
+              text: 'OK',
+              onPress: () => router.push('/client')
+            }
+          ]
+        );
+      } catch (error) {
+        Alert.alert(
+          'Erreur',
+          'Une erreur est survenue lors de la création du compte.'
+        );
+        console.error('Erreur création compte:', error);
+      }
     }
   };
 

@@ -1,17 +1,47 @@
 
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
-    // TODO: Implement login logic
-    // For now, navigate to client dashboard
-    router.push('/client');
+  const handleLogin = async () => {
+    if (email.trim() && password.trim()) {
+      try {
+        // Récupérer les données utilisateur
+        const userData = await AsyncStorage.getItem(`user_${email.trim().toLowerCase()}`);
+        
+        if (userData) {
+          const user = JSON.parse(userData);
+          
+          // Vérifier le mot de passe
+          if (user.password === password) {
+            // Sauvegarder l'utilisateur connecté
+            await AsyncStorage.setItem('currentUser', JSON.stringify(user));
+            
+            // Rediriger selon le type d'utilisateur
+            if (user.userType === 'coach') {
+              router.push('/(coach)/programmes');
+            } else {
+              router.push('/client');
+            }
+          } else {
+            Alert.alert('Erreur', 'Mot de passe incorrect.');
+          }
+        } else {
+          Alert.alert('Erreur', 'Aucun compte trouvé avec cet email.');
+        }
+      } catch (error) {
+        Alert.alert('Erreur', 'Une erreur est survenue lors de la connexion.');
+        console.error('Erreur connexion:', error);
+      }
+    } else {
+      Alert.alert('Erreur', 'Veuillez remplir tous les champs.');
+    }
   };
 
   return (
