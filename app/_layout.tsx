@@ -34,15 +34,15 @@ export default function RootLayout() {
         if (user.userType === 'coach') {
           router.replace('/(coach)/programmes');
         } else {
-          router.replace('/(client)');
+          router.replace('/(client)/index');
         }
       } else {
-        // Aucun utilisateur connecté, aller à l'écran d'accueil
-        router.replace('/(tabs)');
+        // Aucun utilisateur connecté, aller à l'écran de connexion
+        router.replace('/auth/login');
       }
     } catch (error) {
       console.error('Erreur vérification auth:', error);
-      router.replace('/(tabs)');
+      router.replace('/auth/login');
     } finally {
       setShowSplash(false);
     }
