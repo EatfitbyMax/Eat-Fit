@@ -69,7 +69,7 @@ export default function RootLayout() {
   }
 
   if (showSplash) {
-    return <SplashScreenComponent onFinish={handleSplashFinish} />;
+    return <SplashScreenComponent onFinish={() => setShowSplash(false)} />;
   }
 
   return (
