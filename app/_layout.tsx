@@ -19,34 +19,50 @@ export default function RootLayout() {
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        // Petite pause pour s'assurer que tout est chargé
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        await initializeAdminAccount();
+        const user = await getCurrentUser();
+
+        console.log('Utilisateur trouvé:', user);
+
+        if (user) {
+          // Utilisateur connecté, rediriger selon le type
+          if (user.userType === 'coach') {
+            console.log('Redirection vers coach');
+            router.replace('/(coach)/programmes');
+          } else {
+            console.log('Redirection vers client');
+            router.replace('/(client)/index');
+          }
+        } else {
+          // Aucun utilisateur connecté, aller à l'écran de connexion
+          console.log('Aucun utilisateur, redirection vers login');
+          router.replace('/auth/login');
+        }
+      } catch (error) {
+        console.error('Erreur vérification auth:', error);
+        // En cas d'erreur, aller directement à l'écran de connexion
+        router.replace('/auth/login');
+      } finally {
+        // S'assurer que le splash se ferme dans tous les cas
+        setTimeout(() => {
+          setShowSplash(false);
+        }, 500);
+      }
+    };
+
     if (loaded) {
-      SplashScreen.hideAsync();
-      // Initialiser le compte admin dès le chargement
-      initializeAdminAccount();
+      const timer = setTimeout(() => {
+        checkAuth();
+      }, 2000); // 2 secondes d'animation
+
+      return () => clearTimeout(timer);
     }
   }, [loaded]);
-
-  const handleSplashFinish = async () => {
-    try {
-      const user = await getCurrentUser();
-      if (user) {
-        // Rediriger selon le type d'utilisateur connecté
-        if (user.userType === 'coach') {
-          router.replace('/(coach)/programmes');
-        } else {
-          router.replace('/(client)/index');
-        }
-      } else {
-        // Aucun utilisateur connecté, aller à l'écran de connexion
-        router.replace('/auth/login');
-      }
-    } catch (error) {
-      console.error('Erreur vérification auth:', error);
-      router.replace('/auth/login');
-    } finally {
-      setShowSplash(false);
-    }
-  };
 
   if (!loaded) {
     return null;
