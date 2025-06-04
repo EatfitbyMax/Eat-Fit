@@ -130,6 +130,7 @@ export default function CreerProgrammeNutritionScreen() {
       transparent={true}
       animationType="slide"
       onRequestClose={fermerModal}
+      presentationStyle="overFullScreen"
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
@@ -559,7 +560,7 @@ const styles = StyleSheet.create({
   // Styles pour la modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
     justifyContent: 'flex-end',
   },
   modalContainer: {
@@ -567,9 +568,15 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     width: '100%',
-    maxHeight: '90%',
+    maxHeight: '95%',
+    minHeight: '80%',
     borderWidth: 1,
     borderColor: '#21262D',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -607,26 +614,26 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   modalLabel: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#FFFFFF',
     marginBottom: 8,
     fontWeight: '600',
   },
   modalLabelSmall: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#FFFFFF',
     marginBottom: 6,
     fontWeight: '500',
   },
   modalInput: {
     backgroundColor: '#0D1117',
-    borderWidth: 1,
-    borderColor: '#21262D',
+    borderWidth: 2,
+    borderColor: '#30363D',
     borderRadius: 8,
-    padding: 12,
+    padding: 14,
     color: '#FFFFFF',
-    fontSize: 14,
-    minHeight: 44,
+    fontSize: 16,
+    minHeight: 48,
   },
   modalInputSmall: {
     backgroundColor: '#0D1117',
@@ -724,26 +731,34 @@ const styles = StyleSheet.create({
     padding: 20,
     borderTopWidth: 1,
     borderTopColor: '#21262D',
-    gap: 12,
+    gap: 16,
+    backgroundColor: '#161B22',
   },
   cancelButton: {
     flex: 1,
-    paddingVertical: 14,
-    backgroundColor: '#21262D',
-    borderRadius: 8,
+    paddingVertical: 16,
+    backgroundColor: '#30363D',
+    borderRadius: 10,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#484F58',
   },
   cancelButtonText: {
-    color: '#8B949E',
+    color: '#F0F6FC',
     fontSize: 16,
     fontWeight: '600',
   },
   addButton: {
     flex: 1,
-    paddingVertical: 14,
+    paddingVertical: 16,
     backgroundColor: '#F5A623',
-    borderRadius: 8,
+    borderRadius: 10,
     alignItems: 'center',
+    shadowColor: '#F5A623',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   addButtonText: {
     color: '#000000',
