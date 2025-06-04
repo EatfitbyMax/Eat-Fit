@@ -13,7 +13,7 @@ localPort = 8082
 externalPort = 3000
 
 [workflows]
-runButton = "Dev Server"
+runButton = "Full Stack Dev"
 
 [[workflows.workflow]]
 name = "Dev Server"
@@ -21,7 +21,11 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN npx expo start"
+args = 'pkill -f "expo\|metro" || true'
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN npx expo start --clear"
 
 [[workflows.workflow]]
 name = "EAS Init"
@@ -54,3 +58,16 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npx eas build --platform android --profile preview"
+
+[[workflows.workflow]]
+name = "Full Stack Dev"
+author = 42598128
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd server && npm run dev"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd .. && npx expo start --clear"

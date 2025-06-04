@@ -1,139 +1,173 @@
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
+const API_BASE_URL = 'http://localhost:5000/api';
 
 export interface User {
-  id: string;
+  id: number;
   email: string;
   name: string;
   userType: 'client' | 'coach';
-  createdAt: string;
 }
 
-const CURRENT_USER_KEY = 'currentUser';
-const USERS_KEY = 'users';
+export interface AuthResponse {
+  success: boolean;
+  user?: User;
+  token?: string;
+  error?: string;
+}
 
-// Comptes par défaut
-const DEFAULT_ACCOUNTS = [
-  {
-    id: '1',
-    email: 'admin@eatfitbymax.com',
-    password: 'admin123',
-    name: 'Admin',
-    userType: 'coach' as const,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    email: 'm.pacullmarquie@gmail.com',
-    password: 'client123',
-    name: 'Maxandre Pacull-Marquié',
-    userType: 'client' as const,
-    createdAt: new Date().toISOString(),
+class AuthService {
+  private token: string | null = null;
+
+  // Stocker le token
+  private setToken(token: string) {
+    this.token = token;
   }
-];
 
-export async function initializeAdminAccount(): Promise<void> {
-  try {
-    const existingUsers = await AsyncStorage.getItem(USERS_KEY);
-    if (!existingUsers) {
-      await AsyncStorage.setItem(USERS_KEY, JSON.stringify(DEFAULT_ACCOUNTS));
-      console.log('Comptes par défaut initialisés');
+  // Récupérer le token
+  private getToken(): string | null {
+    return this.token;
+  }
+
+  // Inscription
+  async register(email: string, password: string, name: string): Promise<AuthResponse> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          name,
+          userType: 'client'
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.token) {
+        this.setToken(data.token);
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Erreur inscription:', error);
+      return { success: false, error: 'Erreur de connexion au serveur' };
     }
-  } catch (error) {
-    console.error('Erreur initialisation comptes:', error);
   }
-}
 
-export async function getCurrentUser(): Promise<User | null> {
-  try {
-    const currentUserData = await AsyncStorage.getItem(CURRENT_USER_KEY);
-    if (currentUserData) {
-      const user = JSON.parse(currentUserData);
-      console.log('Utilisateur connecté trouvé:', user.email);
-      return user;
+  // Connexion
+  async login(email: string, password: string): Promise<AuthResponse> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.token) {
+        this.setToken(data.token);
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Erreur connexion:', error);
+      return { success: false, error: 'Erreur de connexion au serveur' };
     }
-    console.log('Aucun utilisateur connecté');
-    return null;
-  } catch (error) {
-    console.error('Erreur récupération utilisateur:', error);
-    return null;
   }
-}
 
-export async function login(email: string, password: string): Promise<User | null> {
-  try {
-    const usersData = await AsyncStorage.getItem(USERS_KEY);
-    if (!usersData) {
-      console.log('Aucun utilisateur enregistré');
-      return null;
+  // Vérifier le token
+  async verifyToken(): Promise<AuthResponse> {
+    try {
+      const token = this.getToken();
+      if (!token) {
+        return { success: false, error: 'Aucun token' };
+      }
+
+      const response = await fetch(`${API_BASE_URL}/auth/verify`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Erreur vérification token:', error);
+      return { success: false, error: 'Erreur de vérification' };
     }
+  }
 
-    const users = JSON.parse(usersData);
-    const user = users.find((u: any) => u.email === email && u.password === password);
-    
-    if (user) {
-      // Enlever le mot de passe avant de sauvegarder
-      const { password: _, ...userWithoutPassword } = user;
-      await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userWithoutPassword));
-      console.log('Connexion réussie pour:', user.email);
-      return userWithoutPassword;
-    } else {
-      console.log('Identifiants incorrects');
-      return null;
+  // Déconnexion
+  logout(): void {
+    this.token = null;
+  }
+
+  // Récupérer le profil
+  async getProfile(): Promise<any> {
+    try {
+      const token = this.getToken();
+      if (!token) {
+        throw new Error('Aucun token');
+      }
+
+      const response = await fetch(`${API_BASE_URL}/profile`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      return await response.json();
+    } catch (error) {
+      console.error('Erreur récupération profil:', error);
+      throw error;
     }
-  } catch (error) {
-    console.error('Erreur connexion:', error);
-    return null;
   }
-}
 
-export async function logout(): Promise<void> {
-  try {
-    await AsyncStorage.removeItem(CURRENT_USER_KEY);
-    console.log('Déconnexion réussie');
-  } catch (error) {
-    console.error('Erreur déconnexion:', error);
-  }
-}
+  // Mettre à jour le profil
+  async updateProfile(profileData: any): Promise<any> {
+    try {
+      const token = this.getToken();
+      if (!token) {
+        throw new Error('Aucun token');
+      }
 
-export async function register(userData: {
-  email: string;
-  password: string;
-  name: string;
-  userType: 'client' | 'coach';
-}): Promise<User | null> {
-  try {
-    const usersData = await AsyncStorage.getItem(USERS_KEY);
-    const users = usersData ? JSON.parse(usersData) : [];
-    
-    // Vérifier si l'email existe déjà
-    const existingUser = users.find((u: any) => u.email === userData.email);
-    if (existingUser) {
-      console.log('Email déjà utilisé');
-      return null;
+      const response = await fetch(`${API_BASE_URL}/profile`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(profileData),
+      });
+
+      return await response.json();
+    } catch (error) {
+      console.error('Erreur mise à jour profil:', error);
+      throw error;
     }
+  }
 
-    // Créer le nouvel utilisateur
-    const newUser = {
-      id: Date.now().toString(),
-      email: userData.email,
-      password: userData.password,
-      name: userData.name,
-      userType: userData.userType,
-      createdAt: new Date().toISOString(),
-    };
-
-    users.push(newUser);
-    await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
-
-    // Connecter automatiquement l'utilisateur
-    const { password: _, ...userWithoutPassword } = newUser;
-    await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userWithoutPassword));
-    
-    console.log('Inscription réussie pour:', userData.email);
-    return userWithoutPassword;
-  } catch (error) {
-    console.error('Erreur inscription:', error);
-    return null;
+  // Test de connexion serveur
+  async testConnection(): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/test`);
+      const data = await response.json();
+      return data.success === true;
+    } catch (error) {
+      console.error('Erreur test connexion:', error);
+      return false;
+    }
   }
 }
+
+export const authService = new AuthService();
