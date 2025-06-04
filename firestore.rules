@@ -1,0 +1,41 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Règles pour les utilisateurs
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['coach', 'admin'];
+    }
+    
+    // Règles pour les programmes (coaches peuvent créer et modifier)
+    match /programmes/{programmeId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['coach', 'admin'];
+    }
+    
+    // Règles pour les sessions d'entraînement
+    match /sessions/{sessionId} {
+      allow read, write: if request.auth != null && 
+        (resource.data.userId == request.auth.uid || 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['coach', 'admin']);
+    }
+    
+    // Règles pour les messages entre client et coach
+    match /messages/{messageId} {
+      allow read, write: if request.auth != null && 
+        (resource.data.clientId == request.auth.uid || 
+         resource.data.coachId == request.auth.uid ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+    }
+    
+    // Règles pour les données nutritionnelles
+    match /nutrition/{nutritionId} {
+      allow read, write: if request.auth != null && 
+        (resource.data.userId == request.auth.uid || 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['coach', 'admin']);
+    }
+  }
+}

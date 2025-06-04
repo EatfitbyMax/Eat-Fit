@@ -1,4 +1,3 @@
-
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
@@ -52,7 +51,7 @@ export async function login(email: string, password: string): Promise<User | nul
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const firebaseUser = userCredential.user;
-    
+
     // Récupérer les données utilisateur depuis Firestore
     const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
     if (userDoc.exists()) {
@@ -102,7 +101,7 @@ export async function register(userData: {
     };
 
     await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
-    
+
     console.log('Inscription réussie pour:', userData.email);
     return newUser;
   } catch (error) {
@@ -116,7 +115,7 @@ export async function initializeAdminAccount(): Promise<void> {
     // Créer un compte admin par défaut si nécessaire
     const adminEmail = 'admin@eatfitbymax.com';
     const adminPassword = 'admin123';
-    
+
     try {
       await register({
         email: adminEmail,
@@ -142,3 +141,36 @@ export async function initializeAdminAccount(): Promise<void> {
 export function onAuthStateChange(callback: (user: FirebaseUser | null) => void) {
   return onAuthStateChanged(auth, callback);
 }
+
+export const loginUser = async (email: string, password: string) => {
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    return userCredential.user;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const createUserWithRole = async (
+  email: string, 
+  password: string, 
+  userData: any, 
+  role: 'client' | 'coach' | 'admin' = 'client'
+) => {
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+
+    // Ajouter les données utilisateur dans Firestore avec le rôle
+    await setDoc(doc(db, 'users', user.uid), {
+      ...userData,
+      role,
+      email,
+      createdAt: new Date(),
+    });
+
+    return user;
+  } catch (error) {
+    throw error;
+  }
+};

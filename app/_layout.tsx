@@ -1,4 +1,3 @@
-
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
@@ -27,12 +26,12 @@ export default function RootLayout() {
   // Initialize default accounts
   const initializeDefaultAccounts = async () => {
     console.log('Initialisation du compte admin...');
-    
+
     try {
       // Vérifier si le compte admin existe
       const adminDocRef = doc(db, 'users', 'admin@eatfitbymax.com');
       const adminDoc = await getDoc(adminDocRef);
-      
+
       if (!adminDoc.exists()) {
         await setDoc(adminDocRef, {
           email: 'admin@eatfitbymax.com',
@@ -49,7 +48,7 @@ export default function RootLayout() {
       // Vérifier si le compte client existe
       const clientDocRef = doc(db, 'users', 'm.pacullmarquie@gmail.com');
       const clientDoc = await getDoc(clientDocRef);
-      
+
       if (!clientDoc.exists()) {
         await setDoc(clientDocRef, {
           email: 'm.pacullmarquie@gmail.com',
@@ -64,7 +63,7 @@ export default function RootLayout() {
           createdAt: new Date().toISOString()
         });
       }
-      
+
       console.log('Comptes par défaut initialisés');
     } catch (error) {
       console.error('Erreur lors de l\'initialisation des comptes:', error);
@@ -78,16 +77,16 @@ export default function RootLayout() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       console.log('Vérification de l\'utilisateur connecté...');
-      
+
       if (user) {
         console.log('Utilisateur trouvé:', user.email);
         setUser(user);
-        
+
         // Récupérer le profil utilisateur depuis Firestore
         try {
           const userDocRef = doc(db, 'users', user.email!);
           const userDoc = await getDoc(userDocRef);
-          
+
           if (userDoc.exists()) {
             setUserProfile(userDoc.data());
           }
@@ -99,7 +98,7 @@ export default function RootLayout() {
         setUser(null);
         setUserProfile(null);
       }
-      
+
       setIsLoading(false);
     });
 
@@ -109,7 +108,7 @@ export default function RootLayout() {
   useEffect(() => {
     if (!isLoading) {
       const inAuthGroup = segments[0] === 'auth';
-      
+
       if (!user && !inAuthGroup) {
         console.log('Aucun utilisateur, redirection vers login');
         router.replace('/auth/login');
