@@ -1,4 +1,4 @@
-
+typescript
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -20,9 +20,9 @@ const PROGRAMMES_STORAGE_KEY = 'programmes_coach';
 
 export default function ProgrammesScreen() {
   const router = useRouter();
-  const [selectedTab, setSelectedTab] = useState<'nutrition' | 'sport'>('nutrition');
-  const [programmes, setProgrammes] = useState<Programme[]>([]);
-  const [selectedProgramme, setSelectedProgramme] = useState<Programme | null>(null);
+  const [selectedTab, setSelectedTab] = useState('nutrition');
+  const [programmes, setProgrammes] = useState([]);
+  const [selectedProgramme, setSelectedProgramme] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
 
   // Charger les programmes au démarrage
@@ -173,11 +173,11 @@ export default function ProgrammesScreen() {
                           duree: '30 min',
                           dateCreation: new Date().toLocaleDateString('fr-FR')
                         };
-                        
+
                         const programmesMAJ = [...programmes, nouveauProgramme];
                         setProgrammes(programmesMAJ);
                         await sauvegarderProgrammes(programmesMAJ);
-                        
+
                         Alert.alert(
                           'Programme créé !',
                           `Le programme "${nom}" a été ajouté avec succès.`
@@ -292,9 +292,9 @@ export default function ProgrammesScreen() {
           </TouchableOpacity>
         </View>
       </View>
-      
+
       <Text style={styles.programDescription}>{programme.description}</Text>
-      
+
       {/* Aperçu du contenu réel */}
       <View style={styles.previewContainer}>
         {obtenirPremiersElements(programme)}
@@ -304,7 +304,7 @@ export default function ProgrammesScreen() {
           </Text>
         )}
       </View>
-      
+
       <Text style={styles.programDate}>© Créé le {programme.dateCreation}</Text>
     </TouchableOpacity>
   );
@@ -332,7 +332,7 @@ export default function ProgrammesScreen() {
 
           <ScrollView style={styles.modalContent}>
             <Text style={styles.modalDescription}>{selectedProgramme.description}</Text>
-            
+
             {selectedProgramme.calories && (
               <Text style={styles.modalInfo}>📊 {selectedProgramme.calories} kcal par jour</Text>
             )}
@@ -343,7 +343,7 @@ export default function ProgrammesScreen() {
             {selectedProgramme.details && (
               <View style={styles.detailsContainer}>
                 <Text style={styles.detailsTitle}>Contenu du programme</Text>
-                
+
                 {selectedProgramme.type === 'nutrition' && selectedProgramme.details.repas && (
                   selectedProgramme.details.repas.map((repas: any, index: number) => (
                     <View key={index} style={styles.detailCard}>
@@ -442,7 +442,7 @@ export default function ProgrammesScreen() {
         {/* Mes Modules Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>📋 Vos Modules</Text>
-          
+
           <ScrollView 
             horizontal 
             showsHorizontalScrollIndicator={false}
@@ -457,7 +457,7 @@ export default function ProgrammesScreen() {
                 🍽️ Nutrition ({programmes.filter(p => p.type === 'nutrition').length})
               </Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity 
               style={[styles.tab, selectedTab === 'sport' && styles.activeTab]}
               onPress={() => setSelectedTab('sport')}
@@ -474,7 +474,7 @@ export default function ProgrammesScreen() {
           <Text style={styles.sectionTitle}>
             Programmes {selectedTab === 'nutrition' ? 'de Nutrition' : 'Sportifs'}
           </Text>
-          
+
           {programmesFiltres.length > 0 ? (
             programmesFiltres.map(renderProgrammeCard)
           ) : (
@@ -485,11 +485,11 @@ export default function ProgrammesScreen() {
         {/* Assigner des Programmes */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>⚡ Assigner des Programmes</Text>
-          
+
           <TouchableOpacity style={styles.assignButton}>
             <Text style={styles.assignButtonText}>Gérer les Affectations aux Clients</Text>
           </TouchableOpacity>
-          
+
           <Text style={styles.assignDescription}>
             Accédez à la page de gestion des clients pour leur assigner des programmes personnalisés.
           </Text>
