@@ -40,7 +40,7 @@ export default function RootLayout() {
         console.log('Initialisation du compte admin...');
         await initializeAdminAccount();
         
-        console.log('Vérification de l'utilisateur connecté...');
+        console.log('Vérification de l\'utilisateur connecté...');
         const user = await getCurrentUser();
         
         setAuthChecked(true);
