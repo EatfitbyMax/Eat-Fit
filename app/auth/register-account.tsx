@@ -1,70 +1,46 @@
-
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { register } from '@/utils/auth';
-import { debugSupabaseConfig } from '@/utils/debug';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function RegisterAccountScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    // Diagnostic Supabase au chargement
-    debugSupabaseConfig();
-  }, []);
 
   const handleFinish = async () => {
-    if (!email.trim() || !password.trim() || password !== confirmPassword) {
-      Alert.alert('Erreur', 'Veuillez remplir tous les champs correctement.');
-      return;
-    }
+    if (email.trim() && password.trim() && password === confirmPassword) {
+      try {
+        // Créer l'objet utilisateur
+        const userData = {
+          email: email.trim().toLowerCase(),
+          password: password, // En production, il faudrait hasher le mot de passe
+          createdAt: new Date().toISOString(),
+          userType: 'client'
+        };
 
-    if (password.length < 6) {
-      Alert.alert('Erreur', 'Le mot de passe doit contenir au moins 6 caractères.');
-      return;
-    }
+        // Sauvegarder dans AsyncStorage
+        await AsyncStorage.setItem(`user_${email.trim().toLowerCase()}`, JSON.stringify(userData));
+        await AsyncStorage.setItem('currentUser', JSON.stringify(userData));
 
-    setIsLoading(true);
-
-    try {
-      const userData = {
-        email: email.trim().toLowerCase(),
-        password: password,
-        name: 'Nouvel utilisateur', // Vous pouvez récupérer le nom des étapes précédentes
-        userType: 'client' as const
-      };
-
-      const user = await register(userData);
-      
-      if (user) {
         Alert.alert(
           'Compte créé !',
-          'Votre compte a été créé avec succès. Vous pouvez maintenant vous connecter.',
+          'Votre compte a été créé avec succès.',
           [
             {
               text: 'OK',
-              onPress: () => router.replace('/auth/login')
+              onPress: () => router.replace('/(client)')
             }
           ]
         );
-      } else {
+      } catch (error) {
         Alert.alert(
           'Erreur',
-          'Une erreur est survenue lors de la création du compte. Veuillez réessayer.'
+          'Une erreur est survenue lors de la création du compte.'
         );
+        console.error('Erreur création compte:', error);
       }
-    } catch (error: any) {
-      console.error('Erreur création compte:', error);
-      Alert.alert(
-        'Erreur',
-        error.message || 'Une erreur est survenue lors de la création du compte.'
-      );
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -97,18 +73,16 @@ export default function RegisterAccountScreen() {
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
-          editable={!isLoading}
         />
 
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
-            placeholder="Mot de passe (min. 6 caractères)"
+            placeholder="Mot de passe"
             placeholderTextColor="#666666"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
-            editable={!isLoading}
           />
           <Text style={styles.inputIcon}>👁</Text>
         </View>
@@ -121,7 +95,6 @@ export default function RegisterAccountScreen() {
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry
-            editable={!isLoading}
           />
           <Text style={styles.inputIcon}>👁</Text>
         </View>
@@ -131,7 +104,6 @@ export default function RegisterAccountScreen() {
         <TouchableOpacity 
           style={styles.backNavButton}
           onPress={() => router.back()}
-          disabled={isLoading}
         >
           <Text style={styles.backNavText}>← Retour</Text>
         </TouchableOpacity>
@@ -139,16 +111,12 @@ export default function RegisterAccountScreen() {
         <TouchableOpacity 
           style={[
             styles.nextButton, 
-            (!email.trim() || !password.trim() || password !== confirmPassword || isLoading) && styles.disabledButton
+            (!email.trim() || !password.trim() || password !== confirmPassword) && styles.disabledButton
           ]}
           onPress={handleFinish}
-          disabled={!email.trim() || !password.trim() || password !== confirmPassword || isLoading}
+          disabled={!email.trim() || !password.trim() || password !== confirmPassword}
         >
-          {isLoading ? (
-            <ActivityIndicator color="#000000" size="small" />
-          ) : (
-            <Text style={styles.nextButtonText}>Créer le compte</Text>
-          )}
+          <Text style={styles.nextButtonText}>Suivant</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -239,8 +207,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 20,
-    minWidth: 120,
-    alignItems: 'center',
   },
   disabledButton: {
     backgroundColor: '#333333',
