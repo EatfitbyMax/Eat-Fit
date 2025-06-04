@@ -49,6 +49,15 @@ export default function CoachTabLayout() {
         }}
       />
       <Tabs.Screen
+        name="admin"
+        options={{
+          title: 'Admin',
+          tabBarIcon: ({ color, size }) => (
+            <Text style={{ color, fontSize: size }}>⚙️</Text>
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profil"
         options={{
           title: 'Profil',
