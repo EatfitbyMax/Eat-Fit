@@ -1,32 +1,23 @@
+
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import 'react-native-reanimated/lib/typescript/Animated';
+import { useEffect, useState } from 'react';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { initializeAdminAccount } from '@/utils/auth';
+import { initializeAdminAccount, getCurrentUser } from '@/utils/auth';
+import SplashScreenComponent from '@/components/SplashScreen';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const router = useRouter();
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
-
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
-
-  useEffect(() => {
-    // Initialiser le compte admin au démarrage
-    initializeAdminAccount();
-  }, []);
 
   const [showSplash, setShowSplash] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
