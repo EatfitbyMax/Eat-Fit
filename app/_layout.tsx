@@ -33,13 +33,18 @@ export default function RootLayout() {
   }, [loaded]);
 
   useEffect(() => {
+    if (!auth) {
+      console.error('Auth non initialisé');
+      setIsLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       console.log('État auth changé:', firebaseUser ? 'connecté' : 'déconnecté');
       setUser(firebaseUser);
       
-      if (firebaseUser) {
+      if (firebaseUser && db) {
         try {
-          // Récupérer le type d'utilisateur depuis Firestore
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
           if (userDoc.exists()) {
             const userData = userDoc.data();

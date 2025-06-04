@@ -21,15 +21,19 @@ if (getApps().length === 0) {
   app = getApp();
 }
 
-// Initialiser Auth
+// Initialiser Auth avec gestion d'erreur simplifiée
 let auth;
 try {
-  auth = getAuth(app);
-} catch (error) {
-  // Si getAuth échoue, utiliser initializeAuth
   auth = initializeAuth(app, {
     persistence: getReactNativePersistence(AsyncStorage)
   });
+} catch (error) {
+  // Si initializeAuth échoue, essayer getAuth
+  try {
+    auth = getAuth(app);
+  } catch (e) {
+    console.error('Erreur initialisation auth:', e);
+  }
 }
 
 // Initialiser Firestore
