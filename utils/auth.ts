@@ -117,14 +117,22 @@ export async function register(userData: {
   userType: 'client' | 'coach';
 }): Promise<User | null> {
   try {
-    // Créer le compte utilisateur
+    console.log('Début inscription pour:', userData.email);
+    
+    // Créer le compte utilisateur avec métadonnées
     const { data, error } = await supabase.auth.signUp({
       email: userData.email,
-      password: userData.password
+      password: userData.password,
+      options: {
+        data: {
+          name: userData.name,
+          user_type: userData.userType
+        }
+      }
     });
 
     if (error) {
-      console.log('Erreur inscription:', error.message);
+      console.error('Erreur inscription Supabase:', error.message);
       return null;
     }
 
@@ -133,22 +141,38 @@ export async function register(userData: {
       return null;
     }
 
-    // Créer le profil
-    const { data: profile, error: profileError } = await supabase
+    console.log('Utilisateur créé avec ID:', data.user.id);
+
+    // Attendre un peu pour que le trigger se déclenche
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Vérifier si le profil a été créé automatiquement par le trigger
+    let { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .insert([
-        {
-          user_id: data.user.id,
-          name: userData.name,
-          user_type: userData.userType
-        }
-      ])
-      .select()
+      .select('*')
+      .eq('user_id', data.user.id)
       .single();
 
-    if (profileError) {
-      console.error('Erreur création profil:', profileError);
-      return null;
+    // Si pas de profil, le créer manuellement
+    if (profileError || !profile) {
+      console.log('Création manuelle du profil...');
+      const { data: newProfile, error: createError } = await supabase
+        .from('profiles')
+        .insert([
+          {
+            user_id: data.user.id,
+            name: userData.name,
+            user_type: userData.userType
+          }
+        ])
+        .select()
+        .single();
+
+      if (createError) {
+        console.error('Erreur création manuelle profil:', createError);
+        return null;
+      }
+      profile = newProfile;
     }
 
     const user: User = {
@@ -159,7 +183,7 @@ export async function register(userData: {
       createdAt: new Date().toISOString()
     };
 
-    console.log('Inscription réussie pour:', userData.email);
+    console.log('Inscription réussie pour:', userData.email, 'avec profil:', profile.user_type);
     return user;
   } catch (error) {
     console.error('Erreur inscription:', error);
