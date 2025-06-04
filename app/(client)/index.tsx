@@ -1,154 +1,154 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  TouchableOpacity, 
+  SafeAreaView, 
+  Dimensions,
+  Alert 
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { getCurrentUser } from '@/utils/auth';
 
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+const { width } = Dimensions.get('window');
 
-export default function ClientHomeScreen() {
-  const [currentDate] = useState(new Date().toLocaleDateString('fr-FR', { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  }));
+export default function AccueilScreen() {
+  const router = useRouter();
+  const [user, setUser] = useState<any>(null);
+  const [currentDate, setCurrentDate] = useState('');
+  const [steps, setSteps] = useState(0);
+  const [calories, setCalories] = useState(0);
+  const [training, setTraining] = useState(0);
+  const [fatigue, setFatigue] = useState(0);
+  const [sleepTime, setSleepTime] = useState('0h 0min');
+
+  useEffect(() => {
+    loadUserData();
+    updateDate();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
+      const currentUser = await getCurrentUser();
+      setUser(currentUser);
+    } catch (error) {
+      console.error('Erreur chargement utilisateur:', error);
+    }
+  };
+
+  const updateDate = () => {
+    const now = new Date();
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long'
+    };
+    const dateStr = now.toLocaleDateString('fr-FR', options);
+    setCurrentDate(dateStr);
+  };
+
+  const handleAddSteps = () => {
+    Alert.prompt(
+      'Ajouter des pas',
+      'Combien de pas voulez-vous ajouter ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { 
+          text: 'Ajouter', 
+          onPress: (value) => {
+            const newSteps = parseInt(value || '0');
+            if (!isNaN(newSteps)) {
+              setSteps(prev => prev + newSteps);
+            }
+          }
+        }
+      ],
+      'plain-text',
+      '',
+      'numeric'
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
+      <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.greeting}>Bonjour, Maxandre</Text>
-          <Text style={styles.subtitle}>Prêt à atteindre vos objectifs nutritionnels ?</Text>
+          <Text style={styles.greeting}>
+            Bonjour, {user?.firstName || 'Utilisateur'}
+          </Text>
+          <Text style={styles.subtitle}>
+            Prêt à atteindre vos objectifs nutritionnels ?
+          </Text>
         </View>
 
-        {/* Stats Cards */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <Text style={styles.statLabel}>Aujourd'hui (mardi 3 juin)</Text>
-            <Text style={styles.statValue}>0</Text>
-            <Text style={styles.statUnit}>Calories</Text>
-            <Text style={styles.statSubtext}>2695 kcal</Text>
+        {/* Date */}
+        <Text style={styles.date}>{currentDate}</Text>
+
+        {/* Cards Container */}
+        <View style={styles.cardsContainer}>
+          {/* Calories & Training Row */}
+          <View style={styles.row}>
+            <TouchableOpacity 
+              style={[styles.card, styles.caloriesCard]}
+              onPress={() => router.push('/(client)/nutrition')}
+            >
+              <Text style={styles.cardTitle}>Aujourd'hui (mardi 3 juin)</Text>
+              <Text style={styles.cardValue}>{calories}</Text>
+              <Text style={styles.cardLabel}>Calories</Text>
+              <Text style={styles.cardSubLabel}>2695 kcal</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.card, styles.trainingCard]}
+              onPress={() => router.push('/(client)/entrainement')}
+            >
+              <Text style={styles.cardTitle}>Entraînement</Text>
+              <Text style={styles.cardValue}>{training}</Text>
+              <Text style={styles.cardLabel}>Fatigue</Text>
+            </TouchableOpacity>
           </View>
 
-          <View style={styles.statCard}>
-            <Text style={styles.statLabel}>Entraînement</Text>
-            <Text style={styles.statValue}>0</Text>
-            <Text style={styles.statUnit}>Fatigue</Text>
-          </View>
-        </View>
-
-        {/* Activity Tracker */}
-        <View style={styles.activityCard}>
-          <Text style={styles.activityTitle}>💪 Compteur de pas</Text>
-          <View style={styles.stepsContainer}>
-            <Text style={styles.stepsValue}>0</Text>
-            <Text style={styles.stepsTotal}>/ 10000 pas</Text>
-          </View>
-          <Text style={styles.activitySubtext}>Objectif</Text>
-          <View style={styles.progressBar}>
-            <View style={styles.progressFill} />
-          </View>
-          <TouchableOpacity style={styles.addStepsButton}>
-            <Text style={styles.addStepsText}>Ajouter des pas</Text>
+          {/* Steps Counter */}
+          <TouchableOpacity 
+            style={styles.stepsCard}
+            onPress={handleAddSteps}
+          >
+            <View style={styles.stepsHeader}>
+              <Text style={styles.stepsIcon}>💪</Text>
+              <Text style={styles.stepsTitle}>Compteur de pas</Text>
+            </View>
+            <View style={styles.stepsContent}>
+              <Text style={styles.stepsValue}>{steps}</Text>
+              <Text style={styles.stepsGoal}>/ 10000 pas</Text>
+            </View>
+            <Text style={styles.stepsObjective}>Objectif</Text>
+            <TouchableOpacity style={styles.addStepsButton} onPress={handleAddSteps}>
+              <Text style={styles.addStepsButtonText}>Ajouter des pas</Text>
+            </TouchableOpacity>
           </TouchableOpacity>
-        </View>
 
-        {/* Sleep Tracker */}
-        <View style={styles.sleepCard}>
-          <Text style={styles.sleepTitle}>🌙 Suivi du sommeil</Text>
-          <Text style={styles.sleepSubtitle}>Sommeil aujourd'hui</Text>
-          <Text style={styles.sleepTime}>0h 0min</Text>
-          <Text style={styles.sleepDuration}>0h 0min / 8h 0min</Text>
-          <Text style={styles.sleepQuality}>Durée du sommeil</Text>
-          <View style={styles.sleepInputContainer}>
-            <Text style={styles.sleepInputLabel}>Heures</Text>
-            <Text style={styles.sleepInputLabel}>Minutes</Text>
-          </View>
-          <TouchableOpacity style={styles.saveButton}>
-            <Text style={styles.saveButtonText}>Enregistrer mon sommeil</Text>
+          {/* Sleep Tracking */}
+          <TouchableOpacity 
+            style={styles.sleepCard}
+            onPress={() => router.push('/(client)/profil')}
+          >
+            <View style={styles.sleepHeader}>
+              <Text style={styles.sleepIcon}>🌙</Text>
+              <Text style={styles.sleepTitle}>Suivi du sommeil</Text>
+            </View>
+            <Text style={styles.sleepSubtitle}>Sommeil aujourd'hui</Text>
+            <Text style={styles.sleepTime}>{sleepTime}</Text>
+            <Text style={styles.sleepDuration}>0h 0min / 8h 0min</Text>
+            <Text style={styles.sleepLabel}>Durée du sommeil</Text>
           </TouchableOpacity>
-        </View>
-
-        {/* Health Data */}
-        <View style={styles.healthCard}>
-          <Text style={styles.healthTitle}>Données de santé</Text>
-          <Text style={styles.healthSubtitle}>Mise à jour: 3 juin à 19:17</Text>
-          <Text style={styles.healthSync}>Synchronisé avec Apple Health</Text>
-          
-          <View style={styles.healthStats}>
-            <View style={styles.healthStat}>
-              <Text style={styles.healthStatValue}>8 295 / 10 000</Text>
-              <Text style={styles.healthStatLabel}>Sommeil</Text>
-            </View>
-            <View style={styles.healthStat}>
-              <Text style={styles.healthStatValue}>70 bpm / 8h</Text>
-              <Text style={styles.healthStatLabel}>Fréquence cardiaque</Text>
-            </View>
-            <View style={styles.healthStat}>
-              <Text style={styles.healthStatValue}>65 bpm</Text>
-              <Text style={styles.healthStatLabel}>Voir toutes les données de santé</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Recent Activities */}
-        <View style={styles.activitiesCard}>
-          <Text style={styles.activitiesTitle}>Activités récentes</Text>
-          
-          <View style={styles.activityItem}>
-            <View style={styles.activityIcon}>
-              <Text style={styles.activityIconText}>🎯</Text>
-            </View>
-            <View style={styles.activityInfo}>
-              <Text style={styles.activityName}>Objectif Nutrition</Text>
-              <Text style={styles.activityDescription}>Vous êtes à 30% de votre objectif calorique</Text>
-            </View>
-            <Text style={styles.activityTime}>Aujourd'hui</Text>
-          </View>
-
-          <View style={styles.activityItem}>
-            <View style={styles.activityIcon}>
-              <Text style={styles.activityIconText}>💪</Text>
-            </View>
-            <View style={styles.activityInfo}>
-              <Text style={styles.activityName}>Entraînement</Text>
-              <Text style={styles.activityDescription}>Aucun entraînement enregistré aujourd'hui</Text>
-            </View>
-            <Text style={styles.activityTime}>Aujourd'hui</Text>
-          </View>
-
-          <View style={styles.activityItem}>
-            <View style={styles.activityIcon}>
-              <Text style={styles.activityIconText}>💧</Text>
-            </View>
-            <View style={styles.activityInfo}>
-              <Text style={styles.activityName}>Hydratation</Text>
-              <Text style={styles.activityDescription}>0/8 L d'eau consommée</Text>
-            </View>
-            <Text style={styles.activityTime}>Aujourd'hui</Text>
-          </View>
-
-          <View style={styles.activityItem}>
-            <View style={styles.activityIcon}>
-              <Text style={styles.activityIconText}>📊</Text>
-            </View>
-            <View style={styles.activityInfo}>
-              <Text style={styles.activityName}>Activité physique</Text>
-              <Text style={styles.activityDescription}>0 pas sur un objectif de 10000</Text>
-            </View>
-            <Text style={styles.activityTime}>Aujourd'hui</Text>
-          </View>
-
-          <View style={styles.activityItem}>
-            <View style={styles.activityIcon}>
-              <Text style={styles.activityIconText}>😴</Text>
-            </View>
-            <View style={styles.activityInfo}>
-              <Text style={styles.activityName}>Sommeil</Text>
-              <Text style={styles.activityDescription}>0h 0min - Qualité: 0/5</Text>
-            </View>
-            <Text style={styles.activityTime}>Aujourd'hui</Text>
-          </View>
         </View>
       </ScrollView>
+
+      {/* Bottom Navigation Placeholder */}
+      <View style={styles.bottomNavPlaceholder} />
     </SafeAreaView>
   );
 }
@@ -156,136 +156,142 @@ export default function ClientHomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0D1117',
-  },
-  scrollView: {
-    flex: 1,
+    backgroundColor: '#000000',
   },
   header: {
-    padding: 20,
-    paddingTop: 10,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 10,
   },
   greeting: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 4,
+    marginBottom: 5,
   },
   subtitle: {
     fontSize: 16,
-    color: '#8B949E',
+    color: '#888888',
+    lineHeight: 22,
   },
-  statsContainer: {
-    flexDirection: 'row',
+  date: {
+    fontSize: 14,
+    color: '#CCCCCC',
     paddingHorizontal: 20,
-    gap: 15,
     marginBottom: 20,
   },
-  statCard: {
-    flex: 1,
-    backgroundColor: '#161B22',
-    borderRadius: 12,
+  cardsContainer: {
+    paddingHorizontal: 20,
+    gap: 16,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  card: {
+    borderRadius: 16,
     padding: 16,
-    borderWidth: 1,
-    borderColor: '#21262D',
+    flex: 1,
   },
-  statLabel: {
+  caloriesCard: {
+    backgroundColor: '#1A1A1A',
+  },
+  trainingCard: {
+    backgroundColor: '#1A1A1A',
+  },
+  cardTitle: {
     fontSize: 12,
-    color: '#8B949E',
-    marginBottom: 8,
+    color: '#888888',
+    marginBottom: 12,
   },
-  statValue: {
+  cardValue: {
     fontSize: 32,
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 4,
   },
-  statUnit: {
+  cardLabel: {
     fontSize: 14,
-    color: '#8B949E',
-    marginBottom: 4,
-  },
-  statSubtext: {
-    fontSize: 12,
-    color: '#8B949E',
-  },
-  activityCard: {
-    margin: 20,
-    backgroundColor: '#161B22',
-    borderRadius: 12,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#21262D',
-  },
-  activityTitle: {
-    fontSize: 18,
-    fontWeight: '600',
     color: '#FFFFFF',
+    marginBottom: 2,
+  },
+  cardSubLabel: {
+    fontSize: 12,
+    color: '#888888',
+  },
+  stepsCard: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: 16,
+    padding: 20,
+  },
+  stepsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 16,
   },
-  stepsContainer: {
+  stepsIcon: {
+    fontSize: 20,
+    marginRight: 8,
+  },
+  stepsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  stepsContent: {
     flexDirection: 'row',
     alignItems: 'baseline',
     marginBottom: 8,
   },
   stepsValue: {
-    fontSize: 48,
+    fontSize: 36,
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
-  stepsTotal: {
+  stepsGoal: {
     fontSize: 16,
-    color: '#8B949E',
+    color: '#888888',
     marginLeft: 8,
   },
-  activitySubtext: {
+  stepsObjective: {
     fontSize: 14,
-    color: '#8B949E',
-    marginBottom: 12,
-  },
-  progressBar: {
-    height: 4,
-    backgroundColor: '#21262D',
-    borderRadius: 2,
+    color: '#888888',
     marginBottom: 16,
   },
-  progressFill: {
-    height: '100%',
-    width: '0%',
-    backgroundColor: '#F85149',
-    borderRadius: 2,
-  },
   addStepsButton: {
-    backgroundColor: '#1F6FEB',
+    backgroundColor: '#007AFF',
+    borderRadius: 12,
     paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
     alignItems: 'center',
   },
-  addStepsText: {
+  addStepsButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
   sleepCard: {
-    margin: 20,
-    marginTop: 0,
-    backgroundColor: '#161B22',
-    borderRadius: 12,
+    backgroundColor: '#1A1A1A',
+    borderRadius: 16,
     padding: 20,
-    borderWidth: 1,
-    borderColor: '#21262D',
+  },
+  sleepHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  sleepIcon: {
+    fontSize: 20,
+    marginRight: 8,
   },
   sleepTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
-    marginBottom: 8,
   },
   sleepSubtitle: {
     fontSize: 14,
-    color: '#8B949E',
-    marginBottom: 16,
+    color: '#888888',
+    marginBottom: 8,
   },
   sleepTime: {
     fontSize: 24,
@@ -295,130 +301,14 @@ const styles = StyleSheet.create({
   },
   sleepDuration: {
     fontSize: 14,
-    color: '#8B949E',
-    marginBottom: 16,
+    color: '#888888',
+    marginBottom: 8,
   },
-  sleepQuality: {
+  sleepLabel: {
     fontSize: 14,
-    color: '#8B949E',
-    marginBottom: 16,
+    color: '#888888',
   },
-  sleepInputContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  sleepInputLabel: {
-    fontSize: 14,
-    color: '#8B949E',
-  },
-  saveButton: {
-    backgroundColor: '#F5A623',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  saveButtonText: {
-    color: '#000000',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  healthCard: {
-    margin: 20,
-    marginTop: 0,
-    backgroundColor: '#161B22',
-    borderRadius: 12,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#21262D',
-  },
-  healthTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  healthSubtitle: {
-    fontSize: 12,
-    color: '#8B949E',
-    marginBottom: 4,
-  },
-  healthSync: {
-    fontSize: 12,
-    color: '#58A6FF',
-    marginBottom: 16,
-  },
-  healthStats: {
-    gap: 12,
-  },
-  healthStat: {
-    backgroundColor: '#0D1117',
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#21262D',
-  },
-  healthStatValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  healthStatLabel: {
-    fontSize: 12,
-    color: '#8B949E',
-  },
-  activitiesCard: {
-    margin: 20,
-    marginTop: 0,
-    backgroundColor: '#161B22',
-    borderRadius: 12,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#21262D',
-    marginBottom: 100,
-  },
-  activitiesTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 16,
-  },
-  activityItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#21262D',
-  },
-  activityIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#21262D',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  activityIconText: {
-    fontSize: 18,
-  },
-  activityInfo: {
-    flex: 1,
-  },
-  activityName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 2,
-  },
-  activityDescription: {
-    fontSize: 14,
-    color: '#8B949E',
-  },
-  activityTime: {
-    fontSize: 12,
-    color: '#8B949E',
+  bottomNavPlaceholder: {
+    height: 80,
   },
 });
