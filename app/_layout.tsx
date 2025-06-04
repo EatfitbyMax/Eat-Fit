@@ -23,22 +23,7 @@ export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
 
-  // Initialize default accounts
-  const initializeDefaultAccounts = async () => {
-    console.log('Initialisation du compte admin...');
-
-    try {
-      // Note: En production, ces comptes devraient être créés via l'interface admin
-      // ou des scripts de migration appropriés avec les bonnes règles Firestore
-      console.log('Comptes par défaut prêts (création via auth si nécessaire)');
-    } catch (error) {
-      console.error('Erreur lors de l\'initialisation des comptes:', error);
-    }
-  };
-
-  useEffect(() => {
-    initializeDefaultAccounts();
-  }, []);
+  // Les comptes seront créés manuellement via l'interface de connexion
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
