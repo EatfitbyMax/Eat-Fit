@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { getCurrentUser } from '@/utils/auth';
+import { getTodayProgress, updateTodayProgress } from '@/utils/firestore';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
@@ -27,6 +28,7 @@ export default function AccueilScreen() {
   const [training, setTraining] = useState(0);
   const [fatigue, setFatigue] = useState(0);
   const [sleepTime, setSleepTime] = useState('0h 0min');
+  const [todayProgress, setTodayProgress] = useState<any>(null);
 
   useEffect(() => {
     loadUserData();
@@ -37,6 +39,18 @@ export default function AccueilScreen() {
     try {
       const currentUser = await getCurrentUser();
       setUser(currentUser);
+      
+      if (currentUser) {
+        // Charger les données de progrès du jour
+        const progress = await getTodayProgress(currentUser.id);
+        if (progress) {
+          setTodayProgress(progress);
+          setSteps(progress.steps || 0);
+          setFatigue(progress.fatigue || 0);
+          const sleepHours = progress.sleepHours || 0;
+          setSleepTime(`${Math.floor(sleepHours)}h ${Math.round((sleepHours % 1) * 60)}min`);
+        }
+      }
     } catch (error) {
       console.error('Erreur chargement utilisateur:', error);
     }
@@ -61,10 +75,17 @@ export default function AccueilScreen() {
         { text: 'Annuler', style: 'cancel' },
         { 
           text: 'Ajouter', 
-          onPress: (value) => {
+          onPress: async (value) => {
             const newSteps = parseInt(value || '0');
-            if (!isNaN(newSteps)) {
-              setSteps(prev => prev + newSteps);
+            if (!isNaN(newSteps) && user) {
+              const updatedSteps = steps + newSteps;
+              setSteps(updatedSteps);
+              
+              try {
+                await updateTodayProgress(user.id, { steps: updatedSteps });
+              } catch (error) {
+                console.error('Erreur sauvegarde pas:', error);
+              }
             }
           }
         }
