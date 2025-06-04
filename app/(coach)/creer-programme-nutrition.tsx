@@ -155,10 +155,10 @@ export default function CreerProgrammeNutritionScreen() {
             </View>
 
             {/* Jour de la semaine */}
-            <View style={styles.modalField}>
+            <View style={[styles.modalFieldDropdown, { zIndex: jourDropdownOpen ? 1000 : 1 }]}>
               <Text style={styles.modalLabel}>Jour de la semaine</Text>
               <TouchableOpacity 
-                style={styles.modalDropdown}
+                style={[styles.modalDropdown, jourDropdownOpen && { borderColor: '#F5A623', borderWidth: 2 }]}
                 onPress={() => {
                   setJourDropdownOpen(!jourDropdownOpen);
                   setTypeDropdownOpen(false);
@@ -167,15 +167,18 @@ export default function CreerProgrammeNutritionScreen() {
                 <Text style={[styles.modalDropdownText, !nouveauRepas.jour && styles.placeholderText]}>
                   {nouveauRepas.jour || 'Sélectionnez un jour'}
                 </Text>
-                <Text style={styles.dropdownArrow}>▼</Text>
+                <Text style={[styles.dropdownArrow, jourDropdownOpen && { color: '#F5A623' }]}>▼</Text>
               </TouchableOpacity>
               {jourDropdownOpen && (
                 <View style={styles.dropdownOverlay}>
                   <View style={styles.dropdownList}>
-                    {JOURS_SEMAINE.map((jour) => (
+                    {JOURS_SEMAINE.map((jour, index) => (
                       <TouchableOpacity
                         key={jour}
-                        style={styles.dropdownItem}
+                        style={[
+                          styles.dropdownItem,
+                          index === JOURS_SEMAINE.length - 1 && { borderBottomWidth: 0 }
+                        ]}
                         onPress={() => {
                           setNouveauRepas({...nouveauRepas, jour});
                           setJourDropdownOpen(false);
@@ -190,10 +193,10 @@ export default function CreerProgrammeNutritionScreen() {
             </View>
 
             {/* Type de repas */}
-            <View style={styles.modalField}>
+            <View style={[styles.modalFieldDropdown, { zIndex: typeDropdownOpen ? 1000 : 1 }]}>
               <Text style={styles.modalLabel}>Type de repas</Text>
               <TouchableOpacity 
-                style={styles.modalDropdown}
+                style={[styles.modalDropdown, typeDropdownOpen && { borderColor: '#F5A623', borderWidth: 2 }]}
                 onPress={() => {
                   setTypeDropdownOpen(!typeDropdownOpen);
                   setJourDropdownOpen(false);
@@ -202,15 +205,18 @@ export default function CreerProgrammeNutritionScreen() {
                 <Text style={[styles.modalDropdownText, !nouveauRepas.type && styles.placeholderText]}>
                   {nouveauRepas.type || 'Sélectionnez un type'}
                 </Text>
-                <Text style={styles.dropdownArrow}>▼</Text>
+                <Text style={[styles.dropdownArrow, typeDropdownOpen && { color: '#F5A623' }]}>▼</Text>
               </TouchableOpacity>
               {typeDropdownOpen && (
                 <View style={styles.dropdownOverlay}>
                   <View style={styles.dropdownList}>
-                    {TYPES_REPAS.map((type) => (
+                    {TYPES_REPAS.map((type, index) => (
                       <TouchableOpacity
                         key={type}
-                        style={styles.dropdownItem}
+                        style={[
+                          styles.dropdownItem,
+                          index === TYPES_REPAS.length - 1 && { borderBottomWidth: 0 }
+                        ]}
                         onPress={() => {
                           setNouveauRepas({...nouveauRepas, type});
                           setTypeDropdownOpen(false);
@@ -614,6 +620,11 @@ const styles = StyleSheet.create({
     zIndex: 1,
     position: 'relative',
   },
+  modalFieldDropdown: {
+    marginBottom: 24,
+    zIndex: 10,
+    position: 'relative',
+  },
   modalLabel: {
     fontSize: 16,
     color: '#FFFFFF',
@@ -683,32 +694,34 @@ const styles = StyleSheet.create({
     top: '100%',
     left: 0,
     right: 0,
-    zIndex: 1000,
-    elevation: 10,
-    marginTop: 2,
+    zIndex: 9999,
+    elevation: 15,
+    marginTop: 4,
   },
   dropdownList: {
-    backgroundColor: '#161B22',
+    backgroundColor: '#0D1117',
     borderRadius: 8,
-    maxHeight: 200,
-    borderWidth: 1,
-    borderColor: '#30363D',
+    maxHeight: 180,
+    borderWidth: 2,
+    borderColor: '#F5A623',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.6,
+    shadowRadius: 16,
+    elevation: 15,
   },
   dropdownItem: {
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderBottomWidth: 0.5,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
     borderBottomColor: '#21262D',
+    backgroundColor: 'transparent',
   },
   dropdownItemText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
+    textAlign: 'left',
   },
   macroContainer: {
     marginBottom: 20,
