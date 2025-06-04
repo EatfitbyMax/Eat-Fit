@@ -1,4 +1,3 @@
-
 -- Création du schéma de base de données pour l'application coach/client
 
 -- Table des profils utilisateurs (étend auth.users de Supabase)
@@ -42,7 +41,7 @@ CREATE TABLE IF NOT EXISTS workout_programs (
   coach_id UUID REFERENCES profiles(user_id) ON DELETE CASCADE NOT NULL,
   title VARCHAR(255) NOT NULL,
   description TEXT,
-  duration_weeks INTEGER NOT NULL DEFAULT 1,
+  duration_weeks INTEGER NOT NULL DEFAULT 4,
   difficulty VARCHAR(20) CHECK (difficulty IN ('debutant', 'intermediaire', 'avance')) NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -54,7 +53,7 @@ CREATE TABLE IF NOT EXISTS workouts (
   program_id UUID REFERENCES workout_programs(id) ON DELETE CASCADE NOT NULL,
   day VARCHAR(20) NOT NULL, -- lundi, mardi, etc.
   name VARCHAR(255) NOT NULL,
-  duration_minutes INTEGER NOT NULL DEFAULT 0,
+  duration_minutes INTEGER NOT NULL DEFAULT 60,
   rest_between_sets INTEGER NOT NULL DEFAULT 60, -- en secondes
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -66,10 +65,10 @@ CREATE TABLE IF NOT EXISTS exercises (
   name VARCHAR(255) NOT NULL,
   description TEXT,
   sets INTEGER NOT NULL DEFAULT 1,
-  reps VARCHAR(50) NOT NULL, -- "10-12" ou "30 secondes", etc.
+  reps VARCHAR(50) NOT NULL, -- ex: "8-10", "12", "30 sec"
   weight DECIMAL(5,2), -- poids en kg
-  duration INTEGER, -- durée en secondes
-  rest_time INTEGER NOT NULL DEFAULT 60, -- repos en secondes
+  duration INTEGER, -- durée en secondes pour exercices chronométrés
+  rest_time INTEGER NOT NULL DEFAULT 60, -- temps de repos en secondes
   instructions TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -101,7 +100,7 @@ CREATE TABLE IF NOT EXISTS program_assignments (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   coach_id UUID REFERENCES profiles(user_id) ON DELETE CASCADE NOT NULL,
   client_id UUID REFERENCES profiles(user_id) ON DELETE CASCADE NOT NULL,
-  program_id UUID NOT NULL, -- Référence générique vers nutrition_programs ou workout_programs
+  program_id UUID NOT NULL, -- UUID générique pour pointer vers nutrition ou workout
   program_type VARCHAR(20) CHECK (program_type IN ('nutrition', 'workout')) NOT NULL,
   start_date DATE NOT NULL DEFAULT CURRENT_DATE,
   end_date DATE,
@@ -109,30 +108,31 @@ CREATE TABLE IF NOT EXISTS program_assignments (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Index pour améliorer les performances
-CREATE INDEX IF NOT EXISTS idx_profiles_user_type ON profiles(user_type);
+-- Index pour optimiser les performances
 CREATE INDEX IF NOT EXISTS idx_profiles_user_id ON profiles(user_id);
+CREATE INDEX IF NOT EXISTS idx_profiles_user_type ON profiles(user_type);
 CREATE INDEX IF NOT EXISTS idx_nutrition_programs_coach_id ON nutrition_programs(coach_id);
-CREATE INDEX IF NOT EXISTS idx_workout_programs_coach_id ON workout_programs(coach_id);
 CREATE INDEX IF NOT EXISTS idx_meals_program_id ON meals(program_id);
+CREATE INDEX IF NOT EXISTS idx_workout_programs_coach_id ON workout_programs(coach_id);
 CREATE INDEX IF NOT EXISTS idx_workouts_program_id ON workouts(program_id);
 CREATE INDEX IF NOT EXISTS idx_exercises_workout_id ON exercises(workout_id);
-CREATE INDEX IF NOT EXISTS idx_conversations_coach_client ON conversations(coach_id, client_id);
+CREATE INDEX IF NOT EXISTS idx_conversations_coach_id ON conversations(coach_id);
+CREATE INDEX IF NOT EXISTS idx_conversations_client_id ON conversations(client_id);
 CREATE INDEX IF NOT EXISTS idx_messages_conversation_id ON messages(conversation_id);
-CREATE INDEX IF NOT EXISTS idx_messages_receiver_unread ON messages(receiver_id) WHERE is_read = FALSE;
-CREATE INDEX IF NOT EXISTS idx_program_assignments_client ON program_assignments(client_id);
-CREATE INDEX IF NOT EXISTS idx_program_assignments_coach ON program_assignments(coach_id);
+CREATE INDEX IF NOT EXISTS idx_messages_sender_id ON messages(sender_id);
+CREATE INDEX IF NOT EXISTS idx_program_assignments_client_id ON program_assignments(client_id);
+CREATE INDEX IF NOT EXISTS idx_program_assignments_coach_id ON program_assignments(coach_id);
 
--- Fonction pour mettre à jour le timestamp updated_at automatiquement
+-- Fonction pour mettre à jour automatiquement updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
+    NEW.updated_at = NOW();
+    RETURN NEW;
 END;
 $$ language 'plpgsql';
 
--- Déclencheurs pour mettre à jour automatiquement updated_at
+-- Triggers pour updated_at
 CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON profiles
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -142,47 +142,21 @@ CREATE TRIGGER update_nutrition_programs_updated_at BEFORE UPDATE ON nutrition_p
 CREATE TRIGGER update_workout_programs_updated_at BEFORE UPDATE ON workout_programs
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Politiques RLS (Row Level Security) pour Supabase
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE nutrition_programs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE meals ENABLE ROW LEVEL SECURITY;
-ALTER TABLE workout_programs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE workouts ENABLE ROW LEVEL SECURITY;
-ALTER TABLE exercises ENABLE ROW LEVEL SECURITY;
-ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
-ALTER TABLE program_assignments ENABLE ROW LEVEL SECURITY;
-
--- Politiques pour les profils
-CREATE POLICY "Les utilisateurs peuvent voir leur propre profil" ON profiles
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Les utilisateurs peuvent mettre à jour leur propre profil" ON profiles
-  FOR UPDATE USING (auth.uid() = user_id);
-
-CREATE POLICY "Les coachs peuvent voir les profils clients" ON profiles
-  FOR SELECT USING (
-    user_type = 'client' AND 
-    EXISTS (
-      SELECT 1 FROM profiles p 
-      WHERE p.user_id = auth.uid() AND p.user_type = 'coach'
-    )
+-- Fonction pour créer automatiquement un profil après inscription
+CREATE OR REPLACE FUNCTION public.handle_new_user() 
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.profiles (user_id, name, user_type)
+  VALUES (
+    NEW.id, 
+    COALESCE(NEW.raw_user_meta_data->>'name', NEW.email), 
+    COALESCE(NEW.raw_user_meta_data->>'user_type', 'client')
   );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Politiques pour les programmes de nutrition
-CREATE POLICY "Les coachs peuvent gérer leurs programmes de nutrition" ON nutrition_programs
-  FOR ALL USING (auth.uid() = coach_id);
-
-CREATE POLICY "Les clients peuvent voir leurs programmes assignés" ON nutrition_programs
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM program_assignments pa 
-      WHERE pa.program_id = id 
-      AND pa.client_id = auth.uid() 
-      AND pa.program_type = 'nutrition'
-      AND pa.status = 'active'
-    )
-  );
-
--- Politiques similaires pour les autres tables...
--- (Les politiques complètes seraient trop longues pour cet exemple)
+-- Trigger pour création automatique du profil
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
