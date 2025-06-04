@@ -1,27 +1,31 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { logout } from '@/utils/auth';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/config/firebase';
 
-export default function ProfilScreen() {
+export default function ClientProfileScreen() {
   const router = useRouter();
+  const [notifications, setNotifications] = useState(true);
 
   const handleLogout = async () => {
     Alert.alert(
       'Déconnexion',
       'Êtes-vous sûr de vouloir vous déconnecter ?',
       [
+        { text: 'Annuler', style: 'cancel' },
         {
-          text: 'Annuler',
-          style: 'cancel',
-        },
-        { 
-          text: 'Déconnexion', 
+          text: 'Déconnecter',
           style: 'destructive',
           onPress: async () => {
-            await logout();
-            router.replace('/auth/login');
-          }
+            try {
+              await signOut(auth);
+              router.replace('/auth/login');
+            } catch (error) {
+              console.error('Erreur déconnexion:', error);
+            }
+          },
         },
       ]
     );
@@ -29,60 +33,71 @@ export default function ProfilScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
+      <ScrollView style={styles.content}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Mon profil</Text>
+          <Text style={styles.title}>Profil</Text>
         </View>
 
-        {/* User Info */}
-        <View style={styles.userCard}>
-          <View style={styles.userAvatar}>
-            <Text style={styles.userAvatarText}>MP</Text>
-          </View>
-          <Text style={styles.userName}>Maxandre Pacault-Marqué</Text>
-          <Text style={styles.userEmail}>maxandre@gmail.com</Text>
-        </View>
-
-        {/* Personal Information */}
+        {/* Profile Info */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Informations personnelles</Text>
-
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuItemText}>👤 Informations personnelles</Text>
-            <Text style={styles.menuItemArrow}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuItemText}>🎯 Mes objectifs</Text>
-            <Text style={styles.menuItemArrow}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuItemText}>🔔 Notifications</Text>
-            <Text style={styles.menuItemArrow}>›</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Integrations */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Intégrations</Text>
-
-          <View style={styles.integrationItem}>
-            <View style={styles.integrationInfo}>
-              <Text style={styles.integrationName}>⌚ Strava</Text>
-              <Text style={styles.integrationDescription}>
-                Synchronisez vos activités Strava avec EatFitByMax
-              </Text>
+          <View style={styles.profileCard}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>MP</Text>
             </View>
-            <TouchableOpacity style={styles.connectButton}>
-              <Text style={styles.connectButtonText}>Connecté</Text>
+            <View style={styles.profileInfo}>
+              <Text style={styles.profileName}>Martin Pacull-Marquie</Text>
+              <Text style={styles.profileEmail}>m.pacullmarquie@gmail.com</Text>
+              <Text style={styles.profileType}>Client Premium</Text>
+            </View>
+            <TouchableOpacity style={styles.editButton}>
+              <Text style={styles.editButtonText}>Modifier</Text>
             </TouchableOpacity>
           </View>
+        </View>
 
-          <View style={styles.integrationItem}>
-            <View style={styles.integrationInfo}>
-              <Text style={styles.integrationName}>🍎 Apple Health</Text>
+        {/* Stats Summary */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Mes statistiques</Text>
+          <View style={styles.statsGrid}>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>28</Text>
+              <Text style={styles.statLabel}>Séances réalisées</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>5.2kg</Text>
+              <Text style={styles.statLabel}>Progression</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>3</Text>
+              <Text style={styles.statLabel}>Mois d'abonnement</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>92%</Text>
+              <Text style={styles.statLabel}>Assiduité</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Physical Info */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Informations physiques</Text>
+          <View style={styles.infoGrid}>
+            <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>Âge</Text>
+              <Text style={styles.infoValue}>25 ans</Text>
+            </View>
+            <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>Taille</Text>
+              <Text style={styles.infoValue}>180 cm</Text>
+            </View>
+            <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>Poids actuel</Text>
+              <Text style={styles.infoValue}>77.2 kg</Text>
+            </View>
+            <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>IMC</Text>
+              <Text style={styles.infoValue}>23.8</Text>
             </View>
           </View>
 
@@ -122,18 +137,27 @@ export default function ProfilScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuItemText}>💬 Aide et feedback</Text>
+            <Text style={styles.menuItemText}>🔔 Notifications</Text>
+            <Text style={styles.menuItemArrow}>›</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.menuItem}>
+            <Text style={styles.menuItemText}>💳 Abonnement</Text>
+            <Text style={styles.menuItemArrow}>›</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.menuItem}>
+            <Text style={styles.menuItemText}>❓ Aide et support</Text>
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Logout */}
-        <View style={styles.section}>
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Text style={styles.logoutButtonText}>🚪 Se déconnecter</Text>
-          </TouchableOpacity>
-          <Text style={styles.versionText}>Version 1.0.0</Text>
-        </View>
+        {/* Logout Button */}
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Text style={styles.logoutButtonText}>🚪 Se déconnecter</Text>
+        </TouchableOpacity>
+        
+        <Text style={styles.version}>Version 1.0.0</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -144,127 +168,140 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0D1117',
   },
-  scrollView: {
+  content: {
     flex: 1,
   },
   header: {
     padding: 20,
     paddingTop: 10,
-    alignItems: 'center',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
-  userCard: {
-    margin: 20,
+  section: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 12,
+  },
+  profileCard: {
     backgroundColor: '#161B22',
     borderRadius: 12,
     padding: 20,
     borderWidth: 1,
     borderColor: '#21262D',
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  userAvatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: '#F5A623',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginRight: 16,
   },
-  userAvatarText: {
-    fontSize: 24,
+  avatarText: {
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#000000',
   },
-  userName: {
+  profileInfo: {
+    flex: 1,
+  },
+  profileName: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 4,
   },
-  userEmail: {
+  profileEmail: {
     fontSize: 14,
     color: '#8B949E',
-  },
-  section: {
-    margin: 20,
-    marginTop: 0,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 16,
-  },
-  menuItem: {
-    backgroundColor: '#161B22',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#21262D',
-    marginBottom: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  menuItemText: {
-    fontSize: 16,
-    color: '#FFFFFF',
-  },
-  menuItemArrow: {
-    fontSize: 18,
-    color: '#8B949E',
-  },
-  integrationItem: {
-    backgroundColor: '#161B22',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#21262D',
-    marginBottom: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  integrationInfo: {
-    flex: 1,
-  },
-  integrationName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
     marginBottom: 4,
   },
-  integrationDescription: {
-    fontSize: 14,
-    color: '#8B949E',
+  profileType: {
+    fontSize: 12,
+    color: '#F5A623',
+    fontWeight: '500',
   },
-  connectButton: {
-    backgroundColor: '#28A745',
-    paddingVertical: 8,
+  editButton: {
+    backgroundColor: '#21262D',
     paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 6,
   },
-  connectButtonText: {
-    fontSize: 12,
+  editButtonText: {
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  statItem: {
+    backgroundColor: '#161B22',
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+    width: '47%',
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#F5A623',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#8B949E',
+    textAlign: 'center',
+  },
+  infoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 20,
+  },
+  infoItem: {
+    backgroundColor: '#161B22',
+    borderRadius: 8,
+    padding: 16,
+    width: '47%',
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  infoLabel: {
+    fontSize: 12,
+    color: '#8B949E',
+    marginBottom: 4,
+  },
+  infoValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
   },
   stravaConnection: {
     backgroundColor: '#161B22',
     borderRadius: 12,
-    padding: 20,
+    padding: 16,
     borderWidth: 1,
     borderColor: '#21262D',
-    marginTop: 16,
   },
   stravaTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 8,
   },
@@ -274,10 +311,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   stravaStatus: {
-    fontSize: 14,
-    color: '#8B949E',
-    lineHeight: 20,
-    marginBottom: 20,
+    fontSize: 12,
+    color: '#58A6FF',
+    marginBottom: 16,
+    lineHeight: 16,
   },
   stravaActions: {
     flexDirection: 'row',
@@ -285,43 +322,64 @@ const styles = StyleSheet.create({
   },
   disconnectButton: {
     flex: 1,
-    backgroundColor: '#21262D',
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: '#DA3633',
+    paddingVertical: 10,
+    borderRadius: 6,
     alignItems: 'center',
   },
   disconnectButtonText: {
+    color: '#FFFFFF',
     fontSize: 14,
-    color: '#8B949E',
-    fontWeight: '600',
+    fontWeight: '500',
   },
   importButton: {
     flex: 1,
-    backgroundColor: '#F85149',
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: '#238636',
+    paddingVertical: 10,
+    borderRadius: 6,
     alignItems: 'center',
   },
   importButtonText: {
-    fontSize: 14,
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '500',
   },
-  logoutButton: {
-    backgroundColor: '#F85149',
-    borderRadius: 12,
+  menuItem: {
+    backgroundColor: '#161B22',
+    borderRadius: 8,
     padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#21262D',
   },
-  logoutButtonText: {
+  menuItemText: {
     fontSize: 16,
     color: '#FFFFFF',
-    fontWeight: '600',
   },
-  versionText: {
-    fontSize: 12,
+  menuItemArrow: {
+    fontSize: 18,
     color: '#8B949E',
+  },
+  logoutButton: {
+    backgroundColor: '#DA3633',
+    marginHorizontal: 20,
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  logoutButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  version: {
     textAlign: 'center',
+    color: '#666666',
+    fontSize: 12,
+    marginBottom: 40,
   },
 });

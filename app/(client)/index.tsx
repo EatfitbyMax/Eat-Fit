@@ -1,345 +1,271 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
-  SafeAreaView, 
-  Dimensions,
-  Alert,
-  Platform,
-  StatusBar 
-} from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { getCurrentUser } from '@/utils/auth';
-import { getTodayProgress, updateTodayProgress } from '@/utils/firestore';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const { width, height } = Dimensions.get('window');
-
-export default function AccueilScreen() {
+export default function ClientHomeScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const [user, setUser] = useState<any>(null);
-  const [currentDate, setCurrentDate] = useState('');
-  const [steps, setSteps] = useState(0);
-  const [calories, setCalories] = useState(0);
-  const [training, setTraining] = useState(0);
-  const [fatigue, setFatigue] = useState(0);
-  const [sleepTime, setSleepTime] = useState('0h 0min');
-  const [todayProgress, setTodayProgress] = useState<any>(null);
-
-  useEffect(() => {
-    loadUserData();
-    updateDate();
-  }, []);
-
-  const loadUserData = async () => {
-    try {
-      const currentUser = await getCurrentUser();
-      setUser(currentUser);
-      
-      if (currentUser) {
-        // Charger les données de progrès du jour
-        const progress = await getTodayProgress(currentUser.id);
-        if (progress) {
-          setTodayProgress(progress);
-          setSteps(progress.steps || 0);
-          setFatigue(progress.fatigue || 0);
-          const sleepHours = progress.sleepHours || 0;
-          setSleepTime(`${Math.floor(sleepHours)}h ${Math.round((sleepHours % 1) * 60)}min`);
-        }
-      }
-    } catch (error) {
-      console.error('Erreur chargement utilisateur:', error);
-    }
-  };
-
-  const updateDate = () => {
-    const now = new Date();
-    const options: Intl.DateTimeFormatOptions = {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long'
-    };
-    const dateStr = now.toLocaleDateString('fr-FR', options);
-    setCurrentDate(dateStr);
-  };
-
-  const handleAddSteps = () => {
-    Alert.prompt(
-      'Ajouter des pas',
-      'Combien de pas voulez-vous ajouter ?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        { 
-          text: 'Ajouter', 
-          onPress: async (value) => {
-            const newSteps = parseInt(value || '0');
-            if (!isNaN(newSteps) && user) {
-              const updatedSteps = steps + newSteps;
-              setSteps(updatedSteps);
-              
-              try {
-                await updateTodayProgress(user.id, { steps: updatedSteps });
-              } catch (error) {
-                console.error('Erreur sauvegarde pas:', error);
-              }
-            }
-          }
-        }
-      ],
-      'plain-text',
-      '',
-      'numeric'
-    );
-  };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
-      <ScrollView 
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: insets.bottom + 100 } // Espace pour la tab bar
-        ]}
-      >
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={styles.content}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.greeting}>
-            Bonjour, {user?.firstName || 'Utilisateur'}
-          </Text>
-          <Text style={styles.subtitle}>
-            Prêt à atteindre vos objectifs nutritionnels ?
-          </Text>
+          <Text style={styles.greeting}>Bonjour Martin ! 👋</Text>
+          <Text style={styles.subtitle}>Prêt pour votre séance d'aujourd'hui ?</Text>
         </View>
 
-        {/* Date */}
-        <Text style={styles.date}>{currentDate}</Text>
+        {/* Quick Stats */}
+        <View style={styles.statsContainer}>
+          <View style={styles.statCard}>
+            <Text style={styles.statNumber}>5</Text>
+            <Text style={styles.statLabel}>Séances cette semaine</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statNumber}>2.1kg</Text>
+            <Text style={styles.statLabel}>Progression</Text>
+          </View>
+        </View>
 
-        {/* Cards Container */}
-        <View style={styles.cardsContainer}>
-          {/* Calories & Training Row */}
-          <View style={styles.row}>
+        {/* Today's Workout */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Séance du jour</Text>
+          <View style={styles.workoutCard}>
+            <View style={styles.workoutHeader}>
+              <Text style={styles.workoutTitle}>💪 Push Day - Haut du corps</Text>
+              <Text style={styles.workoutDuration}>45 min</Text>
+            </View>
+            <Text style={styles.workoutDescription}>
+              Développé couché, développé incliné, dips, développé épaules
+            </Text>
             <TouchableOpacity 
-              style={[styles.card, styles.caloriesCard]}
-              onPress={() => router.push('/(client)/nutrition')}
-            >
-              <Text style={styles.cardTitle}>Aujourd'hui (mardi 3 juin)</Text>
-              <Text style={styles.cardValue}>{calories}</Text>
-              <Text style={styles.cardLabel}>Calories</Text>
-              <Text style={styles.cardSubLabel}>2695 kcal</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.card, styles.trainingCard]}
+              style={styles.startButton}
               onPress={() => router.push('/(client)/entrainement')}
             >
-              <Text style={styles.cardTitle}>Entraînement</Text>
-              <Text style={styles.cardValue}>{training}</Text>
-              <Text style={styles.cardLabel}>Fatigue</Text>
+              <Text style={styles.startButtonText}>Commencer la séance</Text>
             </TouchableOpacity>
           </View>
+        </View>
 
-          {/* Steps Counter */}
-          <TouchableOpacity 
-            style={styles.stepsCard}
-            onPress={handleAddSteps}
-          >
-            <View style={styles.stepsHeader}>
-              <Text style={styles.stepsIcon}>💪</Text>
-              <Text style={styles.stepsTitle}>Compteur de pas</Text>
+        {/* Nutrition Today */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Nutrition aujourd'hui</Text>
+          <View style={styles.nutritionCard}>
+            <View style={styles.caloriesRow}>
+              <Text style={styles.caloriesConsumed}>1,847</Text>
+              <Text style={styles.caloriesTotal}> / 2,200 kcal</Text>
             </View>
-            <View style={styles.stepsContent}>
-              <Text style={styles.stepsValue}>{steps}</Text>
-              <Text style={styles.stepsGoal}>/ 10000 pas</Text>
+            <View style={styles.macrosRow}>
+              <View style={styles.macroItem}>
+                <Text style={styles.macroLabel}>Protéines</Text>
+                <Text style={styles.macroValue}>87g</Text>
+              </View>
+              <View style={styles.macroItem}>
+                <Text style={styles.macroLabel}>Glucides</Text>
+                <Text style={styles.macroValue}>165g</Text>
+              </View>
+              <View style={styles.macroItem}>
+                <Text style={styles.macroLabel}>Lipides</Text>
+                <Text style={styles.macroValue}>61g</Text>
+              </View>
             </View>
-            <Text style={styles.stepsObjective}>Objectif</Text>
-            <TouchableOpacity style={styles.addStepsButton} onPress={handleAddSteps}>
-              <Text style={styles.addStepsButtonText}>Ajouter des pas</Text>
+            <TouchableOpacity 
+              style={styles.addMealButton}
+              onPress={() => router.push('/(client)/nutrition')}
+            >
+              <Text style={styles.addMealButtonText}>+ Ajouter un repas</Text>
             </TouchableOpacity>
-          </TouchableOpacity>
+          </View>
+        </View>
 
-          {/* Sleep Tracking */}
-          <TouchableOpacity 
-            style={styles.sleepCard}
-            onPress={() => router.push('/(client)/profil')}
-          >
-            <View style={styles.sleepHeader}>
-              <Text style={styles.sleepIcon}>🌙</Text>
-              <Text style={styles.sleepTitle}>Suivi du sommeil</Text>
-            </View>
-            <Text style={styles.sleepSubtitle}>Sommeil aujourd'hui</Text>
-            <Text style={styles.sleepTime}>{sleepTime}</Text>
-            <Text style={styles.sleepDuration}>0h 0min / 8h 0min</Text>
-            <Text style={styles.sleepLabel}>Durée du sommeil</Text>
-          </TouchableOpacity>
+        {/* Quick Actions */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Actions rapides</Text>
+          <View style={styles.quickActions}>
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => router.push('/(client)/progres')}
+            >
+              <Text style={styles.actionIcon}>📊</Text>
+              <Text style={styles.actionText}>Voir mes progrès</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => router.push('/(client)/coach')}
+            >
+              <Text style={styles.actionIcon}>💬</Text>
+              <Text style={styles.actionText}>Contacter mon coach</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: '#0D1117',
   },
-  scrollContent: {
-    flexGrow: 1,
+  content: {
+    flex: 1,
   },
   header: {
-    paddingHorizontal: 20,
+    padding: 20,
     paddingTop: 10,
-    paddingBottom: 10,
   },
   greeting: {
-    fontSize: width < 375 ? 22 : 24,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 5,
+    marginBottom: 4,
   },
   subtitle: {
-    fontSize: width < 375 ? 14 : 16,
-    color: '#888888',
-    lineHeight: 22,
+    fontSize: 16,
+    color: '#8B949E',
   },
-  date: {
-    fontSize: 14,
-    color: '#CCCCCC',
+  statsContainer: {
+    flexDirection: 'row',
     paddingHorizontal: 20,
+    gap: 12,
+    marginBottom: 20,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: '#161B22',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#F5A623',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#8B949E',
+    textAlign: 'center',
+  },
+  section: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 12,
+  },
+  workoutCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  workoutHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  workoutTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  workoutDuration: {
+    fontSize: 14,
+    color: '#8B949E',
+  },
+  workoutDescription: {
+    fontSize: 14,
+    color: '#8B949E',
     marginBottom: 16,
   },
-  cardsContainer: {
-    paddingHorizontal: 16,
-    gap: 12,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  card: {
-    borderRadius: 16,
-    padding: 14,
-    flex: 1,
-    minHeight: 120,
-  },
-  caloriesCard: {
-    backgroundColor: '#1A1A1A',
-  },
-  trainingCard: {
-    backgroundColor: '#1A1A1A',
-  },
-  cardTitle: {
-    fontSize: 11,
-    color: '#888888',
-    marginBottom: 8,
-    lineHeight: 14,
-  },
-  cardValue: {
-    fontSize: width < 375 ? 28 : 32,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  cardLabel: {
-    fontSize: 13,
-    color: '#FFFFFF',
-    marginBottom: 2,
-  },
-  cardSubLabel: {
-    fontSize: 11,
-    color: '#888888',
-  },
-  stepsCard: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 16,
-    padding: 18,
-  },
-  stepsHeader: {
-    flexDirection: 'row',
+  startButton: {
+    backgroundColor: '#F5A623',
+    paddingVertical: 12,
+    borderRadius: 8,
     alignItems: 'center',
-    marginBottom: 14,
   },
-  stepsIcon: {
-    fontSize: 20,
-    marginRight: 8,
-  },
-  stepsTitle: {
+  startButtonText: {
+    color: '#000000',
     fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    fontWeight: 'bold',
   },
-  stepsContent: {
+  nutritionCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  caloriesRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginBottom: 6,
+    marginBottom: 16,
   },
-  stepsValue: {
-    fontSize: width < 375 ? 32 : 36,
+  caloriesConsumed: {
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#F5A623',
   },
-  stepsGoal: {
-    fontSize: 15,
-    color: '#888888',
-    marginLeft: 8,
-  },
-  stepsObjective: {
-    fontSize: 13,
-    color: '#888888',
-    marginBottom: 14,
-  },
-  addStepsButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: 12,
-    paddingVertical: 11,
-    alignItems: 'center',
-  },
-  addStepsButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  sleepCard: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 16,
-    padding: 18,
-  },
-  sleepHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  sleepIcon: {
-    fontSize: 20,
-    marginRight: 8,
-  },
-  sleepTitle: {
+  caloriesTotal: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    color: '#8B949E',
   },
-  sleepSubtitle: {
-    fontSize: 13,
-    color: '#888888',
-    marginBottom: 6,
+  macrosRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
   },
-  sleepTime: {
-    fontSize: width < 375 ? 22 : 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+  macroItem: {
+    alignItems: 'center',
+  },
+  macroLabel: {
+    fontSize: 12,
+    color: '#8B949E',
     marginBottom: 4,
   },
-  sleepDuration: {
-    fontSize: 13,
-    color: '#888888',
-    marginBottom: 6,
+  macroValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
   },
-  sleepLabel: {
-    fontSize: 13,
-    color: '#888888',
+  addMealButton: {
+    backgroundColor: '#21262D',
+    paddingVertical: 10,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  addMealButtonText: {
+    color: '#F5A623',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  quickActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  actionButton: {
+    flex: 1,
+    backgroundColor: '#161B22',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  actionIcon: {
+    fontSize: 24,
+    marginBottom: 8,
+  },
+  actionText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    textAlign: 'center',
   },
 });
