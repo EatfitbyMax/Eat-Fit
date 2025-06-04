@@ -66,8 +66,8 @@ mode = "parallel"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd server && npm run dev"
+args = "cd server && npm install && npm run dev"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd .. && npx expo start --clear"
+args = "npx expo start --clear"
