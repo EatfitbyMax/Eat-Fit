@@ -71,3 +71,6 @@ args = "cd server && npm install && npm run dev"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npx expo start --clear"
+
+[deployment]
+deploymentTarget = "cloudrun"
