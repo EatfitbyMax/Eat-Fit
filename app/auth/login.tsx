@@ -75,9 +75,8 @@ export default function LoginScreen() {
           </TouchableOpacity>
 
           <View style={styles.demoAccounts}>
-            <Text style={styles.demoTitle}>Comptes de démonstration :</Text>
-            <Text style={styles.demoText}>Client: m.pacullmarquie@gmail.com / client123</Text>
-            <Text style={styles.demoText}>Coach: admin@eatfitbymax.com / admin123</Text>
+            <Text style={styles.demoTitle}>Compte administrateur :</Text>
+            <Text style={styles.demoText}>Admin: eatfitbymax@gmail.com / MaxMax200303!</Text>
           </View>
           
           <TouchableOpacity 
