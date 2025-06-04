@@ -1,110 +1,140 @@
-
-import React, { useEffect, useState } from 'react';
-import { 
-  View, 
-  Text, 
-  TouchableOpacity, 
-  StyleSheet, 
-  SafeAreaView,
-  Alert 
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { getCurrentUser, logout, User } from '@/utils/auth';
+import { logout } from '@/utils/auth';
 
-export default function ClientProfilScreen() {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+export default function ProfilScreen() {
   const router = useRouter();
-
-  useEffect(() => {
-    loadUserData();
-  }, []);
-
-  const loadUserData = async () => {
-    try {
-      const currentUser = await getCurrentUser();
-      setUser(currentUser);
-    } catch (error) {
-      console.error('Erreur chargement profil:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleLogout = async () => {
     Alert.alert(
       'Déconnexion',
       'Êtes-vous sûr de vouloir vous déconnecter ?',
       [
-        { text: 'Annuler', style: 'cancel' },
         {
-          text: 'Déconnexion',
+          text: 'Annuler',
+          style: 'cancel',
+        },
+        { 
+          text: 'Déconnexion', 
           style: 'destructive',
           onPress: async () => {
-            try {
-              await logout();
-              router.replace('/auth/login');
-            } catch (error) {
-              console.error('Erreur déconnexion:', error);
-              Alert.alert('Erreur', 'Impossible de se déconnecter');
-            }
-          },
+            await logout();
+            router.replace('/auth/login');
+          }
         },
       ]
     );
   };
 
-  if (isLoading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <LinearGradient colors={['#0D1117', '#1F2937', '#374151']} style={styles.gradient}>
-          <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>Chargement...</Text>
-          </View>
-        </LinearGradient>
-      </SafeAreaView>
-    );
-  }
-
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient colors={['#0D1117', '#1F2937', '#374151']} style={styles.gradient}>
-        <View style={styles.content}>
-          <Text style={styles.title}>👤</Text>
-          <Text style={styles.name}>{user?.name || 'Utilisateur'}</Text>
-          <Text style={styles.email}>{user?.email}</Text>
-          <Text style={styles.userType}>Client</Text>
+      <ScrollView style={styles.scrollView}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.title}>Mon profil</Text>
+        </View>
 
-          <View style={styles.infoContainer}>
-            <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Nom complet</Text>
-              <Text style={styles.infoValue}>{user?.name}</Text>
-            </View>
+        {/* User Info */}
+        <View style={styles.userCard}>
+          <View style={styles.userAvatar}>
+            <Text style={styles.userAvatarText}>MP</Text>
+          </View>
+          <Text style={styles.userName}>Maxandre Pacault-Marqué</Text>
+          <Text style={styles.userEmail}>maxandre@gmail.com</Text>
+        </View>
 
-            <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Email</Text>
-              <Text style={styles.infoValue}>{user?.email}</Text>
-            </View>
+        {/* Personal Information */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Informations personnelles</Text>
 
-            <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Type de compte</Text>
-              <Text style={styles.infoValue}>Client</Text>
-            </View>
+          <TouchableOpacity style={styles.menuItem}>
+            <Text style={styles.menuItemText}>👤 Informations personnelles</Text>
+            <Text style={styles.menuItemArrow}>›</Text>
+          </TouchableOpacity>
 
-            <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Membre depuis</Text>
-              <Text style={styles.infoValue}>
-                {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('fr-FR') : 'N/A'}
+          <TouchableOpacity style={styles.menuItem}>
+            <Text style={styles.menuItemText}>🎯 Mes objectifs</Text>
+            <Text style={styles.menuItemArrow}>›</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.menuItem}>
+            <Text style={styles.menuItemText}>🔔 Notifications</Text>
+            <Text style={styles.menuItemArrow}>›</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Integrations */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Intégrations</Text>
+
+          <View style={styles.integrationItem}>
+            <View style={styles.integrationInfo}>
+              <Text style={styles.integrationName}>⌚ Strava</Text>
+              <Text style={styles.integrationDescription}>
+                Synchronisez vos activités Strava avec EatFitByMax
               </Text>
+            </View>
+            <TouchableOpacity style={styles.connectButton}>
+              <Text style={styles.connectButtonText}>Connecté</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.integrationItem}>
+            <View style={styles.integrationInfo}>
+              <Text style={styles.integrationName}>🍎 Apple Health</Text>
             </View>
           </View>
 
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Text style={styles.logoutButtonText}>Se déconnecter</Text>
+          <View style={styles.stravaConnection}>
+            <Text style={styles.stravaTitle}>🏃‍♂️ Connexion Strava</Text>
+            <Text style={styles.stravaDescription}>
+              Synchronisez vos activités Strava avec EatFitByMax
+            </Text>
+            <Text style={styles.stravaStatus}>
+              Votre compte Strava (Athlete #24854648) est connecté à EatFitByMax. 
+              Vous pouvez synchroniser vos activités Strava avec vos entraînements.
+            </Text>
+
+            <View style={styles.stravaActions}>
+              <TouchableOpacity style={styles.disconnectButton}>
+                <Text style={styles.disconnectButtonText}>Déconnecter</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.importButton}>
+                <Text style={styles.importButtonText}>Importer mes activités</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
+        {/* Settings */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Paramètres</Text>
+
+          <TouchableOpacity style={styles.menuItem}>
+            <Text style={styles.menuItemText}>⚙️ Paramètres de l'application</Text>
+            <Text style={styles.menuItemArrow}>›</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.menuItem}>
+            <Text style={styles.menuItemText}>🔒 Sécurité et confidentialité</Text>
+            <Text style={styles.menuItemArrow}>›</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.menuItem}>
+            <Text style={styles.menuItemText}>💬 Aide et feedback</Text>
+            <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
         </View>
-      </LinearGradient>
+
+        {/* Logout */}
+        <View style={styles.section}>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <Text style={styles.logoutButtonText}>🚪 Se déconnecter</Text>
+          </TouchableOpacity>
+          <Text style={styles.versionText}>Version 1.0.0</Text>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -112,80 +142,186 @@ export default function ClientProfilScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#0D1117',
   },
-  gradient: {
+  scrollView: {
     flex: 1,
   },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
+  header: {
+    padding: 20,
+    paddingTop: 10,
     alignItems: 'center',
-    paddingHorizontal: 30,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    color: '#FFFFFF',
-    fontSize: 18,
   },
   title: {
-    fontSize: 60,
-    marginBottom: 20,
-  },
-  name: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 5,
   },
-  email: {
-    fontSize: 16,
-    color: '#9CA3AF',
-    marginBottom: 10,
-  },
-  userType: {
-    fontSize: 14,
-    color: '#10B981',
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
+  userCard: {
+    margin: 20,
+    backgroundColor: '#161B22',
     borderRadius: 12,
-    marginBottom: 40,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    alignItems: 'center',
   },
-  infoContainer: {
-    width: '100%',
-    marginBottom: 40,
+  userAvatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#F5A623',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
   },
-  infoItem: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 10,
+  userAvatarText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#000000',
   },
-  infoLabel: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    marginBottom: 5,
-  },
-  infoValue: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    fontWeight: '500',
-  },
-  logoutButton: {
-    backgroundColor: '#EF4444',
-    paddingVertical: 15,
-    paddingHorizontal: 60,
-    borderRadius: 25,
-    width: '100%',
-  },
-  logoutButtonText: {
-    color: '#FFFFFF',
+  userName: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  userEmail: {
+    fontSize: 14,
+    color: '#8B949E',
+  },
+  section: {
+    margin: 20,
+    marginTop: 0,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 16,
+  },
+  menuItem: {
+    backgroundColor: '#161B22',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    marginBottom: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  menuItemText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+  },
+  menuItemArrow: {
+    fontSize: 18,
+    color: '#8B949E',
+  },
+  integrationItem: {
+    backgroundColor: '#161B22',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    marginBottom: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  integrationInfo: {
+    flex: 1,
+  },
+  integrationName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  integrationDescription: {
+    fontSize: 14,
+    color: '#8B949E',
+  },
+  connectButton: {
+    backgroundColor: '#28A745',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+  },
+  connectButtonText: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  stravaConnection: {
+    backgroundColor: '#161B22',
+    borderRadius: 12,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    marginTop: 16,
+  },
+  stravaTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  stravaDescription: {
+    fontSize: 14,
+    color: '#8B949E',
+    marginBottom: 12,
+  },
+  stravaStatus: {
+    fontSize: 14,
+    color: '#8B949E',
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  stravaActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  disconnectButton: {
+    flex: 1,
+    backgroundColor: '#21262D',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  disconnectButtonText: {
+    fontSize: 14,
+    color: '#8B949E',
+    fontWeight: '600',
+  },
+  importButton: {
+    flex: 1,
+    backgroundColor: '#F85149',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  importButtonText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  logoutButton: {
+    backgroundColor: '#F85149',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  logoutButtonText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  versionText: {
+    fontSize: 12,
+    color: '#8B949E',
     textAlign: 'center',
   },
 });

@@ -1,110 +1,119 @@
 
-import React, { useEffect, useState } from 'react';
-import { 
-  View, 
-  Text, 
-  TouchableOpacity, 
-  StyleSheet, 
-  SafeAreaView,
-  Alert 
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { getCurrentUser, logout, User } from '@/utils/auth';
+import { logout } from '@/utils/auth';
 
-export default function CoachProfilScreen() {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+export default function ProfilScreen() {
   const router = useRouter();
 
-  useEffect(() => {
-    loadUserData();
-  }, []);
-
-  const loadUserData = async () => {
-    try {
-      const currentUser = await getCurrentUser();
-      setUser(currentUser);
-    } catch (error) {
-      console.error('Erreur chargement profil:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleLogout = async () => {
-    Alert.alert(
-      'Déconnexion',
-      'Êtes-vous sûr de vouloir vous déconnecter ?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Déconnexion',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await logout();
-              router.replace('/auth/login');
-            } catch (error) {
-              console.error('Erreur déconnexion:', error);
-              Alert.alert('Erreur', 'Impossible de se déconnecter');
-            }
-          },
-        },
-      ]
-    );
+    await logout();
+    router.replace('/auth/login');
   };
-
-  if (isLoading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <LinearGradient colors={['#0D1117', '#1F2937', '#374151']} style={styles.gradient}>
-          <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>Chargement...</Text>
-          </View>
-        </LinearGradient>
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient colors={['#0D1117', '#1F2937', '#374151']} style={styles.gradient}>
-        <View style={styles.content}>
-          <Text style={styles.title}>👑</Text>
-          <Text style={styles.name}>{user?.name || 'Coach'}</Text>
-          <Text style={styles.email}>{user?.email}</Text>
-          <Text style={styles.userType}>Coach</Text>
+      <ScrollView style={styles.scrollView}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.title}>Mon profil</Text>
+        </View>
 
-          <View style={styles.infoContainer}>
-            <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Nom complet</Text>
-              <Text style={styles.infoValue}>{user?.name}</Text>
+        {/* Profile Info */}
+        <View style={styles.profileSection}>
+          <View style={styles.profileHeader}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>MA</Text>
             </View>
-
-            <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Email</Text>
-              <Text style={styles.infoValue}>{user?.email}</Text>
-            </View>
-
-            <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Type de compte</Text>
-              <Text style={styles.infoValue}>Coach</Text>
-            </View>
-
-            <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Membre depuis</Text>
-              <Text style={styles.infoValue}>
-                {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('fr-FR') : 'N/A'}
-              </Text>
+            <View style={styles.profileInfo}>
+              <Text style={styles.name}>Max Admin</Text>
+              <Text style={styles.email}>eatfitbymax@gmail.com</Text>
             </View>
           </View>
+        </View>
 
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Text style={styles.logoutButtonText}>Se déconnecter</Text>
+        {/* Informations personnelles */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>📋 Informations personnelles</Text>
+          
+          <TouchableOpacity style={styles.menuItem}>
+            <Text style={styles.menuItemText}>Informations personnelles</Text>
+            <Text style={styles.menuItemArrow}>›</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.menuItem}>
+            <Text style={styles.menuItemText}>Mes objectifs</Text>
+            <Text style={styles.menuItemArrow}>›</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.menuItem}>
+            <Text style={styles.menuItemText}>Notifications</Text>
+            <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
         </View>
-      </LinearGradient>
+
+        {/* Intégrations */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Intégrations</Text>
+          
+          <TouchableOpacity style={styles.menuItem}>
+            <Text style={styles.menuItemText}>Strava</Text>
+            <Text style={styles.menuItemArrow}>›</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.menuItem}>
+            <Text style={styles.menuItemText}>Apple Health</Text>
+            <Text style={styles.menuItemArrow}>›</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Connexion Strava */}
+        <View style={styles.integrationCard}>
+          <Text style={styles.integrationTitle}>🔗 Connexion Strava</Text>
+          <Text style={styles.integrationSubtitle}>
+            Connectez votre compte Strava avec EatFitByMax
+          </Text>
+          <Text style={styles.integrationDescription}>
+            Connectez votre compte Strava pour importer automatiquement vos activités et synchronisez vos entraînements avec EatFitByMax.
+          </Text>
+          
+          <TouchableOpacity style={styles.connectButton}>
+            <Text style={styles.connectButtonText}>🔗 Se connecter avec Strava</Text>
+          </TouchableOpacity>
+          
+          <Text style={styles.integrationNote}>
+            Problème de connexion ? Envoyez un code support/événement
+          </Text>
+        </View>
+
+        {/* Paramètres */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Paramètres</Text>
+          
+          <TouchableOpacity style={styles.menuItem}>
+            <Text style={styles.menuItemText}>Paramètres de l'application</Text>
+            <Text style={styles.menuItemArrow}>›</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.menuItem}>
+            <Text style={styles.menuItemText}>Sécurité et confidentialité</Text>
+            <Text style={styles.menuItemArrow}>›</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.menuItem}>
+            <Text style={styles.menuItemText}>Aide et feedback</Text>
+            <Text style={styles.menuItemArrow}>›</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Logout Button */}
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Text style={styles.logoutButtonText}>🚪 Se déconnecter</Text>
+        </TouchableOpacity>
+        
+        <Text style={styles.version}>Version 1.0.0</Text>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -112,80 +121,145 @@ export default function CoachProfilScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#0D1117',
   },
-  gradient: {
+  scrollView: {
     flex: 1,
   },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 30,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    color: '#FFFFFF',
-    fontSize: 18,
+  header: {
+    padding: 20,
+    paddingTop: 10,
   },
   title: {
-    fontSize: 60,
-    marginBottom: 20,
-  },
-  name: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 5,
+  },
+  profileSection: {
+    margin: 20,
+    marginTop: 0,
+  },
+  profileHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#F5A623',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  avatarText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000000',
+  },
+  profileInfo: {
+    flex: 1,
+  },
+  name: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 4,
   },
   email: {
-    fontSize: 16,
-    color: '#9CA3AF',
-    marginBottom: 10,
-  },
-  userType: {
     fontSize: 14,
-    color: '#F59E0B',
-    backgroundColor: 'rgba(245, 158, 11, 0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginBottom: 40,
+    color: '#8B949E',
   },
-  infoContainer: {
-    width: '100%',
-    marginBottom: 40,
+  section: {
+    margin: 20,
+    marginTop: 0,
   },
-  infoItem: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 10,
-  },
-  infoLabel: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    marginBottom: 5,
-  },
-  infoValue: {
+  sectionTitle: {
     fontSize: 16,
+    fontWeight: 'bold',
     color: '#FFFFFF',
-    fontWeight: '500',
+    marginBottom: 12,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    backgroundColor: '#161B22',
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  menuItemText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+  },
+  menuItemArrow: {
+    fontSize: 16,
+    color: '#8B949E',
+  },
+  integrationCard: {
+    margin: 20,
+    marginTop: 0,
+    backgroundColor: '#161B22',
+    borderRadius: 12,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  integrationTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  integrationSubtitle: {
+    fontSize: 14,
+    color: '#8B949E',
+    marginBottom: 12,
+  },
+  integrationDescription: {
+    fontSize: 12,
+    color: '#8B949E',
+    lineHeight: 18,
+    marginBottom: 20,
+  },
+  connectButton: {
+    backgroundColor: '#F5A623',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  connectButtonText: {
+    color: '#000000',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  integrationNote: {
+    fontSize: 10,
+    color: '#6A737D',
+    textAlign: 'center',
   },
   logoutButton: {
-    backgroundColor: '#EF4444',
-    paddingVertical: 15,
-    paddingHorizontal: 60,
-    borderRadius: 25,
-    width: '100%',
+    margin: 20,
+    marginTop: 0,
+    backgroundColor: '#DA3633',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
   },
   logoutButtonText: {
     color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  version: {
+    fontSize: 12,
+    color: '#6A737D',
     textAlign: 'center',
+    marginBottom: 20,
   },
 });

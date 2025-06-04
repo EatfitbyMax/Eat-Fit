@@ -1,55 +1,59 @@
-import { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  signOut,
-  onAuthStateChanged,
-  User as FirebaseUser 
-} from 'firebase/auth';
-import { 
-  doc, 
-  setDoc, 
-  getDoc, 
-  collection 
-} from 'firebase/firestore';
-import { auth, db } from '@/config/firebase';
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface User {
   id: string;
   email: string;
-  firstName: string;
-  lastName: string;
   name: string;
   userType: 'client' | 'coach';
   createdAt: string;
 }
 
+const CURRENT_USER_KEY = 'currentUser';
+const USERS_KEY = 'users';
+
+// Comptes par défaut
+const DEFAULT_ACCOUNTS = [
+  {
+    id: '1',
+    email: 'admin@eatfitbymax.com',
+    password: 'admin123',
+    name: 'Admin',
+    userType: 'coach' as const,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: '2',
+    email: 'm.pacullmarquie@gmail.com',
+    password: 'client123',
+    name: 'Maxandre Pacull-Marquié',
+    userType: 'client' as const,
+    createdAt: new Date().toISOString(),
+  }
+];
+
+export async function initializeAdminAccount(): Promise<void> {
+  try {
+    const existingUsers = await AsyncStorage.getItem(USERS_KEY);
+    if (!existingUsers) {
+      await AsyncStorage.setItem(USERS_KEY, JSON.stringify(DEFAULT_ACCOUNTS));
+      console.log('Comptes par défaut initialisés');
+    }
+  } catch (error) {
+    console.error('Erreur initialisation comptes:', error);
+  }
+}
+
 export async function getCurrentUser(): Promise<User | null> {
   try {
-    if (!auth) {
-      console.log('Auth non disponible');
-      return null;
+    const currentUserData = await AsyncStorage.getItem(CURRENT_USER_KEY);
+    if (currentUserData) {
+      const user = JSON.parse(currentUserData);
+      console.log('Utilisateur connecté trouvé:', user.email);
+      return user;
     }
-
-    const firebaseUser = auth.currentUser;
-    if (!firebaseUser) {
-      console.log('Aucun utilisateur Firebase connecté');
-      return null;
-    }
-
-    if (!db) {
-      console.log('Firestore non disponible');
-      return null;
-    }
-
-    const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-    if (userDoc.exists()) {
-      const userData = userDoc.data() as User;
-      console.log('Utilisateur connecté trouvé:', userData.email);
-      return userData;
-    } else {
-      console.log('Données utilisateur non trouvées dans Firestore');
-      return null;
-    }
+    console.log('Aucun utilisateur connecté');
+    return null;
   } catch (error) {
     console.error('Erreur récupération utilisateur:', error);
     return null;
@@ -58,46 +62,34 @@ export async function getCurrentUser(): Promise<User | null> {
 
 export async function login(email: string, password: string): Promise<User | null> {
   try {
-    if (!auth) {
-      throw new Error('Service d\'authentification non disponible');
-    }
-
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const firebaseUser = userCredential.user;
-
-    if (!db) {
-      throw new Error('Base de données non disponible');
-    }
-
-    const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-    if (userDoc.exists()) {
-      const userData = userDoc.data() as User;
-      console.log('Connexion réussie pour:', userData.email);
-      return userData;
-    } else {
-      console.log('Données utilisateur non trouvées');
+    const usersData = await AsyncStorage.getItem(USERS_KEY);
+    if (!usersData) {
+      console.log('Aucun utilisateur enregistré');
       return null;
     }
-  } catch (error: any) {
-    console.error('Erreur connexion:', error);
-    if (error.code === 'auth/user-not-found') {
-      throw new Error('Aucun compte trouvé avec cette adresse email');
-    } else if (error.code === 'auth/wrong-password') {
-      throw new Error('Mot de passe incorrect');
-    } else if (error.code === 'auth/invalid-email') {
-      throw new Error('Adresse email invalide');
+
+    const users = JSON.parse(usersData);
+    const user = users.find((u: any) => u.email === email && u.password === password);
+    
+    if (user) {
+      // Enlever le mot de passe avant de sauvegarder
+      const { password: _, ...userWithoutPassword } = user;
+      await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userWithoutPassword));
+      console.log('Connexion réussie pour:', user.email);
+      return userWithoutPassword;
+    } else {
+      console.log('Identifiants incorrects');
+      return null;
     }
-    throw new Error(error.message || 'Erreur lors de la connexion');
+  } catch (error) {
+    console.error('Erreur connexion:', error);
+    return null;
   }
 }
 
 export async function logout(): Promise<void> {
   try {
-    if (!auth) {
-      console.log('Auth non disponible pour la déconnexion');
-      return;
-    }
-    await signOut(auth);
+    await AsyncStorage.removeItem(CURRENT_USER_KEY);
     console.log('Déconnexion réussie');
   } catch (error) {
     console.error('Erreur déconnexion:', error);
@@ -107,95 +99,41 @@ export async function logout(): Promise<void> {
 export async function register(userData: {
   email: string;
   password: string;
-  firstName: string;
-  lastName: string;
+  name: string;
   userType: 'client' | 'coach';
 }): Promise<User | null> {
   try {
-    if (!auth) {
-      throw new Error('Service d\'authentification non disponible');
+    const usersData = await AsyncStorage.getItem(USERS_KEY);
+    const users = usersData ? JSON.parse(usersData) : [];
+    
+    // Vérifier si l'email existe déjà
+    const existingUser = users.find((u: any) => u.email === userData.email);
+    if (existingUser) {
+      console.log('Email déjà utilisé');
+      return null;
     }
 
-    if (!db) {
-      throw new Error('Base de données non disponible');
-    }
-
-    console.log('Début inscription pour:', userData.email);
-
-    const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
-    const firebaseUser = userCredential.user;
-
-    console.log('Compte Firebase Auth créé:', firebaseUser.uid);
-
-    const newUser: User = {
-      id: firebaseUser.uid,
+    // Créer le nouvel utilisateur
+    const newUser = {
+      id: Date.now().toString(),
       email: userData.email,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      name: `${userData.firstName} ${userData.lastName}`,
+      password: userData.password,
+      name: userData.name,
       userType: userData.userType,
       createdAt: new Date().toISOString(),
     };
 
-    console.log('Création du document Firestore:', newUser);
-    await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
+    users.push(newUser);
+    await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
 
-    console.log('Inscription réussie pour:', userData.email, 'Type:', userData.userType);
-    return newUser;
-  } catch (error: any) {
+    // Connecter automatiquement l'utilisateur
+    const { password: _, ...userWithoutPassword } = newUser;
+    await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userWithoutPassword));
+    
+    console.log('Inscription réussie pour:', userData.email);
+    return userWithoutPassword;
+  } catch (error) {
     console.error('Erreur inscription:', error);
-
-    if (error.code === 'auth/email-already-in-use') {
-      throw new Error('Cette adresse email est déjà utilisée');
-    } else if (error.code === 'auth/weak-password') {
-      throw new Error('Le mot de passe est trop faible');
-    } else if (error.code === 'auth/invalid-email') {
-      throw new Error('Adresse email invalide');
-    } else if (error.code === 'permission-denied') {
-      throw new Error('Erreur de permissions Firebase. Vérifiez les règles Firestore.');
-    }
-
-    throw new Error(error.message || 'Erreur lors de l\'inscription');
+    return null;
   }
 }
-
-export function onAuthStateChange(callback: (user: FirebaseUser | null) => void) {
-  if (!auth) {
-    console.log('Auth non disponible pour onAuthStateChange');
-    return () => {};
-  }
-  return onAuthStateChanged(auth, callback);
-}
-
-export const loginUser = async (email: string, password: string) => {
-  try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    return userCredential.user;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const createUserWithRole = async (
-  email: string, 
-  password: string, 
-  userData: any, 
-  role: 'client' | 'coach' | 'admin' = 'client'
-) => {
-  try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-
-    // Ajouter les données utilisateur dans Firestore avec le rôle
-    await setDoc(doc(db, 'users', user.uid), {
-      ...userData,
-      role,
-      email,
-      createdAt: new Date(),
-    });
-
-    return user;
-  } catch (error) {
-    throw error;
-  }
-};
