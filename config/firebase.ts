@@ -25,12 +25,14 @@ if (getApps().length === 0) {
 // Initialiser Auth avec persistance
 let auth;
 try {
+  // Essayer d'initialiser avec persistance
   auth = initializeAuth(app, {
     persistence: getReactNativePersistence(AsyncStorage)
   });
 } catch (error) {
-  // Si auth est déjà initialisé, récupérer l'instance existante
-  auth = getAuth(app);
+  // Si l'initialisation échoue (déjà initialisé), utiliser l'instance existante
+  console.log('Auth déjà initialisé, récupération de l\'instance existante');
+  auth = getAuth();
 }
 
 // Initialiser Firestore
