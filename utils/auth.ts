@@ -16,18 +16,10 @@ const USERS_KEY = 'users';
 const DEFAULT_ACCOUNTS = [
   {
     id: '1',
-    email: 'admin@eatfitbymax.com',
-    password: 'admin123',
-    name: 'Admin',
+    email: 'eatfitbymax@gmail.com',
+    password: 'MaxMax200303!',
+    name: 'Admin EatFitByMax',
     userType: 'coach' as const,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    email: 'm.pacullmarquie@gmail.com',
-    password: 'client123',
-    name: 'Maxandre Pacull-Marquié',
-    userType: 'client' as const,
     createdAt: new Date().toISOString(),
   }
 ];
@@ -100,7 +92,7 @@ export async function register(userData: {
   email: string;
   password: string;
   name: string;
-  userType: 'client' | 'coach';
+  userType?: 'client' | 'coach';
 }): Promise<User | null> {
   try {
     const usersData = await AsyncStorage.getItem(USERS_KEY);
@@ -113,13 +105,13 @@ export async function register(userData: {
       return null;
     }
 
-    // Créer le nouvel utilisateur
+    // Créer le nouvel utilisateur (toujours client sauf si spécifié autrement)
     const newUser = {
       id: Date.now().toString(),
       email: userData.email,
       password: userData.password,
       name: userData.name,
-      userType: userData.userType,
+      userType: 'client' as const, // Forcer tous les nouveaux comptes à être clients
       createdAt: new Date().toISOString(),
     };
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { register } from '@/utils/auth';
 
 export default function RegisterAccountScreen() {
   const router = useRouter();
@@ -12,28 +12,34 @@ export default function RegisterAccountScreen() {
   const handleFinish = async () => {
     if (email.trim() && password.trim() && password === confirmPassword) {
       try {
-        // Créer l'objet utilisateur
+        // Utiliser la fonction register du système d'auth
+        const { register } = require('@/utils/auth');
         const userData = {
           email: email.trim().toLowerCase(),
-          password: password, // En production, il faudrait hasher le mot de passe
-          createdAt: new Date().toISOString(),
-          userType: 'client'
+          password: password,
+          name: 'Nouveau Client', // Nom par défaut, pourra être modifié plus tard
         };
 
-        // Sauvegarder dans AsyncStorage
-        await AsyncStorage.setItem(`user_${email.trim().toLowerCase()}`, JSON.stringify(userData));
-        await AsyncStorage.setItem('currentUser', JSON.stringify(userData));
-
-        Alert.alert(
-          'Compte créé !',
-          'Votre compte a été créé avec succès.',
-          [
-            {
-              text: 'OK',
-              onPress: () => router.replace('/(client)')
-            }
-          ]
-        );
+        // Créer le compte avec la fonction register
+        const user = await register(userData);
+        
+        if (user) {
+          Alert.alert(
+            'Compte créé !',
+            'Votre compte client a été créé avec succès.',
+            [
+              {
+                text: 'OK',
+                onPress: () => router.replace('/(client)')
+              }
+            ]
+          );
+        } else {
+          Alert.alert(
+            'Erreur',
+            'Cet email est déjà utilisé.'
+          );
+        }
       } catch (error) {
         Alert.alert(
           'Erreur',
