@@ -1,4 +1,3 @@
-
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
@@ -84,7 +83,7 @@ db.serialize(() => {
   // Créer un compte admin par défaut
   const adminEmail = 'admin@eatfitbymax.com';
   const adminPassword = 'admin123';
-  
+
   db.get('SELECT * FROM users WHERE email = ?', [adminEmail], (err, row) => {
     if (!row) {
       const hashedPassword = bcrypt.hashSync(adminPassword, 10);
@@ -105,7 +104,7 @@ db.serialize(() => {
   // Créer un compte client de démonstration
   const clientEmail = 'm.pacullmarquie@gmail.com';
   const clientPassword = 'client123';
-  
+
   db.get('SELECT * FROM users WHERE email = ?', [clientEmail], (err, row) => {
     if (!row) {
       const hashedPassword = bcrypt.hashSync(clientPassword, 10);

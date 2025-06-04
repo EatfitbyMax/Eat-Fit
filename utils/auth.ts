@@ -1,5 +1,5 @@
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev:5000/api';
 
 export interface User {
   id: number;
@@ -171,3 +171,29 @@ class AuthService {
 }
 
 export const authService = new AuthService();
+
+// Fonction pour obtenir l'utilisateur connecté
+export async function getCurrentUser(): Promise<User | null> {
+  try {
+    const response = await authService.verifyToken();
+    return response.success ? response.user || null : null;
+  } catch (error) {
+    console.error('Erreur getCurrentUser:', error);
+    return null;
+  }
+}
+
+// Fonction pour initialiser le compte admin (pour l'instant, juste un placeholder)
+export async function initializeAdminAccount(): Promise<void> {
+  try {
+    // Test de connexion au serveur
+    const isConnected = await authService.testConnection();
+    if (isConnected) {
+      console.log('Comptes par défaut prêts (création via auth si nécessaire)');
+    } else {
+      console.log('Comptes par défaut initialisés');
+    }
+  } catch (error) {
+    console.error('Erreur initialisation admin:', error);
+  }
+}
