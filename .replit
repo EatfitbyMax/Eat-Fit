@@ -21,11 +21,7 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = 'pkill -f "expo\|metro" || true'
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN npx expo start --clear"
+args = "EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN npx expo start"
 
 [[workflows.workflow]]
 name = "EAS Init"
@@ -58,26 +54,3 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npx eas build --platform android --profile preview"
-
-[[workflows.workflow]]
-name = "Start Backend Server"
-author = 42598128
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd server && npm install && node index.js"
-
-[[workflows.workflow]]
-name = "Start Backend"
-author = 42598128
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd server && node index.js"
-
-[deployment]
-deploymentTarget = "cloudrun"
-run = ["sh", "-c", "npx serve dist --port 8081 --host 0.0.0.0"]
-build = ["sh", "-c", "npx expo export --platform web"]

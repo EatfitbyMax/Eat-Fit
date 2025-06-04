@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { authService } from '@/utils/auth';
+import { login } from '@/utils/auth';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -18,18 +18,17 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      console.log('Tentative de connexion avec:', email);
-      const response = await authService.login(email, password);
+      const user = await login(email, password);
       
-      if (response.success && response.user) {
-        console.log('Connexion réussie, redirection...', response.user);
-        if (response.user.userType === 'coach') {
+      if (user) {
+        console.log('Connexion réussie, redirection...');
+        if (user.userType === 'coach') {
           router.replace('/(coach)/programmes');
         } else {
           router.replace('/(client)');
         }
       } else {
-        Alert.alert('Erreur', response.error || 'Email ou mot de passe incorrect');
+        Alert.alert('Erreur', 'Email ou mot de passe incorrect');
       }
     } catch (error) {
       console.error('Erreur connexion:', error);
