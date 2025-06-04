@@ -29,7 +29,18 @@ export async function initializeAdminAccount(): Promise<void> {
     const existingUsers = await AsyncStorage.getItem(USERS_KEY);
     if (!existingUsers) {
       await AsyncStorage.setItem(USERS_KEY, JSON.stringify(DEFAULT_ACCOUNTS));
-      console.log('Comptes par défaut initialisés');
+      console.log('Comptes par défaut initialisés:', DEFAULT_ACCOUNTS.map(u => u.email));
+    } else {
+      const users = JSON.parse(existingUsers);
+      // Vérifier si le compte admin existe
+      const adminExists = users.find((u: any) => u.email === 'eatfitbymax@gmail.com');
+      if (!adminExists) {
+        users.push(...DEFAULT_ACCOUNTS);
+        await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
+        console.log('Compte admin ajouté aux utilisateurs existants');
+      } else {
+        console.log('Compte admin déjà existant');
+      }
     }
   } catch (error) {
     console.error('Erreur initialisation comptes:', error);
@@ -56,21 +67,32 @@ export async function login(email: string, password: string): Promise<User | nul
   try {
     const usersData = await AsyncStorage.getItem(USERS_KEY);
     if (!usersData) {
-      console.log('Aucun utilisateur enregistré');
-      return null;
+      console.log('Aucun utilisateur enregistré, initialisation...');
+      await initializeAdminAccount();
+      return await login(email, password); // Réessayer après initialisation
     }
 
     const users = JSON.parse(usersData);
-    const user = users.find((u: any) => u.email === email && u.password === password);
+    console.log('Utilisateurs disponibles:', users.map((u: any) => ({ email: u.email, userType: u.userType })));
+    
+    // Normaliser l'email (minuscules et trim)
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = users.find((u: any) => 
+      u.email.toLowerCase().trim() === normalizedEmail && u.password === password
+    );
+    
+    console.log('Recherche utilisateur avec email:', normalizedEmail);
+    console.log('Mot de passe fourni:', password);
     
     if (user) {
       // Enlever le mot de passe avant de sauvegarder
       const { password: _, ...userWithoutPassword } = user;
       await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userWithoutPassword));
-      console.log('Connexion réussie pour:', user.email);
+      console.log('Connexion réussie pour:', user.email, 'Type:', user.userType);
       return userWithoutPassword;
     } else {
-      console.log('Identifiants incorrects');
+      console.log('Identifiants incorrects pour:', normalizedEmail);
+      console.log('Utilisateurs dans la base:', users.map((u: any) => u.email));
       return null;
     }
   } catch (error) {
