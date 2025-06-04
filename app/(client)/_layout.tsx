@@ -2,6 +2,79 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform, Text } from 'react-native';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
+
+export default function ClientTabLayout() {
+  const colorScheme = useColorScheme();
+
+  return (
+    <Tabs
+      screenOptions={{
+        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: '#1A1A1A',
+          borderTopColor: '#333333',
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+        },
+      }}>
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Accueil',
+          tabBarIcon: ({ color, size }) => (
+            <Text style={{ color, fontSize: size }}>🏠</Text>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="nutrition"
+        options={{
+          title: 'Nutrition',
+          tabBarIcon: ({ color, size }) => (
+            <Text style={{ color, fontSize: size }}>🍎</Text>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="entrainement"
+        options={{
+          title: 'Entraînement',
+          tabBarIcon: ({ color, size }) => (
+            <Text style={{ color, fontSize: size }}>💪</Text>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="progres"
+        options={{
+          title: 'Progrès',
+          tabBarIcon: ({ color, size }) => (
+            <Text style={{ color, fontSize: size }}>📊</Text>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profil"
+        options={{
+          title: 'Profil',
+          tabBarIcon: ({ color, size }) => (
+            <Text style={{ color, fontSize: size }}>👤</Text>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="coach"
+        options={{
+          href: null, // Hide this tab
+        }}
+      />
+    </Tabs>
+  );
+}
 
 export default function ClientTabLayout() {
   return (
