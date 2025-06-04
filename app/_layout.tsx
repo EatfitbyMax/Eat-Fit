@@ -5,7 +5,6 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import 'react-native-reanimated/lib/reanimated2/NativeReanimated';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth, db } from '@/config/firebase';
