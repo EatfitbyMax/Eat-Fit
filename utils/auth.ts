@@ -85,9 +85,13 @@ export async function register(userData: {
   userType: 'client' | 'coach';
 }): Promise<User | null> {
   try {
+    console.log('Début inscription pour:', userData.email);
+    
     // Créer le compte Firebase Auth
     const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
     const firebaseUser = userCredential.user;
+
+    console.log('Compte Firebase Auth créé:', firebaseUser.uid);
 
     // Créer le document utilisateur dans Firestore
     const newUser: User = {
@@ -100,13 +104,26 @@ export async function register(userData: {
       createdAt: new Date().toISOString(),
     };
 
+    console.log('Création du document Firestore:', newUser);
     await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
 
-    console.log('Inscription réussie pour:', userData.email);
+    console.log('Inscription réussie pour:', userData.email, 'Type:', userData.userType);
     return newUser;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erreur inscription:', error);
-    return null;
+    
+    // Messages d'erreur plus explicites
+    if (error.code === 'auth/email-already-in-use') {
+      throw new Error('Cette adresse email est déjà utilisée');
+    } else if (error.code === 'auth/weak-password') {
+      throw new Error('Le mot de passe est trop faible');
+    } else if (error.code === 'auth/invalid-email') {
+      throw new Error('Adresse email invalide');
+    } else if (error.code === 'permission-denied') {
+      throw new Error('Erreur de permissions Firebase. Vérifiez les règles Firestore.');
+    }
+    
+    throw new Error(error.message || 'Erreur lors de l\'inscription');
   }
 }
 

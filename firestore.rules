@@ -1,24 +1,41 @@
+
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Permettre la lecture et écriture pour les utilisateurs authentifiés
+    // Règles pour la collection users
     match /users/{userId} {
+      // Permettre la lecture et l'écriture pour l'utilisateur propriétaire
       allow read, write: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null;
+      
+      // Permettre la création d'un nouveau document utilisateur lors de l'inscription
+      allow create: if request.auth != null 
+        && request.auth.uid == userId
+        && resource == null
+        && request.resource.data.keys().hasAll(['id', 'email', 'firstName', 'lastName', 'name', 'userType', 'createdAt'])
+        && request.resource.data.id == userId
+        && request.resource.data.email == request.auth.token.email;
+      
+      // Permettre aux coachs de lire tous les utilisateurs
+      allow read: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType in ['coach'];
     }
-
-    // Permettre la lecture des collections Admin et Clients pour les utilisateurs authentifiés
-    match /Admin/{document} {
-      allow read, write: if request.auth != null;
-    }
-
-    match /Clients/{document} {
-      allow read, write: if request.auth != null;
-    }
-
-    // Règles par défaut plus permissives pour le développement
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+    
+    // Règles pour les autres collections (progress, nutrition, etc.)
+    match /{collection}/{document} {
+      // Les utilisateurs peuvent accéder à leurs propres données
+      allow read, write: if request.auth != null && 
+        resource.data.userId == request.auth.uid;
+      
+      // Permettre la création de nouveaux documents pour l'utilisateur connecté
+      allow create: if request.auth != null && 
+        request.resource.data.userId == request.auth.uid;
+      
+      // Les coachs peuvent accéder à toutes les données
+      allow read, write: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType in ['coach'];
     }
   }
 }
