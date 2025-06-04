@@ -43,7 +43,7 @@ export default function RegisterAccountScreen() {
       if (user) {
         Alert.alert(
           'Compte créé !',
-          'Votre compte a été créé avec succès. Vérifiez votre email pour confirmer votre inscription.',
+          'Votre compte a été créé avec succès. Vous pouvez maintenant vous connecter.',
           [
             {
               text: 'OK',
@@ -57,11 +57,11 @@ export default function RegisterAccountScreen() {
           'Une erreur est survenue lors de la création du compte. Veuillez réessayer.'
         );
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur création compte:', error);
       Alert.alert(
         'Erreur',
-        'Une erreur est survenue lors de la création du compte.'
+        error.message || 'Une erreur est survenue lors de la création du compte.'
       );
     } finally {
       setIsLoading(false);

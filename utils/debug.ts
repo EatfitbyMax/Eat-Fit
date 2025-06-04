@@ -1,4 +1,6 @@
 
+import { supabase } from './supabase';
+
 export async function debugSupabaseConfig() {
   console.log('=== DIAGNOSTIC SUPABASE ===');
   
@@ -38,6 +40,52 @@ export async function debugSupabaseConfig() {
     
   } catch (error) {
     console.error('❌ Erreur diagnostic:', error);
+  }
+}
+
+export async function testUserCreation() {
+  console.log('=== TEST CRÉATION UTILISATEUR ===');
+  
+  const testEmail = `test-${Date.now()}@example.com`;
+  const testPassword = 'motdepasse123';
+  
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email: testEmail,
+      password: testPassword,
+      options: {
+        data: {
+          name: 'Test User',
+          user_type: 'client'
+        }
+      }
+    });
+    
+    if (error) {
+      console.error('❌ Erreur test création:', error);
+      return;
+    }
+    
+    console.log('✅ Test création réussi');
+    console.log('User ID:', data.user?.id);
+    console.log('Email confirmé:', data.user?.email_confirmed_at ? 'Oui' : 'Non');
+    
+    // Vérifier si le profil est créé
+    setTimeout(async () => {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', data.user!.id)
+        .single();
+      
+      console.log('Profil créé:', profile ? 'Oui' : 'Non');
+      if (profile) {
+        console.log('Données profil:', profile);
+      }
+    }, 3000);
+    
+  } catch (error) {
+    console.error('❌ Erreur test création:', error)or);
   }
 }
 

@@ -119,9 +119,16 @@ export async function register(userData: {
   try {
     console.log('Début inscription pour:', userData.email);
     
+    // Vérifier le format de l'email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(userData.email)) {
+      console.error('Format email invalide:', userData.email);
+      throw new Error('Format d\'email invalide');
+    }
+    
     // Créer le compte utilisateur avec métadonnées et désactiver la confirmation d'email
     const { data, error } = await supabase.auth.signUp({
-      email: userData.email,
+      email: userData.email.toLowerCase().trim(),
       password: userData.password,
       options: {
         data: {
@@ -134,7 +141,17 @@ export async function register(userData: {
 
     if (error) {
       console.error('Erreur inscription Supabase:', error.message);
-      return null;
+      
+      // Messages d'erreur plus clairs
+      if (error.message.includes('Email address') && error.message.includes('invalid')) {
+        throw new Error('Adresse email invalide. Veuillez utiliser un format valide comme exemple@domaine.com');
+      } else if (error.message.includes('User already registered')) {
+        throw new Error('Un compte existe déjà avec cette adresse email');
+      } else if (error.message.includes('Password')) {
+        throw new Error('Le mot de passe ne respecte pas les critères requis');
+      } else {
+        throw new Error('Erreur lors de la création du compte: ' + error.message);
+      }
     }
 
     if (!data.user) {
