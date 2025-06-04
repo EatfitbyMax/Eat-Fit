@@ -12,20 +12,21 @@ UPDATE auth.users
 SET raw_user_meta_data = '{"name": "M. Pacull Marquie", "user_type": "client"}'::jsonb
 WHERE email = 'm.pacullmarquie@gmail.com';
 
--- Forcer la création des profils si ils n'existent pas
+-- Supprimer les profils existants s'il y en a
+DELETE FROM profiles 
+WHERE user_id IN (
+    SELECT id FROM auth.users 
+    WHERE email IN ('eatfitbymax@gmail.com', 'm.pacullmarquie@gmail.com')
+);
+
+-- Créer les nouveaux profils
 INSERT INTO profiles (user_id, name, user_type)
 SELECT 
     u.id,
     u.raw_user_meta_data->>'name',
     u.raw_user_meta_data->>'user_type'
 FROM auth.users u
-WHERE u.email IN ('eatfitbymax@gmail.com', 'm.pacullmarquie@gmail.com')
-AND NOT EXISTS (
-    SELECT 1 FROM profiles p WHERE p.user_id = u.id
-)
-ON CONFLICT (user_id) DO UPDATE SET
-    name = EXCLUDED.name,
-    user_type = EXCLUDED.user_type;
+WHERE u.email IN ('eatfitbymax@gmail.com', 'm.pacullmarquie@gmail.com');
 
 -- Vérifier les résultats
 SELECT 
