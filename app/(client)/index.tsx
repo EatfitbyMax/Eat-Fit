@@ -7,15 +7,19 @@ import {
   TouchableOpacity, 
   SafeAreaView, 
   Dimensions,
-  Alert 
+  Alert,
+  Platform,
+  StatusBar 
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { getCurrentUser } from '@/utils/auth';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 export default function AccueilScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [user, setUser] = useState<any>(null);
   const [currentDate, setCurrentDate] = useState('');
   const [steps, setSteps] = useState(0);
@@ -72,8 +76,15 @@ export default function AccueilScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: insets.bottom + 100 } // Espace pour la tab bar
+        ]}
+      >
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.greeting}>
@@ -146,10 +157,7 @@ export default function AccueilScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
-
-      {/* Bottom Navigation Placeholder */}
-      <View style={styles.bottomNavPlaceholder} />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -158,19 +166,22 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
+  scrollContent: {
+    flexGrow: 1,
+  },
   header: {
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 10,
     paddingBottom: 10,
   },
   greeting: {
-    fontSize: 24,
+    fontSize: width < 375 ? 22 : 24,
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 5,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: width < 375 ? 14 : 16,
     color: '#888888',
     lineHeight: 22,
   },
@@ -178,20 +189,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#CCCCCC',
     paddingHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   cardsContainer: {
-    paddingHorizontal: 20,
-    gap: 16,
+    paddingHorizontal: 16,
+    gap: 12,
   },
   row: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
   },
   card: {
     borderRadius: 16,
-    padding: 16,
+    padding: 14,
     flex: 1,
+    minHeight: 120,
   },
   caloriesCard: {
     backgroundColor: '#1A1A1A',
@@ -200,34 +212,35 @@ const styles = StyleSheet.create({
     backgroundColor: '#1A1A1A',
   },
   cardTitle: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#888888',
-    marginBottom: 12,
+    marginBottom: 8,
+    lineHeight: 14,
   },
   cardValue: {
-    fontSize: 32,
+    fontSize: width < 375 ? 28 : 32,
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 4,
   },
   cardLabel: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#FFFFFF',
     marginBottom: 2,
   },
   cardSubLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#888888',
   },
   stepsCard: {
     backgroundColor: '#1A1A1A',
     borderRadius: 16,
-    padding: 20,
+    padding: 18,
   },
   stepsHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   stepsIcon: {
     fontSize: 20,
@@ -241,43 +254,43 @@ const styles = StyleSheet.create({
   stepsContent: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   stepsValue: {
-    fontSize: 36,
+    fontSize: width < 375 ? 32 : 36,
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
   stepsGoal: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#888888',
     marginLeft: 8,
   },
   stepsObjective: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#888888',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   addStepsButton: {
     backgroundColor: '#007AFF',
     borderRadius: 12,
-    paddingVertical: 12,
+    paddingVertical: 11,
     alignItems: 'center',
   },
   addStepsButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
   },
   sleepCard: {
     backgroundColor: '#1A1A1A',
     borderRadius: 16,
-    padding: 20,
+    padding: 18,
   },
   sleepHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   sleepIcon: {
     fontSize: 20,
@@ -289,26 +302,23 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   sleepSubtitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#888888',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   sleepTime: {
-    fontSize: 24,
+    fontSize: width < 375 ? 22 : 24,
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 4,
   },
   sleepDuration: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#888888',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   sleepLabel: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#888888',
-  },
-  bottomNavPlaceholder: {
-    height: 80,
   },
 });
