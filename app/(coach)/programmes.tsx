@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
+import * as DocumentPicker from 'expo-document-picker';
 
 interface Programme {
   id: string;
@@ -10,6 +11,7 @@ interface Programme {
   calories?: number;
   duree?: string;
   dateCreation: string;
+  details?: any;
 }
 
 export default function ProgrammesScreen() {
@@ -57,41 +59,110 @@ export default function ProgrammesScreen() {
     }
   };
 
+  const handleImporterProgrammes = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'application/json',
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled) {
+        return;
+      }
+
+      const response = await fetch(result.assets[0].uri);
+      const text = await response.text();
+      const data = JSON.parse(text);
+
+      if (!data.programmes || !Array.isArray(data.programmes)) {
+        Alert.alert('Erreur', 'Format de fichier invalide. Le fichier doit contenir un tableau "programmes".');
+        return;
+      }
+
+      let programmesImportes = 0;
+      const nouveauxProgrammes: Programme[] = [];
+
+      data.programmes.forEach((prog: any) => {
+        if (prog.nom && prog.description && (prog.type === 'nutrition' || prog.type === 'sport')) {
+          const nouveauProgramme: Programme = {
+            id: Date.now().toString() + Math.random().toString(),
+            nom: prog.nom,
+            description: prog.description,
+            type: prog.type,
+            calories: prog.calories,
+            duree: prog.duree,
+            dateCreation: new Date().toLocaleDateString('fr-FR'),
+            details: prog.details
+          };
+          nouveauxProgrammes.push(nouveauProgramme);
+          programmesImportes++;
+        }
+      });
+
+      if (programmesImportes > 0) {
+        setProgrammes(prev => [...prev, ...nouveauxProgrammes]);
+        Alert.alert(
+          'Import réussi !',
+          `${programmesImportes} programme(s) ont été importé(s) avec succès.`
+        );
+      } else {
+        Alert.alert('Aucun programme valide', 'Aucun programme valide trouvé dans le fichier.');
+      }
+
+    } catch (error) {
+      console.error('Erreur import:', error);
+      Alert.alert('Erreur', 'Impossible de lire le fichier. Vérifiez le format JSON.');
+    }
+  };
+
   const handleNouveauProgramme = () => {
-    Alert.prompt(
+    Alert.alert(
       'Nouveau Programme',
-      `Nom du programme ${selectedTab === 'nutrition' ? 'nutrition' : 'sportif'} :`,
+      'Comment voulez-vous créer un programme ?',
       [
         { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Créer',
-          onPress: (nom) => {
-            if (nom && nom.trim()) {
-              const nouveauProgramme: Programme = {
-                id: Date.now().toString(),
-                nom: nom.trim(),
-                description: `Programme ${selectedTab} créé le ${new Date().toLocaleDateString('fr-FR')}`,
-                type: selectedTab,
-                calories: selectedTab === 'nutrition' ? 2000 : undefined,
-                duree: selectedTab === 'sport' ? '30 min' : undefined,
-                dateCreation: new Date().toLocaleDateString('fr-FR')
-              };
-              
-              setProgrammes(prev => [...prev, nouveauProgramme]);
-              
-              Alert.alert(
-                'Programme créé !',
-                `Le programme "${nom}" a été ajouté avec succès.`
-              );
-            } else {
-              Alert.alert('Erreur', 'Veuillez saisir un nom pour le programme.');
-            }
+        { text: 'Importer JSON', onPress: handleImporterProgrammes },
+        { 
+          text: 'Créer manuellement', 
+          onPress: () => {
+            Alert.prompt(
+              'Nouveau Programme',
+              `Nom du programme ${selectedTab === 'nutrition' ? 'nutrition' : 'sportif'} :`,
+              [
+                { text: 'Annuler', style: 'cancel' },
+                {
+                  text: 'Créer',
+                  onPress: (nom) => {
+                    if (nom && nom.trim()) {
+                      const nouveauProgramme: Programme = {
+                        id: Date.now().toString(),
+                        nom: nom.trim(),
+                        description: `Programme ${selectedTab} créé le ${new Date().toLocaleDateString('fr-FR')}`,
+                        type: selectedTab,
+                        calories: selectedTab === 'nutrition' ? 2000 : undefined,
+                        duree: selectedTab === 'sport' ? '30 min' : undefined,
+                        dateCreation: new Date().toLocaleDateString('fr-FR')
+                      };
+                      
+                      setProgrammes(prev => [...prev, nouveauProgramme]);
+                      
+                      Alert.alert(
+                        'Programme créé !',
+                        `Le programme "${nom}" a été ajouté avec succès.`
+                      );
+                    } else {
+                      Alert.alert('Erreur', 'Veuillez saisir un nom pour le programme.');
+                    }
+                  }
+                }
+              ],
+              'plain-text',
+              '',
+              'default'
+            );
           }
         }
-      ],
-      'plain-text',
-      '',
-      'default'
+      ]
     );
   };
 
