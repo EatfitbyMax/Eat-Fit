@@ -1,25 +1,32 @@
 
 -- Données d'exemple pour tester l'application
 
--- Note: Ces données d'exemple utilisent des UUIDs génériques
--- En production, vous devrez remplacer ces UUIDs par ceux d'utilisateurs réels créés via Supabase Auth
+-- Note: Remplacez ces UUIDs par ceux d'utilisateurs réels créés via Supabase Auth
+-- Vous pouvez les trouver dans la table auth.users de votre dashboard Supabase
 
--- Générer des UUIDs pour les exemples
+-- UUIDs d'exemple - REMPLACEZ par vos vrais UUIDs d'utilisateurs
 DO $$
 DECLARE
-    coach_uuid UUID := gen_random_uuid();
-    client_uuid UUID := gen_random_uuid();
+    -- Remplacez ces UUIDs par ceux de vrais utilisateurs de votre table auth.users
+    coach_uuid UUID := '00000000-0000-0000-0000-000000000001'; -- UUID du coach
+    client_uuid UUID := '00000000-0000-0000-0000-000000000002'; -- UUID du client
+    
     nutrition_program_1 UUID;
-    nutrition_program_2 UUID;
-    nutrition_program_3 UUID;
     workout_program_1 UUID;
-    workout_program_2 UUID;
-    workout_program_3 UUID;
     workout_1 UUID;
-    workout_2 UUID;
-    workout_3 UUID;
     conversation_1 UUID;
 BEGIN
+    -- Vérifier si les utilisateurs existent
+    IF NOT EXISTS (SELECT 1 FROM auth.users WHERE id = coach_uuid) THEN
+        RAISE NOTICE 'Coach UUID % n''existe pas dans auth.users. Veuillez le remplacer par un UUID valide.', coach_uuid;
+        RETURN;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM auth.users WHERE id = client_uuid) THEN
+        RAISE NOTICE 'Client UUID % n''existe pas dans auth.users. Veuillez le remplacer par un UUID valide.', client_uuid;
+        RETURN;
+    END IF;
+
     -- Insertion de programmes de nutrition
     INSERT INTO nutrition_programs (id, coach_id, title, description, total_calories) VALUES
       (gen_random_uuid(), coach_uuid, 'Programme Prise de Masse', 'Programme nutritionnel pour la prise de masse musculaire', 3000),
@@ -28,7 +35,7 @@ BEGIN
     RETURNING id INTO nutrition_program_1;
 
     -- Récupérer l'ID du premier programme pour les repas
-    SELECT id INTO nutrition_program_1 FROM nutrition_programs WHERE title = 'Programme Prise de Masse' LIMIT 1;
+    SELECT id INTO nutrition_program_1 FROM nutrition_programs WHERE title = 'Programme Prise de Masse' AND coach_id = coach_uuid LIMIT 1;
 
     -- Insertion de repas d'exemple
     INSERT INTO meals (program_id, day, meal_type, name, description, calories, ingredients, preparation) VALUES
@@ -53,7 +60,7 @@ BEGIN
     RETURNING id INTO workout_program_1;
 
     -- Récupérer l'ID du premier programme pour les workouts
-    SELECT id INTO workout_program_1 FROM workout_programs WHERE title = 'Programme Débutant Full Body' LIMIT 1;
+    SELECT id INTO workout_program_1 FROM workout_programs WHERE title = 'Programme Débutant Full Body' AND coach_id = coach_uuid LIMIT 1;
 
     -- Insertion d'entraînements
     INSERT INTO workouts (id, program_id, day, name, duration_minutes, rest_between_sets) VALUES
@@ -63,7 +70,7 @@ BEGIN
     RETURNING id INTO workout_1;
 
     -- Récupérer l'ID du premier workout pour les exercices
-    SELECT id INTO workout_1 FROM workouts WHERE name = 'Full Body A' LIMIT 1;
+    SELECT id INTO workout_1 FROM workouts WHERE name = 'Full Body A' AND program_id = workout_program_1 LIMIT 1;
 
     -- Insertion d'exercices
     INSERT INTO exercises (workout_id, name, description, sets, reps, weight, rest_time, instructions) VALUES
@@ -80,10 +87,8 @@ BEGIN
 
     -- Insertion d'une conversation d'exemple
     INSERT INTO conversations (id, coach_id, client_id, last_message_at) VALUES
-      (gen_random_uuid(), coach_uuid, client_uuid, NOW());
-
-    -- Récupérer l'ID de la conversation
-    SELECT id INTO conversation_1 FROM conversations WHERE coach_id = coach_uuid LIMIT 1;
+      (gen_random_uuid(), coach_uuid, client_uuid, NOW())
+    RETURNING id INTO conversation_1;
 
     -- Insertion de messages d'exemple
     INSERT INTO messages (conversation_id, sender_id, receiver_id, content, message_type, is_read) VALUES
@@ -95,5 +100,7 @@ BEGIN
     INSERT INTO program_assignments (coach_id, client_id, program_id, program_type, start_date, status) VALUES
       (coach_uuid, client_uuid, nutrition_program_1, 'nutrition', CURRENT_DATE, 'active'),
       (coach_uuid, client_uuid, workout_program_1, 'workout', CURRENT_DATE, 'active');
+
+    RAISE NOTICE 'Données d''exemple insérées avec succès !';
 
 END $$;
