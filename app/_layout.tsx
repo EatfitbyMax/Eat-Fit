@@ -17,18 +17,38 @@ export default function RootLayout() {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
   const [showSplash, setShowSplash] = useState(true);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        // Petite pause pour s'assurer que tout est chargé
-        await new Promise(resolve => setTimeout(resolve, 100));
+    if (loaded && !isNavigating) {
+      // Délai pour l'animation du splash screen
+      const splashTimer = setTimeout(() => {
+        handleNavigation();
+      }, 3000); // 3 secondes d'animation
 
-        await initializeAdminAccount();
-        const user = await getCurrentUser();
+      return () => clearTimeout(splashTimer);
+    }
+  }, [loaded, isNavigating]);
 
-        console.log('Utilisateur trouvé:', user);
+  const handleNavigation = async () => {
+    if (isNavigating) return; // Empêcher les appels multiples
+    
+    setIsNavigating(true);
+    
+    try {
+      console.log('Initialisation du compte admin...');
+      await initializeAdminAccount();
+      
+      console.log('Vérification de l\'utilisateur connecté...');
+      const user = await getCurrentUser();
+      
+      console.log('Utilisateur trouvé:', user);
 
+      // Masquer le splash screen
+      setShowSplash(false);
+      
+      // Petit délai pour que le splash se ferme proprement
+      setTimeout(() => {
         if (user) {
           // Utilisateur connecté, rediriger selon le type
           if (user.userType === 'coach') {
@@ -43,26 +63,16 @@ export default function RootLayout() {
           console.log('Aucun utilisateur, redirection vers login');
           router.replace('/auth/login');
         }
-      } catch (error) {
-        console.error('Erreur vérification auth:', error);
-        // En cas d'erreur, aller directement à l'écran de connexion
+      }, 200);
+      
+    } catch (error) {
+      console.error('Erreur vérification auth:', error);
+      setShowSplash(false);
+      setTimeout(() => {
         router.replace('/auth/login');
-      } finally {
-        // S'assurer que le splash se ferme dans tous les cas
-        setTimeout(() => {
-          setShowSplash(false);
-        }, 500);
-      }
-    };
-
-    if (loaded) {
-      const timer = setTimeout(() => {
-        checkAuth();
-      }, 2000); // 2 secondes d'animation
-
-      return () => clearTimeout(timer);
+      }, 200);
     }
-  }, [loaded]);
+  };
 
   if (!loaded) {
     return null;

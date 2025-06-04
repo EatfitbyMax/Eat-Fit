@@ -20,12 +20,12 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
       Animated.parallel([
         Animated.timing(crownAnimation, {
           toValue: 1,
-          duration: 2000,
+          duration: 1500,
           useNativeDriver: false,
         }),
         Animated.timing(scaleAnimation, {
           toValue: 1,
-          duration: 2000,
+          duration: 1500,
           useNativeDriver: true,
         }),
       ]),
@@ -36,12 +36,8 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
       }),
     ]).start();
 
-    // Redirection après 3.5 secondes
-    const timer = setTimeout(() => {
-      onFinish();
-    }, 3500);
-
-    return () => clearTimeout(timer);
+    // Ne pas déclencher automatiquement onFinish ici
+    // Le parent s'en charge maintenant
   }, []);
 
   return (
