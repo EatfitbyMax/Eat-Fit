@@ -68,6 +68,15 @@ mode = "sequential"
 task = "shell.exec"
 args = "cd server && npm install && node index.js"
 
+[[workflows.workflow]]
+name = "Start Backend"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd server && node index.js"
+
 [deployment]
 deploymentTarget = "cloudrun"
 run = ["sh", "-c", "npx serve dist --port 8081 --host 0.0.0.0"]

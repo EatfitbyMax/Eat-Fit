@@ -1,5 +1,5 @@
 
-const API_BASE_URL = 'https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev:5000/api';
+const API_BASE_URL = 'https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/api';
 
 export interface User {
   id: number;
@@ -60,6 +60,8 @@ class AuthService {
   // Connexion
   async login(email: string, password: string): Promise<AuthResponse> {
     try {
+      console.log('Tentative de connexion à:', `${API_BASE_URL}/auth/login`);
+      
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
@@ -68,7 +70,13 @@ class AuthService {
         body: JSON.stringify({ email, password }),
       });
 
+      if (!response.ok) {
+        console.error('Erreur HTTP:', response.status, response.statusText);
+        return { success: false, error: `Erreur serveur: ${response.status}` };
+      }
+
       const data = await response.json();
+      console.log('Réponse serveur:', data);
 
       if (data.success && data.token) {
         this.setToken(data.token);
@@ -77,7 +85,7 @@ class AuthService {
       return data;
     } catch (error) {
       console.error('Erreur connexion:', error);
-      return { success: false, error: 'Erreur de connexion au serveur' };
+      return { success: false, error: 'Impossible de contacter le serveur. Vérifiez que le serveur backend est démarré.' };
     }
   }
 
