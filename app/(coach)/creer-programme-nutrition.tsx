@@ -171,7 +171,7 @@ export default function CreerProgrammeNutritionScreen() {
               </TouchableOpacity>
               {jourDropdownOpen && (
                 <View style={styles.dropdownOverlay}>
-                  <View style={styles.dropdownList}>
+                  <ScrollView style={styles.dropdownList} nestedScrollEnabled={true} showsVerticalScrollIndicator={true}>
                     {JOURS_SEMAINE.map((jour, index) => (
                       <TouchableOpacity
                         key={jour}
@@ -187,7 +187,7 @@ export default function CreerProgrammeNutritionScreen() {
                         <Text style={styles.dropdownItemText}>{jour}</Text>
                       </TouchableOpacity>
                     ))}
-                  </View>
+                  </ScrollView>
                 </View>
               )}
             </View>
@@ -209,7 +209,7 @@ export default function CreerProgrammeNutritionScreen() {
               </TouchableOpacity>
               {typeDropdownOpen && (
                 <View style={styles.dropdownOverlay}>
-                  <View style={styles.dropdownList}>
+                  <ScrollView style={styles.dropdownList} nestedScrollEnabled={true} showsVerticalScrollIndicator={true}>
                     {TYPES_REPAS.map((type, index) => (
                       <TouchableOpacity
                         key={type}
@@ -225,7 +225,7 @@ export default function CreerProgrammeNutritionScreen() {
                         <Text style={styles.dropdownItemText}>{type}</Text>
                       </TouchableOpacity>
                     ))}
-                  </View>
+                  </ScrollView>
                 </View>
               )}
             </View>
@@ -701,7 +701,7 @@ const styles = StyleSheet.create({
   dropdownList: {
     backgroundColor: '#0D1117',
     borderRadius: 8,
-    maxHeight: 180,
+    maxHeight: 200,
     borderWidth: 2,
     borderColor: '#F5A623',
     shadowColor: '#000',
