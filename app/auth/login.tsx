@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { login } from '@/utils/auth';
 
@@ -8,177 +8,162 @@ export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert('Erreur', 'Veuillez remplir tous les champs.');
+    if (!email || !password) {
+      Alert.alert('Erreur', 'Veuillez remplir tous les champs');
       return;
     }
 
-    setIsLoading(true);
-
+    setLoading(true);
     try {
-      const user = await login(email.trim().toLowerCase(), password);
+      const user = await login(email, password);
       
       if (user) {
-        // Rediriger selon le type d'utilisateur
+        console.log('Connexion réussie, redirection...');
         if (user.userType === 'coach') {
-          router.replace('/(coach)');
+          router.replace('/(coach)/programmes');
         } else {
           router.replace('/(client)');
         }
       } else {
-        Alert.alert(
-          'Erreur de connexion',
-          'Email ou mot de passe incorrect.'
-        );
+        Alert.alert('Erreur', 'Email ou mot de passe incorrect');
       }
     } catch (error) {
       console.error('Erreur connexion:', error);
-      Alert.alert(
-        'Erreur',
-        'Une erreur est survenue lors de la connexion.'
-      );
+      Alert.alert('Erreur', 'Une erreur est survenue lors de la connexion');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.logoContainer}>
-        <Text style={styles.logo}>🏋️‍♂️</Text>
-        <Text style={styles.appName}>EatFitByMax</Text>
-      </View>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        <Text style={styles.title}>Connexion</Text>
+        <Text style={styles.subtitle}>Connectez-vous à votre compte</Text>
+        
+        <View style={styles.form}>
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            placeholderTextColor="#666"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          
+          <TextInput
+            style={styles.input}
+            placeholder="Mot de passe"
+            placeholderTextColor="#666"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+          />
+          
+          <TouchableOpacity 
+            style={[styles.button, loading && styles.buttonDisabled]} 
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            <Text style={styles.buttonText}>
+              {loading ? 'Connexion...' : 'Se connecter'}
+            </Text>
+          </TouchableOpacity>
 
-      <View style={styles.form}>
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor="#666666"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          editable={!isLoading}
-        />
-
-        <TextInput
-          style={styles.input}
-          placeholder="Mot de passe"
-          placeholderTextColor="#666666"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          editable={!isLoading}
-        />
-
-        <TouchableOpacity 
-          style={[styles.loginButton, isLoading && styles.disabledButton]}
-          onPress={handleLogin}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator color="#000000" size="small" />
-          ) : (
-            <Text style={styles.loginButtonText}>Se connecter</Text>
-          )}
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          onPress={() => router.push('/auth/register')}
-          disabled={isLoading}
-        >
-          <Text style={styles.registerText}>
-            Pas de compte ? <Text style={styles.registerLink}>S'inscrire</Text>
-          </Text>
-        </TouchableOpacity>
-
-        <View style={styles.testAccountsContainer}>
-          <Text style={styles.testAccountsTitle}>Comptes de test :</Text>
-          <Text style={styles.testAccount}>Coach: eatfitbymax@gmail.com</Text>
-          <Text style={styles.testAccount}>Client: m.pacullmarquie@gmail.com</Text>
-          <Text style={styles.testAccount}>Mot de passe: motdepasse123</Text>
+          <View style={styles.demoAccounts}>
+            <Text style={styles.demoTitle}>Comptes de démonstration :</Text>
+            <Text style={styles.demoText}>Client: m.pacullmarquie@gmail.com / client123</Text>
+            <Text style={styles.demoText}>Coach: admin@eatfitbymax.com / admin123</Text>
+          </View>
+          
+          <TouchableOpacity 
+            style={styles.linkButton}
+            onPress={() => router.push('/auth/register')}
+          >
+            <Text style={styles.linkText}>Pas encore de compte ? S'inscrire</Text>
+          </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
-    paddingHorizontal: 40,
+    backgroundColor: '#0D1117',
+  },
+  content: {
+    flex: 1,
     justifyContent: 'center',
+    padding: 20,
   },
-  logoContainer: {
-    alignItems: 'center',
-    marginBottom: 60,
-  },
-  logo: {
-    fontSize: 60,
-    marginBottom: 20,
-  },
-  appName: {
+  title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#F5A623',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#8B949E',
+    textAlign: 'center',
+    marginBottom: 40,
   },
   form: {
     gap: 20,
   },
   input: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 12,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    backgroundColor: '#161B22',
+    borderWidth: 1,
+    borderColor: '#21262D',
+    borderRadius: 8,
+    padding: 16,
     fontSize: 16,
     color: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#333333',
   },
-  loginButton: {
+  button: {
     backgroundColor: '#F5A623',
-    paddingVertical: 16,
-    borderRadius: 12,
+    padding: 16,
+    borderRadius: 8,
     alignItems: 'center',
-    marginTop: 20,
   },
-  disabledButton: {
-    backgroundColor: '#333333',
+  buttonDisabled: {
+    opacity: 0.7,
   },
-  loginButtonText: {
+  buttonText: {
     color: '#000000',
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
-  registerText: {
-    color: '#CCCCCC',
-    textAlign: 'center',
-    marginTop: 20,
-  },
-  registerLink: {
-    color: '#F5A623',
-    fontWeight: '600',
-  },
-  testAccountsContainer: {
-    marginTop: 40,
-    padding: 20,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 12,
+  demoAccounts: {
+    backgroundColor: '#161B22',
+    padding: 16,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#333333',
+    borderColor: '#21262D',
   },
-  testAccountsTitle: {
-    color: '#F5A623',
-    fontWeight: '600',
-    marginBottom: 10,
+  demoTitle: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 8,
   },
-  testAccount: {
-    color: '#CCCCCC',
+  demoText: {
+    color: '#8B949E',
     fontSize: 12,
-    marginBottom: 5,
+    marginBottom: 4,
+  },
+  linkButton: {
+    alignItems: 'center',
+  },
+  linkText: {
+    color: '#58A6FF',
+    fontSize: 14,
   },
 });
