@@ -57,17 +57,17 @@ export default function RootLayout() {
             }
           } else {
             console.log('Aucun utilisateur, redirection vers login');
-            router.replace('/auth/login');
+            router.push('/(tabs)'); // Redirection vers la page de lancement qui contient les boutons
           }
         }, 300);
-      }, 3000); // 3 secondes d'animation du splash
+      }, 2000); // Réduire à 2 secondes
       
     } catch (error) {
       console.error('Erreur vérification auth:', error);
       setAuthChecked(true);
       setShowSplash(false);
       setTimeout(() => {
-        router.replace('/auth/login');
+        router.push('/(tabs)'); // Redirection vers la page de lancement
       }, 300);
     }
   };
