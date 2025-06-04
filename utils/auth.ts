@@ -119,7 +119,7 @@ export async function register(userData: {
   try {
     console.log('Début inscription pour:', userData.email);
     
-    // Créer le compte utilisateur avec métadonnées
+    // Créer le compte utilisateur avec métadonnées et désactiver la confirmation d'email
     const { data, error } = await supabase.auth.signUp({
       email: userData.email,
       password: userData.password,
@@ -127,7 +127,8 @@ export async function register(userData: {
         data: {
           name: userData.name,
           user_type: userData.userType
-        }
+        },
+        emailRedirectTo: undefined // Désactiver la redirection email
       }
     });
 
@@ -142,9 +143,15 @@ export async function register(userData: {
     }
 
     console.log('Utilisateur créé avec ID:', data.user.id);
+    console.log('Statut email confirmé:', data.user.email_confirmed_at);
+
+    // Si l'email n'est pas confirmé automatiquement, créer quand même le profil
+    if (!data.user.email_confirmed_at) {
+      console.log('Email non confirmé, mais création du profil...');
+    }
 
     // Attendre un peu pour que le trigger se déclenche
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     // Vérifier si le profil a été créé automatiquement par le trigger
     let { data: profile, error: profileError } = await supabase
@@ -170,9 +177,21 @@ export async function register(userData: {
 
       if (createError) {
         console.error('Erreur création manuelle profil:', createError);
-        return null;
+        
+        // Essayer de récupérer à nouveau le profil au cas où il aurait été créé entre temps
+        const { data: existingProfile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', data.user.id)
+          .single();
+          
+        if (!existingProfile) {
+          return null;
+        }
+        profile = existingProfile;
+      } else {
+        profile = newProfile;
       }
-      profile = newProfile;
     }
 
     const user: User = {
@@ -184,6 +203,8 @@ export async function register(userData: {
     };
 
     console.log('Inscription réussie pour:', userData.email, 'avec profil:', profile.user_type);
+    console.log('Utilisateur visible dans auth.users:', data.user.id);
+    
     return user;
   } catch (error) {
     console.error('Erreur inscription:', error);

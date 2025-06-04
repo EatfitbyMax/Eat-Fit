@@ -1,8 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { register } from '@/utils/auth';
+import { debugSupabaseConfig } from '@/utils/debug';
 
 export default function RegisterAccountScreen() {
   const router = useRouter();
@@ -10,6 +11,11 @@ export default function RegisterAccountScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    // Diagnostic Supabase au chargement
+    debugSupabaseConfig();
+  }, []);
 
   const handleFinish = async () => {
     if (!email.trim() || !password.trim() || password !== confirmPassword) {
