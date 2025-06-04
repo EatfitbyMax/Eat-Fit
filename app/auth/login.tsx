@@ -1,93 +1,112 @@
 
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, SafeAreaView } from 'react-native';
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  StyleSheet, 
+  SafeAreaView,
+  Alert 
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { login } from '@/utils/auth';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/config/firebase';
 
 export default function LoginScreen() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const handleLogin = async () => {
-    if (!email || !password) {
+    if (!email.trim() || !password.trim()) {
       Alert.alert('Erreur', 'Veuillez remplir tous les champs');
       return;
     }
 
-    setLoading(true);
+    setIsLoading(true);
     try {
-      const user = await login(email, password);
-      
-      if (user) {
-        console.log('Connexion réussie, redirection...');
-        if (user.userType === 'coach') {
-          router.replace('/(coach)/programmes');
-        } else {
-          router.replace('/(client)');
-        }
-      } else {
-        Alert.alert('Erreur', 'Email ou mot de passe incorrect');
-      }
-    } catch (error) {
-      console.error('Erreur connexion:', error);
-      Alert.alert('Erreur', 'Une erreur est survenue lors de la connexion');
+      await signInWithEmailAndPassword(auth, email, password);
+      // La redirection se fera automatiquement via le _layout.tsx principal
+    } catch (error: any) {
+      console.error('Erreur de connexion:', error);
+      Alert.alert('Erreur', 'Email ou mot de passe incorrect');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Connexion</Text>
-        <Text style={styles.subtitle}>Connectez-vous à votre compte</Text>
-        
-        <View style={styles.form}>
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            placeholderTextColor="#666"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-          
-          <TextInput
-            style={styles.input}
-            placeholder="Mot de passe"
-            placeholderTextColor="#666"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
-          
+      <LinearGradient
+        colors={['#0D1117', '#1F2937', '#374151']}
+        style={styles.gradient}
+      >
+        <View style={styles.content}>
+          <Text style={styles.title}>👑</Text>
+          <Text style={styles.brandText}>Eat Fit</Text>
+          <Text style={styles.subtitle}>BY MAX</Text>
+          <Text style={styles.tagline}>Connexion</Text>
+
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              placeholderTextColor="#9CA3AF"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            
+            <TextInput
+              style={styles.input}
+              placeholder="Mot de passe"
+              placeholderTextColor="#9CA3AF"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+          </View>
+
           <TouchableOpacity 
-            style={[styles.button, loading && styles.buttonDisabled]} 
+            style={[styles.loginButton, isLoading && styles.disabledButton]}
             onPress={handleLogin}
-            disabled={loading}
+            disabled={isLoading}
           >
-            <Text style={styles.buttonText}>
-              {loading ? 'Connexion...' : 'Se connecter'}
+            <Text style={styles.loginButtonText}>
+              {isLoading ? 'Connexion...' : 'Se connecter'}
             </Text>
           </TouchableOpacity>
 
-          <View style={styles.demoAccounts}>
-            <Text style={styles.demoTitle}>Comptes de démonstration :</Text>
-            <Text style={styles.demoText}>Client: m.pacullmarquie@gmail.com / client123</Text>
-            <Text style={styles.demoText}>Coach: admin@eatfitbymax.com / admin123</Text>
-          </View>
-          
           <TouchableOpacity 
-            style={styles.linkButton}
+            style={styles.registerLink}
             onPress={() => router.push('/auth/register')}
           >
-            <Text style={styles.linkText}>Pas encore de compte ? S'inscrire</Text>
+            <Text style={styles.registerText}>
+              Pas encore de compte ? <Text style={styles.registerHighlight}>S'inscrire</Text>
+            </Text>
           </TouchableOpacity>
+
+          <View style={styles.testAccounts}>
+            <Text style={styles.testTitle}>Comptes de test :</Text>
+            <TouchableOpacity onPress={() => {
+              setEmail('admin@eatfitbymax.com');
+              setPassword('admin123');
+            }}>
+              <Text style={styles.testAccount}>👑 Coach: admin@eatfitbymax.com</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => {
+              setEmail('m.pacullmarquie@gmail.com');
+              setPassword('client123');
+            }}>
+              <Text style={styles.testAccount}>👤 Client: m.pacullmarquie@gmail.com</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      </LinearGradient>
     </SafeAreaView>
   );
 }
@@ -95,75 +114,91 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0D1117',
+  },
+  gradient: {
+    flex: 1,
   },
   content: {
     flex: 1,
     justifyContent: 'center',
-    padding: 20,
+    alignItems: 'center',
+    paddingHorizontal: 30,
   },
   title: {
+    fontSize: 60,
+    marginBottom: 10,
+  },
+  brandText: {
     fontSize: 32,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 5,
   },
   subtitle: {
     fontSize: 16,
-    color: '#8B949E',
+    color: '#9CA3AF',
+    marginBottom: 10,
+  },
+  tagline: {
+    fontSize: 18,
+    color: '#FFFFFF',
     textAlign: 'center',
     marginBottom: 40,
   },
-  form: {
-    gap: 20,
+  inputContainer: {
+    width: '100%',
+    marginBottom: 30,
   },
   input: {
-    backgroundColor: '#161B22',
-    borderWidth: 1,
-    borderColor: '#21262D',
-    borderRadius: 8,
-    padding: 16,
-    fontSize: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 15,
     color: '#FFFFFF',
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
-  button: {
-    backgroundColor: '#F5A623',
-    padding: 16,
-    borderRadius: 8,
+  loginButton: {
+    backgroundColor: '#10B981',
+    paddingVertical: 15,
+    paddingHorizontal: 60,
+    borderRadius: 25,
+    marginBottom: 20,
+    width: '100%',
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  loginButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  registerLink: {
+    marginBottom: 30,
+  },
+  registerText: {
+    color: '#9CA3AF',
+    fontSize: 16,
+  },
+  registerHighlight: {
+    color: '#10B981',
+    fontWeight: 'bold',
+  },
+  testAccounts: {
     alignItems: 'center',
   },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  buttonText: {
-    color: '#000000',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  demoAccounts: {
-    backgroundColor: '#161B22',
-    padding: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#21262D',
-  },
-  demoTitle: {
-    color: '#FFFFFF',
+  testTitle: {
+    color: '#9CA3AF',
     fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 10,
   },
-  demoText: {
-    color: '#8B949E',
+  testAccount: {
+    color: '#60A5FA',
     fontSize: 12,
-    marginBottom: 4,
-  },
-  linkButton: {
-    alignItems: 'center',
-  },
-  linkText: {
-    color: '#58A6FF',
-    fontSize: 14,
+    marginBottom: 5,
+    textDecorationLine: 'underline',
   },
 });

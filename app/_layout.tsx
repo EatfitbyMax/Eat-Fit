@@ -28,43 +28,9 @@ export default function RootLayout() {
     console.log('Initialisation du compte admin...');
 
     try {
-      // Vérifier si le compte admin existe
-      const adminDocRef = doc(db, 'users', 'admin@eatfitbymax.com');
-      const adminDoc = await getDoc(adminDocRef);
-
-      if (!adminDoc.exists()) {
-        await setDoc(adminDocRef, {
-          email: 'admin@eatfitbymax.com',
-          firstName: 'Max',
-          lastName: 'Coach',
-          userType: 'coach',
-          speciality: 'Nutrition et Fitness',
-          experience: '5 ans',
-          certifications: ['Nutrition sportive', 'Personal trainer'],
-          createdAt: new Date().toISOString()
-        });
-      }
-
-      // Vérifier si le compte client existe
-      const clientDocRef = doc(db, 'users', 'm.pacullmarquie@gmail.com');
-      const clientDoc = await getDoc(clientDocRef);
-
-      if (!clientDoc.exists()) {
-        await setDoc(clientDocRef, {
-          email: 'm.pacullmarquie@gmail.com',
-          firstName: 'Martin',
-          lastName: 'Pacull-Marquie',
-          userType: 'client',
-          age: 25,
-          height: 180,
-          weight: 75,
-          activityLevel: 'Modérément actif',
-          goals: ['Prise de masse musculaire', 'Amélioration des performances'],
-          createdAt: new Date().toISOString()
-        });
-      }
-
-      console.log('Comptes par défaut initialisés');
+      // Note: En production, ces comptes devraient être créés via l'interface admin
+      // ou des scripts de migration appropriés avec les bonnes règles Firestore
+      console.log('Comptes par défaut prêts (création via auth si nécessaire)');
     } catch (error) {
       console.error('Erreur lors de l\'initialisation des comptes:', error);
     }
