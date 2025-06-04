@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert, Modal } from 'react-native';
+import { useRouter } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -18,6 +19,7 @@ interface Programme {
 const PROGRAMMES_STORAGE_KEY = 'programmes_coach';
 
 export default function ProgrammesScreen() {
+  const router = useRouter();
   const [selectedTab, setSelectedTab] = useState<'nutrition' | 'sport'>('nutrition');
   const [programmes, setProgrammes] = useState<Programme[]>([]);
   const [selectedProgramme, setSelectedProgramme] = useState<Programme | null>(null);
@@ -140,56 +142,61 @@ export default function ProgrammesScreen() {
   };
 
   const handleNouveauProgramme = () => {
-    Alert.alert(
-      'Nouveau Programme',
-      'Comment voulez-vous créer un programme ?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Importer JSON', onPress: handleImporterProgrammes },
-        { 
-          text: 'Créer manuellement', 
-          onPress: () => {
-            Alert.prompt(
-              'Nouveau Programme',
-              `Nom du programme ${selectedTab === 'nutrition' ? 'nutrition' : 'sportif'} :`,
-              [
-                { text: 'Annuler', style: 'cancel' },
-                {
-                  text: 'Créer',
-                  onPress: async (nom) => {
-                    if (nom && nom.trim()) {
-                      const nouveauProgramme: Programme = {
-                        id: Date.now().toString(),
-                        nom: nom.trim(),
-                        description: `Programme ${selectedTab} créé le ${new Date().toLocaleDateString('fr-FR')}`,
-                        type: selectedTab,
-                        calories: selectedTab === 'nutrition' ? 2000 : undefined,
-                        duree: selectedTab === 'sport' ? '30 min' : undefined,
-                        dateCreation: new Date().toLocaleDateString('fr-FR')
-                      };
-                      
-                      const programmesMAJ = [...programmes, nouveauProgramme];
-                      setProgrammes(programmesMAJ);
-                      await sauvegarderProgrammes(programmesMAJ);
-                      
-                      Alert.alert(
-                        'Programme créé !',
-                        `Le programme "${nom}" a été ajouté avec succès.`
-                      );
-                    } else {
-                      Alert.alert('Erreur', 'Veuillez saisir un nom pour le programme.');
+    if (selectedTab === 'nutrition') {
+      // Naviguer directement vers l'écran de création pour la nutrition
+      router.push('/creer-programme-nutrition');
+    } else {
+      // Pour le sport, garder l'ancien système pour l'instant
+      Alert.alert(
+        'Nouveau Programme Sportif',
+        'Comment voulez-vous créer un programme ?',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          { text: 'Importer JSON', onPress: handleImporterProgrammes },
+          { 
+            text: 'Créer manuellement', 
+            onPress: () => {
+              Alert.prompt(
+                'Nouveau Programme',
+                'Nom du programme sportif :',
+                [
+                  { text: 'Annuler', style: 'cancel' },
+                  {
+                    text: 'Créer',
+                    onPress: async (nom) => {
+                      if (nom && nom.trim()) {
+                        const nouveauProgramme: Programme = {
+                          id: Date.now().toString(),
+                          nom: nom.trim(),
+                          description: `Programme sport créé le ${new Date().toLocaleDateString('fr-FR')}`,
+                          type: 'sport',
+                          duree: '30 min',
+                          dateCreation: new Date().toLocaleDateString('fr-FR')
+                        };
+                        
+                        const programmesMAJ = [...programmes, nouveauProgramme];
+                        setProgrammes(programmesMAJ);
+                        await sauvegarderProgrammes(programmesMAJ);
+                        
+                        Alert.alert(
+                          'Programme créé !',
+                          `Le programme "${nom}" a été ajouté avec succès.`
+                        );
+                      } else {
+                        Alert.alert('Erreur', 'Veuillez saisir un nom pour le programme.');
+                      }
                     }
                   }
-                }
-              ],
-              'plain-text',
-              '',
-              'default'
-            );
+                ],
+                'plain-text',
+                '',
+                'default'
+              );
+            }
           }
-        }
-      ]
-    );
+        ]
+      );
+    }
   };
 
   const obtenirPremiersElements = (programme: Programme) => {
