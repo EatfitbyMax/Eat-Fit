@@ -161,13 +161,18 @@ export default function ProgrammesScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>📋 Vos Modules</Text>
           
-          <View style={styles.tabContainer}>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            style={styles.tabScrollContainer}
+            contentContainerStyle={styles.tabContainer}
+          >
             <TouchableOpacity 
               style={[styles.tab, selectedTab === 'nutrition' && styles.activeTab]}
               onPress={() => setSelectedTab('nutrition')}
             >
               <Text style={[styles.tabText, selectedTab === 'nutrition' && styles.activeTabText]}>
-                🍽️ Programmes Nutrition ({programmes.filter(p => p.type === 'nutrition').length})
+                🍽️ Nutrition ({programmes.filter(p => p.type === 'nutrition').length})
               </Text>
             </TouchableOpacity>
             
@@ -176,10 +181,10 @@ export default function ProgrammesScreen() {
               onPress={() => setSelectedTab('sport')}
             >
               <Text style={[styles.tabText, selectedTab === 'sport' && styles.activeTabText]}>
-                💪 Programmes Sportif ({programmes.filter(p => p.type === 'sport').length})
+                💪 Sportif ({programmes.filter(p => p.type === 'sport').length})
               </Text>
             </TouchableOpacity>
-          </View>
+          </ScrollView>
         </View>
 
         {/* Programmes */}
@@ -247,8 +252,8 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   section: {
-    margin: 20,
-    marginTop: 0,
+    marginHorizontal: 20,
+    marginBottom: 24,
   },
   sectionTitle: {
     fontSize: 18,
@@ -256,16 +261,21 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     marginBottom: 16,
   },
-  tabContainer: {
-    flexDirection: 'row',
+  tabScrollContainer: {
     marginBottom: 16,
   },
+  tabContainer: {
+    flexDirection: 'row',
+    paddingRight: 20,
+  },
   tab: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
     backgroundColor: '#21262D',
-    borderRadius: 8,
+    borderRadius: 10,
     marginRight: 12,
+    minWidth: 140,
+    alignItems: 'center',
   },
   activeTab: {
     backgroundColor: '#F5A623',
