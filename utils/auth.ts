@@ -172,6 +172,31 @@ class AuthService {
 
 export const authService = new AuthService();
 
+// Fonctions simplifiées pour l'interface
+export async function login(email: string, password: string): Promise<User | null> {
+  try {
+    const response = await authService.login(email, password);
+    return response.success ? response.user || null : null;
+  } catch (error) {
+    console.error('Erreur login:', error);
+    return null;
+  }
+}
+
+export async function register(email: string, password: string, name: string): Promise<User | null> {
+  try {
+    const response = await authService.register(email, password, name);
+    return response.success ? response.user || null : null;
+  } catch (error) {
+    console.error('Erreur register:', error);
+    return null;
+  }
+}
+
+export async function logout(): Promise<void> {
+  authService.logout();
+}
+
 // Fonction pour obtenir l'utilisateur connecté
 export async function getCurrentUser(): Promise<User | null> {
   try {
