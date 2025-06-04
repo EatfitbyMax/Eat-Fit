@@ -34,6 +34,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      console.log('État auth changé:', firebaseUser ? 'connecté' : 'déconnecté');
       setUser(firebaseUser);
       
       if (firebaseUser) {
@@ -42,13 +43,16 @@ export default function RootLayout() {
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
           if (userDoc.exists()) {
             const userData = userDoc.data();
-            setUserType(userData.userType || userData.role || 'client');
+            const type = userData.userType || userData.role || 'client';
+            console.log('Type utilisateur trouvé:', type);
+            setUserType(type);
           } else {
-            setUserType('client'); // Valeur par défaut
+            console.log('Document utilisateur non trouvé, type par défaut: client');
+            setUserType('client');
           }
         } catch (error) {
           console.error('Erreur récupération données utilisateur:', error);
-          setUserType('client'); // Valeur par défaut en cas d'erreur
+          setUserType('client');
         }
       } else {
         setUserType(null);
@@ -67,21 +71,23 @@ export default function RootLayout() {
     const inClientGroup = segments[0] === '(client)';
     const inCoachGroup = segments[0] === '(coach)';
 
+    console.log('Navigation - User:', !!user, 'Type:', userType, 'Segments:', segments);
+
     if (!user && !inAuthGroup) {
-      // Pas connecté, rediriger vers login
+      console.log('Redirection vers login');
       router.replace('/auth/login');
-    } else if (user && inAuthGroup) {
-      // Connecté mais sur page auth, rediriger selon le type
+    } else if (user && userType && inAuthGroup) {
+      console.log('Redirection après connexion vers:', userType);
       if (userType === 'coach') {
         router.replace('/(coach)/admin');
       } else {
         router.replace('/(client)/index');
       }
     } else if (user && userType === 'coach' && inClientGroup) {
-      // Coach qui essaie d'accéder à la zone client
+      console.log('Coach redirigé vers zone coach');
       router.replace('/(coach)/admin');
     } else if (user && userType === 'client' && inCoachGroup) {
-      // Client qui essaie d'accéder à la zone coach
+      console.log('Client redirigé vers zone client');
       router.replace('/(client)/index');
     }
   }, [user, userType, segments, isLoading]);
