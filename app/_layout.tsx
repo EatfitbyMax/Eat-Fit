@@ -1,40 +1,44 @@
+
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack, useRouter } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { getCurrentUser, initializeAdminAccount } from '@/utils/auth';
 import SplashScreenComponent from '@/components/SplashScreen';
+import { getCurrentUser, initializeAdminAccount } from '@/utils/auth';
+
+// Prevent the native splash screen from auto-hiding before asset loading is complete.
+SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const router = useRouter();
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
   const [showSplash, setShowSplash] = useState(true);
-  const [isNavigating, setIsNavigating] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    if (loaded && !isNavigating) {
+    if (loaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [loaded]);
+
+  useEffect(() => {
+    if (loaded && !authChecked) {
       // Délai pour l'animation du splash screen
-      const splashTimer = setTimeout(() => {
-        handleNavigation();
+      const timer = setTimeout(() => {
+        handleAuthCheck();
       }, 3000); // 3 secondes d'animation
 
-      return () => clearTimeout(splashTimer);
+      return () => clearTimeout(timer);
     }
-  }, [loaded, isNavigating]);
+  }, [loaded, authChecked]);
 
-  const handleNavigation = async () => {
-    if (isNavigating) return; // Empêcher les appels multiples
-    
-    setIsNavigating(true);
-    
+  const handleAuthCheck = async () => {
     try {
       console.log('Initialisation du compte admin...');
       await initializeAdminAccount();
@@ -44,33 +48,31 @@ export default function RootLayout() {
       
       console.log('Utilisateur trouvé:', user);
 
-      // Masquer le splash screen
+      setAuthChecked(true);
       setShowSplash(false);
       
-      // Petit délai pour que le splash se ferme proprement
+      // Petit délai pour que l'animation se termine
       setTimeout(() => {
         if (user) {
-          // Utilisateur connecté, rediriger selon le type
+          console.log('Redirection utilisateur connecté:', user.userType);
           if (user.userType === 'coach') {
-            console.log('Redirection vers coach');
             router.replace('/(coach)/programmes');
           } else {
-            console.log('Redirection vers client');
-            router.replace('/(client)/index');
+            router.replace('/(client)');
           }
         } else {
-          // Aucun utilisateur connecté, aller à l'écran de connexion
           console.log('Aucun utilisateur, redirection vers login');
           router.replace('/auth/login');
         }
-      }, 200);
+      }, 500);
       
     } catch (error) {
       console.error('Erreur vérification auth:', error);
+      setAuthChecked(true);
       setShowSplash(false);
       setTimeout(() => {
         router.replace('/auth/login');
-      }, 200);
+      }, 500);
     }
   };
 
@@ -79,19 +81,18 @@ export default function RootLayout() {
   }
 
   if (showSplash) {
-    return <SplashScreenComponent onFinish={() => setShowSplash(false)} />;
+    return <SplashScreenComponent onFinish={() => {}} />;
   }
 
   return (
-    <ThemeProvider value={DarkTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="auth" />
-        <Stack.Screen name="(client)" />
-        <Stack.Screen name="(coach)" />
+    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <Stack>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(client)" options={{ headerShown: false }} />
+        <Stack.Screen name="(coach)" options={{ headerShown: false }} />
+        <Stack.Screen name="auth" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
-      <StatusBar style="light" />
     </ThemeProvider>
   );
 }
