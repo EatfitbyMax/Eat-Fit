@@ -1,48 +1,60 @@
 
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform } from 'react-native';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+import { Text } from 'react-native';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
 
 export default function CoachTabLayout() {
+  const colorScheme = useColorScheme();
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#FF6B6B',
+        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
-        tabBarStyle: Platform.select({
-          ios: {
-            position: 'absolute',
-          },
-          default: {},
-        }),
+        tabBarStyle: {
+          backgroundColor: '#1A1A1A',
+          borderTopColor: '#333333',
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+        },
       }}>
       <Tabs.Screen
         name="programmes"
         options={{
           title: 'Programmes',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="doc.text.fill" color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Text style={{ color, fontSize: size }}>📋</Text>
+          ),
         }}
       />
       <Tabs.Screen
         name="clients"
         options={{
           title: 'Clients',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.2.fill" color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Text style={{ color, fontSize: size }}>👥</Text>
+          ),
         }}
       />
       <Tabs.Screen
         name="messages"
         options={{
           title: 'Messages',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="message.fill" color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Text style={{ color, fontSize: size }}>💬</Text>
+          ),
         }}
       />
       <Tabs.Screen
         name="profil"
         options={{
           title: 'Profil',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.circle.fill" color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Text style={{ color, fontSize: size }}>👤</Text>
+          ),
         }}
       />
     </Tabs>
