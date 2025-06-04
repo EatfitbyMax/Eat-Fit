@@ -71,7 +71,22 @@ export default function CreerProgrammeNutritionScreen() {
       return;
     }
 
-    setRepas([...repas, { ...nouveauRepas }]);
+    const repasAajouter = {
+      ...nouveauRepas,
+      nom: nouveauRepas.nom.trim(),
+      caloriesTotal: nouveauRepas.caloriesTotal || 0,
+      proteines: nouveauRepas.proteines || 0,
+      glucides: nouveauRepas.glucides || 0,
+      lipides: nouveauRepas.lipides || 0,
+      fibres: nouveauRepas.fibres || 0
+    };
+
+    console.log('Ajout du repas:', repasAajouter);
+    setRepas(prevRepas => {
+      const nouveauxRepas = [...prevRepas, repasAajouter];
+      console.log('Nombre de repas après ajout:', nouveauxRepas.length);
+      return nouveauxRepas;
+    });
     fermerModal();
   };
 
@@ -92,35 +107,54 @@ export default function CreerProgrammeNutritionScreen() {
     }
 
     try {
+      console.log('Début sauvegarde programme...', { nomProgramme, repasCount: repas.length });
+      
       const programmesStockes = await AsyncStorage.getItem(PROGRAMMES_STORAGE_KEY);
       const programmesExistants = programmesStockes ? JSON.parse(programmesStockes) : [];
+      
+      console.log('Programmes existants chargés:', programmesExistants.length);
 
-      const caloriesTotal = repas.reduce((total, r) => total + r.caloriesTotal, 0);
-      const caloriesMoyennes = Math.round(caloriesTotal / repas.length);
+      const caloriesTotal = repas.reduce((total, r) => total + (r.caloriesTotal || 0), 0);
+      const caloriesMoyennes = repas.length > 0 ? Math.round(caloriesTotal / repas.length) : 0;
 
       const nouveauProgramme = {
-        id: Date.now().toString(),
+        id: Date.now().toString() + '_' + Math.random().toString(36).substr(2, 9),
         nom: nomProgramme.trim(),
         description: description.trim() || `Programme nutrition créé le ${new Date().toLocaleDateString('fr-FR')}`,
         type: 'nutrition' as const,
         calories: caloriesMoyennes,
         dateCreation: new Date().toLocaleDateString('fr-FR'),
         details: {
-          repas: repas
+          repas: repas.map(r => ({
+            ...r,
+            nom: r.nom || 'Repas sans nom',
+            jour: r.jour || 'Non défini',
+            type: r.type || 'Non défini'
+          }))
         }
       };
 
+      console.log('Nouveau programme créé:', nouveauProgramme);
+
       const nouveauxProgrammes = [...programmesExistants, nouveauProgramme];
       await AsyncStorage.setItem(PROGRAMMES_STORAGE_KEY, JSON.stringify(nouveauxProgrammes));
+      
+      console.log('Programme sauvegardé avec succès, total:', nouveauxProgrammes.length);
 
       Alert.alert(
         'Programme créé !',
-        `Le programme "${nomProgramme}" a été créé avec succès.`,
-        [{ text: 'OK', onPress: () => router.back() }]
+        `Le programme "${nomProgramme}" a été créé avec succès avec ${repas.length} repas.`,
+        [{ 
+          text: 'OK', 
+          onPress: () => {
+            console.log('Retour à la liste des programmes');
+            router.back();
+          }
+        }]
       );
     } catch (error) {
       console.error('Erreur sauvegarde programme:', error);
-      Alert.alert('Erreur', 'Impossible de sauvegarder le programme');
+      Alert.alert('Erreur', `Impossible de sauvegarder le programme: ${error.message || 'Erreur inconnue'}`);
     }
   };
 
