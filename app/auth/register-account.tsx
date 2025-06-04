@@ -1,46 +1,64 @@
+
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { register } from '@/utils/auth';
 
 export default function RegisterAccountScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleFinish = async () => {
-    if (email.trim() && password.trim() && password === confirmPassword) {
-      try {
-        // Créer l'objet utilisateur
-        const userData = {
-          email: email.trim().toLowerCase(),
-          password: password, // En production, il faudrait hasher le mot de passe
-          createdAt: new Date().toISOString(),
-          userType: 'client'
-        };
+    if (!email.trim() || !password.trim() || password !== confirmPassword) {
+      Alert.alert('Erreur', 'Veuillez remplir tous les champs correctement.');
+      return;
+    }
 
-        // Sauvegarder dans AsyncStorage
-        await AsyncStorage.setItem(`user_${email.trim().toLowerCase()}`, JSON.stringify(userData));
-        await AsyncStorage.setItem('currentUser', JSON.stringify(userData));
+    if (password.length < 6) {
+      Alert.alert('Erreur', 'Le mot de passe doit contenir au moins 6 caractères.');
+      return;
+    }
 
+    setIsLoading(true);
+
+    try {
+      const userData = {
+        email: email.trim().toLowerCase(),
+        password: password,
+        name: 'Nouvel utilisateur', // Vous pouvez récupérer le nom des étapes précédentes
+        userType: 'client' as const
+      };
+
+      const user = await register(userData);
+      
+      if (user) {
         Alert.alert(
           'Compte créé !',
-          'Votre compte a été créé avec succès.',
+          'Votre compte a été créé avec succès. Vérifiez votre email pour confirmer votre inscription.',
           [
             {
               text: 'OK',
-              onPress: () => router.replace('/(client)')
+              onPress: () => router.replace('/auth/login')
             }
           ]
         );
-      } catch (error) {
+      } else {
         Alert.alert(
           'Erreur',
-          'Une erreur est survenue lors de la création du compte.'
+          'Une erreur est survenue lors de la création du compte. Veuillez réessayer.'
         );
-        console.error('Erreur création compte:', error);
       }
+    } catch (error) {
+      console.error('Erreur création compte:', error);
+      Alert.alert(
+        'Erreur',
+        'Une erreur est survenue lors de la création du compte.'
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -73,16 +91,18 @@ export default function RegisterAccountScreen() {
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
+          editable={!isLoading}
         />
 
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
-            placeholder="Mot de passe"
+            placeholder="Mot de passe (min. 6 caractères)"
             placeholderTextColor="#666666"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
+            editable={!isLoading}
           />
           <Text style={styles.inputIcon}>👁</Text>
         </View>
@@ -95,6 +115,7 @@ export default function RegisterAccountScreen() {
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry
+            editable={!isLoading}
           />
           <Text style={styles.inputIcon}>👁</Text>
         </View>
@@ -104,6 +125,7 @@ export default function RegisterAccountScreen() {
         <TouchableOpacity 
           style={styles.backNavButton}
           onPress={() => router.back()}
+          disabled={isLoading}
         >
           <Text style={styles.backNavText}>← Retour</Text>
         </TouchableOpacity>
@@ -111,12 +133,16 @@ export default function RegisterAccountScreen() {
         <TouchableOpacity 
           style={[
             styles.nextButton, 
-            (!email.trim() || !password.trim() || password !== confirmPassword) && styles.disabledButton
+            (!email.trim() || !password.trim() || password !== confirmPassword || isLoading) && styles.disabledButton
           ]}
           onPress={handleFinish}
-          disabled={!email.trim() || !password.trim() || password !== confirmPassword}
+          disabled={!email.trim() || !password.trim() || password !== confirmPassword || isLoading}
         >
-          <Text style={styles.nextButtonText}>Suivant</Text>
+          {isLoading ? (
+            <ActivityIndicator color="#000000" size="small" />
+          ) : (
+            <Text style={styles.nextButtonText}>Créer le compte</Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>
@@ -207,6 +233,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 20,
+    minWidth: 120,
+    alignItems: 'center',
   },
   disabledButton: {
     backgroundColor: '#333333',
