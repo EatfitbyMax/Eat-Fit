@@ -1,5 +1,5 @@
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from './supabase';
 
 export interface User {
   id: string;
@@ -9,51 +9,43 @@ export interface User {
   createdAt: string;
 }
 
-const CURRENT_USER_KEY = 'currentUser';
-const USERS_KEY = 'users';
-
-// Comptes par défaut
-const DEFAULT_ACCOUNTS = [
-  {
-    id: '1',
-    email: 'admin@eatfitbymax.com',
-    password: 'admin123',
-    name: 'Admin',
-    userType: 'coach' as const,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    email: 'm.pacullmarquie@gmail.com',
-    password: 'client123',
-    name: 'Maxandre Pacull-Marquié',
-    userType: 'client' as const,
-    createdAt: new Date().toISOString(),
-  }
-];
-
 export async function initializeAdminAccount(): Promise<void> {
-  try {
-    const existingUsers = await AsyncStorage.getItem(USERS_KEY);
-    if (!existingUsers) {
-      await AsyncStorage.setItem(USERS_KEY, JSON.stringify(DEFAULT_ACCOUNTS));
-      console.log('Comptes par défaut initialisés');
-    }
-  } catch (error) {
-    console.error('Erreur initialisation comptes:', error);
-  }
+  // Avec Supabase, pas besoin d'initialiser des comptes par défaut
+  // Vous pouvez créer des comptes directement dans le dashboard Supabase
+  console.log('Supabase prêt');
 }
 
 export async function getCurrentUser(): Promise<User | null> {
   try {
-    const currentUserData = await AsyncStorage.getItem(CURRENT_USER_KEY);
-    if (currentUserData) {
-      const user = JSON.parse(currentUserData);
-      console.log('Utilisateur connecté trouvé:', user.email);
-      return user;
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.user) {
+      console.log('Aucun utilisateur connecté');
+      return null;
     }
-    console.log('Aucun utilisateur connecté');
-    return null;
+
+    // Récupérer le profil utilisateur
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .single();
+
+    if (error || !profile) {
+      console.error('Erreur récupération profil:', error);
+      return null;
+    }
+
+    const user: User = {
+      id: profile.user_id,
+      email: session.user.email || '',
+      name: profile.name,
+      userType: profile.user_type,
+      createdAt: profile.created_at
+    };
+
+    console.log('Utilisateur connecté trouvé:', user.email);
+    return user;
   } catch (error) {
     console.error('Erreur récupération utilisateur:', error);
     return null;
@@ -62,25 +54,43 @@ export async function getCurrentUser(): Promise<User | null> {
 
 export async function login(email: string, password: string): Promise<User | null> {
   try {
-    const usersData = await AsyncStorage.getItem(USERS_KEY);
-    if (!usersData) {
-      console.log('Aucun utilisateur enregistré');
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) {
+      console.log('Erreur connexion:', error.message);
       return null;
     }
 
-    const users = JSON.parse(usersData);
-    const user = users.find((u: any) => u.email === email && u.password === password);
-    
-    if (user) {
-      // Enlever le mot de passe avant de sauvegarder
-      const { password: _, ...userWithoutPassword } = user;
-      await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userWithoutPassword));
-      console.log('Connexion réussie pour:', user.email);
-      return userWithoutPassword;
-    } else {
-      console.log('Identifiants incorrects');
+    if (!data.user) {
+      console.log('Aucun utilisateur retourné');
       return null;
     }
+
+    // Récupérer le profil
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', data.user.id)
+      .single();
+
+    if (profileError || !profile) {
+      console.error('Erreur récupération profil:', profileError);
+      return null;
+    }
+
+    const user: User = {
+      id: profile.user_id,
+      email: data.user.email || '',
+      name: profile.name,
+      userType: profile.user_type,
+      createdAt: profile.created_at
+    };
+
+    console.log('Connexion réussie pour:', user.email);
+    return user;
   } catch (error) {
     console.error('Erreur connexion:', error);
     return null;
@@ -89,8 +99,12 @@ export async function login(email: string, password: string): Promise<User | nul
 
 export async function logout(): Promise<void> {
   try {
-    await AsyncStorage.removeItem(CURRENT_USER_KEY);
-    console.log('Déconnexion réussie');
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Erreur déconnexion:', error);
+    } else {
+      console.log('Déconnexion réussie');
+    }
   } catch (error) {
     console.error('Erreur déconnexion:', error);
   }
@@ -103,35 +117,50 @@ export async function register(userData: {
   userType: 'client' | 'coach';
 }): Promise<User | null> {
   try {
-    const usersData = await AsyncStorage.getItem(USERS_KEY);
-    const users = usersData ? JSON.parse(usersData) : [];
-    
-    // Vérifier si l'email existe déjà
-    const existingUser = users.find((u: any) => u.email === userData.email);
-    if (existingUser) {
-      console.log('Email déjà utilisé');
+    // Créer le compte utilisateur
+    const { data, error } = await supabase.auth.signUp({
+      email: userData.email,
+      password: userData.password
+    });
+
+    if (error) {
+      console.log('Erreur inscription:', error.message);
       return null;
     }
 
-    // Créer le nouvel utilisateur
-    const newUser = {
-      id: Date.now().toString(),
+    if (!data.user) {
+      console.log('Aucun utilisateur créé');
+      return null;
+    }
+
+    // Créer le profil
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .insert([
+        {
+          user_id: data.user.id,
+          name: userData.name,
+          user_type: userData.userType
+        }
+      ])
+      .select()
+      .single();
+
+    if (profileError) {
+      console.error('Erreur création profil:', profileError);
+      return null;
+    }
+
+    const user: User = {
+      id: data.user.id,
       email: userData.email,
-      password: userData.password,
       name: userData.name,
       userType: userData.userType,
-      createdAt: new Date().toISOString(),
+      createdAt: new Date().toISOString()
     };
 
-    users.push(newUser);
-    await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
-
-    // Connecter automatiquement l'utilisateur
-    const { password: _, ...userWithoutPassword } = newUser;
-    await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userWithoutPassword));
-    
     console.log('Inscription réussie pour:', userData.email);
-    return userWithoutPassword;
+    return user;
   } catch (error) {
     console.error('Erreur inscription:', error);
     return null;
