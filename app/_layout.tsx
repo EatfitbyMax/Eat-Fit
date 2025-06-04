@@ -29,42 +29,38 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (loaded && !authChecked) {
-      // Délai pour l'animation du splash screen
-      const timer = setTimeout(() => {
-        handleAuthCheck();
-      }, 3000); // 3 secondes d'animation
-
-      return () => clearTimeout(timer);
+      handleAuthCheck();
     }
   }, [loaded, authChecked]);
 
   const handleAuthCheck = async () => {
     try {
-      console.log('Initialisation du compte admin...');
-      await initializeAdminAccount();
-      
-      console.log('Vérification de l\'utilisateur connecté...');
-      const user = await getCurrentUser();
-      
-      console.log('Utilisateur trouvé:', user);
-
-      setAuthChecked(true);
-      setShowSplash(false);
-      
-      // Petit délai pour que l'animation se termine
-      setTimeout(() => {
-        if (user) {
-          console.log('Redirection utilisateur connecté:', user.userType);
-          if (user.userType === 'coach') {
-            router.replace('/(coach)/programmes');
+      // Délai pour l'animation du splash screen
+      setTimeout(async () => {
+        console.log('Initialisation du compte admin...');
+        await initializeAdminAccount();
+        
+        console.log('Vérification de l'utilisateur connecté...');
+        const user = await getCurrentUser();
+        
+        setAuthChecked(true);
+        setShowSplash(false);
+        
+        // Petit délai pour que l'animation se termine
+        setTimeout(() => {
+          if (user) {
+            console.log('Redirection utilisateur connecté:', user.userType);
+            if (user.userType === 'coach') {
+              router.replace('/(coach)/programmes');
+            } else {
+              router.replace('/(client)');
+            }
           } else {
-            router.replace('/(client)');
+            console.log('Aucun utilisateur, redirection vers login');
+            router.replace('/auth/login');
           }
-        } else {
-          console.log('Aucun utilisateur, redirection vers login');
-          router.replace('/auth/login');
-        }
-      }, 500);
+        }, 300);
+      }, 3000); // 3 secondes d'animation du splash
       
     } catch (error) {
       console.error('Erreur vérification auth:', error);
@@ -72,7 +68,7 @@ export default function RootLayout() {
       setShowSplash(false);
       setTimeout(() => {
         router.replace('/auth/login');
-      }, 500);
+      }, 300);
     }
   };
 

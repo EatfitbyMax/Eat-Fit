@@ -15,13 +15,13 @@ export default function ProfilScreen() {
           text: 'Annuler',
           style: 'cancel',
         },
-        {
-          text: 'Déconnexion',
+        { 
+          text: 'Déconnexion', 
           style: 'destructive',
           onPress: async () => {
             await logout();
             router.replace('/auth/login');
-          },
+          }
         },
       ]
     );
