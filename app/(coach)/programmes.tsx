@@ -18,9 +18,11 @@ interface Programme {
 
 const PROGRAMMES_STORAGE_KEY = 'programmes_coach';
 
+type TabType = 'nutrition' | 'sport';
+
 function ProgrammesScreen() {
   const router = useRouter();
-  const [selectedTab, setSelectedTab] = useState<'nutrition' | 'sport'>('nutrition');
+  const [selectedTab, setSelectedTab] = useState<TabType>('nutrition');
   const [programmes, setProgrammes] = useState<Programme[]>([]);
   const [selectedProgramme, setSelectedProgramme] = useState<Programme | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
