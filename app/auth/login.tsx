@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { login } from '@/utils/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -35,6 +36,16 @@ export default function LoginScreen() {
       Alert.alert('Erreur', 'Une erreur est survenue lors de la connexion');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleReset = async () => {
+    try {
+      await AsyncStorage.removeItem('users');
+      await AsyncStorage.removeItem('currentUser');
+      Alert.alert('Debug', 'Données réinitialisées. Redémarrez l\'app.');
+    } catch (error) {
+      console.error('Erreur reset:', error);
     }
   };
 
@@ -84,6 +95,13 @@ export default function LoginScreen() {
             onPress={() => router.push('/auth/register')}
           >
             <Text style={styles.linkText}>Pas encore de compte ? S'inscrire</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.debugButton}
+            onPress={handleReset}
+          >
+            <Text style={styles.debugText}>🔧 Reset Debug</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -164,5 +182,14 @@ const styles = StyleSheet.create({
   linkText: {
     color: '#58A6FF',
     fontSize: 14,
+  },
+  debugButton: {
+    alignItems: 'center',
+    marginTop: 20,
+    padding: 10,
+  },
+  debugText: {
+    color: '#666',
+    fontSize: 12,
   },
 });
