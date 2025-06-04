@@ -1,7 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Programme {
   id: string;
@@ -14,9 +15,14 @@ interface Programme {
   details?: any;
 }
 
+const PROGRAMMES_STORAGE_KEY = 'programmes_coach';
+
 export default function ProgrammesScreen() {
   const [selectedTab, setSelectedTab] = useState<'nutrition' | 'sport'>('nutrition');
-  const [programmes, setProgrammes] = useState<Programme[]>([
+  const [programmes, setProgrammes] = useState<Programme[]>([]);
+
+  // Programmes par défaut
+  const programmesParDefaut: Programme[] = [
     {
       id: '1',
       nom: 'Programme 2500Kcal',
@@ -33,7 +39,40 @@ export default function ProgrammesScreen() {
       duree: '45 min',
       dateCreation: '22 mai 2025'
     }
-  ]);
+  ];
+
+  // Charger les programmes au démarrage
+  useEffect(() => {
+    chargerProgrammes();
+  }, []);
+
+  const chargerProgrammes = async () => {
+    try {
+      const programmesStockes = await AsyncStorage.getItem(PROGRAMMES_STORAGE_KEY);
+      if (programmesStockes) {
+        const programmesParses = JSON.parse(programmesStockes);
+        setProgrammes(programmesParses);
+        console.log('Programmes chargés:', programmesParses.length);
+      } else {
+        // Première utilisation, charger les programmes par défaut
+        setProgrammes(programmesParDefaut);
+        await sauvegarderProgrammes(programmesParDefaut);
+        console.log('Programmes par défaut initialisés');
+      }
+    } catch (error) {
+      console.error('Erreur chargement programmes:', error);
+      setProgrammes(programmesParDefaut);
+    }
+  };
+
+  const sauvegarderProgrammes = async (nouveauxProgrammes: Programme[]) => {
+    try {
+      await AsyncStorage.setItem(PROGRAMMES_STORAGE_KEY, JSON.stringify(nouveauxProgrammes));
+      console.log('Programmes sauvegardés:', nouveauxProgrammes.length);
+    } catch (error) {
+      console.error('Erreur sauvegarde programmes:', error);
+    }
+  };
 
   const programmesFiltres = programmes.filter(p => p.type === selectedTab);
 
@@ -50,8 +89,10 @@ export default function ProgrammesScreen() {
           {
             text: 'Supprimer',
             style: 'destructive',
-            onPress: () => {
-              setProgrammes(prev => prev.filter(p => p.id !== programmeId));
+            onPress: async () => {
+              const nouveauxProgrammes = programmes.filter(p => p.id !== programmeId);
+              setProgrammes(nouveauxProgrammes);
+              await sauvegarderProgrammes(nouveauxProgrammes);
             }
           }
         ]
@@ -100,7 +141,9 @@ export default function ProgrammesScreen() {
       });
 
       if (programmesImportes > 0) {
-        setProgrammes(prev => [...prev, ...nouveauxProgrammes]);
+        const programmesMAJ = [...programmes, ...nouveauxProgrammes];
+        setProgrammes(programmesMAJ);
+        await sauvegarderProgrammes(programmesMAJ);
         Alert.alert(
           'Import réussi !',
           `${programmesImportes} programme(s) ont été importé(s) avec succès.`
@@ -144,7 +187,9 @@ export default function ProgrammesScreen() {
                         dateCreation: new Date().toLocaleDateString('fr-FR')
                       };
                       
-                      setProgrammes(prev => [...prev, nouveauProgramme]);
+                      const programmesMAJ = [...programmes, nouveauProgramme];
+                      setProgrammes(programmesMAJ);
+                      await sauvegarderProgrammes(programmesMAJ);
                       
                       Alert.alert(
                         'Programme créé !',
