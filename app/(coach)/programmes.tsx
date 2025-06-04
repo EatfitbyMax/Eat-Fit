@@ -58,19 +58,40 @@ export default function ProgrammesScreen() {
   };
 
   const handleNouveauProgramme = () => {
-    Alert.alert(
+    Alert.prompt(
       'Nouveau Programme',
-      `Créer un nouveau programme ${selectedTab === 'nutrition' ? 'nutrition' : 'sportif'}`,
+      `Nom du programme ${selectedTab === 'nutrition' ? 'nutrition' : 'sportif'} :`,
       [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Créer',
-          onPress: () => {
-            // TODO: Naviguer vers l'écran de création
-            console.log(`Créer nouveau programme ${selectedTab}`);
+          onPress: (nom) => {
+            if (nom && nom.trim()) {
+              const nouveauProgramme: Programme = {
+                id: Date.now().toString(),
+                nom: nom.trim(),
+                description: `Programme ${selectedTab} créé le ${new Date().toLocaleDateString('fr-FR')}`,
+                type: selectedTab,
+                calories: selectedTab === 'nutrition' ? 2000 : undefined,
+                duree: selectedTab === 'sport' ? '30 min' : undefined,
+                dateCreation: new Date().toLocaleDateString('fr-FR')
+              };
+              
+              setProgrammes(prev => [...prev, nouveauProgramme]);
+              
+              Alert.alert(
+                'Programme créé !',
+                `Le programme "${nom}" a été ajouté avec succès.`
+              );
+            } else {
+              Alert.alert('Erreur', 'Veuillez saisir un nom pour le programme.');
+            }
           }
         }
-      ]
+      ],
+      'plain-text',
+      '',
+      'default'
     );
   };
 
