@@ -23,8 +23,6 @@ export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
 
-  // Les comptes seront créés manuellement via l'interface de connexion
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       console.log('Vérification de l\'utilisateur connecté...');

@@ -21,14 +21,14 @@ if (getApps().length === 0) {
   app = getApps()[0];
 }
 
-// Initialiser Auth
+// Initialiser Auth avec AsyncStorage
 let auth;
 try {
   auth = initializeAuth(app, {
     persistence: getReactNativePersistence(AsyncStorage)
   });
 } catch (error) {
-  console.log('Auth déjà initialisé');
+  // Si déjà initialisé, utiliser getAuth
   auth = getAuth(app);
 }
 
