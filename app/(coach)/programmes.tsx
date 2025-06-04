@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert, Modal } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -20,6 +20,8 @@ const PROGRAMMES_STORAGE_KEY = 'programmes_coach';
 export default function ProgrammesScreen() {
   const [selectedTab, setSelectedTab] = useState<'nutrition' | 'sport'>('nutrition');
   const [programmes, setProgrammes] = useState<Programme[]>([]);
+  const [selectedProgramme, setSelectedProgramme] = useState<Programme | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
   // Charger les programmes au démarrage
   useEffect(() => {
@@ -190,8 +192,71 @@ export default function ProgrammesScreen() {
     );
   };
 
+  const obtenirPremiersElements = (programme: Programme) => {
+    if (!programme.details) return null;
+
+    if (programme.type === 'nutrition' && programme.details.repas) {
+      const premiersRepas = programme.details.repas.slice(0, 2);
+      return premiersRepas.map((repas: any, index: number) => (
+        <View key={index} style={styles.previewItem}>
+          <Text style={styles.previewIcon}>🍽️</Text>
+          <View style={styles.previewContent}>
+            <Text style={styles.previewTitle}>{repas.jour || `Jour ${index + 1}`}</Text>
+            <Text style={styles.previewSubtitle}>{repas.petitDejeuner || repas.nom || 'Repas'}</Text>
+            <Text style={styles.previewDetails}>
+              {repas.type || 'Petit déjeuner'} • {repas.calories || programme.calories} kcal
+            </Text>
+          </View>
+        </View>
+      ));
+    }
+
+    if (programme.type === 'sport' && programme.details.exercices) {
+      const premiersExercices = programme.details.exercices.slice(0, 2);
+      return premiersExercices.map((exercice: any, index: number) => (
+        <View key={index} style={styles.previewItem}>
+          <Text style={styles.previewIcon}>💪</Text>
+          <View style={styles.previewContent}>
+            <Text style={styles.previewTitle}>{exercice.nom}</Text>
+            <Text style={styles.previewSubtitle}>
+              {exercice.series ? `${exercice.series} séries` : ''}
+              {exercice.repetitions ? ` • ${exercice.repetitions} reps` : ''}
+              {exercice.duree ? ` • ${exercice.duree}` : ''}
+            </Text>
+            <Text style={styles.previewDetails}>
+              {exercice.repos ? `Repos: ${exercice.repos}` : ''}
+            </Text>
+          </View>
+        </View>
+      ));
+    }
+
+    // Fallback si pas de détails structurés
+    return (
+      <View style={styles.previewItem}>
+        <Text style={styles.previewIcon}>
+          {programme.type === 'nutrition' ? '🍽️' : '💪'}
+        </Text>
+        <View style={styles.previewContent}>
+          <Text style={styles.previewTitle}>Contenu disponible</Text>
+          <Text style={styles.previewSubtitle}>Cliquez pour voir les détails</Text>
+          <Text style={styles.previewDetails}>
+            {programme.type === 'nutrition' ? `${programme.calories} kcal` : programme.duree}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
   const renderProgrammeCard = (programme: Programme) => (
-    <View key={programme.id} style={styles.programCard}>
+    <TouchableOpacity 
+      key={programme.id} 
+      style={styles.programCard}
+      onPress={() => {
+        setSelectedProgramme(programme);
+        setModalVisible(true);
+      }}
+    >
       <View style={styles.programHeader}>
         <Text style={styles.programTitle}>{programme.nom}</Text>
         <View style={styles.programHeaderRight}>
@@ -203,7 +268,8 @@ export default function ProgrammesScreen() {
           )}
           <TouchableOpacity 
             style={styles.menuButton}
-            onPress={() => {
+            onPress={(e) => {
+              e.stopPropagation();
               Alert.alert(
                 'Actions',
                 'Que souhaitez-vous faire ?',
@@ -222,33 +288,126 @@ export default function ProgrammesScreen() {
       
       <Text style={styles.programDescription}>{programme.description}</Text>
       
-      {programme.type === 'nutrition' && (
-        <View style={styles.mealItem}>
-          <Text style={styles.mealIcon}>📅</Text>
-          <View style={styles.mealContent}>
-            <Text style={styles.mealTitle}>Lundi</Text>
-            <Text style={styles.mealSubtitle}>Porridge protéiné aux fruits rouges</Text>
-            <Text style={styles.mealDetails}>Petit déjeuner</Text>
-          </View>
-          <Text style={styles.mealCalories}>{programme.calories} kcal</Text>
-        </View>
-      )}
-
-      {programme.type === 'sport' && (
-        <View style={styles.mealItem}>
-          <Text style={styles.mealIcon}>💪</Text>
-          <View style={styles.mealContent}>
-            <Text style={styles.mealTitle}>Séance 1</Text>
-            <Text style={styles.mealSubtitle}>Pectoraux - Triceps</Text>
-            <Text style={styles.mealDetails}>3 exercices</Text>
-          </View>
-          <Text style={styles.mealCalories}>{programme.duree}</Text>
-        </View>
-      )}
+      {/* Aperçu du contenu réel */}
+      <View style={styles.previewContainer}>
+        {obtenirPremiersElements(programme)}
+        {programme.details && (
+          <Text style={styles.moreContent}>
+            Cliquez pour voir le programme complet
+          </Text>
+        )}
+      </View>
       
       <Text style={styles.programDate}>© Créé le {programme.dateCreation}</Text>
-    </View>
+    </TouchableOpacity>
   );
+
+  const renderProgrammeDetail = () => {
+    if (!selectedProgramme) return null;
+
+    return (
+      <Modal
+        animationType="slide"
+        transparent={false}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.backButtonText}>← Retour</Text>
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>{selectedProgramme.nom}</Text>
+          </View>
+
+          <ScrollView style={styles.modalContent}>
+            <Text style={styles.modalDescription}>{selectedProgramme.description}</Text>
+            
+            {selectedProgramme.calories && (
+              <Text style={styles.modalInfo}>📊 {selectedProgramme.calories} kcal par jour</Text>
+            )}
+            {selectedProgramme.duree && (
+              <Text style={styles.modalInfo}>⏱️ Durée: {selectedProgramme.duree}</Text>
+            )}
+
+            {selectedProgramme.details && (
+              <View style={styles.detailsContainer}>
+                <Text style={styles.detailsTitle}>Contenu du programme</Text>
+                
+                {selectedProgramme.type === 'nutrition' && selectedProgramme.details.repas && (
+                  selectedProgramme.details.repas.map((repas: any, index: number) => (
+                    <View key={index} style={styles.detailCard}>
+                      <Text style={styles.detailCardTitle}>
+                        {repas.jour || `Jour ${index + 1}`}
+                      </Text>
+                      {repas.petitDejeuner && (
+                        <Text style={styles.detailItem}>🌅 Petit déjeuner: {repas.petitDejeuner}</Text>
+                      )}
+                      {repas.dejeuner && (
+                        <Text style={styles.detailItem}>☀️ Déjeuner: {repas.dejeuner}</Text>
+                      )}
+                      {repas.collation && (
+                        <Text style={styles.detailItem}>🍪 Collation: {repas.collation}</Text>
+                      )}
+                      {repas.diner && (
+                        <Text style={styles.detailItem}>🌙 Dîner: {repas.diner}</Text>
+                      )}
+                      {repas.calories && (
+                        <Text style={styles.detailCalories}>{repas.calories} kcal</Text>
+                      )}
+                    </View>
+                  ))
+                )}
+
+                {selectedProgramme.type === 'sport' && selectedProgramme.details.exercices && (
+                  selectedProgramme.details.exercices.map((exercice: any, index: number) => (
+                    <View key={index} style={styles.detailCard}>
+                      <Text style={styles.detailCardTitle}>{exercice.nom}</Text>
+                      {exercice.series && (
+                        <Text style={styles.detailItem}>📊 Séries: {exercice.series}</Text>
+                      )}
+                      {exercice.repetitions && (
+                        <Text style={styles.detailItem}>🔢 Répétitions: {exercice.repetitions}</Text>
+                      )}
+                      {exercice.duree && (
+                        <Text style={styles.detailItem}>⏱️ Durée: {exercice.duree}</Text>
+                      )}
+                      {exercice.repos && (
+                        <Text style={styles.detailItem}>😴 Repos: {exercice.repos}</Text>
+                      )}
+                      {exercice.description && (
+                        <Text style={styles.detailDescription}>{exercice.description}</Text>
+                      )}
+                    </View>
+                  ))
+                )}
+
+                {/* Affichage générique si structure différente */}
+                {selectedProgramme.details && !selectedProgramme.details.repas && !selectedProgramme.details.exercices && (
+                  <View style={styles.detailCard}>
+                    <Text style={styles.detailCardTitle}>Détails du programme</Text>
+                    <Text style={styles.detailItem}>{JSON.stringify(selectedProgramme.details, null, 2)}</Text>
+                  </View>
+                )}
+              </View>
+            )}
+
+            {!selectedProgramme.details && (
+              <View style={styles.noDetailsContainer}>
+                <Text style={styles.noDetailsText}>Aucun détail disponible pour ce programme</Text>
+                <Text style={styles.noDetailsSubtext}>
+                  Modifiez le programme pour ajouter du contenu détaillé
+                </Text>
+              </View>
+            )}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+    );
+  };
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
@@ -340,6 +499,9 @@ export default function ProgrammesScreen() {
       >
         <Text style={styles.floatingButtonText}>✏️</Text>
       </TouchableOpacity>
+
+      {/* Modal pour les détails du programme */}
+      {renderProgrammeDetail()}
     </SafeAreaView>
   );
 }
@@ -446,40 +608,45 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginBottom: 16,
   },
-  mealItem: {
+  previewContainer: {
+    marginBottom: 12,
+  },
+  previewItem: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#0D1117',
     padding: 12,
     borderRadius: 8,
-    marginBottom: 12,
+    marginBottom: 8,
   },
-  mealIcon: {
+  previewIcon: {
     fontSize: 16,
     marginRight: 12,
   },
-  mealContent: {
+  previewContent: {
     flex: 1,
   },
-  mealTitle: {
+  previewTitle: {
     fontSize: 14,
     fontWeight: '600',
     color: '#FFFFFF',
     marginBottom: 2,
   },
-  mealSubtitle: {
+  previewSubtitle: {
     fontSize: 12,
     color: '#8B949E',
     marginBottom: 2,
   },
-  mealDetails: {
+  previewDetails: {
     fontSize: 10,
     color: '#6A737D',
   },
-  mealCalories: {
+  moreContent: {
     fontSize: 12,
     color: '#F5A623',
-    fontWeight: '600',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginTop: 8,
   },
   programDate: {
     fontSize: 10,
@@ -553,5 +720,101 @@ const styles = StyleSheet.create({
     fontSize: 28,
     color: '#000000',
     fontWeight: 'bold',
+  },
+  // Styles pour la modal
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#0D1117',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#21262D',
+  },
+  backButton: {
+    marginRight: 16,
+  },
+  backButtonText: {
+    color: '#F5A623',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    flex: 1,
+  },
+  modalContent: {
+    flex: 1,
+    padding: 20,
+  },
+  modalDescription: {
+    fontSize: 16,
+    color: '#8B949E',
+    lineHeight: 22,
+    marginBottom: 20,
+  },
+  modalInfo: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  detailsContainer: {
+    marginTop: 20,
+  },
+  detailsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 16,
+  },
+  detailCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    marginBottom: 12,
+  },
+  detailCardTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 12,
+  },
+  detailItem: {
+    fontSize: 14,
+    color: '#8B949E',
+    marginBottom: 6,
+    lineHeight: 18,
+  },
+  detailCalories: {
+    fontSize: 14,
+    color: '#F5A623',
+    fontWeight: '600',
+    marginTop: 8,
+  },
+  detailDescription: {
+    fontSize: 12,
+    color: '#6A737D',
+    marginTop: 8,
+    lineHeight: 16,
+  },
+  noDetailsContainer: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  noDetailsText: {
+    fontSize: 16,
+    color: '#8B949E',
+    marginBottom: 8,
+  },
+  noDetailsSubtext: {
+    fontSize: 14,
+    color: '#6A737D',
+    textAlign: 'center',
   },
 });
