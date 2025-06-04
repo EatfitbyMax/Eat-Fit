@@ -32,7 +32,7 @@ try {
 } catch (error) {
   // Si l'initialisation échoue (déjà initialisé), utiliser l'instance existante
   console.log('Auth déjà initialisé, récupération de l\'instance existante');
-  auth = getAuth();
+  auth = getAuth(app);
 }
 
 // Initialiser Firestore
