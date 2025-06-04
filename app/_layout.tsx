@@ -1,3 +1,4 @@
+
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
@@ -17,42 +18,42 @@ export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
+  
   const [user, setUser] = useState<User | null>(null);
-  const [userProfile, setUserProfile] = useState<any>(null);
+  const [userType, setUserType] = useState<'client' | 'coach' | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  
   const router = useRouter();
   const segments = useSegments();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      console.log('Vérification de l\'utilisateur connecté...');
+    if (loaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [loaded]);
 
-      if (user) {
-        console.log('Utilisateur trouvé:', user.email);
-        setUser(user);
-
-        // Récupérer le profil utilisateur depuis Firestore avec l'UID
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setUser(firebaseUser);
+      
+      if (firebaseUser) {
         try {
-          const userDocRef = doc(db, 'users', user.uid);
-          const userDoc = await getDoc(userDocRef);
-
+          // Récupérer le type d'utilisateur depuis Firestore
+          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
           if (userDoc.exists()) {
-            console.log('Profil utilisateur trouvé:', userDoc.data());
-            setUserProfile(userDoc.data());
+            const userData = userDoc.data();
+            setUserType(userData.userType || userData.role || 'client');
           } else {
-            console.log('Aucun profil trouvé pour cet utilisateur');
-            setUserProfile(null);
+            setUserType('client'); // Valeur par défaut
           }
         } catch (error) {
-          console.error('Erreur lors de la récupération du profil:', error);
-          setUserProfile(null);
+          console.error('Erreur récupération données utilisateur:', error);
+          setUserType('client'); // Valeur par défaut en cas d'erreur
         }
       } else {
-        console.log('Aucun utilisateur connecté');
-        setUser(null);
-        setUserProfile(null);
+        setUserType(null);
       }
-
+      
       setIsLoading(false);
     });
 
@@ -60,29 +61,30 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    if (!isLoading) {
-      const inAuthGroup = segments[0] === 'auth';
+    if (isLoading) return;
 
-      if (!user && !inAuthGroup) {
-        console.log('Aucun utilisateur, redirection vers login');
-        router.replace('/auth/login');
-      } else if (user && inAuthGroup && userProfile) {
-        // Rediriger vers la bonne section selon le type d'utilisateur
-        console.log('Utilisateur connecté, type:', userProfile.userType || userProfile.role);
-        if (userProfile.userType === 'coach' || userProfile.role === 'coach') {
-          router.replace('/(coach)/programmes');
-        } else {
-          router.replace('/(client)');
-        }
+    const inAuthGroup = segments[0] === 'auth';
+    const inClientGroup = segments[0] === '(client)';
+    const inCoachGroup = segments[0] === '(coach)';
+
+    if (!user && !inAuthGroup) {
+      // Pas connecté, rediriger vers login
+      router.replace('/auth/login');
+    } else if (user && inAuthGroup) {
+      // Connecté mais sur page auth, rediriger selon le type
+      if (userType === 'coach') {
+        router.replace('/(coach)/admin');
+      } else {
+        router.replace('/(client)/index');
       }
+    } else if (user && userType === 'coach' && inClientGroup) {
+      // Coach qui essaie d'accéder à la zone client
+      router.replace('/(coach)/admin');
+    } else if (user && userType === 'client' && inCoachGroup) {
+      // Client qui essaie d'accéder à la zone coach
+      router.replace('/(client)/index');
     }
-  }, [user, segments, isLoading, userProfile]);
-
-  useEffect(() => {
-    if (loaded && !isLoading) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded, isLoading]);
+  }, [user, userType, segments, isLoading]);
 
   if (!loaded || isLoading) {
     return null;
@@ -91,7 +93,6 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
         <Stack.Screen name="auth" />
         <Stack.Screen name="(client)" />
         <Stack.Screen name="(coach)" />
