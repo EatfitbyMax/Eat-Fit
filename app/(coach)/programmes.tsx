@@ -1,4 +1,4 @@
-typescript
+
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -18,11 +18,11 @@ interface Programme {
 
 const PROGRAMMES_STORAGE_KEY = 'programmes_coach';
 
-export default function ProgrammesScreen() {
+function ProgrammesScreen() {
   const router = useRouter();
-  const [selectedTab, setSelectedTab] = useState('nutrition');
-  const [programmes, setProgrammes] = useState([]);
-  const [selectedProgramme, setSelectedProgramme] = useState(null);
+  const [selectedTab, setSelectedTab] = useState<'nutrition' | 'sport'>('nutrition');
+  const [programmes, setProgrammes] = useState<Programme[]>([]);
+  const [selectedProgramme, setSelectedProgramme] = useState<Programme | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
   // Charger les programmes au démarrage
@@ -825,3 +825,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+
+export default ProgrammesScreen;
