@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth, db } from '@/config/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -33,16 +33,21 @@ export default function RootLayout() {
         console.log('Utilisateur trouvé:', user.email);
         setUser(user);
 
-        // Récupérer le profil utilisateur depuis Firestore
+        // Récupérer le profil utilisateur depuis Firestore avec l'UID
         try {
-          const userDocRef = doc(db, 'users', user.email!);
+          const userDocRef = doc(db, 'users', user.uid);
           const userDoc = await getDoc(userDocRef);
 
           if (userDoc.exists()) {
+            console.log('Profil utilisateur trouvé:', userDoc.data());
             setUserProfile(userDoc.data());
+          } else {
+            console.log('Aucun profil trouvé pour cet utilisateur');
+            setUserProfile(null);
           }
         } catch (error) {
           console.error('Erreur lors de la récupération du profil:', error);
+          setUserProfile(null);
         }
       } else {
         console.log('Aucun utilisateur connecté');
@@ -63,9 +68,10 @@ export default function RootLayout() {
       if (!user && !inAuthGroup) {
         console.log('Aucun utilisateur, redirection vers login');
         router.replace('/auth/login');
-      } else if (user && inAuthGroup) {
+      } else if (user && inAuthGroup && userProfile) {
         // Rediriger vers la bonne section selon le type d'utilisateur
-        if (userProfile?.userType === 'coach') {
+        console.log('Utilisateur connecté, type:', userProfile.userType || userProfile.role);
+        if (userProfile.userType === 'coach' || userProfile.role === 'coach') {
           router.replace('/(coach)/programmes');
         } else {
           router.replace('/(client)');
@@ -87,10 +93,10 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="auth" options={{ headerShown: false }} />
-        <Stack.Screen name="(client)" options={{ headerShown: false }} />
-        <Stack.Screen name="(coach)" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="auth" />
+        <Stack.Screen name="(client)" />
+        <Stack.Screen name="(coach)" />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />
