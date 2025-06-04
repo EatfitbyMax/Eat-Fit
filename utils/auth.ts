@@ -1,59 +1,47 @@
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut,
+  onAuthStateChanged,
+  User as FirebaseUser 
+} from 'firebase/auth';
+import { 
+  doc, 
+  setDoc, 
+  getDoc, 
+  collection 
+} from 'firebase/firestore';
+import { auth, db } from '@/config/firebase';
 
 export interface User {
   id: string;
   email: string;
+  firstName: string;
+  lastName: string;
   name: string;
   userType: 'client' | 'coach';
   createdAt: string;
 }
 
-const CURRENT_USER_KEY = 'currentUser';
-const USERS_KEY = 'users';
-
-// Comptes par défaut
-const DEFAULT_ACCOUNTS = [
-  {
-    id: '1',
-    email: 'admin@eatfitbymax.com',
-    password: 'admin123',
-    name: 'Admin',
-    userType: 'coach' as const,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    email: 'm.pacullmarquie@gmail.com',
-    password: 'client123',
-    name: 'Maxandre Pacull-Marquié',
-    userType: 'client' as const,
-    createdAt: new Date().toISOString(),
-  }
-];
-
-export async function initializeAdminAccount(): Promise<void> {
-  try {
-    const existingUsers = await AsyncStorage.getItem(USERS_KEY);
-    if (!existingUsers) {
-      await AsyncStorage.setItem(USERS_KEY, JSON.stringify(DEFAULT_ACCOUNTS));
-      console.log('Comptes par défaut initialisés');
-    }
-  } catch (error) {
-    console.error('Erreur initialisation comptes:', error);
-  }
-}
-
 export async function getCurrentUser(): Promise<User | null> {
   try {
-    const currentUserData = await AsyncStorage.getItem(CURRENT_USER_KEY);
-    if (currentUserData) {
-      const user = JSON.parse(currentUserData);
-      console.log('Utilisateur connecté trouvé:', user.email);
-      return user;
+    const firebaseUser = auth.currentUser;
+    if (!firebaseUser) {
+      console.log('Aucun utilisateur Firebase connecté');
+      return null;
     }
-    console.log('Aucun utilisateur connecté');
-    return null;
+
+    // Récupérer les données utilisateur depuis Firestore
+    const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+    if (userDoc.exists()) {
+      const userData = userDoc.data() as User;
+      console.log('Utilisateur connecté trouvé:', userData.email);
+      return userData;
+    } else {
+      console.log('Données utilisateur non trouvées dans Firestore');
+      return null;
+    }
   } catch (error) {
     console.error('Erreur récupération utilisateur:', error);
     return null;
@@ -62,23 +50,17 @@ export async function getCurrentUser(): Promise<User | null> {
 
 export async function login(email: string, password: string): Promise<User | null> {
   try {
-    const usersData = await AsyncStorage.getItem(USERS_KEY);
-    if (!usersData) {
-      console.log('Aucun utilisateur enregistré');
-      return null;
-    }
-
-    const users = JSON.parse(usersData);
-    const user = users.find((u: any) => u.email === email && u.password === password);
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const firebaseUser = userCredential.user;
     
-    if (user) {
-      // Enlever le mot de passe avant de sauvegarder
-      const { password: _, ...userWithoutPassword } = user;
-      await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userWithoutPassword));
-      console.log('Connexion réussie pour:', user.email);
-      return userWithoutPassword;
+    // Récupérer les données utilisateur depuis Firestore
+    const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+    if (userDoc.exists()) {
+      const userData = userDoc.data() as User;
+      console.log('Connexion réussie pour:', userData.email);
+      return userData;
     } else {
-      console.log('Identifiants incorrects');
+      console.log('Données utilisateur non trouvées');
       return null;
     }
   } catch (error) {
@@ -89,7 +71,7 @@ export async function login(email: string, password: string): Promise<User | nul
 
 export async function logout(): Promise<void> {
   try {
-    await AsyncStorage.removeItem(CURRENT_USER_KEY);
+    await signOut(auth);
     console.log('Déconnexion réussie');
   } catch (error) {
     console.error('Erreur déconnexion:', error);
@@ -99,41 +81,64 @@ export async function logout(): Promise<void> {
 export async function register(userData: {
   email: string;
   password: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   userType: 'client' | 'coach';
 }): Promise<User | null> {
   try {
-    const usersData = await AsyncStorage.getItem(USERS_KEY);
-    const users = usersData ? JSON.parse(usersData) : [];
-    
-    // Vérifier si l'email existe déjà
-    const existingUser = users.find((u: any) => u.email === userData.email);
-    if (existingUser) {
-      console.log('Email déjà utilisé');
-      return null;
-    }
+    // Créer le compte Firebase Auth
+    const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
+    const firebaseUser = userCredential.user;
 
-    // Créer le nouvel utilisateur
-    const newUser = {
-      id: Date.now().toString(),
+    // Créer le document utilisateur dans Firestore
+    const newUser: User = {
+      id: firebaseUser.uid,
       email: userData.email,
-      password: userData.password,
-      name: userData.name,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      name: `${userData.firstName} ${userData.lastName}`,
       userType: userData.userType,
       createdAt: new Date().toISOString(),
     };
 
-    users.push(newUser);
-    await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
-
-    // Connecter automatiquement l'utilisateur
-    const { password: _, ...userWithoutPassword } = newUser;
-    await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userWithoutPassword));
+    await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
     
     console.log('Inscription réussie pour:', userData.email);
-    return userWithoutPassword;
+    return newUser;
   } catch (error) {
     console.error('Erreur inscription:', error);
     return null;
   }
+}
+
+export async function initializeAdminAccount(): Promise<void> {
+  try {
+    // Créer un compte admin par défaut si nécessaire
+    const adminEmail = 'admin@eatfitbymax.com';
+    const adminPassword = 'admin123';
+    
+    try {
+      await register({
+        email: adminEmail,
+        password: adminPassword,
+        firstName: 'Admin',
+        lastName: 'EatFitByMax',
+        userType: 'coach'
+      });
+      console.log('Compte admin créé');
+    } catch (error: any) {
+      if (error.code === 'auth/email-already-in-use') {
+        console.log('Compte admin déjà existant');
+      } else {
+        console.error('Erreur création compte admin:', error);
+      }
+    }
+  } catch (error) {
+    console.error('Erreur initialisation admin:', error);
+  }
+}
+
+// Observer pour les changements d'état d'authentification
+export function onAuthStateChange(callback: (user: FirebaseUser | null) => void) {
+  return onAuthStateChanged(auth, callback);
 }
