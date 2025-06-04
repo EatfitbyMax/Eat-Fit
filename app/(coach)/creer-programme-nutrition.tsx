@@ -128,46 +128,48 @@ export default function CreerProgrammeNutritionScreen() {
     <Modal
       visible={modalVisible}
       transparent={true}
-      animationType="fade"
+      animationType="slide"
       onRequestClose={fermerModal}
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Ajouter un repas au programme</Text>
-            <TouchableOpacity onPress={fermerModal}>
+            <Text style={styles.modalTitle}>Ajouter un repas</Text>
+            <TouchableOpacity onPress={fermerModal} style={styles.closeButtonContainer}>
               <Text style={styles.closeButton}>×</Text>
             </TouchableOpacity>
           </View>
 
           <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
-            <Text style={styles.modalSubtitle}>
-              Créer le menu d'un repas pour l'inclure dans votre programme
-            </Text>
+            {/* Nom du repas */}
+            <View style={styles.modalField}>
+              <Text style={styles.modalLabel}>Nom du repas</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={nouveauRepas.nom}
+                onChangeText={(text) => setNouveauRepas({...nouveauRepas, nom: text})}
+                placeholder="Ex: Poulet grillé avec légumes"
+                placeholderTextColor="#6A737D"
+              />
+            </View>
 
-            {/* Ligne nom et jour */}
-            <View style={styles.modalRow}>
-              <View style={styles.modalFieldHalf}>
-                <Text style={styles.modalLabel}>Nom du repas</Text>
-                <TextInput
-                  style={styles.modalInput}
-                  value={nouveauRepas.nom}
-                  onChangeText={(text) => setNouveauRepas({...nouveauRepas, nom: text})}
-                  placeholder="Ex: Poulet grillé avec légumes"
-                  placeholderTextColor="#6A737D"
-                />
-              </View>
-              <View style={styles.modalFieldHalf}>
-                <Text style={styles.modalLabel}>Jour de la semaine</Text>
-                <TouchableOpacity 
-                  style={styles.modalDropdown}
-                  onPress={() => setJourDropdownOpen(!jourDropdownOpen)}
-                >
-                  <Text style={[styles.modalDropdownText, !nouveauRepas.jour && styles.placeholderText]}>
-                    {nouveauRepas.jour || 'Lundi'}
-                  </Text>
-                </TouchableOpacity>
-                {jourDropdownOpen && (
+            {/* Jour de la semaine */}
+            <View style={styles.modalField}>
+              <Text style={styles.modalLabel}>Jour de la semaine</Text>
+              <TouchableOpacity 
+                style={styles.modalDropdown}
+                onPress={() => {
+                  setJourDropdownOpen(!jourDropdownOpen);
+                  setTypeDropdownOpen(false);
+                }}
+              >
+                <Text style={[styles.modalDropdownText, !nouveauRepas.jour && styles.placeholderText]}>
+                  {nouveauRepas.jour || 'Sélectionnez un jour'}
+                </Text>
+                <Text style={styles.dropdownArrow}>▼</Text>
+              </TouchableOpacity>
+              {jourDropdownOpen && (
+                <View style={styles.dropdownOverlay}>
                   <View style={styles.dropdownList}>
                     {JOURS_SEMAINE.map((jour) => (
                       <TouchableOpacity
@@ -182,8 +184,8 @@ export default function CreerProgrammeNutritionScreen() {
                       </TouchableOpacity>
                     ))}
                   </View>
-                )}
-              </View>
+                </View>
+              )}
             </View>
 
             {/* Type de repas */}
@@ -191,26 +193,32 @@ export default function CreerProgrammeNutritionScreen() {
               <Text style={styles.modalLabel}>Type de repas</Text>
               <TouchableOpacity 
                 style={styles.modalDropdown}
-                onPress={() => setTypeDropdownOpen(!typeDropdownOpen)}
+                onPress={() => {
+                  setTypeDropdownOpen(!typeDropdownOpen);
+                  setJourDropdownOpen(false);
+                }}
               >
                 <Text style={[styles.modalDropdownText, !nouveauRepas.type && styles.placeholderText]}>
-                  {nouveauRepas.type || 'Repas Complet'}
+                  {nouveauRepas.type || 'Sélectionnez un type'}
                 </Text>
+                <Text style={styles.dropdownArrow}>▼</Text>
               </TouchableOpacity>
               {typeDropdownOpen && (
-                <View style={styles.dropdownList}>
-                  {TYPES_REPAS.map((type) => (
-                    <TouchableOpacity
-                      key={type}
-                      style={styles.dropdownItem}
-                      onPress={() => {
-                        setNouveauRepas({...nouveauRepas, type});
-                        setTypeDropdownOpen(false);
-                      }}
-                    >
-                      <Text style={styles.dropdownItemText}>{type}</Text>
-                    </TouchableOpacity>
-                  ))}
+                <View style={styles.dropdownOverlay}>
+                  <View style={styles.dropdownList}>
+                    {TYPES_REPAS.map((type) => (
+                      <TouchableOpacity
+                        key={type}
+                        style={styles.dropdownItem}
+                        onPress={() => {
+                          setNouveauRepas({...nouveauRepas, type});
+                          setTypeDropdownOpen(false);
+                        }}
+                      >
+                        <Text style={styles.dropdownItemText}>{type}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
                 </View>
               )}
             </View>
@@ -229,13 +237,15 @@ export default function CreerProgrammeNutritionScreen() {
               />
             </View>
 
-            {/* Macronutriments */}
+            {/* Macronutriments - version compacte */}
             <View style={styles.macroContainer}>
+              <Text style={styles.macroSectionTitle}>Informations nutritionnelles</Text>
+              
               <View style={styles.macroRow}>
-                <View style={styles.macroField}>
-                  <Text style={styles.modalLabel}>Calories (total)</Text>
+                <View style={styles.macroFieldCompact}>
+                  <Text style={styles.modalLabelSmall}>Calories</Text>
                   <TextInput
-                    style={styles.modalInput}
+                    style={styles.modalInputSmall}
                     value={nouveauRepas.caloriesTotal.toString()}
                     onChangeText={(text) => setNouveauRepas({...nouveauRepas, caloriesTotal: parseInt(text) || 0})}
                     placeholder="0"
@@ -243,10 +253,10 @@ export default function CreerProgrammeNutritionScreen() {
                     keyboardType="numeric"
                   />
                 </View>
-                <View style={styles.macroField}>
-                  <Text style={styles.modalLabel}>Protéines (g)</Text>
+                <View style={styles.macroFieldCompact}>
+                  <Text style={styles.modalLabelSmall}>Protéines (g)</Text>
                   <TextInput
-                    style={styles.modalInput}
+                    style={styles.modalInputSmall}
                     value={nouveauRepas.proteines.toString()}
                     onChangeText={(text) => setNouveauRepas({...nouveauRepas, proteines: parseInt(text) || 0})}
                     placeholder="0"
@@ -255,11 +265,12 @@ export default function CreerProgrammeNutritionScreen() {
                   />
                 </View>
               </View>
+              
               <View style={styles.macroRow}>
-                <View style={styles.macroField}>
-                  <Text style={styles.modalLabel}>Glucides (g)</Text>
+                <View style={styles.macroFieldCompact}>
+                  <Text style={styles.modalLabelSmall}>Glucides (g)</Text>
                   <TextInput
-                    style={styles.modalInput}
+                    style={styles.modalInputSmall}
                     value={nouveauRepas.glucides.toString()}
                     onChangeText={(text) => setNouveauRepas({...nouveauRepas, glucides: parseInt(text) || 0})}
                     placeholder="0"
@@ -267,10 +278,10 @@ export default function CreerProgrammeNutritionScreen() {
                     keyboardType="numeric"
                   />
                 </View>
-                <View style={styles.macroField}>
-                  <Text style={styles.modalLabel}>Lipides (g)</Text>
+                <View style={styles.macroFieldCompact}>
+                  <Text style={styles.modalLabelSmall}>Lipides (g)</Text>
                   <TextInput
-                    style={styles.modalInput}
+                    style={styles.modalInputSmall}
                     value={nouveauRepas.lipides.toString()}
                     onChangeText={(text) => setNouveauRepas({...nouveauRepas, lipides: parseInt(text) || 0})}
                     placeholder="0"
@@ -279,32 +290,23 @@ export default function CreerProgrammeNutritionScreen() {
                   />
                 </View>
               </View>
-              <View style={styles.macroField}>
-                <Text style={styles.modalLabel}>Fibres (g)</Text>
-                <TextInput
-                  style={styles.modalInput}
-                  value={nouveauRepas.fibres.toString()}
-                  onChangeText={(text) => setNouveauRepas({...nouveauRepas, fibres: parseInt(text) || 0})}
-                  placeholder="0"
-                  placeholderTextColor="#6A737D"
-                  keyboardType="numeric"
-                />
-              </View>
             </View>
 
             {/* Recette / Instructions */}
             <View style={styles.modalField}>
-              <Text style={styles.modalLabel}>Recette / Instructions</Text>
+              <Text style={styles.modalLabel}>Recette / Instructions (optionnel)</Text>
               <TextInput
                 style={[styles.modalInput, styles.modalTextArea]}
                 value={nouveauRepas.recette}
                 onChangeText={(text) => setNouveauRepas({...nouveauRepas, recette: text})}
-                placeholder="Instructions détaillées pour la préparation..."
+                placeholder="Instructions de préparation..."
                 placeholderTextColor="#6A737D"
                 multiline
-                numberOfLines={4}
+                numberOfLines={3}
               />
             </View>
+
+            <View style={styles.modalSpacer} />
           </ScrollView>
 
           {/* Boutons */}
@@ -313,7 +315,7 @@ export default function CreerProgrammeNutritionScreen() {
               <Text style={styles.cancelButtonText}>Annuler</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.addButton} onPress={ajouterRepas}>
-              <Text style={styles.addButtonText}>Ajouter au programme</Text>
+              <Text style={styles.addButtonText}>Ajouter</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -557,16 +559,14 @@ const styles = StyleSheet.create({
   // Styles pour la modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'flex-end',
   },
   modalContainer: {
     backgroundColor: '#161B22',
-    borderRadius: 12,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     width: '100%',
-    maxWidth: 600,
     maxHeight: '90%',
     borderWidth: 1,
     borderColor: '#21262D',
@@ -583,36 +583,37 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    flex: 1,
+  },
+  closeButtonContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#21262D',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   closeButton: {
-    fontSize: 24,
-    color: '#8B949E',
+    fontSize: 20,
+    color: '#FFFFFF',
     fontWeight: 'bold',
   },
   modalContent: {
     padding: 20,
-    maxHeight: 400,
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    color: '#8B949E',
-    marginBottom: 20,
-    lineHeight: 18,
-  },
-  modalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
+    flex: 1,
   },
   modalField: {
-    marginBottom: 16,
-  },
-  modalFieldHalf: {
-    flex: 1,
-    marginRight: 8,
+    marginBottom: 20,
+    zIndex: 1,
   },
   modalLabel: {
     fontSize: 14,
+    color: '#FFFFFF',
+    marginBottom: 8,
+    fontWeight: '600',
+  },
+  modalLabelSmall: {
+    fontSize: 12,
     color: '#FFFFFF',
     marginBottom: 6,
     fontWeight: '500',
@@ -621,10 +622,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#0D1117',
     borderWidth: 1,
     borderColor: '#21262D',
-    borderRadius: 6,
-    padding: 10,
+    borderRadius: 8,
+    padding: 12,
     color: '#FFFFFF',
     fontSize: 14,
+    minHeight: 44,
+  },
+  modalInputSmall: {
+    backgroundColor: '#0D1117',
+    borderWidth: 1,
+    borderColor: '#21262D',
+    borderRadius: 6,
+    padding: 8,
+    color: '#FFFFFF',
+    fontSize: 14,
+    minHeight: 36,
+    textAlign: 'center',
   },
   modalTextArea: {
     height: 80,
@@ -634,45 +647,76 @@ const styles = StyleSheet.create({
     backgroundColor: '#0D1117',
     borderWidth: 1,
     borderColor: '#21262D',
-    borderRadius: 6,
-    padding: 10,
-    minHeight: 42,
-    justifyContent: 'center',
+    borderRadius: 8,
+    padding: 12,
+    minHeight: 44,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   modalDropdownText: {
     color: '#FFFFFF',
     fontSize: 14,
+    flex: 1,
   },
   placeholderText: {
     color: '#6A737D',
   },
+  dropdownArrow: {
+    color: '#8B949E',
+    fontSize: 12,
+  },
+  dropdownOverlay: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+    elevation: 5,
+  },
   dropdownList: {
-    backgroundColor: '#F5A623',
-    borderRadius: 6,
+    backgroundColor: '#0D1117',
+    borderRadius: 8,
     marginTop: 4,
-    maxHeight: 150,
+    maxHeight: 200,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   dropdownItem: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5941A',
+    borderBottomColor: '#21262D',
   },
   dropdownItemText: {
-    color: '#000000',
+    color: '#FFFFFF',
     fontSize: 14,
   },
   macroContainer: {
-    marginBottom: 16,
+    marginBottom: 20,
+  },
+  macroSectionTitle: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    marginBottom: 12,
+    fontWeight: '600',
   },
   macroRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 12,
   },
-  macroField: {
+  macroFieldCompact: {
     flex: 1,
-    marginRight: 8,
+    marginHorizontal: 4,
+  },
+  modalSpacer: {
+    height: 20,
   },
   modalButtons: {
     flexDirection: 'row',
@@ -680,33 +724,30 @@ const styles = StyleSheet.create({
     padding: 20,
     borderTopWidth: 1,
     borderTopColor: '#21262D',
+    gap: 12,
   },
   cancelButton: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    marginRight: 10,
+    paddingVertical: 14,
     backgroundColor: '#21262D',
     borderRadius: 8,
     alignItems: 'center',
   },
   cancelButtonText: {
     color: '#8B949E',
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 16,
+    fontWeight: '600',
   },
   addButton: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    marginLeft: 10,
+    paddingVertical: 14,
     backgroundColor: '#F5A623',
     borderRadius: 8,
     alignItems: 'center',
   },
   addButtonText: {
     color: '#000000',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
   },
 });
