@@ -21,26 +21,6 @@ export default function ProgrammesScreen() {
   const [selectedTab, setSelectedTab] = useState<'nutrition' | 'sport'>('nutrition');
   const [programmes, setProgrammes] = useState<Programme[]>([]);
 
-  // Programmes par défaut
-  const programmesParDefaut: Programme[] = [
-    {
-      id: '1',
-      nom: 'Programme 2500Kcal',
-      description: 'Programme de nutrition complet pour une semaine conçu pour un apport quotidien de 2500 kcal...',
-      type: 'nutrition',
-      calories: 2500,
-      dateCreation: '20 mai 2025'
-    },
-    {
-      id: '2',
-      nom: 'Musculation Débutant',
-      description: 'Programme d\'entraînement pour débuter la musculation en douceur...',
-      type: 'sport',
-      duree: '45 min',
-      dateCreation: '22 mai 2025'
-    }
-  ];
-
   // Charger les programmes au démarrage
   useEffect(() => {
     chargerProgrammes();
@@ -54,14 +34,13 @@ export default function ProgrammesScreen() {
         setProgrammes(programmesParses);
         console.log('Programmes chargés:', programmesParses.length);
       } else {
-        // Première utilisation, charger les programmes par défaut
-        setProgrammes(programmesParDefaut);
-        await sauvegarderProgrammes(programmesParDefaut);
-        console.log('Programmes par défaut initialisés');
+        // Première utilisation, démarrer avec une liste vide
+        setProgrammes([]);
+        console.log('Démarrage avec une liste de programmes vide');
       }
     } catch (error) {
       console.error('Erreur chargement programmes:', error);
-      setProgrammes(programmesParDefaut);
+      setProgrammes([]);
     }
   };
 
@@ -175,7 +154,7 @@ export default function ProgrammesScreen() {
                 { text: 'Annuler', style: 'cancel' },
                 {
                   text: 'Créer',
-                  onPress: (nom) => {
+                  onPress: async (nom) => {
                     if (nom && nom.trim()) {
                       const nouveauProgramme: Programme = {
                         id: Date.now().toString(),
