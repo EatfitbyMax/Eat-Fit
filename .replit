@@ -74,3 +74,5 @@ args = "npx expo start --clear"
 
 [deployment]
 deploymentTarget = "cloudrun"
+run = ["sh", "-c", "npx serve dist --port 8081 --host 0.0.0.0"]
+build = ["sh", "-c", "npx expo export --platform web"]
