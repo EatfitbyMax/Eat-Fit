@@ -1,90 +1,115 @@
 
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { logout } from '@/utils/auth';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/config/firebase';
 
-export default function ProfilScreen() {
+export default function CoachProfileScreen() {
   const router = useRouter();
 
   const handleLogout = async () => {
-    await logout();
-    router.replace('/auth/login');
+    Alert.alert(
+      'Déconnexion',
+      'Êtes-vous sûr de vouloir vous déconnecter ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Déconnecter',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await signOut(auth);
+              router.replace('/auth/login');
+            } catch (error) {
+              console.error('Erreur déconnexion:', error);
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
+      <ScrollView style={styles.content}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Mon profil</Text>
+          <Text style={styles.title}>Profil Coach</Text>
         </View>
 
         {/* Profile Info */}
-        <View style={styles.profileSection}>
-          <View style={styles.profileHeader}>
+        <View style={styles.section}>
+          <View style={styles.profileCard}>
             <View style={styles.avatar}>
-              <Text style={styles.avatarText}>MA</Text>
+              <Text style={styles.avatarText}>MC</Text>
             </View>
             <View style={styles.profileInfo}>
-              <Text style={styles.name}>Max Admin</Text>
-              <Text style={styles.email}>eatfitbymax@gmail.com</Text>
+              <Text style={styles.profileName}>Max Coach</Text>
+              <Text style={styles.profileEmail}>admin@eatfitbymax.com</Text>
+              <Text style={styles.profileSpecialty}>Nutrition & Fitness Coach</Text>
+            </View>
+            <TouchableOpacity style={styles.editButton}>
+              <Text style={styles.editButtonText}>Modifier</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Coach Stats */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Mes statistiques</Text>
+          <View style={styles.statsGrid}>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>24</Text>
+              <Text style={styles.statLabel}>Clients actifs</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>5 ans</Text>
+              <Text style={styles.statLabel}>Expérience</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>156</Text>
+              <Text style={styles.statLabel}>Programmes créés</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>4.8⭐</Text>
+              <Text style={styles.statLabel}>Note moyenne</Text>
             </View>
           </View>
         </View>
 
-        {/* Informations personnelles */}
+        {/* Certifications */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📋 Informations personnelles</Text>
-          
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuItemText}>Informations personnelles</Text>
-            <Text style={styles.menuItemArrow}>›</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuItemText}>Mes objectifs</Text>
-            <Text style={styles.menuItemArrow}>›</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuItemText}>Notifications</Text>
-            <Text style={styles.menuItemArrow}>›</Text>
-          </TouchableOpacity>
+          <Text style={styles.sectionTitle}>Certifications</Text>
+          <View style={styles.certificationsList}>
+            <View style={styles.certificationItem}>
+              <Text style={styles.certificationIcon}>🏆</Text>
+              <Text style={styles.certificationText}>Nutrition sportive certifiée</Text>
+            </View>
+            <View style={styles.certificationItem}>
+              <Text style={styles.certificationIcon}>💪</Text>
+              <Text style={styles.certificationText}>Personal Trainer Niveau 3</Text>
+            </View>
+            <View style={styles.certificationItem}>
+              <Text style={styles.certificationIcon}>🧠</Text>
+              <Text style={styles.certificationText}>Psychologie du sport</Text>
+            </View>
+          </View>
         </View>
 
-        {/* Intégrations */}
+        {/* Quick Actions */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Intégrations</Text>
-          
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuItemText}>Strava</Text>
-            <Text style={styles.menuItemArrow}>›</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuItemText}>Apple Health</Text>
-            <Text style={styles.menuItemArrow}>›</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Connexion Strava */}
-        <View style={styles.integrationCard}>
-          <Text style={styles.integrationTitle}>🔗 Connexion Strava</Text>
-          <Text style={styles.integrationSubtitle}>
-            Connectez votre compte Strava avec EatFitByMax
-          </Text>
-          <Text style={styles.integrationDescription}>
-            Connectez votre compte Strava pour importer automatiquement vos activités et synchronisez vos entraînements avec EatFitByMax.
-          </Text>
-          
-          <TouchableOpacity style={styles.connectButton}>
-            <Text style={styles.connectButtonText}>🔗 Se connecter avec Strava</Text>
-          </TouchableOpacity>
-          
-          <Text style={styles.integrationNote}>
-            Problème de connexion ? Envoyez un code support/événement
-          </Text>
+          <Text style={styles.sectionTitle}>Actions rapides</Text>
+          <View style={styles.quickActions}>
+            <TouchableOpacity style={styles.actionButton}>
+              <Text style={styles.actionIcon}>📊</Text>
+              <Text style={styles.actionText}>Voir mes statistiques</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionButton}>
+              <Text style={styles.actionIcon}>💰</Text>
+              <Text style={styles.actionText}>Revenus du mois</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Paramètres */}
@@ -123,7 +148,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0D1117',
   },
-  scrollView: {
+  content: {
     flex: 1,
   },
   header: {
@@ -135,11 +160,22 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
-  profileSection: {
-    margin: 20,
-    marginTop: 0,
+  section: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
   },
-  profileHeader: {
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 12,
+  },
+  profileCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 12,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -153,113 +189,144 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   avatarText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#000000',
   },
   profileInfo: {
     flex: 1,
   },
-  name: {
+  profileName: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 4,
   },
-  email: {
+  profileEmail: {
     fontSize: 14,
     color: '#8B949E',
+    marginBottom: 4,
   },
-  section: {
-    margin: 20,
-    marginTop: 0,
+  profileSpecialty: {
+    fontSize: 12,
+    color: '#F5A623',
+    fontWeight: '500',
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 12,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 16,
+  editButton: {
+    backgroundColor: '#21262D',
     paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  editButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  statItem: {
     backgroundColor: '#161B22',
     borderRadius: 8,
-    marginBottom: 8,
-  },
-  menuItemText: {
-    fontSize: 14,
-    color: '#FFFFFF',
-  },
-  menuItemArrow: {
-    fontSize: 16,
-    color: '#8B949E',
-  },
-  integrationCard: {
-    margin: 20,
-    marginTop: 0,
-    backgroundColor: '#161B22',
-    borderRadius: 12,
-    padding: 20,
+    padding: 16,
+    alignItems: 'center',
+    width: '47%',
     borderWidth: 1,
     borderColor: '#21262D',
   },
-  integrationTitle: {
-    fontSize: 16,
+  statValue: {
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 8,
+    color: '#F5A623',
+    marginBottom: 4,
   },
-  integrationSubtitle: {
-    fontSize: 14,
-    color: '#8B949E',
-    marginBottom: 12,
-  },
-  integrationDescription: {
+  statLabel: {
     fontSize: 12,
     color: '#8B949E',
-    lineHeight: 18,
-    marginBottom: 20,
-  },
-  connectButton: {
-    backgroundColor: '#F5A623',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  connectButtonText: {
-    color: '#000000',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  integrationNote: {
-    fontSize: 10,
-    color: '#6A737D',
     textAlign: 'center',
   },
+  certificationsList: {
+    gap: 12,
+  },
+  certificationItem: {
+    backgroundColor: '#161B22',
+    borderRadius: 8,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  certificationIcon: {
+    fontSize: 20,
+    marginRight: 12,
+  },
+  certificationText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    flex: 1,
+  },
+  quickActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  actionButton: {
+    flex: 1,
+    backgroundColor: '#161B22',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  actionIcon: {
+    fontSize: 24,
+    marginBottom: 8,
+  },
+  actionText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  menuItem: {
+    backgroundColor: '#161B22',
+    borderRadius: 8,
+    padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  menuItemText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+  },
+  menuItemArrow: {
+    fontSize: 18,
+    color: '#8B949E',
+  },
   logoutButton: {
-    margin: 20,
-    marginTop: 0,
     backgroundColor: '#DA3633',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
+    marginHorizontal: 20,
+    padding: 16,
     borderRadius: 8,
     alignItems: 'center',
+    marginBottom: 20,
   },
   logoutButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
   },
   version: {
-    fontSize: 12,
-    color: '#6A737D',
     textAlign: 'center',
-    marginBottom: 20,
+    color: '#666666',
+    fontSize: 12,
+    marginBottom: 40,
   },
 });
