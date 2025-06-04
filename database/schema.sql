@@ -1,3 +1,4 @@
+
 -- Création du schéma de base de données pour l'application coach/client
 
 -- Table des profils utilisateurs (étend auth.users de Supabase)
@@ -10,16 +11,21 @@ CREATE TABLE IF NOT EXISTS profiles (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Activer RLS sur toutes les tables
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
 -- Table des programmes de nutrition
 CREATE TABLE IF NOT EXISTS nutrition_programs (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  coach_id UUID REFERENCES profiles(user_id) ON DELETE CASCADE NOT NULL,
+  coach_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   title VARCHAR(255) NOT NULL,
   description TEXT,
   total_calories INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+ALTER TABLE nutrition_programs ENABLE ROW LEVEL SECURITY;
 
 -- Table des repas
 CREATE TABLE IF NOT EXISTS meals (
@@ -35,10 +41,12 @@ CREATE TABLE IF NOT EXISTS meals (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+ALTER TABLE meals ENABLE ROW LEVEL SECURITY;
+
 -- Table des programmes d'entraînement
 CREATE TABLE IF NOT EXISTS workout_programs (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  coach_id UUID REFERENCES profiles(user_id) ON DELETE CASCADE NOT NULL,
+  coach_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   title VARCHAR(255) NOT NULL,
   description TEXT,
   duration_weeks INTEGER NOT NULL DEFAULT 4,
@@ -46,6 +54,8 @@ CREATE TABLE IF NOT EXISTS workout_programs (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+ALTER TABLE workout_programs ENABLE ROW LEVEL SECURITY;
 
 -- Table des entraînements
 CREATE TABLE IF NOT EXISTS workouts (
@@ -57,6 +67,8 @@ CREATE TABLE IF NOT EXISTS workouts (
   rest_between_sets INTEGER NOT NULL DEFAULT 60, -- en secondes
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+ALTER TABLE workouts ENABLE ROW LEVEL SECURITY;
 
 -- Table des exercices
 CREATE TABLE IF NOT EXISTS exercises (
@@ -73,33 +85,39 @@ CREATE TABLE IF NOT EXISTS exercises (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+ALTER TABLE exercises ENABLE ROW LEVEL SECURITY;
+
 -- Table des conversations
 CREATE TABLE IF NOT EXISTS conversations (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  coach_id UUID REFERENCES profiles(user_id) ON DELETE CASCADE NOT NULL,
-  client_id UUID REFERENCES profiles(user_id) ON DELETE CASCADE NOT NULL,
+  coach_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  client_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   last_message_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(coach_id, client_id)
 );
 
+ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
+
 -- Table des messages
 CREATE TABLE IF NOT EXISTS messages (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   conversation_id UUID REFERENCES conversations(id) ON DELETE CASCADE NOT NULL,
-  sender_id UUID REFERENCES profiles(user_id) ON DELETE CASCADE NOT NULL,
-  receiver_id UUID REFERENCES profiles(user_id) ON DELETE CASCADE NOT NULL,
+  sender_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  receiver_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   content TEXT NOT NULL,
   message_type VARCHAR(10) CHECK (message_type IN ('text', 'image', 'file')) DEFAULT 'text',
   is_read BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+
 -- Table des affectations de programmes
 CREATE TABLE IF NOT EXISTS program_assignments (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  coach_id UUID REFERENCES profiles(user_id) ON DELETE CASCADE NOT NULL,
-  client_id UUID REFERENCES profiles(user_id) ON DELETE CASCADE NOT NULL,
+  coach_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  client_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   program_id UUID NOT NULL, -- UUID générique pour pointer vers nutrition ou workout
   program_type VARCHAR(20) CHECK (program_type IN ('nutrition', 'workout')) NOT NULL,
   start_date DATE NOT NULL DEFAULT CURRENT_DATE,
@@ -107,6 +125,8 @@ CREATE TABLE IF NOT EXISTS program_assignments (
   status VARCHAR(20) CHECK (status IN ('active', 'completed', 'paused')) DEFAULT 'active',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+ALTER TABLE program_assignments ENABLE ROW LEVEL SECURITY;
 
 -- Index pour optimiser les performances
 CREATE INDEX IF NOT EXISTS idx_profiles_user_id ON profiles(user_id);
@@ -160,3 +180,25 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+
+-- Politiques RLS de base pour les profils
+CREATE POLICY "Les utilisateurs peuvent voir leur propre profil" ON profiles
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Les utilisateurs peuvent mettre à jour leur propre profil" ON profiles
+  FOR UPDATE USING (auth.uid() = user_id);
+
+-- Politiques pour les programmes de nutrition
+CREATE POLICY "Les coachs peuvent gérer leurs programmes de nutrition" ON nutrition_programs
+  FOR ALL USING (auth.uid() = coach_id);
+
+CREATE POLICY "Les clients peuvent voir leurs programmes de nutrition assignés" ON nutrition_programs
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM program_assignments pa 
+      WHERE pa.program_id = id 
+      AND pa.client_id = auth.uid() 
+      AND pa.program_type = 'nutrition'
+      AND pa.status = 'active'
+    )
+  );
