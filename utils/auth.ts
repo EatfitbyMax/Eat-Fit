@@ -25,13 +25,22 @@ export interface User {
 
 export async function getCurrentUser(): Promise<User | null> {
   try {
+    if (!auth) {
+      console.log('Auth non disponible');
+      return null;
+    }
+
     const firebaseUser = auth.currentUser;
     if (!firebaseUser) {
       console.log('Aucun utilisateur Firebase connecté');
       return null;
     }
 
-    // Récupérer les données utilisateur depuis Firestore
+    if (!db) {
+      console.log('Firestore non disponible');
+      return null;
+    }
+
     const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
     if (userDoc.exists()) {
       const userData = userDoc.data() as User;
@@ -49,10 +58,17 @@ export async function getCurrentUser(): Promise<User | null> {
 
 export async function login(email: string, password: string): Promise<User | null> {
   try {
+    if (!auth) {
+      throw new Error('Service d\'authentification non disponible');
+    }
+
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const firebaseUser = userCredential.user;
 
-    // Récupérer les données utilisateur depuis Firestore
+    if (!db) {
+      throw new Error('Base de données non disponible');
+    }
+
     const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
     if (userDoc.exists()) {
       const userData = userDoc.data() as User;
@@ -62,14 +78,25 @@ export async function login(email: string, password: string): Promise<User | nul
       console.log('Données utilisateur non trouvées');
       return null;
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erreur connexion:', error);
-    return null;
+    if (error.code === 'auth/user-not-found') {
+      throw new Error('Aucun compte trouvé avec cette adresse email');
+    } else if (error.code === 'auth/wrong-password') {
+      throw new Error('Mot de passe incorrect');
+    } else if (error.code === 'auth/invalid-email') {
+      throw new Error('Adresse email invalide');
+    }
+    throw new Error(error.message || 'Erreur lors de la connexion');
   }
 }
 
 export async function logout(): Promise<void> {
   try {
+    if (!auth) {
+      console.log('Auth non disponible pour la déconnexion');
+      return;
+    }
     await signOut(auth);
     console.log('Déconnexion réussie');
   } catch (error) {
@@ -85,15 +112,21 @@ export async function register(userData: {
   userType: 'client' | 'coach';
 }): Promise<User | null> {
   try {
+    if (!auth) {
+      throw new Error('Service d\'authentification non disponible');
+    }
+
+    if (!db) {
+      throw new Error('Base de données non disponible');
+    }
+
     console.log('Début inscription pour:', userData.email);
-    
-    // Créer le compte Firebase Auth
+
     const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
     const firebaseUser = userCredential.user;
 
     console.log('Compte Firebase Auth créé:', firebaseUser.uid);
 
-    // Créer le document utilisateur dans Firestore
     const newUser: User = {
       id: firebaseUser.uid,
       email: userData.email,
@@ -111,8 +144,7 @@ export async function register(userData: {
     return newUser;
   } catch (error: any) {
     console.error('Erreur inscription:', error);
-    
-    // Messages d'erreur plus explicites
+
     if (error.code === 'auth/email-already-in-use') {
       throw new Error('Cette adresse email est déjà utilisée');
     } else if (error.code === 'auth/weak-password') {
@@ -122,40 +154,16 @@ export async function register(userData: {
     } else if (error.code === 'permission-denied') {
       throw new Error('Erreur de permissions Firebase. Vérifiez les règles Firestore.');
     }
-    
+
     throw new Error(error.message || 'Erreur lors de l\'inscription');
   }
 }
 
-export async function initializeAdminAccount(): Promise<void> {
-  try {
-    // Créer un compte admin par défaut si nécessaire
-    const adminEmail = 'admin@eatfitbymax.com';
-    const adminPassword = 'admin123';
-
-    try {
-      await register({
-        email: adminEmail,
-        password: adminPassword,
-        firstName: 'Admin',
-        lastName: 'EatFitByMax',
-        userType: 'coach'
-      });
-      console.log('Compte admin créé');
-    } catch (error: any) {
-      if (error.code === 'auth/email-already-in-use') {
-        console.log('Compte admin déjà existant');
-      } else {
-        console.error('Erreur création compte admin:', error);
-      }
-    }
-  } catch (error) {
-    console.error('Erreur initialisation admin:', error);
-  }
-}
-
-// Observer pour les changements d'état d'authentification
 export function onAuthStateChange(callback: (user: FirebaseUser | null) => void) {
+  if (!auth) {
+    console.log('Auth non disponible pour onAuthStateChange');
+    return () => {};
+  }
   return onAuthStateChanged(auth, callback);
 }
 
