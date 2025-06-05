@@ -165,8 +165,19 @@ function ProgrammesScreen() {
 
   const handleNouveauProgramme = () => {
     if (selectedTab === 'nutrition') {
-      // Naviguer directement vers l'écran de création pour la nutrition
-      router.push('/creer-programme-nutrition');
+      // Afficher les options pour la nutrition
+      Alert.alert(
+        'Nouveau Programme Nutrition',
+        'Comment voulez-vous créer un programme ?',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          { text: 'Importer JSON', onPress: handleImporterProgrammes },
+          { 
+            text: 'Créer manuellement', 
+            onPress: () => router.push('/creer-programme-nutrition')
+          }
+        ]
+      );
     } else {
       // Pour le sport, garder l'ancien système pour l'instant
       Alert.alert(
