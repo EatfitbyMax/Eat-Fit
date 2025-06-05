@@ -1,27 +1,49 @@
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PersistentStorage } from './storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export async function migrateExistingData(): Promise<void> {
-  console.log('🔄 Vérification des données existantes...');
+export class DataMigration {
   
-  try {
-    // Vérifier s'il y a des données à migrer
-    const programmesData = await AsyncStorage.getItem('programmes_coach');
-    const usersData = await AsyncStorage.getItem('users');
-    
-    if (programmesData || usersData) {
-      console.log('📦 Données trouvées, tentative de backup vers Object Storage...');
+  static async migrateToNewStorage(): Promise<void> {
+    try {
+      console.log('Début de la migration des données...');
       
-      // Essayer de sauvegarder vers Object Storage si disponible
-      await PersistentStorage.backupAsyncStorageData();
-    } else {
-      console.log('✅ Aucune donnée à migrer');
+      // Vérifier s'il y a des données existantes
+      const existingProgrammes = await PersistentStorage.getProgrammes();
+      const existingUsers = await PersistentStorage.getUsers();
+      
+      if (existingProgrammes.length > 0 || existingUsers.length > 0) {
+        console.log(`Migration: ${existingProgrammes.length} programmes et ${existingUsers.length} utilisateurs déjà présents`);
+        return;
+      }
+      
+      console.log('Migration terminée');
+      
+    } catch (error) {
+      console.error('Erreur lors de la migration:', error);
+      throw error;
     }
+  }
 
-    console.log('🎉 Vérification terminée !');
-  } catch (error) {
-    console.error('⚠️ Erreur lors de la vérification (non critique):', error);
-    // Ne pas faire échouer l'app pour une erreur de migration
+  static async initializeDefaultData(): Promise<void> {
+    try {
+      // Vérifier si des données existent déjà
+      const programmes = await PersistentStorage.getProgrammes();
+      const users = await PersistentStorage.getUsers();
+      
+      if (programmes.length === 0) {
+        console.log('Initialisation des programmes par défaut...');
+        await PersistentStorage.saveProgrammes([]);
+      }
+      
+      if (users.length === 0) {
+        console.log('Initialisation des utilisateurs par défaut...');
+        await PersistentStorage.saveUsers([]);
+      }
+      
+    } catch (error) {
+      console.error('Erreur lors de l\'initialisation:', error);
+      throw error;
+    }
   }
 }
