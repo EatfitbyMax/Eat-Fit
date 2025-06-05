@@ -3,13 +3,15 @@ import React from 'react';
 import { Alert } from 'react-native';
 
 // Gestion globale des erreurs non capturées
-const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+const handleUnhandledRejection = (event: any) => {
   console.error('Promesse non capturée:', event.reason);
-  event.preventDefault();
+  if (event.preventDefault) {
+    event.preventDefault();
+  }
 };
 
 // Ajouter le gestionnaire d'erreur si on est dans un environnement web
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && window.addEventListener) {
   window.addEventListener('unhandledrejection', handleUnhandledRejection);
 }
 
@@ -91,15 +93,21 @@ export default function RootLayout() {
 
   useEffect(() => {
     const initializeApp = async () => {
-      console.log('Initialisation du compte admin...');
-      await initializeAdminAccount();
+      try {
+        console.log('Initialisation du compte admin...');
+        await initializeAdminAccount();
 
-      console.log('Migration des données existantes...');
-      await migrateExistingData();
+        console.log('Migration des données existantes...');
+        await migrateExistingData();
+      } catch (error) {
+        console.error('Erreur initialisation app:', error);
+      }
     };
 
-    initializeApp();
-  }, []);
+    if (loaded) {
+      initializeApp();
+    }
+  }, [loaded]);
 
   if (!loaded) {
     return null;
