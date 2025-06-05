@@ -51,6 +51,12 @@ export default function CoachTabLayout() {
           href: null, // Cache cette page de la navigation
         }}
       />
+      <Tabs.Screen
+        name="creer-programme-sport"
+        options={{
+          href: null, // Cache cette page de la navigation
+        }}
+      />
     </Tabs>
   );
 }
