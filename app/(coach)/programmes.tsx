@@ -478,18 +478,7 @@ function ProgrammesScreen() {
           )}
         </View>
 
-        {/* Assigner des Programmes */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>⚡ Assigner des Programmes</Text>
-
-          <TouchableOpacity style={styles.assignButton}>
-            <Text style={styles.assignButtonText}>Gérer les Affectations aux Clients</Text>
-          </TouchableOpacity>
-
-          <Text style={styles.assignDescription}>
-            Accédez à la page de gestion des clients pour leur assigner des programmes personnalisés.
-          </Text>
-        </View>
+        
 
         {/* Espace pour le bouton flottant */}
         <View style={styles.bottomPadding} />
