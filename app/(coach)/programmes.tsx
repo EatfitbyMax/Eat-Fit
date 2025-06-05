@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Ale
 import { useRouter } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { PersistentStorage } from '@/utils/storage';
 
 interface Programme {
   id: string;
@@ -32,13 +33,23 @@ function ProgrammesScreen() {
 
   const chargerProgrammes = async () => {
     try {
+      // Essayer d'abord Object Storage
+      const programmesObject = await PersistentStorage.getProgrammes();
+      if (programmesObject.length > 0) {
+        setProgrammes(programmesObject);
+        console.log('Programmes chargés depuis Object Storage:', programmesObject.length);
+        return;
+      }
+
+      // Fallback: migrer depuis AsyncStorage si pas de données dans Object Storage
       const programmesStockes = await AsyncStorage.getItem(PROGRAMMES_STORAGE_KEY);
       if (programmesStockes) {
         const programmesParses = JSON.parse(programmesStockes);
         setProgrammes(programmesParses);
-        console.log('Programmes chargés:', programmesParses.length);
+        // Migrer vers Object Storage
+        await PersistentStorage.saveProgrammes(programmesParses);
+        console.log('Programmes migrés vers Object Storage:', programmesParses.length);
       } else {
-        // Première utilisation, démarrer avec une liste vide
         setProgrammes([]);
         console.log('Démarrage avec une liste de programmes vide');
       }
@@ -50,10 +61,21 @@ function ProgrammesScreen() {
 
   const sauvegarderProgrammes = async (nouveauxProgrammes: Programme[]) => {
     try {
+      // Sauvegarder dans Object Storage (persistant)
+      await PersistentStorage.saveProgrammes(nouveauxProgrammes);
+      
+      // Aussi sauvegarder dans AsyncStorage pour compatibilité
       await AsyncStorage.setItem(PROGRAMMES_STORAGE_KEY, JSON.stringify(nouveauxProgrammes));
       console.log('Programmes sauvegardés:', nouveauxProgrammes.length);
     } catch (error) {
       console.error('Erreur sauvegarde programmes:', error);
+      // Fallback vers AsyncStorage seulement
+      try {
+        await AsyncStorage.setItem(PROGRAMMES_STORAGE_KEY, JSON.stringify(nouveauxProgrammes));
+        console.log('Programmes sauvegardés en fallback AsyncStorage');
+      } catch (fallbackError) {
+        console.error('Erreur fallback AsyncStorage:', fallbackError);
+      }
     }
   };
 
