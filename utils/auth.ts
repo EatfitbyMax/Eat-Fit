@@ -1,5 +1,6 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { PersistentStorage } from './storage';
 
 export interface User {
   id: string;
@@ -65,14 +66,22 @@ export async function getCurrentUser(): Promise<User | null> {
 
 export async function login(email: string, password: string): Promise<User | null> {
   try {
-    const usersData = await AsyncStorage.getItem(USERS_KEY);
-    if (!usersData) {
-      console.log('Aucun utilisateur enregistré, initialisation...');
-      await initializeAdminAccount();
-      return await login(email, password); // Réessayer après initialisation
+    // Essayer d'abord Object Storage
+    let users = await PersistentStorage.getUsers();
+    
+    if (users.length === 0) {
+      // Fallback: chercher dans AsyncStorage et migrer
+      const usersData = await AsyncStorage.getItem(USERS_KEY);
+      if (!usersData) {
+        console.log('Aucun utilisateur enregistré, initialisation...');
+        await initializeAdminAccount();
+        return await login(email, password);
+      }
+      users = JSON.parse(usersData);
+      // Migrer vers Object Storage
+      await PersistentStorage.saveUsers(users);
+      console.log('Utilisateurs migrés vers Object Storage');
     }
-
-    const users = JSON.parse(usersData);
     console.log('Utilisateurs disponibles:', users.map((u: any) => ({ email: u.email, userType: u.userType })));
     
     // Normaliser l'email (minuscules et trim)

@@ -1,4 +1,3 @@
-
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack, useRouter } from 'expo-router';
@@ -7,6 +6,7 @@ import { useEffect, useState } from 'react';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { initializeAdminAccount, getCurrentUser } from '@/utils/auth';
+import { migrateExistingData } from '@/utils/migration';
 import SplashScreenComponent from '@/components/SplashScreen';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -72,6 +72,18 @@ export default function RootLayout() {
       }, 300);
     }
   };
+
+  useEffect(() => {
+    const initializeApp = async () => {
+      console.log('Initialisation du compte admin...');
+      await initializeAdminAccount();
+
+      console.log('Migration des données existantes...');
+      await migrateExistingData();
+    };
+
+    initializeApp();
+  }, []);
 
   if (!loaded) {
     return null;
