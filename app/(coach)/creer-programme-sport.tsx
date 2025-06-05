@@ -220,17 +220,18 @@ export default function CreerProgrammeSportScreen() {
           </View>
 
           <ScrollView style={styles.modalContent}>
+            <View style={styles.modalFullRow}>
+              <Text style={styles.modalLabel}>Nom</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={nouvelExercice.nom}
+                onChangeText={(text) => setNouvelExercice({...nouvelExercice, nom: text})}
+                placeholder="Ex: Squat avec..."
+                placeholderTextColor="#6A737D"
+              />
+            </View>
+
             <View style={styles.modalRow}>
-              <View style={styles.modalColumn}>
-                <Text style={styles.modalLabel}>Nom</Text>
-                <TextInput
-                  style={styles.modalInput}
-                  value={nouvelExercice.nom}
-                  onChangeText={(text) => setNouvelExercice({...nouvelExercice, nom: text})}
-                  placeholder="Ex: Squat avec..."
-                  placeholderTextColor="#6A737D"
-                />
-              </View>
               <View style={styles.modalColumn}>
                 <Text style={styles.modalLabel}>Jour</Text>
                 <View style={styles.modalDropdown}>
@@ -239,9 +240,6 @@ export default function CreerProgrammeSportScreen() {
                   </Text>
                 </View>
               </View>
-            </View>
-
-            <View style={styles.modalRow}>
               <View style={styles.modalColumn}>
                 <Text style={styles.modalLabel}>Type d'exercice</Text>
                 <View style={styles.modalDropdown}>
@@ -250,13 +248,27 @@ export default function CreerProgrammeSportScreen() {
                   </Text>
                 </View>
               </View>
+            </View>
+
+            <View style={styles.modalRow}>
               <View style={styles.modalColumn}>
-                <Text style={styles.modalLabel}>Durée (minutes)</Text>
+                <Text style={styles.modalLabel}>Durée (min)</Text>
                 <TextInput
                   style={styles.modalInput}
                   value={nouvelExercice.duree ? nouvelExercice.duree.toString() : ''}
                   onChangeText={(text) => setNouvelExercice({...nouvelExercice, duree: parseInt(text) || 0})}
-                  placeholder="Ex: 45"
+                  placeholder="45"
+                  placeholderTextColor="#6A737D"
+                  keyboardType="numeric"
+                />
+              </View>
+              <View style={styles.modalColumn}>
+                <Text style={styles.modalLabel}>Calories</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  value={nouvelExercice.calories ? nouvelExercice.calories.toString() : ''}
+                  onChangeText={(text) => setNouvelExercice({...nouvelExercice, calories: parseInt(text) || 0})}
+                  placeholder="300"
                   placeholderTextColor="#6A737D"
                   keyboardType="numeric"
                 />
@@ -264,17 +276,6 @@ export default function CreerProgrammeSportScreen() {
             </View>
 
             <View style={styles.modalRow}>
-              <View style={styles.modalColumn}>
-                <Text style={styles.modalLabel}>Calories brûlées</Text>
-                <TextInput
-                  style={styles.modalInput}
-                  value={nouvelExercice.calories ? nouvelExercice.calories.toString() : ''}
-                  onChangeText={(text) => setNouvelExercice({...nouvelExercice, calories: parseInt(text) || 0})}
-                  placeholder="Ex: 300"
-                  placeholderTextColor="#6A737D"
-                  keyboardType="numeric"
-                />
-              </View>
               <View style={styles.modalColumn}>
                 <Text style={styles.modalLabel}>Intensité</Text>
                 <View style={styles.modalDropdown}>
@@ -283,9 +284,6 @@ export default function CreerProgrammeSportScreen() {
                   </Text>
                 </View>
               </View>
-            </View>
-
-            <View style={styles.modalRow}>
               <View style={styles.modalColumn}>
                 <Text style={styles.modalLabel}>Difficulté</Text>
                 <View style={styles.modalDropdown}>
@@ -294,16 +292,17 @@ export default function CreerProgrammeSportScreen() {
                   </Text>
                 </View>
               </View>
-              <View style={styles.modalColumn}>
-                <Text style={styles.modalLabel}>Équipement</Text>
-                <TextInput
-                  style={styles.modalInput}
-                  value={nouvelExercice.equipement}
-                  onChangeText={(text) => setNouvelExercice({...nouvelExercice, equipement: text})}
-                  placeholder="Ex: Haltères, tapis..."
-                  placeholderTextColor="#6A737D"
-                />
-              </View>
+            </View>
+
+            <View style={styles.modalFullRow}>
+              <Text style={styles.modalLabel}>Équipement</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={nouvelExercice.equipement}
+                onChangeText={(text) => setNouvelExercice({...nouvelExercice, equipement: text})}
+                placeholder="Ex: Haltères, tapis..."
+                placeholderTextColor="#6A737D"
+              />
             </View>
 
             <View style={styles.modalFullRow}>
@@ -361,63 +360,65 @@ export default function CreerProgrammeSportScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Text style={styles.backButtonText}>×</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Nouveau Programme Sportif Complet</Text>
+        <Text style={styles.headerTitle}>Nouveau Programme Sport</Text>
       </View>
 
       <ScrollView style={styles.content}>
-        <View style={styles.leftColumn}>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Nom du Programme</Text>
-            <TextInput
-              style={styles.input}
-              value={nomProgramme}
-              onChangeText={setNomProgramme}
-              placeholder="Ex: Programme de renforcement"
-              placeholderTextColor="#6A737D"
-            />
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Description</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              value={description}
-              onChangeText={setDescription}
-              placeholder="Décrivez brièvement ce programme..."
-              placeholderTextColor="#6A737D"
-              multiline
-              numberOfLines={4}
-            />
-          </View>
-
-          <TouchableOpacity 
-            style={[styles.publicOption, estPublic && styles.publicOptionSelected]}
-            onPress={() => setEstPublic(!estPublic)}
-          >
-            <View style={[styles.radioButton, estPublic && styles.radioButtonSelected]} />
-            <View style={styles.publicOptionText}>
-              <Text style={styles.publicOptionTitle}>Programme Public</Text>
-              <Text style={styles.publicOptionSubtitle}>
-                Rendre ce programme visible et disponible pour tous les clients
-              </Text>
-            </View>
-          </TouchableOpacity>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Nom du Programme</Text>
+          <TextInput
+            style={styles.input}
+            value={nomProgramme}
+            onChangeText={setNomProgramme}
+            placeholder="Ex: Programme de renforcement"
+            placeholderTextColor="#6A737D"
+          />
         </View>
 
-        <View style={styles.rightColumn}>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Description</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            value={description}
+            onChangeText={setDescription}
+            placeholder="Décrivez brièvement ce programme..."
+            placeholderTextColor="#6A737D"
+            multiline
+            numberOfLines={3}
+          />
+        </View>
+
+        <TouchableOpacity 
+          style={[styles.publicOption, estPublic && styles.publicOptionSelected]}
+          onPress={() => setEstPublic(!estPublic)}
+        >
+          <View style={[styles.radioButton, estPublic && styles.radioButtonSelected]} />
+          <View style={styles.publicOptionText}>
+            <Text style={styles.publicOptionTitle}>Programme Public</Text>
+            <Text style={styles.publicOptionSubtitle}>
+              Rendre ce programme visible pour tous les clients
+            </Text>
+          </View>
+        </TouchableOpacity>
+
+        <View style={styles.exercicesSection}>
           <View style={styles.exercicesHeader}>
-            <Text style={styles.exercicesTitle}>💪 Exercices</Text>
+            <Text style={styles.exercicesTitle}>💪 Exercices ({exercices.length})</Text>
             <TouchableOpacity style={styles.addButton} onPress={ouvrirModalAjout}>
-              <Text style={styles.addButtonText}>+ Ajouter un exercice</Text>
+              <Text style={styles.addButtonText}>+ Ajouter</Text>
             </TouchableOpacity>
           </View>
 
           {exercices.length === 0 ? (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>Aucun exercice ajouté.</Text>
+              <Text style={styles.emptyStateIcon}>💪</Text>
+              <Text style={styles.emptyStateText}>Aucun exercice ajouté</Text>
               <Text style={styles.emptyStateSubtext}>
-                Ajoutez des exercices pour compléter votre programme.
+                Commencez par ajouter votre premier exercice
               </Text>
+              <TouchableOpacity style={styles.emptyStateButton} onPress={ouvrirModalAjout}>
+                <Text style={styles.emptyStateButtonText}>+ Ajouter un exercice</Text>
+              </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.exercicesList}>
@@ -428,7 +429,7 @@ export default function CreerProgrammeSportScreen() {
                   onPress={() => ouvrirModalEdition(exercice)}
                 >
                   <View style={styles.exerciceHeader}>
-                    <Text style={styles.exerciceNumber}>⚡ Exercice {index + 1}</Text>
+                    <Text style={styles.exerciceNumber}>Exercice {index + 1}</Text>
                     <View style={styles.exerciceTags}>
                       <Text style={styles.exerciceTag}>{exercice.jour}</Text>
                       <Text style={styles.exerciceTag}>{exercice.type}</Text>
@@ -470,12 +471,12 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
+    padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#21262D',
   },
   backButton: {
-    marginRight: 16,
+    marginRight: 12,
     width: 32,
     height: 32,
     borderRadius: 16,
@@ -492,24 +493,17 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    flex: 1,
   },
   content: {
     flex: 1,
-    flexDirection: 'row',
-    padding: 20,
-  },
-  leftColumn: {
-    flex: 1,
-    marginRight: 20,
-  },
-  rightColumn: {
-    flex: 1,
+    padding: 16,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
     marginBottom: 8,
@@ -521,10 +515,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 16,
   },
   textArea: {
-    height: 100,
+    height: 80,
     textAlignVertical: 'top',
   },
   publicOption: {
@@ -535,6 +529,7 @@ const styles = StyleSheet.create({
     borderColor: '#21262D',
     borderRadius: 8,
     padding: 16,
+    marginBottom: 20,
   },
   publicOptionSelected: {
     borderColor: '#F5A623',
@@ -555,14 +550,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   publicOptionTitle: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
     marginBottom: 4,
   },
   publicOptionSubtitle: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#8B949E',
+  },
+  exercicesSection: {
+    marginBottom: 20,
   },
   exercicesHeader: {
     flexDirection: 'row',
@@ -571,40 +569,55 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   exercicesTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
   addButton: {
-    backgroundColor: '#161B22',
-    borderWidth: 1,
-    borderColor: '#21262D',
+    backgroundColor: '#F5A623',
     borderRadius: 6,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   addButtonText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '500',
+    color: '#000000',
+    fontSize: 14,
+    fontWeight: '600',
   },
   emptyState: {
     backgroundColor: '#161B22',
     borderWidth: 1,
     borderColor: '#21262D',
     borderRadius: 8,
-    padding: 40,
+    padding: 32,
     alignItems: 'center',
   },
+  emptyStateIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
   emptyStateText: {
-    color: '#8B949E',
-    fontSize: 14,
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '600',
     marginBottom: 8,
   },
   emptyStateSubtext: {
-    color: '#6A737D',
-    fontSize: 12,
+    color: '#8B949E',
+    fontSize: 14,
     textAlign: 'center',
+    marginBottom: 20,
+  },
+  emptyStateButton: {
+    backgroundColor: '#F5A623',
+    borderRadius: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  emptyStateButtonText: {
+    color: '#000000',
+    fontSize: 16,
+    fontWeight: '600',
   },
   exercicesList: {
     backgroundColor: '#161B22',
@@ -616,7 +629,7 @@ const styles = StyleSheet.create({
   exerciceCard: {
     backgroundColor: '#0D1117',
     borderRadius: 8,
-    padding: 12,
+    padding: 16,
     marginBottom: 12,
   },
   exerciceHeader: {
@@ -627,7 +640,7 @@ const styles = StyleSheet.create({
   },
   exerciceNumber: {
     color: '#8B949E',
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '500',
   },
   exerciceTags: {
@@ -636,25 +649,27 @@ const styles = StyleSheet.create({
   exerciceTag: {
     backgroundColor: '#21262D',
     color: '#8B949E',
-    fontSize: 10,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    fontSize: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: 4,
     marginLeft: 4,
   },
   exerciceNom: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
     marginBottom: 8,
   },
   exerciceDetails: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
   },
   exerciceDetail: {
     color: '#6A737D',
-    fontSize: 10,
-    marginRight: 8,
+    fontSize: 12,
+    marginRight: 12,
+    marginBottom: 4,
   },
   addAnotherButton: {
     borderWidth: 1,
@@ -666,10 +681,10 @@ const styles = StyleSheet.create({
   },
   addAnotherButtonText: {
     color: '#8B949E',
-    fontSize: 12,
+    fontSize: 14,
   },
   footer: {
-    padding: 20,
+    padding: 16,
     borderTopWidth: 1,
     borderTopColor: '#21262D',
   },
@@ -690,12 +705,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 16,
   },
   modalContainer: {
     backgroundColor: '#0D1117',
     borderRadius: 12,
-    width: '90%',
-    maxHeight: '80%',
+    width: '100%',
+    maxHeight: '90%',
     borderWidth: 1,
     borderColor: '#21262D',
   },
@@ -703,30 +719,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#21262D',
   },
   modalTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
   closeButton: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: '#21262D',
     alignItems: 'center',
     justifyContent: 'center',
   },
   closeButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
   },
   modalContent: {
-    padding: 20,
+    padding: 16,
   },
   modalRow: {
     flexDirection: 'row',
@@ -740,7 +756,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   modalLabel: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '600',
     color: '#8B949E',
     marginBottom: 6,
@@ -750,9 +766,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#21262D',
     borderRadius: 6,
-    padding: 10,
+    padding: 12,
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 16,
   },
   modalTextArea: {
     height: 80,
@@ -763,11 +779,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#21262D',
     borderRadius: 6,
-    padding: 10,
+    padding: 12,
   },
   modalDropdownText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 16,
   },
   deleteButton: {
     backgroundColor: '#DA3633',
@@ -778,7 +794,7 @@ const styles = StyleSheet.create({
   },
   deleteButtonText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 16,
     fontWeight: '600',
   },
   saveButton: {
@@ -789,7 +805,7 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     color: '#000000',
-    fontSize: 12,
+    fontSize: 16,
     fontWeight: 'bold',
   },
   dropdownContainer: {
@@ -797,10 +813,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#21262D',
     borderRadius: 6,
-    padding: 10,
+    padding: 12,
   },
   dropdownText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 16,
   },
 });
