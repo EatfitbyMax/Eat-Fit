@@ -3,33 +3,25 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PersistentStorage } from './storage';
 
 export async function migrateExistingData(): Promise<void> {
-  console.log('🔄 Démarrage de la migration des données...');
+  console.log('🔄 Vérification des données existantes...');
   
   try {
-    // Migrer les programmes
+    // Vérifier s'il y a des données à migrer
     const programmesData = await AsyncStorage.getItem('programmes_coach');
-    if (programmesData) {
-      const programmes = JSON.parse(programmesData);
-      await PersistentStorage.saveProgrammes(programmes);
-      console.log(`✅ ${programmes.length} programmes migrés vers Object Storage`);
-    }
-
-    // Migrer les utilisateurs
     const usersData = await AsyncStorage.getItem('users');
-    if (usersData) {
-      const users = JSON.parse(usersData);
-      await PersistentStorage.saveUsers(users);
-      console.log(`✅ ${users.length} utilisateurs migrés vers Object Storage`);
+    
+    if (programmesData || usersData) {
+      console.log('📦 Données trouvées, tentative de backup vers Object Storage...');
+      
+      // Essayer de sauvegarder vers Object Storage si disponible
+      await PersistentStorage.backupAsyncStorageData();
+    } else {
+      console.log('✅ Aucune donnée à migrer');
     }
 
-    // Migrer l'utilisateur actuel
-    const currentUserData = await AsyncStorage.getItem('currentUser');
-    if (currentUserData) {
-      console.log('✅ Utilisateur actuel préservé');
-    }
-
-    console.log('🎉 Migration terminée avec succès !');
+    console.log('🎉 Vérification terminée !');
   } catch (error) {
-    console.error('❌ Erreur lors de la migration:', error);
+    console.error('⚠️ Erreur lors de la vérification (non critique):', error);
+    // Ne pas faire échouer l'app pour une erreur de migration
   }
 }
