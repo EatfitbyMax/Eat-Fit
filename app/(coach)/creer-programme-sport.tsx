@@ -30,10 +30,15 @@ interface Programme {
   };
 }
 
-const TYPES_EXERCICE = ['Cardio', 'Musculation', 'Étirement', 'HIIT', 'Yoga', 'Pilates'];
+const TYPES_EXERCICE = [
+  'Cardio', 'Musculation', 'Étirement', 'HIIT', 'Yoga', 'Pilates', 'Course à pied', 
+  'Natation', 'Cyclisme', 'Boxe', 'CrossFit', 'Danse', 'Escalade', 'Football', 
+  'Basketball', 'Tennis', 'Badminton', 'Volleyball', 'Rugby', 'Handball', 
+  'Athlétisme', 'Gymnastique', 'Arts martiaux', 'Fitness', 'Aquagym'
+];
 const JOURS_SEMAINE = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
-const INTENSITES = ['Faible', 'Modérée', 'Élevée', 'Très élevée'];
-const DIFFICULTES = ['Débutant', 'Intermédiaire', 'Avancé', 'Expert'];
+const INTENSITES = ['Très faible', 'Faible', 'Modérée', 'Élevée', 'Très élevée'];
+const DIFFICULTES = ['Débutant', 'Intermédiaire', 'Expert'];
 
 const PROGRAMMES_STORAGE_KEY = 'programmes_coach';
 
@@ -45,6 +50,10 @@ export default function CreerProgrammeSportScreen() {
   const [exercices, setExercices] = useState<Exercice[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [exerciceEnEdition, setExerciceEnEdition] = useState<Exercice | null>(null);
+  const [jourDropdownOpen, setJourDropdownOpen] = useState(false);
+  const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
+  const [intensiteDropdownOpen, setIntensiteDropdownOpen] = useState(false);
+  const [difficulteDropdownOpen, setDifficulteDropdownOpen] = useState(false);
 
   const [nouvelExercice, setNouvelExercice] = useState({
     nom: '',
@@ -93,6 +102,10 @@ export default function CreerProgrammeSportScreen() {
   const fermerModal = () => {
     setModalVisible(false);
     setExerciceEnEdition(null);
+    setJourDropdownOpen(false);
+    setTypeDropdownOpen(false);
+    setIntensiteDropdownOpen(false);
+    setDifficulteDropdownOpen(false);
   };
 
   const ajouterOuModifierExercice = () => {
@@ -232,21 +245,81 @@ export default function CreerProgrammeSportScreen() {
             </View>
 
             <View style={styles.modalRow}>
-              <View style={styles.modalColumn}>
+              <View style={[styles.modalColumn, { zIndex: jourDropdownOpen ? 1000 : 1 }]}>
                 <Text style={styles.modalLabel}>Jour</Text>
-                <View style={styles.modalDropdown}>
-                  <Text style={styles.modalDropdownText}>
-                    {nouvelExercice.jour || 'Lundi'}
+                <TouchableOpacity 
+                  style={[styles.modalDropdown, jourDropdownOpen && { borderColor: '#F5A623', borderWidth: 2 }]}
+                  onPress={() => {
+                    setJourDropdownOpen(!jourDropdownOpen);
+                    setTypeDropdownOpen(false);
+                    setIntensiteDropdownOpen(false);
+                    setDifficulteDropdownOpen(false);
+                  }}
+                >
+                  <Text style={[styles.modalDropdownText, !nouvelExercice.jour && styles.placeholderText]}>
+                    {nouvelExercice.jour || 'Sélectionnez un jour'}
                   </Text>
-                </View>
+                  <Text style={[styles.dropdownArrow, jourDropdownOpen && { color: '#F5A623' }]}>▼</Text>
+                </TouchableOpacity>
+                {jourDropdownOpen && (
+                  <View style={styles.dropdownOverlay}>
+                    <ScrollView style={styles.dropdownList} nestedScrollEnabled={true} showsVerticalScrollIndicator={true}>
+                      {JOURS_SEMAINE.map((jour, index) => (
+                        <TouchableOpacity
+                          key={jour}
+                          style={[
+                            styles.dropdownItem,
+                            index === JOURS_SEMAINE.length - 1 && { borderBottomWidth: 0 }
+                          ]}
+                          onPress={() => {
+                            setNouvelExercice({...nouvelExercice, jour: jour});
+                            setJourDropdownOpen(false);
+                          }}
+                        >
+                          <Text style={styles.dropdownItemText}>{jour}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
               </View>
-              <View style={styles.modalColumn}>
+              <View style={[styles.modalColumn, { zIndex: typeDropdownOpen ? 1000 : 1 }]}>
                 <Text style={styles.modalLabel}>Type d'exercice</Text>
-                <View style={styles.modalDropdown}>
-                  <Text style={styles.modalDropdownText}>
-                    {nouvelExercice.type || 'Cardio'}
+                <TouchableOpacity 
+                  style={[styles.modalDropdown, typeDropdownOpen && { borderColor: '#F5A623', borderWidth: 2 }]}
+                  onPress={() => {
+                    setTypeDropdownOpen(!typeDropdownOpen);
+                    setJourDropdownOpen(false);
+                    setIntensiteDropdownOpen(false);
+                    setDifficulteDropdownOpen(false);
+                  }}
+                >
+                  <Text style={[styles.modalDropdownText, !nouvelExercice.type && styles.placeholderText]}>
+                    {nouvelExercice.type || 'Sélectionnez un type'}
                   </Text>
-                </View>
+                  <Text style={[styles.dropdownArrow, typeDropdownOpen && { color: '#F5A623' }]}>▼</Text>
+                </TouchableOpacity>
+                {typeDropdownOpen && (
+                  <View style={styles.dropdownOverlay}>
+                    <ScrollView style={styles.dropdownList} nestedScrollEnabled={true} showsVerticalScrollIndicator={true}>
+                      {TYPES_EXERCICE.map((type, index) => (
+                        <TouchableOpacity
+                          key={type}
+                          style={[
+                            styles.dropdownItem,
+                            index === TYPES_EXERCICE.length - 1 && { borderBottomWidth: 0 }
+                          ]}
+                          onPress={() => {
+                            setNouvelExercice({...nouvelExercice, type: type});
+                            setTypeDropdownOpen(false);
+                          }}
+                        >
+                          <Text style={styles.dropdownItemText}>{type}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
               </View>
             </View>
 
@@ -276,21 +349,81 @@ export default function CreerProgrammeSportScreen() {
             </View>
 
             <View style={styles.modalRow}>
-              <View style={styles.modalColumn}>
+              <View style={[styles.modalColumn, { zIndex: intensiteDropdownOpen ? 1000 : 1 }]}>
                 <Text style={styles.modalLabel}>Intensité</Text>
-                <View style={styles.modalDropdown}>
-                  <Text style={styles.modalDropdownText}>
-                    {nouvelExercice.intensite || 'Modérée'}
+                <TouchableOpacity 
+                  style={[styles.modalDropdown, intensiteDropdownOpen && { borderColor: '#F5A623', borderWidth: 2 }]}
+                  onPress={() => {
+                    setIntensiteDropdownOpen(!intensiteDropdownOpen);
+                    setJourDropdownOpen(false);
+                    setTypeDropdownOpen(false);
+                    setDifficulteDropdownOpen(false);
+                  }}
+                >
+                  <Text style={[styles.modalDropdownText, !nouvelExercice.intensite && styles.placeholderText]}>
+                    {nouvelExercice.intensite || 'Sélectionnez une intensité'}
                   </Text>
-                </View>
+                  <Text style={[styles.dropdownArrow, intensiteDropdownOpen && { color: '#F5A623' }]}>▼</Text>
+                </TouchableOpacity>
+                {intensiteDropdownOpen && (
+                  <View style={styles.dropdownOverlay}>
+                    <ScrollView style={styles.dropdownList} nestedScrollEnabled={true} showsVerticalScrollIndicator={true}>
+                      {INTENSITES.map((intensite, index) => (
+                        <TouchableOpacity
+                          key={intensite}
+                          style={[
+                            styles.dropdownItem,
+                            index === INTENSITES.length - 1 && { borderBottomWidth: 0 }
+                          ]}
+                          onPress={() => {
+                            setNouvelExercice({...nouvelExercice, intensite: intensite});
+                            setIntensiteDropdownOpen(false);
+                          }}
+                        >
+                          <Text style={styles.dropdownItemText}>{intensite}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
               </View>
-              <View style={styles.modalColumn}>
+              <View style={[styles.modalColumn, { zIndex: difficulteDropdownOpen ? 1000 : 1 }]}>
                 <Text style={styles.modalLabel}>Difficulté</Text>
-                <View style={styles.modalDropdown}>
-                  <Text style={styles.modalDropdownText}>
-                    {nouvelExercice.difficulte || 'Intermédiaire'}
+                <TouchableOpacity 
+                  style={[styles.modalDropdown, difficulteDropdownOpen && { borderColor: '#F5A623', borderWidth: 2 }]}
+                  onPress={() => {
+                    setDifficulteDropdownOpen(!difficulteDropdownOpen);
+                    setJourDropdownOpen(false);
+                    setTypeDropdownOpen(false);
+                    setIntensiteDropdownOpen(false);
+                  }}
+                >
+                  <Text style={[styles.modalDropdownText, !nouvelExercice.difficulte && styles.placeholderText]}>
+                    {nouvelExercice.difficulte || 'Sélectionnez une difficulté'}
                   </Text>
-                </View>
+                  <Text style={[styles.dropdownArrow, difficulteDropdownOpen && { color: '#F5A623' }]}>▼</Text>
+                </TouchableOpacity>
+                {difficulteDropdownOpen && (
+                  <View style={styles.dropdownOverlay}>
+                    <ScrollView style={styles.dropdownList} nestedScrollEnabled={true} showsVerticalScrollIndicator={true}>
+                      {DIFFICULTES.map((difficulte, index) => (
+                        <TouchableOpacity
+                          key={difficulte}
+                          style={[
+                            styles.dropdownItem,
+                            index === DIFFICULTES.length - 1 && { borderBottomWidth: 0 }
+                          ]}
+                          onPress={() => {
+                            setNouvelExercice({...nouvelExercice, difficulte: difficulte});
+                            setDifficulteDropdownOpen(false);
+                          }}
+                        >
+                          <Text style={styles.dropdownItemText}>{difficulte}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
               </View>
             </View>
 
@@ -782,6 +915,40 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   modalDropdownText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    flex: 1,
+  },
+  placeholderText: {
+    color: '#6A737D',
+  },
+  dropdownArrow: {
+    color: '#6A737D',
+    fontSize: 12,
+    marginLeft: 8,
+  },
+  dropdownOverlay: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    backgroundColor: '#161B22',
+    borderWidth: 1,
+    borderColor: '#21262D',
+    borderRadius: 6,
+    maxHeight: 150,
+    zIndex: 2000,
+  },
+  dropdownList: {
+    maxHeight: 150,
+  },
+  dropdownItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#21262D',
+  },
+  dropdownItemText: {
     color: '#FFFFFF',
     fontSize: 16,
   },
