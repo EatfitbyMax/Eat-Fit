@@ -1,3 +1,19 @@
+
+import React from 'react';
+import { Alert } from 'react-native';
+
+// Gestion globale des erreurs non capturées
+const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+  console.error('Promesse non capturée:', event.reason);
+  event.preventDefault();
+};
+
+// Ajouter le gestionnaire d'erreur si on est dans un environnement web
+if (typeof window !== 'undefined') {
+  window.addEventListener('unhandledrejection', handleUnhandledRejection);
+}
+
+
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack, useRouter } from 'expo-router';
