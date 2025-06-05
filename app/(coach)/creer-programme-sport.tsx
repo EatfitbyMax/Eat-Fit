@@ -521,18 +521,7 @@ export default function CreerProgrammeSportScreen() {
           />
         </View>
 
-        <TouchableOpacity 
-          style={[styles.publicOption, estPublic && styles.publicOptionSelected]}
-          onPress={() => setEstPublic(!estPublic)}
-        >
-          <View style={[styles.radioButton, estPublic && styles.radioButtonSelected]} />
-          <View style={styles.publicOptionText}>
-            <Text style={styles.publicOptionTitle}>Programme Public</Text>
-            <Text style={styles.publicOptionSubtitle}>
-              Rendre ce programme visible pour tous les clients
-            </Text>
-          </View>
-        </TouchableOpacity>
+        
 
         <View style={styles.exercicesSection}>
           <View style={styles.exercicesHeader}>
@@ -583,13 +572,14 @@ export default function CreerProgrammeSportScreen() {
             </View>
           )}
         </View>
-      </ScrollView>
 
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.createButton} onPress={sauvegarderProgramme}>
-          <Text style={styles.createButtonText}>Créer le Programme</Text>
-        </TouchableOpacity>
-      </View>
+        {/* Bouton de création intégré dans le contenu */}
+        <View style={styles.createButtonContainer}>
+          <TouchableOpacity style={styles.createButton} onPress={sauvegarderProgramme}>
+            <Text style={styles.createButtonText}>Créer le Programme</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
 
       {renderModalAjoutExercice()}
     </SafeAreaView>
@@ -654,44 +644,7 @@ const styles = StyleSheet.create({
     height: 80,
     textAlignVertical: 'top',
   },
-  publicOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#161B22',
-    borderWidth: 1,
-    borderColor: '#21262D',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 20,
-  },
-  publicOptionSelected: {
-    borderColor: '#F5A623',
-  },
-  radioButton: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#6A737D',
-    marginRight: 12,
-  },
-  radioButtonSelected: {
-    borderColor: '#F5A623',
-    backgroundColor: '#F5A623',
-  },
-  publicOptionText: {
-    flex: 1,
-  },
-  publicOptionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  publicOptionSubtitle: {
-    fontSize: 14,
-    color: '#8B949E',
-  },
+  
   exercicesSection: {
     marginBottom: 20,
   },
@@ -816,10 +769,10 @@ const styles = StyleSheet.create({
     color: '#8B949E',
     fontSize: 14,
   },
-  footer: {
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#21262D',
+  createButtonContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    marginBottom: 20,
   },
   createButton: {
     backgroundColor: '#F5A623',
