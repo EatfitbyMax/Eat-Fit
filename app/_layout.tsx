@@ -59,6 +59,9 @@ export default function RootLayout() {
         console.log('Initialisation du compte admin...');
         await initializeAdminAccount();
 
+        console.log('Migration des données existantes...');
+        await migrateExistingData();
+
         console.log('Vérification de l\'utilisateur connecté...');
         const user = await getCurrentUser();
 
@@ -90,24 +93,6 @@ export default function RootLayout() {
       }, 300);
     }
   };
-
-  useEffect(() => {
-    const initializeApp = async () => {
-      try {
-        console.log('Initialisation du compte admin...');
-        await initializeAdminAccount();
-
-        console.log('Migration des données existantes...');
-        await migrateExistingData();
-      } catch (error) {
-        console.error('Erreur initialisation app:', error);
-      }
-    };
-
-    if (loaded) {
-      initializeApp();
-    }
-  }, [loaded]);
 
   if (!loaded) {
     return null;
