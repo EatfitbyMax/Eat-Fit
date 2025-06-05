@@ -188,44 +188,7 @@ function ProgrammesScreen() {
           { text: 'Importer JSON', onPress: handleImporterProgrammes },
           { 
             text: 'Créer manuellement', 
-            onPress: () => {
-              Alert.prompt(
-                'Nouveau Programme',
-                'Nom du programme sportif :',
-                [
-                  { text: 'Annuler', style: 'cancel' },
-                  {
-                    text: 'Créer',
-                    onPress: async (nom) => {
-                      if (nom && nom.trim()) {
-                        const nouveauProgramme: Programme = {
-                          id: Date.now().toString(),
-                          nom: nom.trim(),
-                          description: `Programme sport créé le ${new Date().toLocaleDateString('fr-FR')}`,
-                          type: 'sport',
-                          duree: '30 min',
-                          dateCreation: new Date().toLocaleDateString('fr-FR')
-                        };
-
-                        const programmesMAJ = [...programmes, nouveauProgramme];
-                        setProgrammes(programmesMAJ);
-                        await sauvegarderProgrammes(programmesMAJ);
-
-                        Alert.alert(
-                          'Programme créé !',
-                          `Le programme "${nom}" a été ajouté avec succès.`
-                        );
-                      } else {
-                        Alert.alert('Erreur', 'Veuillez saisir un nom pour le programme.');
-                      }
-                    }
-                  }
-                ],
-                'plain-text',
-                '',
-                'default'
-              );
-            }
+            onPress: () => router.push('/creer-programme-sport')
           }
         ]
       );
