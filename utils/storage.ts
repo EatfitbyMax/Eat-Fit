@@ -76,3 +76,38 @@ export class PersistentStorage {
     }
   }
 }
+
+// Fonctions utilitaires pour l'export
+export const getAllUsers = async () => {
+  return await PersistentStorage.getUsers();
+};
+
+export const getAllProgrammes = async () => {
+  return await PersistentStorage.getProgrammes();
+};
+
+export const saveUser = async (user: any) => {
+  const users = await PersistentStorage.getUsers();
+  const existingIndex = users.findIndex(u => u.id === user.id || u.email === user.email);
+  
+  if (existingIndex !== -1) {
+    users[existingIndex] = user;
+  } else {
+    users.push(user);
+  }
+  
+  await PersistentStorage.saveUsers(users);
+};
+
+export const saveProgramme = async (programme: any) => {
+  const programmes = await PersistentStorage.getProgrammes();
+  const existingIndex = programmes.findIndex(p => p.id === programme.id);
+  
+  if (existingIndex !== -1) {
+    programmes[existingIndex] = programme;
+  } else {
+    programmes.push(programme);
+  }
+  
+  await PersistentStorage.saveProgrammes(programmes);
+};

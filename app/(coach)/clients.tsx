@@ -2,8 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { getAllUsers } from '@/utils/storage';
-import { getAllProgrammes } from '@/utils/storage';
+import { getAllUsers, getAllProgrammes } from '@/utils/storage';
 
 interface Client {
   id: string;
@@ -29,8 +28,20 @@ export default function ClientsScreen() {
   const [programmes, setProgrammes] = useState<Programme[]>([]);
 
   useEffect(() => {
-    chargerClients();
-    chargerProgrammes();
+    const initData = async () => {
+      try {
+        await Promise.all([chargerClients(), chargerProgrammes()]);
+      } catch (error) {
+        console.error('Erreur lors de l\'initialisation des données:', error);
+        Alert.alert(
+          'Erreur',
+          'Impossible de charger les données. Vérifiez votre connexion.',
+          [{ text: 'OK' }]
+        );
+      }
+    };
+    
+    initData();
   }, []);
 
   const chargerClients = async () => {
@@ -226,6 +237,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#21262D',
     marginBottom: 16,
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
   },
   clientHeader: {
     flexDirection: 'row',
