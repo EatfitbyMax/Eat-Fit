@@ -4,13 +4,13 @@ import {
   View, 
   Text, 
   StyleSheet, 
-  ScrollView, 
   TouchableOpacity, 
   SafeAreaView, 
   TextInput, 
   FlatList,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Alert
 } from 'react-native';
 import { getClients } from '../../utils/storage';
 
@@ -32,9 +32,9 @@ export default function MessagesScreen() {
   const [selectedTab, setSelectedTab] = useState<'direct' | 'annonces'>('direct');
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
   const [messageText, setMessageText] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
+  const [showClientList, setShowClientList] = useState(true);
 
   useEffect(() => {
     loadClients();
@@ -53,12 +53,17 @@ export default function MessagesScreen() {
     return nom.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const filteredClients = clients.filter(client =>
-    client.nom.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    client.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   const selectedClient = clients.find(c => c.id === selectedClientId);
+
+  const selectClient = (clientId: string) => {
+    setSelectedClientId(clientId);
+    setShowClientList(false);
+  };
+
+  const backToClientList = () => {
+    setShowClientList(true);
+    setSelectedClientId(null);
+  };
 
   const sendMessage = () => {
     if (messageText.trim() && selectedClientId) {
@@ -75,22 +80,20 @@ export default function MessagesScreen() {
 
   const renderClientItem = ({ item }: { item: Client }) => (
     <TouchableOpacity
-      style={[
-        styles.clientItem,
-        selectedClientId === item.id && styles.clientItemSelected
-      ]}
-      onPress={() => setSelectedClientId(item.id)}
+      style={styles.clientCard}
+      onPress={() => selectClient(item.id)}
     >
       <View style={styles.clientAvatar}>
         <Text style={styles.clientAvatarText}>{getInitials(item.nom)}</Text>
       </View>
       <View style={styles.clientInfo}>
-        <Text style={styles.clientName} numberOfLines={1}>{item.nom}</Text>
-        <Text style={styles.clientEmail} numberOfLines={1}>{item.email}</Text>
+        <Text style={styles.clientName}>{item.nom}</Text>
+        <Text style={styles.clientEmail}>{item.email}</Text>
+        <Text style={styles.lastMessage}>Appuyez pour démarrer la conversation</Text>
       </View>
-      {selectedClientId === item.id && (
-        <View style={styles.activeIndicator} />
-      )}
+      <View style={styles.clientArrow}>
+        <Text style={styles.arrowText}>›</Text>
+      </View>
     </TouchableOpacity>
   );
 
@@ -144,91 +147,90 @@ export default function MessagesScreen() {
         </View>
 
         {selectedTab === 'direct' ? (
-          <View style={styles.mainContent}>
-            {/* Left Panel - Clients List */}
-            <View style={styles.leftPanel}>
-              <View style={styles.panelHeader}>
-                <Text style={styles.panelTitle}>Clients</Text>
-                <Text style={styles.panelSubtitle}>Sélectionnez un client pour discuter</Text>
-              </View>
-              
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Rechercher un client..."
-                placeholderTextColor="#8B949E"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-              />
-              
-              <FlatList
-                data={filteredClients}
-                renderItem={renderClientItem}
-                keyExtractor={(item) => item.id}
-                showsVerticalScrollIndicator={false}
-                style={styles.clientsList}
-              />
-            </View>
-
-            {/* Right Panel - Chat */}
-            <View style={styles.rightPanel}>
-              {selectedClient ? (
-                <>
-                  {/* Chat Header */}
-                  <View style={styles.chatHeader}>
-                    <View style={styles.chatHeaderClient}>
-                      <View style={styles.chatHeaderAvatar}>
-                        <Text style={styles.chatHeaderAvatarText}>
-                          {getInitials(selectedClient.nom)}
-                        </Text>
-                      </View>
-                      <View>
-                        <Text style={styles.chatHeaderName}>{selectedClient.nom}</Text>
-                        <Text style={styles.chatHeaderStatus}>En ligne</Text>
-                      </View>
-                    </View>
-                  </View>
-
-                  {/* Messages */}
-                  <FlatList
-                    data={messages}
-                    renderItem={renderMessage}
-                    keyExtractor={(item) => item.id}
-                    style={styles.messagesList}
-                    showsVerticalScrollIndicator={false}
-                  />
-
-                  {/* Message Input */}
-                  <View style={styles.messageInputContainer}>
-                    <TextInput
-                      style={styles.messageInput}
-                      placeholder="Tapez votre message..."
-                      placeholderTextColor="#8B949E"
-                      value={messageText}
-                      onChangeText={setMessageText}
-                      multiline
-                      maxLength={500}
-                    />
-                    <TouchableOpacity 
-                      style={[styles.sendButton, !messageText.trim() && styles.sendButtonDisabled]}
-                      onPress={sendMessage}
-                      disabled={!messageText.trim()}
-                    >
-                      <Text style={styles.sendButtonText}>➤</Text>
-                    </TouchableOpacity>
-                  </View>
-                </>
-              ) : (
-                <View style={styles.emptyChat}>
-                  <View style={styles.emptyChatIcon}>
-                    <Text style={styles.emptyChatIconText}>💬</Text>
-                  </View>
-                  <Text style={styles.emptyChatTitle}>Sélectionnez un client</Text>
-                  <Text style={styles.emptyChatSubtitle}>
-                    Choisissez un client dans la liste pour commencer une conversation
+          <View style={styles.messagesContainer}>
+            {showClientList ? (
+              /* Liste des clients */
+              <>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>Vos clients</Text>
+                  <Text style={styles.sectionSubtitle}>
+                    Sélectionnez un client pour commencer une conversation
                   </Text>
                 </View>
-              )}
-            </View>
+                
+                <FlatList
+                  data={clients}
+                  renderItem={renderClientItem}
+                  keyExtractor={(item) => item.id}
+                  showsVerticalScrollIndicator={false}
+                  style={styles.clientsList}
+                  contentContainerStyle={styles.clientsListContent}
+                />
+              </>
+            ) : (
+              /* Interface de chat */
+              <>
+                {/* Header du chat */}
+                <View style={styles.chatHeader}>
+                  <TouchableOpacity style={styles.backButton} onPress={backToClientList}>
+                    <Text style={styles.backButtonText}>‹ Retour</Text>
+                  </TouchableOpacity>
+                  <View style={styles.chatHeaderClient}>
+                    <View style={styles.chatHeaderAvatar}>
+                      <Text style={styles.chatHeaderAvatarText}>
+                        {selectedClient ? getInitials(selectedClient.nom) : ''}
+                      </Text>
+                    </View>
+                    <View>
+                      <Text style={styles.chatHeaderName}>
+                        {selectedClient?.nom || 'Client'}
+                      </Text>
+                      <Text style={styles.chatHeaderStatus}>En ligne</Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Messages */}
+                <FlatList
+                  data={messages}
+                  renderItem={renderMessage}
+                  keyExtractor={(item) => item.id}
+                  style={styles.messagesList}
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={styles.messagesListContent}
+                  ListEmptyComponent={
+                    <View style={styles.emptyMessages}>
+                      <Text style={styles.emptyMessagesText}>
+                        Aucun message dans cette conversation.
+                      </Text>
+                      <Text style={styles.emptyMessagesSubtext}>
+                        Envoyez un message pour commencer !
+                      </Text>
+                    </View>
+                  }
+                />
+
+                {/* Input de message */}
+                <View style={styles.messageInputContainer}>
+                  <TextInput
+                    style={styles.messageInput}
+                    placeholder="Tapez votre message..."
+                    placeholderTextColor="#8B949E"
+                    value={messageText}
+                    onChangeText={setMessageText}
+                    multiline
+                    maxLength={500}
+                  />
+                  <TouchableOpacity 
+                    style={[styles.sendButton, !messageText.trim() && styles.sendButtonDisabled]}
+                    onPress={sendMessage}
+                    disabled={!messageText.trim()}
+                  >
+                    <Text style={styles.sendButtonText}>➤</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
           </View>
         ) : (
           <View style={styles.announcesContainer}>
@@ -287,115 +289,111 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
   },
-  mainContent: {
+  messagesContainer: {
     flex: 1,
-    flexDirection: 'row',
-    marginHorizontal: 20,
-    marginBottom: 20,
-  },
-  leftPanel: {
-    width: '38%',
+    margin: 20,
     backgroundColor: '#161B22',
     borderRadius: 12,
-    padding: 16,
-    marginRight: 15,
+    overflow: 'hidden',
   },
-  panelHeader: {
-    marginBottom: 16,
+  sectionHeader: {
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#21262D',
   },
-  panelTitle: {
-    fontSize: 16,
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 4,
   },
-  panelSubtitle: {
-    fontSize: 12,
-    color: '#8B949E',
-    lineHeight: 16,
-  },
-  searchInput: {
-    backgroundColor: '#0D1117',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+  sectionSubtitle: {
     fontSize: 14,
-    color: '#FFFFFF',
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#21262D',
+    color: '#8B949E',
+    lineHeight: 20,
   },
   clientsList: {
     flex: 1,
   },
-  clientItem: {
+  clientsListContent: {
+    padding: 20,
+  },
+  clientCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    marginBottom: 8,
+    padding: 16,
     backgroundColor: '#21262D',
-    position: 'relative',
-  },
-  clientItemSelected: {
-    backgroundColor: '#F5A623',
+    borderRadius: 12,
+    marginBottom: 12,
   },
   clientAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#0D1117',
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#F5A623',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: 16,
   },
   clientAvatarText: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#F5A623',
+    color: '#000000',
   },
   clientInfo: {
     flex: 1,
   },
   clientName: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   clientEmail: {
-    fontSize: 11,
+    fontSize: 14,
     color: '#8B949E',
+    marginBottom: 4,
   },
-  activeIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#0D1117',
-    position: 'absolute',
-    right: 12,
+  lastMessage: {
+    fontSize: 12,
+    color: '#8B949E',
+    fontStyle: 'italic',
   },
-  rightPanel: {
-    flex: 1,
-    backgroundColor: '#161B22',
-    borderRadius: 12,
-    overflow: 'hidden',
+  clientArrow: {
+    marginLeft: 12,
+  },
+  arrowText: {
+    fontSize: 20,
+    color: '#F5A623',
+    fontWeight: 'bold',
   },
   chatHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 16,
+    backgroundColor: '#1C2128',
     borderBottomWidth: 1,
     borderBottomColor: '#21262D',
-    backgroundColor: '#1C2128',
+  },
+  backButton: {
+    marginRight: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: '#F5A623',
+    fontWeight: '600',
   },
   chatHeaderClient: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
   chatHeaderAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: '#F5A623',
     alignItems: 'center',
     justifyContent: 'center',
@@ -418,7 +416,10 @@ const styles = StyleSheet.create({
   },
   messagesList: {
     flex: 1,
+  },
+  messagesListContent: {
     padding: 16,
+    flexGrow: 1,
   },
   messageContainer: {
     marginBottom: 12,
@@ -451,6 +452,23 @@ const styles = StyleSheet.create({
     color: '#8B949E',
     marginTop: 4,
     textAlign: 'right',
+  },
+  emptyMessages: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  emptyMessagesText: {
+    fontSize: 16,
+    color: '#8B949E',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  emptyMessagesSubtext: {
+    fontSize: 14,
+    color: '#8B949E',
+    textAlign: 'center',
   },
   messageInputContainer: {
     flexDirection: 'row',
@@ -488,37 +506,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#000000',
     fontWeight: 'bold',
-  },
-  emptyChat: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 40,
-  },
-  emptyChatIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#21262D',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-  },
-  emptyChatIconText: {
-    fontSize: 32,
-  },
-  emptyChatTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  emptyChatSubtitle: {
-    fontSize: 14,
-    color: '#8B949E',
-    textAlign: 'center',
-    lineHeight: 20,
   },
   announcesContainer: {
     flex: 1,
