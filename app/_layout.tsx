@@ -15,7 +15,6 @@ if (typeof window !== 'undefined' && window.addEventListener) {
   window.addEventListener('unhandledrejection', handleUnhandledRejection);
 }
 
-
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack, useRouter } from 'expo-router';
@@ -39,6 +38,7 @@ export default function RootLayout() {
 
   const [showSplash, setShowSplash] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(false);
 
   useEffect(() => {
     if (loaded) {
@@ -47,28 +47,37 @@ export default function RootLayout() {
   }, [loaded]);
 
   useEffect(() => {
-    if (loaded && !authChecked) {
+    if (loaded && !authChecked && !isInitializing) {
       handleAuthCheck();
     }
-  }, [loaded, authChecked]);
+  }, [loaded, authChecked, isInitializing]);
 
   const handleAuthCheck = async () => {
+    if (isInitializing) return;
+    
+    setIsInitializing(true);
     try {
-      // Délai pour l'animation du splash screen
-      setTimeout(async () => {
-        console.log('Initialisation du compte admin...');
-        await initializeAdminAccount();
+      console.log('=== DÉBUT INITIALISATION ===');
+      
+      // Initialisation rapide sans délai inutile
+      console.log('Initialisation du compte admin...');
+      await initializeAdminAccount();
 
-        console.log('Migration des données existantes...');
-        await migrateExistingData();
+      console.log('Migration des données existantes...');
+      await migrateExistingData();
 
-        console.log('Vérification de l\'utilisateur connecté...');
-        const user = await getCurrentUser();
+      console.log('Vérification de l\'utilisateur connecté...');
+      const user = await getCurrentUser();
 
-        setAuthChecked(true);
+      console.log('=== FIN INITIALISATION ===');
+      
+      setAuthChecked(true);
+      
+      // Attendre un court délai pour l'animation du splash
+      setTimeout(() => {
         setShowSplash(false);
-
-        // Petit délai pour que l'animation se termine
+        
+        // Navigation après avoir caché le splash
         setTimeout(() => {
           if (user) {
             console.log('Redirection utilisateur connecté:', user.userType);
@@ -81,8 +90,8 @@ export default function RootLayout() {
             console.log('Aucun utilisateur, redirection vers login');
             router.replace('/auth/login');
           }
-        }, 300);
-      }, 3000); // 3 secondes d'animation du splash
+        }, 100);
+      }, 2000); // Réduire le délai du splash à 2 secondes
 
     } catch (error) {
       console.error('Erreur vérification auth:', error);
@@ -90,7 +99,9 @@ export default function RootLayout() {
       setShowSplash(false);
       setTimeout(() => {
         router.replace('/auth/login');
-      }, 300);
+      }, 100);
+    } finally {
+      setIsInitializing(false);
     }
   };
 
