@@ -237,7 +237,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#21262D',
     marginBottom: 16,
-    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
+    elevation: 2, // Pour Android
+    shadowColor: '#000', // Pour iOS
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   clientHeader: {
     flexDirection: 'row',
