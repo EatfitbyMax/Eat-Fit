@@ -66,7 +66,7 @@ export async function getCurrentUser(): Promise<User | null> {
 
 export async function login(email: string, password: string): Promise<User | null> {
   try {
-    // Essayer d'abord Object Storage
+    // Récupérer les utilisateurs depuis le serveur VPS ou local
     let users = await PersistentStorage.getUsers();
     
     if (users.length === 0) {
@@ -78,9 +78,9 @@ export async function login(email: string, password: string): Promise<User | nul
         return await login(email, password);
       }
       users = JSON.parse(usersData);
-      // Migrer vers Object Storage
+      // Migrer vers le serveur VPS
       await PersistentStorage.saveUsers(users);
-      console.log('Utilisateurs migrés vers Object Storage');
+      console.log('Utilisateurs migrés vers le serveur VPS');
     }
     console.log('Utilisateurs disponibles:', users.map((u: any) => ({ email: u.email, userType: u.userType })));
     
