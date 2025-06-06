@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Alert } from 'react-native';
 
@@ -24,6 +23,7 @@ import { useEffect, useState } from 'react';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { initializeAdminAccount, getCurrentUser } from '@/utils/auth';
 import { migrateExistingData } from '@/utils/migration';
+import { PersistentStorage } from '../utils/storage';
 import SplashScreenComponent from '@/components/SplashScreen';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -54,12 +54,15 @@ export default function RootLayout() {
 
   const handleAuthCheck = async () => {
     if (isInitializing) return;
-    
+
     setIsInitializing(true);
     try {
       console.log('=== DÉBUT INITIALISATION ===');
-      
+
       // Initialisation rapide sans délai inutile
+      console.log('Synchronisation avec le serveur VPS...');
+      await PersistentStorage.syncData();
+
       console.log('Initialisation du compte admin...');
       await initializeAdminAccount();
 
@@ -70,13 +73,13 @@ export default function RootLayout() {
       const user = await getCurrentUser();
 
       console.log('=== FIN INITIALISATION ===');
-      
+
       setAuthChecked(true);
-      
+
       // Attendre un court délai pour l'animation du splash
       setTimeout(() => {
         setShowSplash(false);
-        
+
         // Navigation après avoir caché le splash
         setTimeout(() => {
           if (user) {
