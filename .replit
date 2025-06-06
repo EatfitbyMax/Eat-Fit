@@ -54,3 +54,12 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npx eas build --platform android --profile preview"
+
+[[workflows.workflow]]
+name = "Start Server"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd server && npm install && npm start"
