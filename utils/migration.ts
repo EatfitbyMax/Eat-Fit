@@ -47,3 +47,6 @@ export class DataMigration {
     }
   }
 }
+
+// Exporter la fonction pour l'utiliser dans _layout.tsx
+export const migrateExistingData = DataMigration.migrateToNewStorage;
