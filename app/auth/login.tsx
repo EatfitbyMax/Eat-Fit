@@ -153,5 +153,4 @@ const styles = StyleSheet.create({
     color: '#58A6FF',
     fontSize: 14,
   },
-  },
 });
