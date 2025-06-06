@@ -85,23 +85,11 @@ export default function LoginScreen() {
             </Text>
           </TouchableOpacity>
 
-          <View style={styles.demoAccounts}>
-            <Text style={styles.demoTitle}>Compte administrateur :</Text>
-            <Text style={styles.demoText}>Admin: eatfitbymax@gmail.com / MaxMax200303!</Text>
-          </View>
-          
           <TouchableOpacity 
             style={styles.linkButton}
             onPress={() => router.push('/auth/register')}
           >
             <Text style={styles.linkText}>Pas encore de compte ? S'inscrire</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.debugButton}
-            onPress={handleReset}
-          >
-            <Text style={styles.debugText}>🔧 Reset Debug</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -158,24 +146,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  demoAccounts: {
-    backgroundColor: '#161B22',
-    padding: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#21262D',
-  },
-  demoTitle: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  demoText: {
-    color: '#8B949E',
-    fontSize: 12,
-    marginBottom: 4,
-  },
   linkButton: {
     alignItems: 'center',
   },
@@ -183,13 +153,5 @@ const styles = StyleSheet.create({
     color: '#58A6FF',
     fontSize: 14,
   },
-  debugButton: {
-    alignItems: 'center',
-    marginTop: 20,
-    padding: 10,
-  },
-  debugText: {
-    color: '#666',
-    fontSize: 12,
   },
 });
