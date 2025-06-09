@@ -9,6 +9,7 @@ import Animated, {
   withSequence,
   withDelay,
 } from 'react-native-reanimated';
+import AnimatedCrown from '@/components/AnimatedCrown';
 
 const { width, height } = Dimensions.get('window');
 
@@ -57,7 +58,7 @@ export default function LaunchScreen() {
     <View style={styles.container}>
       {/* Animated Crown Logo */}
       <Animated.View style={[styles.logoContainer, crownAnimatedStyle]}>
-        <Text style={styles.crownLogo}>👑</Text>
+        <AnimatedCrown />
         <Text style={styles.appName}>Eat Fit</Text>
       </Animated.View>
 
@@ -104,10 +105,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 60,
   },
-  crownLogo: {
-    fontSize: 80,
-    marginBottom: 20,
-  },
+  
   appName: {
     fontSize: 32,
     fontWeight: 'bold',
