@@ -1,17 +1,25 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useRegistration } from '@/context/RegistrationContext';
 
 export default function RegisterProfileScreen() {
   const router = useRouter();
-  const [gender, setGender] = useState<'Homme' | 'Femme' | null>(null);
-  const [age, setAge] = useState('');
-  const [height, setHeight] = useState('');
-  const [weight, setWeight] = useState('');
+  const { registrationData, updateRegistrationData } = useRegistration();
+  const [gender, setGender] = useState<'Homme' | 'Femme' | null>(registrationData.gender);
+  const [age, setAge] = useState(registrationData.age);
+  const [height, setHeight] = useState(registrationData.height);
+  const [weight, setWeight] = useState(registrationData.weight);
 
   const handleNext = () => {
     if (gender && age.trim() && height.trim() && weight.trim()) {
+      updateRegistrationData({
+        gender,
+        age: age.trim(),
+        height: height.trim(),
+        weight: weight.trim(),
+      });
       router.push('/auth/register-activity');
     }
   };

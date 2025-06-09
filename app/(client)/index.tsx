@@ -88,7 +88,7 @@ export default function AccueilScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.greeting}>
-            Bonjour, {user?.firstName || 'Utilisateur'}
+            Bonjour, {user?.firstName || user?.name || 'Utilisateur'}
           </Text>
           <Text style={styles.subtitle}>
             Prêt à atteindre vos objectifs nutritionnels ?

@@ -1,29 +1,49 @@
+
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { register } from '@/utils/auth';
+import { useRegistration } from '@/context/RegistrationContext';
 
 export default function RegisterAccountScreen() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const { registrationData, updateRegistrationData, resetRegistrationData } = useRegistration();
+  const [email, setEmail] = useState(registrationData.email);
+  const [password, setPassword] = useState(registrationData.password);
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const handleFinish = async () => {
     if (email.trim() && password.trim() && password === confirmPassword) {
       try {
-        // Utiliser la fonction register du système d'auth
-        const { register } = require('@/utils/auth');
+        // Mettre à jour les données d'inscription avec email/password
+        updateRegistrationData({
+          email: email.trim().toLowerCase(),
+          password: password,
+        });
+
+        // Créer l'objet utilisateur complet avec toutes les informations
         const userData = {
           email: email.trim().toLowerCase(),
           password: password,
-          name: 'Nouveau Client', // Nom par défaut, pourra être modifié plus tard
+          name: `${registrationData.firstName} ${registrationData.lastName}`,
+          firstName: registrationData.firstName,
+          lastName: registrationData.lastName,
+          goals: registrationData.goals,
+          gender: registrationData.gender,
+          age: parseInt(registrationData.age),
+          height: parseInt(registrationData.height),
+          weight: parseInt(registrationData.weight),
+          activityLevel: registrationData.activityLevel,
+          userType: 'client' as const,
         };
 
-        // Créer le compte avec la fonction register
+        // Créer le compte avec toutes les informations
         const user = await register(userData);
         
         if (user) {
+          // Réinitialiser les données d'inscription
+          resetRegistrationData();
+          
           Alert.alert(
             'Compte créé !',
             'Votre compte client a été créé avec succès.',
@@ -122,7 +142,7 @@ export default function RegisterAccountScreen() {
           onPress={handleFinish}
           disabled={!email.trim() || !password.trim() || password !== confirmPassword}
         >
-          <Text style={styles.nextButtonText}>Suivant</Text>
+          <Text style={styles.nextButtonText}>Créer le compte</Text>
         </TouchableOpacity>
       </View>
     </View>
