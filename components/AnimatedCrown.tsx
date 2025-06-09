@@ -1,91 +1,113 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View } from 'react-native';
-import Svg, { Line, Rect } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 import Animated, {
   useSharedValue,
   useAnimatedProps,
   withTiming,
-  withDelay,
+  withSequence,
+  Easing,
 } from 'react-native-reanimated';
 
-const AnimatedLine = Animated.createAnimatedComponent(Line);
-const AnimatedRect = Animated.createAnimatedComponent(Rect);
+const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 export default function AnimatedCrown() {
   const progress = useSharedValue(0);
 
-  React.useEffect(() => {
-    progress.value = withTiming(1, { duration: 2000 });
+  useEffect(() => {
+    progress.value = withSequence(
+      withTiming(0, { duration: 500 }),
+      withTiming(1, { 
+        duration: 2500,
+        easing: Easing.out(Easing.cubic)
+      })
+    );
   }, []);
 
-  // Base rectangulaire de la couronne
-  const baseAnimatedProps = useAnimatedProps(() => ({
-    strokeDasharray: progress.value * 200,
-    strokeDashoffset: (1 - progress.value) * 200,
-  }));
-
-  // Lignes principales de la couronne
-  const lines = [
+  // Chemins SVG pour reproduire votre couronne
+  const paths = [
+    // Base rectangulaire
+    {
+      d: "M20 85 L180 85 L180 95 L20 95 Z",
+      length: 320,
+      delay: 0
+    },
     // Triangle central (pic du milieu)
-    { x1: 50, y1: 20, x2: 35, y2: 50, delay: 200 },
-    { x1: 50, y1: 20, x2: 65, y2: 50, delay: 300 },
-    
+    {
+      d: "M100 25 L85 75 L115 75 Z",
+      length: 150,
+      delay: 200
+    },
     // Triangle gauche
-    { x1: 35, y1: 50, x2: 20, y2: 35, delay: 400 },
-    { x1: 20, y1: 35, x2: 10, y2: 50, delay: 500 },
-    { x1: 10, y1: 50, x2: 35, y2: 50, delay: 600 },
-    
+    {
+      d: "M50 45 L35 75 L65 75 Z",
+      length: 120,
+      delay: 400
+    },
     // Triangle droit
-    { x1: 65, y1: 50, x2: 80, y2: 35, delay: 700 },
-    { x1: 80, y1: 35, x2: 90, y2: 50, delay: 800 },
-    { x1: 90, y1: 50, x2: 65, y2: 50, delay: 900 },
-    
-    // Lignes croisées internes
-    { x1: 35, y1: 50, x2: 65, y2: 50, delay: 1000 },
-    { x1: 20, y1: 35, x2: 50, y2: 40, delay: 1100 },
-    { x1: 50, y1: 40, x2: 80, y2: 35, delay: 1200 },
-    { x1: 10, y1: 50, x2: 50, y2: 40, delay: 1300 },
-    { x1: 50, y1: 40, x2: 90, y2: 50, delay: 1400 },
+    {
+      d: "M150 45 L135 75 L165 75 Z",
+      length: 120,
+      delay: 600
+    },
+    // Lignes de croisement internes - gauche vers centre
+    {
+      d: "M35 75 L100 60",
+      length: 80,
+      delay: 800
+    },
+    // Lignes de croisement internes - centre vers droite
+    {
+      d: "M100 60 L165 75",
+      length: 80,
+      delay: 900
+    },
+    // Lignes de croisement internes - droite vers centre
+    {
+      d: "M165 75 L100 60",
+      length: 80,
+      delay: 1000
+    },
+    // Lignes de croisement internes - centre vers gauche
+    {
+      d: "M100 60 L35 75",
+      length: 80,
+      delay: 1100
+    },
+    // Ligne horizontale connectant les bases
+    {
+      d: "M35 75 L165 75",
+      length: 130,
+      delay: 1200
+    }
   ];
 
   return (
     <View style={{ alignItems: 'center' }}>
-      <Svg width="120" height="80" viewBox="0 0 100 70">
-        {/* Base rectangulaire */}
-        <AnimatedRect
-          x="10"
-          y="50"
-          width="80"
-          height="8"
-          fill="none"
-          stroke="white"
-          strokeWidth="2"
-          animatedProps={baseAnimatedProps}
-        />
-        
-        {/* Lignes de la couronne avec animation séquentielle */}
-        {lines.map((line, index) => {
-          const lineAnimatedProps = useAnimatedProps(() => {
-            const delayedProgress = Math.max(0, Math.min(1, (progress.value * 2000 - line.delay) / 300));
+      <Svg width="120" height="80" viewBox="0 0 200 120">
+        {paths.map((path, index) => {
+          const animatedProps = useAnimatedProps(() => {
+            const adjustedProgress = Math.max(0, Math.min(1, 
+              (progress.value * 2500 - path.delay) / 500
+            ));
+            
             return {
-              strokeDasharray: delayedProgress * 100,
-              strokeDashoffset: (1 - delayedProgress) * 100,
+              strokeDasharray: path.length,
+              strokeDashoffset: path.length * (1 - adjustedProgress),
             };
           });
 
           return (
-            <AnimatedLine
+            <AnimatedPath
               key={index}
-              x1={line.x1}
-              y1={line.y1}
-              x2={line.x2}
-              y2={line.y2}
+              d={path.d}
+              fill="none"
               stroke="white"
-              strokeWidth="2"
+              strokeWidth="3"
               strokeLinecap="round"
               strokeLinejoin="round"
-              animatedProps={lineAnimatedProps}
+              animatedProps={animatedProps}
             />
           );
         })}
