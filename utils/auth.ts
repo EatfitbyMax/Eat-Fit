@@ -74,22 +74,9 @@ export async function getCurrentUser(): Promise<User | null> {
 
 export async function login(email: string, password: string): Promise<User | null> {
   try {
-    // Récupérer les utilisateurs depuis le serveur VPS ou local
-    let users = await PersistentStorage.getUsers();
+    // Récupérer les utilisateurs depuis le serveur VPS uniquement
+    const users = await PersistentStorage.getUsers();
     
-    if (users.length === 0) {
-      // Fallback: chercher dans AsyncStorage et migrer
-      const usersData = await AsyncStorage.getItem(USERS_KEY);
-      if (!usersData) {
-        console.log('Aucun utilisateur enregistré, initialisation...');
-        await initializeAdminAccount();
-        return await login(email, password);
-      }
-      users = JSON.parse(usersData);
-      // Migrer vers le serveur VPS
-      await PersistentStorage.saveUsers(users);
-      console.log('Utilisateurs migrés vers le serveur VPS');
-    }
     console.log('Utilisateurs disponibles:', users.map((u: any) => ({ email: u.email, userType: u.userType })));
     
     // Normaliser l'email (minuscules et trim)
@@ -99,22 +86,20 @@ export async function login(email: string, password: string): Promise<User | nul
     );
     
     console.log('Recherche utilisateur avec email:', normalizedEmail);
-    console.log('Mot de passe fourni:', password);
     
     if (user) {
-      // Enlever le mot de passe avant de sauvegarder
+      // Enlever le mot de passe avant de sauvegarder dans la session locale
       const { password: _, ...userWithoutPassword } = user;
       await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userWithoutPassword));
       console.log('Connexion réussie pour:', user.email, 'Type:', user.userType);
       return userWithoutPassword;
     } else {
       console.log('Identifiants incorrects pour:', normalizedEmail);
-      console.log('Utilisateurs dans la base:', users.map((u: any) => u.email));
       return null;
     }
   } catch (error) {
     console.error('Erreur connexion:', error);
-    return null;
+    throw error;
   }
 }
 
@@ -142,8 +127,8 @@ export async function register(userData: {
   userType?: 'client' | 'coach';
 }): Promise<User | null> {
   try {
-    const usersData = await AsyncStorage.getItem(USERS_KEY);
-    const users = usersData ? JSON.parse(usersData) : [];
+    // Récupérer les utilisateurs depuis le serveur VPS uniquement
+    const users = await PersistentStorage.getUsers();
     
     // Vérifier si l'email existe déjà
     const existingUser = users.find((u: any) => u.email === userData.email);
@@ -171,16 +156,11 @@ export async function register(userData: {
     };
 
     users.push(newUser);
-    await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
+    
+    // Sauvegarder uniquement sur le serveur VPS
+    await PersistentStorage.saveUsers(users);
 
-    // Sauvegarder aussi sur le serveur VPS si disponible
-    try {
-      await PersistentStorage.saveUsers(users);
-    } catch (error) {
-      console.log('Sauvegarde VPS indisponible, utilisateur sauvé localement');
-    }
-
-    // Connecter automatiquement l'utilisateur
+    // Connecter automatiquement l'utilisateur (session locale uniquement)
     const { password: _, ...userWithoutPassword } = newUser;
     await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userWithoutPassword));
     
@@ -188,6 +168,6 @@ export async function register(userData: {
     return userWithoutPassword;
   } catch (error) {
     console.error('Erreur inscription:', error);
-    return null;
+    throw error;
   }
 }
