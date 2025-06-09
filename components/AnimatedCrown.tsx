@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
@@ -15,16 +16,44 @@ export default function AnimatedCrown() {
 
   useEffect(() => {
     progress.value = withTiming(1, { 
-      duration: 3000,
+      duration: 2500,
       easing: Easing.out(Easing.cubic)
     });
   }, []);
 
-  // Chemin unique qui dessine toute la couronne d'un seul trait
-  const crownPath = "M20 100 L20 90 L50 30 L100 10 L150 30 L180 90 L180 100 M20 90 L80 90 M70 90 L130 90 M120 90 L180 90 M50 30 L130 90 M150 30 L70 90 M100 10 L20 90 M100 10 L180 90";
+  // Reproduction exacte de votre logo : couronne géométrique en forme de diamant
+  // Tracé continu qui dessine toute la couronne d'un seul trait
+  const crownPath = `
+    M 40 80 
+    L 40 70 
+    L 60 40 
+    L 80 20 
+    L 100 10 
+    L 120 20 
+    L 140 40 
+    L 160 70 
+    L 160 80 
+    M 40 70 
+    L 80 50 
+    L 120 20 
+    M 60 40 
+    L 100 60 
+    L 140 40 
+    M 80 20 
+    L 80 50 
+    L 100 60 
+    L 120 50 
+    L 120 20 
+    M 80 50 
+    L 60 70 
+    M 120 50 
+    L 140 70 
+    M 100 60 
+    L 100 80
+  `;
 
-  // Calculer la longueur approximative du chemin
-  const pathLength = 1200;
+  // Longueur approximative du chemin pour l'animation
+  const pathLength = 800;
 
   const animatedProps = useAnimatedProps(() => {
     return {
@@ -35,7 +64,7 @@ export default function AnimatedCrown() {
 
   return (
     <View style={{ alignItems: 'center' }}>
-      <Svg width="120" height="80" viewBox="0 0 200 120">
+      <Svg width="120" height="70" viewBox="0 0 200 90">
         <AnimatedPath
           d={crownPath}
           fill="none"
