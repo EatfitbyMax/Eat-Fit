@@ -6,7 +6,6 @@ import Animated, {
   useSharedValue,
   useAnimatedProps,
   withTiming,
-  withSequence,
   withDelay,
   Easing,
 } from 'react-native-reanimated';
@@ -17,78 +16,68 @@ export default function AnimatedCrown() {
   const progress = useSharedValue(0);
 
   useEffect(() => {
-    progress.value = withSequence(
-      withTiming(0, { duration: 300 }),
-      withTiming(1, { 
-        duration: 2200,
-        easing: Easing.out(Easing.cubic)
-      })
-    );
+    progress.value = withTiming(1, { 
+      duration: 2500,
+      easing: Easing.out(Easing.cubic)
+    });
   }, []);
 
-  // Chemins SVG pour reproduire exactement votre logo EatFit
+  // Reproduction exacte de votre logo EatFit
   const paths = [
-    // Base rectangulaire de la couronne
+    // 1. Base rectangulaire (la barre du bas)
     {
-      d: "M30 85 L170 85 L170 95 L30 95 Z",
-      length: 300,
+      d: "M20 90 L180 90 L180 100 L20 100 Z",
+      length: 340,
       delay: 0
     },
     
-    // Triangle central (pic du milieu) - le plus grand
+    // 2. Triangle gauche (contour)
     {
-      d: "M100 20 L80 75 L120 75 Z",
+      d: "M50 30 L20 90 L80 90 Z",
       length: 180,
       delay: 300
     },
     
-    // Triangle gauche
+    // 3. Triangle central (le plus haut)
     {
-      d: "M60 40 L45 75 L75 75 Z", 
-      length: 140,
+      d: "M100 10 L70 90 L130 90 Z", 
+      length: 200,
       delay: 600
     },
     
-    // Triangle droit
+    // 4. Triangle droit (contour)
     {
-      d: "M140 40 L125 75 L155 75 Z",
-      length: 140,
+      d: "M150 30 L120 90 L180 90 Z",
+      length: 180,
       delay: 900
     },
     
-    // Lignes de croisement internes - première diagonale
+    // 5. Ligne de croisement gauche (du sommet gauche vers le centre)
     {
-      d: "M45 75 L120 75",
-      length: 75,
+      d: "M50 30 L130 90",
+      length: 110,
       delay: 1200
     },
     
-    // Lignes de croisement internes - deuxième diagonale
+    // 6. Ligne de croisement droite (du sommet droit vers le centre)  
     {
-      d: "M80 75 L155 75",
-      length: 75,
-      delay: 1400
+      d: "M150 30 L70 90",
+      length: 110,
+      delay: 1500
     },
     
-    // Croisement central gauche
+    // 7. Ligne de croisement central gauche (du sommet central vers la gauche)
     {
-      d: "M60 40 L100 60",
-      length: 50,
-      delay: 1600
-    },
-    
-    // Croisement central droit
-    {
-      d: "M140 40 L100 60",
-      length: 50,
+      d: "M100 10 L20 90",
+      length: 130,
       delay: 1800
     },
     
-    // Dernière ligne de finition - croisement vertical
+    // 8. Ligne de croisement central droite (du sommet central vers la droite)
     {
-      d: "M100 20 L100 75",
-      length: 55,
-      delay: 2000
+      d: "M100 10 L180 90",
+      length: 130,
+      delay: 2100
     }
   ];
 
@@ -97,8 +86,9 @@ export default function AnimatedCrown() {
       <Svg width="120" height="80" viewBox="0 0 200 120">
         {paths.map((path, index) => {
           const animatedProps = useAnimatedProps(() => {
+            // Calculer le progrès pour chaque ligne avec son délai
             const adjustedProgress = Math.max(0, Math.min(1, 
-              (progress.value * 2200 - path.delay) / 400
+              (progress.value * 2500 - path.delay) / 500
             ));
             
             return {
@@ -113,7 +103,7 @@ export default function AnimatedCrown() {
               d={path.d}
               fill="none"
               stroke="white"
-              strokeWidth="2.5"
+              strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
               animatedProps={animatedProps}
