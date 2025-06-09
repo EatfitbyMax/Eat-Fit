@@ -36,10 +36,7 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
         }).start();
       }, 3300);
 
-      // Appel de onFinish après 5 secondes au total
-      setTimeout(() => {
-        onFinish();
-      }, 5000);
+      // Le parent gère maintenant la fin du splash screen
     };
 
     startAnimation();

@@ -56,56 +56,58 @@ export default function RootLayout() {
     if (isInitializing) return;
 
     setIsInitializing(true);
-    try {
-      console.log('=== DÉBUT INITIALISATION ===');
+    
+    // D'abord lancer l'initialisation en arrière-plan
+    const initPromise = (async () => {
+      try {
+        console.log('=== DÉBUT INITIALISATION ===');
 
-      // Initialisation rapide sans délai inutile
-      console.log('Synchronisation avec le serveur VPS...');
-      await PersistentStorage.syncData();
+        // Initialisation en arrière-plan pendant que le splash s'affiche
+        console.log('Synchronisation avec le serveur VPS...');
+        await PersistentStorage.syncData();
 
-      console.log('Initialisation du compte admin...');
-      await initializeAdminAccount();
+        console.log('Initialisation du compte admin...');
+        await initializeAdminAccount();
 
-      console.log('Migration des données existantes...');
-      await migrateExistingData();
+        console.log('Migration des données existantes...');
+        await migrateExistingData();
 
-      console.log('Vérification de l\'utilisateur connecté...');
-      const user = await getCurrentUser();
+        console.log('Vérification de l\'utilisateur connecté...');
+        const user = await getCurrentUser();
 
-      console.log('=== FIN INITIALISATION ===');
+        console.log('=== FIN INITIALISATION ===');
+        return user;
+      } catch (error) {
+        console.error('Erreur vérification auth:', error);
+        return null;
+      }
+    })();
 
-      setAuthChecked(true);
+    // Attendre minimum 5 secondes pour le splash screen (durée de l'animation)
+    const [user] = await Promise.all([
+      initPromise,
+      new Promise(resolve => setTimeout(resolve, 5000))
+    ]);
 
-      // Attendre un court délai pour l'animation du splash
-      setTimeout(() => {
-        setShowSplash(false);
+    setAuthChecked(true);
+    setShowSplash(false);
 
-        // Navigation après avoir caché le splash
-        setTimeout(() => {
-          if (user) {
-            console.log('Redirection utilisateur connecté:', user.userType);
-            if (user.userType === 'coach') {
-              router.replace('/(coach)/programmes');
-            } else {
-              router.replace('/(client)');
-            }
-          } else {
-            console.log('Aucun utilisateur, redirection vers login');
-            router.replace('/auth/login');
-          }
-        }, 100);
-      }, 2000); // Réduire le délai du splash à 2 secondes
-
-    } catch (error) {
-      console.error('Erreur vérification auth:', error);
-      setAuthChecked(true);
-      setShowSplash(false);
-      setTimeout(() => {
+    // Navigation après avoir caché le splash
+    setTimeout(() => {
+      if (user) {
+        console.log('Redirection utilisateur connecté:', user.userType);
+        if (user.userType === 'coach') {
+          router.replace('/(coach)/programmes');
+        } else {
+          router.replace('/(client)');
+        }
+      } else {
+        console.log('Aucun utilisateur, redirection vers login');
         router.replace('/auth/login');
-      }, 100);
-    } finally {
-      setIsInitializing(false);
-    }
+      }
+    }, 300);
+
+    setIsInitializing(false);
   };
 
   if (!loaded) {
