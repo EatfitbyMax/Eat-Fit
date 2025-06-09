@@ -6,6 +6,14 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
+  goals?: string[];
+  gender?: 'Homme' | 'Femme';
+  age?: number;
+  height?: number;
+  weight?: number;
+  activityLevel?: string;
   userType: 'client' | 'coach';
   createdAt: string;
 }
@@ -123,6 +131,14 @@ export async function register(userData: {
   email: string;
   password: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
+  goals?: string[];
+  gender?: 'Homme' | 'Femme';
+  age?: number;
+  height?: number;
+  weight?: number;
+  activityLevel?: string;
   userType?: 'client' | 'coach';
 }): Promise<User | null> {
   try {
@@ -136,18 +152,33 @@ export async function register(userData: {
       return null;
     }
 
-    // Créer le nouvel utilisateur (toujours client sauf si spécifié autrement)
+    // Créer le nouvel utilisateur avec toutes les informations
     const newUser = {
       id: Date.now().toString(),
       email: userData.email,
       password: userData.password,
       name: userData.name,
-      userType: 'client' as const, // Forcer tous les nouveaux comptes à être clients
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      goals: userData.goals,
+      gender: userData.gender,
+      age: userData.age,
+      height: userData.height,
+      weight: userData.weight,
+      activityLevel: userData.activityLevel,
+      userType: userData.userType || 'client' as const,
       createdAt: new Date().toISOString(),
     };
 
     users.push(newUser);
     await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
+
+    // Sauvegarder aussi sur le serveur VPS si disponible
+    try {
+      await PersistentStorage.saveUsers(users);
+    } catch (error) {
+      console.log('Sauvegarde VPS indisponible, utilisateur sauvé localement');
+    }
 
     // Connecter automatiquement l'utilisateur
     const { password: _, ...userWithoutPassword } = newUser;

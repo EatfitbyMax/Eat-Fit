@@ -1,15 +1,21 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useRegistration } from '@/context/RegistrationContext';
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const { registrationData, updateRegistrationData } = useRegistration();
+  const [firstName, setFirstName] = useState(registrationData.firstName);
+  const [lastName, setLastName] = useState(registrationData.lastName);
 
   const handleNext = () => {
     if (firstName.trim() && lastName.trim()) {
+      updateRegistrationData({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+      });
       router.push('/auth/register-goals');
     }
   };

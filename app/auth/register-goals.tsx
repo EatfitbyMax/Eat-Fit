@@ -1,11 +1,13 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useRegistration } from '@/context/RegistrationContext';
 
 export default function RegisterGoalsScreen() {
   const router = useRouter();
-  const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
+  const { registrationData, updateRegistrationData } = useRegistration();
+  const [selectedGoals, setSelectedGoals] = useState<string[]>(registrationData.goals);
 
   const goals = [
     'Perdre du poids',
@@ -26,6 +28,7 @@ export default function RegisterGoalsScreen() {
 
   const handleNext = () => {
     if (selectedGoals.length > 0) {
+      updateRegistrationData({ goals: selectedGoals });
       router.push('/auth/register-profile');
     }
   };
@@ -50,21 +53,22 @@ export default function RegisterGoalsScreen() {
 
       <Text style={styles.title}>Objectifs</Text>
 
-      <View style={styles.goalsList}>
-        {goals.map((goal, index) => (
+      <View style={styles.form}>
+        {goals.map((goal) => (
           <TouchableOpacity
-            key={index}
+            key={goal}
             style={[
-              styles.goalOption,
+              styles.goalButton,
               selectedGoals.includes(goal) && styles.selectedGoal
             ]}
             onPress={() => toggleGoal(goal)}
           >
-            <Text style={styles.goalText}>{goal}</Text>
-            <View style={[
-              styles.radioButton,
-              selectedGoals.includes(goal) && styles.radioButtonSelected
-            ]} />
+            <Text style={[
+              styles.goalText,
+              selectedGoals.includes(goal) && styles.selectedGoalText
+            ]}>
+              {goal}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -131,38 +135,30 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 60,
   },
-  goalsList: {
-    flex: 1,
+  form: {
     gap: 16,
+    flex: 1,
   },
-  goalOption: {
+  goalButton: {
     backgroundColor: '#1A1A1A',
     borderRadius: 12,
-    paddingHorizontal: 20,
     paddingVertical: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    paddingHorizontal: 20,
     borderWidth: 1,
     borderColor: '#333333',
   },
   selectedGoal: {
+    backgroundColor: '#F5A623',
     borderColor: '#F5A623',
   },
   goalText: {
     fontSize: 16,
     color: '#FFFFFF',
+    textAlign: 'center',
+    fontWeight: '600',
   },
-  radioButton: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#666666',
-  },
-  radioButtonSelected: {
-    borderColor: '#F5A623',
-    backgroundColor: '#F5A623',
+  selectedGoalText: {
+    color: '#000000',
   },
   navigationContainer: {
     flexDirection: 'row',
