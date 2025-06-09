@@ -7,6 +7,7 @@ import Animated, {
   useAnimatedProps,
   withTiming,
   withSequence,
+  withDelay,
   Easing,
 } from 'react-native-reanimated';
 
@@ -17,69 +18,77 @@ export default function AnimatedCrown() {
 
   useEffect(() => {
     progress.value = withSequence(
-      withTiming(0, { duration: 500 }),
+      withTiming(0, { duration: 300 }),
       withTiming(1, { 
-        duration: 2500,
+        duration: 2200,
         easing: Easing.out(Easing.cubic)
       })
     );
   }, []);
 
-  // Chemins SVG pour reproduire votre couronne
+  // Chemins SVG pour reproduire exactement votre logo EatFit
   const paths = [
-    // Base rectangulaire
+    // Base rectangulaire de la couronne
     {
-      d: "M20 85 L180 85 L180 95 L20 95 Z",
-      length: 320,
+      d: "M30 85 L170 85 L170 95 L30 95 Z",
+      length: 300,
       delay: 0
     },
-    // Triangle central (pic du milieu)
+    
+    // Triangle central (pic du milieu) - le plus grand
     {
-      d: "M100 25 L85 75 L115 75 Z",
-      length: 150,
-      delay: 200
+      d: "M100 20 L80 75 L120 75 Z",
+      length: 180,
+      delay: 300
     },
+    
     // Triangle gauche
     {
-      d: "M50 45 L35 75 L65 75 Z",
-      length: 120,
-      delay: 400
-    },
-    // Triangle droit
-    {
-      d: "M150 45 L135 75 L165 75 Z",
-      length: 120,
+      d: "M60 40 L45 75 L75 75 Z", 
+      length: 140,
       delay: 600
     },
-    // Lignes de croisement internes - gauche vers centre
+    
+    // Triangle droit
     {
-      d: "M35 75 L100 60",
-      length: 80,
-      delay: 800
-    },
-    // Lignes de croisement internes - centre vers droite
-    {
-      d: "M100 60 L165 75",
-      length: 80,
+      d: "M140 40 L125 75 L155 75 Z",
+      length: 140,
       delay: 900
     },
-    // Lignes de croisement internes - droite vers centre
+    
+    // Lignes de croisement internes - première diagonale
     {
-      d: "M165 75 L100 60",
-      length: 80,
-      delay: 1000
-    },
-    // Lignes de croisement internes - centre vers gauche
-    {
-      d: "M100 60 L35 75",
-      length: 80,
-      delay: 1100
-    },
-    // Ligne horizontale connectant les bases
-    {
-      d: "M35 75 L165 75",
-      length: 130,
+      d: "M45 75 L120 75",
+      length: 75,
       delay: 1200
+    },
+    
+    // Lignes de croisement internes - deuxième diagonale
+    {
+      d: "M80 75 L155 75",
+      length: 75,
+      delay: 1400
+    },
+    
+    // Croisement central gauche
+    {
+      d: "M60 40 L100 60",
+      length: 50,
+      delay: 1600
+    },
+    
+    // Croisement central droit
+    {
+      d: "M140 40 L100 60",
+      length: 50,
+      delay: 1800
+    },
+    
+    // Dernière ligne de finition - croisement vertical
+    {
+      d: "M100 20 L100 75",
+      length: 55,
+      delay: 2000
     }
   ];
 
@@ -89,7 +98,7 @@ export default function AnimatedCrown() {
         {paths.map((path, index) => {
           const animatedProps = useAnimatedProps(() => {
             const adjustedProgress = Math.max(0, Math.min(1, 
-              (progress.value * 2500 - path.delay) / 500
+              (progress.value * 2200 - path.delay) / 400
             ));
             
             return {
@@ -104,7 +113,7 @@ export default function AnimatedCrown() {
               d={path.d}
               fill="none"
               stroke="white"
-              strokeWidth="3"
+              strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
               animatedProps={animatedProps}
