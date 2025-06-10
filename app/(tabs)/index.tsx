@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -16,7 +15,7 @@ const { width, height } = Dimensions.get('window');
 export default function LaunchScreen() {
   const router = useRouter();
   const [showButtons, setShowButtons] = useState(false);
-  
+
   // Animation values
   const crownOpacity = useSharedValue(0);
   const crownScale = useSharedValue(0.8);
@@ -33,18 +32,18 @@ export default function LaunchScreen() {
         withTiming(1.1, { duration: 800 }),
         withTiming(1, { duration: 200 })
       );
-      
+
       // 2. Titre apparaît après l'animation de la couronne
       titleOpacity.value = withDelay(2000, withTiming(1, { duration: 800 }));
-      
+
       // 3. Sous-titre apparaît
       subtitleOpacity.value = withDelay(2800, withTiming(1, { duration: 800 }));
-      
-      // 4. Boutons apparaissent après 4 secondes
+
+      // 3. Boutons apparaissent après 3 secondes
       setTimeout(() => {
         setShowButtons(true);
         buttonsOpacity.value = withTiming(1, { duration: 600 });
-      }, 4000);
+      }, 3000);
     };
 
     startAnimation();
@@ -90,12 +89,6 @@ export default function LaunchScreen() {
       </Animated.View>
 
       {/* Sous-titre motivationnel */}
-      <Animated.View style={[styles.subtitleContainer, subtitleAnimatedStyle]}>
-        <Text style={styles.subtitle}>
-          Soit la meilleure version de toi jour après jour !
-        </Text>
-      </Animated.View>
-
       {/* Boutons d'action */}
       {showButtons && (
         <Animated.View style={[styles.buttonsContainer, buttonsAnimatedStyle]}>
@@ -105,7 +98,7 @@ export default function LaunchScreen() {
           >
             <Text style={styles.primaryButtonText}>Se connecter</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity 
             style={styles.secondaryButton}
             onPress={() => router.push('/auth/register')}
