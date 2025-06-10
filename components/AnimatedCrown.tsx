@@ -70,10 +70,10 @@ export default function AnimatedCrown() {
       <Animated.View
         style={{
           position: 'absolute',
-          width: 82 * scale,
-          height: 1.5,
+          width: 88 * scale,
+          height: 2,
           left: 98 * scale,
-          top: 362 * scale,
+          top: 368 * scale,
           backgroundColor: 'white',
           transform: [{ rotate: '-95deg' }],
           transformOrigin: 'top left',
@@ -90,12 +90,12 @@ export default function AnimatedCrown() {
       <Animated.View
         style={{
           position: 'absolute',
-          width: 226 * scale,
-          height: 1.5,
-          left: 89 * scale,
+          width: 218 * scale,
+          height: 2,
+          left: 91 * scale,
           top: 278 * scale,
           backgroundColor: 'white',
-          transform: [{ rotate: '22.5deg' }],
+          transform: [{ rotate: '21.5deg' }],
           transformOrigin: 'top left',
           opacity: line2Opacity,
           shadowColor: 'rgba(0, 0, 0, 0.3)',
@@ -110,10 +110,10 @@ export default function AnimatedCrown() {
       <Animated.View
         style={{
           position: 'absolute',
-          width: 82 * scale,
-          height: 1.5,
+          width: 88 * scale,
+          height: 2,
           left: 302 * scale,
-          top: 277 * scale,
+          top: 276 * scale,
           backgroundColor: 'white',
           transform: [{ rotate: '95deg' }],
           transformOrigin: 'top left',
@@ -125,10 +125,10 @@ export default function AnimatedCrown() {
       <Animated.View
         style={{
           position: 'absolute',
-          width: 226 * scale,
-          height: 1.5,
-          left: 303 * scale,
-          top: 277 * scale,
+          width: 220 * scale,
+          height: 2,
+          left: 302 * scale,
+          top: 278 * scale,
           backgroundColor: 'white',
           transform: [{ rotate: '157.5deg' }],
           transformOrigin: 'top left',
@@ -140,8 +140,8 @@ export default function AnimatedCrown() {
       <Animated.View
         style={{
           position: 'absolute',
-          width: 178 * scale,
-          height: 1.5,
+          width: 175 * scale,
+          height: 2,
           left: 98 * scale,
           top: 362 * scale,
           backgroundColor: 'white',
@@ -155,10 +155,10 @@ export default function AnimatedCrown() {
       <Animated.View
         style={{
           position: 'absolute',
-          width: 178 * scale,
-          height: 1.5,
-          left: 196 * scale,
-          top: 216 * scale,
+          width: 174 * scale,
+          height: 2,
+          left: 197.8 * scale,
+          top: 215 * scale,
           backgroundColor: 'white',
           transform: [{ rotate: '56deg' }],
           transformOrigin: 'top left',
@@ -171,7 +171,7 @@ export default function AnimatedCrown() {
         style={{
           position: 'absolute',
           width: 194 * scale,
-          height: 1.5,
+          height: 2,
           left: 295 * scale,
           top: 362 * scale,
           backgroundColor: 'white',
@@ -185,9 +185,9 @@ export default function AnimatedCrown() {
       <Animated.View
         style={{
           position: 'absolute',
-          width: 2 * scale,
-          height: 1.5,
-          left: 98 * scale,
+          width: 1 * scale,
+          height: 2,
+          left: 102 * scale,
           top: 362 * scale,
           backgroundColor: 'white',
           transform: [{ rotate: '90deg' }],
@@ -201,7 +201,7 @@ export default function AnimatedCrown() {
         style={{
           position: 'absolute',
           width: 194 * scale,
-          height: 1.5,
+          height: 2,
           left: 98 * scale,
           top: 367 * scale,
           backgroundColor: 'white',
@@ -214,7 +214,7 @@ export default function AnimatedCrown() {
         style={{
           position: 'absolute',
           width: 38 * scale,
-          height: 1.5,
+          height: 2,
           left: 295 * scale,
           top: 362 * scale,
           backgroundColor: 'white',
@@ -229,9 +229,9 @@ export default function AnimatedCrown() {
         style={{
           position: 'absolute',
           width: 194 * scale,
-          height: 1.5,
+          height: 2,
           left: 295 * scale,
-          top: 398 * scale,
+          top: 400 * scale,
           backgroundColor: 'white',
           transform: [{ rotate: '180deg' }],
           transformOrigin: 'top left',
@@ -244,7 +244,7 @@ export default function AnimatedCrown() {
         style={{
           position: 'absolute',
           width: 38 * scale,
-          height: 1.5,
+          height: 2,
           left: 98 * scale,
           top: 400 * scale,
           backgroundColor: 'white',
