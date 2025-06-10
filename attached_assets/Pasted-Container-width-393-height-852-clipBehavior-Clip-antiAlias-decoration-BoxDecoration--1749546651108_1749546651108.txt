@@ -1,0 +1,77 @@
+Container(
+  width: 393,
+  height: 852,
+  clipBehavior: Clip.antiAlias,
+  decoration: BoxDecoration(color: Colors.black),
+  child: Stack(
+    children: [
+      Positioned(
+        left: 99.05,
+        top: 363.49,
+        child: Container(
+          transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(-1.66),
+          width: 85.55,
+          decoration: ShapeDecoration(
+            shape: RoundedRectangleBorder(
+              side: BorderSide(
+                width: 2,
+                strokeAlign: BorderSide.strokeAlignCenter,
+                color: Colors.white,
+              ),
+            ),
+            shadows: [
+              BoxShadow(
+                color: Color(0x3F000000),
+                blurRadius: 4,
+                offset: Offset(0, 4),
+                spreadRadius: 0,
+              )
+            ],
+          ),
+        ),
+      ),
+      Positioned(
+        left: 90,
+        top: 278.98,
+        child: Container(
+          transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(0.39),
+          width: 220.27,
+          decoration: ShapeDecoration(
+            shape: RoundedRectangleBorder(
+              side: BorderSide(
+                width: 2,
+                strokeAlign: BorderSide.strokeAlignCenter,
+                color: Colors.white,
+              ),
+            ),
+            shadows: [
+              BoxShadow(
+                color: Color(0x3F000000),
+                blurRadius: 4,
+                offset: Offset(0, 4),
+                spreadRadius: 0,
+              )
+            ],
+          ),
+        ),
+      ),
+      Positioned(
+        left: 301.25,
+        top: 278.27,
+        child: Container(
+          transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(1.66),
+          width: 86.03,
+          decoration: ShapeDecoration(
+            shape: RoundedRectangleBorder(
+              side: BorderSide(
+                width: 2,
+                strokeAlign: BorderSide.strokeAlignCenter,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ),
+    ],
+  ),
+)
