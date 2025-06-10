@@ -79,12 +79,7 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
           <Text style={styles.byMax}>BY MAX</Text>
         </Animated.View>
 
-        {/* Sous-titre motivationnel */}
-        <Animated.View style={[styles.subtitleContainer, subtitleAnimatedStyle]}>
-          <Text style={styles.motto}>
-            Soit la meilleure version de toi jour après jour !
-          </Text>
-        </Animated.View>
+        
       </View>
     </View>
   );
