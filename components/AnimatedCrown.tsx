@@ -53,11 +53,10 @@ export default function AnimatedCrown() {
     animateLines();
   }, []);
 
-  // Calculer les dimensions adaptatives pour iPhone avec padding pour éviter les débordements
-  const containerWidth = Math.min(screenWidth * 0.8, 280);
-  const containerHeight = containerWidth * 0.8;
+  // Calculer les dimensions adaptatives pour iPhone
+  const containerWidth = Math.min(screenWidth * 0.7, 250);
+  const containerHeight = containerWidth * 1.1;
   const scale = containerWidth / 393; // Basé sur la largeur de référence
-  const padding = 20; // Padding pour éviter les débordements
 
   return (
     <View style={{ 
@@ -65,20 +64,19 @@ export default function AnimatedCrown() {
       height: containerHeight, 
       alignItems: 'center', 
       justifyContent: 'center',
-      alignSelf: 'center',
-      overflow: 'hidden' // Éviter les débordements
+      alignSelf: 'center'
     }}>
-      {/* Ligne 1 - Côté gauche vertical */}
+      {/* Ligne 1 - Étape 2 */}
       <Animated.View
         style={{
           position: 'absolute',
           width: 80 * scale,
           height: 2,
-          left: (99.05 * scale) + padding,
-          top: (320 * scale) + padding,
+          left: 99.05 * scale,
+          top: 363.49 * scale,
           backgroundColor: 'white',
-          transform: [{ rotate: '-90deg' }],
-          transformOrigin: 'center',
+          transform: [{ rotate: '-95.06deg' }],
+          transformOrigin: 'top left',
           opacity: line1Opacity,
           shadowColor: 'rgba(0, 0, 0, 0.25)',
           shadowOffset: { width: 0, height: 4 },
@@ -88,17 +86,17 @@ export default function AnimatedCrown() {
         }}
       />
 
-      {/* Ligne 2 - Diagonale gauche montante */}
+      {/* Ligne 2 - Étape 3 */}
       <Animated.View
         style={{
           position: 'absolute',
-          width: 140 * scale,
+          width: 224 * scale,
           height: 2,
-          left: (120 * scale) + padding,
-          top: (250 * scale) + padding,
+          left: 90 * scale,
+          top: 278.98 * scale,
           backgroundColor: 'white',
-          transform: [{ rotate: '35deg' }],
-          transformOrigin: 'center',
+          transform: [{ rotate: '22.36deg' }],
+          transformOrigin: 'top left',
           opacity: line2Opacity,
           shadowColor: 'rgba(0, 0, 0, 0.25)',
           shadowOffset: { width: 0, height: 4 },
@@ -108,146 +106,150 @@ export default function AnimatedCrown() {
         }}
       />
 
-      {/* Ligne 3 - Côté droit vertical */}
+      {/* Ligne 3 - Étape 4 */}
       <Animated.View
         style={{
           position: 'absolute',
           width: 80 * scale,
           height: 2,
-          left: (280 * scale) + padding,
-          top: (320 * scale) + padding,
+          left: 301.25 * scale,
+          top: 278.27 * scale,
           backgroundColor: 'white',
-          transform: [{ rotate: '90deg' }],
-          transformOrigin: 'center',
+          transform: [{ rotate: '94.83deg' }],
+          transformOrigin: 'top left',
           opacity: line3Opacity,
         }}
       />
 
-      {/* Ligne 4 - Diagonale droite montante */}
+      {/* Ligne 4 - Étape 5 */}
       <Animated.View
         style={{
           position: 'absolute',
-          width: 140 * scale,
+          width: 224 * scale,
           height: 2,
-          left: (230 * scale) + padding,
-          top: (250 * scale) + padding,
+          left: 302 * scale,
+          top: 278.27 * scale,
           backgroundColor: 'white',
-          transform: [{ rotate: '-35deg' }],
-          transformOrigin: 'center',
+          transform: [{ rotate: '157.39deg' }],
+          transformOrigin: 'top left',
           opacity: line4Opacity,
         }}
       />
 
-      {/* Ligne 5 - Diagonale gauche interne */}
+      {/* Ligne 5 - Étape 6 */}
       <Animated.View
         style={{
           position: 'absolute',
-          width: 120 * scale,
+          width: 176 * scale,
           height: 2,
-          left: (140 * scale) + padding,
-          top: (280 * scale) + padding,
+          left: 98.96 * scale,
+          top: 363.44 * scale,
           backgroundColor: 'white',
-          transform: [{ rotate: '-45deg' }],
-          transformOrigin: 'center',
+          transform: [{ rotate: '-56.16deg' }],
+          transformOrigin: 'top left',
           opacity: line5Opacity,
         }}
       />
 
-      {/* Ligne 6 - Pic central */}
+      {/* Ligne 6 - Étape 7 */}
       <Animated.View
         style={{
           position: 'absolute',
-          width: 100 * scale,
+          width: 176 * scale,
           height: 2,
-          left: (196 * scale) + padding,
-          top: (200 * scale) + padding,
+          left: 195.52 * scale,
+          top: 217.06 * scale,
           backgroundColor: 'white',
-          transform: [{ rotate: '90deg' }],
-          transformOrigin: 'center',
+          transform: [{ rotate: '56.20deg' }],
+          transformOrigin: 'top left',
           opacity: line6Opacity,
         }}
       />
 
-      {/* Ligne 7 - Base droite horizontale */}
+      {/* Ligne 7 - Étape 8 */}
       <Animated.View
         style={{
           position: 'absolute',
-          width: 140 * scale,
+          width: 192 * scale,
           height: 2,
-          left: (220 * scale) + padding,
-          top: (350 * scale) + padding,
+          left: 294 * scale,
+          top: 363 * scale,
           backgroundColor: 'white',
+          transform: [{ rotate: '180deg' }],
+          transformOrigin: 'top left',
           opacity: line7Opacity,
         }}
       />
 
-      {/* Ligne 8 - Connexion base */}
+      {/* Ligne 8 - Étape 8 */}
       <Animated.View
         style={{
           position: 'absolute',
-          width: 2,
+          width: 2 * scale,
           height: 2,
-          left: (140 * scale) + padding,
-          top: (350 * scale) + padding,
+          left: 98 * scale,
+          top: 363 * scale,
           backgroundColor: 'white',
+          transform: [{ rotate: '90deg' }],
+          transformOrigin: 'top left',
           opacity: line8Opacity,
         }}
       />
 
-      {/* Ligne 9 - Base principale horizontale */}
+      {/* Ligne 9 - Étape 9 */}
       <Animated.View
         style={{
           position: 'absolute',
-          width: 140 * scale,
+          width: 192 * scale,
           height: 2,
-          left: (140 * scale) + padding,
-          top: (350 * scale) + padding,
+          left: 99 * scale,
+          top: 368 * scale,
           backgroundColor: 'white',
           opacity: line9Opacity,
         }}
       />
 
-      {/* Ligne 10 - Côté droit base */}
+      {/* Ligne 10 - Étape 10 */}
       <Animated.View
         style={{
           position: 'absolute',
-          width: 30 * scale,
+          width: 36 * scale,
           height: 2,
-          left: (280 * scale) + padding,
-          top: (350 * scale) + padding,
+          left: 294 * scale,
+          top: 363 * scale,
           backgroundColor: 'white',
           transform: [{ rotate: '90deg' }],
-          transformOrigin: 'center',
+          transformOrigin: 'top left',
           opacity: line10Opacity,
         }}
       />
 
-      {/* Ligne 11 - Base inférieure droite */}
+      {/* Ligne 11 - Étape 11 */}
       <Animated.View
         style={{
           position: 'absolute',
-          width: 140 * scale,
+          width: 192 * scale,
           height: 2,
-          left: (220 * scale) + padding,
-          top: (370 * scale) + padding,
+          left: 294 * scale,
+          top: 397 * scale,
           backgroundColor: 'white',
           transform: [{ rotate: '180deg' }],
-          transformOrigin: 'center',
+          transformOrigin: 'top left',
           opacity: line11Opacity,
         }}
       />
 
-      {/* Ligne 12 - Côté gauche base */}
+      {/* Ligne 12 - Étape 12 */}
       <Animated.View
         style={{
           position: 'absolute',
-          width: 30 * scale,
+          width: 36 * scale,
           height: 2,
-          left: (140 * scale) + padding,
-          top: (370 * scale) + padding,
+          left: 99 * scale,
+          top: 399 * scale,
           backgroundColor: 'white',
           transform: [{ rotate: '-90deg' }],
-          transformOrigin: 'center',
+          transformOrigin: 'top left',
           opacity: line12Opacity,
         }}
       />
