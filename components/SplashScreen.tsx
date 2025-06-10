@@ -10,33 +10,35 @@ interface SplashScreenProps {
 }
 
 export default function SplashScreen({ onFinish }: SplashScreenProps) {
-  const textAnimation = useRef(new Animated.Value(0)).current;
-  const subtitleAnimation = useRef(new Animated.Value(0)).current;
+  const titleOpacity = useRef(new Animated.Value(0)).current;
+  const subtitleOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Séquence d'animation complète
     const startAnimation = () => {
-      // La couronne s'anime automatiquement pendant 2.5s
+      // La couronne s'anime automatiquement pendant 2.5s (11 lignes × 200ms + animations)
       
-      // Titre apparaît après 2.5s
+      // Titre apparaît après l'animation de la couronne
       setTimeout(() => {
-        Animated.timing(textAnimation, {
+        Animated.timing(titleOpacity, {
           toValue: 1,
           duration: 800,
           useNativeDriver: true,
         }).start();
       }, 2500);
 
-      // Sous-titre apparaît après 3.3s
+      // Sous-titre apparaît après le titre
       setTimeout(() => {
-        Animated.timing(subtitleAnimation, {
+        Animated.timing(subtitleOpacity, {
           toValue: 1,
           duration: 800,
           useNativeDriver: true,
         }).start();
       }, 3300);
 
-      // Le parent gère maintenant la fin du splash screen
+      // Terminer le splash screen après toutes les animations
+      setTimeout(() => {
+        onFinish();
+      }, 5000);
     };
 
     startAnimation();
@@ -53,11 +55,11 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
         {/* Titre principal */}
         <Animated.View
           style={[
-            styles.textContainer,
+            styles.titleContainer,
             {
-              opacity: textAnimation,
+              opacity: titleOpacity,
               transform: [{
-                translateY: textAnimation.interpolate({
+                translateY: titleOpacity.interpolate({
                   inputRange: [0, 1],
                   outputRange: [20, 0],
                 }),
@@ -74,9 +76,9 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
           style={[
             styles.subtitleContainer,
             {
-              opacity: subtitleAnimation,
+              opacity: subtitleOpacity,
               transform: [{
-                translateY: subtitleAnimation.interpolate({
+                translateY: subtitleOpacity.interpolate({
                   inputRange: [0, 1],
                   outputRange: [20, 0],
                 }),
@@ -108,26 +110,25 @@ const styles = StyleSheet.create({
     marginBottom: 40,
     alignItems: 'center',
   },
-  textContainer: {
+  titleContainer: {
     paddingHorizontal: 40,
     alignItems: 'center',
     marginBottom: 30,
   },
   appTitle: {
-    fontSize: 36,
-    fontWeight: 'bold',
+    fontSize: 64,
+    fontWeight: '900',
     color: '#FFFFFF',
     textAlign: 'center',
-    letterSpacing: 3,
+    fontFamily: 'Inter',
   },
   byMax: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#CCCCCC',
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#FFFFFF',
     textAlign: 'center',
     marginTop: 8,
-    letterSpacing: 6,
-    opacity: 0.8,
+    fontFamily: 'Inter',
   },
   subtitleContainer: {
     paddingHorizontal: 40,
