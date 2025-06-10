@@ -1,80 +1,232 @@
 
-import React, { useEffect } from 'react';
-import { View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
-import Animated, {
-  useSharedValue,
-  useAnimatedProps,
-  withTiming,
-  Easing,
-} from 'react-native-reanimated';
+import React, { useEffect, useRef } from 'react';
+import { View, Animated, Dimensions } from 'react-native';
 
-const AnimatedPath = Animated.createAnimatedComponent(Path);
+const { width: screenWidth } = Dimensions.get('window');
 
 export default function AnimatedCrown() {
-  const progress = useSharedValue(0);
+  // Valeurs d'animation pour chaque ligne de la couronne
+  const line1Opacity = useRef(new Animated.Value(0)).current;
+  const line2Opacity = useRef(new Animated.Value(0)).current;
+  const line3Opacity = useRef(new Animated.Value(0)).current;
+  const line4Opacity = useRef(new Animated.Value(0)).current;
+  const line5Opacity = useRef(new Animated.Value(0)).current;
+  const line6Opacity = useRef(new Animated.Value(0)).current;
+  const line7Opacity = useRef(new Animated.Value(0)).current;
+  const line8Opacity = useRef(new Animated.Value(0)).current;
+  const line9Opacity = useRef(new Animated.Value(0)).current;
+  const line10Opacity = useRef(new Animated.Value(0)).current;
+  const line11Opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    progress.value = withTiming(1, { 
-      duration: 2500,
-      easing: Easing.out(Easing.cubic)
-    });
+    const animateLines = () => {
+      const animationDelay = 200; // Délai entre chaque ligne
+
+      // Animation séquentielle de chaque ligne
+      const animations = [
+        line1Opacity,
+        line2Opacity,
+        line3Opacity,
+        line4Opacity,
+        line5Opacity,
+        line6Opacity,
+        line7Opacity,
+        line8Opacity,
+        line9Opacity,
+        line10Opacity,
+        line11Opacity,
+      ];
+
+      animations.forEach((animation, index) => {
+        setTimeout(() => {
+          Animated.timing(animation, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          }).start();
+        }, index * animationDelay);
+      });
+    };
+
+    animateLines();
   }, []);
 
-  // Reproduction exacte de votre logo : couronne géométrique en forme de diamant
-  // Tracé continu qui dessine toute la couronne d'un seul trait
-  const crownPath = `
-    M 40 80 
-    L 40 70 
-    L 60 40 
-    L 80 20 
-    L 100 10 
-    L 120 20 
-    L 140 40 
-    L 160 70 
-    L 160 80 
-    M 40 70 
-    L 80 50 
-    L 120 20 
-    M 60 40 
-    L 100 60 
-    L 140 40 
-    M 80 20 
-    L 80 50 
-    L 100 60 
-    L 120 50 
-    L 120 20 
-    M 80 50 
-    L 60 70 
-    M 120 50 
-    L 140 70 
-    M 100 60 
-    L 100 80
-  `;
-
-  // Longueur approximative du chemin pour l'animation
-  const pathLength = 800;
-
-  const animatedProps = useAnimatedProps(() => {
-    return {
-      strokeDasharray: pathLength,
-      strokeDashoffset: pathLength * (1 - progress.value),
-    };
-  });
-
   return (
-    <View style={{ alignItems: 'center' }}>
-      <Svg width="120" height="70" viewBox="0 0 200 90">
-        <AnimatedPath
-          d={crownPath}
-          fill="none"
-          stroke="white"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          animatedProps={animatedProps}
-        />
-      </Svg>
+    <View style={{ width: 250, height: 200, alignItems: 'center', justifyContent: 'center' }}>
+      {/* Ligne 1 - Étape 2 */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          width: 85.55,
+          height: 2,
+          left: 82,
+          top: 140,
+          backgroundColor: 'white',
+          transform: [{ rotate: '-95deg' }],
+          opacity: line1Opacity,
+          shadowColor: 'rgba(0, 0, 0, 0.25)',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 1,
+          shadowRadius: 4,
+        }}
+      />
+
+      {/* Ligne 2 - Étape 3 */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          width: 220.27,
+          height: 2,
+          left: 73,
+          top: 55,
+          backgroundColor: 'white',
+          transform: [{ rotate: '22deg' }],
+          opacity: line2Opacity,
+          shadowColor: 'rgba(0, 0, 0, 0.25)',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 1,
+          shadowRadius: 4,
+        }}
+      />
+
+      {/* Ligne 3 - Étape 4 */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          width: 86.03,
+          height: 2,
+          left: 183,
+          top: 55,
+          backgroundColor: 'white',
+          transform: [{ rotate: '95deg' }],
+          opacity: line3Opacity,
+        }}
+      />
+
+      {/* Ligne 4 - Étape 5 */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          width: 220.17,
+          height: 2,
+          left: 184,
+          top: 55,
+          backgroundColor: 'white',
+          transform: [{ rotate: '157deg' }],
+          opacity: line4Opacity,
+        }}
+      />
+
+      {/* Ligne 5 - Étape 6 */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          width: 176.30,
+          height: 2,
+          left: 81,
+          top: 140,
+          backgroundColor: 'white',
+          transform: [{ rotate: '-56deg' }],
+          opacity: line5Opacity,
+        }}
+      />
+
+      {/* Ligne 6 - Étape 7 */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          width: 175.73,
+          height: 2,
+          left: 178,
+          top: -6,
+          backgroundColor: 'white',
+          transform: [{ rotate: '56deg' }],
+          opacity: line6Opacity,
+        }}
+      />
+
+      {/* Ligne 7 - Étape 8 */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          width: 195,
+          height: 2,
+          left: 176,
+          top: 140,
+          backgroundColor: 'white',
+          transform: [{ rotate: '180deg' }],
+          opacity: line7Opacity,
+        }}
+      />
+
+      {/* Ligne 8 - Étape 8 (petite ligne verticale) */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          width: 2,
+          height: 2,
+          left: 80,
+          top: 140,
+          backgroundColor: 'white',
+          transform: [{ rotate: '90deg' }],
+          opacity: line8Opacity,
+        }}
+      />
+
+      {/* Ligne 9 - Étape 9 */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          width: 195,
+          height: 2,
+          left: 81,
+          top: 145,
+          backgroundColor: 'white',
+          opacity: line9Opacity,
+        }}
+      />
+
+      {/* Ligne 10 - Étape 10 */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          width: 36,
+          height: 2,
+          left: 176,
+          top: 140,
+          backgroundColor: 'white',
+          transform: [{ rotate: '90deg' }],
+          opacity: line10Opacity,
+        }}
+      />
+
+      {/* Ligne 11 - Étape 11 */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          width: 195,
+          height: 2,
+          left: 176,
+          top: 174,
+          backgroundColor: 'white',
+          transform: [{ rotate: '180deg' }],
+          opacity: line11Opacity,
+        }}
+      />
+
+      {/* Ligne 12 - Étape 12 */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          width: 36,
+          height: 2,
+          left: 81,
+          top: 176,
+          backgroundColor: 'white',
+          transform: [{ rotate: '-90deg' }],
+          opacity: line11Opacity,
+        }}
+      />
     </View>
   );
 }
