@@ -9,6 +9,7 @@ export default function AnimatedCrown() {
     new Animated.Value(0), // Deuxième élément
     new Animated.Value(0), // Troisième élément
     new Animated.Value(0), // Quatrième élément
+    new Animated.Value(0), // Cinquième élément
   ]).current;
 
   useEffect(() => {
@@ -46,6 +47,15 @@ export default function AnimatedCrown() {
           useNativeDriver: false,
         }).start();
       }, 450);
+
+      // Animer le cinquième élément avec un délai
+      setTimeout(() => {
+        Animated.timing(lineAnimations[4], {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: false,
+        }).start();
+      }, 600);
     };
 
     animateLines();
@@ -152,6 +162,27 @@ export default function AnimatedCrown() {
           shadowRadius: 4,
           elevation: 4, // Pour Android
           opacity: lineAnimations[3],
+        }}
+      />
+
+      {/* Cinquième élément de la couronne - ligne diagonale centrale */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          left: 98.96 * scale,
+          top: 363.44 * scale,
+          width: 176.30 * scale,
+          height: 2,
+          backgroundColor: 'white',
+          transform: [
+            { rotate: '-0.98rad' },
+          ],
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.25,
+          shadowRadius: 4,
+          elevation: 4, // Pour Android
+          opacity: lineAnimations[4],
         }}
       />
 
