@@ -88,7 +88,6 @@ export default function LaunchScreen() {
         <Text style={styles.byMax}>BY MAX</Text>
       </Animated.View>
 
-      {/* Sous-titre motivationnel */}
       {/* Boutons d'action */}
       {showButtons && (
         <Animated.View style={[styles.buttonsContainer, buttonsAnimatedStyle]}>
