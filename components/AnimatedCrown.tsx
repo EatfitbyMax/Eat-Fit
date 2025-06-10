@@ -8,6 +8,7 @@ export default function AnimatedCrown() {
     new Animated.Value(0), // Premier élément
     new Animated.Value(0), // Deuxième élément
     new Animated.Value(0), // Troisième élément
+    new Animated.Value(0), // Quatrième élément
   ]).current;
 
   useEffect(() => {
@@ -36,6 +37,15 @@ export default function AnimatedCrown() {
           useNativeDriver: false,
         }).start();
       }, 300);
+
+      // Animer le quatrième élément avec un délai
+      setTimeout(() => {
+        Animated.timing(lineAnimations[3], {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: false,
+        }).start();
+      }, 450);
     };
 
     animateLines();
@@ -121,6 +131,27 @@ export default function AnimatedCrown() {
           shadowRadius: 4,
           elevation: 4, // Pour Android
           opacity: lineAnimations[2],
+        }}
+      />
+
+      {/* Quatrième élément de la couronne - ligne diagonale longue */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          left: 302 * scale,
+          top: 278.27 * scale,
+          width: 220.17 * scale,
+          height: 2,
+          backgroundColor: 'white',
+          transform: [
+            { rotate: '2.75rad' },
+          ],
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.25,
+          shadowRadius: 4,
+          elevation: 4, // Pour Android
+          opacity: lineAnimations[3],
         }}
       />
 
