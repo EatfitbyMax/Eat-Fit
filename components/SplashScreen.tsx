@@ -31,16 +31,16 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
         withTiming(1, { duration: 200 })
       );
       
-      // 2. Titre apparaît après l'animation de la couronne
-      titleOpacity.value = withDelay(2500, withTiming(1, { duration: 800 }));
+      // 2. Titre apparaît après l'animation de la couronne (3 secondes)
+      titleOpacity.value = withDelay(3000, withTiming(1, { duration: 800 }));
       
       // 3. Sous-titre apparaît après le titre
-      subtitleOpacity.value = withDelay(3300, withTiming(1, { duration: 800 }));
+      subtitleOpacity.value = withDelay(3800, withTiming(1, { duration: 800 }));
       
       // 4. Terminer le splash screen après toutes les animations
       setTimeout(() => {
         onFinish();
-      }, 5000);
+      }, 6000);
     };
 
     startAnimation();
@@ -101,22 +101,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 20,
+    width: '100%',
   },
   crownContainer: {
-    marginBottom: 40,
+    marginBottom: 60,
     alignItems: 'center',
+    width: '100%',
   },
   titleContainer: {
-    paddingHorizontal: 40,
+    paddingHorizontal: 20,
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 40,
+    width: '100%',
   },
   appTitle: {
-    fontSize: Math.min(width * 0.16, 64),
+    fontSize: Math.min(width * 0.15, 60),
     fontWeight: '900',
     color: '#FFFFFF',
     textAlign: 'center',
     fontFamily: 'System',
+    letterSpacing: 2,
   },
   byMax: {
     fontSize: Math.min(width * 0.04, 16),
@@ -125,10 +129,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 8,
     fontFamily: 'System',
+    letterSpacing: 4,
   },
   subtitleContainer: {
-    paddingHorizontal: 40,
+    paddingHorizontal: 30,
     alignItems: 'center',
+    width: '100%',
   },
   motto: {
     fontSize: Math.min(width * 0.045, 18),
