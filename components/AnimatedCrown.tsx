@@ -1,284 +1,258 @@
+
 import React, { useEffect, useRef } from 'react';
 import { View, Animated, Dimensions } from 'react-native';
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const { width: screenWidth } = Dimensions.get('window');
 
 export default function AnimatedCrown() {
-  const lineAnimations = useRef([
-    new Animated.Value(0), // Premier élément
-    new Animated.Value(0), // Deuxième élément
-    new Animated.Value(0), // Troisième élément
-    new Animated.Value(0), // Quatrième élément
-    new Animated.Value(0), // Cinquième élément
-    new Animated.Value(0), // Sixième élément
-    new Animated.Value(0), // Septième élément
-    new Animated.Value(0), // Huitième élément
-  ]).current;
+  // Valeurs d'animation pour chaque étape
+  const line1Opacity = useRef(new Animated.Value(0)).current;
+  const line2Opacity = useRef(new Animated.Value(0)).current;
+  const line3Opacity = useRef(new Animated.Value(0)).current;
+  const line4Opacity = useRef(new Animated.Value(0)).current;
+  const line5Opacity = useRef(new Animated.Value(0)).current;
+  const line6Opacity = useRef(new Animated.Value(0)).current;
+  const line7Opacity = useRef(new Animated.Value(0)).current;
+  const line8Opacity = useRef(new Animated.Value(0)).current;
+  const line9Opacity = useRef(new Animated.Value(0)).current;
+  const line10Opacity = useRef(new Animated.Value(0)).current;
+  const line11Opacity = useRef(new Animated.Value(0)).current;
+  const line12Opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const animateLines = () => {
-      // Animer le premier élément
-      Animated.timing(lineAnimations[0], {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: false,
-      }).start();
+      const animationDelay = 180; // Délai légèrement augmenté pour un effet plus fluide
 
-      // Animer le deuxième élément avec un délai
-      setTimeout(() => {
-        Animated.timing(lineAnimations[1], {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: false,
-        }).start();
-      }, 150);
+      // Animation séquentielle de chaque ligne
+      const animations = [
+        line1Opacity,
+        line2Opacity,
+        line3Opacity,
+        line4Opacity,
+        line5Opacity,
+        line6Opacity,
+        line7Opacity,
+        line8Opacity,
+        line9Opacity,
+        line10Opacity,
+        line11Opacity,
+        line12Opacity,
+      ];
 
-      // Animer le troisième élément avec un délai
-      setTimeout(() => {
-        Animated.timing(lineAnimations[2], {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: false,
-        }).start();
-      }, 300);
-
-      // Animer le quatrième élément avec un délai
-      setTimeout(() => {
-        Animated.timing(lineAnimations[3], {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: false,
-        }).start();
-      }, 450);
-
-      // Animer le cinquième élément avec un délai
-      setTimeout(() => {
-        Animated.timing(lineAnimations[4], {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: false,
-        }).start();
-      }, 600);
-
-      // Animer le sixième élément avec un délai
-      setTimeout(() => {
-        Animated.timing(lineAnimations[5], {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: false,
-        }).start();
-      }, 750);
-
-      // Animer le septième élément avec un délai
-      setTimeout(() => {
-        Animated.timing(lineAnimations[6], {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: false,
-        }).start();
-      }, 900);
-
-      // Animer le huitième élément avec un délai
-      setTimeout(() => {
-        Animated.timing(lineAnimations[7], {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: false,
-        }).start();
-      }, 1050);
+      animations.forEach((animation, index) => {
+        setTimeout(() => {
+          Animated.timing(animation, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: false,
+          }).start();
+        }, index * animationDelay);
+      });
     };
 
     animateLines();
   }, []);
 
-  // Dimensions du container (393x852 adaptées à l'écran)
-  const containerWidth = 393;
-  const containerHeight = 852;
-
-  // Adapter les dimensions à l'écran actuel
-  const scaleX = screenWidth / containerWidth;
-  const scaleY = screenHeight / containerHeight;
-  const scale = Math.min(scaleX, scaleY);
+  // Calculer les dimensions adaptatives pour iPhone avec meilleure précision
+  const containerWidth = Math.min(screenWidth * 0.65, 240);
+  const containerHeight = containerWidth * 1.0;
+  const scale = containerWidth / 393;
 
   return (
     <View style={{ 
-      width: containerWidth * scale, 
-      height: containerHeight * scale, 
-      backgroundColor: '#000000',
+      width: containerWidth, 
+      height: containerHeight, 
       alignItems: 'center', 
       justifyContent: 'center',
-      alignSelf: 'center',
-      overflow: 'hidden',
+      alignSelf: 'center'
     }}>
-
-      {/* Premier élément de la couronne - ligne diagonale */}
+      {/* Ligne 1 - Côté gauche */}
       <Animated.View
         style={{
           position: 'absolute',
-          left: 99.05 * scale,
-          top: 363.49 * scale,
-          width: 85.55 * scale,
-          height: 2,
+          width: 82 * scale,
+          height: 1.5,
+          left: 98 * scale,
+          top: 362 * scale,
           backgroundColor: 'white',
-          transform: [
-            { rotate: '-1.66rad' },
-          ],
-          shadowColor: '#000000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.25,
-          shadowRadius: 4,
-          elevation: 4, // Pour Android
-          opacity: lineAnimations[0],
+          transform: [{ rotate: '-95deg' }],
+          transformOrigin: 'top left',
+          opacity: line1Opacity,
+          shadowColor: 'rgba(0, 0, 0, 0.3)',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 1,
+          shadowRadius: 3,
+          elevation: 4,
         }}
       />
 
-      {/* Deuxième élément de la couronne - ligne horizontale longue */}
+      {/* Ligne 2 - Ligne diagonale gauche vers haut */}
       <Animated.View
         style={{
           position: 'absolute',
-          left: 90 * scale,
-          top: 278.98 * scale,
-          width: 220.27 * scale,
-          height: 2,
+          width: 226 * scale,
+          height: 1.5,
+          left: 89 * scale,
+          top: 278 * scale,
           backgroundColor: 'white',
-          transform: [
-            { rotate: '0.39rad' },
-          ],
-          shadowColor: '#000000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.25,
-          shadowRadius: 4,
-          elevation: 4, // Pour Android
-          opacity: lineAnimations[1],
+          transform: [{ rotate: '22.5deg' }],
+          transformOrigin: 'top left',
+          opacity: line2Opacity,
+          shadowColor: 'rgba(0, 0, 0, 0.3)',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 1,
+          shadowRadius: 3,
+          elevation: 4,
         }}
       />
 
-      {/* Troisième élément de la couronne - ligne diagonale droite */}
+      {/* Ligne 3 - Côté droit */}
       <Animated.View
         style={{
           position: 'absolute',
-          left: 301.25 * scale,
-          top: 278.27 * scale,
-          width: 86.03 * scale,
-          height: 2,
-          backgroundColor: 'white',
-          transform: [
-            { rotate: '1.66rad' },
-          ],
-          shadowColor: '#000000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.25,
-          shadowRadius: 4,
-          elevation: 4, // Pour Android
-          opacity: lineAnimations[2],
-        }}
-      />
-
-      {/* Quatrième élément de la couronne - ligne diagonale longue */}
-      <Animated.View
-        style={{
-          position: 'absolute',
+          width: 82 * scale,
+          height: 1.5,
           left: 302 * scale,
-          top: 278.27 * scale,
-          width: 220.17 * scale,
-          height: 2,
+          top: 277 * scale,
           backgroundColor: 'white',
-          transform: [
-            { rotate: '2.75rad' },
-          ],
-          shadowColor: '#000000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.25,
-          shadowRadius: 4,
-          elevation: 4, // Pour Android
-          opacity: lineAnimations[3],
+          transform: [{ rotate: '95deg' }],
+          transformOrigin: 'top left',
+          opacity: line3Opacity,
         }}
       />
 
-      {/* Cinquième élément de la couronne - ligne diagonale centrale */}
+      {/* Ligne 4 - Ligne diagonale droite vers haut */}
       <Animated.View
         style={{
           position: 'absolute',
-          left: 98.96 * scale,
-          top: 363.44 * scale,
-          width: 176.30 * scale,
-          height: 2,
+          width: 226 * scale,
+          height: 1.5,
+          left: 303 * scale,
+          top: 277 * scale,
           backgroundColor: 'white',
-          transform: [
-            { rotate: '-0.98rad' },
-          ],
-          shadowColor: '#000000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.25,
-          shadowRadius: 4,
-          elevation: 4, // Pour Android
-          opacity: lineAnimations[4],
+          transform: [{ rotate: '157.5deg' }],
+          transformOrigin: 'top left',
+          opacity: line4Opacity,
         }}
       />
 
-      {/* Sixième élément de la couronne - ligne diagonale en haut à droite */}
+      {/* Ligne 5 - Diagonale intérieure gauche */}
       <Animated.View
         style={{
           position: 'absolute',
-          left: 195.52 * scale,
-          top: 217.06 * scale,
-          width: 175.73 * scale,
-          height: 2,
+          width: 178 * scale,
+          height: 1.5,
+          left: 98 * scale,
+          top: 362 * scale,
           backgroundColor: 'white',
-          transform: [
-            { rotate: '0.98rad' },
-          ],
-          shadowColor: '#000000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.25,
-          shadowRadius: 4,
-          elevation: 4, // Pour Android
-          opacity: lineAnimations[5],
-        }}
-      />
-      
-      {/* Septième élément de la couronne - ligne horizontale longue */}
-      <Animated.View
-        style={{
-          position: 'absolute',
-          left: 99.05 * scale,
-          top: 450 * scale,
-          width: 195 * scale,
-          height: 2,
-          backgroundColor: 'white',
-          transform: [
-            { rotate: '3.14rad' },
-          ],
-          shadowColor: '#000000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.25,
-          shadowRadius: 4,
-          elevation: 4, // Pour Android
-          opacity: lineAnimations[6],
+          transform: [{ rotate: '-56deg' }],
+          transformOrigin: 'top left',
+          opacity: line5Opacity,
         }}
       />
 
-      {/* Huitième élément de la couronne - ligne verticale courte */}
+      {/* Ligne 6 - Diagonale intérieure droite */}
       <Animated.View
         style={{
           position: 'absolute',
-          left: 250 * scale,
-          top: 390 * scale,
+          width: 178 * scale,
+          height: 1.5,
+          left: 196 * scale,
+          top: 216 * scale,
+          backgroundColor: 'white',
+          transform: [{ rotate: '56deg' }],
+          transformOrigin: 'top left',
+          opacity: line6Opacity,
+        }}
+      />
+
+      {/* Ligne 7 - Base supérieure */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          width: 194 * scale,
+          height: 1.5,
+          left: 295 * scale,
+          top: 362 * scale,
+          backgroundColor: 'white',
+          transform: [{ rotate: '180deg' }],
+          transformOrigin: 'top left',
+          opacity: line7Opacity,
+        }}
+      />
+
+      {/* Ligne 8 - Côté gauche vertical court */}
+      <Animated.View
+        style={{
+          position: 'absolute',
           width: 2 * scale,
-          height: 50 * scale,
+          height: 1.5,
+          left: 98 * scale,
+          top: 362 * scale,
           backgroundColor: 'white',
-          transform: [
-            { rotate: '1.57rad' },
-          ],
-          shadowColor: '#000000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.25,
-          shadowRadius: 4,
-          elevation: 4, // Pour Android
-          opacity: lineAnimations[7],
+          transform: [{ rotate: '90deg' }],
+          transformOrigin: 'top left',
+          opacity: line8Opacity,
         }}
       />
 
+      {/* Ligne 9 - Base principale */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          width: 194 * scale,
+          height: 1.5,
+          left: 98 * scale,
+          top: 367 * scale,
+          backgroundColor: 'white',
+          opacity: line9Opacity,
+        }}
+      />
+
+      {/* Ligne 10 - Côté droit vertical */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          width: 38 * scale,
+          height: 1.5,
+          left: 295 * scale,
+          top: 362 * scale,
+          backgroundColor: 'white',
+          transform: [{ rotate: '90deg' }],
+          transformOrigin: 'top left',
+          opacity: line10Opacity,
+        }}
+      />
+
+      {/* Ligne 11 - Base inférieure */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          width: 194 * scale,
+          height: 1.5,
+          left: 295 * scale,
+          top: 398 * scale,
+          backgroundColor: 'white',
+          transform: [{ rotate: '180deg' }],
+          transformOrigin: 'top left',
+          opacity: line11Opacity,
+        }}
+      />
+
+      {/* Ligne 12 - Côté gauche vertical bas */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          width: 38 * scale,
+          height: 1.5,
+          left: 98 * scale,
+          top: 400 * scale,
+          backgroundColor: 'white',
+          transform: [{ rotate: '-90deg' }],
+          transformOrigin: 'top left',
+          opacity: line12Opacity,
+        }}
+      />
     </View>
   );
 }
