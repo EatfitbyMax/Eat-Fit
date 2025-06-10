@@ -11,6 +11,8 @@ export default function AnimatedCrown() {
     new Animated.Value(0), // Quatrième élément
     new Animated.Value(0), // Cinquième élément
     new Animated.Value(0), // Sixième élément
+    new Animated.Value(0), // Septième élément
+    new Animated.Value(0), // Huitième élément
   ]).current;
 
   useEffect(() => {
@@ -66,6 +68,24 @@ export default function AnimatedCrown() {
           useNativeDriver: false,
         }).start();
       }, 750);
+
+      // Animer le septième élément avec un délai
+      setTimeout(() => {
+        Animated.timing(lineAnimations[6], {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: false,
+        }).start();
+      }, 900);
+
+      // Animer le huitième élément avec un délai
+      setTimeout(() => {
+        Animated.timing(lineAnimations[7], {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: false,
+        }).start();
+      }, 1050);
     };
 
     animateLines();
@@ -214,6 +234,48 @@ export default function AnimatedCrown() {
           shadowRadius: 4,
           elevation: 4, // Pour Android
           opacity: lineAnimations[5],
+        }}
+      />
+      
+      {/* Septième élément de la couronne - ligne horizontale longue */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          left: 99.05 * scale,
+          top: 450 * scale,
+          width: 195 * scale,
+          height: 2,
+          backgroundColor: 'white',
+          transform: [
+            { rotate: '3.14rad' },
+          ],
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.25,
+          shadowRadius: 4,
+          elevation: 4, // Pour Android
+          opacity: lineAnimations[6],
+        }}
+      />
+
+      {/* Huitième élément de la couronne - ligne verticale courte */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          left: 250 * scale,
+          top: 390 * scale,
+          width: 2 * scale,
+          height: 50 * scale,
+          backgroundColor: 'white',
+          transform: [
+            { rotate: '1.57rad' },
+          ],
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.25,
+          shadowRadius: 4,
+          elevation: 4, // Pour Android
+          opacity: lineAnimations[7],
         }}
       />
 
