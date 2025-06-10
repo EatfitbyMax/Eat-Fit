@@ -1,207 +1,64 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Animated, Dimensions } from 'react-native';
 
-const { width: screenWidth } = Dimensions.get('window');
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export default function AnimatedCrown() {
-  // Valeurs d'animation pour chaque ligne
-  const lineAnimations = useRef(
-    Array.from({ length: 12 }, () => new Animated.Value(0))
-  ).current;
+  const lineAnimation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const animateLines = () => {
-      const animationDelay = 150;
-
-      lineAnimations.forEach((animation, index) => {
-        setTimeout(() => {
-          Animated.timing(animation, {
-            toValue: 1,
-            duration: 300,
-            useNativeDriver: false,
-          }).start();
-        }, index * animationDelay);
-      });
+    const animateLine = () => {
+      Animated.timing(lineAnimation, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: false,
+      }).start();
     };
 
-    animateLines();
+    animateLine();
   }, []);
 
-  // Calculer les dimensions adaptatives
-  const containerWidth = Math.min(screenWidth * 0.65, 240);
-  const containerHeight = containerWidth * 0.8;
+  // Dimensions du container (393x852 adaptées à l'écran)
+  const containerWidth = 393;
+  const containerHeight = 852;
+
+  // Adapter les dimensions à l'écran actuel
+  const scaleX = screenWidth / containerWidth;
+  const scaleY = screenHeight / containerHeight;
+  const scale = Math.min(scaleX, scaleY);
 
   return (
     <View style={{ 
-      width: containerWidth, 
-      height: containerHeight, 
+      width: containerWidth * scale, 
+      height: containerHeight * scale, 
+      backgroundColor: '#000000',
       alignItems: 'center', 
       justifyContent: 'center',
-      alignSelf: 'center'
+      alignSelf: 'center',
+      overflow: 'hidden',
     }}>
-      {/* Base de la couronne */}
+
+      {/* Premier élément de la couronne - ligne diagonale */}
       <Animated.View
         style={{
           position: 'absolute',
-          width: containerWidth * 0.8,
+          left: 99.05 * scale,
+          top: 363.49 * scale,
+          width: 85.55 * scale,
           height: 2,
-          bottom: containerHeight * 0.1,
           backgroundColor: 'white',
-          opacity: lineAnimations[0],
+          transform: [
+            { rotate: '-1.66rad' },
+          ],
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.25,
+          shadowRadius: 4,
+          elevation: 4, // Pour Android
+          opacity: lineAnimation,
         }}
       />
 
-      {/* Base supérieure */}
-      <Animated.View
-        style={{
-          position: 'absolute',
-          width: containerWidth * 0.8,
-          height: 2,
-          bottom: containerHeight * 0.25,
-          backgroundColor: 'white',
-          opacity: lineAnimations[1],
-        }}
-      />
-
-      {/* Côté gauche */}
-      <Animated.View
-        style={{
-          position: 'absolute',
-          width: 2,
-          height: containerHeight * 0.15,
-          left: containerWidth * 0.1,
-          bottom: containerHeight * 0.1,
-          backgroundColor: 'white',
-          opacity: lineAnimations[2],
-        }}
-      />
-
-      {/* Côté droit */}
-      <Animated.View
-        style={{
-          position: 'absolute',
-          width: 2,
-          height: containerHeight * 0.15,
-          right: containerWidth * 0.1,
-          bottom: containerHeight * 0.1,
-          backgroundColor: 'white',
-          opacity: lineAnimations[3],
-        }}
-      />
-
-      {/* Pic central */}
-      <Animated.View
-        style={{
-          position: 'absolute',
-          width: 2,
-          height: containerHeight * 0.4,
-          alignSelf: 'center',
-          bottom: containerHeight * 0.25,
-          backgroundColor: 'white',
-          opacity: lineAnimations[4],
-        }}
-      />
-
-      {/* Diagonale gauche vers pic central */}
-      <Animated.View
-        style={{
-          position: 'absolute',
-          width: containerWidth * 0.3,
-          height: 2,
-          left: containerWidth * 0.1,
-          bottom: containerHeight * 0.25,
-          backgroundColor: 'white',
-          transform: [{ rotate: '45deg' }],
-          transformOrigin: 'left center',
-          opacity: lineAnimations[5],
-        }}
-      />
-
-      {/* Diagonale droite vers pic central */}
-      <Animated.View
-        style={{
-          position: 'absolute',
-          width: containerWidth * 0.3,
-          height: 2,
-          right: containerWidth * 0.1,
-          bottom: containerHeight * 0.25,
-          backgroundColor: 'white',
-          transform: [{ rotate: '-45deg' }],
-          transformOrigin: 'right center',
-          opacity: lineAnimations[6],
-        }}
-      />
-
-      {/* Pic gauche */}
-      <Animated.View
-        style={{
-          position: 'absolute',
-          width: 2,
-          height: containerHeight * 0.25,
-          left: containerWidth * 0.25,
-          bottom: containerHeight * 0.25,
-          backgroundColor: 'white',
-          opacity: lineAnimations[7],
-        }}
-      />
-
-      {/* Pic droit */}
-      <Animated.View
-        style={{
-          position: 'absolute',
-          width: 2,
-          height: containerHeight * 0.25,
-          right: containerWidth * 0.25,
-          bottom: containerHeight * 0.25,
-          backgroundColor: 'white',
-          opacity: lineAnimations[8],
-        }}
-      />
-
-      {/* Diagonale intérieure gauche */}
-      <Animated.View
-        style={{
-          position: 'absolute',
-          width: containerWidth * 0.2,
-          height: 2,
-          left: containerWidth * 0.25,
-          bottom: containerHeight * 0.35,
-          backgroundColor: 'white',
-          transform: [{ rotate: '30deg' }],
-          transformOrigin: 'left center',
-          opacity: lineAnimations[9],
-        }}
-      />
-
-      {/* Diagonale intérieure droite */}
-      <Animated.View
-        style={{
-          position: 'absolute',
-          width: containerWidth * 0.2,
-          height: 2,
-          right: containerWidth * 0.25,
-          bottom: containerHeight * 0.35,
-          backgroundColor: 'white',
-          transform: [{ rotate: '-30deg' }],
-          transformOrigin: 'right center',
-          opacity: lineAnimations[10],
-        }}
-      />
-
-      {/* Connexion base vers pics latéraux */}
-      <Animated.View
-        style={{
-          position: 'absolute',
-          width: containerWidth * 0.15,
-          height: 2,
-          left: containerWidth * 0.1,
-          bottom: containerHeight * 0.3,
-          backgroundColor: 'white',
-          transform: [{ rotate: '60deg' }],
-          transformOrigin: 'left center',
-          opacity: lineAnimations[11],
-        }}
-      />
     </View>
   );
 }
