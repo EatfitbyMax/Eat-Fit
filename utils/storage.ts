@@ -1,7 +1,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const SERVER_URL = 'http://51.178.29.220:5000';
+const SERVER_URL = 'http://localhost:5000';
 
 export class PersistentStorage {
   // Test de connexion au serveur
