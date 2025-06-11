@@ -151,13 +151,6 @@ export default function EntrainementScreen() {
             
             <View style={styles.dateContainer}>
               <Text style={styles.selectedDate}>{formatSelectedDate(selectedDate)}</Text>
-              <Text style={styles.selectedDateSubtext}>
-                {selectedDate.toLocaleDateString('fr-FR', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric'
-                })}
-              </Text>
             </View>
             
             <TouchableOpacity 
