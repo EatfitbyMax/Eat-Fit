@@ -77,13 +77,13 @@ function NutritionScreen() {
 
       const updatedEntries = [...foodEntries, newEntry];
       setFoodEntries(updatedEntries);
-      
+
       // Sauvegarder localement
       await AsyncStorage.setItem(`food_entries_${user.id}`, JSON.stringify(updatedEntries));
-      
+
       // Recalculer les totaux
       calculateDailyTotals(updatedEntries);
-      
+
       setShowFoodModal(false);
       Alert.alert('Succès', `${product.name} ajouté à ${selectedMealType}`);
     } catch (error) {
@@ -95,7 +95,7 @@ function NutritionScreen() {
   const calculateDailyTotals = (entries: FoodEntry[]) => {
     const dateString = selectedDate.toISOString().split('T')[0];
     const dayEntries = entries.filter(entry => entry.date === dateString);
-    
+
     const totals = dayEntries.reduce(
       (acc, entry) => ({
         calories: acc.calories + entry.calories,
@@ -105,7 +105,7 @@ function NutritionScreen() {
       }),
       { calories: 0, proteins: 0, carbohydrates: 0, fat: 0 }
     );
-    
+
     setDailyTotals(totals);
   };
 
@@ -175,7 +175,7 @@ function NutritionScreen() {
 
       const updatedEntries = foodEntries.filter(entry => entry.id !== entryId);
       setFoodEntries(updatedEntries);
-      
+
       await AsyncStorage.setItem(`food_entries_${user.id}`, JSON.stringify(updatedEntries));
       calculateDailyTotals(updatedEntries);
     } catch (error) {
@@ -302,7 +302,7 @@ function NutritionScreen() {
                 <Text style={styles.resetButtonText}>Reset</Text>
               </TouchableOpacity>
             </View>
-            
+
             <View style={styles.hydrationContent}>
               <View style={styles.waterProgress}>
                 <View style={styles.waterProgressBar}>
@@ -314,7 +314,7 @@ function NutritionScreen() {
                   {waterIntake} ml / 2000 ml
                 </Text>
               </View>
-              
+
               <View style={styles.waterButtons}>
                 <TouchableOpacity
                   style={styles.waterButton}
@@ -372,7 +372,7 @@ function NutritionScreen() {
               {['Petit-déjeuner', 'Déjeuner', 'Collation', 'Dîner'].map((mealType) => {
                 const mealEntries = getMealEntries(mealType);
                 const mealCalories = mealEntries.reduce((sum, entry) => sum + entry.calories, 0);
-                
+
                 return (
                   <View key={mealType} style={styles.mealCard}>
                     <View style={styles.mealHeader}>
@@ -381,7 +381,7 @@ function NutritionScreen() {
                         <Text style={styles.addButtonText}>{mealCalories} kcal</Text>
                       </TouchableOpacity>
                     </View>
-                    
+
                     {mealEntries.length === 0 ? (
                       <Text style={styles.mealEmpty}>Aucun aliment ajouté</Text>
                     ) : (
@@ -404,7 +404,7 @@ function NutritionScreen() {
                         ))}
                       </View>
                     )}
-                    
+
                     <TouchableOpacity 
                       style={styles.addFoodButton}
                       onPress={() => handleAddFood(mealType)}
