@@ -6,7 +6,7 @@ export class PersistentStorage {
   // Test de connexion au serveur
   static async testConnection(): Promise<boolean> {
     try {
-      const response = await fetch(`${SERVER_URL}/api/health`, {
+      const response = await fetch(`${SERVER_URL}/api/health-check`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -137,72 +137,6 @@ export class PersistentStorage {
     }
   }
 
-  // Sauvegarde des données Apple Health
-  static async saveHealthData(userId: string, healthData: any[]): Promise<void> {
-    try {
-      const response = await fetch(`${SERVER_URL}/api/health/${userId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(healthData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Erreur sauvegarde données Apple Health sur le serveur');
-      }
-
-      console.log('Données Apple Health sauvegardées sur le serveur VPS');
-    } catch (error) {
-      console.error('Erreur sauvegarde données Apple Health:', error);
-      throw error;
-    }
-  }
-
-  // Sauvegarde des activités Strava
-  static async saveStravaActivities(userId: string, activities: any[]): Promise<void> {
-    try {
-      const response = await fetch(`${SERVER_URL}/api/strava/${userId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(activities),
-      });
-
-      if (!response.ok) {
-        throw new Error('Erreur sauvegarde données Strava sur le serveur');
-      }
-
-      console.log('Activités Strava sauvegardées sur le serveur VPS');
-    } catch (error) {
-      console.error('Erreur sauvegarde données Strava:', error);
-      throw error;
-    }
-  }
-
-  // Méthodes utilitaires
-  static async clearAllData(): Promise<void> {
-    try {
-      await AsyncStorage.multiRemove(['programmes_coach', 'users', 'current_user']);
-      console.log('Toutes les données locales ont été supprimées');
-    } catch (error) {
-      console.error('Erreur lors de la suppression des données:', error);
-      throw error;
-    }
-  }
-
-  static async exportData(): Promise<{programmes: any[], users: any[]}> {
-    try {
-      const programmes = await this.getProgrammes();
-      const users = await this.getUsers();
-      return { programmes, users };
-    } catch (error) {
-      console.error('Erreur lors de l\'export des données:', error);
-      throw error;
-    }
-  }
-
   // Méthodes pour Apple Health
   static async saveHealthData(userId: string, healthData: any[]): Promise<void> {
     try {
@@ -262,6 +196,28 @@ export class PersistentStorage {
       throw new Error('Erreur sauvegarde activités Strava sur le serveur');
     } catch (error) {
       console.error('Erreur sauvegarde activités Strava:', error);
+      throw error;
+    }
+  }
+
+  // Méthodes utilitaires
+  static async clearAllData(): Promise<void> {
+    try {
+      await AsyncStorage.multiRemove(['programmes_coach', 'users', 'current_user']);
+      console.log('Toutes les données locales ont été supprimées');
+    } catch (error) {
+      console.error('Erreur lors de la suppression des données:', error);
+      throw error;
+    }
+  }
+
+  static async exportData(): Promise<{programmes: any[], users: any[]}> {
+    try {
+      const programmes = await this.getProgrammes();
+      const users = await this.getUsers();
+      return { programmes, users };
+    } catch (error) {
+      console.error('Erreur lors de l\'export des données:', error);
       throw error;
     }
   }
