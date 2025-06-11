@@ -129,19 +129,11 @@ export default function NutritionScreen() {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity 
-            style={[styles.tab, selectedTab === 'Rechercher' && styles.activeTab]}
-            onPress={() => setSelectedTab('Rechercher')}
+            style={[styles.tab, selectedTab === 'Programme' && styles.activeTab]}
+            onPress={() => setSelectedTab('Programme')}
           >
-            <Text style={[styles.tabText, selectedTab === 'Rechercher' && styles.activeTabText]}>
-              Rechercher
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.tab, selectedTab === 'Scanner' && styles.activeTab]}
-            onPress={() => setSelectedTab('Scanner')}
-          >
-            <Text style={[styles.tabText, selectedTab === 'Scanner' && styles.activeTabText]}>
-              Scanner
+            <Text style={[styles.tabText, selectedTab === 'Programme' && styles.activeTabText]}>
+              Programme
             </Text>
           </TouchableOpacity>
         </View>
