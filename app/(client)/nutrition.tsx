@@ -1,13 +1,15 @@
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
+
+const { width } = Dimensions.get('window');
 
 export default function NutritionScreen() {
   const [selectedTab, setSelectedTab] = useState('Journal');
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Nutrition</Text>
@@ -140,82 +142,84 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    padding: 20,
-    paddingTop: 10,
+    paddingHorizontal: width < 375 ? 16 : 20,
+    paddingTop: 8,
+    paddingBottom: 12,
   },
   title: {
-    fontSize: 24,
+    fontSize: width < 375 ? 22 : 24,
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 4,
   },
   date: {
-    fontSize: 16,
+    fontSize: width < 375 ? 14 : 16,
     color: '#8B949E',
   },
   statsContainer: {
-    padding: 20,
-    paddingTop: 0,
+    paddingHorizontal: width < 375 ? 12 : 16,
+    paddingBottom: 16,
   },
   caloriesCard: {
     backgroundColor: '#161B22',
     borderRadius: 12,
-    padding: 20,
+    padding: width < 375 ? 16 : 20,
     borderWidth: 1,
     borderColor: '#21262D',
-    marginBottom: 16,
+    marginBottom: 12,
     alignItems: 'center',
   },
   caloriesValue: {
-    fontSize: 32,
+    fontSize: width < 375 ? 28 : 32,
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 4,
   },
   caloriesLabel: {
-    fontSize: 16,
+    fontSize: width < 375 ? 14 : 16,
     color: '#8B949E',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   caloriesSubtext: {
-    fontSize: 14,
+    fontSize: width < 375 ? 12 : 14,
     color: '#8B949E',
   },
   macrosContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: width < 375 ? 6 : 8,
   },
   macroItem: {
     backgroundColor: '#161B22',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 10,
+    padding: width < 375 ? 12 : 16,
     borderWidth: 1,
     borderColor: '#21262D',
     flex: 1,
-    marginHorizontal: 4,
     alignItems: 'center',
   },
   macroLabel: {
-    fontSize: 12,
+    fontSize: width < 375 ? 11 : 12,
     color: '#8B949E',
     marginBottom: 4,
+    textAlign: 'center',
   },
   macroValue: {
-    fontSize: 18,
+    fontSize: width < 375 ? 16 : 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
   tabsContainer: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
-    marginBottom: 20,
+    paddingHorizontal: width < 375 ? 12 : 16,
+    marginBottom: 16,
+    gap: width < 375 ? 6 : 8,
   },
   tab: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: width < 375 ? 10 : 12,
+    paddingHorizontal: width < 375 ? 12 : 16,
     borderRadius: 8,
-    marginHorizontal: 4,
     backgroundColor: '#161B22',
     borderWidth: 1,
     borderColor: '#21262D',
@@ -226,7 +230,7 @@ const styles = StyleSheet.create({
     borderColor: '#1F6FEB',
   },
   tabText: {
-    fontSize: 14,
+    fontSize: width < 375 ? 12 : 14,
     color: '#8B949E',
     fontWeight: '500',
   },
@@ -234,50 +238,49 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   mealsContainer: {
-    padding: 20,
-    paddingTop: 0,
-    paddingBottom: 100,
+    paddingHorizontal: width < 375 ? 12 : 16,
+    paddingBottom: 120,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: width < 375 ? 16 : 18,
     fontWeight: '600',
     color: '#FFFFFF',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   mealCard: {
     backgroundColor: '#161B22',
     borderRadius: 12,
-    padding: 20,
+    padding: width < 375 ? 14 : 18,
     borderWidth: 1,
     borderColor: '#21262D',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   mealHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   mealTitle: {
-    fontSize: 16,
+    fontSize: width < 375 ? 14 : 16,
     fontWeight: '600',
     color: '#FFFFFF',
   },
   addButton: {
     backgroundColor: '#21262D',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: width < 375 ? 4 : 6,
+    paddingHorizontal: width < 375 ? 8 : 12,
     borderRadius: 6,
   },
   addButtonText: {
-    fontSize: 12,
+    fontSize: width < 375 ? 10 : 12,
     color: '#8B949E',
   },
   mealEmpty: {
-    fontSize: 14,
+    fontSize: width < 375 ? 12 : 14,
     color: '#8B949E',
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
     fontStyle: 'italic',
   },
   addFoodButton: {
@@ -285,12 +288,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#21262D',
     borderStyle: 'dashed',
-    paddingVertical: 12,
+    paddingVertical: width < 375 ? 10 : 12,
     borderRadius: 8,
     alignItems: 'center',
   },
   addFoodText: {
-    fontSize: 14,
+    fontSize: width < 375 ? 12 : 14,
     color: '#8B949E',
   },
 });
