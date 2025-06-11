@@ -293,6 +293,31 @@ function NutritionScreen() {
           </View>
         </View>
 
+        {/* Tabs */}
+        <View style={styles.tabsContainer}>
+          <TouchableOpacity 
+            style={[styles.tab, selectedTab === 'Journal' && styles.activeTab]}
+            onPress={() => handleTabPress('Journal')}
+          >
+            <Text style={[styles.tabText, selectedTab === 'Journal' && styles.activeTabText]}>
+              Journal
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.tab, selectedTab === 'Programme' && styles.activeTab]}
+            onPress={() => handleTabPress('Programme')}
+          >
+            <View style={styles.tabContent}>
+              <Text style={[styles.tabText, selectedTab === 'Programme' && styles.activeTabText]}>
+                Programme
+              </Text>
+              <Text style={[styles.crownIcon, selectedTab === 'Programme' && styles.activeCrownIcon]}>
+                👑
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+
         {/* Hydratation */}
         <View style={styles.hydrationContainer}>
           <View style={styles.hydrationCard}>
@@ -337,31 +362,6 @@ function NutritionScreen() {
               </View>
             </View>
           </View>
-        </View>
-
-        {/* Tabs */}
-        <View style={styles.tabsContainer}>
-          <TouchableOpacity 
-            style={[styles.tab, selectedTab === 'Journal' && styles.activeTab]}
-            onPress={() => handleTabPress('Journal')}
-          >
-            <Text style={[styles.tabText, selectedTab === 'Journal' && styles.activeTabText]}>
-              Journal
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.tab, selectedTab === 'Programme' && styles.activeTab]}
-            onPress={() => handleTabPress('Programme')}
-          >
-            <View style={styles.tabContent}>
-              <Text style={[styles.tabText, selectedTab === 'Programme' && styles.activeTabText]}>
-                Programme
-              </Text>
-              <Text style={[styles.crownIcon, selectedTab === 'Programme' && styles.activeCrownIcon]}>
-                👑
-              </Text>
-            </View>
-          </TouchableOpacity>
         </View>
 
         {/* Meals Section */}
