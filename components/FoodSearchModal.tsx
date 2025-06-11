@@ -12,12 +12,22 @@ import {
   Alert,
   ActivityIndicator,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { OpenFoodFactsService, FoodProduct } from '@/utils/openfoodfacts';
 import * as ImagePicker from 'expo-image-picker';
-import { BarCodeScanner, BarCodeScannerResult } from 'expo-barcode-scanner';
 
 const { width } = Dimensions.get('window');
+
+// Import conditionnel du BarCodeScanner seulement sur mobile
+let BarCodeScanner: any = null;
+if (Platform.OS !== 'web') {
+  try {
+    BarCodeScanner = require('expo-barcode-scanner').BarCodeScanner;
+  } catch (error) {
+    console.log('BarCodeScanner non disponible:', error);
+  }
+}
 
 interface FoodSearchModalProps {
   visible: boolean;
@@ -44,8 +54,17 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
 
   useEffect(() => {
     (async () => {
-      const { status } = await BarCodeScanner.requestPermissionsAsync();
-      setHasPermission(status === 'granted');
+      if (BarCodeScanner && Platform.OS !== 'web') {
+        try {
+          const { status } = await BarCodeScanner.requestPermissionsAsync();
+          setHasPermission(status === 'granted');
+        } catch (error) {
+          console.log('Erreur permissions scanner:', error);
+          setHasPermission(false);
+        }
+      } else {
+        setHasPermission(false);
+      }
     })();
   }, []);
 
@@ -88,6 +107,28 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleScannerPress = () => {
+    if (Platform.OS === 'web') {
+      Alert.alert(
+        'Fonctionnalité non disponible', 
+        'Le scanner de code-barres n\'est disponible que sur les appareils mobiles. Utilisez la recherche manuelle ou testez sur votre téléphone.'
+      );
+      return;
+    }
+    
+    if (!BarCodeScanner) {
+      Alert.alert('Erreur', 'Le scanner de code-barres n\'est pas disponible sur cet appareil.');
+      return;
+    }
+    
+    if (hasPermission === false) {
+      Alert.alert('Permission requise', 'L\'accès à la caméra est nécessaire pour scanner les codes-barres');
+      return;
+    }
+    
+    setShowScanner(true);
   };
 
   const handleTakePhoto = async () => {
@@ -162,7 +203,7 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
     );
   };
 
-  if (showScanner) {
+  if (showScanner && BarCodeScanner && Platform.OS !== 'web') {
     return (
       <Modal visible={visible} animationType="slide">
         <View style={styles.scannerContainer}>
@@ -215,11 +256,12 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
             <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => setShowScanner(true)}
-              disabled={hasPermission === false}
+              style={[styles.actionButton, Platform.OS === 'web' && styles.disabledButton]}
+              onPress={handleScannerPress}
             >
-              <Text style={styles.actionButtonText}>📷 Scanner</Text>
+              <Text style={[styles.actionButtonText, Platform.OS === 'web' && styles.disabledButtonText]}>
+                📷 Scanner{Platform.OS === 'web' ? ' (Mobile seulement)' : ''}
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.actionButton}
@@ -392,6 +434,12 @@ const styles = StyleSheet.create({
   actionButtonText: {
     color: '#FFFFFF',
     fontSize: 14,
+  },
+  disabledButton: {
+    opacity: 0.5,
+  },
+  disabledButtonText: {
+    color: '#8B949E',
   },
   resultsContainer: {
     flex: 1,
