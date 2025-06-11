@@ -234,50 +234,30 @@ export default function EntrainementScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Days Tabs (only for Journal) */}
-        {selectedTab === 'Journal' && (
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            style={styles.daysScrollContainer}
-            contentContainerStyle={styles.daysContainer}
-          >
-            {daysOfWeek.map((day) => (
-              <TouchableOpacity
-                key={day}
-                style={[styles.dayTab, selectedDay === day && styles.activeDayTab]}
-                onPress={() => setSelectedDay(day)}
-              >
-                <Text style={[styles.dayTabText, selectedDay === day && styles.activeDayTabText]}>
-                  {day}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        )}
-
         {/* Content */}
         <View style={styles.contentContainer}>
           {selectedTab === 'Journal' && (
-            <View style={styles.dayContent}>
-              <Text style={styles.selectedDayTitle}>{selectedDay}</Text>
-              
-              {/* Empty state for the selected day */}
-              <View style={styles.emptyState}>
-                <View style={styles.emptyIcon}>
-                  <Text style={styles.emptyIconText}>💪</Text>
+            <View style={styles.daysContainer}>
+              {daysOfWeek.map((day) => (
+                <View key={day} style={styles.dayCard}>
+                  <View style={styles.dayHeader}>
+                    <Text style={styles.dayTitle}>{day}</Text>
+                    <Text style={styles.dayCalories}>0 exercices</Text>
+                  </View>
+
+                  <Text style={styles.dayEmpty}>Aucun entraînement ajouté</Text>
+
+                  <TouchableOpacity 
+                    style={styles.addWorkoutButton}
+                    onPress={() => {
+                      setSelectedDay(day);
+                      // Ici on pourrait ouvrir un modal d'ajout d'exercice
+                    }}
+                  >
+                    <Text style={styles.addWorkoutText}>+ Ajouter un entraînement</Text>
+                  </TouchableOpacity>
                 </View>
-                <Text style={styles.emptyTitle}>Aucun entraînement</Text>
-                <Text style={styles.emptyMessage}>
-                  Ajoutez vos exercices pour {selectedDay.toLowerCase()}
-                </Text>
-                <Text style={styles.emptySubmessage}>
-                  Notez vos séries, répétitions, poids et ressentis
-                </Text>
-                <TouchableOpacity style={styles.addWorkoutButton}>
-                  <Text style={styles.addWorkoutText}>Ajouter un entraînement</Text>
-                </TouchableOpacity>
-              </View>
+              ))}
             </View>
           )}
 
@@ -446,51 +426,47 @@ const styles = StyleSheet.create({
   lockedTabText: {
     color: '#6A737D',
   },
-  daysScrollContainer: {
-    paddingHorizontal: 16,
-    marginBottom: 16,
-  },
   daysContainer: {
-    flexDirection: 'row',
-    gap: 8,
+    flex: 1,
   },
-  dayTab: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
+  dayCard: {
     backgroundColor: '#161B22',
+    borderRadius: 12,
+    padding: 18,
     borderWidth: 1,
     borderColor: '#21262D',
-    minWidth: 80,
+    marginBottom: 12,
+  },
+  dayHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 10,
   },
-  activeDayTab: {
-    backgroundColor: '#F5A623',
-    borderColor: '#F5A623',
+  dayTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
-  dayTabText: {
+  dayCalories: {
+    backgroundColor: '#21262D',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
     fontSize: 12,
     color: '#8B949E',
-    fontWeight: '500',
   },
-  activeDayTabText: {
-    color: '#000000',
-    fontWeight: '600',
+  dayEmpty: {
+    fontSize: 14,
+    color: '#8B949E',
+    textAlign: 'center',
+    marginBottom: 12,
+    fontStyle: 'italic',
   },
   contentContainer: {
     flex: 1,
     paddingHorizontal: 16,
     paddingBottom: 90,
-  },
-  dayContent: {
-    flex: 1,
-  },
-  selectedDayTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 16,
-    textAlign: 'center',
   },
   emptyState: {
     backgroundColor: '#161B22',
@@ -536,17 +512,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   addWorkoutButton: {
-    backgroundColor: '#F5A623',
+    backgroundColor: '#0D1117',
+    borderWidth: 1,
+    borderColor: '#21262D',
+    borderStyle: 'dashed',
     paddingVertical: 12,
-    paddingHorizontal: 20,
     borderRadius: 8,
-    minWidth: 200,
     alignItems: 'center',
   },
   addWorkoutText: {
-    color: '#000000',
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 14,
+    color: '#8B949E',
   },
   fab: {
     position: 'absolute',
