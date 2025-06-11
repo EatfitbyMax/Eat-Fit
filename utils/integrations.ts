@@ -262,6 +262,7 @@ export class IntegrationsManager {
           date: new Date(Date.now() - 86400000).toISOString() // hier
         }
       ];
+      }
 
       // Sauvegarder les données localement d'abord
       await AsyncStorage.setItem(`${STRAVA_DATA_KEY}_${userId}`, JSON.stringify(activities));
