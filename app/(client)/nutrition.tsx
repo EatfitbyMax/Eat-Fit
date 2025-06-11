@@ -65,24 +65,60 @@ export default function NutritionScreen() {
 
         {/* Stats */}
         <View style={styles.statsContainer}>
+          {/* Calories Circular Gauge */}
           <View style={styles.caloriesCard}>
-            <Text style={styles.caloriesValue}>0 / 2495</Text>
-            <Text style={styles.caloriesLabel}>kcal</Text>
-            <Text style={styles.caloriesSubtext}>245.5 kcal restantes</Text>
+            <View style={styles.circularGaugeContainer}>
+              <View style={styles.circularGauge}>
+                <View style={[styles.circularGaugeFill, { transform: [{ rotate: '0deg' }] }]} />
+                <View style={styles.circularGaugeInner}>
+                  <Text style={styles.caloriesValue}>0</Text>
+                  <Text style={styles.caloriesTarget}>/ 2495</Text>
+                  <Text style={styles.caloriesLabel}>kcal</Text>
+                </View>
+              </View>
+            </View>
+            <Text style={styles.caloriesSubtext}>2495 kcal restantes</Text>
           </View>
 
+          {/* Macros Progress Bars */}
           <View style={styles.macrosContainer}>
+            {/* Protéines */}
             <View style={styles.macroItem}>
-              <Text style={styles.macroLabel}>Protéines</Text>
-              <Text style={styles.macroValue}>0 g</Text>
+              <View style={styles.macroHeader}>
+                <Text style={styles.macroLabel}>Protéines</Text>
+                <Text style={styles.macroValue}>0g / 125g</Text>
+              </View>
+              <View style={styles.progressBarContainer}>
+                <View style={styles.progressBar}>
+                  <View style={[styles.progressFill, { width: '0%', backgroundColor: '#FF6B6B' }]} />
+                </View>
+              </View>
             </View>
+
+            {/* Glucides */}
             <View style={styles.macroItem}>
-              <Text style={styles.macroLabel}>Glucides</Text>
-              <Text style={styles.macroValue}>0 g</Text>
+              <View style={styles.macroHeader}>
+                <Text style={styles.macroLabel}>Glucides</Text>
+                <Text style={styles.macroValue}>0g / 312g</Text>
+              </View>
+              <View style={styles.progressBarContainer}>
+                <View style={styles.progressBar}>
+                  <View style={[styles.progressFill, { width: '0%', backgroundColor: '#4ECDC4' }]} />
+                </View>
+              </View>
             </View>
+
+            {/* Lipides */}
             <View style={styles.macroItem}>
-              <Text style={styles.macroLabel}>Lipides</Text>
-              <Text style={styles.macroValue}>0 g</Text>
+              <View style={styles.macroHeader}>
+                <Text style={styles.macroLabel}>Lipides</Text>
+                <Text style={styles.macroValue}>0g / 83g</Text>
+              </View>
+              <View style={styles.progressBarContainer}>
+                <View style={styles.progressBar}>
+                  <View style={[styles.progressFill, { width: '0%', backgroundColor: '#FFE66D' }]} />
+                </View>
+              </View>
             </View>
           </View>
         </View>
@@ -248,28 +284,57 @@ const styles = StyleSheet.create({
     padding: width < 375 ? 16 : 20,
     borderWidth: 1,
     borderColor: '#21262D',
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  circularGaugeContainer: {
+    alignItems: 'center',
     marginBottom: 12,
+  },
+  circularGauge: {
+    width: width < 375 ? 120 : 140,
+    height: width < 375 ? 120 : 140,
+    borderRadius: width < 375 ? 60 : 70,
+    borderWidth: 8,
+    borderColor: '#21262D',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  circularGaugeFill: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    borderRadius: width < 375 ? 60 : 70,
+    borderWidth: 8,
+    borderColor: 'transparent',
+    borderTopColor: '#1F6FEB',
+  },
+  circularGaugeInner: {
     alignItems: 'center',
   },
   caloriesValue: {
-    fontSize: width < 375 ? 28 : 32,
+    fontSize: width < 375 ? 24 : 28,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 4,
+    lineHeight: width < 375 ? 26 : 30,
   },
-  caloriesLabel: {
+  caloriesTarget: {
     fontSize: width < 375 ? 14 : 16,
     color: '#8B949E',
-    marginBottom: 6,
+    lineHeight: width < 375 ? 16 : 18,
+  },
+  caloriesLabel: {
+    fontSize: width < 375 ? 12 : 14,
+    color: '#8B949E',
+    marginTop: 2,
   },
   caloriesSubtext: {
     fontSize: width < 375 ? 12 : 14,
     color: '#8B949E',
   },
   macrosContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: width < 375 ? 6 : 8,
+    gap: width < 375 ? 12 : 16,
   },
   macroItem: {
     backgroundColor: '#161B22',
@@ -277,19 +342,35 @@ const styles = StyleSheet.create({
     padding: width < 375 ? 12 : 16,
     borderWidth: 1,
     borderColor: '#21262D',
-    flex: 1,
+  },
+  macroHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 8,
   },
   macroLabel: {
-    fontSize: width < 375 ? 11 : 12,
+    fontSize: width < 375 ? 12 : 14,
     color: '#8B949E',
-    marginBottom: 4,
-    textAlign: 'center',
+    fontWeight: '500',
   },
   macroValue: {
-    fontSize: width < 375 ? 16 : 18,
-    fontWeight: 'bold',
+    fontSize: width < 375 ? 12 : 14,
+    fontWeight: '600',
     color: '#FFFFFF',
+  },
+  progressBarContainer: {
+    width: '100%',
+  },
+  progressBar: {
+    height: width < 375 ? 6 : 8,
+    backgroundColor: '#21262D',
+    borderRadius: width < 375 ? 3 : 4,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: width < 375 ? 3 : 4,
   },
   tabsContainer: {
     flexDirection: 'row',
