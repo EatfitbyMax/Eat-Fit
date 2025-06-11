@@ -96,11 +96,17 @@ export class IntegrationsManager {
         }
       ];
 
-      // Sauvegarder les données localement
+      // Sauvegarder les données localement d'abord
       await AsyncStorage.setItem(`${HEALTH_DATA_KEY}_${userId}`, JSON.stringify(healthData));
       
-      // Synchroniser avec le serveur VPS
-      await PersistentStorage.saveHealthData(userId, healthData);
+      try {
+        // Tentative de synchronisation avec le serveur VPS
+        await PersistentStorage.saveHealthData(userId, healthData);
+        console.log('Données Apple Health sauvegardées sur le serveur VPS');
+      } catch (serverError) {
+        console.warn('Impossible de sauvegarder sur le serveur, données conservées localement:', serverError);
+        // Continuer même si le serveur échoue
+      }
 
       // Mettre à jour la date de dernière sync
       integrationStatus.appleHealth.lastSync = new Date().toISOString();
@@ -172,11 +178,17 @@ export class IntegrationsManager {
         }
       ];
 
-      // Sauvegarder les données localement
+      // Sauvegarder les données localement d'abord
       await AsyncStorage.setItem(`${STRAVA_DATA_KEY}_${userId}`, JSON.stringify(activities));
       
-      // Synchroniser avec le serveur VPS
-      await PersistentStorage.saveStravaActivities(userId, activities);
+      try {
+        // Tentative de synchronisation avec le serveur VPS
+        await PersistentStorage.saveStravaActivities(userId, activities);
+        console.log('Activités Strava sauvegardées sur le serveur VPS');
+      } catch (serverError) {
+        console.warn('Impossible de sauvegarder sur le serveur, données conservées localement:', serverError);
+        // Continuer même si le serveur échoue
+      }
 
       // Mettre à jour la date de dernière sync
       integrationStatus.strava.lastSync = new Date().toISOString();
@@ -269,16 +281,36 @@ export class IntegrationsManager {
   static async syncAllData(userId: string): Promise<void> {
     try {
       const integrationStatus = await this.getIntegrationStatus(userId);
+      const results = { appleHealth: false, strava: false };
       
       if (integrationStatus.appleHealth.connected) {
-        await this.syncAppleHealthData(userId);
+        try {
+          await this.syncAppleHealthData(userId);
+          results.appleHealth = true;
+          console.log('✅ Apple Health synchronisé avec succès');
+        } catch (error) {
+          console.error('❌ Erreur sync Apple Health:', error);
+        }
       }
       
       if (integrationStatus.strava.connected) {
-        await this.syncStravaActivities(userId);
+        try {
+          await this.syncStravaActivities(userId);
+          results.strava = true;
+          console.log('✅ Strava synchronisé avec succès');
+        } catch (error) {
+          console.error('❌ Erreur sync Strava:', error);
+        }
       }
       
-      console.log('Synchronisation complète terminée pour utilisateur:', userId);
+      console.log('Synchronisation complète terminée pour utilisateur:', userId, results);
+      
+      if (!results.appleHealth && integrationStatus.appleHealth.connected) {
+        console.warn('Apple Health connecté mais synchronisation échouée');
+      }
+      if (!results.strava && integrationStatus.strava.connected) {
+        console.warn('Strava connecté mais synchronisation échouée');
+      }
     } catch (error) {
       console.error('Erreur synchronisation complète:', error);
       throw error;

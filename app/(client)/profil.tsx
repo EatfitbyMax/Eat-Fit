@@ -31,7 +31,7 @@ export default function ProfilScreen() {
     try {
       const currentUser = await getCurrentUser();
       if (!currentUser) return;
-      
+
       const status = await IntegrationsManager.getIntegrationStatus(currentUser.id);
       setIntegrationStatus(status);
     } catch (error) {
@@ -493,7 +493,20 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
   },
-    syncAllButton: {
+    testButton: {
+    backgroundColor: '#6C757D',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  testButtonText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '500',
+  },
+  syncAllButton: {
     backgroundColor: '#3498db',
     borderRadius: 12,
     padding: 16,
