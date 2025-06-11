@@ -17,7 +17,7 @@
       "icon": "./assets/images/crown-logo.png",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/crown-logo.png",
-        "backgroundColor": "#000000"
+        "backgroundColor": "#1E1E1E"
       }
     },
     "web": {
