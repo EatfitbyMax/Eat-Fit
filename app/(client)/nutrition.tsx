@@ -65,9 +65,10 @@ export default function NutritionScreen() {
 
         {/* Stats */}
         <View style={styles.statsContainer}>
-          {/* Calories Circular Gauge */}
-          <View style={styles.caloriesCard}>
-            <View style={styles.circularGaugeContainer}>
+          {/* Combined Calories and Macros Card */}
+          <View style={styles.combinedStatsCard}>
+            {/* Calories Circular Gauge - Left Side */}
+            <View style={styles.caloriesSection}>
               <View style={styles.circularGauge}>
                 <View style={[styles.circularGaugeFill, { transform: [{ rotate: '0deg' }] }]} />
                 <View style={styles.circularGaugeInner}>
@@ -76,42 +77,42 @@ export default function NutritionScreen() {
                   <Text style={styles.caloriesLabel}>kcal</Text>
                 </View>
               </View>
-            </View>
-            <Text style={styles.caloriesSubtext}>2495 kcal restantes</Text>
-          </View>
-
-          {/* Macros Progress Bars */}
-          <View style={styles.macrosContainer}>
-            {/* Protéines */}
-            <View style={styles.macroItem}>
-              <View style={styles.macroHeader}>
-                <Text style={styles.macroLabel}>Protéines</Text>
-                <Text style={styles.macroValue}>0g / 125g</Text>
-              </View>
-              <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: '0%', backgroundColor: '#FF6B6B' }]} />
-              </View>
+              <Text style={styles.caloriesSubtext}>2495 kcal restantes</Text>
             </View>
 
-            {/* Glucides */}
-            <View style={styles.macroItem}>
-              <View style={styles.macroHeader}>
-                <Text style={styles.macroLabel}>Glucides</Text>
-                <Text style={styles.macroValue}>0g / 312g</Text>
+            {/* Macros Progress Bars - Right Side */}
+            <View style={styles.macrosSection}>
+              {/* Protéines */}
+              <View style={styles.macroItem}>
+                <View style={styles.macroHeader}>
+                  <Text style={styles.macroLabel}>Protéines</Text>
+                  <Text style={styles.macroValue}>0g / 125g</Text>
+                </View>
+                <View style={styles.progressBar}>
+                  <View style={[styles.progressFill, { width: '0%', backgroundColor: '#FF6B6B' }]} />
+                </View>
               </View>
-              <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: '0%', backgroundColor: '#4ECDC4' }]} />
-              </View>
-            </View>
 
-            {/* Lipides */}
-            <View style={styles.macroItem}>
-              <View style={styles.macroHeader}>
-                <Text style={styles.macroLabel}>Lipides</Text>
-                <Text style={styles.macroValue}>0g / 83g</Text>
+              {/* Glucides */}
+              <View style={styles.macroItem}>
+                <View style={styles.macroHeader}>
+                  <Text style={styles.macroLabel}>Glucides</Text>
+                  <Text style={styles.macroValue}>0g / 312g</Text>
+                </View>
+                <View style={styles.progressBar}>
+                  <View style={[styles.progressFill, { width: '0%', backgroundColor: '#4ECDC4' }]} />
+                </View>
               </View>
-              <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: '0%', backgroundColor: '#FFE66D' }]} />
+
+              {/* Lipides */}
+              <View style={styles.macroItem}>
+                <View style={styles.macroHeader}>
+                  <Text style={styles.macroLabel}>Lipides</Text>
+                  <Text style={styles.macroValue}>0g / 83g</Text>
+                </View>
+                <View style={styles.progressBar}>
+                  <View style={[styles.progressFill, { width: '0%', backgroundColor: '#FFE66D' }]} />
+                </View>
               </View>
             </View>
           </View>
@@ -272,35 +273,37 @@ const styles = StyleSheet.create({
     paddingHorizontal: width < 375 ? 12 : 16,
     paddingBottom: 16,
   },
-  caloriesCard: {
+  combinedStatsCard: {
     backgroundColor: '#161B22',
     borderRadius: 12,
     padding: width < 375 ? 12 : 16,
     borderWidth: 1,
     borderColor: '#21262D',
-    marginBottom: 12,
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: width < 375 ? 12 : 16,
   },
-  circularGaugeContainer: {
+  caloriesSection: {
     alignItems: 'center',
-    marginBottom: 8,
+    minWidth: width < 375 ? 100 : 110,
   },
   circularGauge: {
-    width: width < 375 ? 80 : 90,
-    height: width < 375 ? 80 : 90,
-    borderRadius: width < 375 ? 40 : 45,
-    borderWidth: 6,
+    width: width < 375 ? 70 : 80,
+    height: width < 375 ? 70 : 80,
+    borderRadius: width < 375 ? 35 : 40,
+    borderWidth: 5,
     borderColor: '#21262D',
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
+    marginBottom: 6,
   },
   circularGaugeFill: {
     position: 'absolute',
     width: '100%',
     height: '100%',
-    borderRadius: width < 375 ? 40 : 45,
-    borderWidth: 6,
+    borderRadius: width < 375 ? 35 : 40,
+    borderWidth: 5,
     borderColor: 'transparent',
     borderTopColor: '#1F6FEB',
   },
@@ -308,26 +311,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   caloriesValue: {
-    fontSize: width < 375 ? 18 : 20,
+    fontSize: width < 375 ? 16 : 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    lineHeight: width < 375 ? 20 : 22,
+    lineHeight: width < 375 ? 18 : 20,
   },
   caloriesTarget: {
-    fontSize: width < 375 ? 12 : 13,
+    fontSize: width < 375 ? 10 : 11,
     color: '#8B949E',
-    lineHeight: width < 375 ? 14 : 15,
+    lineHeight: width < 375 ? 12 : 13,
   },
   caloriesLabel: {
-    fontSize: width < 375 ? 10 : 11,
+    fontSize: width < 375 ? 9 : 10,
     color: '#8B949E',
     marginTop: 1,
   },
   caloriesSubtext: {
-    fontSize: width < 375 ? 11 : 12,
+    fontSize: width < 375 ? 9 : 10,
     color: '#8B949E',
+    textAlign: 'center',
   },
-  macrosContainer: {
+  macrosSection: {
+    flex: 1,
     gap: width < 375 ? 8 : 10,
   },
   macroItem: {
