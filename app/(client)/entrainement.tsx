@@ -54,17 +54,9 @@ export default function EntrainementScreen() {
 
   const formatSelectedDate = (date: Date) => {
     const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
-
+    
     if (date.toDateString() === today.toDateString()) {
       return 'Aujourd\'hui';
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      return 'Hier';
-    } else if (date.toDateString() === tomorrow.toDateString()) {
-      return 'Demain';
     } else {
       return date.toLocaleDateString('fr-FR', {
         weekday: 'long',
@@ -162,7 +154,7 @@ export default function EntrainementScreen() {
               <Text style={styles.selectedDateSubtext}>
                 {selectedDate.toLocaleDateString('fr-FR', {
                   day: 'numeric',
-                  month: 'short',
+                  month: 'long',
                   year: 'numeric'
                 })}
               </Text>
