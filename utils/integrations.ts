@@ -48,7 +48,7 @@ const STRAVA_DATA_KEY = 'strava_activities';
 const STRAVA_CONFIG = {
   CLIENT_ID: process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID || 'YOUR_STRAVA_CLIENT_ID',
   CLIENT_SECRET: process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET || 'YOUR_STRAVA_CLIENT_SECRET',
-  REDIRECT_URI: 'https://eatfitbymax.replit.app/auth/strava/callback',
+  REDIRECT_URI: 'https://your-app.com/auth/strava/callback',
   SCOPE: 'read,activity:read_all',
   API_BASE_URL: 'https://www.strava.com/api/v3'
 };
@@ -239,9 +239,9 @@ export class IntegrationsManager {
       if (activities.length === 0) {
         console.log('🔄 Mode simulation - génération d\'activités Strava factices');
         activities = [
-          {
-            id: `strava_${Date.now()}_1`,
-            name: 'Course matinale',
+        {
+          id: `strava_${Date.now()}_1`,
+          name: 'Course matinale',
           type: 'Run',
           distance: 5000 + Math.random() * 3000,
           duration: 1800 + Math.random() * 1200,
@@ -260,9 +260,8 @@ export class IntegrationsManager {
           avgHeartRate: 130 + Math.random() * 15,
           maxHeartRate: 150 + Math.random() * 15,
           date: new Date(Date.now() - 86400000).toISOString() // hier
-          }
-        ];
-      }
+        }
+      ];
 
       // Sauvegarder les données localement d'abord
       await AsyncStorage.setItem(`${STRAVA_DATA_KEY}_${userId}`, JSON.stringify(activities));
