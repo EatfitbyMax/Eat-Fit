@@ -46,9 +46,9 @@ const STRAVA_DATA_KEY = 'strava_activities';
 
 // Configuration Strava API
 const STRAVA_CONFIG = {
-  CLIENT_ID: process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID || 'YOUR_STRAVA_CLIENT_ID',
-  CLIENT_SECRET: process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET || 'YOUR_STRAVA_CLIENT_SECRET',
-  REDIRECT_URI: 'https://your-app.com/auth/strava/callback',
+  CLIENT_ID: process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID || '159394',
+  CLIENT_SECRET: process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET || '0a888961cf64a2294908224b07b222ccba150700',
+  REDIRECT_URI: 'https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/auth/strava/callback',
   SCOPE: 'read,activity:read_all',
   API_BASE_URL: 'https://www.strava.com/api/v3'
 };
