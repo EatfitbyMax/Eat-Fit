@@ -122,17 +122,26 @@ export default function ProfilScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Informations personnelles</Text>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => router.push('/informations-personnelles')}
+          >
             <Text style={styles.menuItemText}>👤 Informations personnelles</Text>
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => router.push('/mes-objectifs')}
+          >
             <Text style={styles.menuItemText}>🎯 Mes objectifs</Text>
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => router.push('/notifications')}
+          >
             <Text style={styles.menuItemText}>🔔 Notifications</Text>
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
