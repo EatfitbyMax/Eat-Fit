@@ -8,6 +8,7 @@ export default function EntrainementScreen() {
   const [selectedTab, setSelectedTab] = useState('À venir');
   const [stravaActivities, setStravaActivities] = useState<StravaActivity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   useEffect(() => {
     loadStravaActivities();
@@ -49,6 +50,38 @@ export default function EntrainementScreen() {
       month: 'short',
       year: 'numeric'
     });
+  };
+
+  const formatSelectedDate = (date: Date) => {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return 'Aujourd\'hui';
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return 'Hier';
+    } else if (date.toDateString() === tomorrow.toDateString()) {
+      return 'Demain';
+    } else {
+      return date.toLocaleDateString('fr-FR', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long'
+      });
+    }
+  };
+
+  const navigateDate = (direction: 'prev' | 'next') => {
+    const newDate = new Date(selectedDate);
+    if (direction === 'prev') {
+      newDate.setDate(selectedDate.getDate() - 1);
+    } else {
+      newDate.setDate(selectedDate.getDate() + 1);
+    }
+    setSelectedDate(newDate);
   };
 
   const getActivityIcon = (type: string) => {
@@ -114,6 +147,35 @@ export default function EntrainementScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Entraînement</Text>
+          
+          {/* Navigation par dates */}
+          <View style={styles.dateNavigation}>
+            <TouchableOpacity 
+              style={styles.dateArrow}
+              onPress={() => navigateDate('prev')}
+            >
+              <Text style={styles.arrowText}>‹</Text>
+            </TouchableOpacity>
+            
+            <View style={styles.dateContainer}>
+              <Text style={styles.selectedDate}>{formatSelectedDate(selectedDate)}</Text>
+              <Text style={styles.selectedDateSubtext}>
+                {selectedDate.toLocaleDateString('fr-FR', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric'
+                })}
+              </Text>
+            </View>
+            
+            <TouchableOpacity 
+              style={styles.dateArrow}
+              onPress={() => navigateDate('next')}
+            >
+              <Text style={styles.arrowText}>›</Text>
+            </TouchableOpacity>
+          </View>
+
           <Text style={styles.weekInfo}>Cette semaine</Text>
           <Text style={styles.dateRange}>2 juin - 8 juin</Text>
         </View>
@@ -263,16 +325,59 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 4,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  dateNavigation: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 16,
+  },
+  dateArrow: {
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: '#161B22',
+    borderWidth: 1,
+    borderColor: '#21262D',
+    minWidth: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  arrowText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  dateContainer: {
+    flex: 1,
+    alignItems: 'center',
+    marginHorizontal: 16,
+  },
+  selectedDate: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    textTransform: 'capitalize',
+  },
+  selectedDateSubtext: {
+    fontSize: 12,
+    color: '#8B949E',
+    marginTop: 2,
+    textAlign: 'center',
   },
   weekInfo: {
     fontSize: 16,
     color: '#8B949E',
     marginBottom: 2,
+    textAlign: 'center',
   },
   dateRange: {
     fontSize: 14,
     color: '#8B949E',
+    textAlign: 'center',
   },
   statsContainer: {
     flexDirection: 'row',
