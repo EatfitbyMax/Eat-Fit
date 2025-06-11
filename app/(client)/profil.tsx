@@ -59,14 +59,27 @@ export default function ProfilScreen() {
         const success = await IntegrationsManager.connectAppleHealth(currentUser.id);
         if (success) {
           await loadIntegrationStatus();
-          Alert.alert("Succès", "Apple Health connecté avec succès");
+          Alert.alert(
+            "Succès", 
+            "Apple Health connecté avec succès ! Vos données de santé seront maintenant synchronisées.",
+            [{ text: "OK" }]
+          );
         } else {
-          Alert.alert("Erreur", "Impossible de connecter Apple Health");
+          Alert.alert(
+            "Erreur", 
+            "Impossible de connecter Apple Health. Vérifiez que l'app Santé est installée et que vous avez accordé les permissions nécessaires.",
+            [{ text: "OK" }]
+          );
         }
       }
     } catch (error) {
       console.error("Failed to toggle Apple Health:", error);
-      Alert.alert("Erreur", "Impossible de connecter/déconnecter Apple Health.");
+      const errorMessage = error.message || "Une erreur inconnue s'est produite";
+      Alert.alert(
+        "Erreur de connexion", 
+        `Impossible de connecter Apple Health: ${errorMessage}`,
+        [{ text: "OK" }]
+      );
     } finally {
       setIsLoading(false);
     }
