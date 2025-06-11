@@ -28,23 +28,42 @@ export default function ProfilScreen() {
   };
 
   const loadIntegrationStatus = async () => {
-    setIsLoading(true);
     try {
-      const status = await IntegrationsManager.getIntegrationStatus();
+      const currentUser = await getCurrentUser();
+      if (!currentUser) return;
+      
+      const status = await IntegrationsManager.getIntegrationStatus(currentUser.id);
       setIntegrationStatus(status);
     } catch (error) {
       console.error("Failed to load integration status:", error);
-      Alert.alert("Erreur", "Impossible de charger le statut des intégrations.");
-    } finally {
-      setIsLoading(false);
     }
-  };
+  };;
 
   const handleAppleHealthToggle = async () => {
     setIsLoading(true);
     try {
-      const newStatus = await IntegrationsManager.toggleAppleHealth();
-      setIntegrationStatus(prev => ({ ...prev, appleHealth: newStatus }));
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        Alert.alert("Erreur", "Utilisateur non connecté");
+        return;
+      }
+
+      if (integrationStatus.appleHealth.connected) {
+        await IntegrationsManager.disconnectAppleHealth(currentUser.id);
+        setIntegrationStatus(prev => ({
+          ...prev,
+          appleHealth: { connected: false, lastSync: null }
+        }));
+        Alert.alert("Succès", "Apple Health déconnecté");
+      } else {
+        const success = await IntegrationsManager.connectAppleHealth(currentUser.id);
+        if (success) {
+          await loadIntegrationStatus();
+          Alert.alert("Succès", "Apple Health connecté avec succès");
+        } else {
+          Alert.alert("Erreur", "Impossible de connecter Apple Health");
+        }
+      }
     } catch (error) {
       console.error("Failed to toggle Apple Health:", error);
       Alert.alert("Erreur", "Impossible de connecter/déconnecter Apple Health.");
@@ -53,10 +72,49 @@ export default function ProfilScreen() {
     }
   };
 
+  const handleStravaToggle = async () => {
+    setIsLoading(true);
+    try {
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        Alert.alert("Erreur", "Utilisateur non connecté");
+        return;
+      }
+
+      if (integrationStatus.strava.connected) {
+        await IntegrationsManager.disconnectStrava(currentUser.id);
+        setIntegrationStatus(prev => ({
+          ...prev,
+          strava: { connected: false, lastSync: null, athleteId: null }
+        }));
+        Alert.alert("Succès", "Strava déconnecté");
+      } else {
+        const success = await IntegrationsManager.connectStrava(currentUser.id);
+        if (success) {
+          await loadIntegrationStatus();
+          Alert.alert("Succès", "Strava connecté avec succès");
+        } else {
+          Alert.alert("Erreur", "Impossible de connecter Strava");
+        }
+      }
+    } catch (error) {
+      console.error("Failed to toggle Strava:", error);
+      Alert.alert("Erreur", "Impossible de connecter/déconnecter Strava.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSyncAllData = async () => {
     setIsLoading(true);
     try {
-      await IntegrationsManager.syncAllData();
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        Alert.alert("Erreur", "Utilisateur non connecté");
+        return;
+      }
+
+      await IntegrationsManager.syncAllData(currentUser.id);
       Alert.alert("Succès", "Toutes les données ont été synchronisées.");
       await loadIntegrationStatus(); // Refresh statuses after sync
     } catch (error) {
@@ -165,6 +223,24 @@ export default function ProfilScreen() {
             >
               <Text style={[styles.connectButtonText, integrationStatus.appleHealth.connected && styles.connectedButtonText]}>
                 {integrationStatus.appleHealth.connected ? 'Connecté' : 'Connecter'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.integrationItem}>
+            <View style={styles.integrationInfo}>
+              <Text style={styles.integrationName}>🏃‍♂️ Strava</Text>
+              <Text style={styles.integrationDescription}>
+                Synchronisez vos activités sportives avec EatFitByMax
+              </Text>
+            </View>
+            <TouchableOpacity 
+              style={[styles.connectButton, integrationStatus.strava.connected && styles.connectedButton]}
+              onPress={() => handleStravaToggle()}
+              disabled={isLoading}
+            >
+              <Text style={[styles.connectButtonText, integrationStatus.strava.connected && styles.connectedButtonText]}>
+                {integrationStatus.strava.connected ? 'Connecté' : 'Connecter'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -357,6 +433,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#FFFFFF',
     fontWeight: '600',
+  },
+  connectedButton: {
+    backgroundColor: '#6C757D',
+  },
+  connectedButtonText: {
+    color: '#FFFFFF',
   },
   stravaConnection: {
     backgroundColor: '#161B22',
