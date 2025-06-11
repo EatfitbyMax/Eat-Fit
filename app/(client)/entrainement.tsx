@@ -227,6 +227,9 @@ export default function EntrainementScreen() {
               <Text style={[styles.tabText, selectedTab === 'Programmes' && styles.activeTabText, !hasSubscription && styles.lockedTabText]}>
                 Programmes
               </Text>
+              <Text style={[styles.crownIcon, selectedTab === 'Programmes' && styles.activeCrownIcon]}>
+                👑
+              </Text>
               {!hasSubscription && <Text style={styles.lockIcon}>🔒</Text>}
             </View>
           </TouchableOpacity>
@@ -458,6 +461,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  crownIcon: {
+    fontSize: 10,
+    marginLeft: 4,
+    color: '#8B949E',
+    opacity: 0.6,
+  },
+  activeCrownIcon: {
+    opacity: 1,
   },
   lockIcon: {
     fontSize: 10,
