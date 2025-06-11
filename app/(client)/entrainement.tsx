@@ -230,7 +230,6 @@ export default function EntrainementScreen() {
               <Text style={[styles.crownIcon, selectedTab === 'Programmes' && styles.activeCrownIcon]}>
                 👑
               </Text>
-              {!hasSubscription && <Text style={styles.lockIcon}>🔒</Text>}
             </View>
           </TouchableOpacity>
         </View>
