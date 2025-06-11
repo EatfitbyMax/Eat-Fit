@@ -141,9 +141,14 @@ export default function NutritionScreen() {
             style={[styles.tab, selectedTab === 'Programme' && styles.activeTab]}
             onPress={() => handleTabPress('Programme')}
           >
-            <Text style={[styles.tabText, selectedTab === 'Programme' && styles.activeTabText]}>
-              Programme
-            </Text>
+            <View style={styles.tabContent}>
+              <Text style={[styles.tabText, selectedTab === 'Programme' && styles.activeTabText]}>
+                Programme
+              </Text>
+              <Text style={[styles.crownIcon, selectedTab === 'Programme' && styles.activeCrownIcon]}>
+                👑
+              </Text>
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -446,6 +451,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#1F6FEB',
     borderColor: '#1F6FEB',
   },
+  tabContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   tabText: {
     fontSize: width < 375 ? 12 : 14,
     color: '#8B949E',
@@ -453,6 +463,13 @@ const styles = StyleSheet.create({
   },
   activeTabText: {
     color: '#FFFFFF',
+  },
+  crownIcon: {
+    fontSize: width < 375 ? 12 : 14,
+    opacity: 0.6,
+  },
+  activeCrownIcon: {
+    opacity: 1,
   },
   mealsContainer: {
     paddingHorizontal: width < 375 ? 12 : 16,
