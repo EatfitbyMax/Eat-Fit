@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { OpenFoodFactsService, FoodProduct } from '@/utils/openfoodfacts';
 import * as ImagePicker from 'expo-image-picker';
-import { BarCodeScanner } from 'expo-barcode-scanner';
+import { BarCodeScanner, BarCodeScannerResult } from 'expo-barcode-scanner';
 
 const { width } = Dimensions.get('window');
 
