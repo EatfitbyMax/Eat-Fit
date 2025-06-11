@@ -306,8 +306,8 @@ export class IntegrationsManager {
         await PersistentStorage.saveStravaActivities(userId, activities);
         console.log('Activités Strava sauvegardées sur le serveur VPS');
       } catch (serverError) {
-        console.warn('Impossible de sauvegarder sur le serveur, données conservées localement:', serverError);
-        // Continuer même si le serveur échoue
+        console.warn('Serveur VPS non disponible, données conservées localement uniquement');
+        // Continuer même si le serveur échoue - c'est normal en développement
       }
 
       // Mettre à jour la date de dernière sync
