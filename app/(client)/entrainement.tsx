@@ -1,17 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
 import { IntegrationsManager, StravaActivity } from '../../utils/integrations';
 import { getCurrentUser } from '../../utils/auth';
 
 export default function EntrainementScreen() {
-  const [selectedTab, setSelectedTab] = useState('À venir');
+  const [selectedTab, setSelectedTab] = useState('Journal');
   const [stravaActivities, setStravaActivities] = useState<StravaActivity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [hasSubscription, setHasSubscription] = useState(false); // État pour l'abonnement
 
   useEffect(() => {
     loadStravaActivities();
+    checkSubscriptionStatus();
   }, []);
 
   const loadStravaActivities = async () => {
@@ -27,6 +29,37 @@ export default function EntrainementScreen() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const checkSubscriptionStatus = async () => {
+    try {
+      const currentUser = await getCurrentUser();
+      if (currentUser) {
+        // Ici vous pouvez vérifier le statut d'abonnement de l'utilisateur
+        // Pour l'instant, on simule avec false (pas d'abonnement)
+        setHasSubscription(false);
+      }
+    } catch (error) {
+      console.error('Erreur vérification abonnement:', error);
+    }
+  };
+
+  const handleProgrammesTab = () => {
+    if (!hasSubscription) {
+      Alert.alert(
+        'Abonnement requis',
+        'Cette fonctionnalité est réservée aux membres premium. Souhaitez-vous vous abonner ?',
+        [
+          { text: 'Plus tard', style: 'cancel' },
+          { text: 'S\'abonner', onPress: () => {
+            // Rediriger vers la page d'abonnement
+            console.log('Redirection vers abonnement');
+          }}
+        ]
+      );
+      return;
+    }
+    setSelectedTab('Programmes');
   };
 
   const formatDuration = (seconds: number) => {
@@ -171,56 +204,59 @@ export default function EntrainementScreen() {
         {/* Tabs */}
         <View style={styles.tabsContainer}>
           <TouchableOpacity 
-            style={[styles.tab, selectedTab === 'À venir' && styles.activeTab]}
-            onPress={() => setSelectedTab('À venir')}
+            style={[styles.tab, selectedTab === 'Journal' && styles.activeTab]}
+            onPress={() => setSelectedTab('Journal')}
           >
-            <Text style={[styles.tabText, selectedTab === 'À venir' && styles.activeTabText]}>
-              À venir
+            <Text style={[styles.tabText, selectedTab === 'Journal' && styles.activeTabText]}>
+              Journal
             </Text>
           </TouchableOpacity>
           <TouchableOpacity 
-            style={[styles.tab, selectedTab === 'Terminés' && styles.activeTab]}
-            onPress={() => setSelectedTab('Terminés')}
+            style={[styles.tab, selectedTab === 'Strava' && styles.activeTab]}
+            onPress={() => setSelectedTab('Strava')}
           >
-            <Text style={[styles.tabText, selectedTab === 'Terminés' && styles.activeTabText]}>
-              Terminés
+            <Text style={[styles.tabText, selectedTab === 'Strava' && styles.activeTabText]}>
+              Strava
             </Text>
           </TouchableOpacity>
           <TouchableOpacity 
-            style={[styles.tab, selectedTab === 'Programmes' && styles.activeTab]}
-            onPress={() => setSelectedTab('Programmes')}
+            style={[styles.tab, selectedTab === 'Programmes' && styles.activeTab, !hasSubscription && styles.lockedTab]}
+            onPress={handleProgrammesTab}
           >
-            <Text style={[styles.tabText, selectedTab === 'Programmes' && styles.activeTabText]}>
-              Programmes
-            </Text>
+            <View style={styles.tabContent}>
+              <Text style={[styles.tabText, selectedTab === 'Programmes' && styles.activeTabText, !hasSubscription && styles.lockedTabText]}>
+                Programmes
+              </Text>
+              {!hasSubscription && <Text style={styles.lockIcon}>🔒</Text>}
+            </View>
           </TouchableOpacity>
         </View>
 
         {/* Content */}
         <View style={styles.contentContainer}>
-          {selectedTab === 'À venir' && (
+          {selectedTab === 'Journal' && (
             <View style={styles.emptyState}>
               <View style={styles.emptyIcon}>
-                <Text style={styles.emptyIconText}>🏋️‍♂️</Text>
+                <Text style={styles.emptyIconText}>📝</Text>
               </View>
-              <Text style={styles.emptyTitle}>Semaine 23 - 2 juin - 8 juin</Text>
+              <Text style={styles.emptyTitle}>Journal d'entraînement</Text>
               <Text style={styles.emptyMessage}>
-                Aucun entraînement prévu cette semaine
+                Enregistrez vos séances manuellement
               </Text>
               <Text style={styles.emptySubmessage}>
-                Utilisez les onglets pour parcourir votre programmation
-                ou ajoutez un nouvel entraînement
+                Notez vos exercices, poids, répétitions et ressentis
+                pour suivre votre progression
               </Text>
               <TouchableOpacity style={styles.addWorkoutButton}>
-                <Text style={styles.addWorkoutText}>Accéder au programme</Text>
+                <Text style={styles.addWorkoutText}>Ajouter une séance</Text>
               </TouchableOpacity>
             </View>
           )}
 
-          {selectedTab === 'Terminés' && (
+          {selectedTab === 'Strava' && (
             <View style={styles.completedContainer}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Séances terminées</Text>
+                <Text style={styles.sectionTitle}>Activités Strava</Text>
                 <Text style={styles.sectionSubtitle}>
                   {stravaActivities.length} activité{stravaActivities.length > 1 ? 's' : ''} synchronisée{stravaActivities.length > 1 ? 's' : ''} depuis Strava
                 </Text>
@@ -251,18 +287,21 @@ export default function EntrainementScreen() {
             </View>
           )}
 
-          {selectedTab === 'Programmes' && (
+          {selectedTab === 'Programmes' && hasSubscription && (
             <View style={styles.emptyState}>
               <View style={styles.emptyIcon}>
-                <Text style={styles.emptyIconText}>📋</Text>
+                <Text style={styles.emptyIconText}>💪</Text>
               </View>
-              <Text style={styles.emptyTitle}>Programmes d'entraînement</Text>
+              <Text style={styles.emptyTitle}>Programmes Premium</Text>
               <Text style={styles.emptyMessage}>
-                Aucun programme personnalisé pour le moment
+                Accédez à vos programmes personnalisés
               </Text>
               <Text style={styles.emptySubmessage}>
-                Contactez votre coach pour créer un programme adapté
+                Programmes créés spécialement pour vous par votre coach
               </Text>
+              <TouchableOpacity style={styles.addWorkoutButton}>
+                <Text style={styles.addWorkoutText}>Voir mes programmes</Text>
+              </TouchableOpacity>
             </View>
           )}
         </View>
@@ -414,6 +453,22 @@ const styles = StyleSheet.create({
   },
   activeTabText: {
     color: '#FFFFFF',
+  },
+  tabContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  lockIcon: {
+    fontSize: 10,
+    marginLeft: 4,
+    color: '#8B949E',
+  },
+  lockedTab: {
+    opacity: 0.7,
+  },
+  lockedTabText: {
+    color: '#6A737D',
   },
   contentContainer: {
     flex: 1,
