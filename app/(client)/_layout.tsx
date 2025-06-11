@@ -72,6 +72,24 @@ export default function ClientLayout() {
           href: null, // Cache cet onglet car c'est juste une page de redirection
         }}
       />
+      <Tabs.Screen
+        name="informations-personnelles"
+        options={{
+          href: null, // Cache cette page de la navigation
+        }}
+      />
+      <Tabs.Screen
+        name="mes-objectifs"
+        options={{
+          href: null, // Cache cette page de la navigation
+        }}
+      />
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          href: null, // Cache cette page de la navigation
+        }}
+      />
     </Tabs>
   );
 }
