@@ -7,7 +7,7 @@ import { getCurrentUser } from '@/utils/auth';
 
 const { width } = Dimensions.get('window');
 
-export default function NutritionScreen() {
+function NutritionScreen() {
   const [selectedTab, setSelectedTab] = useState('Journal');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [hasNutritionProgram, setHasNutritionProgram] = useState(false); // Assuming default is no access
@@ -766,3 +766,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
+export default NutritionScreen;
