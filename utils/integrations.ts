@@ -44,6 +44,15 @@ const INTEGRATION_KEY = 'user_integrations';
 const HEALTH_DATA_KEY = 'health_data';
 const STRAVA_DATA_KEY = 'strava_activities';
 
+// Configuration Strava API
+const STRAVA_CONFIG = {
+  CLIENT_ID: process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID || 'YOUR_STRAVA_CLIENT_ID',
+  CLIENT_SECRET: process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET || 'YOUR_STRAVA_CLIENT_SECRET',
+  REDIRECT_URI: 'https://your-app.com/auth/strava/callback',
+  SCOPE: 'read,activity:read_all',
+  API_BASE_URL: 'https://www.strava.com/api/v3'
+};
+
 export class IntegrationsManager {
   // Apple Health Integration
   static async connectAppleHealth(userId: string): Promise<boolean> {
@@ -123,10 +132,15 @@ export class IntegrationsManager {
   // Strava Integration
   static async connectStrava(userId: string): Promise<boolean> {
     try {
-      // Simuler l'authentification OAuth Strava
-      // Dans une vraie app, vous utiliseriez l'API Strava OAuth
+      // Pour une vraie intégration, utilisez l'URL d'autorisation Strava
+      const authUrl = `https://www.strava.com/oauth/authorize?client_id=${STRAVA_CONFIG.CLIENT_ID}&redirect_uri=${STRAVA_CONFIG.REDIRECT_URI}&response_type=code&scope=${STRAVA_CONFIG.SCOPE}`;
+      
+      console.log('URL d\'autorisation Strava:', authUrl);
+      console.log('⚠️ Mode simulation activé - utilisation de données mock');
+      
+      // Mode simulation pour le développement
       const mockAccessToken = `strava_token_${userId}_${Date.now()}`;
-      const mockAthleteId = `24854648`; // ID d'athlète simulé
+      const mockAthleteId = `24854648`;
 
       const integrationStatus = await this.getIntegrationStatus(userId);
       integrationStatus.strava = {
@@ -145,6 +159,44 @@ export class IntegrationsManager {
     }
   }
 
+  // Méthode pour échanger le code d'autorisation contre un token d'accès
+  static async exchangeStravaCode(code: string, userId: string): Promise<boolean> {
+    try {
+      const response = await fetch('https://www.strava.com/oauth/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          client_id: STRAVA_CONFIG.CLIENT_ID,
+          client_secret: STRAVA_CONFIG.CLIENT_SECRET,
+          code: code,
+          grant_type: 'authorization_code'
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.access_token) {
+        const integrationStatus = await this.getIntegrationStatus(userId);
+        integrationStatus.strava = {
+          connected: true,
+          lastSync: new Date().toISOString(),
+          accessToken: data.access_token,
+          athleteId: data.athlete.id.toString()
+        };
+
+        await this.saveIntegrationStatus(userId, integrationStatus);
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Erreur échange code Strava:', error);
+      return false;
+    }
+  }
+
   static async syncStravaActivities(userId: string): Promise<StravaActivity[]> {
     try {
       const integrationStatus = await this.getIntegrationStatus(userId);
@@ -152,8 +204,41 @@ export class IntegrationsManager {
         throw new Error('Strava non connecté');
       }
 
-      // Simuler la récupération des activités Strava
-      const activities: StravaActivity[] = [
+      // Tentative de récupération des vraies données Strava
+      let activities: StravaActivity[] = [];
+      
+      if (integrationStatus.strava.accessToken && !integrationStatus.strava.accessToken.includes('mock')) {
+        try {
+          const response = await fetch(`${STRAVA_CONFIG.API_BASE_URL}/athlete/activities?per_page=10`, {
+            headers: {
+              'Authorization': `Bearer ${integrationStatus.strava.accessToken}`
+            }
+          });
+          
+          if (response.ok) {
+            const stravaData = await response.json();
+            activities = stravaData.map((activity: any) => ({
+              id: activity.id.toString(),
+              name: activity.name,
+              type: activity.type,
+              distance: activity.distance,
+              duration: activity.moving_time,
+              calories: activity.calories || 0,
+              avgHeartRate: activity.average_heartrate,
+              maxHeartRate: activity.max_heartrate,
+              date: activity.start_date
+            }));
+            console.log('Données Strava réelles récupérées:', activities.length);
+          }
+        } catch (apiError) {
+          console.warn('Impossible de récupérer les données Strava réelles, utilisation des données simulées');
+        }
+      }
+      
+      // Si pas de données réelles, utiliser les données simulées
+      if (activities.length === 0) {
+        console.log('🔄 Mode simulation - génération d\'activités Strava factices');
+        activities = [
         {
           id: `strava_${Date.now()}_1`,
           name: 'Course matinale',
