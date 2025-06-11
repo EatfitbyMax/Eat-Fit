@@ -168,30 +168,12 @@ export default function EntrainementScreen() {
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.weekInfo}>Cette semaine</Text>
-          <Text style={styles.dateRange}>2 juin - 8 juin</Text>
+          
         </View>
 
-        {/* Stats */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>0 / 6</Text>
-            <Text style={styles.statLabel}>Séances</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>0</Text>
-            <Text style={styles.statLabel}>Calories</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>0%</Text>
-            <Text style={styles.statLabel}>Objectif</Text>
-          </View>
-        </View>
+        
 
-        <View style={styles.progressContainer}>
-          <Text style={styles.progressLabel}>Progression</Text>
-          <Text style={styles.progressSubtext}>0/6 séances (0 %)</Text>
-        </View>
+        
 
         {/* Tabs */}
         <View style={styles.tabsContainer}>
