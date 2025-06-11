@@ -7,14 +7,25 @@ import { IntegrationsManager, IntegrationStatus } from '@/utils/integrations';
 export default function ProfilScreen() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const [integrationStatus, setIntegrationStatus] = useState({
     appleHealth: { connected: false, lastSync: null },
     strava: { connected: false, lastSync: null, athleteId: null },
   });
 
   useEffect(() => {
+    loadUserData();
     loadIntegrationStatus();
   }, []);
+
+  const loadUserData = async () => {
+    try {
+      const currentUser = await getCurrentUser();
+      setUser(currentUser);
+    } catch (error) {
+      console.error('Erreur chargement utilisateur:', error);
+    }
+  };
 
   const loadIntegrationStatus = async () => {
     setIsLoading(true);
@@ -88,10 +99,23 @@ export default function ProfilScreen() {
         {/* User Info */}
         <View style={styles.userCard}>
           <View style={styles.userAvatar}>
-            <Text style={styles.userAvatarText}>MP</Text>
+            <Text style={styles.userAvatarText}>
+              {user ? (
+                (user.firstName?.[0] || user.name?.[0] || '?').toUpperCase() + 
+                (user.lastName?.[0] || user.name?.split(' ')?.[1]?.[0] || '').toUpperCase()
+              ) : '?'}
+            </Text>
           </View>
-          <Text style={styles.userName}>Maxandre Pacault-Marqué</Text>
-          <Text style={styles.userEmail}>maxandre@gmail.com</Text>
+          <Text style={styles.userName}>
+            {user ? (
+              user.firstName && user.lastName 
+                ? `${user.firstName} ${user.lastName}`
+                : user.name || 'Utilisateur'
+            ) : 'Chargement...'}
+          </Text>
+          <Text style={styles.userEmail}>
+            {user?.email || 'email@example.com'}
+          </Text>
         </View>
 
         {/* Personal Information */}
