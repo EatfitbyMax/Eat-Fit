@@ -52,11 +52,6 @@ export default function NutritionScreen() {
               <Text style={styles.date}>
                 {isToday() ? 'Aujourd\'hui' : formatDate(selectedDate)}
               </Text>
-              {!isToday() && (
-                <Text style={styles.dateSubtext}>
-                  {formatDate(selectedDate)}
-                </Text>
-              )}
             </View>
             
             <TouchableOpacity 
