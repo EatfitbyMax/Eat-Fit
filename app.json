@@ -30,8 +30,7 @@
     },
     "plugins": [
       "expo-router",
-      "expo-web-browser",
-      "expo-health-connect"
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

@@ -49,24 +49,55 @@ export default function ProfilScreen() {
       }
 
       if (integrationStatus.appleHealth.connected) {
-        await IntegrationsManager.disconnectAppleHealth(currentUser.id);
-        setIntegrationStatus(prev => ({
-          ...prev,
-          appleHealth: { connected: false, lastSync: null }
-        }));
-        Alert.alert("Succès", "Apple Health déconnecté");
+        Alert.alert(
+          "Déconnecter Apple Health",
+          "Êtes-vous sûr de vouloir déconnecter Apple Health ? Vos données ne seront plus synchronisées.",
+          [
+            { text: "Annuler", style: "cancel" },
+            { 
+              text: "Déconnecter", 
+              style: "destructive",
+              onPress: async () => {
+                await IntegrationsManager.disconnectAppleHealth(currentUser.id);
+                setIntegrationStatus(prev => ({
+                  ...prev,
+                  appleHealth: { connected: false, lastSync: null }
+                }));
+                Alert.alert("Succès", "Apple Health déconnecté");
+              }
+            }
+          ]
+        );
       } else {
-        const success = await IntegrationsManager.connectAppleHealth(currentUser.id);
-        if (success) {
-          await loadIntegrationStatus();
-          Alert.alert("Succès", "Apple Health connecté avec succès");
-        } else {
-          Alert.alert("Erreur", "Impossible de connecter Apple Health");
-        }
+        Alert.alert(
+          "Connecter Apple Health",
+          "EatFitByMax va demander l'autorisation d'accéder à vos données de santé (pas, calories, rythme cardiaque, poids, sommeil). Ces données resteront privées et sécurisées.",
+          [
+            { text: "Annuler", style: "cancel" },
+            { 
+              text: "Autoriser", 
+              onPress: async () => {
+                const success = await IntegrationsManager.connectAppleHealth(currentUser.id);
+                if (success) {
+                  await loadIntegrationStatus();
+                  Alert.alert(
+                    "Succès", 
+                    "Apple Health connecté avec succès ! Vos données de santé seront maintenant synchronisées automatiquement."
+                  );
+                } else {
+                  Alert.alert(
+                    "Erreur", 
+                    "Impossible de connecter Apple Health. Assurez-vous d'avoir autorisé l'accès aux données de santé dans les réglages."
+                  );
+                }
+              }
+            }
+          ]
+        );
       }
     } catch (error) {
       console.error("Failed to toggle Apple Health:", error);
-      Alert.alert("Erreur", "Impossible de connecter/déconnecter Apple Health.");
+      Alert.alert("Erreur", "Une erreur est survenue lors de la connexion à Apple Health.");
     } finally {
       setIsLoading(false);
     }
