@@ -6,6 +6,31 @@ const { width } = Dimensions.get('window');
 
 export default function NutritionScreen() {
   const [selectedTab, setSelectedTab] = useState('Journal');
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
+  const formatDate = (date: Date) => {
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long'
+    };
+    return date.toLocaleDateString('fr-FR', options);
+  };
+
+  const navigateDate = (direction: 'prev' | 'next') => {
+    const newDate = new Date(selectedDate);
+    if (direction === 'prev') {
+      newDate.setDate(newDate.getDate() - 1);
+    } else {
+      newDate.setDate(newDate.getDate() + 1);
+    }
+    setSelectedDate(newDate);
+  };
+
+  const isToday = () => {
+    const today = new Date();
+    return selectedDate.toDateString() === today.toDateString();
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -13,7 +38,34 @@ export default function NutritionScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Nutrition</Text>
-          <Text style={styles.date}>Aujourd'hui, Mardi 3 Juin</Text>
+          
+          {/* Date Navigation */}
+          <View style={styles.dateNavigation}>
+            <TouchableOpacity 
+              style={styles.dateArrow}
+              onPress={() => navigateDate('prev')}
+            >
+              <Text style={styles.arrowText}>‹</Text>
+            </TouchableOpacity>
+            
+            <View style={styles.dateContainer}>
+              <Text style={styles.date}>
+                {isToday() ? 'Aujourd\'hui' : formatDate(selectedDate)}
+              </Text>
+              {!isToday() && (
+                <Text style={styles.dateSubtext}>
+                  {formatDate(selectedDate)}
+                </Text>
+              )}
+            </View>
+            
+            <TouchableOpacity 
+              style={styles.dateArrow}
+              onPress={() => navigateDate('next')}
+            >
+              <Text style={styles.arrowText}>›</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Stats */}
@@ -144,17 +196,52 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: width < 375 ? 16 : 20,
     paddingTop: 8,
-    paddingBottom: 12,
+    paddingBottom: 16,
   },
   title: {
     fontSize: width < 375 ? 22 : 24,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 4,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  dateNavigation: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+  },
+  dateArrow: {
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: '#161B22',
+    borderWidth: 1,
+    borderColor: '#21262D',
+    minWidth: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  arrowText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  dateContainer: {
+    flex: 1,
+    alignItems: 'center',
+    marginHorizontal: 16,
   },
   date: {
     fontSize: width < 375 ? 14 : 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  dateSubtext: {
+    fontSize: 12,
     color: '#8B949E',
+    marginTop: 2,
+    textAlign: 'center',
   },
   statsContainer: {
     paddingHorizontal: width < 375 ? 12 : 16,
