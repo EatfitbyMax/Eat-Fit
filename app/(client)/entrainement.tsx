@@ -1,9 +1,112 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import { IntegrationsManager, StravaActivity } from '../../utils/integrations';
+import { getCurrentUser } from '../../utils/auth';
 
 export default function EntrainementScreen() {
   const [selectedTab, setSelectedTab] = useState('À venir');
+  const [stravaActivities, setStravaActivities] = useState<StravaActivity[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    loadStravaActivities();
+  }, []);
+
+  const loadStravaActivities = async () => {
+    try {
+      setIsLoading(true);
+      const currentUser = await getCurrentUser();
+      if (currentUser) {
+        const activities = await IntegrationsManager.getStravaActivities(currentUser.id);
+        setStravaActivities(activities);
+      }
+    } catch (error) {
+      console.error('Erreur chargement activités Strava:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const formatDuration = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    if (hours > 0) {
+      return `${hours}h ${minutes}min`;
+    }
+    return `${minutes}min`;
+  };
+
+  const formatDistance = (meters: number) => {
+    const km = meters / 1000;
+    return `${km.toFixed(1)} km`;
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
+
+  const getActivityIcon = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'run':
+        return '🏃‍♂️';
+      case 'ride':
+        return '🚴‍♂️';
+      case 'swim':
+        return '🏊‍♂️';
+      case 'walk':
+        return '🚶‍♂️';
+      case 'hike':
+        return '🥾';
+      case 'workout':
+        return '💪';
+      default:
+        return '🏋️‍♂️';
+    }
+  };
+
+  const renderStravaActivity = (activity: StravaActivity) => (
+    <View key={activity.id} style={styles.activityCard}>
+      <View style={styles.activityHeader}>
+        <Text style={styles.activityIcon}>{getActivityIcon(activity.type)}</Text>
+        <View style={styles.activityInfo}>
+          <Text style={styles.activityName}>{activity.name}</Text>
+          <Text style={styles.activityDate}>{formatDate(activity.date)}</Text>
+        </View>
+        <Text style={styles.activityType}>{activity.type}</Text>
+      </View>
+      
+      <View style={styles.activityStats}>
+        {activity.distance > 0 && (
+          <View style={styles.statItem}>
+            <Text style={styles.statLabel}>Distance</Text>
+            <Text style={styles.statValue}>{formatDistance(activity.distance)}</Text>
+          </View>
+        )}
+        <View style={styles.statItem}>
+          <Text style={styles.statLabel}>Durée</Text>
+          <Text style={styles.statValue}>{formatDuration(activity.duration)}</Text>
+        </View>
+        {activity.calories > 0 && (
+          <View style={styles.statItem}>
+            <Text style={styles.statLabel}>Calories</Text>
+            <Text style={styles.statValue}>{activity.calories}</Text>
+          </View>
+        )}
+        {activity.avgHeartRate && (
+          <View style={styles.statItem}>
+            <Text style={styles.statLabel}>FC moy.</Text>
+            <Text style={styles.statValue}>{Math.round(activity.avgHeartRate)} bpm</Text>
+          </View>
+        )}
+      </View>
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -66,22 +169,73 @@ export default function EntrainementScreen() {
 
         {/* Content */}
         <View style={styles.contentContainer}>
-          <View style={styles.emptyState}>
-            <View style={styles.emptyIcon}>
-              <Text style={styles.emptyIconText}>🏋️‍♂️</Text>
+          {selectedTab === 'À venir' && (
+            <View style={styles.emptyState}>
+              <View style={styles.emptyIcon}>
+                <Text style={styles.emptyIconText}>🏋️‍♂️</Text>
+              </View>
+              <Text style={styles.emptyTitle}>Semaine 23 - 2 juin - 8 juin</Text>
+              <Text style={styles.emptyMessage}>
+                Aucun entraînement prévu cette semaine
+              </Text>
+              <Text style={styles.emptySubmessage}>
+                Utilisez les onglets pour parcourir votre programmation
+                ou ajoutez un nouvel entraînement
+              </Text>
+              <TouchableOpacity style={styles.addWorkoutButton}>
+                <Text style={styles.addWorkoutText}>Accéder au programme</Text>
+              </TouchableOpacity>
             </View>
-            <Text style={styles.emptyTitle}>Semaine 23 - 2 juin - 8 juin</Text>
-            <Text style={styles.emptyMessage}>
-              Aucun entraînement prévu cette semaine
-            </Text>
-            <Text style={styles.emptySubmessage}>
-              Utilisez les onglets pour parcourir votre programmation
-              ou ajoutez un nouvel entraînement
-            </Text>
-            <TouchableOpacity style={styles.addWorkoutButton}>
-              <Text style={styles.addWorkoutText}>Accéder au programme</Text>
-            </TouchableOpacity>
-          </View>
+          )}
+
+          {selectedTab === 'Terminés' && (
+            <View style={styles.completedContainer}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Séances terminées</Text>
+                <Text style={styles.sectionSubtitle}>
+                  {stravaActivities.length} activité{stravaActivities.length > 1 ? 's' : ''} synchronisée{stravaActivities.length > 1 ? 's' : ''} depuis Strava
+                </Text>
+              </View>
+              
+              {isLoading ? (
+                <View style={styles.loadingContainer}>
+                  <Text style={styles.loadingText}>Chargement...</Text>
+                </View>
+              ) : stravaActivities.length > 0 ? (
+                <ScrollView style={styles.activitiesList}>
+                  {stravaActivities.map(renderStravaActivity)}
+                </ScrollView>
+              ) : (
+                <View style={styles.emptyState}>
+                  <View style={styles.emptyIcon}>
+                    <Text style={styles.emptyIconText}>📊</Text>
+                  </View>
+                  <Text style={styles.emptyTitle}>Aucune activité</Text>
+                  <Text style={styles.emptyMessage}>
+                    Connectez votre compte Strava pour voir vos séances
+                  </Text>
+                  <Text style={styles.emptySubmessage}>
+                    Rendez-vous dans votre profil pour connecter Strava
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
+
+          {selectedTab === 'Programmes' && (
+            <View style={styles.emptyState}>
+              <View style={styles.emptyIcon}>
+                <Text style={styles.emptyIconText}>📋</Text>
+              </View>
+              <Text style={styles.emptyTitle}>Programmes d'entraînement</Text>
+              <Text style={styles.emptyMessage}>
+                Aucun programme personnalisé pour le moment
+              </Text>
+              <Text style={styles.emptySubmessage}>
+                Contactez votre coach pour créer un programme adapté
+              </Text>
+            </View>
+          )}
         </View>
       </ScrollView>
 
@@ -267,5 +421,97 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontSize: 12,
     fontWeight: '600',
+  },
+  // Styles pour les activités Strava
+  completedContainer: {
+    flex: 1,
+  },
+  sectionHeader: {
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    color: '#8B949E',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#8B949E',
+  },
+  activitiesList: {
+    flex: 1,
+  },
+  activityCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    marginBottom: 12,
+  },
+  activityHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  activityIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  activityInfo: {
+    flex: 1,
+  },
+  activityName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 2,
+  },
+  activityDate: {
+    fontSize: 12,
+    color: '#8B949E',
+  },
+  activityType: {
+    fontSize: 12,
+    color: '#F5A623',
+    fontWeight: '500',
+    backgroundColor: '#F5A623',
+    color: '#000000',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  activityStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  statItem: {
+    alignItems: 'center',
+    minWidth: 60,
+  },
+  statLabel: {
+    fontSize: 10,
+    color: '#8B949E',
+    marginBottom: 2,
+    textTransform: 'uppercase',
+  },
+  statValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 });
