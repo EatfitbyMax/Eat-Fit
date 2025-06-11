@@ -1,10 +1,60 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { logout } from '@/utils/auth';
+import { logout, getCurrentUser } from '@/utils/auth';
+import { IntegrationsManager, IntegrationStatus } from '@/utils/integrations';
 
 export default function ProfilScreen() {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [integrationStatus, setIntegrationStatus] = useState({
+    appleHealth: { connected: false, lastSync: null },
+    strava: { connected: false, lastSync: null, athleteId: null },
+  });
+
+  useEffect(() => {
+    loadIntegrationStatus();
+  }, []);
+
+  const loadIntegrationStatus = async () => {
+    setIsLoading(true);
+    try {
+      const status = await IntegrationsManager.getIntegrationStatus();
+      setIntegrationStatus(status);
+    } catch (error) {
+      console.error("Failed to load integration status:", error);
+      Alert.alert("Erreur", "Impossible de charger le statut des intégrations.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAppleHealthToggle = async () => {
+    setIsLoading(true);
+    try {
+      const newStatus = await IntegrationsManager.toggleAppleHealth();
+      setIntegrationStatus(prev => ({ ...prev, appleHealth: newStatus }));
+    } catch (error) {
+      console.error("Failed to toggle Apple Health:", error);
+      Alert.alert("Erreur", "Impossible de connecter/déconnecter Apple Health.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSyncAllData = async () => {
+    setIsLoading(true);
+    try {
+      await IntegrationsManager.syncAllData();
+      Alert.alert("Succès", "Toutes les données ont été synchronisées.");
+      await loadIntegrationStatus(); // Refresh statuses after sync
+    } catch (error) {
+      console.error("Failed to sync all data:", error);
+      Alert.alert("Erreur", "Impossible de synchroniser toutes les données.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleLogout = async () => {
     Alert.alert(
@@ -70,41 +120,62 @@ export default function ProfilScreen() {
 
           <View style={styles.integrationItem}>
             <View style={styles.integrationInfo}>
-              <Text style={styles.integrationName}>⌚ Strava</Text>
+              <Text style={styles.integrationName}>🍎 Apple Health</Text>
               <Text style={styles.integrationDescription}>
-                Synchronisez vos activités Strava avec EatFitByMax
+                Synchronisez vos données de santé avec EatFitByMax
               </Text>
             </View>
-            <TouchableOpacity style={styles.connectButton}>
-              <Text style={styles.connectButtonText}>Connecté</Text>
+            <TouchableOpacity 
+              style={[styles.connectButton, integrationStatus.appleHealth.connected && styles.connectedButton]}
+              onPress={() => handleAppleHealthToggle()}
+              disabled={isLoading}
+            >
+              <Text style={[styles.connectButtonText, integrationStatus.appleHealth.connected && styles.connectedButtonText]}>
+                {integrationStatus.appleHealth.connected ? 'Connecté' : 'Connecter'}
+              </Text>
             </TouchableOpacity>
           </View>
 
-          <View style={styles.integrationItem}>
-            <View style={styles.integrationInfo}>
-              <Text style={styles.integrationName}>🍎 Apple Health</Text>
-            </View>
-          </View>
+          {/* Synchronisation globale */}
+          {(integrationStatus.appleHealth.connected || integrationStatus.strava.connected) && (
+            <TouchableOpacity 
+              style={styles.syncAllButton}
+              onPress={handleSyncAllData}
+              disabled={isLoading}
+            >
+              <Text style={styles.syncAllButtonText}>
+                🔄 Synchroniser toutes les données
+              </Text>
+            </TouchableOpacity>
+          )}
 
-          <View style={styles.stravaConnection}>
-            <Text style={styles.stravaTitle}>🏃‍♂️ Connexion Strava</Text>
-            <Text style={styles.stravaDescription}>
-              Synchronisez vos activités Strava avec EatFitByMax
-            </Text>
-            <Text style={styles.stravaStatus}>
-              Votre compte Strava (Athlete #24854648) est connecté à EatFitByMax. 
-              Vous pouvez synchroniser vos activités Strava avec vos entraînements.
-            </Text>
-
-            <View style={styles.stravaActions}>
-              <TouchableOpacity style={styles.disconnectButton}>
-                <Text style={styles.disconnectButtonText}>Déconnecter</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.importButton}>
-                <Text style={styles.importButtonText}>Importer mes activités</Text>
-              </TouchableOpacity>
+          {/* Informations de statut */}
+          {integrationStatus.appleHealth.connected && (
+            <View style={styles.statusCard}>
+              <Text style={styles.statusTitle}>📱 Apple Health</Text>
+              <Text style={styles.statusDescription}>
+                Dernière synchronisation : {integrationStatus.appleHealth.lastSync ? 
+                  new Date(integrationStatus.appleHealth.lastSync).toLocaleDateString('fr-FR') : 
+                  'Jamais'
+                }
+              </Text>
             </View>
-          </View>
+          )}
+
+          {integrationStatus.strava.connected && (
+            <View style={styles.statusCard}>
+              <Text style={styles.statusTitle}>🏃‍♂️ Strava</Text>
+              <Text style={styles.statusDescription}>
+                Athlete #{integrationStatus.strava.athleteId || '24854648'} connecté à EatFitByMax.
+              </Text>
+              <Text style={styles.statusDescription}>
+                Dernière synchronisation : {integrationStatus.strava.lastSync ? 
+                  new Date(integrationStatus.strava.lastSync).toLocaleDateString('fr-FR') : 
+                  'Jamais'
+                }
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Settings */}
@@ -306,6 +377,40 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#FFFFFF',
     fontWeight: '600',
+  },
+    syncAllButton: {
+    backgroundColor: '#3498db',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  syncAllButtonText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  statusCard: {
+    backgroundColor: '#2c3e50',
+    borderRadius: 8,
+    padding: 16,
+    marginTop: 8,
+  },
+  statusTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  statusDescription: {
+    fontSize: 14,
+    color: '#ecf0f1',
+  },
+  connectedButton: {
+    backgroundColor: '#2ecc71',
+  },
+  connectedButtonText: {
+    color: '#000000',
   },
   logoutButton: {
     backgroundColor: '#F85149',

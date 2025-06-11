@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { getCurrentUser } from '@/utils/auth';
+import { IntegrationsManager } from '@/utils/integrations';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
@@ -37,8 +38,49 @@ export default function AccueilScreen() {
     try {
       const currentUser = await getCurrentUser();
       setUser(currentUser);
+      
+      if (currentUser) {
+        // Charger les données synchronisées
+        await loadSyncedData(currentUser.id);
+      }
     } catch (error) {
       console.error('Erreur chargement utilisateur:', error);
+    }
+  };
+
+  const loadSyncedData = async (userId: string) => {
+    try {
+      // Charger les données Apple Health
+      const healthData = await IntegrationsManager.getHealthData(userId);
+      if (healthData.length > 0) {
+        const todayData = healthData[healthData.length - 1];
+        setSteps(todayData.steps || 0);
+        setCalories(todayData.calories || 0);
+        if (todayData.sleep) {
+          const hours = Math.floor(todayData.sleep.duration / 60);
+          const minutes = todayData.sleep.duration % 60;
+          setSleepTime(`${hours}h ${minutes}min`);
+        }
+      }
+
+      // Charger les activités Strava
+      const stravaActivities = await IntegrationsManager.getStravaActivities(userId);
+      if (stravaActivities.length > 0) {
+        // Calculer le niveau de fatigue basé sur les activités récentes
+        const recentActivities = stravaActivities.filter(activity => {
+          const activityDate = new Date(activity.date);
+          const today = new Date();
+          const diffTime = Math.abs(today.getTime() - activityDate.getTime());
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          return diffDays <= 7; // Activités de la semaine
+        });
+        
+        const totalDuration = recentActivities.reduce((sum, activity) => sum + activity.duration, 0);
+        const fatigueLevel = Math.min(Math.floor(totalDuration / 3600), 10); // Max 10
+        setFatigue(fatigueLevel);
+      }
+    } catch (error) {
+      console.error('Erreur chargement données synchronisées:', error);
     }
   };
 

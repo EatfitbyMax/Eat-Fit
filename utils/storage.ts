@@ -160,6 +160,86 @@ export class PersistentStorage {
     }
   }
 
+  // Méthodes pour Apple Health
+  static async saveHealthData(userId: string, healthData: any[]): Promise<void> {
+    try {
+      await this.testConnection();
+      const response = await fetch(`${SERVER_URL}/api/health/${userId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(healthData),
+      });
+      
+      if (response.ok) {
+        console.log('Données Apple Health sauvegardées sur le serveur VPS');
+        return;
+      }
+      throw new Error('Erreur sauvegarde données Apple Health sur le serveur');
+    } catch (error) {
+      console.error('Erreur sauvegarde données Apple Health:', error);
+      throw error;
+    }
+  }
+
+  static async getHealthData(userId: string): Promise<any[]> {
+    try {
+      await this.testConnection();
+      const response = await fetch(`${SERVER_URL}/api/health/${userId}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Données Apple Health récupérées du serveur VPS');
+        return data;
+      }
+      throw new Error('Erreur récupération données Apple Health du serveur');
+    } catch (error) {
+      console.error('Erreur récupération données Apple Health:', error);
+      return [];
+    }
+  }
+
+  // Méthodes pour Strava
+  static async saveStravaActivities(userId: string, activities: any[]): Promise<void> {
+    try {
+      await this.testConnection();
+      const response = await fetch(`${SERVER_URL}/api/strava/${userId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(activities),
+      });
+      
+      if (response.ok) {
+        console.log('Activités Strava sauvegardées sur le serveur VPS');
+        return;
+      }
+      throw new Error('Erreur sauvegarde activités Strava sur le serveur');
+    } catch (error) {
+      console.error('Erreur sauvegarde activités Strava:', error);
+      throw error;
+    }
+  }
+
+  static async getStravaActivities(userId: string): Promise<any[]> {
+    try {
+      await this.testConnection();
+      const response = await fetch(`${SERVER_URL}/api/strava/${userId}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Activités Strava récupérées du serveur VPS');
+        return data;
+      }
+      throw new Error('Erreur récupération activités Strava du serveur');
+    } catch (error) {
+      console.error('Erreur récupération activités Strava:', error);
+      return [];
+    }
+  }
+
   static async importData(data: {programmes: any[], users: any[]}): Promise<void> {
     try {
       await this.saveProgrammes(data.programmes || []);
