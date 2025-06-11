@@ -1,4 +1,3 @@
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SERVER_URL = 'http://51.178.29.220:5000';
@@ -48,7 +47,7 @@ export class PersistentStorage {
         },
         body: JSON.stringify(programmes),
       });
-      
+
       if (response.ok) {
         console.log('Programmes sauvegardés sur le serveur VPS');
         return;
@@ -87,7 +86,7 @@ export class PersistentStorage {
         },
         body: JSON.stringify(users),
       });
-      
+
       if (response.ok) {
         console.log('Utilisateurs sauvegardés sur le serveur VPS');
         return;
@@ -116,9 +115,9 @@ export class PersistentStorage {
     }
   }
 
+  // Sauvegarde des messages
   static async saveMessages(userId: string, messages: any[]): Promise<void> {
     try {
-      await this.testConnection();
       const response = await fetch(`${SERVER_URL}/api/messages/${userId}`, {
         method: 'POST',
         headers: {
@@ -126,14 +125,58 @@ export class PersistentStorage {
         },
         body: JSON.stringify(messages),
       });
-      
-      if (response.ok) {
-        console.log('Messages sauvegardés sur le serveur VPS');
-        return;
+
+      if (!response.ok) {
+        throw new Error('Erreur sauvegarde messages sur le serveur');
       }
-      throw new Error('Erreur sauvegarde messages sur le serveur');
+
+      console.log('Messages sauvegardés sur le serveur VPS');
     } catch (error) {
       console.error('Erreur sauvegarde messages:', error);
+      throw error;
+    }
+  }
+
+  // Sauvegarde des données Apple Health
+  static async saveHealthData(userId: string, healthData: any[]): Promise<void> {
+    try {
+      const response = await fetch(`${SERVER_URL}/api/health/${userId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(healthData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur sauvegarde données Apple Health sur le serveur');
+      }
+
+      console.log('Données Apple Health sauvegardées sur le serveur VPS');
+    } catch (error) {
+      console.error('Erreur sauvegarde données Apple Health:', error);
+      throw error;
+    }
+  }
+
+  // Sauvegarde des activités Strava
+  static async saveStravaActivities(userId: string, activities: any[]): Promise<void> {
+    try {
+      const response = await fetch(`${SERVER_URL}/api/strava/${userId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(activities),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur sauvegarde données Strava sur le serveur');
+      }
+
+      console.log('Activités Strava sauvegardées sur le serveur VPS');
+    } catch (error) {
+      console.error('Erreur sauvegarde données Strava:', error);
       throw error;
     }
   }
@@ -171,7 +214,7 @@ export class PersistentStorage {
         },
         body: JSON.stringify(healthData),
       });
-      
+
       if (response.ok) {
         console.log('Données Apple Health sauvegardées sur le serveur VPS');
         return;
@@ -187,7 +230,7 @@ export class PersistentStorage {
     try {
       await this.testConnection();
       const response = await fetch(`${SERVER_URL}/api/health/${userId}`);
-      
+
       if (response.ok) {
         const data = await response.json();
         console.log('Données Apple Health récupérées du serveur VPS');
@@ -211,7 +254,7 @@ export class PersistentStorage {
         },
         body: JSON.stringify(activities),
       });
-      
+
       if (response.ok) {
         console.log('Activités Strava sauvegardées sur le serveur VPS');
         return;
@@ -227,7 +270,7 @@ export class PersistentStorage {
     try {
       await this.testConnection();
       const response = await fetch(`${SERVER_URL}/api/strava/${userId}`);
-      
+
       if (response.ok) {
         const data = await response.json();
         console.log('Activités Strava récupérées du serveur VPS');
@@ -275,25 +318,25 @@ export const getAllProgrammes = async () => {
 export const saveUser = async (user: any) => {
   const users = await PersistentStorage.getUsers();
   const existingIndex = users.findIndex(u => u.id === user.id || u.email === user.email);
-  
+
   if (existingIndex !== -1) {
     users[existingIndex] = user;
   } else {
     users.push(user);
   }
-  
+
   await PersistentStorage.saveUsers(users);
 };
 
 export const saveProgramme = async (programme: any) => {
   const programmes = await PersistentStorage.getProgrammes();
   const existingIndex = programmes.findIndex(p => p.id === programme.id);
-  
+
   if (existingIndex !== -1) {
     programmes[existingIndex] = programme;
   } else {
     programmes.push(programme);
   }
-  
+
   await PersistentStorage.saveProgrammes(programmes);
 };
