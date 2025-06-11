@@ -96,8 +96,60 @@ app.post('/api/messages/:userId', async (req, res) => {
   }
 });
 
+// Routes pour Apple Health
+app.get('/api/health/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const data = await fs.readFile(path.join(DATA_DIR, `health_${userId}.json`), 'utf8');
+    res.json(JSON.parse(data));
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      res.json([]);
+    } else {
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
+});
+
+app.post('/api/health/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const healthData = req.body;
+    await fs.writeFile(path.join(DATA_DIR, `health_${userId}.json`), JSON.stringify(healthData, null, 2));
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur sauvegarde données Apple Health' });
+  }
+});
+
+// Routes pour Strava
+app.get('/api/strava/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const data = await fs.readFile(path.join(DATA_DIR, `strava_${userId}.json`), 'utf8');
+    res.json(JSON.parse(data));
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      res.json([]);
+    } else {
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
+});
+
+app.post('/api/strava/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const stravaData = req.body;
+    await fs.writeFile(path.join(DATA_DIR, `strava_${userId}.json`), JSON.stringify(stravaData, null, 2));
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur sauvegarde données Strava' });
+  }
+});
+
 // Route de test
-app.get('/api/health', (req, res) => {
+app.get('/api/health-check', (req, res) => {
   res.json({ status: 'OK', message: 'Serveur VPS fonctionnel' });
 });
 
