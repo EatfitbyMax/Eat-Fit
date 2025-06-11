@@ -31,7 +31,12 @@
     "plugins": [
       "expo-router",
       "expo-web-browser",
-      "expo-health"
+      [
+        "expo-health",
+        {
+          "healthSharePermission": "EatFitByMax utilise Apple Health pour synchroniser vos données de santé et fitness afin de vous fournir un suivi personnalisé de votre progression."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
