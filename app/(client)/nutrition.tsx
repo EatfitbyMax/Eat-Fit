@@ -366,7 +366,6 @@ function NutritionScreen() {
 
         {/* Meals Section */}
         <View style={styles.mealsContainer}>
-          <Text style={styles.sectionTitle}>Repas du jour</Text>
           {selectedTab === 'Journal' && (
             <>
               {['Petit-déjeuner', 'Déjeuner', 'Collation', 'Dîner'].map((mealType) => {
