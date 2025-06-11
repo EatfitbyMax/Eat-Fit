@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert, Modal, TextInput } from 'react-native';
 import { IntegrationsManager, StravaActivity } from '../../utils/integrations';
 import { getCurrentUser } from '../../utils/auth';
 
@@ -11,6 +11,19 @@ export default function EntrainementScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [hasSubscription, setHasSubscription] = useState(false);
   const [currentWeek, setCurrentWeek] = useState(new Date());
+  const [modalVisible, setModalVisible] = useState(false);
+  const [nouvelEntrainement, setNouvelEntrainement] = useState({
+    nom: '',
+    typeActivite: 'Musculation',
+    typeSpecifique: 'Force',
+    difficulte: 'Intermédiaire',
+    duree: '',
+    calories: '',
+    date: '',
+    heure: '',
+    notes: '',
+    jour: selectedDay
+  });
 
   const daysOfWeek = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
@@ -134,6 +147,38 @@ export default function EntrainementScreen() {
     }
   };
 
+  const ouvrirModalAjout = (jour: string) => {
+    setSelectedDay(jour);
+    const today = new Date();
+    setNouvelEntrainement({
+      nom: '',
+      typeActivite: 'Musculation',
+      typeSpecifique: 'Force',
+      difficulte: 'Intermédiaire',
+      duree: '',
+      calories: '',
+      date: today.toISOString().split('T')[0],
+      heure: '09:00',
+      notes: '',
+      jour: jour
+    });
+    setModalVisible(true);
+  };
+
+  const fermerModal = () => {
+    setModalVisible(false);
+  };
+
+  const sauvegarderEntrainement = () => {
+    if (!nouvelEntrainement.nom.trim()) {
+      Alert.alert('Erreur', 'Veuillez saisir un nom pour l\'entraînement');
+      return;
+    }
+
+    Alert.alert('Succès', 'Entraînement ajouté avec succès!');
+    fermerModal();
+  };
+
   const renderStravaActivity = (activity: StravaActivity) => (
     <View key={activity.id} style={styles.activityCard}>
       <View style={styles.activityHeader}>
@@ -249,10 +294,7 @@ export default function EntrainementScreen() {
 
                   <TouchableOpacity 
                     style={styles.addWorkoutButton}
-                    onPress={() => {
-                      setSelectedDay(day);
-                      // Ici on pourrait ouvrir un modal d'ajout d'exercice
-                    }}
+                    onPress={() => ouvrirModalAjout(day)}
                   >
                     <Text style={styles.addWorkoutText}>+ Ajouter un entraînement</Text>
                   </TouchableOpacity>
@@ -319,6 +361,157 @@ export default function EntrainementScreen() {
       <TouchableOpacity style={styles.fab}>
         <Text style={styles.fabText}>Ajouter</Text>
       </TouchableOpacity>
+
+      {/* Modal d'ajout d'entraînement */}
+      <Modal
+        visible={modalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={fermerModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Nouvel entraînement</Text>
+              <TouchableOpacity onPress={fermerModal} style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>×</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalContent}>
+              {/* Nom */}
+              <View style={styles.modalSection}>
+                <Text style={styles.modalLabel}>Nom</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  value={nouvelEntrainement.nom}
+                  onChangeText={(text) => setNouvelEntrainement({...nouvelEntrainement, nom: text})}
+                  placeholder="Ex: Séance de musculation du Lundi"
+                  placeholderTextColor="#6A737D"
+                />
+              </View>
+
+              {/* Type d'activité */}
+              <View style={styles.modalSection}>
+                <Text style={styles.modalLabel}>Type d'activité</Text>
+                <View style={styles.dropdown}>
+                  <Text style={styles.dropdownText}>{nouvelEntrainement.typeActivite}</Text>
+                  <Text style={styles.dropdownArrow}>▼</Text>
+                </View>
+              </View>
+
+              {/* Type spécifique */}
+              <View style={styles.modalSection}>
+                <Text style={styles.modalLabel}>Type spécifique</Text>
+                <View style={styles.dropdown}>
+                  <Text style={styles.dropdownText}>{nouvelEntrainement.typeSpecifique}</Text>
+                  <Text style={styles.dropdownArrow}>▼</Text>
+                </View>
+              </View>
+
+              {/* Difficulté */}
+              <View style={styles.modalSection}>
+                <Text style={styles.modalLabel}>Difficulté</Text>
+                <View style={styles.dropdown}>
+                  <Text style={styles.dropdownText}>{nouvelEntrainement.difficulte}</Text>
+                  <Text style={styles.dropdownArrow}>▼</Text>
+                </View>
+              </View>
+
+              {/* Durée */}
+              <View style={styles.modalSection}>
+                <Text style={styles.modalLabel}>Durée (minutes)</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  value={nouvelEntrainement.duree}
+                  onChangeText={(text) => setNouvelEntrainement({...nouvelEntrainement, duree: text})}
+                  placeholder="45"
+                  placeholderTextColor="#6A737D"
+                  keyboardType="numeric"
+                />
+              </View>
+
+              {/* Calories */}
+              <View style={styles.modalSection}>
+                <Text style={styles.modalLabel}>Calories (kcal)</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  value={nouvelEntrainement.calories}
+                  onChangeText={(text) => setNouvelEntrainement({...nouvelEntrainement, calories: text})}
+                  placeholder="250"
+                  placeholderTextColor="#6A737D"
+                  keyboardType="numeric"
+                />
+              </View>
+
+              {/* Date et Heure */}
+              <View style={styles.modalRow}>
+                <View style={styles.modalColumn}>
+                  <Text style={styles.modalLabel}>Date</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    value={nouvelEntrainement.date}
+                    onChangeText={(text) => setNouvelEntrainement({...nouvelEntrainement, date: text})}
+                    placeholder="11/06/2025"
+                    placeholderTextColor="#6A737D"
+                  />
+                </View>
+                <View style={styles.modalColumn}>
+                  <Text style={styles.modalLabel}>Heure</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    value={nouvelEntrainement.heure}
+                    onChangeText={(text) => setNouvelEntrainement({...nouvelEntrainement, heure: text})}
+                    placeholder="09:00"
+                    placeholderTextColor="#6A737D"
+                  />
+                </View>
+              </View>
+
+              {/* Notes */}
+              <View style={styles.modalSection}>
+                <Text style={styles.modalLabel}>Notes</Text>
+                <TextInput
+                  style={[styles.modalInput, styles.textArea]}
+                  value={nouvelEntrainement.notes}
+                  onChangeText={(text) => setNouvelEntrainement({...nouvelEntrainement, notes: text})}
+                  placeholder="Notes supplémentaires sur cet entraînement..."
+                  placeholderTextColor="#6A737D"
+                  multiline
+                  numberOfLines={4}
+                />
+              </View>
+
+              {/* Section Exercices */}
+              <View style={styles.modalSection}>
+                <View style={styles.exercicesHeader}>
+                  <Text style={styles.modalLabel}>Exercices (0)</Text>
+                  <TouchableOpacity style={styles.addExerciceButton}>
+                    <Text style={styles.addExerciceButtonText}>+ Ajouter</Text>
+                  </TouchableOpacity>
+                </View>
+                
+                <View style={styles.emptyExercices}>
+                  <Text style={styles.emptyExercicesIcon}>💪</Text>
+                  <Text style={styles.emptyExercicesText}>
+                    Aucun exercice ajouté. Cliquez sur "Ajouter" pour créer un exercice.
+                  </Text>
+                </View>
+              </View>
+            </ScrollView>
+
+            {/* Boutons d'action */}
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.cancelButton} onPress={fermerModal}>
+                <Text style={styles.cancelButtonText}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.createButton} onPress={sauvegarderEntrainement}>
+                <Text style={styles.createButtonText}>Créer</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -638,5 +831,168 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  // Styles pour la modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  modalContainer: {
+    backgroundColor: '#0D1117',
+    borderRadius: 12,
+    width: '100%',
+    maxHeight: '90%',
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#21262D',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#21262D',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  modalContent: {
+    flex: 1,
+    padding: 16,
+  },
+  modalSection: {
+    marginBottom: 16,
+  },
+  modalLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  modalInput: {
+    backgroundColor: '#161B22',
+    borderWidth: 1,
+    borderColor: '#F5A623',
+    borderRadius: 8,
+    padding: 12,
+    color: '#FFFFFF',
+    fontSize: 16,
+  },
+  dropdown: {
+    backgroundColor: '#161B22',
+    borderWidth: 1,
+    borderColor: '#21262D',
+    borderRadius: 8,
+    padding: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dropdownText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+  },
+  dropdownArrow: {
+    color: '#8B949E',
+    fontSize: 12,
+  },
+  modalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  modalColumn: {
+    flex: 1,
+    marginHorizontal: 4,
+  },
+  textArea: {
+    height: 80,
+    textAlignVertical: 'top',
+  },
+  exercicesHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  addExerciceButton: {
+    backgroundColor: '#F5A623',
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  addExerciceButtonText: {
+    color: '#000000',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  emptyExercices: {
+    borderWidth: 1,
+    borderColor: '#21262D',
+    borderStyle: 'dashed',
+    borderRadius: 8,
+    padding: 24,
+    alignItems: 'center',
+  },
+  emptyExercicesIcon: {
+    fontSize: 32,
+    marginBottom: 8,
+  },
+  emptyExercicesText: {
+    color: '#8B949E',
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#21262D',
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: '#21262D',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  cancelButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  createButton: {
+    flex: 1,
+    backgroundColor: '#F5A623',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  createButtonText: {
+    color: '#000000',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
