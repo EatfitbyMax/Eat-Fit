@@ -10,11 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "icon": "./assets/images/crown-logo.png",
-      "supportsTablet": true,
-      "infoPlist": {
-        "NSHealthShareUsageDescription": "EatFitByMax utilise Apple Health pour synchroniser vos données de santé et fitness afin de vous fournir un suivi personnalisé de votre progression.",
-        "NSHealthUpdateUsageDescription": "EatFitBy Max peut écrire des données dans Apple Health pour garder vos informations de santé à jour."
-      }
+      "supportsTablet": true
     },
     "android": {
       "icon": "./assets/images/crown-logo.png",
@@ -30,13 +26,7 @@
     },
     "plugins": [
       "expo-router",
-      "expo-web-browser",
-      [
-        "expo-health",
-        {
-          "healthSharePermission": "EatFitByMax utilise Apple Health pour synchroniser vos données de santé et fitness afin de vous fournir un suivi personnalisé de votre progression."
-        }
-      ]
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
