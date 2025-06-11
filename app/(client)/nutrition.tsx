@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Modal, Alert } from 'react-native';
+import FoodSearchModal from '@/components/FoodSearchModal';
+import { FoodProduct, OpenFoodFactsService, FoodEntry } from '@/utils/openfoodfacts';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getCurrentUser } from '@/utils/auth';
 
 const { width } = Dimensions.get('window');
 
@@ -8,6 +12,15 @@ export default function NutritionScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [hasNutritionProgram, setHasNutritionProgram] = useState(false); // Assuming default is no access
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [showFoodModal, setShowFoodModal] = useState(false);
+  const [selectedMealType, setSelectedMealType] = useState<string>('');
+  const [foodEntries, setFoodEntries] = useState<FoodEntry[]>([]);
+  const [dailyTotals, setDailyTotals] = useState({
+    calories: 0,
+    proteins: 0,
+    carbohydrates: 0,
+    fat: 0,
+  });
 
   const formatDate = (date: Date) => {
     const options: Intl.DateTimeFormatOptions = {
@@ -40,6 +53,108 @@ export default function NutritionScreen() {
       setSelectedTab(tabName);
     }
   };
+
+  const handleAddFood = (mealType: string) => {
+    setSelectedMealType(mealType);
+    setShowFoodModal(true);
+  };
+
+  const handleFoodAdded = async (product: FoodProduct, quantity: number) => {
+    try {
+      const user = await getCurrentUser();
+      if (!user) return;
+
+      const nutrition = OpenFoodFactsService.calculateNutrition(product, quantity);
+      const newEntry: FoodEntry = {
+        id: Date.now().toString(),
+        product,
+        quantity,
+        mealType: selectedMealType as any,
+        date: selectedDate.toISOString().split('T')[0],
+        ...nutrition,
+      };
+
+      const updatedEntries = [...foodEntries, newEntry];
+      setFoodEntries(updatedEntries);
+      
+      // Sauvegarder localement
+      await AsyncStorage.setItem(`food_entries_${user.id}`, JSON.stringify(updatedEntries));
+      
+      // Recalculer les totaux
+      calculateDailyTotals(updatedEntries);
+      
+      setShowFoodModal(false);
+      Alert.alert('Succès', `${product.name} ajouté à ${selectedMealType}`);
+    } catch (error) {
+      console.error('Erreur ajout aliment:', error);
+      Alert.alert('Erreur', 'Impossible d\'ajouter l\'aliment');
+    }
+  };
+
+  const calculateDailyTotals = (entries: FoodEntry[]) => {
+    const dateString = selectedDate.toISOString().split('T')[0];
+    const dayEntries = entries.filter(entry => entry.date === dateString);
+    
+    const totals = dayEntries.reduce(
+      (acc, entry) => ({
+        calories: acc.calories + entry.calories,
+        proteins: acc.proteins + entry.proteins,
+        carbohydrates: acc.carbohydrates + entry.carbohydrates,
+        fat: acc.fat + entry.fat,
+      }),
+      { calories: 0, proteins: 0, carbohydrates: 0, fat: 0 }
+    );
+    
+    setDailyTotals(totals);
+  };
+
+  const loadUserFoodData = async () => {
+    try {
+      const user = await getCurrentUser();
+      if (!user) return;
+
+      const stored = await AsyncStorage.getItem(`food_entries_${user.id}`);
+      if (stored) {
+        const entries = JSON.parse(stored);
+        setFoodEntries(entries);
+        calculateDailyTotals(entries);
+      }
+    } catch (error) {
+      console.error('Erreur chargement données alimentaires:', error);
+    }
+  };
+
+  const getMealEntries = (mealType: string) => {
+    const dateString = selectedDate.toISOString().split('T')[0];
+    return foodEntries.filter(entry => 
+      entry.mealType === mealType && entry.date === dateString
+    );
+  };
+
+  const removeFoodEntry = async (entryId: string) => {
+    try {
+      const user = await getCurrentUser();
+      if (!user) return;
+
+      const updatedEntries = foodEntries.filter(entry => entry.id !== entryId);
+      setFoodEntries(updatedEntries);
+      
+      await AsyncStorage.setItem(`food_entries_${user.id}`, JSON.stringify(updatedEntries));
+      calculateDailyTotals(updatedEntries);
+    } catch (error) {
+      console.error('Erreur suppression aliment:', error);
+    }
+  };
+
+  // Charger les données au montage du composant
+  React.useEffect(() => {
+    loadUserFoodData();
+  }, []);
+
+  // Recalculer les totaux quand la date change
+  React.useEffect(() => {
+    calculateDailyTotals(foodEntries);
+  }, [selectedDate, foodEntries]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -79,14 +194,18 @@ export default function NutritionScreen() {
             {/* Calories Circular Gauge - Left Side */}
             <View style={styles.caloriesSection}>
               <View style={styles.circularGauge}>
-                <View style={[styles.circularGaugeFill, { transform: [{ rotate: '0deg' }] }]} />
+                <View style={[styles.circularGaugeFill, { 
+                  transform: [{ rotate: `${(dailyTotals.calories / 2495) * 360}deg` }] 
+                }]} />
                 <View style={styles.circularGaugeInner}>
-                  <Text style={styles.caloriesValue}>0</Text>
+                  <Text style={styles.caloriesValue}>{dailyTotals.calories}</Text>
                   <Text style={styles.caloriesTarget}>/ 2495</Text>
                   <Text style={styles.caloriesLabel}>kcal</Text>
                 </View>
               </View>
-              <Text style={styles.caloriesSubtext}>2495 kcal restantes</Text>
+              <Text style={styles.caloriesSubtext}>
+                {Math.max(0, 2495 - dailyTotals.calories)} kcal restantes
+              </Text>
             </View>
 
             {/* Macros Progress Bars - Right Side */}
@@ -95,10 +214,13 @@ export default function NutritionScreen() {
               <View style={styles.macroItem}>
                 <View style={styles.macroHeader}>
                   <Text style={styles.macroLabel}>Protéines</Text>
-                  <Text style={styles.macroValue}>0g / 125g</Text>
+                  <Text style={styles.macroValue}>{Math.round(dailyTotals.proteins)}g / 125g</Text>
                 </View>
                 <View style={styles.progressBar}>
-                  <View style={[styles.progressFill, { width: '0%', backgroundColor: '#FF6B6B' }]} />
+                  <View style={[styles.progressFill, { 
+                    width: `${Math.min((dailyTotals.proteins / 125) * 100, 100)}%`, 
+                    backgroundColor: '#FF6B6B' 
+                  }]} />
                 </View>
               </View>
 
@@ -106,10 +228,13 @@ export default function NutritionScreen() {
               <View style={styles.macroItem}>
                 <View style={styles.macroHeader}>
                   <Text style={styles.macroLabel}>Glucides</Text>
-                  <Text style={styles.macroValue}>0g / 312g</Text>
+                  <Text style={styles.macroValue}>{Math.round(dailyTotals.carbohydrates)}g / 312g</Text>
                 </View>
                 <View style={styles.progressBar}>
-                  <View style={[styles.progressFill, { width: '0%', backgroundColor: '#4ECDC4' }]} />
+                  <View style={[styles.progressFill, { 
+                    width: `${Math.min((dailyTotals.carbohydrates / 312) * 100, 100)}%`, 
+                    backgroundColor: '#4ECDC4' 
+                  }]} />
                 </View>
               </View>
 
@@ -117,10 +242,13 @@ export default function NutritionScreen() {
               <View style={styles.macroItem}>
                 <View style={styles.macroHeader}>
                   <Text style={styles.macroLabel}>Lipides</Text>
-                  <Text style={styles.macroValue}>0g / 83g</Text>
+                  <Text style={styles.macroValue}>{Math.round(dailyTotals.fat)}g / 83g</Text>
                 </View>
                 <View style={styles.progressBar}>
-                  <View style={[styles.progressFill, { width: '0%', backgroundColor: '#FFE66D' }]} />
+                  <View style={[styles.progressFill, { 
+                    width: `${Math.min((dailyTotals.fat / 83) * 100, 100)}%`, 
+                    backgroundColor: '#FFE66D' 
+                  }]} />
                 </View>
               </View>
             </View>
@@ -157,61 +285,51 @@ export default function NutritionScreen() {
           <Text style={styles.sectionTitle}>Repas du jour</Text>
           {selectedTab === 'Journal' && (
             <>
-              {/* Petit-déjeuner */}
-              <View style={styles.mealCard}>
-                <View style={styles.mealHeader}>
-                  <Text style={styles.mealTitle}>Petit-déjeuner</Text>
-                  <TouchableOpacity style={styles.addButton}>
-                    <Text style={styles.addButtonText}>Aujourd'hui</Text>
-                  </TouchableOpacity>
-                </View>
-                <Text style={styles.mealEmpty}>Aucun aliment ajouté</Text>
-                <TouchableOpacity style={styles.addFoodButton}>
-                  <Text style={styles.addFoodText}>+ Ajouter un aliment</Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Déjeuner */}
-              <View style={styles.mealCard}>
-                <View style={styles.mealHeader}>
-                  <Text style={styles.mealTitle}>Déjeuner</Text>
-                  <TouchableOpacity style={styles.addButton}>
-                    <Text style={styles.addButtonText}>Aujourd'hui</Text>
-                  </TouchableOpacity>
-                </View>
-                <Text style={styles.mealEmpty}>Aucun aliment ajouté</Text>
-                <TouchableOpacity style={styles.addFoodButton}>
-                  <Text style={styles.addFoodText}>+ Ajouter un aliment</Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Collation */}
-              <View style={styles.mealCard}>
-                <View style={styles.mealHeader}>
-                  <Text style={styles.mealTitle}>Collation</Text>
-                  <TouchableOpacity style={styles.addButton}>
-                    <Text style={styles.addButtonText}>Aujourd'hui</Text>
-                  </TouchableOpacity>
-                </View>
-                <Text style={styles.mealEmpty}>Aucun aliment ajouté</Text>
-                <TouchableOpacity style={styles.addFoodButton}>
-                  <Text style={styles.addFoodText}>+ Ajouter un aliment</Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Dîner */}
-              <View style={styles.mealCard}>
-                <View style={styles.mealHeader}>
-                  <Text style={styles.mealTitle}>Dîner</Text>
-                  <TouchableOpacity style={styles.addButton}>
-                    <Text style={styles.addButtonText}>Aujourd'hui</Text>
-                  </TouchableOpacity>
-                </View>
-                <Text style={styles.mealEmpty}>Aucun aliment ajouté</Text>
-                <TouchableOpacity style={styles.addFoodButton}>
-                  <Text style={styles.addFoodText}>+ Ajouter un aliment</Text>
-                </TouchableOpacity>
-              </View>
+              {['Petit-déjeuner', 'Déjeuner', 'Collation', 'Dîner'].map((mealType) => {
+                const mealEntries = getMealEntries(mealType);
+                const mealCalories = mealEntries.reduce((sum, entry) => sum + entry.calories, 0);
+                
+                return (
+                  <View key={mealType} style={styles.mealCard}>
+                    <View style={styles.mealHeader}>
+                      <Text style={styles.mealTitle}>{mealType}</Text>
+                      <TouchableOpacity style={styles.addButton}>
+                        <Text style={styles.addButtonText}>{mealCalories} kcal</Text>
+                      </TouchableOpacity>
+                    </View>
+                    
+                    {mealEntries.length === 0 ? (
+                      <Text style={styles.mealEmpty}>Aucun aliment ajouté</Text>
+                    ) : (
+                      <View style={styles.foodList}>
+                        {mealEntries.map((entry) => (
+                          <View key={entry.id} style={styles.foodItem}>
+                            <View style={styles.foodInfo}>
+                              <Text style={styles.foodName}>{entry.product.name}</Text>
+                              <Text style={styles.foodDetails}>
+                                {entry.quantity}g • {entry.calories} kcal
+                              </Text>
+                            </View>
+                            <TouchableOpacity
+                              style={styles.removeButton}
+                              onPress={() => removeFoodEntry(entry.id)}
+                            >
+                              <Text style={styles.removeButtonText}>×</Text>
+                            </TouchableOpacity>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+                    
+                    <TouchableOpacity 
+                      style={styles.addFoodButton}
+                      onPress={() => handleAddFood(mealType)}
+                    >
+                      <Text style={styles.addFoodText}>+ Ajouter un aliment</Text>
+                    </TouchableOpacity>
+                  </View>
+                );
+              })}
             </>
           )}
         </View>
@@ -268,6 +386,14 @@ export default function NutritionScreen() {
             </View>
           </View>
         </Modal>
+
+        {/* Modal de recherche d'aliments */}
+        <FoodSearchModal
+          visible={showFoodModal}
+          onClose={() => setShowFoodModal(false)}
+          onAddFood={handleFoodAdded}
+          mealType={selectedMealType}
+        />
       </ScrollView>
     </SafeAreaView>
   );
@@ -599,5 +725,44 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     fontSize: width < 375 ? 14 : 16,
     color: '#8B949E',
+  },
+  foodList: {
+    marginBottom: 12,
+  },
+  foodItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0D1117',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  foodInfo: {
+    flex: 1,
+  },
+  foodName: {
+    color: '#FFFFFF',
+    fontSize: width < 375 ? 14 : 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  foodDetails: {
+    color: '#8B949E',
+    fontSize: width < 375 ? 12 : 14,
+  },
+  removeButton: {
+    backgroundColor: '#FF6B6B',
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  removeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
