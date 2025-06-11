@@ -6,10 +6,13 @@ import { getCurrentUser } from '../../utils/auth';
 
 export default function EntrainementScreen() {
   const [selectedTab, setSelectedTab] = useState('Journal');
+  const [selectedDay, setSelectedDay] = useState('Lundi');
   const [stravaActivities, setStravaActivities] = useState<StravaActivity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [hasSubscription, setHasSubscription] = useState(false); // État pour l'abonnement
+  const [hasSubscription, setHasSubscription] = useState(false);
+  const [currentWeek, setCurrentWeek] = useState(new Date());
+
+  const daysOfWeek = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
   useEffect(() => {
     loadStravaActivities();
@@ -35,8 +38,6 @@ export default function EntrainementScreen() {
     try {
       const currentUser = await getCurrentUser();
       if (currentUser) {
-        // Ici vous pouvez vérifier le statut d'abonnement de l'utilisateur
-        // Pour l'instant, on simule avec false (pas d'abonnement)
         setHasSubscription(false);
       }
     } catch (error) {
@@ -52,7 +53,6 @@ export default function EntrainementScreen() {
         [
           { text: 'Plus tard', style: 'cancel' },
           { text: 'S\'abonner', onPress: () => {
-            // Rediriger vers la page d'abonnement
             console.log('Redirection vers abonnement');
           }}
         ]
@@ -85,28 +85,34 @@ export default function EntrainementScreen() {
     });
   };
 
-  const formatSelectedDate = (date: Date) => {
-    const today = new Date();
-    
-    if (date.toDateString() === today.toDateString()) {
-      return 'Aujourd\'hui';
-    } else {
-      return date.toLocaleDateString('fr-FR', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long'
-      });
-    }
+  const getWeekRange = () => {
+    const startOfWeek = new Date(currentWeek);
+    const day = startOfWeek.getDay();
+    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
+    startOfWeek.setDate(diff);
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+    return {
+      start: startOfWeek,
+      end: endOfWeek
+    };
   };
 
-  const navigateDate = (direction: 'prev' | 'next') => {
-    const newDate = new Date(selectedDate);
+  const formatWeekRange = () => {
+    const { start, end } = getWeekRange();
+    return `${start.getDate()}-${end.getDate()} ${end.toLocaleDateString('fr-FR', { month: 'long' })}`;
+  };
+
+  const navigateWeek = (direction: 'prev' | 'next') => {
+    const newWeek = new Date(currentWeek);
     if (direction === 'prev') {
-      newDate.setDate(selectedDate.getDate() - 1);
+      newWeek.setDate(currentWeek.getDate() - 7);
     } else {
-      newDate.setDate(selectedDate.getDate() + 1);
+      newWeek.setDate(currentWeek.getDate() + 7);
     }
-    setSelectedDate(newDate);
+    setCurrentWeek(newWeek);
   };
 
   const getActivityIcon = (type: string) => {
@@ -173,33 +179,27 @@ export default function EntrainementScreen() {
         <View style={styles.header}>
           <Text style={styles.title}>Entraînement</Text>
           
-          {/* Navigation par dates */}
-          <View style={styles.dateNavigation}>
+          {/* Navigation par semaines */}
+          <View style={styles.weekNavigation}>
             <TouchableOpacity 
-              style={styles.dateArrow}
-              onPress={() => navigateDate('prev')}
+              style={styles.weekArrow}
+              onPress={() => navigateWeek('prev')}
             >
               <Text style={styles.arrowText}>‹</Text>
             </TouchableOpacity>
             
-            <View style={styles.dateContainer}>
-              <Text style={styles.selectedDate}>{formatSelectedDate(selectedDate)}</Text>
+            <View style={styles.weekContainer}>
+              <Text style={styles.weekRange}>{formatWeekRange()}</Text>
             </View>
             
             <TouchableOpacity 
-              style={styles.dateArrow}
-              onPress={() => navigateDate('next')}
+              style={styles.weekArrow}
+              onPress={() => navigateWeek('next')}
             >
               <Text style={styles.arrowText}>›</Text>
             </TouchableOpacity>
           </View>
-
-          
         </View>
-
-        
-
-        
 
         {/* Tabs */}
         <View style={styles.tabsContainer}>
@@ -234,24 +234,50 @@ export default function EntrainementScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Days Tabs (only for Journal) */}
+        {selectedTab === 'Journal' && (
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            style={styles.daysScrollContainer}
+            contentContainerStyle={styles.daysContainer}
+          >
+            {daysOfWeek.map((day) => (
+              <TouchableOpacity
+                key={day}
+                style={[styles.dayTab, selectedDay === day && styles.activeDayTab]}
+                onPress={() => setSelectedDay(day)}
+              >
+                <Text style={[styles.dayTabText, selectedDay === day && styles.activeDayTabText]}>
+                  {day}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
+
         {/* Content */}
         <View style={styles.contentContainer}>
           {selectedTab === 'Journal' && (
-            <View style={styles.emptyState}>
-              <View style={styles.emptyIcon}>
-                <Text style={styles.emptyIconText}>📝</Text>
+            <View style={styles.dayContent}>
+              <Text style={styles.selectedDayTitle}>{selectedDay}</Text>
+              
+              {/* Empty state for the selected day */}
+              <View style={styles.emptyState}>
+                <View style={styles.emptyIcon}>
+                  <Text style={styles.emptyIconText}>💪</Text>
+                </View>
+                <Text style={styles.emptyTitle}>Aucun entraînement</Text>
+                <Text style={styles.emptyMessage}>
+                  Ajoutez vos exercices pour {selectedDay.toLowerCase()}
+                </Text>
+                <Text style={styles.emptySubmessage}>
+                  Notez vos séries, répétitions, poids et ressentis
+                </Text>
+                <TouchableOpacity style={styles.addWorkoutButton}>
+                  <Text style={styles.addWorkoutText}>Ajouter un entraînement</Text>
+                </TouchableOpacity>
               </View>
-              <Text style={styles.emptyTitle}>Journal d'entraînement</Text>
-              <Text style={styles.emptyMessage}>
-                Enregistrez vos séances manuellement
-              </Text>
-              <Text style={styles.emptySubmessage}>
-                Notez vos exercices, poids, répétitions et ressentis
-                pour suivre votre progression
-              </Text>
-              <TouchableOpacity style={styles.addWorkoutButton}>
-                <Text style={styles.addWorkoutText}>Ajouter une séance</Text>
-              </TouchableOpacity>
             </View>
           )}
 
@@ -337,14 +363,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
-  dateNavigation: {
+  weekNavigation: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 20,
     paddingHorizontal: 8,
   },
-  dateArrow: {
+  weekArrow: {
     padding: 10,
     borderRadius: 8,
     backgroundColor: '#161B22',
@@ -360,73 +386,17 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
-  dateContainer: {
+  weekContainer: {
     flex: 1,
     alignItems: 'center',
     marginHorizontal: 12,
   },
-  selectedDate: {
+  weekRange: {
     fontSize: 15,
     fontWeight: '600',
     color: '#FFFFFF',
     textAlign: 'center',
     textTransform: 'capitalize',
-  },
-  selectedDateSubtext: {
-    fontSize: 12,
-    color: '#8B949E',
-    marginTop: 2,
-    textAlign: 'center',
-  },
-  weekInfo: {
-    fontSize: 16,
-    color: '#8B949E',
-    marginBottom: 2,
-    textAlign: 'center',
-  },
-  dateRange: {
-    fontSize: 14,
-    color: '#8B949E',
-    textAlign: 'center',
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    gap: 15,
-    marginBottom: 20,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: '#161B22',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#21262D',
-    alignItems: 'center',
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#8B949E',
-  },
-  progressContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  progressLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  progressSubtext: {
-    fontSize: 14,
-    color: '#8B949E',
   },
   tabsContainer: {
     flexDirection: 'row',
@@ -470,21 +440,57 @@ const styles = StyleSheet.create({
   activeCrownIcon: {
     opacity: 1,
   },
-  lockIcon: {
-    fontSize: 10,
-    marginLeft: 4,
-    color: '#8B949E',
-  },
   lockedTab: {
     opacity: 0.7,
   },
   lockedTabText: {
     color: '#6A737D',
   },
+  daysScrollContainer: {
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  daysContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  dayTab: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: '#161B22',
+    borderWidth: 1,
+    borderColor: '#21262D',
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  activeDayTab: {
+    backgroundColor: '#F5A623',
+    borderColor: '#F5A623',
+  },
+  dayTabText: {
+    fontSize: 12,
+    color: '#8B949E',
+    fontWeight: '500',
+  },
+  activeDayTabText: {
+    color: '#000000',
+    fontWeight: '600',
+  },
   contentContainer: {
     flex: 1,
     paddingHorizontal: 16,
     paddingBottom: 90,
+  },
+  dayContent: {
+    flex: 1,
+  },
+  selectedDayTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 16,
+    textAlign: 'center',
   },
   emptyState: {
     backgroundColor: '#161B22',
