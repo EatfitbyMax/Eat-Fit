@@ -1,4 +1,3 @@
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PersistentStorage } from './storage';
 
@@ -15,6 +14,7 @@ export interface User {
   weight?: number;
   activityLevel?: string;
   userType: 'client' | 'coach';
+  hasNutritionProgram?: boolean;
   createdAt: string;
 }
 
@@ -76,17 +76,17 @@ export async function login(email: string, password: string): Promise<User | nul
   try {
     // Récupérer les utilisateurs depuis le serveur VPS uniquement
     const users = await PersistentStorage.getUsers();
-    
+
     console.log('Utilisateurs disponibles:', users.map((u: any) => ({ email: u.email, userType: u.userType })));
-    
+
     // Normaliser l'email (minuscules et trim)
     const normalizedEmail = email.toLowerCase().trim();
     const user = users.find((u: any) => 
       u.email.toLowerCase().trim() === normalizedEmail && u.password === password
     );
-    
+
     console.log('Recherche utilisateur avec email:', normalizedEmail);
-    
+
     if (user) {
       // Enlever le mot de passe avant de sauvegarder dans la session locale
       const { password: _, ...userWithoutPassword } = user;
@@ -129,7 +129,7 @@ export async function register(userData: {
   try {
     // Récupérer les utilisateurs depuis le serveur VPS uniquement
     const users = await PersistentStorage.getUsers();
-    
+
     // Vérifier si l'email existe déjà
     const existingUser = users.find((u: any) => u.email === userData.email);
     if (existingUser) {
@@ -156,14 +156,14 @@ export async function register(userData: {
     };
 
     users.push(newUser);
-    
+
     // Sauvegarder uniquement sur le serveur VPS
     await PersistentStorage.saveUsers(users);
 
     // Connecter automatiquement l'utilisateur (session locale uniquement)
     const { password: _, ...userWithoutPassword } = newUser;
     await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userWithoutPassword));
-    
+
     console.log('Inscription réussie pour:', userData.email);
     return userWithoutPassword;
   } catch (error) {

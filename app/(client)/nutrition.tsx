@@ -1,12 +1,13 @@
-
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Modal, Alert } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
 export default function NutritionScreen() {
   const [selectedTab, setSelectedTab] = useState('Journal');
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [hasNutritionProgram, setHasNutritionProgram] = useState(false); // Assuming default is no access
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
   const formatDate = (date: Date) => {
     const options: Intl.DateTimeFormatOptions = {
@@ -32,13 +33,21 @@ export default function NutritionScreen() {
     return selectedDate.toDateString() === today.toDateString();
   };
 
+  const handleTabPress = (tabName: string) => {
+    if (tabName === 'Programme' && !hasNutritionProgram) {
+      setShowSubscriptionModal(true);
+    } else {
+      setSelectedTab(tabName);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Nutrition</Text>
-          
+
           {/* Date Navigation */}
           <View style={styles.dateNavigation}>
             <TouchableOpacity 
@@ -47,13 +56,13 @@ export default function NutritionScreen() {
             >
               <Text style={styles.arrowText}>‹</Text>
             </TouchableOpacity>
-            
+
             <View style={styles.dateContainer}>
               <Text style={styles.date}>
                 {isToday() ? 'Aujourd\'hui' : formatDate(selectedDate)}
               </Text>
             </View>
-            
+
             <TouchableOpacity 
               style={styles.dateArrow}
               onPress={() => navigateDate('next')}
@@ -122,7 +131,7 @@ export default function NutritionScreen() {
         <View style={styles.tabsContainer}>
           <TouchableOpacity 
             style={[styles.tab, selectedTab === 'Journal' && styles.activeTab]}
-            onPress={() => setSelectedTab('Journal')}
+            onPress={() => handleTabPress('Journal')}
           >
             <Text style={[styles.tabText, selectedTab === 'Journal' && styles.activeTabText]}>
               Journal
@@ -130,7 +139,7 @@ export default function NutritionScreen() {
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.tab, selectedTab === 'Programme' && styles.activeTab]}
-            onPress={() => setSelectedTab('Programme')}
+            onPress={() => handleTabPress('Programme')}
           >
             <Text style={[styles.tabText, selectedTab === 'Programme' && styles.activeTabText]}>
               Programme
@@ -141,63 +150,119 @@ export default function NutritionScreen() {
         {/* Meals Section */}
         <View style={styles.mealsContainer}>
           <Text style={styles.sectionTitle}>Repas du jour</Text>
+          {selectedTab === 'Journal' && (
+            <>
+              {/* Petit-déjeuner */}
+              <View style={styles.mealCard}>
+                <View style={styles.mealHeader}>
+                  <Text style={styles.mealTitle}>Petit-déjeuner</Text>
+                  <TouchableOpacity style={styles.addButton}>
+                    <Text style={styles.addButtonText}>Aujourd'hui</Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.mealEmpty}>Aucun aliment ajouté</Text>
+                <TouchableOpacity style={styles.addFoodButton}>
+                  <Text style={styles.addFoodText}>+ Ajouter un aliment</Text>
+                </TouchableOpacity>
+              </View>
 
-          {/* Petit-déjeuner */}
-          <View style={styles.mealCard}>
-            <View style={styles.mealHeader}>
-              <Text style={styles.mealTitle}>Petit-déjeuner</Text>
-              <TouchableOpacity style={styles.addButton}>
-                <Text style={styles.addButtonText}>Aujourd'hui</Text>
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.mealEmpty}>Aucun aliment ajouté</Text>
-            <TouchableOpacity style={styles.addFoodButton}>
-              <Text style={styles.addFoodText}>+ Ajouter un aliment</Text>
-            </TouchableOpacity>
-          </View>
+              {/* Déjeuner */}
+              <View style={styles.mealCard}>
+                <View style={styles.mealHeader}>
+                  <Text style={styles.mealTitle}>Déjeuner</Text>
+                  <TouchableOpacity style={styles.addButton}>
+                    <Text style={styles.addButtonText}>Aujourd'hui</Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.mealEmpty}>Aucun aliment ajouté</Text>
+                <TouchableOpacity style={styles.addFoodButton}>
+                  <Text style={styles.addFoodText}>+ Ajouter un aliment</Text>
+                </TouchableOpacity>
+              </View>
 
-          {/* Déjeuner */}
-          <View style={styles.mealCard}>
-            <View style={styles.mealHeader}>
-              <Text style={styles.mealTitle}>Déjeuner</Text>
-              <TouchableOpacity style={styles.addButton}>
-                <Text style={styles.addButtonText}>Aujourd'hui</Text>
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.mealEmpty}>Aucun aliment ajouté</Text>
-            <TouchableOpacity style={styles.addFoodButton}>
-              <Text style={styles.addFoodText}>+ Ajouter un aliment</Text>
-            </TouchableOpacity>
-          </View>
+              {/* Collation */}
+              <View style={styles.mealCard}>
+                <View style={styles.mealHeader}>
+                  <Text style={styles.mealTitle}>Collation</Text>
+                  <TouchableOpacity style={styles.addButton}>
+                    <Text style={styles.addButtonText}>Aujourd'hui</Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.mealEmpty}>Aucun aliment ajouté</Text>
+                <TouchableOpacity style={styles.addFoodButton}>
+                  <Text style={styles.addFoodText}>+ Ajouter un aliment</Text>
+                </TouchableOpacity>
+              </View>
 
-          {/* Collation */}
-          <View style={styles.mealCard}>
-            <View style={styles.mealHeader}>
-              <Text style={styles.mealTitle}>Collation</Text>
-              <TouchableOpacity style={styles.addButton}>
-                <Text style={styles.addButtonText}>Aujourd'hui</Text>
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.mealEmpty}>Aucun aliment ajouté</Text>
-            <TouchableOpacity style={styles.addFoodButton}>
-              <Text style={styles.addFoodText}>+ Ajouter un aliment</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Dîner */}
-          <View style={styles.mealCard}>
-            <View style={styles.mealHeader}>
-              <Text style={styles.mealTitle}>Dîner</Text>
-              <TouchableOpacity style={styles.addButton}>
-                <Text style={styles.addButtonText}>Aujourd'hui</Text>
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.mealEmpty}>Aucun aliment ajouté</Text>
-            <TouchableOpacity style={styles.addFoodButton}>
-              <Text style={styles.addFoodText}>+ Ajouter un aliment</Text>
-            </TouchableOpacity>
-          </View>
+              {/* Dîner */}
+              <View style={styles.mealCard}>
+                <View style={styles.mealHeader}>
+                  <Text style={styles.mealTitle}>Dîner</Text>
+                  <TouchableOpacity style={styles.addButton}>
+                    <Text style={styles.addButtonText}>Aujourd'hui</Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.mealEmpty}>Aucun aliment ajouté</Text>
+                <TouchableOpacity style={styles.addFoodButton}>
+                  <Text style={styles.addFoodText}>+ Ajouter un aliment</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
         </View>
+
+        {/* Modal d'abonnement */}
+        <Modal
+          visible={showSubscriptionModal}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowSubscriptionModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>🔒 Accès Premium</Text>
+                <TouchableOpacity 
+                  style={styles.closeButton}
+                  onPress={() => setShowSubscriptionModal(false)}
+                >
+                  <Text style={styles.closeButtonText}>×</Text>
+                </TouchableOpacity>
+              </View>
+
+              <Text style={styles.modalDescription}>
+                L'accès aux programmes nutrition est réservé aux membres Premium.
+              </Text>
+
+              <View style={styles.benefitsList}>
+                <Text style={styles.benefitItem}>✓ Programmes nutrition personnalisés</Text>
+                <Text style={styles.benefitItem}>✓ Suivi par un coach professionnel</Text>
+                <Text style={styles.benefitItem}>✓ Plans de repas détaillés</Text>
+                <Text style={styles.benefitItem}>✓ Ajustements selon vos progrès</Text>
+              </View>
+
+              <TouchableOpacity 
+                style={styles.subscribeButton}
+                onPress={() => {
+                  setShowSubscriptionModal(false);
+                  Alert.alert(
+                    'Abonnement Premium', 
+                    'Fonctionnalité d\'abonnement en cours de développement.'
+                  );
+                }}
+              >
+                <Text style={styles.subscribeButtonText}>S'abonner maintenant</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.cancelButton}
+                onPress={() => setShowSubscriptionModal(false)}
+              >
+                <Text style={styles.cancelButtonText}>Plus tard</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </ScrollView>
     </SafeAreaView>
   );
@@ -446,6 +511,76 @@ const styles = StyleSheet.create({
   },
   addFoodText: {
     fontSize: width < 375 ? 12 : 14,
+    color: '#8B949E',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#161B22',
+    borderRadius: 12,
+    padding: width < 375 ? 20 : 24,
+    width: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: width < 375 ? 18 : 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  closeButton: {
+    backgroundColor: '#21262D',
+    borderRadius: 12,
+    width: width < 375 ? 24 : 28,
+    height: width < 375 ? 24 : 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeButtonText: {
+    fontSize: width < 375 ? 14 : 16,
+    color: '#8B949E',
+    fontWeight: 'bold',
+  },
+  modalDescription: {
+    fontSize: width < 375 ? 14 : 16,
+    color: '#8B949E',
+    marginBottom: 20,
+  },
+  benefitsList: {
+    marginBottom: 20,
+  },
+  benefitItem: {
+    fontSize: width < 375 ? 14 : 16,
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  subscribeButton: {
+    backgroundColor: '#1F6FEB',
+    paddingVertical: width < 375 ? 12 : 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  subscribeButtonText: {
+    fontSize: width < 375 ? 14 : 16,
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
+  cancelButton: {
+    paddingVertical: width < 375 ? 12 : 14,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    fontSize: width < 375 ? 14 : 16,
     color: '#8B949E',
   },
 });
