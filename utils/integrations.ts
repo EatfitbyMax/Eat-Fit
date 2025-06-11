@@ -1,6 +1,8 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PersistentStorage } from './storage';
+import * as WebBrowser from 'expo-web-browser';
+import * as AuthSession from 'expo-auth-session';
 
 export interface HealthData {
   steps: number;
@@ -46,9 +48,9 @@ const STRAVA_DATA_KEY = 'strava_activities';
 
 // Configuration Strava API
 const STRAVA_CONFIG = {
-  CLIENT_ID: process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID || '159394',
-  CLIENT_SECRET: process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET || '0a888961cf64a2294908224b07b222ccba150700',
-  REDIRECT_URI: 'https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/auth/strava/callback',
+  CLIENT_ID: process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID || 'YOUR_STRAVA_CLIENT_ID',
+  CLIENT_SECRET: process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET || 'YOUR_STRAVA_CLIENT_SECRET',
+  REDIRECT_URI: 'myapp://auth', // Deep link pour Expo
   SCOPE: 'read,activity:read_all',
   API_BASE_URL: 'https://www.strava.com/api/v3'
 };
@@ -132,29 +134,56 @@ export class IntegrationsManager {
   // Strava Integration
   static async connectStrava(userId: string): Promise<boolean> {
     try {
-      // Pour une vraie intégration, utilisez l'URL d'autorisation Strava
-      const authUrl = `https://www.strava.com/oauth/authorize?client_id=${STRAVA_CONFIG.CLIENT_ID}&redirect_uri=${STRAVA_CONFIG.REDIRECT_URI}&response_type=code&scope=${STRAVA_CONFIG.SCOPE}`;
+      console.log('🚀 Lancement de l\'authentification Strava...');
+      
+      // Configuration de la redirection pour Expo
+      const redirectUri = AuthSession.makeRedirectUri({
+        scheme: 'myapp', // Doit correspondre au scheme dans app.json
+        path: 'auth'
+      });
+      
+      console.log('Redirect URI:', redirectUri);
+      
+      // URL d'autorisation Strava
+      const authUrl = `https://www.strava.com/oauth/authorize?client_id=${STRAVA_CONFIG.CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${STRAVA_CONFIG.SCOPE}&approval_prompt=force`;
       
       console.log('URL d\'autorisation Strava:', authUrl);
-      console.log('⚠️ Mode simulation activé - utilisation de données mock');
       
-      // Mode simulation pour le développement
-      const mockAccessToken = `strava_token_${userId}_${Date.now()}`;
-      const mockAthleteId = `24854648`;
-
-      const integrationStatus = await this.getIntegrationStatus(userId);
-      integrationStatus.strava = {
-        connected: true,
-        lastSync: new Date().toISOString(),
-        accessToken: mockAccessToken,
-        athleteId: mockAthleteId
-      };
-
-      await this.saveIntegrationStatus(userId, integrationStatus);
-      console.log('Strava connecté pour utilisateur:', userId);
-      return true;
+      // Ouvrir le navigateur pour l'authentification
+      const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
+      
+      console.log('Résultat authentification:', result);
+      
+      if (result.type === 'success' && result.url) {
+        // Extraire le code d'autorisation de l'URL de retour
+        const url = new URL(result.url);
+        const code = url.searchParams.get('code');
+        
+        if (code) {
+          console.log('Code d\'autorisation reçu:', code);
+          
+          // Échanger le code contre un token d'accès
+          const success = await this.exchangeStravaCode(code, userId);
+          if (success) {
+            console.log('✅ Authentification Strava réussie');
+            return true;
+          } else {
+            console.error('❌ Échec de l\'échange du code');
+            return false;
+          }
+        } else {
+          console.error('❌ Aucun code d\'autorisation reçu');
+          return false;
+        }
+      } else if (result.type === 'cancel') {
+        console.log('🚫 Authentification annulée par l\'utilisateur');
+        return false;
+      } else {
+        console.error('❌ Erreur lors de l\'authentification:', result);
+        return false;
+      }
     } catch (error) {
-      console.error('Erreur connexion Strava:', error);
+      console.error('❌ Erreur connexion Strava:', error);
       return false;
     }
   }
@@ -162,6 +191,8 @@ export class IntegrationsManager {
   // Méthode pour échanger le code d'autorisation contre un token d'accès
   static async exchangeStravaCode(code: string, userId: string): Promise<boolean> {
     try {
+      console.log('🔄 Échange du code d\'autorisation contre un token...');
+      
       const response = await fetch('https://www.strava.com/oauth/token', {
         method: 'POST',
         headers: {
@@ -176,6 +207,7 @@ export class IntegrationsManager {
       });
 
       const data = await response.json();
+      console.log('Réponse Strava OAuth:', data);
       
       if (data.access_token) {
         const integrationStatus = await this.getIntegrationStatus(userId);
@@ -187,12 +219,14 @@ export class IntegrationsManager {
         };
 
         await this.saveIntegrationStatus(userId, integrationStatus);
+        console.log('✅ Token Strava sauvegardé pour l\'utilisateur:', userId);
         return true;
+      } else {
+        console.error('❌ Pas de token d\'accès dans la réponse:', data);
+        return false;
       }
-      
-      return false;
     } catch (error) {
-      console.error('Erreur échange code Strava:', error);
+      console.error('❌ Erreur échange code Strava:', error);
       return false;
     }
   }
