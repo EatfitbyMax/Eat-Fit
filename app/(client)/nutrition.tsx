@@ -21,6 +21,7 @@ function NutritionScreen() {
     carbohydrates: 0,
     fat: 0,
   });
+  const [waterIntake, setWaterIntake] = useState(0); // en ml
 
   const formatDate = (date: Date) => {
     const options: Intl.DateTimeFormatOptions = {
@@ -119,8 +120,44 @@ function NutritionScreen() {
         setFoodEntries(entries);
         calculateDailyTotals(entries);
       }
+
+      // Charger les données d'hydratation
+      const waterStored = await AsyncStorage.getItem(`water_intake_${user.id}_${selectedDate.toISOString().split('T')[0]}`);
+      if (waterStored) {
+        setWaterIntake(parseInt(waterStored));
+      } else {
+        setWaterIntake(0);
+      }
     } catch (error) {
       console.error('Erreur chargement données alimentaires:', error);
+    }
+  };
+
+  const addWater = async (amount: number) => {
+    try {
+      const user = await getCurrentUser();
+      if (!user) return;
+
+      const newWaterIntake = waterIntake + amount;
+      setWaterIntake(newWaterIntake);
+
+      const dateKey = selectedDate.toISOString().split('T')[0];
+      await AsyncStorage.setItem(`water_intake_${user.id}_${dateKey}`, newWaterIntake.toString());
+    } catch (error) {
+      console.error('Erreur ajout eau:', error);
+    }
+  };
+
+  const resetWater = async () => {
+    try {
+      const user = await getCurrentUser();
+      if (!user) return;
+
+      setWaterIntake(0);
+      const dateKey = selectedDate.toISOString().split('T')[0];
+      await AsyncStorage.setItem(`water_intake_${user.id}_${dateKey}`, '0');
+    } catch (error) {
+      console.error('Erreur reset eau:', error);
     }
   };
 
@@ -151,10 +188,11 @@ function NutritionScreen() {
     loadUserFoodData();
   }, []);
 
-  // Recalculer les totaux quand la date change
+  // Recalculer les totaux et charger l'hydratation quand la date change
   React.useEffect(() => {
     calculateDailyTotals(foodEntries);
-  }, [selectedDate, foodEntries]);
+    loadUserFoodData();
+  }, [selectedDate]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -250,6 +288,52 @@ function NutritionScreen() {
                     backgroundColor: '#FFE66D' 
                   }]} />
                 </View>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Hydratation */}
+        <View style={styles.hydrationContainer}>
+          <View style={styles.hydrationCard}>
+            <View style={styles.hydrationHeader}>
+              <Text style={styles.hydrationTitle}>💧 Hydratation</Text>
+              <TouchableOpacity onPress={resetWater} style={styles.resetButton}>
+                <Text style={styles.resetButtonText}>Reset</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.hydrationContent}>
+              <View style={styles.waterProgress}>
+                <View style={styles.waterProgressBar}>
+                  <View style={[styles.waterProgressFill, { 
+                    width: `${Math.min((waterIntake / 2000) * 100, 100)}%` 
+                  }]} />
+                </View>
+                <Text style={styles.waterText}>
+                  {waterIntake} ml / 2000 ml
+                </Text>
+              </View>
+              
+              <View style={styles.waterButtons}>
+                <TouchableOpacity
+                  style={styles.waterButton}
+                  onPress={() => addWater(250)}
+                >
+                  <Text style={styles.waterButtonText}>+250ml</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.waterButton}
+                  onPress={() => addWater(500)}
+                >
+                  <Text style={styles.waterButtonText}>+500ml</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.waterButton}
+                  onPress={() => addWater(1000)}
+                >
+                  <Text style={styles.waterButtonText}>+1L</Text>
+                </TouchableOpacity>
               </View>
             </View>
           </View>
@@ -764,6 +848,79 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  hydrationContainer: {
+    paddingHorizontal: width < 375 ? 12 : 16,
+    paddingBottom: 16,
+  },
+  hydrationCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 12,
+    padding: width < 375 ? 14 : 18,
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  hydrationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  hydrationTitle: {
+    fontSize: width < 375 ? 16 : 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  resetButton: {
+    backgroundColor: '#21262D',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+  },
+  resetButtonText: {
+    fontSize: 12,
+    color: '#8B949E',
+  },
+  hydrationContent: {
+    gap: 16,
+  },
+  waterProgress: {
+    alignItems: 'center',
+  },
+  waterProgressBar: {
+    width: '100%',
+    height: 8,
+    backgroundColor: '#21262D',
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  waterProgressFill: {
+    height: '100%',
+    backgroundColor: '#4ECDC4',
+    borderRadius: 4,
+  },
+  waterText: {
+    fontSize: width < 375 ? 14 : 16,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  waterButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  waterButton: {
+    flex: 1,
+    backgroundColor: '#4ECDC4',
+    paddingVertical: width < 375 ? 10 : 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  waterButtonText: {
+    color: '#FFFFFF',
+    fontSize: width < 375 ? 12 : 14,
+    fontWeight: '600',
   },
 });
 
