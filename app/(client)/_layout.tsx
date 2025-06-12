@@ -57,20 +57,20 @@ export default function ClientLayout() {
         }}
       />
       <Tabs.Screen
-        name="profil"
-        options={{
-          title: 'Profil',
-          tabBarIcon: ({ color, focused }) => (
-            <IconSymbol size={28} name={focused ? 'person.fill' : 'person'} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="coach"
         options={{
           title: 'Messages',
           tabBarIcon: ({ color, focused }) => (
             <IconSymbol size={28} name={focused ? 'message.fill' : 'message'} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profil"
+        options={{
+          title: 'Profil',
+          tabBarIcon: ({ color, focused }) => (
+            <IconSymbol size={28} name={focused ? 'person.fill' : 'person'} color={color} />
           ),
         }}
       />
