@@ -1,11 +1,54 @@
 
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, TextInput, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { logout } from '@/utils/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+interface CoachInfo {
+  prenom: string;
+  nom: string;
+  email: string;
+  specialite: string;
+  disponibilites: string;
+}
 
 export default function ProfilScreen() {
   const router = useRouter();
+  const [coachInfo, setCoachInfo] = useState<CoachInfo>({
+    prenom: 'Maxime',
+    nom: 'Renard',
+    email: 'eatfitbymax@gmail.com',
+    specialite: 'Coach Nutrition & Fitness',
+    disponibilites: 'Lun-Ven, 8h-18h'
+  });
+  const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    loadCoachInfo();
+  }, []);
+
+  const loadCoachInfo = async () => {
+    try {
+      const savedInfo = await AsyncStorage.getItem('coachInfo');
+      if (savedInfo) {
+        setCoachInfo(JSON.parse(savedInfo));
+      }
+    } catch (error) {
+      console.error('Erreur chargement infos coach:', error);
+    }
+  };
+
+  const saveCoachInfo = async () => {
+    try {
+      await AsyncStorage.setItem('coachInfo', JSON.stringify(coachInfo));
+      setIsEditing(false);
+      Alert.alert('Succès', 'Vos informations ont été sauvegardées');
+    } catch (error) {
+      console.error('Erreur sauvegarde infos coach:', error);
+      Alert.alert('Erreur', 'Impossible de sauvegarder vos informations');
+    }
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -24,13 +67,95 @@ export default function ProfilScreen() {
         <View style={styles.profileSection}>
           <View style={styles.profileHeader}>
             <View style={styles.avatar}>
-              <Text style={styles.avatarText}>MA</Text>
+              <Text style={styles.avatarText}>
+                {coachInfo.prenom[0]?.toUpperCase()}{coachInfo.nom[0]?.toUpperCase()}
+              </Text>
             </View>
             <View style={styles.profileInfo}>
-              <Text style={styles.name}>Max Admin</Text>
-              <Text style={styles.email}>eatfitbymax@gmail.com</Text>
+              <Text style={styles.name}>{coachInfo.prenom} {coachInfo.nom}</Text>
+              <Text style={styles.email}>{coachInfo.email}</Text>
+              <Text style={styles.specialite}>{coachInfo.specialite}</Text>
             </View>
+            <TouchableOpacity 
+              style={styles.editButton}
+              onPress={() => setIsEditing(!isEditing)}
+            >
+              <Text style={styles.editButtonText}>✏️</Text>
+            </TouchableOpacity>
           </View>
+
+          {isEditing && (
+            <View style={styles.editSection}>
+              <Text style={styles.editTitle}>Modifier mes informations</Text>
+              
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Prénom</Text>
+                <TextInput
+                  style={styles.input}
+                  value={coachInfo.prenom}
+                  onChangeText={(text) => setCoachInfo({...coachInfo, prenom: text})}
+                  placeholder="Prénom"
+                  placeholderTextColor="#8B949E"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Nom</Text>
+                <TextInput
+                  style={styles.input}
+                  value={coachInfo.nom}
+                  onChangeText={(text) => setCoachInfo({...coachInfo, nom: text})}
+                  placeholder="Nom"
+                  placeholderTextColor="#8B949E"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Email</Text>
+                <TextInput
+                  style={styles.input}
+                  value={coachInfo.email}
+                  onChangeText={(text) => setCoachInfo({...coachInfo, email: text})}
+                  placeholder="Email"
+                  placeholderTextColor="#8B949E"
+                  keyboardType="email-address"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Spécialité</Text>
+                <TextInput
+                  style={styles.input}
+                  value={coachInfo.specialite}
+                  onChangeText={(text) => setCoachInfo({...coachInfo, specialite: text})}
+                  placeholder="Ex: Coach Nutrition & Fitness"
+                  placeholderTextColor="#8B949E"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Disponibilités</Text>
+                <TextInput
+                  style={[styles.input, styles.textArea]}
+                  value={coachInfo.disponibilites}
+                  onChangeText={(text) => setCoachInfo({...coachInfo, disponibilites: text})}
+                  placeholder="Ex: Lun-Ven, 8h-18h / Sam, 9h-12h"
+                  placeholderTextColor="#8B949E"
+                  multiline
+                  numberOfLines={3}
+                />
+              </View>
+
+              <View style={styles.editButtons}>
+                <TouchableOpacity style={styles.cancelButton} onPress={() => setIsEditing(false)}>
+                  <Text style={styles.cancelButtonText}>Annuler</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.saveButton} onPress={saveCoachInfo}>
+                  <Text style={styles.saveButtonText}>Sauvegarder</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
         </View>
 
         {/* Informations personnelles */}
@@ -169,6 +294,93 @@ const styles = StyleSheet.create({
   email: {
     fontSize: 14,
     color: '#8B949E',
+  },
+  specialite: {
+    fontSize: 12,
+    color: '#F5A623',
+    fontWeight: '500',
+    marginTop: 2,
+  },
+  editButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#161B22',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  editButtonText: {
+    fontSize: 16,
+  },
+  editSection: {
+    marginTop: 20,
+    backgroundColor: '#0D1117',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  editTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 16,
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    marginBottom: 6,
+    fontWeight: '500',
+  },
+  input: {
+    backgroundColor: '#161B22',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#21262D',
+    fontSize: 14,
+  },
+  textArea: {
+    height: 80,
+    textAlignVertical: 'top',
+  },
+  editButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: '#21262D',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  cancelButtonText: {
+    color: '#8B949E',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  saveButton: {
+    flex: 1,
+    backgroundColor: '#F5A623',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  saveButtonText: {
+    color: '#000000',
+    fontSize: 14,
+    fontWeight: '600',
   },
   section: {
     margin: 20,

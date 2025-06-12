@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, TextInput, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
 import { getMessages, saveMessages } from '../../utils/storage';
 import { getCurrentUser } from '../../utils/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Message {
   id: string;
@@ -11,13 +12,29 @@ interface Message {
   timestamp: Date;
 }
 
+interface CoachInfo {
+  prenom: string;
+  nom: string;
+  email: string;
+  specialite: string;
+  disponibilites: string;
+}
+
 export default function CoachScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [coachInfo, setCoachInfo] = useState<CoachInfo>({
+    prenom: 'Maxime',
+    nom: 'Renard',
+    email: 'eatfitbymax@gmail.com',
+    specialite: 'Coach Nutrition & Fitness',
+    disponibilites: 'Lun-Ven, 8h-18h'
+  });
 
   useEffect(() => {
     initUser();
+    loadCoachInfo();
   }, []);
 
   useEffect(() => {
@@ -29,6 +46,17 @@ export default function CoachScreen() {
   const initUser = async () => {
     const user = await getCurrentUser();
     setCurrentUser(user);
+  };
+
+  const loadCoachInfo = async () => {
+    try {
+      const savedInfo = await AsyncStorage.getItem('coachInfo');
+      if (savedInfo) {
+        setCoachInfo(JSON.parse(savedInfo));
+      }
+    } catch (error) {
+      console.error('Erreur chargement infos coach:', error);
+    }
   };
 
   const loadMessages = async () => {
@@ -92,12 +120,14 @@ export default function CoachScreen() {
         <View style={styles.coachCard}>
           <View style={styles.coachHeader}>
             <View style={styles.coachAvatar}>
-              <Text style={styles.coachAvatarText}>MR</Text>
+              <Text style={styles.coachAvatarText}>
+                {coachInfo.prenom[0]?.toUpperCase()}{coachInfo.nom[0]?.toUpperCase()}
+              </Text>
             </View>
             <View style={styles.coachInfo}>
-              <Text style={styles.coachName}>Maxime Renard</Text>
-              <Text style={styles.coachRole}>Coach Nutrition & Fitness</Text>
-              <Text style={styles.coachLocation}>Disponibilité: Lun-Ven, 8h-18h</Text>
+              <Text style={styles.coachName}>{coachInfo.prenom} {coachInfo.nom}</Text>
+              <Text style={styles.coachRole}>{coachInfo.specialite}</Text>
+              <Text style={styles.coachLocation}>Disponibilité: {coachInfo.disponibilites}</Text>
             </View>
           </View>
           
