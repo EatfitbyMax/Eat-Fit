@@ -218,7 +218,7 @@ export default function MessagesScreen() {
                     </View>
                     <View>
                       <Text style={styles.chatHeaderName}>
-                        {selectedClient?.nom || 'Client'
+                        {selectedClient?.nom || 'Client'}
                       </Text>
                       <Text style={styles.chatHeaderStatus}>En ligne</Text>
                     </View>
