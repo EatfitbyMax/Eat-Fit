@@ -59,9 +59,9 @@ export default function ClientLayout() {
       <Tabs.Screen
         name="coach"
         options={{
-          title: 'Messages',
+          title: 'Coach',
           tabBarIcon: ({ color, focused }) => (
-            <IconSymbol size={28} name={focused ? 'message.fill' : 'message'} color={color} />
+            <IconSymbol size={28} name={focused ? 'person.badge.plus.fill' : 'person.badge.plus'} color={color} />
           ),
         }}
       />
