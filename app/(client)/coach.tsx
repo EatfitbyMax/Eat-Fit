@@ -12,7 +12,6 @@ interface Message {
 }
 
 export default function CoachScreen() {
-  const [selectedTab, setSelectedTab] = useState<'info' | 'messages'>('info');
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -22,10 +21,10 @@ export default function CoachScreen() {
   }, []);
 
   useEffect(() => {
-    if (currentUser && selectedTab === 'messages') {
+    if (currentUser) {
       loadMessages();
     }
-  }, [currentUser, selectedTab]);
+  }, [currentUser]);
 
   const initUser = async () => {
     const user = await getCurrentUser();
@@ -86,142 +85,84 @@ export default function CoachScreen() {
       <ScrollView style={styles.scrollView}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>EatFitByMax</Text>
+          <Text style={styles.title}>Coach</Text>
         </View>
 
-        {/* Tabs */}
-        <View style={styles.tabsContainer}>
-          <TouchableOpacity 
-            style={[styles.tab, selectedTab === 'info' && styles.activeTab]}
-            onPress={() => setSelectedTab('info')}
-          >
-            <Text style={[styles.tabText, selectedTab === 'info' && styles.activeTabText]}>
-              Informations
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[styles.tab, selectedTab === 'messages' && styles.activeTab]}
-            onPress={() => setSelectedTab('messages')}
-          >
-            <Text style={[styles.tabText, selectedTab === 'messages' && styles.activeTabText]}>
-              Messages
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {selectedTab === 'info' ? (
-          /* Coach Info */
-          <View style={styles.coachCard}>
-            <View style={styles.coachHeader}>
-              <View style={styles.coachAvatar}>
-                <Text style={styles.coachAvatarText}>MR</Text>
-              </View>
-              <View style={styles.coachInfo}>
-                <Text style={styles.coachName}>Maxime Renard</Text>
-                <Text style={styles.coachRole}>Coach Nutrition & Fitness</Text>
-                <Text style={styles.coachLocation}>Disponibilité: Lun-Ven, 8h-18h</Text>
-              </View>
+        {/* Coach Info */}
+        <View style={styles.coachCard}>
+          <View style={styles.coachHeader}>
+            <View style={styles.coachAvatar}>
+              <Text style={styles.coachAvatarText}>MR</Text>
             </View>
-            
-            <View style={styles.coachActions}>
-              <TouchableOpacity style={styles.actionButton}>
-                <Text style={styles.actionButtonText}>📞 Appel vidéo</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton}>
-                <Text style={styles.actionButtonText}>📧 Appel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton}>
-                <Text style={styles.actionButtonText}>📅 Rendez-vous</Text>
-              </TouchableOpacity>
+            <View style={styles.coachInfo}>
+              <Text style={styles.coachName}>Maxime Renard</Text>
+              <Text style={styles.coachRole}>Coach Nutrition & Fitness</Text>
+              <Text style={styles.coachLocation}>Disponibilité: Lun-Ven, 8h-18h</Text>
             </View>
           </View>
-        ) : (
-          /* Messages Interface */
-          <KeyboardAvoidingView 
-            style={styles.messagesContainer} 
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          >
-            <View style={styles.messagesHeader}>
-              <Text style={styles.messagesTitle}>💬 Messages avec votre coach</Text>
-            </View>
-            
-            <FlatList
-              data={messages}
-              renderItem={renderMessage}
-              keyExtractor={(item) => item.id}
-              style={styles.messagesList}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.messagesListContent}
-              ListEmptyComponent={
-                <View style={styles.emptyMessages}>
-                  <Text style={styles.emptyMessagesText}>
-                    Aucun message avec votre coach.
-                  </Text>
-                  <Text style={styles.emptyMessagesSubtext}>
-                    Envoyez un message pour commencer !
-                  </Text>
-                </View>
-              }
+          
+          <View style={styles.coachActions}>
+            <TouchableOpacity style={styles.actionButton}>
+              <Text style={styles.actionButtonText}>📞 Appel vidéo</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionButton}>
+              <Text style={styles.actionButtonText}>📧 Appel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionButton}>
+              <Text style={styles.actionButtonText}>📅 Rendez-vous</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Messages Interface */}
+        <KeyboardAvoidingView 
+          style={styles.messagesContainer} 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <View style={styles.messagesHeader}>
+            <Text style={styles.messagesTitle}>💬 Messages avec votre coach</Text>
+          </View>
+          
+          <FlatList
+            data={messages}
+            renderItem={renderMessage}
+            keyExtractor={(item) => item.id}
+            style={styles.messagesList}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.messagesListContent}
+            ListEmptyComponent={
+              <View style={styles.emptyMessages}>
+                <Text style={styles.emptyMessagesText}>
+                  Aucun message avec votre coach.
+                </Text>
+                <Text style={styles.emptyMessagesSubtext}>
+                  Envoyez un message pour commencer !
+                </Text>
+              </View>
+            }
+          />
+
+          <View style={styles.messageInputContainer}>
+            <TextInput
+              style={styles.messageInput}
+              placeholder="Tapez votre message..."
+              placeholderTextColor="#8B949E"
+              value={messageText}
+              onChangeText={setMessageText}
+              multiline
+              maxLength={500}
             />
-
-            <View style={styles.messageInputContainer}>
-              <TextInput
-                style={styles.messageInput}
-                placeholder="Tapez votre message..."
-                placeholderTextColor="#8B949E"
-                value={messageText}
-                onChangeText={setMessageText}
-                multiline
-                maxLength={500}
-              />
-              <TouchableOpacity 
-                style={[styles.sendButton, !messageText.trim() && styles.sendButtonDisabled]}
-                onPress={sendMessage}
-                disabled={!messageText.trim()}
-              >
-                <Text style={styles.sendButtonText}>➤</Text>
-              </TouchableOpacity>
-            </View>
-          </KeyboardAvoidingView>
-        )}
-
-        {/* Tabs */}
-        <View style={styles.tabsContainer}>
-          <TouchableOpacity style={[styles.tab, styles.activeTab]}>
-            <Text style={[styles.tabText, styles.activeTabText]}>Messages</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.tab}>
-            <Text style={styles.tabText}>Rendez-vous</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.tab}>
-            <Text style={styles.tabText}>Plans</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Messages Section */}
-        <View style={styles.messagesContainer}>
-          <Text style={styles.sectionTitle}>Conversation</Text>
-          
-          <View style={styles.emptyMessages}>
-            <Text style={styles.emptyTitle}>Aucun message dans cette conversation.</Text>
-            <Text style={styles.emptySubtitle}>Envoyez un message pour commencer!</Text>
+            <TouchableOpacity 
+              style={[styles.sendButton, !messageText.trim() && styles.sendButtonDisabled]}
+              onPress={sendMessage}
+              disabled={!messageText.trim()}
+            >
+              <Text style={styles.sendButtonText}>➤</Text>
+            </TouchableOpacity>
           </View>
-        </View>
-      </ScrollView>
+        </KeyboardAvoidingView>
 
-      {/* Message Input */}
-      <View style={styles.messageInputContainer}>
-        <TextInput
-          style={styles.messageInput}
-          placeholder="Tapez votre message..."
-          placeholderTextColor="#8B949E"
-          multiline
-        />
-        <TouchableOpacity style={styles.sendButton}>
-          <Text style={styles.sendButtonText}>➤</Text>
-        </TouchableOpacity>
-      </View>
+        </ScrollView>
     </SafeAreaView>
   );
 }
