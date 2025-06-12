@@ -535,7 +535,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     minHeight: 60,
     marginHorizontal: 16,
-    marginBottom: 16,
+    marginBottom: 45,
     borderRadius: 16,
   },
   messageInput: {
