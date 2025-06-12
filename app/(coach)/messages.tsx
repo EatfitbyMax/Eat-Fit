@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
@@ -56,7 +57,7 @@ export default function MessagesScreen() {
 
   const loadMessages = async () => {
     if (!selectedClientId) return;
-
+    
     try {
       const messagesData = await getMessages(selectedClientId);
       // Convertir les timestamps en objets Date
@@ -72,7 +73,7 @@ export default function MessagesScreen() {
 
   const saveMessagesToServer = async (newMessages: Message[]) => {
     if (!selectedClientId) return;
-
+    
     try {
       await saveMessages(selectedClientId, newMessages);
     } catch (error) {
@@ -109,7 +110,7 @@ export default function MessagesScreen() {
       const updatedMessages = [...messages, newMessage];
       setMessages(updatedMessages);
       setMessageText('');
-
+      
       // Sauvegarder sur le serveur
       await saveMessagesToServer(updatedMessages);
     }
@@ -172,7 +173,7 @@ export default function MessagesScreen() {
               Messages directs
             </Text>
           </TouchableOpacity>
-
+          
           <TouchableOpacity 
             style={[styles.tab, selectedTab === 'annonces' && styles.activeTab]}
             onPress={() => setSelectedTab('annonces')}
@@ -194,7 +195,7 @@ export default function MessagesScreen() {
                     Sélectionnez un client pour commencer une conversation
                   </Text>
                 </View>
-
+                
                 <FlatList
                   data={clients}
                   renderItem={renderClientItem}
@@ -246,6 +247,26 @@ export default function MessagesScreen() {
                     </View>
                   }
                 />
+
+                {/* Input de message */}
+                <View style={styles.messageInputContainer}>
+                  <TextInput
+                    style={styles.messageInput}
+                    placeholder="Tapez votre message..."
+                    placeholderTextColor="#8B949E"
+                    value={messageText}
+                    onChangeText={setMessageText}
+                    multiline
+                    maxLength={500}
+                  />
+                  <TouchableOpacity 
+                    style={[styles.sendButton, !messageText.trim() && styles.sendButtonDisabled]}
+                    onPress={sendMessage}
+                    disabled={!messageText.trim()}
+                  >
+                    <Text style={styles.sendButtonText}>➤</Text>
+                  </TouchableOpacity>
+                </View>
               </>
             )}
           </View>
@@ -255,28 +276,6 @@ export default function MessagesScreen() {
             <Text style={styles.announcesSubtitle}>
               Fonctionnalité à venir - Envoyez des messages à tous vos clients
             </Text>
-          </View>
-        )}
-
-        {/* Input de message */}
-        {!showClientList && selectedTab === 'direct' && (
-          <View style={styles.messageInputContainer}>
-            <TextInput
-              style={styles.messageInput}
-              placeholder="Tapez votre message..."
-              placeholderTextColor="#8B949E"
-              value={messageText}
-              onChangeText={setMessageText}
-              multiline
-              maxLength={500}
-            />
-            <TouchableOpacity 
-              style={[styles.sendButton, !messageText.trim() && styles.sendButtonDisabled]}
-              onPress={sendMessage}
-              disabled={!messageText.trim()}
-            >
-              <Text style={styles.sendButtonText}>➤</Text>
-            </TouchableOpacity>
           </View>
         )}
       </KeyboardAvoidingView>
@@ -332,7 +331,7 @@ const styles = StyleSheet.create({
   messagesContainer: {
     flex: 1,
     marginHorizontal: 16,
-    marginBottom: 8,
+    marginBottom: 16,
     backgroundColor: '#161B22',
     borderRadius: 16,
     overflow: 'hidden',
@@ -473,7 +472,7 @@ const styles = StyleSheet.create({
   messagesListContent: {
     padding: 16,
     flexGrow: 1,
-    paddingBottom: 80,
+    paddingBottom: 32,
   },
   messageContainer: {
     marginBottom: 10,
@@ -535,11 +534,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#21262D',
     alignItems: 'flex-end',
-    minHeight: 60,
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    minHeight: 56,
   },
   messageInput: {
     flex: 1,
