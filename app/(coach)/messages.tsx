@@ -258,7 +258,7 @@ export default function MessagesScreen() {
           </View>
         )}
 
-        {/* Input de message - placé en dehors pour éviter qu'il soit coupé */}
+        {/* Input de message */}
         {!showClientList && selectedTab === 'direct' && (
           <View style={styles.messageInputContainer}>
             <TextInput
@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
   messagesListContent: {
     padding: 16,
     flexGrow: 1,
-    paddingBottom: 16,
+    paddingBottom: 80,
   },
   messageContainer: {
     marginBottom: 10,
@@ -531,15 +531,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    paddingBottom: 16,
     backgroundColor: '#1C2128',
     borderTopWidth: 1,
     borderTopColor: '#21262D',
     alignItems: 'flex-end',
     minHeight: 60,
-    marginHorizontal: 16,
-    marginBottom: 8,
-    borderRadius: 16,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
   messageInput: {
     flex: 1,
