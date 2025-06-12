@@ -162,10 +162,7 @@ export default function ProfilScreen() {
             onPress={() => setIsEditing(!isEditing)}
           >
             <Text style={styles.menuItemText}>Informations personnelles</Text>
-            <View style={styles.menuItemRight}>
-              <Text style={styles.editIcon}>✏️</Text>
-              <Text style={styles.menuItemArrow}>›</Text>
-            </View>
+            <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.menuItem}>
@@ -362,14 +359,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#8B949E',
   },
-  menuItemRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  editIcon: {
-    fontSize: 16,
-    marginRight: 8,
-  },
+  
   
   logoutButton: {
     margin: 20,
