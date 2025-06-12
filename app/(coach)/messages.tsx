@@ -12,7 +12,6 @@ import {
   Platform,
   Alert
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getClients, getMessages, saveMessages } from '../../utils/storage';
 
 interface Client {
@@ -36,7 +35,6 @@ export default function MessagesScreen() {
   const [messageText, setMessageText] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [showClientList, setShowClientList] = useState(true);
-  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     loadClients();
@@ -150,11 +148,10 @@ export default function MessagesScreen() {
   );
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView 
-        style={styles.keyboardContainer} 
+        style={styles.container} 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={insets.bottom}
       >
         {/* Header */}
         <View style={styles.header}>
@@ -200,7 +197,7 @@ export default function MessagesScreen() {
                   keyExtractor={(item) => item.id}
                   showsVerticalScrollIndicator={false}
                   style={styles.clientsList}
-                  contentContainerStyle={[styles.clientsListContent, { paddingBottom: insets.bottom + 100 }]}
+                  contentContainerStyle={styles.clientsListContent}
                 />
               </>
             ) : (
@@ -233,7 +230,7 @@ export default function MessagesScreen() {
                   keyExtractor={(item) => item.id}
                   style={styles.messagesList}
                   showsVerticalScrollIndicator={false}
-                  contentContainerStyle={[styles.messagesListContent, { paddingBottom: insets.bottom + 20 }]}
+                  contentContainerStyle={styles.messagesListContent}
                   ListEmptyComponent={
                     <View style={styles.emptyMessages}>
                       <Text style={styles.emptyMessagesText}>
@@ -247,7 +244,7 @@ export default function MessagesScreen() {
                 />
 
                 {/* Input de message */}
-                <View style={[styles.messageInputContainer, { paddingBottom: insets.bottom + 8 }]}>
+                <View style={styles.messageInputContainer}>
                   <TextInput
                     style={styles.messageInput}
                     placeholder="Tapez votre message..."
@@ -277,7 +274,7 @@ export default function MessagesScreen() {
           </View>
         )}
       </KeyboardAvoidingView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -285,9 +282,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0D1117',
-  },
-  keyboardContainer: {
-    flex: 1,
   },
   header: {
     paddingHorizontal: 16,
@@ -332,7 +326,7 @@ const styles = StyleSheet.create({
   messagesContainer: {
     flex: 1,
     marginHorizontal: 16,
-    marginBottom: 8,
+    marginBottom: 16,
     backgroundColor: '#161B22',
     borderRadius: 16,
     overflow: 'hidden',
@@ -530,7 +524,7 @@ const styles = StyleSheet.create({
   messageInputContainer: {
     flexDirection: 'row',
     paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingVertical: 12,
     backgroundColor: '#1C2128',
     borderTopWidth: 1,
     borderTopColor: '#21262D',
