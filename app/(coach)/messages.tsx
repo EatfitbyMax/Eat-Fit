@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
@@ -17,7 +16,7 @@ import { getClients, getMessages, saveMessages } from '../../utils/storage';
 
 interface Client {
   id: string;
-  name?: string;
+  nom?: string;
   email: string;
   avatar?: string;
 }
@@ -59,7 +58,7 @@ export default function MessagesScreen() {
 
   const loadMessages = async () => {
     if (!selectedClientId) return;
-    
+
     try {
       const messagesData = await getMessages(selectedClientId);
       setMessages(messagesData);
@@ -70,7 +69,7 @@ export default function MessagesScreen() {
 
   const saveMessagesToServer = async (newMessages: Message[]) => {
     if (!selectedClientId) return;
-    
+
     try {
       await saveMessages(selectedClientId, newMessages);
     } catch (error) {
@@ -78,9 +77,9 @@ export default function MessagesScreen() {
     }
   };
 
-  const getInitials = (name?: string) => {
-    if (!name) return 'XX';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  const getInitials = (nom?: string) => {
+    if (!nom) return 'XX';
+    return nom.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
   const selectedClient = clients.find(c => c.id === selectedClientId);
@@ -107,7 +106,7 @@ export default function MessagesScreen() {
       const updatedMessages = [...messages, newMessage];
       setMessages(updatedMessages);
       setMessageText('');
-      
+
       // Sauvegarder sur le serveur
       await saveMessagesToServer(updatedMessages);
     }
@@ -119,10 +118,10 @@ export default function MessagesScreen() {
       onPress={() => selectClient(item.id)}
     >
       <View style={styles.clientAvatar}>
-        <Text style={styles.clientAvatarText}>{getInitials(item.name)}</Text>
+        <Text style={styles.clientAvatarText}>{getInitials(item.nom)}</Text>
       </View>
       <View style={styles.clientInfo}>
-        <Text style={styles.clientName}>{item.name || 'Client sans nom'}</Text>
+        <Text style={styles.clientName}>{item.nom || 'Client sans nom'}</Text>
         <Text style={styles.clientEmail}>{item.email}</Text>
         <Text style={styles.lastMessage}>Appuyez pour démarrer la conversation</Text>
       </View>
@@ -171,7 +170,7 @@ export default function MessagesScreen() {
               Messages directs
             </Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity 
             style={[styles.tab, selectedTab === 'annonces' && styles.activeTab]}
             onPress={() => setSelectedTab('annonces')}
@@ -193,7 +192,7 @@ export default function MessagesScreen() {
                     Sélectionnez un client pour commencer une conversation
                   </Text>
                 </View>
-                
+
                 <FlatList
                   data={clients}
                   renderItem={renderClientItem}
@@ -214,12 +213,12 @@ export default function MessagesScreen() {
                   <View style={styles.chatHeaderClient}>
                     <View style={styles.chatHeaderAvatar}>
                       <Text style={styles.chatHeaderAvatarText}>
-                        {selectedClient ? getInitials(selectedClient.name) : ''}
+                        {selectedClient ? getInitials(selectedClient.nom) : ''}
                       </Text>
                     </View>
                     <View>
                       <Text style={styles.chatHeaderName}>
-                        {selectedClient?.name || 'Client'}
+                        {selectedClient?.nom || 'Client'
                       </Text>
                       <Text style={styles.chatHeaderStatus}>En ligne</Text>
                     </View>
