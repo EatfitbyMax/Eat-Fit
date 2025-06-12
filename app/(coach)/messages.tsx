@@ -249,24 +249,352 @@ export default function MessagesScreen() {
                 />
 
                 {/* Input de message */}
-                <View style={styles.messageInputContainer}>
-                  <TextInput
-                    style={styles.messageInput}
-                    placeholder="Tapez votre message..."
-                    placeholderTextColor="#8B949E"
-                    value={messageText}
-                    onChangeText={setMessageText}
-                    multiline
-                    maxLength={500}
-                  />
-                  <TouchableOpacity 
-                    style={[styles.sendButton, !messageText.trim() && styles.sendButtonDisabled]}
-                    onPress={sendMessage}
-                    disabled={!messageText.trim()}
-                  >
-                    <Text style={styles.sendButtonText}>➤</Text>
-                  </TouchableOpacity>
-                </View>
+                
+              </>
+            )}
+          </View>
+        ) : (
+          <View style={styles.announcesContainer}>
+            <Text style={styles.announcesTitle}>Annonces groupées</Text>
+            <Text style={styles.announcesSubtitle}>
+              Fonctionnalité à venir - Envoyez des messages à tous vos clients
+            </Text>
+          </View>
+        )}
+
+        {/* Input de message - placé en dehors pour éviter qu'il soit coupé */}
+        {!showClientList && selectedTab === 'direct' && (
+          <View style={styles.messageInputContainer}>
+            <TextInput
+              style={styles.messageInput}
+              placeholder="Tapez votre message..."
+              placeholderTextColor="#8B949E"
+              value={messageText}
+              onChangeText={setMessageText}
+              multiline
+              maxLength={500}
+            />
+            <TouchableOpacity 
+              style={[styles.sendButton, !messageText.trim() && styles.sendButtonDisabled]}
+              onPress={sendMessage}
+              disabled={!messageText.trim()}
+            >
+              <Text style={styles.sendButtonText}>➤</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#0D1117',
+  },
+  header: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 12,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    lineHeight: 28,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    backgroundColor: '#21262D',
+    alignItems: 'center',
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    marginHorizontal: 1,
+  },
+  activeTab: {
+    backgroundColor: '#161B22',
+    borderBottomWidth: 2,
+    borderBottomColor: '#F5A623',
+  },
+  tabText: {
+    fontSize: 13,
+    color: '#8B949E',
+    fontWeight: '500',
+  },
+  activeTabText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  messagesContainer: {
+    flex: 1,
+    marginHorizontal: 16,
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  sectionHeader: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#21262D',
+  },
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  sectionSubtitle: {
+    fontSize: 13,
+    color: '#8B949E',
+    lineHeight: 18,
+  },
+  clientsList: {
+    flex: 1,
+  },
+  clientsListContent: {
+    padding: 16,
+    paddingBottom: 32,
+  },
+  clientCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#21262D',
+    borderRadius: 12,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+    elevation: 3,
+  },
+  clientAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#F5A623',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  clientAvatarText: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#000000',
+  },
+  clientInfo: {
+    flex: 1,
+  },
+  clientName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 3,
+  },
+  clientEmail: {
+    fontSize: 13,
+    color: '#8B949E',
+    marginBottom: 3,
+  },
+  lastMessage: {
+    fontSize: 11,
+    color: '#8B949E',
+    fontStyle: 'italic',
+  },
+  clientArrow: {
+    marginLeft: 8,
+  },
+  arrowText: {
+    fontSize: 18,
+    color: '#F5A623',
+    fontWeight: 'bold',
+  },
+  chatHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#1C2128',
+    borderBottomWidth: 1,
+    borderBottomColor: '#21262D',
+    minHeight: 60,
+  },
+  backButton: {
+    marginRight: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+  },
+  backButtonText: {
+    fontSize: 15,
+    color: '#F5A623',
+    fontWeight: '600',
+  },
+  chatHeaderClient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  chatHeaderAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F5A623',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  chatHeaderAvatarText: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#000000',
+  },
+  chatHeaderName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 1,
+  },
+  chatHeaderStatus: {
+    fontSize: 11,
+    color: '#00D26A',
+  },
+  messagesList: {
+    flex: 1,
+  },
+  messagesListContent: {
+    padding: 16,
+    flexGrow: 1,
+    paddingBottom: 16,
+  },
+  messageContainer: {
+    marginBottom: 10,
+    maxWidth: '85%',
+  },
+  messageFromCoach: {
+    alignSelf: 'flex-end',
+  },
+  messageFromClient: {
+    alignSelf: 'flex-start',
+  },
+  messageText: {
+    padding: 12,
+    borderRadius: 16,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  messageTextCoach: {
+    backgroundColor: '#F5A623',
+    color: '#000000',
+    borderBottomRightRadius: 4,
+  },
+  messageTextClient: {
+    backgroundColor: '#21262D',
+    color: '#FFFFFF',
+    borderBottomLeftRadius: 4,
+  },
+  messageTime: {
+    fontSize: 10,
+    color: '#8B949E',
+    marginTop: 3,
+    textAlign: 'right',
+  },
+  emptyMessages: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+  emptyMessagesText: {
+    fontSize: 16,
+    color: '#8B949E',
+    textAlign: 'center',
+    marginBottom: 8,
+    fontWeight: '500',
+  },
+  emptyMessagesSubtext: {
+    fontSize: 13,
+    color: '#8B949E',
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  messageInputContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#1C2128',
+    borderTopWidth: 1,
+    borderTopColor: '#21262D',
+    alignItems: 'flex-end',
+    minHeight: 60,
+  },
+  messageInput: {
+    flex: 1,
+    backgroundColor: '#0D1117',
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    color: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#21262D',
+    maxHeight: 80,
+    marginRight: 10,
+    fontSize: 14,
+    lineHeight: 18,
+  },
+  sendButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F5A623',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 2,
+  },
+  sendButtonDisabled: {
+    backgroundColor: '#21262D',
+  },
+  sendButtonText: {
+    fontSize: 16,
+    color: '#000000',
+    fontWeight: 'bold',
+  },
+  announcesContainer: {
+    flex: 1,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  announcesTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  announcesSubtitle: {
+    fontSize: 13,
+    color: '#8B949E',
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+});
               </>
             )}
           </View>
