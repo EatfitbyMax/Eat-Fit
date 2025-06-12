@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
   messagesContainer: {
     flex: 1,
     marginHorizontal: 16,
-    marginBottom: 16,
+    marginBottom: 8,
     backgroundColor: '#161B22',
     borderRadius: 16,
     overflow: 'hidden',
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
   messagesListContent: {
     padding: 16,
     flexGrow: 1,
-    paddingBottom: 32,
+    paddingBottom: 16,
   },
   messageContainer: {
     marginBottom: 10,
@@ -530,11 +530,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 16,
     paddingVertical: 12,
+    paddingBottom: 16,
     backgroundColor: '#1C2128',
     borderTopWidth: 1,
     borderTopColor: '#21262D',
     alignItems: 'flex-end',
-    minHeight: 56,
+    minHeight: 60,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    borderRadius: 16,
   },
   messageInput: {
     flex: 1,
