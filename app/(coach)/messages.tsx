@@ -16,7 +16,7 @@ import { getClients, getMessages, saveMessages } from '../../utils/storage';
 
 interface Client {
   id: string;
-  nom?: string;
+  name?: string;
   email: string;
   avatar?: string;
 }
@@ -76,9 +76,9 @@ export default function MessagesScreen() {
     }
   };
 
-  const getInitials = (nom: string) => {
-    if (!nom) return 'XX';
-    return nom.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  const getInitials = (name?: string) => {
+    if (!name) return 'XX';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
   const selectedClient = clients.find(c => c.id === selectedClientId);
@@ -117,10 +117,10 @@ export default function MessagesScreen() {
       onPress={() => selectClient(item.id)}
     >
       <View style={styles.clientAvatar}>
-        <Text style={styles.clientAvatarText}>{getInitials(item.nom)}</Text>
+        <Text style={styles.clientAvatarText}>{getInitials(item.name)}</Text>
       </View>
       <View style={styles.clientInfo}>
-        <Text style={styles.clientName}>{item.nom || 'Client sans nom'}</Text>
+        <Text style={styles.clientName}>{item.name || 'Client sans nom'}</Text>
         <Text style={styles.clientEmail}>{item.email}</Text>
         <Text style={styles.lastMessage}>Appuyez pour démarrer la conversation</Text>
       </View>
@@ -211,12 +211,12 @@ export default function MessagesScreen() {
                   <View style={styles.chatHeaderClient}>
                     <View style={styles.chatHeaderAvatar}>
                       <Text style={styles.chatHeaderAvatarText}>
-                        {selectedClient ? getInitials(selectedClient.nom) : ''}
+                        {selectedClient ? getInitials(selectedClient.name) : ''}
                       </Text>
                     </View>
                     <View>
                       <Text style={styles.chatHeaderName}>
-                        {selectedClient?.nom || 'Client'}
+                        {selectedClient?.name || 'Client'}
                       </Text>
                       <Text style={styles.chatHeaderStatus}>En ligne</Text>
                     </View>
