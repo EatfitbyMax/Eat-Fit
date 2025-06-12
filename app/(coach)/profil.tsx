@@ -76,12 +76,7 @@ export default function ProfilScreen() {
               <Text style={styles.email}>{coachInfo.email}</Text>
               <Text style={styles.specialite}>{coachInfo.specialite}</Text>
             </View>
-            <TouchableOpacity 
-              style={styles.editButton}
-              onPress={() => setIsEditing(!isEditing)}
-            >
-              <Text style={styles.editButtonText}>✏️</Text>
-            </TouchableOpacity>
+            
           </View>
 
           {isEditing && (
@@ -162,14 +157,15 @@ export default function ProfilScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>📋 Informations personnelles</Text>
           
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => setIsEditing(!isEditing)}
+          >
             <Text style={styles.menuItemText}>Informations personnelles</Text>
-            <Text style={styles.menuItemArrow}>›</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuItemText}>Mes objectifs</Text>
-            <Text style={styles.menuItemArrow}>›</Text>
+            <View style={styles.menuItemRight}>
+              <Text style={styles.editIcon}>✏️</Text>
+              <Text style={styles.menuItemArrow}>›</Text>
+            </View>
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.menuItem}>
@@ -178,39 +174,7 @@ export default function ProfilScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Intégrations */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Intégrations</Text>
-          
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuItemText}>Strava</Text>
-            <Text style={styles.menuItemArrow}>›</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuItemText}>Apple Health</Text>
-            <Text style={styles.menuItemArrow}>›</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Connexion Strava */}
-        <View style={styles.integrationCard}>
-          <Text style={styles.integrationTitle}>🔗 Connexion Strava</Text>
-          <Text style={styles.integrationSubtitle}>
-            Connectez votre compte Strava avec EatFitByMax
-          </Text>
-          <Text style={styles.integrationDescription}>
-            Connectez votre compte Strava pour importer automatiquement vos activités et synchronisez vos entraînements avec EatFitByMax.
-          </Text>
-          
-          <TouchableOpacity style={styles.connectButton}>
-            <Text style={styles.connectButtonText}>🔗 Se connecter avec Strava</Text>
-          </TouchableOpacity>
-          
-          <Text style={styles.integrationNote}>
-            Problème de connexion ? Envoyez un code support/événement
-          </Text>
-        </View>
+        
 
         {/* Paramètres */}
         <View style={styles.section}>
@@ -301,19 +265,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginTop: 2,
   },
-  editButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#161B22',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#21262D',
-  },
-  editButtonText: {
-    fontSize: 16,
-  },
+  
   editSection: {
     marginTop: 20,
     backgroundColor: '#0D1117',
@@ -410,50 +362,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#8B949E',
   },
-  integrationCard: {
-    margin: 20,
-    marginTop: 0,
-    backgroundColor: '#161B22',
-    borderRadius: 12,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#21262D',
-  },
-  integrationTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 8,
-  },
-  integrationSubtitle: {
-    fontSize: 14,
-    color: '#8B949E',
-    marginBottom: 12,
-  },
-  integrationDescription: {
-    fontSize: 12,
-    color: '#8B949E',
-    lineHeight: 18,
-    marginBottom: 20,
-  },
-  connectButton: {
-    backgroundColor: '#F5A623',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+  menuItemRight: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
   },
-  connectButtonText: {
-    color: '#000000',
-    fontSize: 14,
-    fontWeight: '600',
+  editIcon: {
+    fontSize: 16,
+    marginRight: 8,
   },
-  integrationNote: {
-    fontSize: 10,
-    color: '#6A737D',
-    textAlign: 'center',
-  },
+  
   logoutButton: {
     margin: 20,
     marginTop: 0,
