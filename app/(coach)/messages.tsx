@@ -16,7 +16,7 @@ import { getClients, getMessages, saveMessages } from '../../utils/storage';
 
 interface Client {
   id: string;
-  nom: string;
+  nom?: string;
   email: string;
   avatar?: string;
 }
@@ -77,6 +77,7 @@ export default function MessagesScreen() {
   };
 
   const getInitials = (nom: string) => {
+    if (!nom) return 'XX';
     return nom.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
@@ -119,7 +120,7 @@ export default function MessagesScreen() {
         <Text style={styles.clientAvatarText}>{getInitials(item.nom)}</Text>
       </View>
       <View style={styles.clientInfo}>
-        <Text style={styles.clientName}>{item.nom}</Text>
+        <Text style={styles.clientName}>{item.nom || 'Client sans nom'}</Text>
         <Text style={styles.clientEmail}>{item.email}</Text>
         <Text style={styles.lastMessage}>Appuyez pour démarrer la conversation</Text>
       </View>
