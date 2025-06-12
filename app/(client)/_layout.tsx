@@ -68,7 +68,10 @@ export default function ClientLayout() {
       <Tabs.Screen
         name="coach"
         options={{
-          href: null, // Cache cet onglet car c'est juste une page de redirection
+          title: 'Messages',
+          tabBarIcon: ({ color, focused }) => (
+            <IconSymbol size={28} name={focused ? 'message.fill' : 'message'} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
