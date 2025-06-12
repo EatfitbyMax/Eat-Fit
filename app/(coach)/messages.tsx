@@ -60,7 +60,12 @@ export default function MessagesScreen() {
     
     try {
       const messagesData = await getMessages(selectedClientId);
-      setMessages(messagesData);
+      // Convertir les timestamps en objets Date
+      const messagesWithDates = messagesData.map(message => ({
+        ...message,
+        timestamp: new Date(message.timestamp)
+      }));
+      setMessages(messagesWithDates);
     } catch (error) {
       console.error('Erreur chargement messages:', error);
     }
@@ -142,7 +147,7 @@ export default function MessagesScreen() {
         {item.text}
       </Text>
       <Text style={styles.messageTime}>
-        {item.timestamp.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+        {new Date(item.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
       </Text>
     </View>
   );
