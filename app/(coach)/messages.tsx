@@ -12,7 +12,7 @@ import {
   Platform,
   Alert
 } from 'react-native';
-import { getClients } from '../../utils/storage';
+import { getClients, getMessages, saveMessages } from '../../utils/storage';
 
 interface Client {
   id: string;
@@ -40,12 +40,39 @@ export default function MessagesScreen() {
     loadClients();
   }, []);
 
+  useEffect(() => {
+    if (selectedClientId) {
+      loadMessages();
+    }
+  }, [selectedClientId]);
+
   const loadClients = async () => {
     try {
       const clientsData = await getClients();
       setClients(clientsData);
     } catch (error) {
       console.error('Erreur chargement clients:', error);
+    }
+  };
+
+  const loadMessages = async () => {
+    if (!selectedClientId) return;
+    
+    try {
+      const messagesData = await getMessages(selectedClientId);
+      setMessages(messagesData);
+    } catch (error) {
+      console.error('Erreur chargement messages:', error);
+    }
+  };
+
+  const saveMessagesToServer = async (newMessages: Message[]) => {
+    if (!selectedClientId) return;
+    
+    try {
+      await saveMessages(selectedClientId, newMessages);
+    } catch (error) {
+      console.error('Erreur sauvegarde messages:', error);
     }
   };
 
@@ -58,6 +85,7 @@ export default function MessagesScreen() {
   const selectClient = (clientId: string) => {
     setSelectedClientId(clientId);
     setShowClientList(false);
+    setMessages([]); // Réinitialiser les messages
   };
 
   const backToClientList = () => {
@@ -65,7 +93,7 @@ export default function MessagesScreen() {
     setSelectedClientId(null);
   };
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (messageText.trim() && selectedClientId) {
       const newMessage: Message = {
         id: Date.now().toString(),
@@ -73,8 +101,12 @@ export default function MessagesScreen() {
         sender: 'coach',
         timestamp: new Date()
       };
-      setMessages(prev => [...prev, newMessage]);
+      const updatedMessages = [...messages, newMessage];
+      setMessages(updatedMessages);
       setMessageText('');
+      
+      // Sauvegarder sur le serveur
+      await saveMessagesToServer(updatedMessages);
     }
   };
 

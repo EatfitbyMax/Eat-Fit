@@ -296,3 +296,45 @@ export const saveProgramme = async (programme: any) => {
 
   await PersistentStorage.saveProgrammes(programmes);
 };
+
+// Adding missing getClients function here
+export const getClients = async (): Promise<any[]> => {
+  const users = await PersistentStorage.getUsers();
+  return users.filter(user => user.userType === 'client');
+};
+
+// Adding message management functions here
+export const getMessages = async (userId: string): Promise<any[]> => {
+  try {
+    const response = await fetch(`${SERVER_URL}/api/messages/${userId}`);
+    if (!response.ok) {
+      throw new Error(`Erreur HTTP: ${response.status}`);
+    }
+    const messages = await response.json();
+    return messages || [];
+  } catch (error) {
+    console.error('Erreur lors de la récupération des messages:', error);
+    return [];
+  }
+};
+
+export const saveMessages = async (userId: string, messages: any[]): Promise<boolean> => {
+  try {
+    const response = await fetch(`${SERVER_URL}/api/messages/${userId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(messages),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Erreur HTTP: ${response.status}`);
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Erreur lors de la sauvegarde des messages:', error);
+    return false;
+  }
+};
