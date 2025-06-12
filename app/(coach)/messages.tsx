@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
@@ -57,7 +56,7 @@ export default function MessagesScreen() {
 
   const loadMessages = async () => {
     if (!selectedClientId) return;
-    
+
     try {
       const messagesData = await getMessages(selectedClientId);
       // Convertir les timestamps en objets Date
@@ -73,7 +72,7 @@ export default function MessagesScreen() {
 
   const saveMessagesToServer = async (newMessages: Message[]) => {
     if (!selectedClientId) return;
-    
+
     try {
       await saveMessages(selectedClientId, newMessages);
     } catch (error) {
@@ -110,7 +109,7 @@ export default function MessagesScreen() {
       const updatedMessages = [...messages, newMessage];
       setMessages(updatedMessages);
       setMessageText('');
-      
+
       // Sauvegarder sur le serveur
       await saveMessagesToServer(updatedMessages);
     }
@@ -173,7 +172,7 @@ export default function MessagesScreen() {
               Messages directs
             </Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity 
             style={[styles.tab, selectedTab === 'annonces' && styles.activeTab]}
             onPress={() => setSelectedTab('annonces')}
@@ -195,7 +194,7 @@ export default function MessagesScreen() {
                     Sélectionnez un client pour commencer une conversation
                   </Text>
                 </View>
-                
+
                 <FlatList
                   data={clients}
                   renderItem={renderClientItem}
@@ -472,7 +471,7 @@ const styles = StyleSheet.create({
   messagesListContent: {
     padding: 16,
     flexGrow: 1,
-    paddingBottom: 32,
+    paddingBottom: 16,
   },
   messageContainer: {
     marginBottom: 10,
@@ -534,7 +533,10 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#21262D',
     alignItems: 'flex-end',
-    minHeight: 56,
+    minHeight: 60,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 16,
   },
   messageInput: {
     flex: 1,
