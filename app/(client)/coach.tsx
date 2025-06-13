@@ -239,29 +239,29 @@ export default function CoachScreen() {
                 </ScrollView>
               </View>
             )}
+
+            {/* Zone de saisie intégrée */}
+            <View style={styles.integratedMessageInput}>
+              <TextInput
+                style={styles.messageInput}
+                placeholder="Tapez votre message..."
+                placeholderTextColor="#8B949E"
+                value={messageText}
+                onChangeText={setMessageText}
+                multiline
+                maxLength={500}
+                textAlignVertical="top"
+              />
+              <TouchableOpacity 
+                style={[styles.sendButton, !messageText.trim() && styles.sendButtonDisabled]}
+                onPress={sendMessage}
+                disabled={!messageText.trim()}
+              >
+                <Text style={styles.sendButtonText}>➤</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
-
-        {/* Zone de saisie fixe en bas */}
-        <View style={styles.messageInputContainer}>
-          <TextInput
-            style={styles.messageInput}
-            placeholder="Tapez votre message..."
-            placeholderTextColor="#8B949E"
-            value={messageText}
-            onChangeText={setMessageText}
-            multiline
-            maxLength={500}
-            textAlignVertical="top"
-          />
-          <TouchableOpacity 
-            style={[styles.sendButton, !messageText.trim() && styles.sendButtonDisabled]}
-            onPress={sendMessage}
-            disabled={!messageText.trim()}
-          >
-            <Text style={styles.sendButtonText}>➤</Text>
-          </TouchableOpacity>
-        </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </GestureHandlerRootView>
@@ -489,7 +489,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#161B22',
     borderRadius: 16,
     overflow: 'hidden',
-    minHeight: 250,
+    minHeight: 320,
   },
   messagesHeader: {
     padding: 18,
@@ -585,6 +585,14 @@ const styles = StyleSheet.create({
     color: '#8B949E',
     textAlign: 'center',
     lineHeight: 16,
+  },
+  integratedMessageInput: {
+    flexDirection: 'row',
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#21262D',
+    alignItems: 'flex-end',
+    backgroundColor: '#161B22',
   },
   messageInputContainer: {
     flexDirection: 'row',
