@@ -221,24 +221,25 @@ export default function CoachScreen() {
               <Text style={styles.messagesTitle}>💬 Messages avec votre coach</Text>
             </View>
 
-            {messages.length === 0 ? (
-              <View style={styles.emptyMessages}>
-                <Text style={styles.emptyMessagesText}>
-                  Aucun message avec votre coach.
-                </Text>
-                <Text style={styles.emptyMessagesSubtext}>
-                  Envoyez un message pour commencer !
-                </Text>
-              </View>
-            ) : (
-              <View style={styles.messagesList}>
-                 <ScrollView contentContainerStyle={styles.messagesListContent}>
-                  {messages.map((message) => (
-                    <SwipeableMessage key={message.id} message={message} />
-                  ))}
-                </ScrollView>
-              </View>
-            )}
+            <FlatList
+              data={messages}
+              renderItem={renderMessage}
+              keyExtractor={(item) => item.id}
+              style={styles.messagesList}
+              contentContainerStyle={styles.messagesListContent}
+              showsVerticalScrollIndicator={false}
+              inverted={false}
+              ListEmptyComponent={
+                <View style={styles.emptyMessages}>
+                  <Text style={styles.emptyMessagesText}>
+                    Aucun message avec votre coach.
+                  </Text>
+                  <Text style={styles.emptyMessagesSubtext}>
+                    Envoyez un message pour commencer !
+                  </Text>
+                </View>
+              }
+            />
 
             {/* Zone de saisie intégrée */}
             <View style={styles.integratedMessageInput}>
@@ -509,6 +510,7 @@ const styles = StyleSheet.create({
   messagesListContent: {
     paddingVertical: 6,
     paddingBottom: 12,
+    flexGrow: 1,
   },
   messageContainer: {
     marginBottom: 8,
