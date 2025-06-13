@@ -286,22 +286,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
   coachCard: {
-    marginHorizontal: 16,
-    marginBottom: 16,
+    marginHorizontal: 15,
+    marginBottom: 15,
     backgroundColor: '#161B22',
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 15,
+    padding: 15,
     borderWidth: 1,
     borderColor: '#21262D',
   },
   coachHeader: {
     flexDirection: 'row',
-    marginBottom: 20,
+    marginBottom: 15,
     alignItems: 'center',
   },
   coachAvatar: {
