@@ -532,14 +532,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 20,
+    marginBottom: 12,
     textAlign: 'center',
   },
   weekNavigation: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 20,
+    justifyContent: 'center',
+    marginBottom: 10,
     paddingHorizontal: 8,
   },
   weekArrow: {
@@ -554,9 +554,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   arrowText: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#F5A623',
+    color: '#FFFFFF',
   },
   weekContainer: {
     flex: 1,
