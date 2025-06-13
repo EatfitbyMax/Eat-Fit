@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert, Modal, TextInput } from 'react-native';
 import { IntegrationsManager, StravaActivity } from '../../utils/integrations';
@@ -189,7 +188,7 @@ export default function EntrainementScreen() {
         </View>
         <Text style={styles.activityType}>{activity.type}</Text>
       </View>
-      
+
       <View style={styles.activityStats}>
         {activity.distance > 0 && (
           <View style={styles.statItem}>
@@ -223,7 +222,7 @@ export default function EntrainementScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Entraînement</Text>
-          
+
           {/* Navigation par semaines */}
           <View style={styles.weekNavigation}>
             <TouchableOpacity 
@@ -232,11 +231,11 @@ export default function EntrainementScreen() {
             >
               <Text style={styles.arrowText}>‹</Text>
             </TouchableOpacity>
-            
+
             <View style={styles.weekContainer}>
               <Text style={styles.weekRange}>{formatWeekRange()}</Text>
             </View>
-            
+
             <TouchableOpacity 
               style={styles.weekArrow}
               onPress={() => navigateWeek('next')}
@@ -311,7 +310,7 @@ export default function EntrainementScreen() {
                   {stravaActivities.length} activité{stravaActivities.length > 1 ? 's' : ''} synchronisée{stravaActivities.length > 1 ? 's' : ''} depuis Strava
                 </Text>
               </View>
-              
+
               {isLoading ? (
                 <View style={styles.loadingContainer}>
                   <Text style={styles.loadingText}>Chargement...</Text>
@@ -490,7 +489,7 @@ export default function EntrainementScreen() {
                     <Text style={styles.addExerciceButtonText}>+ Ajouter</Text>
                   </TouchableOpacity>
                 </View>
-                
+
                 <View style={styles.emptyExercices}>
                   <Text style={styles.emptyExercicesIcon}>💪</Text>
                   <Text style={styles.emptyExercicesText}>
@@ -555,9 +554,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   arrowText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#F5A623',
   },
   weekContainer: {
     flex: 1,
