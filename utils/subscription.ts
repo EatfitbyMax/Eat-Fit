@@ -7,6 +7,13 @@ export const checkSubscriptionStatus = async (): Promise<boolean> => {
     const currentUser = await getCurrentUser();
     if (!currentUser) return false;
 
+    // Utilisateurs premium par défaut
+    const premiumEmails = ['m.pacullmarquie@gmail.com'];
+    
+    if (premiumEmails.includes(currentUser.email)) {
+      return true;
+    }
+
     // Vérifier le statut d'abonnement depuis le stockage local ou serveur
     const subscriptionStatus = await AsyncStorage.getItem(`subscription_${currentUser.id}`);
     return subscriptionStatus === 'premium';
