@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, TextInput, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { logout } from '@/utils/auth';
+import { PersistentStorage } from '@/utils/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface CoachInfo {
@@ -30,18 +31,68 @@ export default function ProfilScreen() {
 
   const loadCoachInfo = async () => {
     try {
-      const savedInfo = await AsyncStorage.getItem('coachInfo');
-      if (savedInfo) {
-        setCoachInfo(JSON.parse(savedInfo));
+      // D'abord essayer de charger depuis le serveur
+      const users = await PersistentStorage.getUsers();
+      const coach = users.find(user => user.userType === 'coach' && user.email === 'eatfitbymax@gmail.com');
+      
+      if (coach) {
+        const serverCoachInfo = {
+          prenom: coach.firstName || coach.name.split(' ')[0] || 'Maxime',
+          nom: coach.lastName || coach.name.split(' ')[1] || 'Renard',
+          email: coach.email,
+          specialite: coach.specialite || 'Coach Nutrition & Fitness',
+          disponibilites: coach.disponibilites || 'Lun-Ven, 8h-18h'
+        };
+        setCoachInfo(serverCoachInfo);
+        console.log('Données coach chargées depuis le serveur VPS');
+      } else {
+        // Fallback sur le stockage local si pas trouvé sur le serveur
+        const savedInfo = await AsyncStorage.getItem('coachInfo');
+        if (savedInfo) {
+          setCoachInfo(JSON.parse(savedInfo));
+          console.log('Données coach chargées depuis le stockage local');
+        }
       }
     } catch (error) {
       console.error('Erreur chargement infos coach:', error);
+      // En cas d'erreur, essayer le stockage local
+      try {
+        const savedInfo = await AsyncStorage.getItem('coachInfo');
+        if (savedInfo) {
+          setCoachInfo(JSON.parse(savedInfo));
+        }
+      } catch (localError) {
+        console.error('Erreur chargement local:', localError);
+      }
     }
   };
 
   const saveCoachInfo = async () => {
     try {
+      // Sauvegarder localement
       await AsyncStorage.setItem('coachInfo', JSON.stringify(coachInfo));
+      
+      // Sauvegarder sur le serveur VPS
+      const users = await PersistentStorage.getUsers();
+      const coachIndex = users.findIndex(user => user.userType === 'coach' && user.email === 'eatfitbymax@gmail.com');
+      
+      if (coachIndex !== -1) {
+        // Mettre à jour les données du coach
+        users[coachIndex] = {
+          ...users[coachIndex],
+          firstName: coachInfo.prenom,
+          lastName: coachInfo.nom,
+          name: `${coachInfo.prenom} ${coachInfo.nom}`,
+          email: coachInfo.email,
+          specialite: coachInfo.specialite,
+          disponibilites: coachInfo.disponibilites
+        };
+        
+        // Sauvegarder sur le serveur
+        await PersistentStorage.saveUsers(users);
+        console.log('Données coach sauvegardées sur le serveur VPS');
+      }
+      
       setIsEditing(false);
       Alert.alert('Succès', 'Vos informations ont été sauvegardées');
     } catch (error) {
