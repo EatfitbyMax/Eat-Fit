@@ -164,6 +164,23 @@ export default function AccueilScreen() {
             </TouchableOpacity>
           </View>
 
+          {/* Progrès Section */}
+          <View style={styles.progressSection}>
+            <Text style={styles.progressTitle}>📊 Vos Progrès</Text>
+            
+            <View style={styles.progressRow}>
+              <View style={styles.progressCard}>
+                <Text style={styles.progressLabel}>Poids actuel</Text>
+                <Text style={styles.progressValue}>68.5 kg</Text>
+              </View>
+              <View style={styles.progressCard}>
+                <Text style={styles.progressLabel}>Objectif</Text>
+                <Text style={styles.progressValue}>65.0 kg</Text>
+                <Text style={styles.progressSubtext}>- 3.5 kg</Text>
+              </View>
+            </View>
+          </View>
+
           {/* Steps Counter */}
           <TouchableOpacity 
             style={styles.stepsCard}
@@ -362,5 +379,43 @@ const styles = StyleSheet.create({
   sleepLabel: {
     fontSize: 13,
     color: '#888888',
+  },
+  progressSection: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: 16,
+    padding: 18,
+    marginTop: 12,
+  },
+  progressTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 14,
+  },
+  progressRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  progressCard: {
+    flex: 1,
+    backgroundColor: '#2A2A2A',
+    borderRadius: 12,
+    padding: 14,
+    alignItems: 'center',
+  },
+  progressLabel: {
+    fontSize: 12,
+    color: '#888888',
+    marginBottom: 6,
+  },
+  progressValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  progressSubtext: {
+    fontSize: 11,
+    color: '#888888',
+    marginTop: 2,
   },
 });
