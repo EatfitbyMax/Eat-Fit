@@ -132,14 +132,8 @@ export default function CoachScreen() {
           </View>
           
           <View style={styles.coachActions}>
-            <TouchableOpacity style={styles.actionButton}>
-              <Text style={styles.actionButtonText}>📞 Appel vidéo</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
-              <Text style={styles.actionButtonText}>📧 Appel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
-              <Text style={styles.actionButtonText}>📅 Rendez-vous</Text>
+            <TouchableOpacity style={styles.appointmentButton}>
+              <Text style={styles.appointmentButtonText}>📅 Prendre rendez-vous avec le coach</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -263,27 +257,29 @@ const styles = StyleSheet.create({
     color: '#8B949E',
   },
   coachActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 4,
+    marginTop: 16,
   },
-  actionButton: {
-    flex: 1,
-    backgroundColor: '#21262D',
-    paddingVertical: 14,
-    paddingHorizontal: 6,
+  appointmentButton: {
+    backgroundColor: '#F5A623',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
     borderRadius: 12,
-    marginHorizontal: 3,
     alignItems: 'center',
-    minHeight: 50,
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
-  actionButtonText: {
-    fontSize: 11,
-    color: '#FFFFFF',
-    fontWeight: '600',
+  appointmentButtonText: {
+    fontSize: 16,
+    color: '#000000',
+    fontWeight: 'bold',
     textAlign: 'center',
-    lineHeight: 14,
   },
   tabsContainer: {
     flexDirection: 'row',
