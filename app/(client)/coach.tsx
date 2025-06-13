@@ -276,10 +276,11 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   appointmentButtonText: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#000000',
     fontWeight: 'bold',
     textAlign: 'center',
+    numberOfLines: 1,
   },
   tabsContainer: {
     flexDirection: 'row',
