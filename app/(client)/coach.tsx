@@ -110,7 +110,7 @@ export default function CoachScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
+      <View style={styles.content}>
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Coach</Text>
@@ -192,7 +192,7 @@ export default function CoachScreen() {
           </View>
         </KeyboardAvoidingView>
 
-        </ScrollView>
+        </View>
     </SafeAreaView>
   );
 }
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0D1117',
   },
-  scrollView: {
+  content: {
     flex: 1,
   },
   header: {
