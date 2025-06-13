@@ -94,16 +94,28 @@ export default function RootLayout() {
 
     // Navigation après avoir caché le splash
     setTimeout(() => {
-      if (user) {
-        console.log('Redirection utilisateur connecté:', user.userType);
-        if (user.userType === 'coach') {
-          router.replace('/(coach)/programmes');
+      try {
+        if (user) {
+          console.log('Redirection utilisateur connecté:', user.userType);
+          if (user.userType === 'coach') {
+            router.replace('/(coach)/programmes');
+          } else {
+            router.replace('/(client)');
+          }
         } else {
-          router.replace('/(client)');
+          console.log('Aucun utilisateur, redirection vers login');
+          router.replace('/auth/login');
         }
-      } else {
-        console.log('Aucun utilisateur, redirection vers login');
-        router.replace('/auth/login');
+      } catch (error) {
+        console.error('Erreur navigation:', error);
+        // Fallback : essayer une navigation simple
+        setTimeout(() => {
+          if (user) {
+            router.push('/(client)');
+          } else {
+            router.push('/auth/login');
+          }
+        }, 500);
       }
     }, 300);
 

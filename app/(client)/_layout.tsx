@@ -59,17 +59,6 @@ export default function ClientLayout() {
           ),
         }}
       />
-      {hasSubscription && (
-        <Tabs.Screen
-          name="coach"
-          options={{
-            title: 'Coach',
-            tabBarIcon: ({ color, focused }) => (
-              <IconSymbol size={28} name={focused ? 'person.badge.plus.fill' : 'person.badge.plus'} color={color} />
-            ),
-          }}
-        />
-      )}
       <Tabs.Screen
         name="profil"
         options={{
@@ -82,6 +71,10 @@ export default function ClientLayout() {
       <Tabs.Screen
         name="coach"
         options={{
+          title: 'Coach',
+          tabBarIcon: ({ color, focused }) => (
+            <IconSymbol size={28} name={focused ? 'person.badge.plus.fill' : 'person.badge.plus'} color={color} />
+          ),
           href: hasSubscription ? undefined : null, // Cache cette page si pas d'abonnement
         }}
       />
