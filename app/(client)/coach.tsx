@@ -182,18 +182,13 @@ export default function CoachScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
         >
-        <ScrollView 
-          style={styles.scrollContainer}
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Header */}
+        <View style={styles.mainContainer}>
+          {/* Header fixe */}
           <View style={styles.header}>
             <Text style={styles.title}>Coach</Text>
           </View>
 
-          {/* Coach Info */}
+          {/* Coach Info fixe */}
           <View style={styles.coachCard}>
             <View style={styles.coachHeader}>
               <View style={styles.coachAvatar}>
@@ -229,6 +224,7 @@ export default function CoachScreen() {
               contentContainerStyle={styles.messagesListContent}
               showsVerticalScrollIndicator={false}
               inverted={false}
+              keyboardShouldPersistTaps="handled"
               ListEmptyComponent={
                 <View style={styles.emptyMessages}>
                   <Text style={styles.emptyMessagesText}>
@@ -262,7 +258,7 @@ export default function CoachScreen() {
               </TouchableOpacity>
             </View>
           </View>
-        </ScrollView>
+        </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </GestureHandlerRootView>
@@ -274,11 +270,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0D1117',
   },
-  scrollContainer: {
+  mainContainer: {
     flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 20,
   },
   header: {
     paddingHorizontal: 16,
@@ -485,12 +478,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   messagesContainer: {
+    flex: 1,
     marginHorizontal: 16,
     marginBottom: 16,
     backgroundColor: '#161B22',
     borderRadius: 16,
     overflow: 'hidden',
-    minHeight: 320,
   },
   messagesHeader: {
     padding: 18,
