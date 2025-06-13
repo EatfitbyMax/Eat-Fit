@@ -110,48 +110,51 @@ export default function CoachScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Coach</Text>
-        </View>
+      <KeyboardAvoidingView 
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      >
+        <ScrollView 
+          style={styles.scrollContainer}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.title}>Coach</Text>
+          </View>
 
-        {/* Coach Info */}
-        <View style={styles.coachCard}>
-          <View style={styles.coachHeader}>
-            <View style={styles.coachAvatar}>
-              <Text style={styles.coachAvatarText}>
-                {coachInfo.prenom[0]?.toUpperCase()}{coachInfo.nom[0]?.toUpperCase()}
-              </Text>
+          {/* Coach Info */}
+          <View style={styles.coachCard}>
+            <View style={styles.coachHeader}>
+              <View style={styles.coachAvatar}>
+                <Text style={styles.coachAvatarText}>
+                  {coachInfo.prenom[0]?.toUpperCase()}{coachInfo.nom[0]?.toUpperCase()}
+                </Text>
+              </View>
+              <View style={styles.coachInfo}>
+                <Text style={styles.coachName}>{coachInfo.prenom} {coachInfo.nom}</Text>
+                <Text style={styles.coachRole}>{coachInfo.specialite}</Text>
+                <Text style={styles.coachLocation}>Disponibilité: {coachInfo.disponibilites}</Text>
+              </View>
             </View>
-            <View style={styles.coachInfo}>
-              <Text style={styles.coachName}>{coachInfo.prenom} {coachInfo.nom}</Text>
-              <Text style={styles.coachRole}>{coachInfo.specialite}</Text>
-              <Text style={styles.coachLocation}>Disponibilité: {coachInfo.disponibilites}</Text>
+            
+            <View style={styles.coachActions}>
+              <TouchableOpacity style={styles.appointmentButton}>
+                <Text style={styles.appointmentButtonText}>📅 Prendre rendez-vous avec le coach</Text>
+              </TouchableOpacity>
             </View>
           </View>
-          
-          <View style={styles.coachActions}>
-            <TouchableOpacity style={styles.appointmentButton}>
-              <Text style={styles.appointmentButtonText}>📅 Prendre rendez-vous avec le coach</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
 
-        {/* Messages Interface */}
-        <View style={styles.messagesContainer}>
-          <View style={styles.messagesHeader}>
-            <Text style={styles.messagesTitle}>💬 Messages avec votre coach</Text>
-          </View>
-          
-          <FlatList
-            data={messages}
-            renderItem={renderMessage}
-            keyExtractor={(item) => item.id}
-            style={styles.messagesList}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.messagesListContent}
-            ListEmptyComponent={
+          {/* Messages Interface */}
+          <View style={styles.messagesContainer}>
+            <View style={styles.messagesHeader}>
+              <Text style={styles.messagesTitle}>💬 Messages avec votre coach</Text>
+            </View>
+            
+            {messages.length === 0 ? (
               <View style={styles.emptyMessages}>
                 <Text style={styles.emptyMessagesText}>
                   Aucun message avec votre coach.
@@ -160,37 +163,50 @@ export default function CoachScreen() {
                   Envoyez un message pour commencer !
                 </Text>
               </View>
-            }
-          />
-        </View>
+            ) : (
+              <View style={styles.messagesListContainer}>
+                {messages.map((message) => (
+                  <View key={message.id} style={[
+                    styles.messageContainer,
+                    message.sender === 'client' ? styles.messageFromClient : styles.messageFromCoach
+                  ]}>
+                    <Text style={[
+                      styles.messageText,
+                      message.sender === 'client' ? styles.messageTextClient : styles.messageTextCoach
+                    ]}>
+                      {message.text}
+                    </Text>
+                    <Text style={styles.messageTime}>
+                      {new Date(message.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        </ScrollView>
 
         {/* Zone de saisie fixe en bas */}
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-        >
-          <View style={styles.messageInputContainer}>
-            <TextInput
-              style={styles.messageInput}
-              placeholder="Tapez votre message..."
-              placeholderTextColor="#8B949E"
-              value={messageText}
-              onChangeText={setMessageText}
-              multiline
-              maxLength={500}
-              textAlignVertical="top"
-            />
-            <TouchableOpacity 
-              style={[styles.sendButton, !messageText.trim() && styles.sendButtonDisabled]}
-              onPress={sendMessage}
-              disabled={!messageText.trim()}
-            >
-              <Text style={styles.sendButtonText}>➤</Text>
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-
+        <View style={styles.messageInputContainer}>
+          <TextInput
+            style={styles.messageInput}
+            placeholder="Tapez votre message..."
+            placeholderTextColor="#8B949E"
+            value={messageText}
+            onChangeText={setMessageText}
+            multiline
+            maxLength={500}
+            textAlignVertical="top"
+          />
+          <TouchableOpacity 
+            style={[styles.sendButton, !messageText.trim() && styles.sendButtonDisabled]}
+            onPress={sendMessage}
+            disabled={!messageText.trim()}
+          >
+            <Text style={styles.sendButtonText}>➤</Text>
+          </TouchableOpacity>
         </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -200,8 +216,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0D1117',
   },
-  content: {
+  scrollContainer: {
     flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 20,
   },
   header: {
     paddingHorizontal: 16,
@@ -408,12 +427,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   messagesContainer: {
-    flex: 1,
     marginHorizontal: 16,
-    marginBottom: 8,
+    marginBottom: 16,
     backgroundColor: '#161B22',
     borderRadius: 16,
     overflow: 'hidden',
+    minHeight: 250,
   },
   messagesHeader: {
     padding: 18,
@@ -425,14 +444,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
-  messagesList: {
-    flex: 1,
-    minHeight: 200,
-  },
-  messagesListContent: {
+  messagesListContainer: {
     padding: 16,
-    flexGrow: 1,
-    paddingBottom: 20,
+    minHeight: 180,
   },
   messageContainer: {
     marginBottom: 14,
@@ -490,12 +504,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    marginHorizontal: 16,
-    marginBottom: 16,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 12,
     backgroundColor: '#161B22',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#21262D',
+    borderTopWidth: 1,
+    borderTopColor: '#21262D',
     alignItems: 'flex-end',
     shadowColor: '#000',
     shadowOffset: {
