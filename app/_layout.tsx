@@ -56,7 +56,7 @@ export default function RootLayout() {
     if (isInitializing) return;
 
     setIsInitializing(true);
-    
+
     // D'abord lancer l'initialisation en arrière-plan
     const initPromise = (async () => {
       try {
