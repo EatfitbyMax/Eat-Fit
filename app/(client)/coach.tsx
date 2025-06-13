@@ -139,10 +139,7 @@ export default function CoachScreen() {
         </View>
 
         {/* Messages Interface */}
-        <KeyboardAvoidingView 
-          style={styles.messagesContainer} 
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
+        <View style={styles.messagesContainer}>
           <View style={styles.messagesHeader}>
             <Text style={styles.messagesTitle}>💬 Messages avec votre coach</Text>
           </View>
@@ -165,7 +162,13 @@ export default function CoachScreen() {
               </View>
             }
           />
+        </View>
 
+        {/* Zone de saisie fixe en bas */}
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        >
           <View style={styles.messageInputContainer}>
             <TextInput
               style={styles.messageInput}
@@ -175,6 +178,7 @@ export default function CoachScreen() {
               onChangeText={setMessageText}
               multiline
               maxLength={500}
+              textAlignVertical="top"
             />
             <TouchableOpacity 
               style={[styles.sendButton, !messageText.trim() && styles.sendButtonDisabled]}
@@ -406,7 +410,7 @@ const styles = StyleSheet.create({
   messagesContainer: {
     flex: 1,
     marginHorizontal: 16,
-    marginBottom: 20,
+    marginBottom: 8,
     backgroundColor: '#161B22',
     borderRadius: 16,
     overflow: 'hidden',
@@ -485,12 +489,22 @@ const styles = StyleSheet.create({
   messageInputContainer: {
     flexDirection: 'row',
     paddingHorizontal: 16,
-    paddingVertical: 14,
-    backgroundColor: '#1C2128',
-    borderTopWidth: 1,
-    borderTopColor: '#21262D',
+    paddingVertical: 12,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#21262D',
     alignItems: 'flex-end',
-    paddingBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 5,
   },
   messageInput: {
     flex: 1,
@@ -501,7 +515,8 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#21262D',
-    maxHeight: 120,
+    maxHeight: 100,
+    minHeight: 44,
     marginRight: 12,
     fontSize: 15,
     lineHeight: 20,
