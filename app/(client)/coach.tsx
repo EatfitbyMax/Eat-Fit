@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, TextInput, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
 import { getMessages, saveMessages } from '../../utils/storage';
@@ -69,7 +68,7 @@ export default function CoachScreen() {
 
   const loadMessages = async () => {
     if (!currentUser?.id) return;
-    
+
     try {
       const messagesData = await getMessages(currentUser.id);
       setMessages(messagesData);
@@ -89,7 +88,7 @@ export default function CoachScreen() {
       const updatedMessages = [...messages, newMessage];
       setMessages(updatedMessages);
       setMessageText('');
-      
+
       // Sauvegarder sur le serveur
       try {
         await saveMessages(currentUser.id, updatedMessages);
@@ -157,7 +156,7 @@ export default function CoachScreen() {
             </View>
           </Animated.View>
         </PanGestureHandler>
-        
+
         <Animated.View style={[
           styles.messageTimeContainer,
           message.sender === 'client' ? styles.messageTimeContainerClient : styles.messageTimeContainerCoach,
@@ -208,7 +207,7 @@ export default function CoachScreen() {
                 <Text style={styles.coachLocation}>Disponibilité: {coachInfo.disponibilites}</Text>
               </View>
             </View>
-            
+
             <View style={styles.coachActions}>
               <TouchableOpacity style={styles.appointmentButton}>
                 <Text style={styles.appointmentButtonText}>📅 Prendre rendez-vous avec le coach</Text>
@@ -221,7 +220,7 @@ export default function CoachScreen() {
             <View style={styles.messagesHeader}>
               <Text style={styles.messagesTitle}>💬 Messages avec votre coach</Text>
             </View>
-            
+
             {messages.length === 0 ? (
               <View style={styles.emptyMessages}>
                 <Text style={styles.emptyMessagesText}>
@@ -232,10 +231,12 @@ export default function CoachScreen() {
                 </Text>
               </View>
             ) : (
-              <View style={styles.messagesListContainer}>
-                {messages.map((message) => (
-                  <SwipeableMessage key={message.id} message={message} />
-                ))}
+              <View style={styles.messagesList}>
+                 <ScrollView contentContainerStyle={styles.messagesListContent}>
+                  {messages.map((message) => (
+                    <SwipeableMessage key={message.id} message={message} />
+                  ))}
+                </ScrollView>
               </View>
             )}
           </View>
@@ -496,13 +497,18 @@ const styles = StyleSheet.create({
     borderBottomColor: '#21262D',
   },
   messagesTitle: {
-    fontSize: 19,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    marginBottom: 2,
   },
-  messagesListContainer: {
-    padding: 16,
-    minHeight: 180,
+  messagesList: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  messagesListContent: {
+    paddingVertical: 8,
+    paddingBottom: 16,
   },
   messageContainer: {
     marginBottom: 14,
@@ -526,10 +532,10 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   messageText: {
-    padding: 14,
-    borderRadius: 18,
-    fontSize: 15,
-    lineHeight: 22,
+    padding: 10,
+    borderRadius: 16,
+    fontSize: 13,
+    lineHeight: 18,
   },
   messageTextClient: {
     backgroundColor: '#F5A623',
@@ -568,17 +574,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   emptyMessagesText: {
-    fontSize: 17,
+    fontSize: 14,
     color: '#8B949E',
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
     fontWeight: '500',
   },
   emptyMessagesSubtext: {
-    fontSize: 15,
+    fontSize: 12,
     color: '#8B949E',
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 16,
   },
   messageInputContainer: {
     flexDirection: 'row',
