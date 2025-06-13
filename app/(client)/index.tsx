@@ -197,6 +197,64 @@ export default function AccueilScreen() {
             <Text style={styles.sleepDuration}>0h 0min / 8h 0min</Text>
             <Text style={styles.sleepLabel}>Durée du sommeil</Text>
           </TouchableOpacity>
+
+          {/* Section Progrès */}
+          <View style={styles.progressSection}>
+            <View style={styles.progressHeader}>
+              <Text style={styles.progressSectionTitle}>📈 Vos progrès</Text>
+              <TouchableOpacity onPress={() => router.push('/(client)/progres')}>
+                <Text style={styles.viewAllText}>Voir tout</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Weight Stats Row */}
+            <View style={styles.progressRow}>
+              <View style={styles.progressStatCard}>
+                <Text style={styles.progressStatLabel}>Poids actuel</Text>
+                <Text style={styles.progressStatValue}>68.5 kg</Text>
+              </View>
+              <View style={styles.progressStatCard}>
+                <Text style={styles.progressStatLabel}>Objectif</Text>
+                <Text style={styles.progressStatValue}>65.0 kg</Text>
+                <Text style={styles.progressStatSubtext}>- 3.5 kg</Text>
+              </View>
+            </View>
+
+            {/* Mini Chart */}
+            <TouchableOpacity 
+              style={styles.miniChartCard}
+              onPress={() => router.push('/(client)/progres')}
+            >
+              <View style={styles.miniChartHeader}>
+                <Text style={styles.miniChartTitle}>Évolution du poids</Text>
+                <Text style={styles.miniChartPeriod}>30 derniers jours</Text>
+              </View>
+              
+              <View style={styles.miniChartContainer}>
+                <View style={styles.miniChart}>
+                  <View style={styles.chartLine} />
+                  <View style={styles.chartDots}>
+                    <View style={[styles.chartDot, { left: '10%', top: '60%' }]} />
+                    <View style={[styles.chartDot, { left: '30%', top: '45%' }]} />
+                    <View style={[styles.chartDot, { left: '50%', top: '40%' }]} />
+                    <View style={[styles.chartDot, { left: '70%', top: '30%' }]} />
+                    <View style={[styles.chartDot, { left: '90%', top: '20%' }]} />
+                  </View>
+                </View>
+                
+                <View style={styles.miniChartStats}>
+                  <View style={styles.miniStatItem}>
+                    <Text style={styles.miniStatValue}>-4.3 kg</Text>
+                    <Text style={styles.miniStatLabel}>Ce mois</Text>
+                  </View>
+                  <View style={styles.miniStatItem}>
+                    <Text style={styles.miniStatValue}>📉 -2.1%</Text>
+                    <Text style={styles.miniStatLabel}>Tendance</Text>
+                  </View>
+                </View>
+              </View>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -361,6 +419,122 @@ const styles = StyleSheet.create({
   },
   sleepLabel: {
     fontSize: 13,
+    color: '#888888',
+  },
+  // Styles pour la section progrès
+  progressSection: {
+    marginTop: 16,
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  progressSectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  viewAllText: {
+    fontSize: 14,
+    color: '#007AFF',
+    fontWeight: '500',
+  },
+  progressRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 12,
+  },
+  progressStatCard: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: 12,
+    padding: 14,
+    flex: 1,
+    alignItems: 'center',
+  },
+  progressStatLabel: {
+    fontSize: 12,
+    color: '#888888',
+    marginBottom: 6,
+  },
+  progressStatValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  progressStatSubtext: {
+    fontSize: 11,
+    color: '#888888',
+    marginTop: 2,
+  },
+  miniChartCard: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: 16,
+    padding: 16,
+  },
+  miniChartHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  miniChartTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  miniChartPeriod: {
+    fontSize: 12,
+    color: '#888888',
+  },
+  miniChartContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  miniChart: {
+    flex: 1,
+    height: 60,
+    position: 'relative',
+    marginRight: 16,
+  },
+  chartLine: {
+    position: 'absolute',
+    top: 20,
+    left: '10%',
+    right: '10%',
+    height: 2,
+    backgroundColor: '#007AFF',
+    borderRadius: 1,
+  },
+  chartDots: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  chartDot: {
+    position: 'absolute',
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#007AFF',
+  },
+  miniChartStats: {
+    alignItems: 'flex-end',
+  },
+  miniStatItem: {
+    alignItems: 'flex-end',
+    marginBottom: 8,
+  },
+  miniStatValue: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  miniStatLabel: {
+    fontSize: 11,
     color: '#888888',
   },
 });

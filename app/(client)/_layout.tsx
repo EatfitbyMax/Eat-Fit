@@ -47,15 +47,7 @@ export default function ClientLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="progres"
-        options={{
-          title: 'Progrès',
-          tabBarIcon: ({ color, focused }) => (
-            <IconSymbol size={28} name={focused ? 'chart.bar.fill' : 'chart.bar'} color={color} />
-          ),
-        }}
-      />
+      
       <Tabs.Screen
         name="coach"
         options={{
