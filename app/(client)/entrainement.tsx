@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert, Modal, TextInput } from 'react-native';
 import { IntegrationsManager, StravaActivity } from '../../utils/integrations';
 import { getCurrentUser } from '../../utils/auth';
+import { checkSubscriptionStatus } from '../../utils/subscription';
 
 export default function EntrainementScreen() {
   const [selectedTab, setSelectedTab] = useState('Journal');
@@ -28,7 +29,7 @@ export default function EntrainementScreen() {
 
   useEffect(() => {
     loadStravaActivities();
-    checkSubscriptionStatus();
+    checkUserSubscription();
   }, []);
 
   const loadStravaActivities = async () => {
@@ -46,12 +47,10 @@ export default function EntrainementScreen() {
     }
   };
 
-  const checkSubscriptionStatus = async () => {
+  const checkUserSubscription = async () => {
     try {
-      const currentUser = await getCurrentUser();
-      if (currentUser) {
-        setHasSubscription(false);
-      }
+      const subscriptionStatus = await checkSubscriptionStatus();
+      setHasSubscription(subscriptionStatus);
     } catch (error) {
       console.error('Erreur vérification abonnement:', error);
     }
