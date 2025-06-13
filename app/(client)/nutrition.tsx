@@ -519,7 +519,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   arrowText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
@@ -529,7 +529,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
   },
   date: {
-    fontSize: width < 375 ? 14 : 16,
+    fontSize: width < 375 ? 12 : 14,
     fontWeight: '600',
     color: '#FFFFFF',
     textAlign: 'center',
@@ -576,7 +576,7 @@ const styles = StyleSheet.create({
     borderRadius: width < 375 ? 45 : 50,
     borderWidth: 6,
     borderColor: 'transparent',
-    borderTopColor: '#1F6FEB',
+    borderTopColor: '#F5A623',
   },
   circularGaugeInner: {
     alignItems: 'center',
@@ -657,8 +657,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   activeTab: {
-    backgroundColor: '#1F6FEB',
-    borderColor: '#1F6FEB',
+    backgroundColor: '#F5A623',
+    borderColor: '#F5A623',
   },
   tabContent: {
     flexDirection: 'row',
@@ -789,7 +789,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   subscribeButton: {
-    backgroundColor: '#1F6FEB',
+    backgroundColor: '#F5A623',
     paddingVertical: width < 375 ? 12 : 14,
     borderRadius: 8,
     alignItems: 'center',
