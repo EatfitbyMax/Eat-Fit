@@ -4,6 +4,14 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Tex
 import { getMessages, saveMessages } from '../../utils/storage';
 import { getCurrentUser } from '../../utils/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { PanGestureHandler, GestureHandlerRootView } from 'react-native-gesture-handler';
+import Animated, {
+  useAnimatedGestureHandler,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  runOnJS,
+} from 'react-native-reanimated';
 
 interface Message {
   id: string;
@@ -91,30 +99,90 @@ export default function CoachScreen() {
     }
   };
 
-  const renderMessage = ({ item }: { item: Message }) => (
-    <View style={[
-      styles.messageContainer,
-      item.sender === 'client' ? styles.messageFromClient : styles.messageFromCoach
-    ]}>
-      <Text style={[
-        styles.messageText,
-        item.sender === 'client' ? styles.messageTextClient : styles.messageTextCoach
+  const SwipeableMessage = ({ message }: { message: Message }) => {
+    const translateX = useSharedValue(0);
+    const timeOpacity = useSharedValue(0);
+
+    const gestureHandler = useAnimatedGestureHandler({
+      onStart: (_, context) => {
+        context.startX = translateX.value;
+      },
+      onActive: (event, context) => {
+        const newTranslateX = context.startX + event.translationX;
+        if (message.sender === 'client') {
+          // Pour les messages du client (à droite), on glisse vers la gauche
+          translateX.value = Math.min(0, Math.max(-80, newTranslateX));
+          timeOpacity.value = Math.abs(translateX.value) / 80;
+        } else {
+          // Pour les messages du coach (à gauche), on glisse vers la droite
+          translateX.value = Math.max(0, Math.min(80, newTranslateX));
+          timeOpacity.value = translateX.value / 80;
+        }
+      },
+      onEnd: () => {
+        translateX.value = withSpring(0);
+        timeOpacity.value = withSpring(0);
+      },
+    });
+
+    const animatedStyle = useAnimatedStyle(() => {
+      return {
+        transform: [{ translateX: translateX.value }],
+      };
+    });
+
+    const timeStyle = useAnimatedStyle(() => {
+      return {
+        opacity: timeOpacity.value,
+      };
+    });
+
+    return (
+      <View style={[
+        styles.messageContainer,
+        message.sender === 'client' ? styles.messageFromClient : styles.messageFromCoach
       ]}>
-        {item.text}
-      </Text>
-      <Text style={styles.messageTime}>
-        {new Date(item.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-      </Text>
-    </View>
+        <PanGestureHandler onGestureEvent={gestureHandler}>
+          <Animated.View style={animatedStyle}>
+            <View style={[
+              styles.messageWrapper,
+              message.sender === 'client' ? styles.messageWrapperClient : styles.messageWrapperCoach
+            ]}>
+              <Text style={[
+                styles.messageText,
+                message.sender === 'client' ? styles.messageTextClient : styles.messageTextCoach
+              ]}>
+                {message.text}
+              </Text>
+            </View>
+          </Animated.View>
+        </PanGestureHandler>
+        
+        <Animated.View style={[
+          styles.messageTimeContainer,
+          message.sender === 'client' ? styles.messageTimeContainerClient : styles.messageTimeContainerCoach,
+          timeStyle
+        ]}>
+          <Text style={styles.messageTimeSwipe}>
+            {new Date(message.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+          </Text>
+        </Animated.View>
+      </View>
+    );
+  };
+
+  const renderMessage = ({ item }: { item: Message }) => (
+    <SwipeableMessage message={item} />
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-      >
+    <GestureHandlerRootView style={styles.container}>
+      <SafeAreaView style={styles.container}>
+        <KeyboardAvoidingView 
+          style={styles.container}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        >
         <ScrollView 
           style={styles.scrollContainer}
           contentContainerStyle={styles.scrollContent}
@@ -166,20 +234,7 @@ export default function CoachScreen() {
             ) : (
               <View style={styles.messagesListContainer}>
                 {messages.map((message) => (
-                  <View key={message.id} style={[
-                    styles.messageContainer,
-                    message.sender === 'client' ? styles.messageFromClient : styles.messageFromCoach
-                  ]}>
-                    <Text style={[
-                      styles.messageText,
-                      message.sender === 'client' ? styles.messageTextClient : styles.messageTextCoach
-                    ]}>
-                      {message.text}
-                    </Text>
-                    <Text style={styles.messageTime}>
-                      {new Date(message.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                    </Text>
-                  </View>
+                  <SwipeableMessage key={message.id} message={message} />
                 ))}
               </View>
             )}
@@ -206,8 +261,9 @@ export default function CoachScreen() {
             <Text style={styles.sendButtonText}>➤</Text>
           </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </GestureHandlerRootView>
   );
 }
 
@@ -451,11 +507,22 @@ const styles = StyleSheet.create({
   messageContainer: {
     marginBottom: 14,
     maxWidth: '85%',
+    position: 'relative',
   },
   messageFromClient: {
     alignSelf: 'flex-end',
   },
   messageFromCoach: {
+    alignSelf: 'flex-start',
+  },
+  messageWrapper: {
+    position: 'relative',
+    zIndex: 2,
+  },
+  messageWrapperClient: {
+    alignSelf: 'flex-end',
+  },
+  messageWrapperCoach: {
     alignSelf: 'flex-start',
   },
   messageText: {
@@ -474,11 +541,24 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     borderBottomLeftRadius: 6,
   },
-  messageTime: {
+  messageTimeContainer: {
+    position: 'absolute',
+    top: '50%',
+    transform: [{ translateY: -10 }],
+    zIndex: 1,
+  },
+  messageTimeContainerClient: {
+    right: '100%',
+    marginRight: 8,
+  },
+  messageTimeContainerCoach: {
+    left: '100%',
+    marginLeft: 8,
+  },
+  messageTimeSwipe: {
     fontSize: 11,
     color: '#8B949E',
-    marginTop: 6,
-    textAlign: 'right',
+    fontWeight: '500',
   },
   emptyMessages: {
     flex: 1,
