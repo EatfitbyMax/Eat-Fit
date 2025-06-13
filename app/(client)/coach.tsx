@@ -507,11 +507,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   messagesListContent: {
-    paddingVertical: 8,
-    paddingBottom: 16,
+    paddingVertical: 6,
+    paddingBottom: 12,
   },
   messageContainer: {
-    marginBottom: 14,
+    marginBottom: 8,
     maxWidth: '85%',
     position: 'relative',
   },
