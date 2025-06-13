@@ -73,7 +73,7 @@ export default function ClientLayout() {
         options={{
           title: 'Coach',
           tabBarIcon: ({ color, focused }) => (
-            <IconSymbol size={28} name={focused ? 'person.badge.plus.fill' : 'person.badge.plus'} color={color} />
+            <IconSymbol size={28} name={focused ? 'crown.fill' : 'crown'} color={color} />
           ),
           href: hasSubscription ? undefined : null, // Cache cette page si pas d'abonnement
         }}
