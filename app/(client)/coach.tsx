@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, TextInput, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
-import { getMessages, saveMessages } from '../../utils/storage';
+import { getMessages, saveMessages, PersistentStorage } from '../../utils/storage';
 import { getCurrentUser } from '../../utils/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PanGestureHandler, GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -57,9 +57,21 @@ export default function CoachScreen() {
 
   const loadCoachInfo = async () => {
     try {
-      const savedInfo = await AsyncStorage.getItem('coachInfo');
-      if (savedInfo) {
-        setCoachInfo(JSON.parse(savedInfo));
+      // Récupérer les vraies données du coach depuis le serveur
+      const users = await PersistentStorage.getUsers();
+      const coach = users.find(user => user.userType === 'coach' && user.email === 'eatfitbymax@gmail.com');
+      
+      if (coach) {
+        setCoachInfo({
+          prenom: coach.firstName || coach.name.split(' ')[0] || 'Maxime',
+          nom: coach.lastName || coach.name.split(' ')[1] || 'Renard',
+          email: coach.email,
+          specialite: coach.specialite || 'Coach Nutrition & Fitness',
+          disponibilites: coach.disponibilites || 'Lun-Ven, 8h-18h'
+        });
+      } else {
+        // Fallback sur les données par défaut si le coach n'est pas trouvé
+        console.log('Coach non trouvé, utilisation des données par défaut');
       }
     } catch (error) {
       console.error('Erreur chargement infos coach:', error);
