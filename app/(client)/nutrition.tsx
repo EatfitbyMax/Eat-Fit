@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   title: {
-    fontSize: width < 375 ? 22 : 24,
+    fontSize: width < 375 ? 18 : 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 12,
