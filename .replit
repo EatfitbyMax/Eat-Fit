@@ -4,12 +4,16 @@ modules = ["nodejs-20"]
 [nix]
 channel = "stable-24_05"
 
+[deployment]
+run = ["sh", "-c", "npx expo export -p web && npx serve dist --single"]
+deploymentTarget = "cloudrun"
+
 [[ports]]
 localPort = 5000
 externalPort = 5000
 
 [[ports]]
-localPort = 8081
+localPort = 3000
 externalPort = 80
 
 [[ports]]
