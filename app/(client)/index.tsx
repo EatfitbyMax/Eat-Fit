@@ -310,6 +310,53 @@ export default function AccueilScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Steps and Sleep Gauges Row */}
+        <View style={styles.gaugesContainer}>
+          {/* Steps Gauge */}
+          <TouchableOpacity 
+            style={styles.gaugeCard}
+            onPress={handleAddSteps}
+          >
+            <View style={styles.circularGauge}>
+              <View style={[styles.circularGaugeFill, { 
+                transform: [{ rotate: `${Math.min((steps / 10000) * 360, 360)}deg` }],
+                borderTopColor: '#32D74B'
+              }]} />
+              <View style={styles.circularGaugeInner}>
+                <Text style={styles.gaugeValue}>{steps}</Text>
+                <Text style={styles.gaugeTarget}>/ 10000</Text>
+                <Text style={styles.gaugeUnit}>pas</Text>
+              </View>
+            </View>
+            <Text style={styles.gaugeLabel}>Compteur de pas</Text>
+            <Text style={styles.gaugeSubtext}>
+              {Math.max(0, 10000 - steps)} pas restants
+            </Text>
+          </TouchableOpacity>
+
+          {/* Sleep Gauge */}
+          <TouchableOpacity 
+            style={styles.gaugeCard}
+            onPress={() => router.push('/(client)/profil')}
+          >
+            <View style={styles.circularGauge}>
+              <View style={[styles.circularGaugeFill, { 
+                transform: [{ rotate: `${Math.min((parseInt(sleepTime.split('h')[0]) / 8) * 360, 360)}deg` }],
+                borderTopColor: '#AF52DE'
+              }]} />
+              <View style={styles.circularGaugeInner}>
+                <Text style={styles.gaugeValue}>{sleepTime.split('h')[0]}h</Text>
+                <Text style={styles.gaugeTarget}>/ 8h</Text>
+                <Text style={styles.gaugeUnit}>sommeil</Text>
+              </View>
+            </View>
+            <Text style={styles.gaugeLabel}>Suivi du sommeil</Text>
+            <Text style={styles.gaugeSubtext}>
+              {Math.max(0, 8 - parseInt(sleepTime.split('h')[0]))}h restantes
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Container for all cards */}
         <View style={styles.cardsContainer}>
           {/* Progrès Section */}
@@ -328,40 +375,6 @@ export default function AccueilScreen() {
               </View>
             </View>
           </View>
-
-          {/* Steps Counter */}
-          <TouchableOpacity 
-            style={styles.stepsCard}
-            onPress={handleAddSteps}
-          >
-            <View style={styles.stepsHeader}>
-              <Text style={styles.stepsIcon}>💪</Text>
-              <Text style={styles.stepsTitle}>Compteur de pas</Text>
-            </View>
-            <View style={styles.stepsContent}>
-              <Text style={styles.stepsValue}>{steps}</Text>
-              <Text style={styles.stepsGoal}>/ 10000 pas</Text>
-            </View>
-            <Text style={styles.stepsObjective}>Objectif</Text>
-            <TouchableOpacity style={styles.addStepsButton} onPress={handleAddSteps}>
-              <Text style={styles.addStepsButtonText}>Ajouter des pas</Text>
-            </TouchableOpacity>
-          </TouchableOpacity>
-
-          {/* Sleep Tracking */}
-          <TouchableOpacity 
-            style={styles.sleepCard}
-            onPress={() => router.push('/(client)/profil')}
-          >
-            <View style={styles.sleepHeader}>
-              <Text style={styles.sleepIcon}>🌙</Text>
-              <Text style={styles.sleepTitle}>Suivi du sommeil</Text>
-            </View>
-            <Text style={styles.sleepSubtitle}>Sommeil aujourd'hui</Text>
-            <Text style={styles.sleepTime}>{sleepTime}</Text>
-            <Text style={styles.sleepDuration}>0h 0min / 8h 0min</Text>
-            <Text style={styles.sleepLabel}>Durée du sommeil</Text>
-          </TouchableOpacity>
         </View>
       </ScrollView>
     </View>
@@ -498,100 +511,10 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#888888',
   },
-  stepsCard: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 16,
-    padding: 18,
-  },
-  stepsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  stepsIcon: {
-    fontSize: 20,
-    marginRight: 8,
-  },
-  stepsTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  stepsContent: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    marginBottom: 6,
-  },
-  stepsValue: {
-    fontSize: width < 375 ? 32 : 36,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  stepsGoal: {
-    fontSize: 15,
-    color: '#888888',
-    marginLeft: 8,
-  },
-  stepsObjective: {
-    fontSize: 13,
-    color: '#888888',
-    marginBottom: 14,
-  },
-  addStepsButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: 12,
-    paddingVertical: 11,
-    alignItems: 'center',
-  },
-  addStepsButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  sleepCard: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 16,
-    padding: 18,
-  },
-  sleepHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  sleepIcon: {
-    fontSize: 20,
-    marginRight: 8,
-  },
-  sleepTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  sleepSubtitle: {
-    fontSize: 13,
-    color: '#888888',
-    marginBottom: 6,
-  },
-  sleepTime: {
-    fontSize: width < 375 ? 22 : 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  sleepDuration: {
-    fontSize: 13,
-    color: '#888888',
-    marginBottom: 6,
-  },
-  sleepLabel: {
-    fontSize: 13,
-    color: '#888888',
-  },
   progressSection: {
     backgroundColor: '#1A1A1A',
     borderRadius: 16,
     padding: 18,
-    marginTop: 12,
   },
   progressTitle: {
     fontSize: 16,
