@@ -229,7 +229,7 @@ export default function AccueilScreen() {
               style={[styles.card, styles.caloriesCard]}
               onPress={() => router.push('/(client)/nutrition')}
             >
-              <Text style={styles.cardTitle}>Aujourd'hui ({currentDate})</Text>
+              <Text style={styles.cardTitle}>Aujourd'hui</Text>
               <Text style={styles.cardValue}>{calories}</Text>
               <Text style={styles.cardLabel}>Calories</Text>
               <Text style={styles.cardSubLabel}>{caloriesGoal} kcal</Text>
