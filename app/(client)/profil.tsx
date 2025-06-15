@@ -354,17 +354,26 @@ export default function ProfilScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Paramètres</Text>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => router.push('/(client)/parametres-application')}
+          >
             <Text style={styles.menuItemText}>⚙️ Paramètres de l'application</Text>
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => router.push('/(client)/securite-confidentialite')}
+          >
             <Text style={styles.menuItemText}>🔒 Sécurité et confidentialité</Text>
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => router.push('/(client)/aide-feedback')}
+          >
             <Text style={styles.menuItemText}>💬 Aide et feedback</Text>
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
