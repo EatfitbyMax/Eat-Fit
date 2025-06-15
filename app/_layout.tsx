@@ -1,5 +1,4 @@
 import React from 'react';
-import { Alert } from 'react-native';
 
 // Gestion globale des erreurs non capturées
 const handleUnhandledRejection = (event: any) => {
