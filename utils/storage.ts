@@ -1,9 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const SERVER_URL = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
+const SERVER_URL = 'http://51.178.29.220:5000';
 
 export class PersistentStorage {
-  static isServerAvailable: boolean = false;
   // Test de connexion au serveur
   static async testConnection(): Promise<boolean> {
     try {
@@ -254,46 +253,11 @@ export class PersistentStorage {
   // Vérification de l'état du serveur
   static async syncData(): Promise<void> {
     try {
-      console.log('Synchronisation avec le serveur VPS...');
-
-      if (!process.env.EXPO_PUBLIC_VPS_URL) {
-        console.log('URL du serveur VPS non configurée, utilisation des données locales uniquement');
-        this.isServerAvailable = false;
-        return;
-      }
-
-      // Timeout de 5 secondes pour éviter de bloquer l'app
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-      try {
-        const response = await fetch(`${process.env.EXPO_PUBLIC_VPS_URL}/api/health-check`, {
-          signal: controller.signal,
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        });
-
-        clearTimeout(timeoutId);
-
-        if (response.ok) {
-          console.log('Serveur VPS opérationnel - toutes les données sont sur le serveur');
-          this.isServerAvailable = true;
-        } else {
-          console.log('Serveur VPS non disponible, utilisation des données locales');
-          this.isServerAvailable = false;
-        }
-      } catch (fetchError) {
-        clearTimeout(timeoutId);
-        throw fetchError;
-      }
+      await this.testConnection();
+      console.log('Serveur VPS opérationnel - toutes les données sont sur le serveur');
     } catch (error) {
-      if (error.name === 'AbortError') {
-        console.warn('Timeout de connexion au serveur VPS, utilisation des données locales');
-      } else {
-        console.warn('Erreur connexion serveur VPS, utilisation des données locales:', error.message);
-      }
-      this.isServerAvailable = false;
+      console.error('Erreur connexion serveur VPS:', error);
+      throw error;
     }
   }
 }
