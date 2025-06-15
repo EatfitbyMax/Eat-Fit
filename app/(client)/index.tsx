@@ -154,9 +154,6 @@ export default function AccueilScreen() {
       } else {
         setTraining(0);
       }
-    } catch (error) {
-      console.error('Erreur chargement données entraînement:', error);
-    }
 
       // Charger l'objectif calorique personnalisé basé sur le profil du client
       const userProfile = await AsyncStorage.getItem(`user_profile_${userId}`);
@@ -175,7 +172,7 @@ export default function AccueilScreen() {
         setCaloriesGoal(parseInt(caloriesGoalStored));
       }
     } catch (error) {
-      console.error('Erreur chargement données nutrition:', error);
+      console.error('Erreur chargement données entraînement:', error);
     }
   };
 
