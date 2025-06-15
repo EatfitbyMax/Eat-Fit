@@ -1,8 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const SERVER_URL = 'http://51.178.29.220:5000';
+const SERVER_URL = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
 
 export class PersistentStorage {
+  static isServerAvailable: boolean = false;
   // Test de connexion au serveur
   static async testConnection(): Promise<boolean> {
     try {
@@ -266,7 +267,7 @@ export class PersistentStorage {
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
       try {
-        const response = await fetch(`${process.env.EXPO_PUBLIC_VPS_URL}/api/health`, {
+        const response = await fetch(`${process.env.EXPO_PUBLIC_VPS_URL}/api/health-check`, {
           signal: controller.signal,
           headers: {
             'Content-Type': 'application/json',
