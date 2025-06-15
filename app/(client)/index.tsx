@@ -11,7 +11,7 @@ import {
   Platform,
   StatusBar 
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { getCurrentUser } from '@/utils/auth';
 import { IntegrationsManager } from '@/utils/integrations';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -36,15 +36,13 @@ export default function AccueilScreen() {
   }, []);
 
   // Recharger les données nutritionnelles quand on revient sur la page
-  useEffect(() => {
-    const unsubscribe = router.addListener(() => {
+  useFocusEffect(
+    React.useCallback(() => {
       if (user) {
         loadNutritionData(user.id);
       }
-    });
-
-    return unsubscribe;
-  }, [user, router]);
+    }, [user])
+  );
 
   const loadUserData = async () => {
     try {
@@ -111,9 +109,22 @@ export default function AccueilScreen() {
         
         const totalCalories = todayEntries.reduce((sum: number, entry: any) => sum + (entry.calories || 0), 0);
         setCalories(totalCalories);
+      } else {
+        setCalories(0);
       }
 
-      // Charger l'objectif calorique personnalisé s'il existe
+      // Charger l'objectif calorique personnalisé basé sur le profil du client
+      const userProfile = await AsyncStorage.getItem(`user_profile_${userId}`);
+      if (userProfile) {
+        const profile = JSON.parse(userProfile);
+        // Calculer l'objectif calorique basé sur les données du client
+        if (profile.age && profile.weight && profile.height && profile.activity) {
+          const calculatedGoal = calculateCalorieGoal(profile);
+          setCaloriesGoal(calculatedGoal);
+        }
+      }
+
+      // Sinon, charger l'objectif personnalisé s'il existe
       const caloriesGoalStored = await AsyncStorage.getItem(`calories_goal_${userId}`);
       if (caloriesGoalStored) {
         setCaloriesGoal(parseInt(caloriesGoalStored));
@@ -121,6 +132,37 @@ export default function AccueilScreen() {
     } catch (error) {
       console.error('Erreur chargement données nutrition:', error);
     }
+  };
+
+  const calculateCalorieGoal = (profile: any) => {
+    // Formule de Mifflin-St Jeor pour calculer le métabolisme de base
+    let bmr;
+    if (profile.gender === 'male') {
+      bmr = 88.362 + (13.397 * profile.weight) + (4.799 * profile.height) - (5.677 * profile.age);
+    } else {
+      bmr = 447.593 + (9.247 * profile.weight) + (3.098 * profile.height) - (4.330 * profile.age);
+    }
+
+    // Facteur d'activité
+    const activityFactors = {
+      'sedentaire': 1.2,
+      'leger': 1.375,
+      'modere': 1.55,
+      'intense': 1.725,
+      'tres_intense': 1.9
+    };
+
+    const activityFactor = activityFactors[profile.activity] || 1.2;
+    const totalCalories = Math.round(bmr * activityFactor);
+
+    // Ajuster selon l'objectif
+    if (profile.goal === 'lose_weight') {
+      return Math.round(totalCalories * 0.8); // Déficit de 20%
+    } else if (profile.goal === 'gain_weight') {
+      return Math.round(totalCalories * 1.15); // Surplus de 15%
+    }
+    
+    return totalCalories;
   };
 
   const updateDate = () => {
@@ -187,7 +229,7 @@ export default function AccueilScreen() {
               style={[styles.card, styles.caloriesCard]}
               onPress={() => router.push('/(client)/nutrition')}
             >
-              <Text style={styles.cardTitle}>Aujourd'hui ({new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })})</Text>
+              <Text style={styles.cardTitle}>Aujourd'hui ({currentDate})</Text>
               <Text style={styles.cardValue}>{calories}</Text>
               <Text style={styles.cardLabel}>Calories</Text>
               <Text style={styles.cardSubLabel}>{caloriesGoal} kcal</Text>
