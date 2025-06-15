@@ -20,7 +20,6 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import 'react-native-reanimated/lib/reanimated2/js-reanimated/package.json';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { initializeAdminAccount, getCurrentUser } from '@/utils/auth';
