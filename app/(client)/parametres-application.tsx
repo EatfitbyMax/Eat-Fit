@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Switch, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Switch, Alert, ActionSheetIOS, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -111,7 +110,7 @@ export default function ParametresApplicationScreen() {
         {/* Apparence */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>🎨 Apparence</Text>
-          
+
           <View style={styles.settingItem}>
             <View style={styles.settingInfo}>
               <Text style={styles.settingTitle}>Mode sombre</Text>
@@ -145,7 +144,7 @@ export default function ParametresApplicationScreen() {
         {/* Synchronisation */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>🔄 Synchronisation</Text>
-          
+
           <View style={styles.settingItem}>
             <View style={styles.settingInfo}>
               <Text style={styles.settingTitle}>Synchronisation automatique</Text>
@@ -184,7 +183,7 @@ export default function ParametresApplicationScreen() {
         {/* Données et stockage */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>💾 Données et stockage</Text>
-          
+
           <TouchableOpacity style={styles.settingItem} onPress={clearCache}>
             <View style={styles.settingInfo}>
               <Text style={styles.settingTitle}>Vider le cache</Text>
@@ -213,7 +212,7 @@ export default function ParametresApplicationScreen() {
         {/* Confidentialité */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>🔒 Confidentialité</Text>
-          
+
           <View style={styles.settingItem}>
             <View style={styles.settingInfo}>
               <Text style={styles.settingTitle}>Analytics</Text>
@@ -244,7 +243,7 @@ export default function ParametresApplicationScreen() {
         {/* Actions */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>⚙️ Actions</Text>
-          
+
           <TouchableOpacity style={styles.settingItem} onPress={resetSettings}>
             <View style={styles.settingInfo}>
               <Text style={[styles.settingTitle, styles.dangerText]}>Réinitialiser les paramètres</Text>
