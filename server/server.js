@@ -148,12 +148,8 @@ app.post('/api/strava/:userId', async (req, res) => {
   }
 });
 
-// Routes de test
+// Route de test
 app.get('/api/health-check', (req, res) => {
-  res.json({ status: 'OK', message: 'Serveur VPS fonctionnel' });
-});
-
-app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Serveur VPS fonctionnel' });
 });
 

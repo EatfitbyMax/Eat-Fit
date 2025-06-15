@@ -1,9 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Switch, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import * as LocalAuthentication from 'expo-local-authentication';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SecuriteConfidentialiteScreen() {
   const router = useRouter();
@@ -15,124 +13,9 @@ export default function SecuriteConfidentialiteScreen() {
     locationTracking: false,
     thirdPartySharing: false,
   });
-  const [biometricAvailable, setBiometricAvailable] = useState(false);
-  const [biometricType, setBiometricType] = useState<string>('');
 
-  useEffect(() => {
-    checkBiometricAvailability();
-    loadSettings();
-  }, []);
-
-  const checkBiometricAvailability = async () => {
-    try {
-      const isAvailable = await LocalAuthentication.hasHardwareAsync();
-      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-      const authTypes = await LocalAuthentication.supportedAuthenticationTypesAsync();
-      
-      setBiometricAvailable(isAvailable && isEnrolled);
-      
-      if (authTypes.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) {
-        setBiometricType('Face ID');
-      } else if (authTypes.includes(LocalAuthentication.AuthenticationType.FINGERPRINT)) {
-        setBiometricType('Touch ID');
-      } else {
-        setBiometricType('Biométrie');
-      }
-    } catch (error) {
-      console.error('Erreur vérification biométrie:', error);
-      setBiometricAvailable(false);
-    }
-  };
-
-  const loadSettings = async () => {
-    try {
-      const savedSettings = await AsyncStorage.getItem('security_settings');
-      if (savedSettings) {
-        setSettings(JSON.parse(savedSettings));
-      }
-    } catch (error) {
-      console.error('Erreur chargement paramètres:', error);
-    }
-  };
-
-  const saveSettings = async (newSettings: typeof settings) => {
-    try {
-      await AsyncStorage.setItem('security_settings', JSON.stringify(newSettings));
-    } catch (error) {
-      console.error('Erreur sauvegarde paramètres:', error);
-    }
-  };
-
-  const handleBiometricToggle = async (value: boolean) => {
-    if (!biometricAvailable) {
-      Alert.alert(
-        'Biométrie non disponible',
-        'L\'authentification biométrique n\'est pas configurée sur cet appareil. Veuillez configurer Face ID ou Touch ID dans les paramètres de votre appareil.',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
-
-    if (value) {
-      try {
-        const result = await LocalAuthentication.authenticateAsync({
-          promptMessage: 'Authentifiez-vous pour activer la sécurité biométrique',
-          fallbackLabel: 'Utiliser le code',
-          cancelLabel: 'Annuler',
-        });
-
-        if (result.success) {
-          const newSettings = { ...settings, biometricAuth: true };
-          setSettings(newSettings);
-          await saveSettings(newSettings);
-          Alert.alert(
-            'Succès',
-            `L\'authentification ${biometricType} a été activée avec succès.`
-          );
-        } else {
-          Alert.alert(
-            'Échec de l\'authentification',
-            'Impossible d\'activer l\'authentification biométrique.'
-          );
-        }
-      } catch (error) {
-        console.error('Erreur authentification biométrique:', error);
-        Alert.alert(
-          'Erreur',
-          'Une erreur est survenue lors de l\'activation de l\'authentification biométrique.'
-        );
-      }
-    } else {
-      try {
-        const result = await LocalAuthentication.authenticateAsync({
-          promptMessage: 'Authentifiez-vous pour désactiver la sécurité biométrique',
-          fallbackLabel: 'Utiliser le code',
-          cancelLabel: 'Annuler',
-        });
-
-        if (result.success) {
-          const newSettings = { ...settings, biometricAuth: false };
-          setSettings(newSettings);
-          await saveSettings(newSettings);
-          Alert.alert(
-            'Désactivé',
-            `L\'authentification ${biometricType} a été désactivée.`
-          );
-        }
-      } catch (error) {
-        console.error('Erreur désactivation biométrique:', error);
-      }
-    }
-  };
-
-  const updateSetting = async (key: keyof typeof settings, value: boolean) => {
-    if (key === 'biometricAuth') {
-      await handleBiometricToggle(value);
-    } else {
-      const newSettings = { ...settings, [key]: value };
-      setSettings(newSettings);
-      await saveSettings(newSettings);
-    }
+  const updateSetting = (key: keyof typeof settings, value: boolean) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
   };
 
   const deleteAccount = () => {
@@ -178,19 +61,13 @@ export default function SecuriteConfidentialiteScreen() {
           <View style={styles.settingItem}>
             <View style={styles.settingInfo}>
               <Text style={styles.settingTitle}>Authentification biométrique</Text>
-              <Text style={styles.settingDescription}>
-                {biometricAvailable 
-                  ? `${biometricType} pour déverrouiller l'app`
-                  : 'Non disponible sur cet appareil'
-                }
-              </Text>
+              <Text style={styles.settingDescription}>Face ID / Touch ID pour déverrouiller l'app</Text>
             </View>
             <Switch
               value={settings.biometricAuth}
               onValueChange={(value) => updateSetting('biometricAuth', value)}
               trackColor={{ false: '#21262D', true: '#1F6FEB' }}
               thumbColor={settings.biometricAuth ? '#FFFFFF' : '#8B949E'}
-              disabled={!biometricAvailable}
             />
           </View>
 
