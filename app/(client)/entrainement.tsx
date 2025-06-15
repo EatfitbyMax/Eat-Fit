@@ -3,8 +3,10 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Ale
 import { IntegrationsManager, StravaActivity } from '../../utils/integrations';
 import { getCurrentUser } from '../../utils/auth';
 import { checkSubscriptionStatus } from '../../utils/subscription';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function EntrainementScreen() {
+  const { theme } = useTheme();
   const [selectedTab, setSelectedTab] = useState('Journal');
   const [selectedDay, setSelectedDay] = useState('Lundi');
   const [stravaActivities, setStravaActivities] = useState<StravaActivity[]>([]);
@@ -216,7 +218,7 @@ export default function EntrainementScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView style={styles.scrollView}>
         {/* Header */}
         <View style={styles.header}>
@@ -621,11 +623,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   dayCard: {
-    backgroundColor: '#161B22',
     borderRadius: 12,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#21262D',
     marginBottom: 12,
   },
   dayHeader: {

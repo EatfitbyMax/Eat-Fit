@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Switch, Alert, ActionSheetIOS, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function ParametresApplicationScreen() {
+  const { theme, isDarkMode, toggleTheme } = useTheme();
   const router = useRouter();
   const [settings, setSettings] = useState({
     darkMode: true,
@@ -65,7 +67,7 @@ export default function ParametresApplicationScreen() {
 
   const showLanguageOptions = () => {
     const languages = ['Français', 'English', 'Español', 'Deutsch'];
-    
+
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
         {
@@ -96,7 +98,7 @@ export default function ParametresApplicationScreen() {
 
   const showUnitsOptions = () => {
     const units = ['Métrique (kg, cm)', 'Impérial (lbs, ft)'];
-    
+
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
         {
@@ -159,70 +161,71 @@ export default function ParametresApplicationScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, {backgroundColor: theme.background}]}>
       <ScrollView style={styles.scrollView}>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { borderBottomColor: theme.border }]}>
           <TouchableOpacity 
             style={styles.backButton}
             onPress={() => router.back()}
           >
-            <Text style={styles.backText}>←</Text>
+            <Text style={[styles.backText, { color: theme.text }]}>←</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>Paramètres de l'application</Text>
+          <Text style={[styles.title, { color: theme.text }]}>Paramètres de l'application</Text>
           <View style={styles.placeholder} />
         </View>
 
         {/* Apparence */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🎨 Apparence</Text>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>🎨 Apparence</Text>
 
-          <View style={styles.settingItem}>
+          {/* Mode sombre */}
+          <View style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
             <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>Mode sombre</Text>
-              <Text style={styles.settingDescription}>Interface sombre pour vos yeux</Text>
+              <Text style={[styles.settingTitle, { color: theme.text }]}>Mode sombre</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Interface sombre pour vos yeux</Text>
             </View>
             <Switch
-              value={settings.darkMode}
-              onValueChange={(value) => updateSetting('darkMode', value)}
+              value={isDarkMode}
+              onValueChange={toggleTheme}
               trackColor={{ false: '#21262D', true: '#1F6FEB' }}
-              thumbColor={settings.darkMode ? '#FFFFFF' : '#8B949E'}
+              thumbColor={isDarkMode ? '#FFFFFF' : '#8B949E'}
             />
           </View>
 
           <TouchableOpacity 
-            style={styles.settingItem}
+            style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}
             onPress={() => showLanguageOptions()}
           >
             <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>Langue</Text>
-              <Text style={styles.settingDescription}>{settings.language}</Text>
+              <Text style={[styles.settingTitle, { color: theme.text }]}>Langue</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>{settings.language}</Text>
             </View>
-            <Text style={styles.settingArrow}>›</Text>
+            <Text style={[styles.settingArrow, { color: theme.textSecondary }]}>›</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
-            style={styles.settingItem}
+            style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}
             onPress={() => showUnitsOptions()}
           >
             <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>Unités</Text>
-              <Text style={styles.settingDescription}>
+              <Text style={[styles.settingTitle, { color: theme.text }]}>Unités</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>
                 {settings.units === 'Métrique' ? 'Métrique (kg, cm)' : 'Impérial (lbs, ft)'}
               </Text>
             </View>
-            <Text style={styles.settingArrow}>›</Text>
+            <Text style={[styles.settingArrow, { color: theme.textSecondary }]}>›</Text>
           </TouchableOpacity>
         </View>
 
         {/* Synchronisation */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🔄 Synchronisation</Text>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>🔄 Synchronisation</Text>
 
-          <View style={styles.settingItem}>
+          <View style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
             <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>Synchronisation automatique</Text>
-              <Text style={styles.settingDescription}>Synchroniser automatiquement vos données</Text>
+              <Text style={[styles.settingTitle, { color: theme.text }]}>Synchronisation automatique</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Synchroniser automatiquement vos données</Text>
             </View>
             <Switch
               value={settings.autoSync}
@@ -232,10 +235,10 @@ export default function ParametresApplicationScreen() {
             />
           </View>
 
-          <View style={styles.settingItem}>
+          <View style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
             <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>Mode hors ligne</Text>
-              <Text style={styles.settingDescription}>Utiliser l'app sans connexion internet</Text>
+              <Text style={[styles.settingTitle, { color: theme.text }]}>Mode hors ligne</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Utiliser l'app sans connexion internet</Text>
             </View>
             <Switch
               value={settings.offlineMode}
@@ -245,52 +248,52 @@ export default function ParametresApplicationScreen() {
             />
           </View>
 
-          <TouchableOpacity style={styles.settingItem}>
+          <TouchableOpacity style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
             <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>Utilisation des données</Text>
-              <Text style={styles.settingDescription}>{settings.dataUsage}</Text>
+              <Text style={[styles.settingTitle, { color: theme.text }]}>Utilisation des données</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>{settings.dataUsage}</Text>
             </View>
-            <Text style={styles.settingArrow}>›</Text>
+            <Text style={[styles.settingArrow, { color: theme.textSecondary }]}>›</Text>
           </TouchableOpacity>
         </View>
 
         {/* Données et stockage */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>💾 Données et stockage</Text>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>💾 Données et stockage</Text>
 
-          <TouchableOpacity style={styles.settingItem} onPress={clearCache}>
+          <TouchableOpacity style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]} onPress={clearCache}>
             <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>Vider le cache</Text>
-              <Text style={styles.settingDescription}>Libérer de l'espace de stockage</Text>
+              <Text style={[styles.settingTitle, { color: theme.text }]}>Vider le cache</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Libérer de l'espace de stockage</Text>
             </View>
-            <Text style={styles.settingArrow}>›</Text>
+            <Text style={[styles.settingArrow, { color: theme.textSecondary }]}>›</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.settingItem}>
+          <TouchableOpacity style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
             <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>Sauvegarde</Text>
-              <Text style={styles.settingDescription}>Sauvegarder vos données</Text>
+              <Text style={[styles.settingTitle, { color: theme.text }]}>Sauvegarde</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Sauvegarder vos données</Text>
             </View>
-            <Text style={styles.settingArrow}>›</Text>
+            <Text style={[styles.settingArrow, { color: theme.textSecondary }]}>›</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.settingItem}>
+          <TouchableOpacity style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
             <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>Exporter les données</Text>
-              <Text style={styles.settingDescription}>Télécharger vos données</Text>
+              <Text style={[styles.settingTitle, { color: theme.text }]}>Exporter les données</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Télécharger vos données</Text>
             </View>
-            <Text style={styles.settingArrow}>›</Text>
+            <Text style={[styles.settingArrow, { color: theme.textSecondary }]}>›</Text>
           </TouchableOpacity>
         </View>
 
         {/* Confidentialité */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🔒 Confidentialité</Text>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>🔒 Confidentialité</Text>
 
-          <View style={styles.settingItem}>
+          <View style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
             <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>Analytics</Text>
-              <Text style={styles.settingDescription}>Partager des données d'utilisation anonymes</Text>
+              <Text style={[styles.settingTitle, { color: theme.text }]}>Analytics</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Partager des données d'utilisation anonymes</Text>
             </View>
             <Switch
               value={settings.analytics}
@@ -300,10 +303,10 @@ export default function ParametresApplicationScreen() {
             />
           </View>
 
-          <View style={styles.settingItem}>
+          <View style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
             <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>Rapports de crash</Text>
-              <Text style={styles.settingDescription}>Envoyer automatiquement les rapports d'erreur</Text>
+              <Text style={[styles.settingTitle, { color: theme.text }]}>Rapports de crash</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Envoyer automatiquement les rapports d'erreur</Text>
             </View>
             <Switch
               value={settings.crashReporting}
@@ -316,21 +319,21 @@ export default function ParametresApplicationScreen() {
 
         {/* Actions */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>⚙️ Actions</Text>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>⚙️ Actions</Text>
 
-          <TouchableOpacity style={styles.settingItem} onPress={resetSettings}>
+          <TouchableOpacity style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]} onPress={resetSettings}>
             <View style={styles.settingInfo}>
-              <Text style={[styles.settingTitle, styles.dangerText]}>Réinitialiser les paramètres</Text>
-              <Text style={styles.settingDescription}>Restaurer les paramètres par défaut</Text>
+              <Text style={[styles.settingTitle, styles.dangerText, { color: theme.text }]}>Réinitialiser les paramètres</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Restaurer les paramètres par défaut</Text>
             </View>
-            <Text style={styles.settingArrow}>›</Text>
+            <Text style={[styles.settingArrow, { color: theme.textSecondary }]}>›</Text>
           </TouchableOpacity>
         </View>
 
         {/* Version */}
         <View style={styles.versionContainer}>
-          <Text style={styles.versionText}>EatFitByMax v1.0.0</Text>
-          <Text style={styles.versionSubtext}>Dernière mise à jour: 11 juin 2024</Text>
+          <Text style={[styles.versionText, { color: theme.textSecondary }]}>EatFitByMax v1.0.0</Text>
+          <Text style={[styles.versionSubtext, { color: theme.textSecondary }]}>Dernière mise à jour: 11 juin 2024</Text>
         </View>
       </ScrollView>
     </SafeAreaView>

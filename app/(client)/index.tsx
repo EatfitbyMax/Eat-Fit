@@ -15,6 +15,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { getCurrentUser } from '@/utils/auth';
 import { IntegrationsManager } from '@/utils/integrations';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '@/context/ThemeContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -29,6 +30,7 @@ export default function AccueilScreen() {
   const [training, setTraining] = useState(0);
   const [fatigue, setFatigue] = useState(0);
   const [sleepTime, setSleepTime] = useState('0h 0min');
+  const { theme } = useTheme();
 
   useEffect(() => {
     loadUserData();
@@ -99,14 +101,14 @@ export default function AccueilScreen() {
   const loadNutritionData = async (userId: string) => {
     try {
       const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-      
+
       // Charger les données alimentaires du jour
       const stored = await AsyncStorage.getItem(`food_entries_${userId}`);
       if (stored) {
         const entries = JSON.parse(stored);
         const today = new Date().toISOString().split('T')[0];
         const todayEntries = entries.filter((entry: any) => entry.date === today);
-        
+
         const totalCalories = todayEntries.reduce((sum: number, entry: any) => sum + (entry.calories || 0), 0);
         setCalories(totalCalories);
       } else {
@@ -161,7 +163,7 @@ export default function AccueilScreen() {
     } else if (profile.goal === 'gain_weight') {
       return Math.round(totalCalories * 1.15); // Surplus de 15%
     }
-    
+
     return totalCalories;
   };
 
@@ -199,7 +201,7 @@ export default function AccueilScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: theme.background }]}>
       <StatusBar barStyle="light-content" backgroundColor="#000000" />
       <ScrollView 
         showsVerticalScrollIndicator={false}
