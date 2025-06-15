@@ -211,19 +211,49 @@ export default function ProfilScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Informations personnelles</Text>
 
+          {/* Informations de base */}
+          <View style={styles.infoCard}>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>👤 Sexe:</Text>
+              <Text style={styles.infoValue}>{user?.gender || 'Non renseigné'}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>📅 Âge:</Text>
+              <Text style={styles.infoValue}>{user?.age ? `${user.age} ans` : 'Non renseigné'}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>📏 Taille:</Text>
+              <Text style={styles.infoValue}>{user?.height ? `${user.height} cm` : 'Non renseignée'}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>⚖️ Poids:</Text>
+              <Text style={styles.infoValue}>{user?.weight ? `${user.weight} kg` : 'Non renseigné'}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>🏃‍♂️ Activité:</Text>
+              <Text style={styles.infoValue}>{user?.activityLevel || 'Non renseigné'}</Text>
+            </View>
+          </View>
+
+          {/* Objectifs */}
+          <View style={styles.infoCard}>
+            <Text style={styles.infoSectionTitle}>🎯 Mes objectifs</Text>
+            {user?.goals && user.goals.length > 0 ? (
+              user.goals.map((goal: string, index: number) => (
+                <View key={index} style={styles.goalItem}>
+                  <Text style={styles.goalText}>• {goal}</Text>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.infoValue}>Aucun objectif défini</Text>
+            )}
+          </View>
+
           <TouchableOpacity 
             style={styles.menuItem}
             onPress={() => router.push('/informations-personnelles')}
           >
-            <Text style={styles.menuItemText}>👤 Informations personnelles</Text>
-            <Text style={styles.menuItemArrow}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={() => router.push('/mes-objectifs')}
-          >
-            <Text style={styles.menuItemText}>🎯 Mes objectifs</Text>
+            <Text style={styles.menuItemText}>✏️ Modifier mes informations</Text>
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
 
@@ -587,5 +617,45 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#8B949E',
     textAlign: 'center',
+  },
+  infoCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    marginBottom: 12,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#21262D',
+  },
+  infoLabel: {
+    fontSize: 14,
+    color: '#8B949E',
+    fontWeight: '500',
+  },
+  infoValue: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  infoSectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 12,
+  },
+  goalItem: {
+    paddingVertical: 4,
+  },
+  goalText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    lineHeight: 20,
   },
 });
