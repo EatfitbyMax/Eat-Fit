@@ -4,9 +4,11 @@ import { IntegrationsManager, StravaActivity } from '../../utils/integrations';
 import { getCurrentUser } from '../../utils/auth';
 import { checkSubscriptionStatus } from '../../utils/subscription';
 import { useTheme } from '@/context/ThemeContext';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function EntrainementScreen() {
   const { theme } = useTheme();
+  const { t } = useLanguage();
   const [selectedTab, setSelectedTab] = useState('Journal');
   const [selectedDay, setSelectedDay] = useState('Lundi');
   const [stravaActivities, setStravaActivities] = useState<StravaActivity[]>([]);
@@ -27,7 +29,15 @@ export default function EntrainementScreen() {
     jour: selectedDay
   });
 
-  const daysOfWeek = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+  const daysOfWeek = [
+    t('monday'), 
+    t('tuesday'), 
+    t('wednesday'), 
+    t('thursday'), 
+    t('friday'), 
+    t('saturday'), 
+    t('sunday')
+  ];
 
   useEffect(() => {
     loadStravaActivities();
@@ -222,7 +232,7 @@ export default function EntrainementScreen() {
       <ScrollView style={styles.scrollView}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Entraînement</Text>
+          <Text style={styles.title}>{t('training')}</Text>
 
           {/* Navigation par semaines */}
           <View style={styles.weekNavigation}>
@@ -253,7 +263,7 @@ export default function EntrainementScreen() {
             onPress={() => setSelectedTab('Journal')}
           >
             <Text style={[styles.tabText, selectedTab === 'Journal' && styles.activeTabText]}>
-              Journal
+              {t('journal')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity 
@@ -270,7 +280,7 @@ export default function EntrainementScreen() {
           >
             <View style={styles.tabContent}>
               <Text style={[styles.tabText, selectedTab === 'Programmes' && styles.activeTabText, !hasSubscription && styles.lockedTabText]}>
-                Programmes
+                {t('programs')}
               </Text>
               <Text style={[styles.crownIcon, selectedTab === 'Programmes' && styles.activeCrownIcon]}>
                 👑
@@ -290,13 +300,13 @@ export default function EntrainementScreen() {
                     <Text style={styles.dayCalories}>0 exercices</Text>
                   </View>
 
-                  <Text style={styles.dayEmpty}>Aucun entraînement ajouté</Text>
+                  <Text style={styles.dayEmpty}>{t('no_workout_added')}</Text>
 
                   <TouchableOpacity 
                     style={styles.addWorkoutButton}
                     onPress={() => ouvrirModalAjout(day)}
                   >
-                    <Text style={styles.addWorkoutText}>+ Ajouter un entraînement</Text>
+                    <Text style={styles.addWorkoutText}>{t('add_workout')}</Text>
                   </TouchableOpacity>
                 </View>
               ))}
@@ -372,7 +382,7 @@ export default function EntrainementScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Nouvel entraînement</Text>
+              <Text style={styles.modalTitle}>{t('new_workout')}</Text>
               <TouchableOpacity onPress={fermerModal} style={styles.closeButton}>
                 <Text style={styles.closeButtonText}>×</Text>
               </TouchableOpacity>
@@ -381,7 +391,7 @@ export default function EntrainementScreen() {
             <ScrollView style={styles.modalContent}>
               {/* Nom */}
               <View style={styles.modalSection}>
-                <Text style={styles.modalLabel}>Nom</Text>
+                <Text style={styles.modalLabel}>{t('workout_name')}</Text>
                 <TextInput
                   style={styles.modalInput}
                   value={nouvelEntrainement.nom}
@@ -393,7 +403,7 @@ export default function EntrainementScreen() {
 
               {/* Type d'activité */}
               <View style={styles.modalSection}>
-                <Text style={styles.modalLabel}>Type d'activité</Text>
+                <Text style={styles.modalLabel}>{t('activity_type')}</Text>
                 <View style={styles.dropdown}>
                   <Text style={styles.dropdownText}>{nouvelEntrainement.typeActivite}</Text>
                   <Text style={styles.dropdownArrow}>▼</Text>
@@ -411,7 +421,7 @@ export default function EntrainementScreen() {
 
               {/* Difficulté */}
               <View style={styles.modalSection}>
-                <Text style={styles.modalLabel}>Difficulté</Text>
+                <Text style={styles.modalLabel}>{t('difficulty')}</Text>
                 <View style={styles.dropdown}>
                   <Text style={styles.dropdownText}>{nouvelEntrainement.difficulte}</Text>
                   <Text style={styles.dropdownArrow}>▼</Text>
@@ -420,7 +430,7 @@ export default function EntrainementScreen() {
 
               {/* Durée */}
               <View style={styles.modalSection}>
-                <Text style={styles.modalLabel}>Durée (minutes)</Text>
+                <Text style={styles.modalLabel}>{t('duration_minutes')}</Text>
                 <TextInput
                   style={styles.modalInput}
                   value={nouvelEntrainement.duree}
@@ -470,7 +480,7 @@ export default function EntrainementScreen() {
 
               {/* Notes */}
               <View style={styles.modalSection}>
-                <Text style={styles.modalLabel}>Notes</Text>
+                <Text style={styles.modalLabel}>{t('notes')}</Text>
                 <TextInput
                   style={[styles.modalInput, styles.textArea]}
                   value={nouvelEntrainement.notes}
@@ -485,16 +495,16 @@ export default function EntrainementScreen() {
               {/* Section Exercices */}
               <View style={styles.modalSection}>
                 <View style={styles.exercicesHeader}>
-                  <Text style={styles.modalLabel}>Exercices (0)</Text>
+                  <Text style={styles.modalLabel}>{t('exercises')} (0)</Text>
                   <TouchableOpacity style={styles.addExerciceButton}>
-                    <Text style={styles.addExerciceButtonText}>+ Ajouter</Text>
+                    <Text style={styles.addExerciceButtonText}>{t('add_exercise')}</Text>
                   </TouchableOpacity>
                 </View>
 
                 <View style={styles.emptyExercices}>
                   <Text style={styles.emptyExercicesIcon}>💪</Text>
                   <Text style={styles.emptyExercicesText}>
-                    Aucun exercice ajouté. Cliquez sur "Ajouter" pour créer un exercice.
+                    {t('no_exercises')}
                   </Text>
                 </View>
               </View>
@@ -503,10 +513,10 @@ export default function EntrainementScreen() {
             {/* Boutons d'action */}
             <View style={styles.modalActions}>
               <TouchableOpacity style={styles.cancelButton} onPress={fermerModal}>
-                <Text style={styles.cancelButtonText}>Annuler</Text>
+                <Text style={styles.cancelButtonText}>{t('cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.createButton} onPress={sauvegarderEntrainement}>
-                <Text style={styles.createButtonText}>Créer</Text>
+                <Text style={styles.createButtonText}>{t('create')}</Text>
               </TouchableOpacity>
             </View>
           </View>

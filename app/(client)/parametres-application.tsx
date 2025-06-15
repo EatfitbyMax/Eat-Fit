@@ -3,9 +3,11 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Swi
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '@/context/ThemeContext';
+import { useLanguage, SupportedLanguage } from '@/context/LanguageContext';
 
 export default function ParametresApplicationScreen() {
   const { theme, isDarkMode, toggleTheme } = useTheme();
+  const { language, setLanguage, t } = useLanguage();
   const router = useRouter();
   const [settings, setSettings] = useState({
     darkMode: true,
@@ -66,31 +68,40 @@ export default function ParametresApplicationScreen() {
   };
 
   const showLanguageOptions = () => {
-    const languages = ['Français', 'English', 'Español', 'Deutsch'];
+    const languageOptions = [
+      { label: t('french'), code: 'fr' as SupportedLanguage },
+      { label: t('english'), code: 'en' as SupportedLanguage },
+      { label: t('spanish'), code: 'es' as SupportedLanguage },
+      { label: t('german'), code: 'de' as SupportedLanguage },
+    ];
 
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
         {
-          title: 'Choisir la langue',
-          options: [...languages, 'Annuler'],
-          cancelButtonIndex: languages.length,
+          title: t('choose_language'),
+          options: [...languageOptions.map(lang => lang.label), t('cancel')],
+          cancelButtonIndex: languageOptions.length,
         },
         (buttonIndex) => {
-          if (buttonIndex < languages.length) {
-            updateSetting('language', languages[buttonIndex]);
+          if (buttonIndex < languageOptions.length) {
+            setLanguage(languageOptions[buttonIndex].code);
+            updateSetting('language', languageOptions[buttonIndex].label);
           }
         }
       );
     } else {
       Alert.alert(
-        'Choisir la langue',
+        t('choose_language'),
         'Sélectionnez votre langue préférée',
         [
-          ...languages.map(lang => ({
-            text: lang,
-            onPress: () => updateSetting('language', lang)
+          ...languageOptions.map(lang => ({
+            text: lang.label,
+            onPress: () => {
+              setLanguage(lang.code);
+              updateSetting('language', lang.label);
+            }
           })),
-          { text: 'Annuler', style: 'cancel' }
+          { text: t('cancel'), style: 'cancel' }
         ]
       );
     }
@@ -171,19 +182,19 @@ export default function ParametresApplicationScreen() {
           >
             <Text style={[styles.backText, { color: theme.text }]}>←</Text>
           </TouchableOpacity>
-          <Text style={[styles.title, { color: theme.text }]}>Paramètres de l'application</Text>
+          <Text style={[styles.title, { color: theme.text }]}>{t('app_settings')}</Text>
           <View style={styles.placeholder} />
         </View>
 
         {/* Apparence */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>🎨 Apparence</Text>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>🎨 {t('appearance')}</Text>
 
           {/* Mode sombre */}
           <View style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
             <View style={styles.settingInfo}>
-              <Text style={[styles.settingTitle, { color: theme.text }]}>Mode sombre</Text>
-              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Interface sombre pour vos yeux</Text>
+              <Text style={[styles.settingTitle, { color: theme.text }]}>{t('dark_mode')}</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>{t('dark_interface')}</Text>
             </View>
             <Switch
               value={isDarkMode}
@@ -198,7 +209,7 @@ export default function ParametresApplicationScreen() {
             onPress={() => showLanguageOptions()}
           >
             <View style={styles.settingInfo}>
-              <Text style={[styles.settingTitle, { color: theme.text }]}>Langue</Text>
+              <Text style={[styles.settingTitle, { color: theme.text }]}>{t('language')}</Text>
               <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>{settings.language}</Text>
             </View>
             <Text style={[styles.settingArrow, { color: theme.textSecondary }]}>›</Text>
@@ -209,9 +220,9 @@ export default function ParametresApplicationScreen() {
             onPress={() => showUnitsOptions()}
           >
             <View style={styles.settingInfo}>
-              <Text style={[styles.settingTitle, { color: theme.text }]}>Unités</Text>
+              <Text style={[styles.settingTitle, { color: theme.text }]}>{t('units')}</Text>
               <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>
-                {settings.units === 'Métrique' ? 'Métrique (kg, cm)' : 'Impérial (lbs, ft)'}
+                {settings.units === 'Métrique' ? t('metric_units') : t('imperial_units')}
               </Text>
             </View>
             <Text style={[styles.settingArrow, { color: theme.textSecondary }]}>›</Text>
