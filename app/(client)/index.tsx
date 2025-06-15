@@ -38,7 +38,7 @@ export default function AccueilScreen() {
     try {
       const currentUser = await getCurrentUser();
       setUser(currentUser);
-      
+
       if (currentUser) {
         // Charger les données synchronisées
         await loadSyncedData(currentUser.id);
@@ -74,7 +74,7 @@ export default function AccueilScreen() {
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
           return diffDays <= 7; // Activités de la semaine
         });
-        
+
         const totalDuration = recentActivities.reduce((sum, activity) => sum + activity.duration, 0);
         const fatigueLevel = Math.min(Math.floor(totalDuration / 3600), 10); // Max 10
         setFatigue(fatigueLevel);
@@ -133,7 +133,7 @@ export default function AccueilScreen() {
             Bonjour, {user?.firstName || user?.name || 'Utilisateur'}
           </Text>
           <Text style={styles.subtitle}>
-            Prêt à atteindre vos objectifs nutritionnels ?
+            Prêt à atteindre vos objectifs ?
           </Text>
         </View>
 
@@ -167,7 +167,7 @@ export default function AccueilScreen() {
           {/* Progrès Section */}
           <View style={styles.progressSection}>
             <Text style={styles.progressTitle}>📊 Vos Progrès</Text>
-            
+
             <View style={styles.progressRow}>
               <View style={styles.progressCard}>
                 <Text style={styles.progressLabel}>Poids actuel</Text>
