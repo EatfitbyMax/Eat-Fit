@@ -21,6 +21,12 @@ function NutritionScreen() {
     carbohydrates: 0,
     fat: 0,
   });
+  const [calorieGoals, setCalorieGoals] = useState({
+    calories: 2495,
+    proteins: 125,
+    carbohydrates: 312,
+    fat: 83,
+  });
   const [waterIntake, setWaterIntake] = useState(0); // en ml
 
   const formatDate = (date: Date) => {
@@ -30,6 +36,73 @@ function NutritionScreen() {
       month: 'long'
     };
     return date.toLocaleDateString('fr-FR', options);
+  };
+
+  const calculatePersonalizedGoals = (user: any) => {
+    if (!user || !user.age || !user.weight || !user.height || !user.gender) {
+      return {
+        calories: 2495,
+        proteins: 125,
+        carbohydrates: 312,
+        fat: 83,
+      };
+    }
+
+    // Calcul du métabolisme de base (BMR) avec la formule de Mifflin-St Jeor
+    let bmr;
+    if (user.gender === 'Homme') {
+      bmr = 88.362 + (13.397 * user.weight) + (4.799 * user.height) - (5.677 * user.age);
+    } else {
+      bmr = 447.593 + (9.247 * user.weight) + (3.098 * user.height) - (4.330 * user.age);
+    }
+
+    // Facteurs d'activité physique
+    const activityFactors = {
+      'sedentaire': 1.2,
+      'leger': 1.375,
+      'modere': 1.55,
+      'actif': 1.725,
+      'extreme': 1.9
+    };
+
+    const activityFactor = activityFactors[user.activityLevel] || 1.2;
+    let totalCalories = Math.round(bmr * activityFactor);
+
+    // Ajustements selon les objectifs
+    const goals = user.goals || [];
+    
+    if (goals.includes('Perdre du poids')) {
+      totalCalories -= 200; // Déficit de 200 kcal
+    }
+    
+    // Calcul des macronutriments selon les objectifs
+    let proteinRatio = 0.20; // 20% par défaut
+    let carbRatio = 0.50;    // 50% par défaut
+    let fatRatio = 0.30;     // 30% par défaut
+
+    if (goals.includes('Me muscler')) {
+      // Augmenter les protéines, réduire les lipides
+      proteinRatio = 0.30; // 30%
+      carbRatio = 0.45;    // 45%
+      fatRatio = 0.25;     // 25%
+    } else if (goals.includes('Gagner en performance')) {
+      // Ratio glucides/protéines optimal pour la performance
+      proteinRatio = 0.25; // 25%
+      carbRatio = 0.55;    // 55%
+      fatRatio = 0.20;     // 20%
+    }
+
+    // Calcul des grammes de macronutriments
+    const proteins = Math.round((totalCalories * proteinRatio) / 4); // 4 kcal par gramme
+    const carbohydrates = Math.round((totalCalories * carbRatio) / 4); // 4 kcal par gramme
+    const fat = Math.round((totalCalories * fatRatio) / 9); // 9 kcal par gramme
+
+    return {
+      calories: Math.max(totalCalories, 1200), // Minimum 1200 kcal pour la santé
+      proteins,
+      carbohydrates,
+      fat,
+    };
   };
 
   const navigateDate = (direction: 'prev' | 'next') => {
@@ -113,6 +186,10 @@ function NutritionScreen() {
     try {
       const user = await getCurrentUser();
       if (!user) return;
+
+      // Calculer les objectifs personnalisés
+      const personalizedGoals = calculatePersonalizedGoals(user);
+      setCalorieGoals(personalizedGoals);
 
       const stored = await AsyncStorage.getItem(`food_entries_${user.id}`);
       if (stored) {
@@ -233,16 +310,16 @@ function NutritionScreen() {
             <View style={styles.caloriesSection}>
               <View style={styles.circularGauge}>
                 <View style={[styles.circularGaugeFill, { 
-                  transform: [{ rotate: `${(dailyTotals.calories / 2495) * 360}deg` }] 
+                  transform: [{ rotate: `${(dailyTotals.calories / calorieGoals.calories) * 360}deg` }] 
                 }]} />
                 <View style={styles.circularGaugeInner}>
                   <Text style={styles.caloriesValue}>{dailyTotals.calories}</Text>
-                  <Text style={styles.caloriesTarget}>/ 2495</Text>
+                  <Text style={styles.caloriesTarget}>/ {calorieGoals.calories}</Text>
                   <Text style={styles.caloriesLabel}>kcal</Text>
                 </View>
               </View>
               <Text style={styles.caloriesSubtext}>
-                {Math.max(0, 2495 - dailyTotals.calories)} kcal restantes
+                {Math.max(0, calorieGoals.calories - dailyTotals.calories)} kcal restantes
               </Text>
             </View>
 
@@ -252,11 +329,11 @@ function NutritionScreen() {
               <View style={styles.macroItem}>
                 <View style={styles.macroHeader}>
                   <Text style={styles.macroLabel}>Protéines</Text>
-                  <Text style={styles.macroValue}>{Math.round(dailyTotals.proteins)}g / 125g</Text>
+                  <Text style={styles.macroValue}>{Math.round(dailyTotals.proteins)}g / {calorieGoals.proteins}g</Text>
                 </View>
                 <View style={styles.progressBar}>
                   <View style={[styles.progressFill, { 
-                    width: `${Math.min((dailyTotals.proteins / 125) * 100, 100)}%`, 
+                    width: `${Math.min((dailyTotals.proteins / calorieGoals.proteins) * 100, 100)}%`, 
                     backgroundColor: '#FF6B6B' 
                   }]} />
                 </View>
@@ -266,11 +343,11 @@ function NutritionScreen() {
               <View style={styles.macroItem}>
                 <View style={styles.macroHeader}>
                   <Text style={styles.macroLabel}>Glucides</Text>
-                  <Text style={styles.macroValue}>{Math.round(dailyTotals.carbohydrates)}g / 312g</Text>
+                  <Text style={styles.macroValue}>{Math.round(dailyTotals.carbohydrates)}g / {calorieGoals.carbohydrates}g</Text>
                 </View>
                 <View style={styles.progressBar}>
                   <View style={[styles.progressFill, { 
-                    width: `${Math.min((dailyTotals.carbohydrates / 312) * 100, 100)}%`, 
+                    width: `${Math.min((dailyTotals.carbohydrates / calorieGoals.carbohydrates) * 100, 100)}%`, 
                     backgroundColor: '#4ECDC4' 
                   }]} />
                 </View>
@@ -280,11 +357,11 @@ function NutritionScreen() {
               <View style={styles.macroItem}>
                 <View style={styles.macroHeader}>
                   <Text style={styles.macroLabel}>Lipides</Text>
-                  <Text style={styles.macroValue}>{Math.round(dailyTotals.fat)}g / 83g</Text>
+                  <Text style={styles.macroValue}>{Math.round(dailyTotals.fat)}g / {calorieGoals.fat}g</Text>
                 </View>
                 <View style={styles.progressBar}>
                   <View style={[styles.progressFill, { 
-                    width: `${Math.min((dailyTotals.fat / 83) * 100, 100)}%`, 
+                    width: `${Math.min((dailyTotals.fat / calorieGoals.fat) * 100, 100)}%`, 
                     backgroundColor: '#FFE66D' 
                   }]} />
                 </View>
