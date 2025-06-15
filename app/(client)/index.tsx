@@ -67,7 +67,7 @@ export default function AccueilScreen() {
       await loadNutritionData(userId);
       
       // Charger les données d'entraînement de la semaine
-      await loadTrainingData(userId);Id);
+      await loadTrainingData(userId);
 
       // Charger les données Apple Health
       const healthData = await IntegrationsManager.getHealthData(userId);
