@@ -25,6 +25,7 @@ export default function AccueilScreen() {
   const [currentDate, setCurrentDate] = useState('');
   const [steps, setSteps] = useState(0);
   const [calories, setCalories] = useState(0);
+  const [caloriesGoal, setCaloriesGoal] = useState(2495);
   const [training, setTraining] = useState(0);
   const [fatigue, setFatigue] = useState(0);
   const [sleepTime, setSleepTime] = useState('0h 0min');
@@ -33,6 +34,17 @@ export default function AccueilScreen() {
     loadUserData();
     updateDate();
   }, []);
+
+  // Recharger les données nutritionnelles quand on revient sur la page
+  useEffect(() => {
+    const unsubscribe = router.addListener(() => {
+      if (user) {
+        loadNutritionData(user.id);
+      }
+    });
+
+    return unsubscribe;
+  }, [user, router]);
 
   const loadUserData = async () => {
     try {
@@ -50,12 +62,14 @@ export default function AccueilScreen() {
 
   const loadSyncedData = async (userId: string) => {
     try {
+      // Charger les données nutritionnelles du jour
+      await loadNutritionData(userId);
+
       // Charger les données Apple Health
       const healthData = await IntegrationsManager.getHealthData(userId);
       if (healthData.length > 0) {
         const todayData = healthData[healthData.length - 1];
         setSteps(todayData.steps || 0);
-        setCalories(todayData.calories || 0);
         if (todayData.sleep) {
           const hours = Math.floor(todayData.sleep.duration / 60);
           const minutes = todayData.sleep.duration % 60;
@@ -81,6 +95,31 @@ export default function AccueilScreen() {
       }
     } catch (error) {
       console.error('Erreur chargement données synchronisées:', error);
+    }
+  };
+
+  const loadNutritionData = async (userId: string) => {
+    try {
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+      
+      // Charger les données alimentaires du jour
+      const stored = await AsyncStorage.getItem(`food_entries_${userId}`);
+      if (stored) {
+        const entries = JSON.parse(stored);
+        const today = new Date().toISOString().split('T')[0];
+        const todayEntries = entries.filter((entry: any) => entry.date === today);
+        
+        const totalCalories = todayEntries.reduce((sum: number, entry: any) => sum + (entry.calories || 0), 0);
+        setCalories(totalCalories);
+      }
+
+      // Charger l'objectif calorique personnalisé s'il existe
+      const caloriesGoalStored = await AsyncStorage.getItem(`calories_goal_${userId}`);
+      if (caloriesGoalStored) {
+        setCaloriesGoal(parseInt(caloriesGoalStored));
+      }
+    } catch (error) {
+      console.error('Erreur chargement données nutrition:', error);
     }
   };
 
@@ -148,10 +187,10 @@ export default function AccueilScreen() {
               style={[styles.card, styles.caloriesCard]}
               onPress={() => router.push('/(client)/nutrition')}
             >
-              <Text style={styles.cardTitle}>Aujourd'hui (mardi 3 juin)</Text>
+              <Text style={styles.cardTitle}>Aujourd'hui ({new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })})</Text>
               <Text style={styles.cardValue}>{calories}</Text>
               <Text style={styles.cardLabel}>Calories</Text>
-              <Text style={styles.cardSubLabel}>2695 kcal</Text>
+              <Text style={styles.cardSubLabel}>{caloriesGoal} kcal</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
