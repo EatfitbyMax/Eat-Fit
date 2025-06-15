@@ -70,7 +70,11 @@ export default function RootLayout() {
 
         // Initialisation en arrière-plan pendant que le splash s'affiche
         console.log('Synchronisation avec le serveur VPS...');
-        await PersistentStorage.syncData();
+        try {
+          await PersistentStorage.syncData();
+        } catch (syncError) {
+          console.warn('Impossible de synchroniser avec le serveur VPS, utilisation des données locales:', syncError);
+        }
 
         console.log('Initialisation du compte admin...');
         await initializeAdminAccount();
@@ -85,10 +89,15 @@ export default function RootLayout() {
           console.log('Utilisateur connecté trouvé:', user.email);
 
           // Charger les paramètres biométriques et vérifier si l'auth est requise
-          await loadBiometricSettings();
-          if (requiresAuthentication()) {
-            setNeedsBiometricAuth(true);
-            return;
+          try {
+            await loadBiometricSettings();
+            if (requiresAuthentication()) {
+              setNeedsBiometricAuth(true);
+              setIsInitializing(false);
+              return user;
+            }
+          } catch (biometricError) {
+            console.warn('Erreur chargement paramètres biométriques:', biometricError);
           }
         } else {
           console.log('Aucun utilisateur connecté');
@@ -98,14 +107,15 @@ export default function RootLayout() {
         return user;
       } catch (error) {
         console.error('Erreur vérification auth:', error);
+        // En cas d'erreur, on continue quand même pour ne pas bloquer l'app
         return null;
       }
     })();
 
-    // Attendre minimum 5 secondes pour le splash screen (durée de l'animation)
+    // Attendre minimum 3 secondes pour le splash screen (réduction pour meilleure UX)
     const [user] = await Promise.all([
       initPromise,
-      new Promise(resolve => setTimeout(resolve, 5000))
+      new Promise(resolve => setTimeout(resolve, 3000))
     ]);
 
     setAuthChecked(true);
@@ -121,20 +131,28 @@ export default function RootLayout() {
           } else {
             router.replace('/(client)');
           }
-        } else {
+        } else if (!needsBiometricAuth) {
           console.log('Aucun utilisateur, redirection vers login');
           router.replace('/auth/login');
         }
       } catch (error) {
         console.error('Erreur navigation:', error);
-        // Fallback : essayer une navigation simple
+        // Fallback robuste
         setTimeout(() => {
-          if (user) {
-            router.push('/(client)');
-          } else {
-            router.push('/auth/login');
+          try {
+            if (user && !needsBiometricAuth) {
+              router.push('/(client)');
+            } else if (!needsBiometricAuth) {
+              router.push('/auth/login');
+            }
+          } catch (fallbackError) {
+            console.error('Erreur navigation fallback:', fallbackError);
+            // Dernier fallback : forcer la navigation
+            if (typeof window !== 'undefined') {
+              window.location.href = user ? '/(client)' : '/auth/login';
+            }
           }
-        }, 500);
+        }, 1000);
       }
     }, 300);
 
