@@ -209,7 +209,15 @@ export default function ProfilScreen() {
 
         {/* Personal Information */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Informations personnelles</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Informations personnelles</Text>
+            <TouchableOpacity 
+              onPress={() => router.push('/informations-personnelles')}
+              style={styles.modifyButton}
+            >
+              <Text style={styles.modifyText}>Modifier</Text>
+            </TouchableOpacity>
+          </View>
 
           {/* Informations de base */}
           <View style={styles.infoCard}>
@@ -249,13 +257,7 @@ export default function ProfilScreen() {
             )}
           </View>
 
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={() => router.push('/informations-personnelles')}
-          >
-            <Text style={styles.menuItemText}>✏️ Modifier mes informations</Text>
-            <Text style={styles.menuItemArrow}>›</Text>
-          </TouchableOpacity>
+          
 
           <TouchableOpacity 
             style={styles.menuItem}
@@ -435,11 +437,25 @@ const styles = StyleSheet.create({
     margin: 20,
     marginTop: 0,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#FFFFFF',
-    marginBottom: 16,
+  },
+  modifyButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  modifyText: {
+    fontSize: 14,
+    color: '#F5A623',
+    fontWeight: '500',
   },
   menuItem: {
     backgroundColor: '#161B22',
