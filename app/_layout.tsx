@@ -54,109 +54,83 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (loaded && !authChecked && !isInitializing) {
+      console.log('Démarrage unique de l\'initialisation');
       handleAuthCheck();
     }
-  }, [loaded, authChecked, isInitializing]);
+  }, [loaded]);
 
   const handleAuthCheck = async () => {
-    if (isInitializing) return;
+    if (isInitializing) {
+      console.log('Initialisation déjà en cours, arrêt');
+      return;
+    }
 
+    console.log('=== DÉBUT INITIALISATION UNIQUE ===');
     setIsInitializing(true);
 
-    // D'abord lancer l'initialisation en arrière-plan
-    const initPromise = (async () => {
+    try {
+      // Synchronisation avec timeout
+      console.log('Synchronisation avec le serveur VPS...');
       try {
-        console.log('=== DÉBUT INITIALISATION ===');
-
-        // Initialisation en arrière-plan pendant que le splash s'affiche
-        console.log('Synchronisation avec le serveur VPS...');
-        try {
-          await PersistentStorage.syncData();
-        } catch (syncError) {
-          console.warn('Impossible de synchroniser avec le serveur VPS, utilisation des données locales:', syncError);
-        }
-
-        console.log('Initialisation du compte admin...');
-        await initializeAdminAccount();
-
-        console.log('Migration des données existantes...');
-        await migrateExistingData();
-
-        console.log('Vérification de l\'utilisateur connecté...');
-        const user = await getCurrentUser();
-
-        if (user) {
-          console.log('Utilisateur connecté trouvé:', user.email);
-
-          // Charger les paramètres biométriques et vérifier si l'auth est requise
-          try {
-            await loadBiometricSettings();
-            if (requiresAuthentication()) {
-              setNeedsBiometricAuth(true);
-              setIsInitializing(false);
-              return user;
-            }
-          } catch (biometricError) {
-            console.warn('Erreur chargement paramètres biométriques:', biometricError);
-          }
-        } else {
-          console.log('Aucun utilisateur connecté');
-        }
-
-        console.log('=== FIN INITIALISATION ===');
-        return user;
-      } catch (error) {
-        console.error('Erreur vérification auth:', error);
-        // En cas d'erreur, on continue quand même pour ne pas bloquer l'app
-        return null;
+        await PersistentStorage.syncData();
+      } catch (syncError) {
+        console.warn('Serveur VPS non accessible, mode local');
       }
-    })();
 
-    // Attendre minimum 3 secondes pour le splash screen (réduction pour meilleure UX)
-    const [user] = await Promise.all([
-      initPromise,
-      new Promise(resolve => setTimeout(resolve, 3000))
-    ]);
+      // Initialisation des données
+      await initializeAdminAccount();
+      await migrateExistingData();
 
-    setAuthChecked(true);
-    setShowSplash(false);
+      // Vérification utilisateur
+      const user = await getCurrentUser();
+      
+      if (user) {
+        console.log('Utilisateur trouvé:', user.email);
+        // Vérifier l'authentification biométrique
+        try {
+          await loadBiometricSettings();
+          if (requiresAuthentication()) {
+            setNeedsBiometricAuth(true);
+            setShowSplash(false);
+            setAuthChecked(true);
+            setIsInitializing(false);
+            return;
+          }
+        } catch (biometricError) {
+          console.warn('Erreur biométrie:', biometricError);
+        }
+      }
 
-    // Navigation après avoir caché le splash
-    setTimeout(() => {
-      try {
+      // Attendre le splash minimum
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      setShowSplash(false);
+      setAuthChecked(true);
+
+      // Navigation après un délai
+      setTimeout(() => {
         if (user && !needsBiometricAuth) {
-          console.log('Redirection utilisateur connecté:', user.userType);
+          console.log('Redirection:', user.userType);
           if (user.userType === 'coach') {
             router.replace('/(coach)/programmes');
           } else {
             router.replace('/(client)');
           }
         } else if (!needsBiometricAuth) {
-          console.log('Aucun utilisateur, redirection vers login');
+          console.log('Redirection vers login');
           router.replace('/auth/login');
         }
-      } catch (error) {
-        console.error('Erreur navigation:', error);
-        // Fallback robuste
-        setTimeout(() => {
-          try {
-            if (user && !needsBiometricAuth) {
-              router.push('/(client)');
-            } else if (!needsBiometricAuth) {
-              router.push('/auth/login');
-            }
-          } catch (fallbackError) {
-            console.error('Erreur navigation fallback:', fallbackError);
-            // Dernier fallback : forcer la navigation
-            if (typeof window !== 'undefined') {
-              window.location.href = user ? '/(client)' : '/auth/login';
-            }
-          }
-        }, 1000);
-      }
-    }, 300);
+      }, 100);
 
-    setIsInitializing(false);
+    } catch (error) {
+      console.error('Erreur initialisation:', error);
+      setShowSplash(false);
+      setAuthChecked(true);
+      router.replace('/auth/login');
+    } finally {
+      setIsInitializing(false);
+      console.log('=== FIN INITIALISATION ===');
+    }
   };
 
   const handleBiometricAuth = async () => {
