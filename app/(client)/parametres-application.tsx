@@ -63,6 +63,72 @@ export default function ParametresApplicationScreen() {
     );
   };
 
+  const showLanguageOptions = () => {
+    const languages = ['Français', 'English', 'Español', 'Deutsch'];
+    
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          title: 'Choisir la langue',
+          options: [...languages, 'Annuler'],
+          cancelButtonIndex: languages.length,
+        },
+        (buttonIndex) => {
+          if (buttonIndex < languages.length) {
+            updateSetting('language', languages[buttonIndex]);
+          }
+        }
+      );
+    } else {
+      Alert.alert(
+        'Choisir la langue',
+        'Sélectionnez votre langue préférée',
+        [
+          ...languages.map(lang => ({
+            text: lang,
+            onPress: () => updateSetting('language', lang)
+          })),
+          { text: 'Annuler', style: 'cancel' }
+        ]
+      );
+    }
+  };
+
+  const showUnitsOptions = () => {
+    const units = ['Métrique (kg, cm)', 'Impérial (lbs, ft)'];
+    
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          title: 'Choisir les unités',
+          options: [...units, 'Annuler'],
+          cancelButtonIndex: units.length,
+        },
+        (buttonIndex) => {
+          if (buttonIndex < units.length) {
+            updateSetting('units', buttonIndex === 0 ? 'Métrique' : 'Impérial');
+          }
+        }
+      );
+    } else {
+      Alert.alert(
+        'Choisir les unités',
+        'Sélectionnez votre système d\'unités',
+        [
+          {
+            text: 'Métrique (kg, cm)',
+            onPress: () => updateSetting('units', 'Métrique')
+          },
+          {
+            text: 'Impérial (lbs, ft)',
+            onPress: () => updateSetting('units', 'Impérial')
+          },
+          { text: 'Annuler', style: 'cancel' }
+        ]
+      );
+    }
+  };
+
   const resetSettings = () => {
     Alert.alert(
       'Réinitialiser les paramètres',
@@ -124,7 +190,10 @@ export default function ParametresApplicationScreen() {
             />
           </View>
 
-          <TouchableOpacity style={styles.settingItem}>
+          <TouchableOpacity 
+            style={styles.settingItem}
+            onPress={() => showLanguageOptions()}
+          >
             <View style={styles.settingInfo}>
               <Text style={styles.settingTitle}>Langue</Text>
               <Text style={styles.settingDescription}>{settings.language}</Text>
@@ -132,10 +201,15 @@ export default function ParametresApplicationScreen() {
             <Text style={styles.settingArrow}>›</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.settingItem}>
+          <TouchableOpacity 
+            style={styles.settingItem}
+            onPress={() => showUnitsOptions()}
+          >
             <View style={styles.settingInfo}>
               <Text style={styles.settingTitle}>Unités</Text>
-              <Text style={styles.settingDescription}>{settings.units} (kg, cm)</Text>
+              <Text style={styles.settingDescription}>
+                {settings.units === 'Métrique' ? 'Métrique (kg, cm)' : 'Impérial (lbs, ft)'}
+              </Text>
             </View>
             <Text style={styles.settingArrow}>›</Text>
           </TouchableOpacity>
