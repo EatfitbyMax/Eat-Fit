@@ -37,11 +37,12 @@ export default function AccueilScreen() {
     updateDate();
   }, []);
 
-  // Recharger les données nutritionnelles quand on revient sur la page
+  // Recharger les données quand on revient sur la page
   useFocusEffect(
     React.useCallback(() => {
       if (user) {
         loadNutritionData(user.id);
+        loadTrainingData(user.id);
       }
     }, [user])
   );
@@ -64,6 +65,9 @@ export default function AccueilScreen() {
     try {
       // Charger les données nutritionnelles du jour
       await loadNutritionData(userId);
+      
+      // Charger les données d'entraînement de la semaine
+      await loadTrainingData(userId);Id);
 
       // Charger les données Apple Health
       const healthData = await IntegrationsManager.getHealthData(userId);
@@ -114,6 +118,45 @@ export default function AccueilScreen() {
       } else {
         setCalories(0);
       }
+    } catch (error) {
+      console.error('Erreur chargement données nutrition:', error);
+    }
+  };
+
+  const loadTrainingData = async (userId: string) => {
+    try {
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+
+      // Charger les séances d'entraînement de la semaine
+      const storedWorkouts = await AsyncStorage.getItem(`workouts_${userId}`);
+      if (storedWorkouts) {
+        const workouts = JSON.parse(storedWorkouts);
+        
+        // Calculer le début de la semaine actuelle
+        const now = new Date();
+        const startOfWeek = new Date(now);
+        const day = startOfWeek.getDay();
+        const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
+        startOfWeek.setDate(diff);
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        endOfWeek.setHours(23, 59, 59, 999);
+
+        // Compter les séances de cette semaine
+        const weekWorkouts = workouts.filter((workout: any) => {
+          const workoutDate = new Date(workout.date);
+          return workoutDate >= startOfWeek && workoutDate <= endOfWeek;
+        });
+
+        setTraining(weekWorkouts.length);
+      } else {
+        setTraining(0);
+      }
+    } catch (error) {
+      console.error('Erreur chargement données entraînement:', error);
+    }
 
       // Charger l'objectif calorique personnalisé basé sur le profil du client
       const userProfile = await AsyncStorage.getItem(`user_profile_${userId}`);
@@ -223,28 +266,52 @@ export default function AccueilScreen() {
         {/* Date */}
         <Text style={styles.date}>{currentDate}</Text>
 
-        {/* Cards Container */}
-        <View style={styles.cardsContainer}>
-          {/* Calories & Training Row */}
-          <View style={styles.row}>
-            <TouchableOpacity 
-              style={[styles.card, styles.caloriesCard]}
-              onPress={() => router.push('/(client)/nutrition')}
-            >
-              <Text style={styles.cardValue}>{calories}</Text>
-              <Text style={styles.cardLabel}>Calories</Text>
-              <Text style={styles.cardSubLabel}>{caloriesGoal} kcal</Text>
-            </TouchableOpacity>
+        {/* Circular Gauges Row */}
+        <View style={styles.gaugesContainer}>
+          {/* Nutrition Gauge */}
+          <TouchableOpacity 
+            style={styles.gaugeCard}
+            onPress={() => router.push('/(client)/nutrition')}
+          >
+            <View style={styles.circularGauge}>
+              <View style={[styles.circularGaugeFill, { 
+                transform: [{ rotate: `${Math.min((calories / caloriesGoal) * 360, 360)}deg` }],
+                borderTopColor: '#F5A623'
+              }]} />
+              <View style={styles.circularGaugeInner}>
+                <Text style={styles.gaugeValue}>{calories}</Text>
+                <Text style={styles.gaugeTarget}>/ {caloriesGoal}</Text>
+                <Text style={styles.gaugeUnit}>kcal</Text>
+              </View>
+            </View>
+            <Text style={styles.gaugeLabel}>Nutrition</Text>
+            <Text style={styles.gaugeSubtext}>
+              {Math.max(0, caloriesGoal - calories)} kcal restantes
+            </Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity 
-              style={[styles.card, styles.trainingCard]}
-              onPress={() => router.push('/(client)/entrainement')}
-            >
-              <Text style={styles.cardTitle}>Entraînement</Text>
-              <Text style={styles.cardValue}>{training}</Text>
-              <Text style={styles.cardLabel}>Fatigue</Text>
-            </TouchableOpacity>
-          </View>
+          {/* Training Gauge */}
+          <TouchableOpacity 
+            style={styles.gaugeCard}
+            onPress={() => router.push('/(client)/entrainement')}
+          >
+            <View style={styles.circularGauge}>
+              <View style={[styles.circularGaugeFill, { 
+                transform: [{ rotate: `${Math.min((training / 7) * 360, 360)}deg` }],
+                borderTopColor: '#1F6FEB'
+              }]} />
+              <View style={styles.circularGaugeInner}>
+                <Text style={styles.gaugeValue}>{training}</Text>
+                <Text style={styles.gaugeTarget}>/ 7</Text>
+                <Text style={styles.gaugeUnit}>séances</Text>
+              </View>
+            </View>
+            <Text style={styles.gaugeLabel}>Entraînement</Text>
+            <Text style={styles.gaugeSubtext}>
+              {Math.max(0, 7 - training)} séances restantes
+            </Text>
+          </TouchableOpacity>
+        </View>
 
           {/* Progrès Section */}
           <View style={styles.progressSection}>
@@ -336,6 +403,71 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     gap: 12,
   },
+  gaugesContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    gap: 12,
+    marginBottom: 16,
+  },
+  gaugeCard: {
+    flex: 1,
+    backgroundColor: '#1A1A1A',
+    borderRadius: 16,
+    padding: 18,
+    alignItems: 'center',
+    minHeight: 180,
+  },
+  circularGauge: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 6,
+    borderColor: '#333333',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    marginBottom: 12,
+  },
+  circularGaugeFill: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    borderRadius: 50,
+    borderWidth: 6,
+    borderColor: 'transparent',
+  },
+  circularGaugeInner: {
+    alignItems: 'center',
+  },
+  gaugeValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    lineHeight: 22,
+  },
+  gaugeTarget: {
+    fontSize: 12,
+    color: '#888888',
+    lineHeight: 14,
+  },
+  gaugeUnit: {
+    fontSize: 10,
+    color: '#888888',
+    marginTop: 1,
+  },
+  gaugeLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  gaugeSubtext: {
+    fontSize: 10,
+    color: '#888888',
+    textAlign: 'center',
+    lineHeight: 12,
+  },
   row: {
     flexDirection: 'row',
     gap: 10,
@@ -345,12 +477,6 @@ const styles = StyleSheet.create({
     padding: 14,
     flex: 1,
     minHeight: 120,
-  },
-  caloriesCard: {
-    backgroundColor: '#1A1A1A',
-  },
-  trainingCard: {
-    backgroundColor: '#1A1A1A',
   },
   cardTitle: {
     fontSize: 11,
