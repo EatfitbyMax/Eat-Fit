@@ -102,6 +102,24 @@ export default function ClientLayout() {
           href: null, // Cache cette page de la navigation
         }}
       />
+      <Tabs.Screen
+        name="parametres-application"
+        options={{
+          href: null, // Cache cette page de la navigation
+        }}
+      />
+      <Tabs.Screen
+        name="securite-confidentialite"
+        options={{
+          href: null, // Cache cette page de la navigation
+        }}
+      />
+      <Tabs.Screen
+        name="aide-feedback"
+        options={{
+          href: null, // Cache cette page de la navigation
+        }}
+      />
     </Tabs>
   );
 }
