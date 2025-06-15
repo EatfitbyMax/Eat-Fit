@@ -310,6 +310,8 @@ export default function AccueilScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Container for all cards */}
+        <View style={styles.cardsContainer}>
           {/* Progrès Section */}
           <View style={styles.progressSection}>
             <Text style={styles.progressTitle}>📊 Vos Progrès</Text>
