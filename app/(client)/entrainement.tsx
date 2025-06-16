@@ -293,57 +293,28 @@ export default function EntrainementScreen() {
         <View style={styles.contentContainer}>
           {selectedTab === 'Journal' && (
             <View style={styles.daysContainer}>
-              {/* Sélecteur de jour */}
-              <TouchableOpacity style={styles.daySelector}>
-                <Text style={styles.daySelectorText}>{selectedDay}</Text>
-                <Text style={styles.daySelectorArrow}>▼</Text>
-              </TouchableOpacity>
-
-              {/* Navigation entre les jours */}
-              <View style={styles.dayNavigation}>
+              {/* Liste de tous les jours */}
+              {daysOfWeek.map((jour) => (
                 <TouchableOpacity 
-                  style={styles.dayArrow}
-                  onPress={() => {
-                    const currentIndex = daysOfWeek.indexOf(selectedDay);
-                    const prevIndex = currentIndex === 0 ? daysOfWeek.length - 1 : currentIndex - 1;
-                    setSelectedDay(daysOfWeek[prevIndex]);
-                  }}
+                  key={jour}
+                  style={styles.dayCard}
+                  onPress={() => setSelectedDay(jour)}
                 >
-                  <Text style={styles.arrowText}>‹</Text>
+                  <View style={styles.dayHeader}>
+                    <Text style={styles.dayTitle}>{jour}</Text>
+                    <Text style={styles.dayCalories}>0 exercices</Text>
+                  </View>
+
+                  <Text style={styles.dayEmpty}>{t('no_workout_added')}</Text>
+
+                  <TouchableOpacity 
+                    style={styles.addWorkoutButton}
+                    onPress={() => ouvrirModalAjout(jour)}
+                  >
+                    <Text style={styles.addWorkoutText}>+ {t('add_workout')}</Text>
+                  </TouchableOpacity>
                 </TouchableOpacity>
-
-                <View style={styles.dayContainer}>
-                  <Text style={styles.currentDay}>{selectedDay}</Text>
-                </View>
-
-                <TouchableOpacity 
-                  style={styles.dayArrow}
-                  onPress={() => {
-                    const currentIndex = daysOfWeek.indexOf(selectedDay);
-                    const nextIndex = currentIndex === daysOfWeek.length - 1 ? 0 : currentIndex + 1;
-                    setSelectedDay(daysOfWeek[nextIndex]);
-                  }}
-                >
-                  <Text style={styles.arrowText}>›</Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Contenu du jour sélectionné */}
-              <View style={styles.selectedDayCard}>
-                <View style={styles.dayHeader}>
-                  <Text style={styles.dayTitle}>{selectedDay}</Text>
-                  <Text style={styles.dayCalories}>0 exercices</Text>
-                </View>
-
-                <Text style={styles.dayEmpty}>{t('no_workout_added')}</Text>
-
-                <TouchableOpacity 
-                  style={styles.addWorkoutButton}
-                  onPress={() => ouvrirModalAjout(selectedDay)}
-                >
-                  <Text style={styles.addWorkoutText}>{t('add_workout')}</Text>
-                </TouchableOpacity>
-              </View>
+              ))}
             </View>
           )}
 
@@ -663,66 +634,12 @@ const styles = StyleSheet.create({
   daysContainer: {
     flex: 1,
   },
-  daySelector: {
-    backgroundColor: '#161B22',
-    borderWidth: 1,
-    borderColor: '#21262D',
-    borderRadius: 8,
-    padding: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  daySelectorText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  daySelectorArrow: {
-    color: '#8B949E',
-    fontSize: 12,
-  },
-  dayNavigation: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-    paddingHorizontal: 8,
-  },
-  dayArrow: {
-    padding: 10,
-    borderRadius: 8,
-    backgroundColor: '#161B22',
-    borderWidth: 1,
-    borderColor: '#21262D',
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dayContainer: {
-    flex: 1,
-    alignItems: 'center',
-    marginHorizontal: 12,
-  },
-  currentDay: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    textAlign: 'center',
-  },
-  selectedDayCard: {
-    backgroundColor: '#161B22',
-    borderRadius: 12,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: '#21262D',
-  },
   dayCard: {
+    backgroundColor: '#161B22',
     borderRadius: 12,
     padding: 18,
     borderWidth: 1,
+    borderColor: '#21262D',
     marginBottom: 12,
   },
   dayHeader: {
