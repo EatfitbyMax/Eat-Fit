@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { IntegrationsManager, StravaActivity } from '../../utils/integrations';
 import { getCurrentUser } from '../../utils/auth';
@@ -156,6 +156,22 @@ export default function EntrainementScreen() {
     setCurrentWeek(newWeek);
   };
 
+  const handleDayPress = (jour: string) => {
+    const { start } = getWeekRange();
+    const dayIndex = daysOfWeek.indexOf(jour);
+    const targetDate = new Date(start);
+    targetDate.setDate(start.getDate() + dayIndex);
+    const dateString = targetDate.toISOString().split('T')[0];
+    
+    router.push({
+      pathname: '/(client)/creer-entrainement',
+      params: {
+        selectedDay: jour,
+        selectedDate: dateString
+      }
+    });
+  };
+
   const getActivityIcon = (type: string) => {
     switch (type.toLowerCase()) {
       case 'run':
@@ -285,17 +301,19 @@ export default function EntrainementScreen() {
               {daysOfWeek.map((jour) => {
                 const sessionCount = getWorkoutsCountForDay(jour);
                 return (
-                  <View 
+                  <TouchableOpacity 
                     key={jour}
                     style={styles.dayRow}
+                    onPress={() => handleDayPress(jour)}
                   >
                     <Text style={styles.dayName}>{jour}</Text>
                     <View style={styles.dayInfo}>
                       <Text style={styles.sessionCount}>
                         {sessionCount} séance{sessionCount > 1 ? 's' : ''}
                       </Text>
+                      <Text style={styles.addIcon}>+</Text>
                     </View>
-                  </View>
+                  </TouchableOpacity>
                 );
               })}
             </View>
@@ -492,6 +510,11 @@ const styles = StyleSheet.create({
     color: '#F5A623',
     fontWeight: '500',
     marginRight: 12,
+  },
+  addIcon: {
+    fontSize: 20,
+    color: '#1F6FEB',
+    fontWeight: 'bold',
   },
   
   contentContainer: {
