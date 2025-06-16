@@ -274,6 +274,7 @@ export default function EntrainementScreen() {
   };
 
   const ouvrirModalExercice = () => {
+    console.log('ouvrirModalExercice appelée');
     setNouvelExercice({
       id: '',
       nom: '',
@@ -285,6 +286,7 @@ export default function EntrainementScreen() {
     });
     setExerciceEnEdition(null);
     setExerciceModalVisible(true);
+    console.log('exerciceModalVisible défini à true');
   };
 
   const fermerModalExercice = () => {
@@ -736,7 +738,13 @@ export default function EntrainementScreen() {
               <View style={styles.modalSection}>
                 <View style={styles.exercicesHeader}>
                   <Text style={styles.modalLabel}>{t('exercises')} ({nouvelEntrainement.exercices.length})</Text>
-                  <TouchableOpacity style={styles.addExerciceButton} onPress={ouvrirModalExercice}>
+                  <TouchableOpacity 
+                    style={styles.addExerciceButton} 
+                    onPress={() => {
+                      console.log('Bouton + Ajouter pressé');
+                      ouvrirModalExercice();
+                    }}
+                  >
                     <Text style={styles.addExerciceButtonText}>+ Ajouter</Text>
                   </TouchableOpacity>
                 </View>
@@ -788,6 +796,7 @@ export default function EntrainementScreen() {
       </Modal>
 
       {/* Modal d'ajout d'exercice */}
+      {console.log('Rendu de la modal exercice, visible:', exerciceModalVisible)}
       <Modal
         visible={exerciceModalVisible}
         transparent={true}
@@ -1195,6 +1204,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
+    zIndex: 9999,
   },
   modalContainer: {
     backgroundColor: '#0D1117',
