@@ -293,26 +293,18 @@ export default function EntrainementScreen() {
         <View style={styles.contentContainer}>
           {selectedTab === 'Journal' && (
             <View style={styles.daysContainer}>
-              {/* Liste de tous les jours */}
+              {/* Liste des jours avec style compact */}
               {daysOfWeek.map((jour) => (
                 <TouchableOpacity 
                   key={jour}
-                  style={styles.dayCard}
+                  style={styles.dayRow}
                   onPress={() => setSelectedDay(jour)}
                 >
-                  <View style={styles.dayHeader}>
-                    <Text style={styles.dayTitle}>{jour}</Text>
-                    <Text style={styles.dayCalories}>0 exercices</Text>
+                  <Text style={styles.dayName}>{jour}</Text>
+                  <View style={styles.dayInfo}>
+                    <Text style={styles.sessionCount}>X séances</Text>
+                    <Text style={styles.expandArrow}>⌄</Text>
                   </View>
-
-                  <Text style={styles.dayEmpty}>{t('no_workout_added')}</Text>
-
-                  <TouchableOpacity 
-                    style={styles.addWorkoutButton}
-                    onPress={() => ouvrirModalAjout(jour)}
-                  >
-                    <Text style={styles.addWorkoutText}>+ {t('add_workout')}</Text>
-                  </TouchableOpacity>
                 </TouchableOpacity>
               ))}
             </View>
@@ -633,40 +625,36 @@ const styles = StyleSheet.create({
   },
   daysContainer: {
     flex: 1,
+    paddingTop: 8,
   },
-  dayCard: {
-    backgroundColor: '#161B22',
-    borderRadius: 12,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: '#21262D',
-    marginBottom: 12,
-  },
-  dayHeader: {
+  dayRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#21262D',
   },
-  dayTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+  dayName: {
+    fontSize: 17,
+    fontWeight: '500',
     color: '#FFFFFF',
   },
-  dayCalories: {
-    backgroundColor: '#21262D',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    fontSize: 12,
-    color: '#8B949E',
+  dayInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  dayEmpty: {
-    fontSize: 14,
+  sessionCount: {
+    fontSize: 15,
+    color: '#F5A623',
+    fontWeight: '500',
+    marginRight: 12,
+  },
+  expandArrow: {
+    fontSize: 16,
     color: '#8B949E',
-    textAlign: 'center',
-    marginBottom: 12,
-    fontStyle: 'italic',
+    fontWeight: '300',
   },
   contentContainer: {
     flex: 1,
