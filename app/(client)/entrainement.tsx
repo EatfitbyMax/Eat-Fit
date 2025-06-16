@@ -200,7 +200,7 @@ export default function EntrainementScreen() {
     });
   };
 
-  
+
 
   const renderStravaActivity = (activity: StravaActivity) => (
     <View key={activity.id} style={styles.activityCard}>

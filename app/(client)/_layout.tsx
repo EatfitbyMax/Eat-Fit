@@ -1,4 +1,3 @@
-
 import { Tabs } from 'expo-router';
 import React, { useState, useEffect } from 'react';
 import { Platform } from 'react-native';
@@ -118,6 +117,13 @@ export default function ClientLayout() {
         name="aide-feedback"
         options={{
           href: null, // Cache cette page de la navigation
+        }}
+      />
+      <Tabs.Screen
+        name="creer-entrainement"
+        options={{
+          href: null, // Cache cette page de la navigation
+          tabBarButton: () => null, // This line hides the tab bar button
         }}
       />
     </Tabs>
