@@ -1,3 +1,4 @@
+
 import { Tabs } from 'expo-router';
 import React, { useState, useEffect } from 'react';
 import { Platform } from 'react-native';
@@ -116,13 +117,6 @@ export default function ClientLayout() {
       <Tabs.Screen
         name="aide-feedback"
         options={{
-          href: null, // Cache cette page de la navigation
-        }}
-      />
-      <Tabs.Screen
-        name="creer-entrainement"
-        options={{
-          title: 'Créer Entraînement',
           href: null, // Cache cette page de la navigation
         }}
       />
