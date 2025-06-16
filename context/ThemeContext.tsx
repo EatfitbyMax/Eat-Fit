@@ -1,4 +1,5 @@
 
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -69,28 +70,31 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(true); // Par défaut mode sombre
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
   useEffect(() => {
-    loadThemePreference();
-  }, []);
-
-  const loadThemePreference = async () => {
-    try {
-      const savedTheme = await AsyncStorage.getItem('theme_preference');
-      if (savedTheme !== null) {
-        setIsDarkMode(savedTheme === 'dark');
+    const loadTheme = async () => {
+      try {
+        const savedTheme = await AsyncStorage.getItem('theme_preference');
+        if (savedTheme !== null) {
+          setIsDarkMode(savedTheme === 'dark');
+        }
+      } catch (error) {
+        console.error('Erreur chargement thème:', error);
+      } finally {
+        setIsLoaded(true);
       }
-    } catch (error) {
-      console.error('Erreur lors du chargement des préférences de thème:', error);
-    }
-  };
+    };
+    
+    loadTheme();
+  }, []);
 
   const saveThemePreference = async (isDark: boolean) => {
     try {
       await AsyncStorage.setItem('theme_preference', isDark ? 'dark' : 'light');
     } catch (error) {
-      console.error('Erreur lors de la sauvegarde des préférences de thème:', error);
+      console.error('Erreur sauvegarde thème:', error);
     }
   };
 
@@ -105,6 +109,11 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     saveThemePreference(isDark);
   };
 
+  // Ne pas rendre tant que le thème n'est pas chargé
+  if (!isLoaded) {
+    return null;
+  }
+
   const theme = isDarkMode ? darkTheme : lightTheme;
 
   return (
@@ -113,3 +122,4 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     </ThemeContext.Provider>
   );
 };
+
