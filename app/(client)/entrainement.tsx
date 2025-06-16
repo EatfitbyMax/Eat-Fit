@@ -276,12 +276,9 @@ export default function EntrainementScreen() {
   };
 
   const ouvrirModalExercice = () => {
-    console.log('Navigation vers création d\'exercice');
-    // Navigation vers la page de création d'exercices avec le type d'activité
-    router.push({
-      pathname: '/creer-exercice',
-      params: { typeActivite: nouvelEntrainement.typeActivite }
-    });
+    console.log('ouvrirModalExercice appelée');
+    setExerciceModalVisible(true);
+    console.log('exerciceModalVisible défini à true');
   };
 
   const fermerModalExercice = () => {
@@ -798,8 +795,8 @@ export default function EntrainementScreen() {
         animationType="slide"
         onRequestClose={fermerModalExercice}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
+        <View style={styles.exerciceModalOverlay}>
+          <View style={styles.exerciceModalContainer}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Ajouter un exercice</Text>
               <TouchableOpacity onPress={fermerModalExercice} style={styles.closeButton}>
@@ -1426,5 +1423,21 @@ const styles = StyleSheet.create({
   dropdownItemText: {
     color: '#FFFFFF',
     fontSize: 16,
+  },
+  // Styles spécifiques pour la modal d'exercice (50% écran)
+  exerciceModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+    zIndex: 10000,
+  },
+  exerciceModalContainer: {
+    backgroundColor: '#0D1117',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    height: '50%',
+    borderWidth: 1,
+    borderColor: '#21262D',
+    borderBottomWidth: 0,
   },
 });
