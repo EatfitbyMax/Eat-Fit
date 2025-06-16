@@ -879,8 +879,6 @@ export default function EntrainementScreen() {
 
               {/* Notes */}
               <View style={styles.modalSection}>
-                This correction addresses a syntax error in the styles, specifically in the dropdownList definition.
-```
                 <Text style={styles.modalLabel}>Notes</Text>
                 <TextInput
                   style={[styles.modalInput, styles.textArea]}
