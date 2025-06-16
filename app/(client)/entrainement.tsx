@@ -673,5 +673,18 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#FFFFFF',
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#161B22',
+    borderRadius: 12,
+    width: '90%',
+    maxHeight: '80%',
+    borderWidth: 1,
+    borderColor: '#21262D',
   },
 });
