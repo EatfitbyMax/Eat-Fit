@@ -80,7 +80,7 @@ export default function EntrainementScreen() {
     const targetDate = new Date(start);
     targetDate.setDate(start.getDate() + dayIndex);
     const dateString = targetDate.toISOString().split('T')[0];
-    
+
     return workouts.filter(workout => workout.date === dateString).length;
   };
 
@@ -203,7 +203,7 @@ export default function EntrainementScreen() {
     const dayIndex = daysOfWeek.indexOf(jour);
     const targetDate = new Date(start);
     targetDate.setDate(start.getDate() + dayIndex);
-    
+
     setNouvelEntrainement({
       nom: '',
       typeActivite: 'Musculation',
@@ -238,7 +238,7 @@ export default function EntrainementScreen() {
 
       const updatedWorkouts = [...workouts, newWorkout];
       await saveWorkouts(updatedWorkouts);
-      
+
       Alert.alert('Succès', 'Entraînement ajouté avec succès!');
       fermerModal();
     } catch (error) {
@@ -427,7 +427,7 @@ export default function EntrainementScreen() {
         </View>
       </ScrollView>
 
-      
+
 
       {/* Modal d'ajout d'entraînement */}
       <Modal
@@ -780,7 +780,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#8B949E',
   },
-  
+
   // Styles pour les activités Strava
   completedContainer: {
     flex: 1,
@@ -884,7 +884,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#0D1117',
     borderRadius: 12,
     width: '100%',
-    maxHeight: '90%',
+    maxHeight: '95%',
     borderWidth: 1,
     borderColor: '#21262D',
   },
