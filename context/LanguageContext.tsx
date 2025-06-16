@@ -318,6 +318,7 @@ interface LanguageProviderProps {
 
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) => {
   const [language, setLanguageState] = useState<SupportedLanguage>('fr');
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
 
   useEffect(() => {
     loadLanguage();
@@ -329,8 +330,10 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
       if (savedLanguage && ['fr', 'en', 'es', 'de'].includes(savedLanguage)) {
         setLanguageState(savedLanguage as SupportedLanguage);
       }
+      setIsInitialized(true);
     } catch (error) {
       console.error('Erreur chargement langue:', error);
+      setIsInitialized(true);
     }
   };
 
