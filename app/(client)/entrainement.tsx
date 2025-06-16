@@ -170,13 +170,29 @@ export default function EntrainementScreen() {
     targetDate.setDate(start.getDate() + dayIndex);
     const dateString = targetDate.toISOString().split('T')[0];
     
-    router.push({
-      pathname: '/(client)/creer-entrainement',
-      params: {
-        selectedDay: jour,
-        selectedDate: dateString
-      }
-    });
+    // Récupérer les entraînements du jour
+    const dayWorkouts = workouts.filter(workout => workout.date === dateString);
+    
+    if (dayWorkouts.length > 0) {
+      // S'il y a des entraînements, naviguer vers la gestion
+      router.push({
+        pathname: '/(client)/gerer-entrainements',
+        params: {
+          selectedDay: jour,
+          selectedDate: dateString,
+          workouts: JSON.stringify(dayWorkouts)
+        }
+      });
+    } else {
+      // S'il n'y en a pas, créer un nouvel entraînement
+      router.push({
+        pathname: '/(client)/creer-entrainement',
+        params: {
+          selectedDay: jour,
+          selectedDate: dateString
+        }
+      });
+    }
   };
 
   const getActivityIcon = (type: string) => {
@@ -318,7 +334,7 @@ export default function EntrainementScreen() {
                       <Text style={styles.sessionCount}>
                         {sessionCount} séance{sessionCount > 1 ? 's' : ''}
                       </Text>
-                      <Text style={styles.addIcon}>+</Text>
+                      <Text style={styles.arrowIcon}>›</Text>
                     </View>
                   </TouchableOpacity>
                 );
@@ -518,9 +534,9 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginRight: 12,
   },
-  addIcon: {
-    fontSize: 20,
-    color: '#1F6FEB',
+  arrowIcon: {
+    fontSize: 18,
+    color: '#8B949E',
     fontWeight: 'bold',
   },
   
