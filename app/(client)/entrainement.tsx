@@ -1200,7 +1200,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#0D1117',
     borderRadius: 12,
     width: '100%',
-    maxHeight: '90%',
+    height: '75%',
     borderWidth: 1,
     borderColor: '#21262D',
   },
