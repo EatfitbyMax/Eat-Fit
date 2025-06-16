@@ -253,7 +253,13 @@ export default function CreerEntrainementScreen() {
       Alert.alert(
         'Succès', 
         'Entraînement créé avec succès !',
-        [{ text: 'OK', onPress: () => router.back() }]
+        [{ 
+          text: 'OK', 
+          onPress: () => {
+            // Redirection avec paramètre pour forcer le rechargement
+            router.replace('/(client)/entrainement?refresh=true');
+          }
+        }]
       );
     } catch (error) {
       console.error('Erreur sauvegarde entraînement:', error);
