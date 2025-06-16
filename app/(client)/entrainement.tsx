@@ -1416,7 +1416,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 0,
     borderBottomLeftRadius: 8,
     borderBottomRightRadius: 8,
-    maxHeight: '99%',
+    maxHeight: 200,
     zIndex: 1000,
   },
   dropdownScrollView: {
