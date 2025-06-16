@@ -1,7 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useColorScheme } from 'react-native';
 
 export interface ThemeColors {
   background: string;
@@ -70,8 +69,7 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const systemColorScheme = useColorScheme();
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(systemColorScheme === 'dark');
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(true); // Par défaut mode sombre
 
   useEffect(() => {
     loadThemePreference();
@@ -82,9 +80,6 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       const savedTheme = await AsyncStorage.getItem('theme_preference');
       if (savedTheme !== null) {
         setIsDarkMode(savedTheme === 'dark');
-      } else {
-        // Si pas de préférence sauvegardée, utiliser le thème système
-        setIsDarkMode(systemColorScheme === 'dark');
       }
     } catch (error) {
       console.error('Erreur lors du chargement des préférences de thème:', error);
