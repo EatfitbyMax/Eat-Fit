@@ -122,8 +122,8 @@ export default function ClientLayout() {
       <Tabs.Screen
         name="creer-entrainement"
         options={{
+          title: 'Créer Entraînement',
           href: null, // Cache cette page de la navigation
-          tabBarButton: () => null, // This line hides the tab bar button
         }}
       />
     </Tabs>
