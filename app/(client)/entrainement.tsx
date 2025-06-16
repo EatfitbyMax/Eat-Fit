@@ -16,6 +16,7 @@ export default function EntrainementScreen() {
   const [hasSubscription, setHasSubscription] = useState(false);
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [modalVisible, setModalVisible] = useState(false);
+  const [workouts, setWorkouts] = useState<any[]>([]);
   const [nouvelEntrainement, setNouvelEntrainement] = useState({
     nom: '',
     typeActivite: 'Musculation',
@@ -30,19 +31,58 @@ export default function EntrainementScreen() {
   });
 
   const daysOfWeek = [
-    t('monday'), 
-    t('tuesday'), 
-    t('wednesday'), 
-    t('thursday'), 
-    t('friday'), 
-    t('saturday'), 
-    t('sunday')
+    'Lundi', 
+    'Mardi', 
+    'Mercredi', 
+    'Jeudi', 
+    'Vendredi', 
+    'Samedi', 
+    'Dimanche'
   ];
 
   useEffect(() => {
     loadStravaActivities();
     checkUserSubscription();
+    loadWorkouts();
   }, []);
+
+  const loadWorkouts = async () => {
+    try {
+      const currentUser = await getCurrentUser();
+      if (currentUser) {
+        const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+        const storedWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
+        if (storedWorkouts) {
+          setWorkouts(JSON.parse(storedWorkouts));
+        }
+      }
+    } catch (error) {
+      console.error('Erreur chargement entraînements:', error);
+    }
+  };
+
+  const saveWorkouts = async (newWorkouts: any[]) => {
+    try {
+      const currentUser = await getCurrentUser();
+      if (currentUser) {
+        const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+        await AsyncStorage.setItem(`workouts_${currentUser.id}`, JSON.stringify(newWorkouts));
+        setWorkouts(newWorkouts);
+      }
+    } catch (error) {
+      console.error('Erreur sauvegarde entraînements:', error);
+    }
+  };
+
+  const getWorkoutsCountForDay = (day: string) => {
+    const { start } = getWeekRange();
+    const dayIndex = daysOfWeek.indexOf(day);
+    const targetDate = new Date(start);
+    targetDate.setDate(start.getDate() + dayIndex);
+    const dateString = targetDate.toISOString().split('T')[0];
+    
+    return workouts.filter(workout => workout.date === dateString).length;
+  };
 
   const loadStravaActivities = async () => {
     try {
@@ -159,7 +199,11 @@ export default function EntrainementScreen() {
 
   const ouvrirModalAjout = (jour: string) => {
     setSelectedDay(jour);
-    const today = new Date();
+    const { start } = getWeekRange();
+    const dayIndex = daysOfWeek.indexOf(jour);
+    const targetDate = new Date(start);
+    targetDate.setDate(start.getDate() + dayIndex);
+    
     setNouvelEntrainement({
       nom: '',
       typeActivite: 'Musculation',
@@ -167,7 +211,7 @@ export default function EntrainementScreen() {
       difficulte: 'Intermédiaire',
       duree: '',
       calories: '',
-      date: today.toISOString().split('T')[0],
+      date: targetDate.toISOString().split('T')[0],
       heure: '09:00',
       notes: '',
       jour: jour
@@ -179,14 +223,28 @@ export default function EntrainementScreen() {
     setModalVisible(false);
   };
 
-  const sauvegarderEntrainement = () => {
+  const sauvegarderEntrainement = async () => {
     if (!nouvelEntrainement.nom.trim()) {
       Alert.alert('Erreur', 'Veuillez saisir un nom pour l\'entraînement');
       return;
     }
 
-    Alert.alert('Succès', 'Entraînement ajouté avec succès!');
-    fermerModal();
+    try {
+      const newWorkout = {
+        id: Date.now().toString(),
+        ...nouvelEntrainement,
+        createdAt: new Date().toISOString()
+      };
+
+      const updatedWorkouts = [...workouts, newWorkout];
+      await saveWorkouts(updatedWorkouts);
+      
+      Alert.alert('Succès', 'Entraînement ajouté avec succès!');
+      fermerModal();
+    } catch (error) {
+      console.error('Erreur sauvegarde:', error);
+      Alert.alert('Erreur', 'Impossible de sauvegarder l\'entraînement');
+    }
   };
 
   const renderStravaActivity = (activity: StravaActivity) => (
@@ -294,19 +352,24 @@ export default function EntrainementScreen() {
           {selectedTab === 'Journal' && (
             <View style={styles.daysContainer}>
               {/* Liste des jours avec style compact */}
-              {daysOfWeek.map((jour) => (
-                <TouchableOpacity 
-                  key={jour}
-                  style={styles.dayRow}
-                  onPress={() => setSelectedDay(jour)}
-                >
-                  <Text style={styles.dayName}>{jour}</Text>
-                  <View style={styles.dayInfo}>
-                    <Text style={styles.sessionCount}>X séances</Text>
-                    <Text style={styles.expandArrow}>⌄</Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
+              {daysOfWeek.map((jour) => {
+                const sessionCount = getWorkoutsCountForDay(jour);
+                return (
+                  <TouchableOpacity 
+                    key={jour}
+                    style={styles.dayRow}
+                    onPress={() => ouvrirModalAjout(jour)}
+                  >
+                    <Text style={styles.dayName}>{jour}</Text>
+                    <View style={styles.dayInfo}>
+                      <Text style={styles.sessionCount}>
+                        {sessionCount} séance{sessionCount > 1 ? 's' : ''}
+                      </Text>
+                      <Text style={styles.expandArrow}>⌄</Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           )}
 
