@@ -24,6 +24,9 @@ interface Exercise {
   duration?: string;
   rest?: string;
   notes?: string;
+  distance?: string;
+  weight?: string;
+  intensity?: string;
 }
 
 interface Workout {
@@ -51,6 +54,73 @@ const SPECIFICITIES = [
 ];
 
 const DIFFICULTIES = ['Débutant', 'Intermédiaire', 'Avancé', 'Expert'];
+
+const EXERCISE_SUGGESTIONS = {
+  'Musculation': [
+    'Squat', 'Développé couché', 'Soulevé de terre', 'Pompes', 'Tractions',
+    'Développé militaire', 'Rowing barre', 'Curl biceps', 'Dips', 'Fentes'
+  ],
+  'Cardio': [
+    'Tapis de course', 'Vélo elliptique', 'Rameur', 'Stepper', 'Burpees',
+    'Mountain climbers', 'Jumping jacks', 'High knees', 'Corde à sauter'
+  ],
+  'Course à pied': [
+    'Échauffement', 'Course continue', 'Fractionné', 'Interval training',
+    'Sprint', 'Côtes', 'Récupération active', 'Étirements', 'Fartlek'
+  ],
+  'Natation': [
+    'Crawl', 'Brasse', 'Dos crawlé', 'Papillon', 'Battements de jambes',
+    'Pull buoy', 'Plaquettes', 'Éducatifs', 'Récupération', 'Apnée'
+  ],
+  'Cyclisme': [
+    'Échauffement', 'Endurance', 'Fractionné', 'Côtes', 'Sprint',
+    'Tempo', 'Récupération', 'Technique', 'PMA', 'Seuil'
+  ],
+  'Yoga': [
+    'Salutation au soleil', 'Guerrier', 'Chien tête en bas', 'Cobra',
+    'Triangle', 'Arbre', 'Lotus', 'Shavasana', 'Pranayama', 'Méditation'
+  ],
+  'HIIT': [
+    'Burpees', 'Squat jump', 'Mountain climbers', 'Planche', 'Fentes sautées',
+    'Push-ups', 'Corde à sauter', 'Sprints', 'Battle rope', 'Box jump'
+  ],
+  'Pilates': [
+    'Hundred', 'Roll up', 'Single leg circle', 'Rolling like a ball',
+    'Teaser', 'Plank', 'Side plank', 'Swan', 'Leg pull front', 'Scissors'
+  ],
+  'Boxe': [
+    'Jab', 'Cross', 'Crochet', 'Uppercut', 'Esquive', 'Blocage',
+    'Sac de frappe', 'Pattes d\'ours', 'Shadow boxing', 'Corde à sauter'
+  ],
+  'CrossFit': [
+    'Thrusters', 'Pull-ups', 'Box jump', 'Kettlebell swing', 'Burpees',
+    'Deadlift', 'Clean and jerk', 'Snatch', 'Wall ball', 'Double unders'
+  ],
+  'Football': [
+    'Échauffement', 'Passes courtes', 'Passes longues', 'Contrôle',
+    'Dribbles', 'Tirs', 'Têtes', 'Défense', 'Jeu à 11', 'Penalties'
+  ],
+  'Basketball': [
+    'Dribbles', 'Tirs', 'Passes', 'Rebonds', 'Défense', 'Lay-up',
+    '3 points', 'Lancers francs', 'Jeu collectif', 'Conditionnement'
+  ],
+  'Tennis': [
+    'Service', 'Coup droit', 'Revers', 'Volée', 'Smash', 'Lob',
+    'Déplacements', 'Jeu de jambes', 'Retour de service', 'Points'
+  ],
+  'Étirement': [
+    'Ischio-jambiers', 'Quadriceps', 'Mollets', 'Fessiers', 'Dos',
+    'Épaules', 'Cou', 'Hanches', 'Adducteurs', 'Psoas'
+  ],
+  'Danse': [
+    'Échauffement', 'Technique', 'Chorégraphie', 'Improvisation',
+    'Cardio dance', 'Isolation', 'Coordination', 'Souplesse', 'Rythme'
+  ],
+  'Escalade': [
+    'Échauffement', 'Technique', 'Force', 'Endurance', 'Équilibre',
+    'Voies faciles', 'Voies difficiles', 'Boulder', 'Rappel', 'Nœuds'
+  ]
+};
 
 export default function CreerEntrainementScreen() {
   const router = useRouter();
@@ -82,9 +152,13 @@ export default function CreerEntrainementScreen() {
     reps: '',
     duration: '',
     rest: '',
-    notes: ''
+    notes: '',
+    distance: '',
+    weight: '',
+    intensity: ''
   });
   const [editingExerciseIndex, setEditingExerciseIndex] = useState<number | null>(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
     // Calculer les calories estimées basées sur le type et la durée
@@ -195,9 +269,13 @@ export default function CreerEntrainementScreen() {
       reps: '',
       duration: '',
       rest: '',
-      notes: ''
+      notes: '',
+      distance: '',
+      weight: '',
+      intensity: ''
     });
     setEditingExerciseIndex(null);
+    setShowSuggestions(false);
     setShowExerciseModal(true);
   };
 
@@ -252,6 +330,81 @@ export default function CreerEntrainementScreen() {
     );
   };
 
+  const getFieldsForSport = (sportType: string) => {
+    const commonFields = ['name', 'notes'];
+    
+    switch (sportType.toLowerCase()) {
+      case 'musculation':
+      case 'crossfit':
+        return [...commonFields, 'sets', 'reps', 'weight', 'rest'];
+      
+      case 'course à pied':
+      case 'cyclisme':
+        return [...commonFields, 'distance', 'duration', 'intensity'];
+      
+      case 'natation':
+        return [...commonFields, 'distance', 'duration', 'sets'];
+      
+      case 'cardio':
+      case 'hiit':
+        return [...commonFields, 'duration', 'intensity', 'rest'];
+      
+      case 'yoga':
+      case 'pilates':
+      case 'étirement':
+        return [...commonFields, 'duration', 'sets'];
+      
+      case 'boxe':
+      case 'danse':
+        return [...commonFields, 'duration', 'sets', 'intensity'];
+      
+      case 'football':
+      case 'basketball':
+      case 'tennis':
+      case 'escalade':
+        return [...commonFields, 'duration', 'sets', 'intensity'];
+      
+      default:
+        return [...commonFields, 'sets', 'reps', 'duration', 'rest'];
+    }
+  };
+
+  const getPlaceholderForField = (field: string, sportType: string) => {
+    switch (field) {
+      case 'sets':
+        return sportType === 'Natation' ? 'Longueurs' : '3';
+      case 'reps':
+        return '12';
+      case 'duration':
+        return sportType === 'Course à pied' ? '30' : '30';
+      case 'distance':
+        return sportType === 'Course à pied' ? '5' : sportType === 'Natation' ? '1000' : '10';
+      case 'weight':
+        return '20';
+      case 'rest':
+        return '60';
+      case 'intensity':
+        return sportType === 'Course à pied' ? 'Modérée' : 'Moyenne';
+      default:
+        return '';
+    }
+  };
+
+  const getUnitForField = (field: string, sportType: string) => {
+    switch (field) {
+      case 'duration':
+        return 'min';
+      case 'distance':
+        return sportType === 'Natation' ? 'm' : 'km';
+      case 'weight':
+        return 'kg';
+      case 'rest':
+        return 'sec';
+      default:
+        return '';
+    }
+  };
+
   const renderDropdownModal = (
     visible: boolean,
     onClose: () => void,
@@ -287,105 +440,231 @@ export default function CreerEntrainementScreen() {
     </Modal>
   );
 
-  const renderExerciseModal = () => (
-    <Modal visible={showExerciseModal} transparent animationType="slide">
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>
-              {editingExerciseIndex !== null ? 'Modifier l\'exercice' : 'Ajouter un exercice'}
-            </Text>
-            <TouchableOpacity onPress={() => setShowExerciseModal(false)} style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>×</Text>
-            </TouchableOpacity>
-          </View>
-          
-          <ScrollView style={styles.modalContent}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Nom de l'exercice *</Text>
-              <TextInput
-                style={styles.input}
-                value={currentExercise.name}
-                onChangeText={(text) => setCurrentExercise(prev => ({ ...prev, name: text }))}
-                placeholder="Ex: Squat, Pompes..."
-                placeholderTextColor="#8B949E"
-              />
-            </View>
+  const renderExerciseModal = () => {
+    const fieldsToShow = getFieldsForSport(workout.type);
+    const suggestions = EXERCISE_SUGGESTIONS[workout.type] || [];
 
-            <View style={styles.row}>
-              <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
-                <Text style={styles.label}>Séries</Text>
-                <TextInput
-                  style={styles.input}
-                  value={currentExercise.sets}
-                  onChangeText={(text) => setCurrentExercise(prev => ({ ...prev, sets: text }))}
-                  placeholder="3"
-                  placeholderTextColor="#8B949E"
-                  keyboardType="numeric"
-                />
-              </View>
-              
-              <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
-                <Text style={styles.label}>Répétitions</Text>
-                <TextInput
-                  style={styles.input}
-                  value={currentExercise.reps}
-                  onChangeText={(text) => setCurrentExercise(prev => ({ ...prev, reps: text }))}
-                  placeholder="12"
-                  placeholderTextColor="#8B949E"
-                  keyboardType="numeric"
-                />
-              </View>
-            </View>
-
-            <View style={styles.row}>
-              <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
-                <Text style={styles.label}>Durée (min)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={currentExercise.duration}
-                  onChangeText={(text) => setCurrentExercise(prev => ({ ...prev, duration: text }))}
-                  placeholder="30"
-                  placeholderTextColor="#8B949E"
-                  keyboardType="numeric"
-                />
-              </View>
-              
-              <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
-                <Text style={styles.label}>Repos (sec)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={currentExercise.rest}
-                  onChangeText={(text) => setCurrentExercise(prev => ({ ...prev, rest: text }))}
-                  placeholder="60"
-                  placeholderTextColor="#8B949E"
-                  keyboardType="numeric"
-                />
-              </View>
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Notes</Text>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                value={currentExercise.notes}
-                onChangeText={(text) => setCurrentExercise(prev => ({ ...prev, notes: text }))}
-                placeholder="Instructions spécifiques..."
-                placeholderTextColor="#8B949E"
-                multiline
-              />
-            </View>
-
-            <TouchableOpacity style={styles.saveButton} onPress={handleSaveExercise}>
-              <Text style={styles.saveButtonText}>
-                {editingExerciseIndex !== null ? 'Modifier' : 'Ajouter'}
+    return (
+      <Modal visible={showExerciseModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {editingExerciseIndex !== null ? 'Modifier l\'exercice' : `Ajouter un exercice ${workout.type ? `- ${workout.type}` : ''}`}
               </Text>
-            </TouchableOpacity>
-          </ScrollView>
+              <TouchableOpacity onPress={() => setShowExerciseModal(false)} style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>×</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView style={styles.modalContent}>
+              {/* Nom de l'exercice avec suggestions */}
+              <View style={styles.inputGroup}>
+                <View style={styles.labelWithSuggestion}>
+                  <Text style={styles.label}>Nom de l'exercice *</Text>
+                  {suggestions.length > 0 && (
+                    <TouchableOpacity 
+                      style={styles.suggestionButton}
+                      onPress={() => setShowSuggestions(!showSuggestions)}
+                    >
+                      <Text style={styles.suggestionButtonText}>
+                        {showSuggestions ? 'Masquer' : 'Suggestions'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+                <TextInput
+                  style={styles.input}
+                  value={currentExercise.name}
+                  onChangeText={(text) => setCurrentExercise(prev => ({ ...prev, name: text }))}
+                  placeholder={`Ex: ${suggestions.slice(0, 2).join(', ')}...`}
+                  placeholderTextColor="#8B949E"
+                />
+                
+                {showSuggestions && suggestions.length > 0 && (
+                  <View style={styles.suggestionsContainer}>
+                    {suggestions.map((suggestion) => (
+                      <TouchableOpacity
+                        key={suggestion}
+                        style={styles.suggestionItem}
+                        onPress={() => {
+                          setCurrentExercise(prev => ({ ...prev, name: suggestion }));
+                          setShowSuggestions(false);
+                        }}
+                      >
+                        <Text style={styles.suggestionText}>{suggestion}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              </View>
+
+              {/* Champs dynamiques selon le sport */}
+              {fieldsToShow.includes('sets') && fieldsToShow.includes('reps') && (
+                <View style={styles.row}>
+                  <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.label}>
+                      {workout.type === 'Natation' ? 'Longueurs' : 'Séries'}
+                    </Text>
+                    <TextInput
+                      style={styles.input}
+                      value={currentExercise.sets}
+                      onChangeText={(text) => setCurrentExercise(prev => ({ ...prev, sets: text }))}
+                      placeholder={getPlaceholderForField('sets', workout.type)}
+                      placeholderTextColor="#8B949E"
+                      keyboardType="numeric"
+                    />
+                  </View>
+                  
+                  <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
+                    <Text style={styles.label}>Répétitions</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={currentExercise.reps}
+                      onChangeText={(text) => setCurrentExercise(prev => ({ ...prev, reps: text }))}
+                      placeholder={getPlaceholderForField('reps', workout.type)}
+                      placeholderTextColor="#8B949E"
+                      keyboardType="numeric"
+                    />
+                  </View>
+                </View>
+              )}
+
+              {fieldsToShow.includes('distance') && fieldsToShow.includes('duration') && (
+                <View style={styles.row}>
+                  <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.label}>
+                      Distance ({getUnitForField('distance', workout.type)})
+                    </Text>
+                    <TextInput
+                      style={styles.input}
+                      value={currentExercise.distance}
+                      onChangeText={(text) => setCurrentExercise(prev => ({ ...prev, distance: text }))}
+                      placeholder={getPlaceholderForField('distance', workout.type)}
+                      placeholderTextColor="#8B949E"
+                      keyboardType="numeric"
+                    />
+                  </View>
+                  
+                  <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
+                    <Text style={styles.label}>
+                      Durée ({getUnitForField('duration', workout.type)})
+                    </Text>
+                    <TextInput
+                      style={styles.input}
+                      value={currentExercise.duration}
+                      onChangeText={(text) => setCurrentExercise(prev => ({ ...prev, duration: text }))}
+                      placeholder={getPlaceholderForField('duration', workout.type)}
+                      placeholderTextColor="#8B949E"
+                      keyboardType="numeric"
+                    />
+                  </View>
+                </View>
+              )}
+
+              {fieldsToShow.includes('weight') && fieldsToShow.includes('rest') && (
+                <View style={styles.row}>
+                  <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.label}>
+                      Poids ({getUnitForField('weight', workout.type)})
+                    </Text>
+                    <TextInput
+                      style={styles.input}
+                      value={currentExercise.weight}
+                      onChangeText={(text) => setCurrentExercise(prev => ({ ...prev, weight: text }))}
+                      placeholder={getPlaceholderForField('weight', workout.type)}
+                      placeholderTextColor="#8B949E"
+                      keyboardType="numeric"
+                    />
+                  </View>
+                  
+                  <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
+                    <Text style={styles.label}>
+                      Repos ({getUnitForField('rest', workout.type)})
+                    </Text>
+                    <TextInput
+                      style={styles.input}
+                      value={currentExercise.rest}
+                      onChangeText={(text) => setCurrentExercise(prev => ({ ...prev, rest: text }))}
+                      placeholder={getPlaceholderForField('rest', workout.type)}
+                      placeholderTextColor="#8B949E"
+                      keyboardType="numeric"
+                    />
+                  </View>
+                </View>
+              )}
+
+              {fieldsToShow.includes('intensity') && (
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Intensité</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={currentExercise.intensity}
+                    onChangeText={(text) => setCurrentExercise(prev => ({ ...prev, intensity: text }))}
+                    placeholder={getPlaceholderForField('intensity', workout.type)}
+                    placeholderTextColor="#8B949E"
+                  />
+                </View>
+              )}
+
+              {/* Champs individuels selon le sport */}
+              {fieldsToShow.includes('sets') && !fieldsToShow.includes('reps') && (
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>
+                    {workout.type === 'Natation' ? 'Longueurs' : 'Séries'}
+                  </Text>
+                  <TextInput
+                    style={styles.input}
+                    value={currentExercise.sets}
+                    onChangeText={(text) => setCurrentExercise(prev => ({ ...prev, sets: text }))}
+                    placeholder={getPlaceholderForField('sets', workout.type)}
+                    placeholderTextColor="#8B949E"
+                    keyboardType="numeric"
+                  />
+                </View>
+              )}
+
+              {fieldsToShow.includes('duration') && !fieldsToShow.includes('distance') && (
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>
+                    Durée ({getUnitForField('duration', workout.type)})
+                  </Text>
+                  <TextInput
+                    style={styles.input}
+                    value={currentExercise.duration}
+                    onChangeText={(text) => setCurrentExercise(prev => ({ ...prev, duration: text }))}
+                    placeholder={getPlaceholderForField('duration', workout.type)}
+                    placeholderTextColor="#8B949E"
+                    keyboardType="numeric"
+                  />
+                </View>
+              )}
+
+              {fieldsToShow.includes('notes') && (
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Notes</Text>
+                  <TextInput
+                    style={[styles.input, styles.textArea]}
+                    value={currentExercise.notes}
+                    onChangeText={(text) => setCurrentExercise(prev => ({ ...prev, notes: text }))}
+                    placeholder="Instructions spécifiques..."
+                    placeholderTextColor="#8B949E"
+                    multiline
+                  />
+                </View>
+              )}
+
+              <TouchableOpacity style={styles.saveButton} onPress={handleSaveExercise}>
+                <Text style={styles.saveButtonText}>
+                  {editingExerciseIndex !== null ? 'Modifier' : 'Ajouter'}
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
         </View>
-      </View>
-    </Modal>
-  );
+      </Modal>
+    );
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
@@ -523,13 +802,26 @@ export default function CreerEntrainementScreen() {
                     
                     <View style={styles.exerciseDetails}>
                       {exercise.sets && (
-                        <Text style={styles.exerciseDetail}>{exercise.sets} séries</Text>
+                        <Text style={styles.exerciseDetail}>
+                          {exercise.sets} {workout.type === 'Natation' ? 'longueurs' : 'séries'}
+                        </Text>
                       )}
                       {exercise.reps && (
                         <Text style={styles.exerciseDetail}>{exercise.reps} reps</Text>
                       )}
                       {exercise.duration && (
                         <Text style={styles.exerciseDetail}>{exercise.duration} min</Text>
+                      )}
+                      {exercise.distance && (
+                        <Text style={styles.exerciseDetail}>
+                          {exercise.distance} {workout.type === 'Natation' ? 'm' : 'km'}
+                        </Text>
+                      )}
+                      {exercise.weight && (
+                        <Text style={styles.exerciseDetail}>{exercise.weight} kg</Text>
+                      )}
+                      {exercise.intensity && (
+                        <Text style={styles.exerciseDetail}>Intensité: {exercise.intensity}</Text>
                       )}
                       {exercise.rest && (
                         <Text style={styles.exerciseDetail}>{exercise.rest}s repos</Text>
@@ -876,5 +1168,40 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  labelWithSuggestion: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  suggestionButton: {
+    backgroundColor: '#21262D',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  suggestionButtonText: {
+    color: '#1F6FEB',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  suggestionsContainer: {
+    backgroundColor: '#161B22',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    marginTop: 8,
+    maxHeight: 150,
+  },
+  suggestionItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#21262D',
+  },
+  suggestionText: {
+    color: '#FFFFFF',
+    fontSize: 14,
   },
 });
