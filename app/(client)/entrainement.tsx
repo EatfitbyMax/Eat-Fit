@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert, Modal, TextInput } from 'react-native';
-import { useRouter } from 'expo-router';
 import { IntegrationsManager, StravaActivity } from '../../utils/integrations';
 import { getCurrentUser } from '../../utils/auth';
 import { checkSubscriptionStatus } from '../../utils/subscription';
@@ -8,7 +7,6 @@ import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
 
 export default function EntrainementScreen() {
-  const router = useRouter();
   const { theme } = useTheme();
   const { t } = useLanguage();
   const [selectedTab, setSelectedTab] = useState('Journal');
@@ -22,7 +20,17 @@ export default function EntrainementScreen() {
   const [typeActiviteDropdownOpen, setTypeActiviteDropdownOpen] = useState(false);
   const [typeSpecifiqueDropdownOpen, setTypeSpecifiqueDropdownOpen] = useState(false);
   const [difficulteDropdownOpen, setDifficulteDropdownOpen] = useState(false);
-  
+  const [exerciceModalVisible, setExerciceModalVisible] = useState(false);
+  const [exerciceEnEdition, setExerciceEnEdition] = useState<any>(null);
+  const [nouvelExercice, setNouvelExercice] = useState({
+    id: '',
+    nom: '',
+    series: '',
+    repetitions: '',
+    poids: '',
+    repos: '',
+    notes: ''
+  });
   const [nouvelEntrainement, setNouvelEntrainement] = useState({
     nom: '',
     typeActivite: 'Musculation',
@@ -266,13 +274,44 @@ export default function EntrainementScreen() {
   };
 
   const ouvrirModalExercice = () => {
-    console.log('Navigation vers la page d\'ajout d\'exercice');
-    router.push('/ajouter-exercice');
+    console.log('ouvrirModalExercice appelée');
+    setNouvelExercice({
+      id: '',
+      nom: '',
+      series: '',
+      repetitions: '',
+      poids: '',
+      repos: '',
+      notes: ''
+    });
+    setExerciceEnEdition(null);
+    setExerciceModalVisible(true);
+    console.log('exerciceModalVisible défini à true');
   };
 
-  
+  const fermerModalExercice = () => {
+    setExerciceModalVisible(false);
+    setExerciceEnEdition(null);
+  };
 
-  
+  const ajouterExercice = () => {
+    if (!nouvelExercice.nom.trim()) {
+      Alert.alert('Erreur', 'Veuillez saisir un nom pour l\'exercice');
+      return;
+    }
+
+    const exercice = {
+      id: Date.now().toString(),
+      ...nouvelExercice
+    };
+
+    setNouvelEntrainement({
+      ...nouvelEntrainement,
+      exercices: [...nouvelEntrainement.exercices, exercice]
+    });
+
+    fermerModalExercice();
+  };
 
   const supprimerExercice = (exerciceId: string) => {
     setNouvelEntrainement({
@@ -756,7 +795,115 @@ export default function EntrainementScreen() {
         </View>
       </Modal>
 
-      
+      {/* Modal d'ajout d'exercice */}
+      {console.log('Rendu de la modal exercice, visible:', exerciceModalVisible)}
+      <Modal
+        visible={exerciceModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={fermerModalExercice}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Ajouter un exercice</Text>
+              <TouchableOpacity onPress={fermerModalExercice} style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>×</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalContent}>
+              {/* Nom de l'exercice */}
+              <View style={styles.modalSection}>
+                <Text style={styles.modalLabel}>Nom de l'exercice</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  value={nouvelExercice.nom}
+                  onChangeText={(text) => setNouvelExercice({...nouvelExercice, nom: text})}
+                  placeholder="Ex: Développé couché"
+                  placeholderTextColor="#6A737D"
+                />
+              </View>
+
+              {/* Séries et Répétitions */}
+              <View style={styles.modalRow}>
+                <View style={styles.modalColumn}>
+                  <Text style={styles.modalLabel}>Séries</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    value={nouvelExercice.series}
+                    onChangeText={(text) => setNouvelExercice({...nouvelExercice, series: text})}
+                    placeholder="4"
+                    placeholderTextColor="#6A737D"
+                    keyboardType="numeric"
+                  />
+                </View>
+                <View style={styles.modalColumn}>
+                  <Text style={styles.modalLabel}>Répétitions</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    value={nouvelExercice.repetitions}
+                    onChangeText={(text) => setNouvelExercice({...nouvelExercice, repetitions: text})}
+                    placeholder="12"
+                    placeholderTextColor="#6A737D"
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
+
+              {/* Poids et Repos */}
+              <View style={styles.modalRow}>
+                <View style={styles.modalColumn}>
+                  <Text style={styles.modalLabel}>Poids (kg)</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    value={nouvelExercice.poids}
+                    onChangeText={(text) => setNouvelExercice({...nouvelExercice, poids: text})}
+                    placeholder="80"
+                    placeholderTextColor="#6A737D"
+                    keyboardType="numeric"
+                  />
+                </View>
+                <View style={styles.modalColumn}>
+                  <Text style={styles.modalLabel}>Repos (sec)</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    value={nouvelExercice.repos}
+                    onChangeText={(text) => setNouvelExercice({...nouvelExercice, repos: text})}
+                    placeholder="90"
+                    placeholderTextColor="#6A737D"
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
+
+              {/* Notes */}
+              <View style={styles.modalSection}>
+                <Text style={styles.modalLabel}>Notes</Text>
+                <TextInput
+                  style={[styles.modalInput, styles.textArea]}
+                  value={nouvelExercice.notes}
+                  onChangeText={(text) => setNouvelExercice({...nouvelExercice, notes: text})}
+                  placeholder="Instructions ou notes sur cet exercice..."
+                  placeholderTextColor="#6A737D"
+                  multiline
+                  numberOfLines={3}
+                />
+              </View>
+            </ScrollView>
+
+            {/* Boutons d'action */}
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.cancelButton} onPress={fermerModalExercice}>
+                <Text style={styles.cancelButtonText}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.createButton} onPress={ajouterExercice}>
+                <Text style={styles.createButtonText}>Ajouter</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
