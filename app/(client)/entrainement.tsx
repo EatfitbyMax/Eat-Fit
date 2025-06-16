@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Modal, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { IntegrationsManager, StravaActivity } from '../../utils/integrations';
 import { getCurrentUser } from '../../utils/auth';
@@ -18,25 +18,6 @@ export default function EntrainementScreen() {
   const [hasSubscription, setHasSubscription] = useState(false);
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [workouts, setWorkouts] = useState<any[]>([]);
-  const [showWorkoutModal, setShowWorkoutModal] = useState(false);
-  const [selectedDayForWorkout, setSelectedDayForWorkout] = useState('');
-  const [newWorkout, setNewWorkout] = useState({
-    nom: '',
-    type: '',
-    difficulte: 'Facile',
-    duree: 0,
-    notes: '',
-    exercices: []
-  });
-  const [showExerciseModal, setShowExerciseModal] = useState(false);
-  const [newExercise, setNewExercise] = useState({
-    nom: '',
-    series: 0,
-    repetitions: 0,
-    poids: 0,
-    repos: 0,
-    notes: ''
-  });
 
   
 
@@ -194,100 +175,6 @@ export default function EntrainementScreen() {
     }
   };
 
-  const handleDayPress = (day: string) => {
-    setSelectedDayForWorkout(day);
-    setNewWorkout({
-      nom: '',
-      type: '',
-      difficulte: 'Facile',
-      duree: 0,
-      notes: '',
-      exercices: []
-    });
-    setShowWorkoutModal(true);
-  };
-
-  const handleAddExercise = () => {
-    setNewExercise({
-      nom: '',
-      series: 0,
-      repetitions: 0,
-      poids: 0,
-      repos: 0,
-      notes: ''
-    });
-    setShowExerciseModal(true);
-  };
-
-  const handleSaveExercise = () => {
-    if (!newExercise.nom.trim()) {
-      Alert.alert('Erreur', 'Veuillez saisir le nom de l\'exercice');
-      return;
-    }
-
-    const exercice = {
-      id: Date.now().toString(),
-      ...newExercise
-    };
-
-    setNewWorkout(prev => ({
-      ...prev,
-      exercices: [...prev.exercices, exercice]
-    }));
-
-    setShowExerciseModal(false);
-  };
-
-  const handleRemoveExercise = (exerciseId: string) => {
-    setNewWorkout(prev => ({
-      ...prev,
-      exercices: prev.exercices.filter(ex => ex.id !== exerciseId)
-    }));
-  };
-
-  const handleSaveWorkout = async () => {
-    if (!newWorkout.nom.trim()) {
-      Alert.alert('Erreur', 'Veuillez saisir le nom de l\'entraînement');
-      return;
-    }
-
-    try {
-      const currentUser = await getCurrentUser();
-      if (currentUser) {
-        const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-        
-        // Calculer la date du jour sélectionné
-        const { start } = getWeekRange();
-        const dayIndex = daysOfWeek.indexOf(selectedDayForWorkout);
-        const targetDate = new Date(start);
-        targetDate.setDate(start.getDate() + dayIndex);
-        const dateString = targetDate.toISOString().split('T')[0];
-
-        const workout = {
-          id: Date.now().toString(),
-          ...newWorkout,
-          date: dateString,
-          jour: selectedDayForWorkout,
-          userId: currentUser.id,
-          createdAt: new Date().toISOString()
-        };
-
-        const existingWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
-        const workoutsArray = existingWorkouts ? JSON.parse(existingWorkouts) : [];
-        workoutsArray.push(workout);
-
-        await AsyncStorage.setItem(`workouts_${currentUser.id}`, JSON.stringify(workoutsArray));
-        setWorkouts(workoutsArray);
-        setShowWorkoutModal(false);
-
-        Alert.alert('Succès', 'Entraînement créé avec succès !');
-      }
-    } catch (error) {
-      console.error('Erreur sauvegarde entraînement:', error);
-      Alert.alert('Erreur', 'Impossible de sauvegarder l\'entraînement');
-    }
-  };
-
   
 
   const renderStravaActivity = (activity: StravaActivity) => (
@@ -398,19 +285,17 @@ export default function EntrainementScreen() {
               {daysOfWeek.map((jour) => {
                 const sessionCount = getWorkoutsCountForDay(jour);
                 return (
-                  <TouchableOpacity 
+                  <View 
                     key={jour}
                     style={styles.dayRow}
-                    onPress={() => handleDayPress(jour)}
                   >
                     <Text style={styles.dayName}>{jour}</Text>
                     <View style={styles.dayInfo}>
                       <Text style={styles.sessionCount}>
                         {sessionCount} séance{sessionCount > 1 ? 's' : ''}
                       </Text>
-                      <Text style={styles.addIcon}>+</Text>
                     </View>
-                  </TouchableOpacity>
+                  </View>
                 );
               })}
             </View>
@@ -470,257 +355,9 @@ export default function EntrainementScreen() {
         </View>
       </ScrollView>
 
-      {/* Modal Nouvel Entraînement */}
-      <Modal
-        visible={showWorkoutModal}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setShowWorkoutModal(false)}
-      >
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-          <View style={styles.modalHeader}>
-            <TouchableOpacity 
-              onPress={() => setShowWorkoutModal(false)}
-              style={styles.closeButton}
-            >
-              <Text style={styles.closeButtonText}>×</Text>
-            </TouchableOpacity>
-            <Text style={styles.modalTitle}>Nouvel entraînement - {selectedDayForWorkout}</Text>
-            <TouchableOpacity 
-              onPress={handleSaveWorkout}
-              style={styles.saveButton}
-            >
-              <Text style={styles.saveButtonText}>Sauvegarder</Text>
-            </TouchableOpacity>
-          </View>
 
-          <ScrollView style={styles.modalContent}>
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Nom de l'entraînement</Text>
-              <TextInput
-                style={styles.input}
-                value={newWorkout.nom}
-                onChangeText={(text) => setNewWorkout({...newWorkout, nom: text})}
-                placeholder="Ex: Séance jambes"
-                placeholderTextColor="#6A737D"
-              />
-            </View>
 
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Type d'activité</Text>
-              <TextInput
-                style={styles.input}
-                value={newWorkout.type}
-                onChangeText={(text) => setNewWorkout({...newWorkout, type: text})}
-                placeholder="Ex: Musculation, Cardio"
-                placeholderTextColor="#6A737D"
-              />
-            </View>
-
-            <View style={styles.modalRow}>
-              <View style={styles.modalColumn}>
-                <Text style={styles.sectionTitle}>Difficulté</Text>
-                <View style={styles.difficultyContainer}>
-                  {['Facile', 'Moyen', 'Difficile'].map((level) => (
-                    <TouchableOpacity
-                      key={level}
-                      style={[
-                        styles.difficultyButton,
-                        newWorkout.difficulte === level && styles.difficultyButtonActive
-                      ]}
-                      onPress={() => setNewWorkout({...newWorkout, difficulte: level})}
-                    >
-                      <Text style={[
-                        styles.difficultyButtonText,
-                        newWorkout.difficulte === level && styles.difficultyButtonTextActive
-                      ]}>
-                        {level}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-              <View style={styles.modalColumn}>
-                <Text style={styles.sectionTitle}>Durée (min)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={newWorkout.duree ? newWorkout.duree.toString() : ''}
-                  onChangeText={(text) => setNewWorkout({...newWorkout, duree: parseInt(text) || 0})}
-                  placeholder="45"
-                  placeholderTextColor="#6A737D"
-                  keyboardType="numeric"
-                />
-              </View>
-            </View>
-
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Notes</Text>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                value={newWorkout.notes}
-                onChangeText={(text) => setNewWorkout({...newWorkout, notes: text})}
-                placeholder="Notes sur l'entraînement..."
-                placeholderTextColor="#6A737D"
-                multiline
-              />
-            </View>
-
-            <View style={styles.exercicesSection}>
-              <View style={styles.exercicesHeader}>
-                <Text style={styles.exercicesTitle}>Exercices</Text>
-                <TouchableOpacity 
-                  style={styles.addButton}
-                  onPress={handleAddExercise}
-                >
-                  <Text style={styles.addButtonText}>+ Ajouter</Text>
-                </TouchableOpacity>
-              </View>
-
-              {newWorkout.exercices.length === 0 ? (
-                <View style={styles.emptyState}>
-                  <Text style={styles.emptyStateIcon}>💪</Text>
-                  <Text style={styles.emptyStateText}>Aucun exercice ajouté</Text>
-                  <Text style={styles.emptyStateSubtext}>
-                    Cliquez sur "Ajouter" pour créer un exercice
-                  </Text>
-                </View>
-              ) : (
-                <View style={styles.exercicesList}>
-                  {newWorkout.exercices.map((exercice, index) => (
-                    <View key={exercice.id} style={styles.exerciceCard}>
-                      <View style={styles.exerciceHeader}>
-                        <Text style={styles.exerciceNumber}>Exercice {index + 1}</Text>
-                        <TouchableOpacity
-                          onPress={() => handleRemoveExercise(exercice.id)}
-                          style={styles.removeButton}
-                        >
-                          <Text style={styles.removeButtonText}>×</Text>
-                        </TouchableOpacity>
-                      </View>
-                      <Text style={styles.exerciceNom}>{exercice.nom}</Text>
-                      <View style={styles.exerciceDetails}>
-                        {exercice.series > 0 && (
-                          <Text style={styles.exerciceDetail}>{exercice.series} séries</Text>
-                        )}
-                        {exercice.repetitions > 0 && (
-                          <Text style={styles.exerciceDetail}>{exercice.repetitions} reps</Text>
-                        )}
-                        {exercice.poids > 0 && (
-                          <Text style={styles.exerciceDetail}>{exercice.poids} kg</Text>
-                        )}
-                        {exercice.repos > 0 && (
-                          <Text style={styles.exerciceDetail}>{exercice.repos}s repos</Text>
-                        )}
-                      </View>
-                    </View>
-                  ))}
-                </View>
-              )}
-            </View>
-          </ScrollView>
-        </SafeAreaView>
-      </Modal>
-
-      {/* Modal Nouvel Exercice */}
-      <Modal
-        visible={showExerciseModal}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setShowExerciseModal(false)}
-      >
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-          <View style={styles.modalHeader}>
-            <TouchableOpacity 
-              onPress={() => setShowExerciseModal(false)}
-              style={styles.closeButton}
-            >
-              <Text style={styles.closeButtonText}>×</Text>
-            </TouchableOpacity>
-            <Text style={styles.modalTitle}>Nouvel exercice</Text>
-            <TouchableOpacity 
-              onPress={handleSaveExercise}
-              style={styles.saveButton}
-            >
-              <Text style={styles.saveButtonText}>Ajouter</Text>
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView style={styles.modalContent}>
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Nom de l'exercice</Text>
-              <TextInput
-                style={styles.input}
-                value={newExercise.nom}
-                onChangeText={(text) => setNewExercise({...newExercise, nom: text})}
-                placeholder="Ex: Squats, Développé couché"
-                placeholderTextColor="#6A737D"
-              />
-            </View>
-
-            <View style={styles.modalRow}>
-              <View style={styles.modalColumn}>
-                <Text style={styles.sectionTitle}>Séries</Text>
-                <TextInput
-                  style={styles.input}
-                  value={newExercise.series ? newExercise.series.toString() : ''}
-                  onChangeText={(text) => setNewExercise({...newExercise, series: parseInt(text) || 0})}
-                  placeholder="3"
-                  placeholderTextColor="#6A737D"
-                  keyboardType="numeric"
-                />
-              </View>
-              <View style={styles.modalColumn}>
-                <Text style={styles.sectionTitle}>Répétitions</Text>
-                <TextInput
-                  style={styles.input}
-                  value={newExercise.repetitions ? newExercise.repetitions.toString() : ''}
-                  onChangeText={(text) => setNewExercise({...newExercise, repetitions: parseInt(text) || 0})}
-                  placeholder="12"
-                  placeholderTextColor="#6A737D"
-                  keyboardType="numeric"
-                />
-              </View>
-            </View>
-
-            <View style={styles.modalRow}>
-              <View style={styles.modalColumn}>
-                <Text style={styles.sectionTitle}>Poids (kg)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={newExercise.poids ? newExercise.poids.toString() : ''}
-                  onChangeText={(text) => setNewExercise({...newExercise, poids: parseFloat(text) || 0})}
-                  placeholder="20"
-                  placeholderTextColor="#6A737D"
-                  keyboardType="numeric"
-                />
-              </View>
-              <View style={styles.modalColumn}>
-                <Text style={styles.sectionTitle}>Repos (sec)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={newExercise.repos ? newExercise.repos.toString() : ''}
-                  onChangeText={(text) => setNewExercise({...newExercise, repos: parseInt(text) || 0})}
-                  placeholder="60"
-                  placeholderTextColor="#6A737D"
-                  keyboardType="numeric"
-                />
-              </View>
-            </View>
-
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Notes</Text>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                value={newExercise.notes}
-                onChangeText={(text) => setNewExercise({...newExercise, notes: text})}
-                placeholder="Instructions particulières..."
-                placeholderTextColor="#6A737D"
-                multiline
-              />
-            </View>
-          </ScrollView>
-        </SafeAreaView>
-      </Modal>
+      
     </SafeAreaView>
   );
 }
@@ -855,11 +492,6 @@ const styles = StyleSheet.create({
     color: '#F5A623',
     fontWeight: '500',
     marginRight: 12,
-  },
-  addIcon: {
-    fontSize: 18,
-    color: '#8B949E',
-    fontWeight: 'bold',
   },
   
   contentContainer: {
@@ -1014,185 +646,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#FFFFFF',
-  },
-
-  // Styles pour les modals
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#21262D',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    flex: 1,
-    textAlign: 'center',
-  },
-  closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#21262D',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeButtonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  saveButton: {
-    backgroundColor: '#F5A623',
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  saveButtonText: {
-    color: '#000000',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  modalContent: {
-    flex: 1,
-    padding: 16,
-  },
-  section: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: '#161B22',
-    borderWidth: 1,
-    borderColor: '#F5A623',
-    borderRadius: 8,
-    padding: 12,
-    color: '#FFFFFF',
-    fontSize: 16,
-  },
-  textArea: {
-    height: 80,
-    textAlignVertical: 'top',
-  },
-  modalRow: {
-    flexDirection: 'row',
-    marginBottom: 20,
-  },
-  modalColumn: {
-    flex: 1,
-    marginRight: 10,
-  },
-  difficultyContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  difficultyButton: {
-    flex: 1,
-    backgroundColor: '#161B22',
-    borderWidth: 1,
-    borderColor: '#21262D',
-    borderRadius: 8,
-    paddingVertical: 12,
-    marginHorizontal: 2,
-    alignItems: 'center',
-  },
-  difficultyButtonActive: {
-    backgroundColor: '#F5A623',
-    borderColor: '#F5A623',
-  },
-  difficultyButtonText: {
-    fontSize: 14,
-    color: '#8B949E',
-    fontWeight: '500',
-  },
-  difficultyButtonTextActive: {
-    color: '#000000',
-  },
-  exercicesSection: {
-    marginBottom: 20,
-  },
-  exercicesHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  exercicesTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  addButton: {
-    backgroundColor: '#F5A623',
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  addButtonText: {
-    color: '#000000',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  exercicesList: {
-    backgroundColor: '#161B22',
-    borderWidth: 1,
-    borderColor: '#21262D',
-    borderRadius: 8,
-    padding: 16,
-  },
-  exerciceCard: {
-    backgroundColor: '#0D1117',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 12,
-  },
-  exerciceHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  exerciceNumber: {
-    color: '#8B949E',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  removeButton: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#21262D',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  removeButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  exerciceNom: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  exerciceDetails: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  exerciceDetail: {
-    color: '#6A737D',
-    fontSize: 12,
-    marginRight: 12,
-    marginBottom: 4,
   },
   
 });
