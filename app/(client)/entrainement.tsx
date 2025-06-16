@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert, Modal, TextInput } from 'react-native';
+import { useRouter } from 'expo-router';
 import { IntegrationsManager, StravaActivity } from '../../utils/integrations';
 import { getCurrentUser } from '../../utils/auth';
 import { checkSubscriptionStatus } from '../../utils/subscription';
@@ -7,6 +8,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
 
 export default function EntrainementScreen() {
+  const router = useRouter();
   const { theme } = useTheme();
   const { t } = useLanguage();
   const [selectedTab, setSelectedTab] = useState('Journal');
@@ -274,19 +276,12 @@ export default function EntrainementScreen() {
   };
 
   const ouvrirModalExercice = () => {
-    console.log('ouvrirModalExercice appelée');
-    setNouvelExercice({
-      id: '',
-      nom: '',
-      series: '',
-      repetitions: '',
-      poids: '',
-      repos: '',
-      notes: ''
+    console.log('Navigation vers création d\'exercice');
+    // Navigation vers la page de création d'exercices avec le type d'activité
+    router.push({
+      pathname: '/creer-exercice',
+      params: { typeActivite: nouvelEntrainement.typeActivite }
     });
-    setExerciceEnEdition(null);
-    setExerciceModalVisible(true);
-    console.log('exerciceModalVisible défini à true');
   };
 
   const fermerModalExercice = () => {
