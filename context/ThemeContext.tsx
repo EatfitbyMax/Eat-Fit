@@ -71,11 +71,17 @@ interface ThemeProviderProps {
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const systemColorScheme = useColorScheme();
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(systemColorScheme === 'dark');
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
 
   useEffect(() => {
     loadThemePreference();
   }, []);
+
+  useEffect(() => {
+    if (isInitialized) return;
+    setIsDarkMode(systemColorScheme === 'dark');
+  }, [systemColorScheme, isInitialized]);
 
   const loadThemePreference = async () => {
     try {
@@ -86,8 +92,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         // Si pas de préférence sauvegardée, utiliser le thème système
         setIsDarkMode(systemColorScheme === 'dark');
       }
+      setIsInitialized(true);
     } catch (error) {
       console.error('Erreur lors du chargement des préférences de thème:', error);
+      setIsInitialized(true);
     }
   };
 
