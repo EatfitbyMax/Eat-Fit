@@ -17,6 +17,9 @@ export default function EntrainementScreen() {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [modalVisible, setModalVisible] = useState(false);
   const [workouts, setWorkouts] = useState<any[]>([]);
+  const [typeActiviteDropdownOpen, setTypeActiviteDropdownOpen] = useState(false);
+  const [typeSpecifiqueDropdownOpen, setTypeSpecifiqueDropdownOpen] = useState(false);
+  const [difficulteDropdownOpen, setDifficulteDropdownOpen] = useState(false);
   const [nouvelEntrainement, setNouvelEntrainement] = useState({
     nom: '',
     typeActivite: 'Musculation',
@@ -29,6 +32,37 @@ export default function EntrainementScreen() {
     notes: '',
     jour: selectedDay
   });
+
+  const typesActivite = [
+    'Musculation',
+    'Course à pied',
+    'Cyclisme',
+    'Natation',
+    'Yoga',
+    'Pilates',
+    'Crossfit',
+    'Tennis',
+    'Football',
+    'Basketball',
+    'Boxe',
+    'Danse',
+    'Randonnée',
+    'Escalade',
+    'Autre'
+  ];
+
+  const typesSpecifiques = {
+    'Musculation': ['Force', 'Hypertrophie', 'Endurance', 'Puissance'],
+    'Course à pied': ['Sprint', 'Moyenne distance', 'Longue distance', 'Trail'],
+    'Cyclisme': ['Route', 'VTT', 'Piste', 'BMX'],
+    'Natation': ['Crawl', 'Brasse', 'Dos', 'Papillon', 'Eau libre'],
+    'Yoga': ['Hatha', 'Vinyasa', 'Ashtanga', 'Hot yoga'],
+    'Pilates': ['Mat', 'Reformer', 'Cadillac'],
+    'Crossfit': ['WOD', 'AMRAP', 'EMOM', 'For Time'],
+    'default': ['Débutant', 'Intermédiaire', 'Avancé']
+  };
+
+  const difficultes = ['Facile', 'Intermédiaire', 'Difficile', 'Expert'];
 
   const daysOfWeek = [
     'Lundi', 
@@ -216,6 +250,9 @@ export default function EntrainementScreen() {
       notes: '',
       jour: jour
     });
+    setTypeActiviteDropdownOpen(false);
+    setTypeSpecifiqueDropdownOpen(false);
+    setDifficulteDropdownOpen(false);
     setModalVisible(true);
   };
 
@@ -459,30 +496,118 @@ export default function EntrainementScreen() {
               </View>
 
               {/* Type d'activité */}
-              <View style={styles.modalSection}>
+              <View style={[styles.modalSection, { zIndex: typeActiviteDropdownOpen ? 1000 : 1 }]}>
                 <Text style={styles.modalLabel}>{t('activity_type')}</Text>
-                <View style={styles.dropdown}>
+                <TouchableOpacity 
+                  style={[styles.dropdown, typeActiviteDropdownOpen && { borderColor: '#F5A623', borderWidth: 2 }]}
+                  onPress={() => {
+                    setTypeActiviteDropdownOpen(!typeActiviteDropdownOpen);
+                    setTypeSpecifiqueDropdownOpen(false);
+                    setDifficulteDropdownOpen(false);
+                  }}
+                >
                   <Text style={styles.dropdownText}>{nouvelEntrainement.typeActivite}</Text>
                   <Text style={styles.dropdownArrow}>▼</Text>
-                </View>
+                </TouchableOpacity>
+                {typeActiviteDropdownOpen && (
+                  <View style={styles.dropdownList}>
+                    <ScrollView style={styles.dropdownScrollView} nestedScrollEnabled={true}>
+                      {typesActivite.map((type, index) => (
+                        <TouchableOpacity
+                          key={index}
+                          style={[
+                            styles.dropdownItem,
+                            index === typesActivite.length - 1 && { borderBottomWidth: 0 }
+                          ]}
+                          onPress={() => {
+                            setNouvelEntrainement({
+                              ...nouvelEntrainement, 
+                              typeActivite: type,
+                              typeSpecifique: typesSpecifiques[type] ? typesSpecifiques[type][0] : 'Débutant'
+                            });
+                            setTypeActiviteDropdownOpen(false);
+                          }}
+                        >
+                          <Text style={styles.dropdownItemText}>{type}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
               </View>
 
               {/* Type spécifique */}
-              <View style={styles.modalSection}>
+              <View style={[styles.modalSection, { zIndex: typeSpecifiqueDropdownOpen ? 1000 : 1 }]}>
                 <Text style={styles.modalLabel}>Type spécifique</Text>
-                <View style={styles.dropdown}>
+                <TouchableOpacity 
+                  style={[styles.dropdown, typeSpecifiqueDropdownOpen && { borderColor: '#F5A623', borderWidth: 2 }]}
+                  onPress={() => {
+                    setTypeSpecifiqueDropdownOpen(!typeSpecifiqueDropdownOpen);
+                    setTypeActiviteDropdownOpen(false);
+                    setDifficulteDropdownOpen(false);
+                  }}
+                >
                   <Text style={styles.dropdownText}>{nouvelEntrainement.typeSpecifique}</Text>
                   <Text style={styles.dropdownArrow}>▼</Text>
-                </View>
+                </TouchableOpacity>
+                {typeSpecifiqueDropdownOpen && (
+                  <View style={styles.dropdownList}>
+                    <ScrollView style={styles.dropdownScrollView} nestedScrollEnabled={true}>
+                      {(typesSpecifiques[nouvelEntrainement.typeActivite] || typesSpecifiques.default).map((type, index) => (
+                        <TouchableOpacity
+                          key={index}
+                          style={[
+                            styles.dropdownItem,
+                            index === (typesSpecifiques[nouvelEntrainement.typeActivite] || typesSpecifiques.default).length - 1 && { borderBottomWidth: 0 }
+                          ]}
+                          onPress={() => {
+                            setNouvelEntrainement({...nouvelEntrainement, typeSpecifique: type});
+                            setTypeSpecifiqueDropdownOpen(false);
+                          }}
+                        >
+                          <Text style={styles.dropdownItemText}>{type}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
               </View>
 
               {/* Difficulté */}
-              <View style={styles.modalSection}>
+              <View style={[styles.modalSection, { zIndex: difficulteDropdownOpen ? 1000 : 1 }]}>
                 <Text style={styles.modalLabel}>{t('difficulty')}</Text>
-                <View style={styles.dropdown}>
+                <TouchableOpacity 
+                  style={[styles.dropdown, difficulteDropdownOpen && { borderColor: '#F5A623', borderWidth: 2 }]}
+                  onPress={() => {
+                    setDifficulteDropdownOpen(!difficulteDropdownOpen);
+                    setTypeActiviteDropdownOpen(false);
+                    setTypeSpecifiqueDropdownOpen(false);
+                  }}
+                >
                   <Text style={styles.dropdownText}>{nouvelEntrainement.difficulte}</Text>
                   <Text style={styles.dropdownArrow}>▼</Text>
-                </View>
+                </TouchableOpacity>
+                {difficulteDropdownOpen && (
+                  <View style={styles.dropdownList}>
+                    <ScrollView style={styles.dropdownScrollView} nestedScrollEnabled={true}>
+                      {difficultes.map((difficulte, index) => (
+                        <TouchableOpacity
+                          key={index}
+                          style={[
+                            styles.dropdownItem,
+                            index === difficultes.length - 1 && { borderBottomWidth: 0 }
+                          ]}
+                          onPress={() => {
+                            setNouvelEntrainement({...nouvelEntrainement, difficulte: difficulte});
+                            setDifficulteDropdownOpen(false);
+                          }}
+                        >
+                          <Text style={styles.dropdownItemText}>{difficulte}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
               </View>
 
               {/* Durée */}
@@ -1034,5 +1159,32 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  dropdownList: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    backgroundColor: '#161B22',
+    borderWidth: 1,
+    borderColor: '#F5A623',
+    borderTopWidth: 0,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+    maxHeight: 150,
+    zIndex: 1000,
+  },
+  dropdownScrollView: {
+    maxHeight: 150,
+  },
+  dropdownItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#21262D',
+  },
+  dropdownItemText: {
+    color: '#FFFFFF',
+    fontSize: 16,
   },
 });
