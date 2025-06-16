@@ -20,6 +20,17 @@ export default function EntrainementScreen() {
   const [typeActiviteDropdownOpen, setTypeActiviteDropdownOpen] = useState(false);
   const [typeSpecifiqueDropdownOpen, setTypeSpecifiqueDropdownOpen] = useState(false);
   const [difficulteDropdownOpen, setDifficulteDropdownOpen] = useState(false);
+  const [exerciceModalVisible, setExerciceModalVisible] = useState(false);
+  const [exerciceEnEdition, setExerciceEnEdition] = useState<any>(null);
+  const [nouvelExercice, setNouvelExercice] = useState({
+    id: '',
+    nom: '',
+    series: '',
+    repetitions: '',
+    poids: '',
+    repos: '',
+    notes: ''
+  });
   const [nouvelEntrainement, setNouvelEntrainement] = useState({
     nom: '',
     typeActivite: 'Musculation',
@@ -30,7 +41,8 @@ export default function EntrainementScreen() {
     date: '',
     heure: '',
     notes: '',
-    jour: selectedDay
+    jour: selectedDay,
+    exercices: []
   });
 
   const typesActivite = [
@@ -248,7 +260,8 @@ export default function EntrainementScreen() {
       date: targetDate.toISOString().split('T')[0],
       heure: '09:00',
       notes: '',
-      jour: jour
+      jour: jour,
+      exercices: []
     });
     setTypeActiviteDropdownOpen(false);
     setTypeSpecifiqueDropdownOpen(false);
@@ -258,6 +271,51 @@ export default function EntrainementScreen() {
 
   const fermerModal = () => {
     setModalVisible(false);
+  };
+
+  const ouvrirModalExercice = () => {
+    setNouvelExercice({
+      id: '',
+      nom: '',
+      series: '',
+      repetitions: '',
+      poids: '',
+      repos: '',
+      notes: ''
+    });
+    setExerciceEnEdition(null);
+    setExerciceModalVisible(true);
+  };
+
+  const fermerModalExercice = () => {
+    setExerciceModalVisible(false);
+    setExerciceEnEdition(null);
+  };
+
+  const ajouterExercice = () => {
+    if (!nouvelExercice.nom.trim()) {
+      Alert.alert('Erreur', 'Veuillez saisir un nom pour l\'exercice');
+      return;
+    }
+
+    const exercice = {
+      id: Date.now().toString(),
+      ...nouvelExercice
+    };
+
+    setNouvelEntrainement({
+      ...nouvelEntrainement,
+      exercices: [...nouvelEntrainement.exercices, exercice]
+    });
+
+    fermerModalExercice();
+  };
+
+  const supprimerExercice = (exerciceId: string) => {
+    setNouvelEntrainement({
+      ...nouvelEntrainement,
+      exercices: nouvelEntrainement.exercices.filter(ex => ex.id !== exerciceId)
+    });
   };
 
   const sauvegarderEntrainement = async () => {
@@ -677,18 +735,42 @@ export default function EntrainementScreen() {
               {/* Section Exercices */}
               <View style={styles.modalSection}>
                 <View style={styles.exercicesHeader}>
-                  <Text style={styles.modalLabel}>{t('exercises')} (0)</Text>
-                  <TouchableOpacity style={styles.addExerciceButton}>
-                    <Text style={styles.addExerciceButtonText}>{t('add_exercise')}</Text>
+                  <Text style={styles.modalLabel}>{t('exercises')} ({nouvelEntrainement.exercices.length})</Text>
+                  <TouchableOpacity style={styles.addExerciceButton} onPress={ouvrirModalExercice}>
+                    <Text style={styles.addExerciceButtonText}>+ Ajouter</Text>
                   </TouchableOpacity>
                 </View>
 
-                <View style={styles.emptyExercices}>
-                  <Text style={styles.emptyExercicesIcon}>💪</Text>
-                  <Text style={styles.emptyExercicesText}>
-                    {t('no_exercises')}
-                  </Text>
-                </View>
+                {nouvelEntrainement.exercices.length > 0 ? (
+                  <View style={styles.exercicesList}>
+                    {nouvelEntrainement.exercices.map((exercice, index) => (
+                      <View key={exercice.id} style={styles.exerciceItem}>
+                        <View style={styles.exerciceHeader}>
+                          <Text style={styles.exerciceNom}>{exercice.nom}</Text>
+                          <TouchableOpacity 
+                            onPress={() => supprimerExercice(exercice.id)}
+                            style={styles.deleteExerciceButton}
+                          >
+                            <Text style={styles.deleteExerciceText}>×</Text>
+                          </TouchableOpacity>
+                        </View>
+                        <View style={styles.exerciceDetails}>
+                          {exercice.series && <Text style={styles.exerciceDetail}>{exercice.series} séries</Text>}
+                          {exercice.repetitions && <Text style={styles.exerciceDetail}>{exercice.repetitions} reps</Text>}
+                          {exercice.poids && <Text style={styles.exerciceDetail}>{exercice.poids} kg</Text>}
+                          {exercice.repos && <Text style={styles.exerciceDetail}>{exercice.repos}s repos</Text>}
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                ) : (
+                  <View style={styles.emptyExercices}>
+                    <Text style={styles.emptyExercicesIcon}>💪</Text>
+                    <Text style={styles.emptyExercicesText}>
+                      Aucun exercice ajouté. Cliquez sur "Ajouter" pour créer un exercice.
+                    </Text>
+                  </View>
+                )}
               </View>
             </ScrollView>
 
@@ -699,6 +781,115 @@ export default function EntrainementScreen() {
               </TouchableOpacity>
               <TouchableOpacity style={styles.createButton} onPress={sauvegarderEntrainement}>
                 <Text style={styles.createButtonText}>{t('create')}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal d'ajout d'exercice */}
+      <Modal
+        visible={exerciceModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={fermerModalExercice}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Ajouter un exercice</Text>
+              <TouchableOpacity onPress={fermerModalExercice} style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>×</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalContent}>
+              {/* Nom de l'exercice */}
+              <View style={styles.modalSection}>
+                <Text style={styles.modalLabel}>Nom de l'exercice</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  value={nouvelExercice.nom}
+                  onChangeText={(text) => setNouvelExercice({...nouvelExercice, nom: text})}
+                  placeholder="Ex: Développé couché"
+                  placeholderTextColor="#6A737D"
+                />
+              </View>
+
+              {/* Séries et Répétitions */}
+              <View style={styles.modalRow}>
+                <View style={styles.modalColumn}>
+                  <Text style={styles.modalLabel}>Séries</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    value={nouvelExercice.series}
+                    onChangeText={(text) => setNouvelExercice({...nouvelExercice, series: text})}
+                    placeholder="4"
+                    placeholderTextColor="#6A737D"
+                    keyboardType="numeric"
+                  />
+                </View>
+                <View style={styles.modalColumn}>
+                  <Text style={styles.modalLabel}>Répétitions</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    value={nouvelExercice.repetitions}
+                    onChangeText={(text) => setNouvelExercice({...nouvelExercice, repetitions: text})}
+                    placeholder="12"
+                    placeholderTextColor="#6A737D"
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
+
+              {/* Poids et Repos */}
+              <View style={styles.modalRow}>
+                <View style={styles.modalColumn}>
+                  <Text style={styles.modalLabel}>Poids (kg)</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    value={nouvelExercice.poids}
+                    onChangeText={(text) => setNouvelExercice({...nouvelExercice, poids: text})}
+                    placeholder="80"
+                    placeholderTextColor="#6A737D"
+                    keyboardType="numeric"
+                  />
+                </View>
+                <View style={styles.modalColumn}>
+                  <Text style={styles.modalLabel}>Repos (sec)</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    value={nouvelExercice.repos}
+                    onChangeText={(text) => setNouvelExercice({...nouvelExercice, repos: text})}
+                    placeholder="90"
+                    placeholderTextColor="#6A737D"
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
+
+              {/* Notes */}
+              <View style={styles.modalSection}>
+                <Text style={styles.modalLabel}>Notes</Text>
+                <TextInput
+                  style={[styles.modalInput, styles.textArea]}
+                  value={nouvelExercice.notes}
+                  onChangeText={(text) => setNouvelExercice({...nouvelExercice, notes: text})}
+                  placeholder="Instructions ou notes sur cet exercice..."
+                  placeholderTextColor="#6A737D"
+                  multiline
+                  numberOfLines={3}
+                />
+              </View>
+            </ScrollView>
+
+            {/* Boutons d'action */}
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.cancelButton} onPress={fermerModalExercice}>
+                <Text style={styles.cancelButtonText}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.createButton} onPress={ajouterExercice}>
+                <Text style={styles.createButtonText}>Ajouter</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1126,6 +1317,50 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
+  },
+  exercicesList: {
+    marginTop: 8,
+  },
+  exerciceItem: {
+    backgroundColor: '#21262D',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+  },
+  exerciceHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  exerciceNom: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    flex: 1,
+  },
+  deleteExerciceButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#DA3633',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteExerciceText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  exerciceDetails: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  exerciceDetail: {
+    color: '#8B949E',
+    fontSize: 12,
+    marginRight: 12,
+    marginBottom: 4,
   },
   modalActions: {
     flexDirection: 'row',
