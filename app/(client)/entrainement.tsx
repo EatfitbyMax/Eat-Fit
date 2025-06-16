@@ -367,10 +367,7 @@ export default function EntrainementScreen() {
         </View>
       </ScrollView>
 
-      {/* Floating Action Button */}
-      <TouchableOpacity style={styles.fab}>
-        <Text style={styles.fabText}>Ajouter</Text>
-      </TouchableOpacity>
+      
 
       {/* Modal d'ajout d'entraînement */}
       <Modal
@@ -725,30 +722,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#8B949E',
   },
-  fab: {
-    position: 'absolute',
-    bottom: 16,
-    right: 16,
-    backgroundColor: '#F5A623',
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-  },
-  fabText: {
-    color: '#000000',
-    fontSize: 11,
-    fontWeight: '600',
-  },
+  
   // Styles pour les activités Strava
   completedContainer: {
     flex: 1,
