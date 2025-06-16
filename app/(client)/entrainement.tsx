@@ -673,6 +673,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
