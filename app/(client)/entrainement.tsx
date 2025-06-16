@@ -445,7 +445,7 @@ export default function EntrainementScreen() {
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
+            <ScrollView style={styles.modalContent}>
               {/* Nom */}
               <View style={styles.modalSection}>
                 <Text style={styles.modalLabel}>{t('workout_name')}</Text>
@@ -453,52 +453,85 @@ export default function EntrainementScreen() {
                   style={styles.modalInput}
                   value={nouvelEntrainement.nom}
                   onChangeText={(text) => setNouvelEntrainement({...nouvelEntrainement, nom: text})}
-                  placeholder="Ex: Séance de musculation"
+                  placeholder="Ex: Séance de musculation du Lundi"
                   placeholderTextColor="#6A737D"
                 />
               </View>
 
-              {/* Durée et Calories sur la même ligne */}
-              <View style={styles.modalRow}>
-                <View style={styles.modalColumn}>
-                  <Text style={styles.modalLabel}>{t('duration_minutes')}</Text>
-                  <TextInput
-                    style={styles.modalInput}
-                    value={nouvelEntrainement.duree}
-                    onChangeText={(text) => setNouvelEntrainement({...nouvelEntrainement, duree: text})}
-                    placeholder="45"
-                    placeholderTextColor="#6A737D"
-                    keyboardType="numeric"
-                  />
-                </View>
-                <View style={styles.modalColumn}>
-                  <Text style={styles.modalLabel}>Calories</Text>
-                  <TextInput
-                    style={styles.modalInput}
-                    value={nouvelEntrainement.calories}
-                    onChangeText={(text) => setNouvelEntrainement({...nouvelEntrainement, calories: text})}
-                    placeholder="250"
-                    placeholderTextColor="#6A737D"
-                    keyboardType="numeric"
-                  />
+              {/* Type d'activité */}
+              <View style={styles.modalSection}>
+                <Text style={styles.modalLabel}>{t('activity_type')}</Text>
+                <View style={styles.dropdown}>
+                  <Text style={styles.dropdownText}>{nouvelEntrainement.typeActivite}</Text>
+                  <Text style={styles.dropdownArrow}>▼</Text>
                 </View>
               </View>
 
-              {/* Type d'activité et Difficulté */}
+              {/* Type spécifique */}
+              <View style={styles.modalSection}>
+                <Text style={styles.modalLabel}>Type spécifique</Text>
+                <View style={styles.dropdown}>
+                  <Text style={styles.dropdownText}>{nouvelEntrainement.typeSpecifique}</Text>
+                  <Text style={styles.dropdownArrow}>▼</Text>
+                </View>
+              </View>
+
+              {/* Difficulté */}
+              <View style={styles.modalSection}>
+                <Text style={styles.modalLabel}>{t('difficulty')}</Text>
+                <View style={styles.dropdown}>
+                  <Text style={styles.dropdownText}>{nouvelEntrainement.difficulte}</Text>
+                  <Text style={styles.dropdownArrow}>▼</Text>
+                </View>
+              </View>
+
+              {/* Durée */}
+              <View style={styles.modalSection}>
+                <Text style={styles.modalLabel}>{t('duration_minutes')}</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  value={nouvelEntrainement.duree}
+                  onChangeText={(text) => setNouvelEntrainement({...nouvelEntrainement, duree: text})}
+                  placeholder="45"
+                  placeholderTextColor="#6A737D"
+                  keyboardType="numeric"
+                />
+              </View>
+
+              {/* Calories */}
+              <View style={styles.modalSection}>
+                <Text style={styles.modalLabel}>Calories (kcal)</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  value={nouvelEntrainement.calories}
+                  onChangeText={(text) => setNouvelEntrainement({...nouvelEntrainement, calories: text})}
+                  placeholder="250"
+                  placeholderTextColor="#6A737D"
+                  keyboardType="numeric"
+                />
+              </View>
+
+              {/* Date et Heure */}
               <View style={styles.modalRow}>
                 <View style={styles.modalColumn}>
-                  <Text style={styles.modalLabel}>{t('activity_type')}</Text>
-                  <View style={styles.dropdown}>
-                    <Text style={styles.dropdownText}>Musculation</Text>
-                    <Text style={styles.dropdownArrow}>▼</Text>
-                  </View>
+                  <Text style={styles.modalLabel}>Date</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    value={nouvelEntrainement.date}
+                    onChangeText={(text) => setNouvelEntrainement({...nouvelEntrainement, date: text})}
+                    placeholder="11/06/2025"
+                    placeholderTextColor="#6A737D"
+                  />
                 </View>
                 <View style={styles.modalColumn}>
-                  <Text style={styles.modalLabel}>{t('difficulty')}</Text>
-                  <View style={styles.dropdown}>
-                    <Text style={styles.dropdownText}>Intermédiaire</Text>
-                    <Text style={styles.dropdownArrow}>▼</Text>
-                  </View>
+                  <Text style={styles.modalLabel}>Heure</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    value={nouvelEntrainement.heure}
+                    onChangeText={(text) => setNouvelEntrainement({...nouvelEntrainement, heure: text})}
+                    placeholder="09:00"
+                    placeholderTextColor="#6A737D"
+                  />
                 </View>
               </View>
 
@@ -509,11 +542,28 @@ export default function EntrainementScreen() {
                   style={[styles.modalInput, styles.textArea]}
                   value={nouvelEntrainement.notes}
                   onChangeText={(text) => setNouvelEntrainement({...nouvelEntrainement, notes: text})}
-                  placeholder="Notes supplémentaires..."
+                  placeholder="Notes supplémentaires sur cet entraînement..."
                   placeholderTextColor="#6A737D"
                   multiline
-                  numberOfLines={3}
+                  numberOfLines={4}
                 />
+              </View>
+
+              {/* Section Exercices */}
+              <View style={styles.modalSection}>
+                <View style={styles.exercicesHeader}>
+                  <Text style={styles.modalLabel}>{t('exercises')} (0)</Text>
+                  <TouchableOpacity style={styles.addExerciceButton}>
+                    <Text style={styles.addExerciceButtonText}>{t('add_exercise')}</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.emptyExercices}>
+                  <Text style={styles.emptyExercicesIcon}>💪</Text>
+                  <Text style={styles.emptyExercicesText}>
+                    {t('no_exercises')}
+                  </Text>
+                </View>
               </View>
             </ScrollView>
 
@@ -826,15 +876,15 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    justifyContent: 'flex-end',
-    padding: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
   },
   modalContainer: {
     backgroundColor: '#0D1117',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderRadius: 12,
     width: '100%',
-    maxHeight: '85%',
+    maxHeight: '90%',
     borderWidth: 1,
     borderColor: '#21262D',
   },
@@ -866,10 +916,10 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     flex: 1,
-    padding: 20,
+    padding: 16,
   },
   modalSection: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   modalLabel: {
     fontSize: 14,
@@ -907,14 +957,14 @@ const styles = StyleSheet.create({
   modalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   modalColumn: {
     flex: 1,
-    marginHorizontal: 6,
+    marginHorizontal: 4,
   },
   textArea: {
-    height: 70,
+    height: 80,
     textAlignVertical: 'top',
   },
   exercicesHeader: {
