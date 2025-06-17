@@ -19,7 +19,7 @@ export default function EntrainementScreen() {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [workouts, setWorkouts] = useState<any[]>([]);
 
-  
+
 
   const daysOfWeek = [
     'Lundi', 
@@ -183,10 +183,10 @@ export default function EntrainementScreen() {
     const targetDate = new Date(start);
     targetDate.setDate(start.getDate() + dayIndex);
     const dateString = targetDate.toISOString().split('T')[0];
-    
+
     // Récupérer les entraînements du jour
     const dayWorkouts = workouts.filter(workout => workout.date === dateString);
-    
+
     if (dayWorkouts.length > 0) {
       // S'il y a des entraînements, naviguer vers la gestion
       router.push({
@@ -228,7 +228,7 @@ export default function EntrainementScreen() {
     }
   };
 
-  
+
 
   const renderStravaActivity = (activity: StravaActivity) => (
     <View key={activity.id} style={styles.activityCard}>
@@ -304,7 +304,7 @@ export default function EntrainementScreen() {
             onPress={() => setSelectedTab('Journal')}
           >
             <Text style={[styles.tabText, selectedTab === 'Journal' && styles.activeTabText]}>
-              {t('journal')}
+              À venir
             </Text>
           </TouchableOpacity>
           <TouchableOpacity 
@@ -312,7 +312,7 @@ export default function EntrainementScreen() {
             onPress={() => setSelectedTab('Strava')}
           >
             <Text style={[styles.tabText, selectedTab === 'Strava' && styles.activeTabText]}>
-              Strava
+              Terminées
             </Text>
           </TouchableOpacity>
           <TouchableOpacity 
@@ -412,7 +412,7 @@ export default function EntrainementScreen() {
 
 
 
-      
+
     </SafeAreaView>
   );
 }
@@ -553,7 +553,7 @@ const styles = StyleSheet.create({
     color: '#8B949E',
     fontWeight: 'bold',
   },
-  
+
   contentContainer: {
     flex: 1,
     paddingHorizontal: 16,
@@ -707,5 +707,5 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
   },
-  
+
 });
