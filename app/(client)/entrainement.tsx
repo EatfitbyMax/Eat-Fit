@@ -458,6 +458,27 @@ export default function EntrainementScreen() {
 
           {selectedTab === 'Strava' && (
             <View style={styles.completedContainer}>
+              {/* Navigation par semaines pour Strava */}
+              <View style={styles.stravaWeekNavigation}>
+                <TouchableOpacity 
+                  style={styles.weekArrow}
+                  onPress={() => navigateWeek('prev')}
+                >
+                  <Text style={styles.arrowText}>‹</Text>
+                </TouchableOpacity>
+
+                <View style={styles.weekContainer}>
+                  <Text style={styles.weekRange}>{formatWeekRange()}</Text>
+                </View>
+
+                <TouchableOpacity 
+                  style={styles.weekArrow}
+                  onPress={() => navigateWeek('next')}
+                >
+                  <Text style={styles.arrowText}>›</Text>
+                </TouchableOpacity>
+              </View>
+
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Activités Strava</Text>
                 <Text style={styles.sectionSubtitle}>
@@ -734,6 +755,13 @@ const styles = StyleSheet.create({
   // Styles pour les activités Strava
   completedContainer: {
     flex: 1,
+  },
+  stravaWeekNavigation: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 8,
   },
   sectionHeader: {
     marginBottom: 16,
