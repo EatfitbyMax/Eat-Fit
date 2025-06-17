@@ -1,5 +1,5 @@
 
-import { Tabs } from 'expo-router';
+import { Tabs, usePathname } from 'expo-router';
 import React, { useState, useEffect } from 'react';
 import { Platform } from 'react-native';
 import { IconSymbol } from '@/components/ui/IconSymbol';
@@ -10,6 +10,7 @@ import { checkSubscriptionStatus } from '@/utils/subscription';
 export default function ClientLayout() {
   const colorScheme = useColorScheme();
   const [hasSubscription, setHasSubscription] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     checkUserSubscription();
@@ -18,6 +19,16 @@ export default function ClientLayout() {
   const checkUserSubscription = async () => {
     const subscriptionStatus = await checkSubscriptionStatus();
     setHasSubscription(subscriptionStatus);
+  };
+
+  // Fonction pour déterminer si nous sommes sur une page liée à l'entraînement
+  const isTrainingRelated = (currentPath: string) => {
+    const trainingPaths = [
+      '/(client)/entrainement',
+      '/(client)/creer-entrainement',
+      '/(client)/gerer-entrainements'
+    ];
+    return trainingPaths.some(path => currentPath.includes(path.replace('/(client)/', '')));
   };
 
   return (
@@ -54,9 +65,16 @@ export default function ClientLayout() {
         name="entrainement"
         options={{
           title: 'Entrainement',
-          tabBarIcon: ({ color, focused }) => (
-            <IconSymbol size={28} name={focused ? 'dumbbell.fill' : 'dumbbell'} color={color} />
-          ),
+          tabBarIcon: ({ color }) => {
+            const isActive = pathname === '/(client)/entrainement' || isTrainingRelated(pathname);
+            return (
+              <IconSymbol 
+                size={28} 
+                name={isActive ? 'dumbbell.fill' : 'dumbbell'} 
+                color={isActive ? '#F5A623' : color} 
+              />
+            );
+          },
         }}
       />
       <Tabs.Screen
