@@ -6,17 +6,22 @@ export class PersistentStorage {
   // Test de connexion au serveur
   static async testConnection(): Promise<boolean> {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
       const response = await fetch(`${SERVER_URL}/api/health-check`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
-        timeout: 5000,
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
       return response.ok;
     } catch (error) {
       console.error('Erreur connexion serveur VPS:', error);
-      throw new Error('Serveur VPS indisponible');
+      return false; // Ne pas jeter d'erreur, retourner false
     }
   }
 
@@ -197,6 +202,68 @@ export class PersistentStorage {
     } catch (error) {
       console.error('Erreur sauvegarde activités Strava:', error);
       throw error;
+    }
+  }
+
+  // Méthodes pour les entraînements (workouts)
+  static async getWorkouts(userId: string): Promise<any[]> {
+    try {
+      const isConnected = await this.testConnection();
+      if (isConnected) {
+        const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`);
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Entraînements récupérés depuis le serveur VPS');
+          // Sauvegarder en local comme backup
+          await AsyncStorage.setItem(`workouts_${userId}`, JSON.stringify(data));
+          return data;
+        }
+      }
+      
+      // Fallback vers le stockage local
+      console.log('Fallback vers le stockage local pour les entraînements');
+      const localData = await AsyncStorage.getItem(`workouts_${userId}`);
+      return localData ? JSON.parse(localData) : [];
+    } catch (error) {
+      console.error('Erreur récupération entraînements:', error);
+      // Essayer le stockage local en cas d'erreur
+      try {
+        const localData = await AsyncStorage.getItem(`workouts_${userId}`);
+        return localData ? JSON.parse(localData) : [];
+      } catch (localError) {
+        console.error('Erreur stockage local:', localError);
+        return [];
+      }
+    }
+  }
+
+  static async saveWorkouts(userId: string, workouts: any[]): Promise<void> {
+    try {
+      // Toujours sauvegarder en local d'abord
+      await AsyncStorage.setItem(`workouts_${userId}`, JSON.stringify(workouts));
+      
+      const isConnected = await this.testConnection();
+      if (isConnected) {
+        const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(workouts),
+        });
+
+        if (response.ok) {
+          console.log('Entraînements sauvegardés sur le serveur VPS');
+        } else {
+          console.log('Entraînements sauvegardés localement (serveur indisponible)');
+        }
+      } else {
+        console.log('Entraînements sauvegardés localement (serveur indisponible)');
+      }
+    } catch (error) {
+      console.error('Erreur sauvegarde entraînements:', error);
+      // Au moins garder la sauvegarde locale
+      await AsyncStorage.setItem(`workouts_${userId}`, JSON.stringify(workouts));
     }
   }
 
