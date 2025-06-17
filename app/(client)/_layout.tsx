@@ -75,6 +75,12 @@ export default function ClientLayout() {
               />
             );
           },
+          tabBarLabelStyle: () => {
+            const isActive = pathname === '/(client)/entrainement' || isTrainingRelated(pathname);
+            return {
+              color: isActive ? '#F5A623' : '#8B949E',
+            };
+          },
         }}
       />
       <Tabs.Screen
