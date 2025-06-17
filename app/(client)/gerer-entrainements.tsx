@@ -164,7 +164,7 @@ export default function GererEntrainementsScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.push('/(client)/entrainement')}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <View style={styles.headerCenter}>
