@@ -120,6 +120,18 @@ export default function ClientLayout() {
           href: null, // Cache cette page de la navigation
         }}
       />
+      <Tabs.Screen
+        name="creer-entrainement"
+        options={{
+          href: null, // Cache cette page de la navigation
+        }}
+      />
+      <Tabs.Screen
+        name="gerer-entrainements"
+        options={{
+          href: null, // Cache cette page de la navigation
+        }}
+      />
     </Tabs>
   );
 }
