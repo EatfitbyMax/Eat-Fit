@@ -182,4 +182,5 @@ app.get('/api/health-check', (req, res) => {
 app.listen(PORT, '0.0.0.0', async () => {
   await initDataDir();
   console.log(`Serveur démarré sur le port ${PORT}`);
+  console.log(`Serveur accessible sur : https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.replit.dev:${PORT}`);
 });
