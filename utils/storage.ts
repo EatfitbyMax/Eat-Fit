@@ -198,10 +198,10 @@ export class PersistentStorage {
         console.log('Activités Strava sauvegardées sur le serveur VPS');
         return;
       }
-      throw new Error('Erreur sauvegarde activités Strava sur le serveur');
+      console.warn('Échec sauvegarde Strava sur serveur VPS, données conservées localement');
     } catch (error) {
-      console.error('Erreur sauvegarde activités Strava:', error);
-      throw error;
+      console.warn('Erreur sauvegarde activités Strava sur serveur VPS:', error);
+      console.log('Les données Strava restent disponibles localement');
     }
   }
 
