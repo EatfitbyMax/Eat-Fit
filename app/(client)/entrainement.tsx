@@ -48,14 +48,28 @@ export default function EntrainementScreen() {
     try {
       const currentUser = await getCurrentUser();
       if (currentUser) {
-        const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-        const storedWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
-        if (storedWorkouts) {
-          setWorkouts(JSON.parse(storedWorkouts));
-        }
+        // Utiliser la nouvelle méthode avec fallback
+        const { PersistentStorage } = await import('../../utils/storage');
+        const storedWorkouts = await PersistentStorage.getWorkouts(currentUser.id);
+        setWorkouts(storedWorkouts);
+        console.log(`Entraînements chargés: ${storedWorkouts.length} séances trouvées`);
       }
     } catch (error) {
       console.error('Erreur chargement entraînements:', error);
+      // En cas d'erreur, essayer le stockage local direct
+      try {
+        const currentUser = await getCurrentUser();
+        if (currentUser) {
+          const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+          const storedWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
+          if (storedWorkouts) {
+            setWorkouts(JSON.parse(storedWorkouts));
+            console.log(`Fallback local: ${JSON.parse(storedWorkouts).length} séances trouvées`);
+          }
+        }
+      } catch (localError) {
+        console.error('Erreur fallback local:', localError);
+      }
     }
   };
 

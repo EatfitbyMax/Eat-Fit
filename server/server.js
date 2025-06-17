@@ -122,6 +122,32 @@ app.post('/api/health/:userId', async (req, res) => {
   }
 });
 
+// Routes pour les entraînements (workouts)
+app.get('/api/workouts/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const data = await fs.readFile(path.join(DATA_DIR, `workouts_${userId}.json`), 'utf8');
+    res.json(JSON.parse(data));
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      res.json([]);
+    } else {
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
+});
+
+app.post('/api/workouts/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const workouts = req.body;
+    await fs.writeFile(path.join(DATA_DIR, `workouts_${userId}.json`), JSON.stringify(workouts, null, 2));
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur sauvegarde entraînements' });
+  }
+});
+
 // Routes pour Strava
 app.get('/api/strava/:userId', async (req, res) => {
   try {

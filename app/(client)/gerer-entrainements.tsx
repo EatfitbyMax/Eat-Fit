@@ -45,16 +45,31 @@ export default function GererEntrainementsScreen() {
     try {
       const currentUser = await getCurrentUser();
       if (currentUser) {
-        const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-        const storedWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
-        if (storedWorkouts) {
-          const allWorkouts = JSON.parse(storedWorkouts);
-          const dayWorkouts = allWorkouts.filter((workout: Workout) => workout.date === selectedDate);
-          setWorkouts(dayWorkouts);
-        }
+        // Utiliser la nouvelle méthode avec fallback
+        const { PersistentStorage } = await import('../../utils/storage');
+        const allWorkouts = await PersistentStorage.getWorkouts(currentUser.id);
+        const dayWorkouts = allWorkouts.filter((workout: Workout) => workout.date === selectedDate);
+        setWorkouts(dayWorkouts);
+        console.log(`Entraînements du jour chargés: ${dayWorkouts.length} séances trouvées`);
       }
     } catch (error) {
       console.error('Erreur chargement entraînements:', error);
+      // En cas d'erreur, essayer le stockage local direct
+      try {
+        const currentUser = await getCurrentUser();
+        if (currentUser) {
+          const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+          const storedWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
+          if (storedWorkouts) {
+            const allWorkouts = JSON.parse(storedWorkouts);
+            const dayWorkouts = allWorkouts.filter((workout: Workout) => workout.date === selectedDate);
+            setWorkouts(dayWorkouts);
+            console.log(`Fallback local: ${dayWorkouts.length} séances trouvées`);
+          }
+        }
+      } catch (localError) {
+        console.error('Erreur fallback local:', localError);
+      }
     }
   };
 
