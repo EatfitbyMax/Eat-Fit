@@ -17,7 +17,6 @@ export default function EntrainementScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [hasSubscription, setHasSubscription] = useState(false);
   const [currentWeek, setCurrentWeek] = useState(new Date());
-  const [currentStravaWeek, setCurrentStravaWeek] = useState(new Date());
   const [workouts, setWorkouts] = useState<any[]>([]);
   const [selectedStravaActivity, setSelectedStravaActivity] = useState<StravaActivity | null>(null);
 
@@ -169,38 +168,8 @@ export default function EntrainementScreen() {
     return `${start.getDate()}-${end.getDate()} ${end.toLocaleDateString('fr-FR', { month: 'long' })}`;
   };
 
-  const getStravaWeekRange = () => {
-    const startOfWeek = new Date(currentStravaWeek);
-    const day = startOfWeek.getDay();
-    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
-    startOfWeek.setDate(diff);
-
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
-
-    return {
-      start: startOfWeek,
-      end: endOfWeek
-    };
-  };
-
-  const formatStravaWeekRange = () => {
-    const { start, end } = getStravaWeekRange();
-    return `${start.getDate()}-${end.getDate()} ${end.toLocaleDateString('fr-FR', { month: 'long' })}`;
-  };
-
-  const navigateStravaWeek = (direction: 'prev' | 'next') => {
-    const newWeek = new Date(currentStravaWeek);
-    if (direction === 'prev') {
-      newWeek.setDate(currentStravaWeek.getDate() - 7);
-    } else {
-      newWeek.setDate(currentStravaWeek.getDate() + 7);
-    }
-    setCurrentStravaWeek(newWeek);
-  };
-
   const getStravaActivitiesForCurrentWeek = () => {
-    const { start, end } = getStravaWeekRange();
+    const { start, end } = getWeekRange();
     return stravaActivities.filter(activity => {
       const activityDate = new Date(activity.date);
       return activityDate >= start && activityDate <= end;
@@ -491,28 +460,6 @@ export default function EntrainementScreen() {
             <View style={styles.completedContainer}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Activités Strava</Text>
-
-                {/* Navigation par semaines pour Strava */}
-                <View style={styles.weekNavigation}>
-                  <TouchableOpacity 
-                    style={styles.weekArrow}
-                    onPress={() => navigateStravaWeek('prev')}
-                  >
-                    <Text style={styles.arrowText}>‹</Text>
-                  </TouchableOpacity>
-
-                  <View style={styles.weekContainer}>
-                    <Text style={styles.weekRange}>{formatStravaWeekRange()}</Text>
-                  </View>
-
-                  <TouchableOpacity 
-                    style={styles.weekArrow}
-                    onPress={() => navigateStravaWeek('next')}
-                  >
-                    <Text style={styles.arrowText}>›</Text>
-                  </TouchableOpacity>
-                </View>
-
                 <Text style={styles.sectionSubtitle}>
                   {getStravaActivitiesForCurrentWeek().length} activité{getStravaActivitiesForCurrentWeek().length > 1 ? 's' : ''} cette semaine
                 </Text>
