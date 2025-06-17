@@ -17,7 +17,9 @@ export default function EntrainementScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [hasSubscription, setHasSubscription] = useState(false);
   const [currentWeek, setCurrentWeek] = useState(new Date());
+  const [currentStravaWeek, setCurrentStravaWeek] = useState(new Date());
   const [workouts, setWorkouts] = useState<any[]>([]);
+  const [selectedStravaActivity, setSelectedStravaActivity] = useState<StravaActivity | null>(null);
 
 
 
@@ -167,6 +169,44 @@ export default function EntrainementScreen() {
     return `${start.getDate()}-${end.getDate()} ${end.toLocaleDateString('fr-FR', { month: 'long' })}`;
   };
 
+  const getStravaWeekRange = () => {
+    const startOfWeek = new Date(currentStravaWeek);
+    const day = startOfWeek.getDay();
+    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
+    startOfWeek.setDate(diff);
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+    return {
+      start: startOfWeek,
+      end: endOfWeek
+    };
+  };
+
+  const formatStravaWeekRange = () => {
+    const { start, end } = getStravaWeekRange();
+    return `${start.getDate()}-${end.getDate()} ${end.toLocaleDateString('fr-FR', { month: 'long' })}`;
+  };
+
+  const navigateStravaWeek = (direction: 'prev' | 'next') => {
+    const newWeek = new Date(currentStravaWeek);
+    if (direction === 'prev') {
+      newWeek.setDate(currentStravaWeek.getDate() - 7);
+    } else {
+      newWeek.setDate(currentStravaWeek.getDate() + 7);
+    }
+    setCurrentStravaWeek(newWeek);
+  };
+
+  const getStravaActivitiesForCurrentWeek = () => {
+    const { start, end } = getStravaWeekRange();
+    return stravaActivities.filter(activity => {
+      const activityDate = new Date(activity.date);
+      return activityDate >= start && activityDate <= end;
+    });
+  };
+
   const navigateWeek = (direction: 'prev' | 'next') => {
     const newWeek = new Date(currentWeek);
     if (direction === 'prev') {
@@ -231,14 +271,21 @@ export default function EntrainementScreen() {
 
 
   const renderStravaActivity = (activity: StravaActivity) => (
-    <View key={activity.id} style={styles.activityCard}>
+    <TouchableOpacity 
+      key={activity.id} 
+      style={styles.activityCard}
+      onPress={() => setSelectedStravaActivity(activity)}
+    >
       <View style={styles.activityHeader}>
         <Text style={styles.activityIcon}>{getActivityIcon(activity.type)}</Text>
         <View style={styles.activityInfo}>
           <Text style={styles.activityName}>{activity.name}</Text>
           <Text style={styles.activityDate}>{formatDate(activity.date)}</Text>
         </View>
-        <Text style={styles.activityType}>{activity.type}</Text>
+        <View style={styles.activityTypeContainer}>
+          <Text style={styles.activityType}>{activity.type}</Text>
+          <Text style={styles.arrowIcon}>›</Text>
+        </View>
       </View>
 
       <View style={styles.activityStats}>
@@ -265,8 +312,92 @@ export default function EntrainementScreen() {
           </View>
         )}
       </View>
-    </View>
+    </TouchableOpacity>
   );
+
+  const renderStravaActivityDetail = () => {
+    if (!selectedStravaActivity) return null;
+    
+    const activity = selectedStravaActivity;
+    
+    return (
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>{activity.name}</Text>
+            <TouchableOpacity 
+              style={styles.closeButton}
+              onPress={() => setSelectedStravaActivity(null)}
+            >
+              <Text style={styles.closeButtonText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <ScrollView style={styles.modalBody}>
+            <View style={styles.activityDetailHeader}>
+              <Text style={styles.activityDetailIcon}>{getActivityIcon(activity.type)}</Text>
+              <View style={styles.activityDetailInfo}>
+                <Text style={styles.activityDetailType}>{activity.type}</Text>
+                <Text style={styles.activityDetailDate}>{formatDate(activity.date)}</Text>
+              </View>
+            </View>
+
+            <View style={styles.detailStatsGrid}>
+              {activity.distance > 0 && (
+                <View style={styles.detailStatCard}>
+                  <Text style={styles.detailStatLabel}>Distance</Text>
+                  <Text style={styles.detailStatValue}>{formatDistance(activity.distance)}</Text>
+                </View>
+              )}
+              
+              <View style={styles.detailStatCard}>
+                <Text style={styles.detailStatLabel}>Durée</Text>
+                <Text style={styles.detailStatValue}>{formatDuration(activity.duration)}</Text>
+              </View>
+              
+              {activity.calories > 0 && (
+                <View style={styles.detailStatCard}>
+                  <Text style={styles.detailStatLabel}>Calories</Text>
+                  <Text style={styles.detailStatValue}>{activity.calories}</Text>
+                </View>
+              )}
+              
+              {activity.avgHeartRate && (
+                <View style={styles.detailStatCard}>
+                  <Text style={styles.detailStatLabel}>FC moyenne</Text>
+                  <Text style={styles.detailStatValue}>{Math.round(activity.avgHeartRate)} bpm</Text>
+                </View>
+              )}
+              
+              {activity.maxHeartRate && (
+                <View style={styles.detailStatCard}>
+                  <Text style={styles.detailStatLabel}>FC maximale</Text>
+                  <Text style={styles.detailStatValue}>{Math.round(activity.maxHeartRate)} bpm</Text>
+                </View>
+              )}
+              
+              {activity.distance > 0 && activity.duration > 0 && (
+                <View style={styles.detailStatCard}>
+                  <Text style={styles.detailStatLabel}>Allure moyenne</Text>
+                  <Text style={styles.detailStatValue}>
+                    {formatPace(activity.duration, activity.distance)}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </ScrollView>
+        </View>
+      </View>
+    );
+  };
+
+  const formatPace = (duration: number, distance: number) => {
+    if (distance === 0) return '--';
+    const pacePerKm = (duration / (distance / 1000)) / 60; // minutes par km
+    const minutes = Math.floor(pacePerKm);
+    const seconds = Math.floor((pacePerKm - minutes) * 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}/km`;
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
@@ -360,8 +491,30 @@ export default function EntrainementScreen() {
             <View style={styles.completedContainer}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Activités Strava</Text>
+                
+                {/* Navigation par semaines pour Strava */}
+                <View style={styles.weekNavigation}>
+                  <TouchableOpacity 
+                    style={styles.weekArrow}
+                    onPress={() => navigateStravaWeek('prev')}
+                  >
+                    <Text style={styles.arrowText}>‹</Text>
+                  </TouchableOpacity>
+
+                  <View style={styles.weekContainer}>
+                    <Text style={styles.weekRange}>{formatStravaWeekRange()}</Text>
+                  </View>
+
+                  <TouchableOpacity 
+                    style={styles.weekArrow}
+                    onPress={() => navigateStravaWeek('next')}
+                  >
+                    <Text style={styles.arrowText}>›</Text>
+                  </TouchableOpacity>
+                </View>
+                
                 <Text style={styles.sectionSubtitle}>
-                  {stravaActivities.length} activité{stravaActivities.length > 1 ? 's' : ''} synchronisée{stravaActivities.length > 1 ? 's' : ''} depuis Strava
+                  {getStravaActivitiesForCurrentWeek().length} activité{getStravaActivitiesForCurrentWeek().length > 1 ? 's' : ''} cette semaine
                 </Text>
               </View>
 
@@ -369,10 +522,23 @@ export default function EntrainementScreen() {
                 <View style={styles.loadingContainer}>
                   <Text style={styles.loadingText}>Chargement...</Text>
                 </View>
-              ) : stravaActivities.length > 0 ? (
+              ) : getStravaActivitiesForCurrentWeek().length > 0 ? (
                 <ScrollView style={styles.activitiesList}>
-                  {stravaActivities.map(renderStravaActivity)}
+                  {getStravaActivitiesForCurrentWeek().map(renderStravaActivity)}
                 </ScrollView>
+              ) : stravaActivities.length > 0 ? (
+                <View style={styles.emptyState}>
+                  <View style={styles.emptyIcon}>
+                    <Text style={styles.emptyIconText}>📅</Text>
+                  </View>
+                  <Text style={styles.emptyTitle}>Aucune activité cette semaine</Text>
+                  <Text style={styles.emptyMessage}>
+                    Pas d'activité Strava pour cette période
+                  </Text>
+                  <Text style={styles.emptySubmessage}>
+                    Naviguez entre les semaines pour voir vos autres séances
+                  </Text>
+                </View>
               ) : (
                 <View style={styles.emptyState}>
                   <View style={styles.emptyIcon}>
@@ -413,6 +579,8 @@ export default function EntrainementScreen() {
 
 
 
+    {/* Modal pour les détails de l'activité Strava */}
+      {selectedStravaActivity && renderStravaActivityDetail()}
     </SafeAreaView>
   );
 }
@@ -706,6 +874,111 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  activityTypeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  // Styles pour le modal de détail
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  modalContent: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    margin: 20,
+    maxHeight: '80%',
+    width: '90%',
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#21262D',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    flex: 1,
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#21262D',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeButtonText: {
+    fontSize: 16,
+    color: '#8B949E',
+    fontWeight: 'bold',
+  },
+  modalBody: {
+    padding: 20,
+  },
+  activityDetailHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  activityDetailIcon: {
+    fontSize: 32,
+    marginRight: 16,
+  },
+  activityDetailInfo: {
+    flex: 1,
+  },
+  activityDetailType: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  activityDetailDate: {
+    fontSize: 14,
+    color: '#8B949E',
+  },
+  detailStatsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  detailStatCard: {
+    backgroundColor: '#0D1117',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    minWidth: '45%',
+    alignItems: 'center',
+  },
+  detailStatLabel: {
+    fontSize: 12,
+    color: '#8B949E',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    fontWeight: '500',
+  },
+  detailStatValue: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    textAlign: 'center',
   },
 
 });
