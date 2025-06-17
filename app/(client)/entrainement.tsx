@@ -317,9 +317,9 @@ export default function EntrainementScreen() {
 
   const renderStravaActivityDetail = () => {
     if (!selectedStravaActivity) return null;
-    
+
     const activity = selectedStravaActivity;
-    
+
     return (
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
@@ -332,7 +332,7 @@ export default function EntrainementScreen() {
               <Text style={styles.closeButtonText}>✕</Text>
             </TouchableOpacity>
           </View>
-          
+
           <ScrollView style={styles.modalBody}>
             <View style={styles.activityDetailHeader}>
               <Text style={styles.activityDetailIcon}>{getActivityIcon(activity.type)}</Text>
@@ -349,33 +349,33 @@ export default function EntrainementScreen() {
                   <Text style={styles.detailStatValue}>{formatDistance(activity.distance)}</Text>
                 </View>
               )}
-              
+
               <View style={styles.detailStatCard}>
                 <Text style={styles.detailStatLabel}>Durée</Text>
                 <Text style={styles.detailStatValue}>{formatDuration(activity.duration)}</Text>
               </View>
-              
+
               {activity.calories > 0 && (
                 <View style={styles.detailStatCard}>
                   <Text style={styles.detailStatLabel}>Calories</Text>
                   <Text style={styles.detailStatValue}>{activity.calories}</Text>
                 </View>
               )}
-              
+
               {activity.avgHeartRate && (
                 <View style={styles.detailStatCard}>
                   <Text style={styles.detailStatLabel}>FC moyenne</Text>
                   <Text style={styles.detailStatValue}>{Math.round(activity.avgHeartRate)} bpm</Text>
                 </View>
               )}
-              
+
               {activity.maxHeartRate && (
                 <View style={styles.detailStatCard}>
                   <Text style={styles.detailStatLabel}>FC maximale</Text>
                   <Text style={styles.detailStatValue}>{Math.round(activity.maxHeartRate)} bpm</Text>
                 </View>
               )}
-              
+
               {activity.distance > 0 && activity.duration > 0 && (
                 <View style={styles.detailStatCard}>
                   <Text style={styles.detailStatLabel}>Allure moyenne</Text>
@@ -491,7 +491,7 @@ export default function EntrainementScreen() {
             <View style={styles.completedContainer}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Activités Strava</Text>
-                
+
                 {/* Navigation par semaines pour Strava */}
                 <View style={styles.weekNavigation}>
                   <TouchableOpacity 
@@ -512,7 +512,7 @@ export default function EntrainementScreen() {
                     <Text style={styles.arrowText}>›</Text>
                   </TouchableOpacity>
                 </View>
-                
+
                 <Text style={styles.sectionSubtitle}>
                   {getStravaActivitiesForCurrentWeek().length} activité{getStravaActivitiesForCurrentWeek().length > 1 ? 's' : ''} cette semaine
                 </Text>
