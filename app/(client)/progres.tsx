@@ -25,7 +25,7 @@ export default function ProgresScreen() {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header with Gradient */}
         <LinearGradient
-          colors={['#1F6FEB', '#0D47A1']}
+          colors={['#F5A623', '#E8941A']}
           style={styles.headerGradient}
         >
           <Text style={styles.title}>EatFitByMax</Text>
@@ -43,7 +43,7 @@ export default function ProgresScreen() {
             >
               {selectedTab === tab && (
                 <LinearGradient
-                  colors={['#1F6FEB', '#0D47A1']}
+                  colors={['#F5A623', '#E8941A']}
                   style={styles.tabGradient}
                 />
               )}
@@ -132,7 +132,7 @@ export default function ProgresScreen() {
               
               {/* Enhanced Weight Line with Gradient */}
               <LinearGradient
-                colors={['rgba(31, 111, 235, 0.3)', 'rgba(31, 111, 235, 0.1)']}
+                colors={['rgba(245, 166, 35, 0.3)', 'rgba(245, 166, 35, 0.1)']}
                 style={styles.weightLineGradient}
               />
               <View style={styles.weightLine} />
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
   activeTab: {
     borderColor: 'transparent',
     elevation: 4,
-    shadowColor: '#1F6FEB',
+    shadowColor: '#F5A623',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   currentWeightCard: {
-    borderColor: '#1F6FEB',
+    borderColor: '#F5A623',
     borderWidth: 2,
   },
   statIcon: {
@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
   progressPercentage: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1F6FEB',
+    color: '#F5A623',
   },
   progressBarContainer: {
     marginBottom: 12,
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#1F6FEB',
+    backgroundColor: '#F5A623',
     borderRadius: 4,
   },
   progressLabels: {
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 3,
-    backgroundColor: '#1F6FEB',
+    backgroundColor: '#F5A623',
     borderRadius: 2,
   },
   dataPoints: {
@@ -458,7 +458,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 8,
     height: 8,
-    backgroundColor: '#1F6FEB',
+    backgroundColor: '#F5A623',
     borderRadius: 4,
     borderWidth: 2,
     borderColor: '#FFFFFF',
@@ -501,7 +501,7 @@ const styles = StyleSheet.create({
   summaryValue: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1F6FEB',
+    color: '#F5A623',
     marginBottom: 4,
   },
   summaryLabel: {
@@ -525,7 +525,7 @@ const styles = StyleSheet.create({
   avatarContainer: {
     width: 50,
     height: 50,
-    backgroundColor: '#1F6FEB',
+    backgroundColor: '#F5A623',
     borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
