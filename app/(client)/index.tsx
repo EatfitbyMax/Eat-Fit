@@ -375,17 +375,17 @@ const styles = StyleSheet.create({
   caloriesCard: {
     backgroundColor: '#1A1F36',
     borderLeftWidth: 4,
-    borderLeftColor: '#FF6B6B',
+    borderLeftColor: '#F5A623',
   },
   workoutCard: {
     backgroundColor: '#1A1F36',
     borderLeftWidth: 4,
-    borderLeftColor: '#4ECDC4',
+    borderLeftColor: '#45B7D1',
   },
   stepsCard: {
     backgroundColor: '#1A1F36',
     borderLeftWidth: 4,
-    borderLeftColor: '#45B7D1',
+    borderLeftColor: '#FF6B6B',
   },
   statNumber: {
     fontSize: 18,
