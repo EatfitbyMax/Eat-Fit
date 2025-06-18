@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -63,7 +62,7 @@ export default function ProgresScreen() {
             <Text style={styles.statValue}>68.5 kg</Text>
             <Text style={styles.statTrend}>↓ -0.8 kg cette semaine</Text>
           </View>
-          
+
           <View style={styles.statCard}>
             <View style={styles.statIcon}>
               <Text style={styles.iconText}>🎯</Text>
@@ -71,7 +70,7 @@ export default function ProgresScreen() {
             <Text style={styles.statLabel}>Poids de départ</Text>
             <Text style={styles.statValue}>72.8 kg</Text>
           </View>
-          
+
           <View style={styles.statCard}>
             <View style={styles.statIcon}>
               <Text style={styles.iconText}>🏆</Text>
@@ -88,13 +87,13 @@ export default function ProgresScreen() {
             <Text style={styles.progressTitle}>Progression vers l'objectif</Text>
             <Text style={styles.progressPercentage}>65%</Text>
           </View>
-          
+
           <View style={styles.progressBarContainer}>
             <View style={styles.progressBarBackground}>
               <Animated.View style={[styles.progressBarFill, animatedProgressStyle]} />
             </View>
           </View>
-          
+
           <View style={styles.progressLabels}>
             <Text style={styles.progressLabel}>72.8 kg</Text>
             <Text style={styles.progressLabel}>65.0 kg</Text>
@@ -109,7 +108,7 @@ export default function ProgresScreen() {
               <Text style={styles.chartPeriodText}>6 mois</Text>
             </View>
           </View>
-          
+
           {/* Improved Chart */}
           <View style={styles.chartArea}>
             <View style={styles.yAxis}>
@@ -120,7 +119,7 @@ export default function ProgresScreen() {
               <Text style={styles.yAxisLabel}>66</Text>
               <Text style={styles.yAxisLabel}>64</Text>
             </View>
-            
+
             <View style={styles.chartContent}>
               {/* Grid */}
               <View style={styles.gridContainer}>
@@ -128,14 +127,14 @@ export default function ProgresScreen() {
                   <View key={i} style={styles.gridLine} />
                 ))}
               </View>
-              
+
               {/* Enhanced Weight Line with Gradient */}
               <LinearGradient
                 colors={['rgba(245, 166, 35, 0.3)', 'rgba(245, 166, 35, 0.1)']}
                 style={styles.weightLineGradient}
               />
               <View style={styles.weightLine} />
-              
+
               {/* Data Points */}
               <View style={styles.dataPoints}>
                 <View style={[styles.dataPoint, { left: '10%', top: '20%' }]} />
@@ -144,7 +143,7 @@ export default function ProgresScreen() {
                 <View style={[styles.dataPoint, { left: '70%', top: '55%' }]} />
                 <View style={[styles.dataPoint, { left: '90%', top: '65%' }]} />
               </View>
-              
+
               {/* X-axis labels */}
               <View style={styles.xAxis}>
                 <Text style={styles.xAxisLabel}>Janv</Text>
@@ -222,7 +221,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     marginBottom: 2,
   },
-  
+
   tabsContainer: {
     flexDirection: 'row',
     paddingHorizontal: 20,
