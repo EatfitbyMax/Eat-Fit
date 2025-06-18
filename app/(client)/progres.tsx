@@ -1,16 +1,27 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring } from 'react-native-reanimated';
+import { checkSubscriptionStatus } from '@/utils/subscription';
 
 const { width } = Dimensions.get('window');
 
 export default function ProgresScreen() {
   const [selectedTab, setSelectedTab] = useState('Mesures');
+  const [isPremium, setIsPremium] = useState(false);
+  const [selectedMeasurementTab, setSelectedMeasurementTab] = useState('Poids');
   const progressAnimation = useSharedValue(0);
 
-  React.useEffect(() => {
+  useEffect(() => {
     progressAnimation.value = withSpring(0.65); // 65% progress towards goal
+    
+    // Vérifier le statut d'abonnement
+    const checkPremiumStatus = async () => {
+      const premiumStatus = await checkSubscriptionStatus();
+      setIsPremium(premiumStatus);
+    };
+    
+    checkPremiumStatus();
   }, []);
 
   const animatedProgressStyle = useAnimatedStyle(() => {
@@ -52,36 +63,140 @@ export default function ProgresScreen() {
           ))}
         </View>
 
-        {/* Enhanced Weight Stats */}
-        <View style={styles.statsContainer}>
-          <View style={[styles.statCard, styles.currentWeightCard]}>
-            <View style={styles.statIcon}>
-              <Text style={styles.iconText}>⚖️</Text>
-            </View>
-            <Text style={styles.statLabel}>Poids actuel</Text>
-            <Text style={styles.statValue}>68.5 kg</Text>
-            <Text style={styles.statTrend}>↓ -0.8 kg cette semaine</Text>
+        {/* Onglets de mesures */}
+        {selectedTab === 'Mesures' && (
+          <View style={styles.measurementTabsContainer}>
+            <TouchableOpacity 
+              style={[styles.measurementTab, selectedMeasurementTab === 'Poids' && styles.activeMeasurementTab]}
+              onPress={() => setSelectedMeasurementTab('Poids')}
+            >
+              <Text style={[styles.measurementTabText, selectedMeasurementTab === 'Poids' && styles.activeMeasurementTabText]}>
+                Poids
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.measurementTab, selectedMeasurementTab === 'Mensurations' && styles.activeMeasurementTab]}
+              onPress={() => {
+                if (!isPremium) {
+                  Alert.alert(
+                    'Fonctionnalité Premium',
+                    'Le suivi des mensurations musculaires est réservé aux abonnés premium.',
+                    [{ text: 'OK' }]
+                  );
+                  return;
+                }
+                setSelectedMeasurementTab('Mensurations');
+              }}
+            >
+              <View style={styles.measurementTabContent}>
+                <Text style={[styles.measurementTabText, selectedMeasurementTab === 'Mensurations' && styles.activeMeasurementTabText]}>
+                  Mensurations
+                </Text>
+                {!isPremium && <Text style={styles.premiumBadge}>👑</Text>}
+              </View>
+            </TouchableOpacity>
           </View>
+        )}
 
-          <View style={styles.statCard}>
-            <View style={styles.statIcon}>
-              <Text style={styles.iconText}>🎯</Text>
+        {/* Statistiques selon l'onglet sélectionné */}
+        {selectedTab === 'Mesures' && selectedMeasurementTab === 'Poids' && (
+          <View style={styles.statsContainer}>
+            <View style={[styles.statCard, styles.currentWeightCard]}>
+              <View style={styles.statIcon}>
+                <Text style={styles.iconText}>⚖️</Text>
+              </View>
+              <Text style={styles.statLabel}>Poids actuel</Text>
+              <Text style={styles.statValue}>68.5 kg</Text>
+              <Text style={styles.statTrend}>↓ -0.8 kg cette semaine</Text>
             </View>
-            <Text style={styles.statLabel}>Poids de départ</Text>
-            <Text style={styles.statValue}>72.8 kg</Text>
-          </View>
 
-          <View style={styles.statCard}>
-            <View style={styles.statIcon}>
-              <Text style={styles.iconText}>🏆</Text>
+            <View style={styles.statCard}>
+              <View style={styles.statIcon}>
+                <Text style={styles.iconText}>🎯</Text>
+              </View>
+              <Text style={styles.statLabel}>Poids de départ</Text>
+              <Text style={styles.statValue}>72.8 kg</Text>
             </View>
-            <Text style={styles.statLabel}>Objectif</Text>
-            <Text style={styles.statValue}>65.0 kg</Text>
-            <Text style={styles.statSubtext}>- 3.5 kg restants</Text>
-          </View>
-        </View>
 
-        {/* Progress Card */}
+            <View style={styles.statCard}>
+              <View style={styles.statIcon}>
+                <Text style={styles.iconText}>🏆</Text>
+              </View>
+              <Text style={styles.statLabel}>Objectif</Text>
+              <Text style={styles.statValue}>65.0 kg</Text>
+              <Text style={styles.statSubtext}>- 3.5 kg restants</Text>
+            </View>
+          </View>
+        )}
+
+        {/* Mensurations musculaires (Premium uniquement) */}
+        {selectedTab === 'Mesures' && selectedMeasurementTab === 'Mensurations' && isPremium && (
+          <View style={styles.measurementsContainer}>
+            <View style={styles.measurementRow}>
+              <View style={styles.measurementCard}>
+                <View style={styles.statIcon}>
+                  <Text style={styles.iconText}>💪</Text>
+                </View>
+                <Text style={styles.statLabel}>Biceps</Text>
+                <Text style={styles.statValue}>35.2 cm</Text>
+                <Text style={styles.statTrend}>↑ +0.5 cm</Text>
+              </View>
+              
+              <View style={styles.measurementCard}>
+                <View style={styles.statIcon}>
+                  <Text style={styles.iconText}>🦵</Text>
+                </View>
+                <Text style={styles.statLabel}>Cuisses</Text>
+                <Text style={styles.statValue}>58.1 cm</Text>
+                <Text style={styles.statTrend}>↑ +1.2 cm</Text>
+              </View>
+            </View>
+
+            <View style={styles.measurementRow}>
+              <View style={styles.measurementCard}>
+                <View style={styles.statIcon}>
+                  <Text style={styles.iconText}>🫸</Text>
+                </View>
+                <Text style={styles.statLabel}>Pectoraux</Text>
+                <Text style={styles.statValue}>102.5 cm</Text>
+                <Text style={styles.statTrend}>↑ +0.8 cm</Text>
+              </View>
+              
+              <View style={styles.measurementCard}>
+                <View style={styles.statIcon}>
+                  <Text style={styles.iconText}>🤏</Text>
+                </View>
+                <Text style={styles.statLabel}>Taille</Text>
+                <Text style={styles.statValue}>82.3 cm</Text>
+                <Text style={styles.statTrend}>↓ -1.5 cm</Text>
+              </View>
+            </View>
+
+            <View style={styles.measurementRow}>
+              <View style={styles.measurementCard}>
+                <View style={styles.statIcon}>
+                  <Text style={styles.iconText}>🦾</Text>
+                </View>
+                <Text style={styles.statLabel}>Avant-bras</Text>
+                <Text style={styles.statValue}>28.4 cm</Text>
+                <Text style={styles.statTrend}>↑ +0.3 cm</Text>
+              </View>
+              
+              <View style={styles.measurementCard}>
+                <View style={styles.statIcon}>
+                  <Text style={styles.iconText}>🦵</Text>
+                </View>
+                <Text style={styles.statLabel}>Mollets</Text>
+                <Text style={styles.statValue}>36.8 cm</Text>
+                <Text style={styles.statTrend}>↑ +0.4 cm</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* Progress Card - Affiché seulement pour le suivi du poids */}
+        {selectedTab === 'Mesures' && selectedMeasurementTab === 'Poids' && (
         <View style={styles.progressCard}>
           <View style={styles.progressHeader}>
             <Text style={styles.progressTitle}>Progression vers l'objectif</Text>
@@ -99,8 +214,10 @@ export default function ProgresScreen() {
             <Text style={styles.progressLabel}>65.0 kg</Text>
           </View>
         </View>
+        )}
 
-        {/* Enhanced Chart Section */}
+        {/* Enhanced Chart Section - Affiché seulement pour le suivi du poids */}
+        {selectedTab === 'Mesures' && selectedMeasurementTab === 'Poids' && (
         <View style={styles.chartContainer}>
           <View style={styles.chartHeader}>
             <Text style={styles.chartTitle}>Évolution du poids</Text>
@@ -156,8 +273,10 @@ export default function ProgresScreen() {
             </View>
           </View>
         </View>
+        )}
 
-        {/* Statistics Summary */}
+        {/* Statistics Summary - Affiché seulement pour le suivi du poids */}
+        {selectedTab === 'Mesures' && selectedMeasurementTab === 'Poids' && (
         <View style={styles.summaryContainer}>
           <Text style={styles.summaryTitle}>Résumé de la période</Text>
           <View style={styles.summaryStats}>
@@ -175,6 +294,7 @@ export default function ProgresScreen() {
             </View>
           </View>
         </View>
+        )}
 
         {/* Enhanced User Info */}
         <LinearGradient
@@ -264,6 +384,62 @@ const styles = StyleSheet.create({
   },
   activeTabText: {
     color: '#FFFFFF',
+  },
+  
+  measurementTabsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    marginBottom: 25,
+    gap: 12,
+  },
+  measurementTab: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    backgroundColor: '#161B22',
+    borderWidth: 1,
+    borderColor: '#21262D',
+    alignItems: 'center',
+  },
+  activeMeasurementTab: {
+    backgroundColor: '#F5A623',
+    borderColor: '#F5A623',
+  },
+  measurementTabContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  measurementTabText: {
+    fontSize: 14,
+    color: '#8B949E',
+    fontWeight: '600',
+  },
+  activeMeasurementTabText: {
+    color: '#FFFFFF',
+  },
+  premiumBadge: {
+    fontSize: 12,
+  },
+  
+  measurementsContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 25,
+  },
+  measurementRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 12,
+  },
+  measurementCard: {
+    flex: 1,
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    alignItems: 'center',
   },
   statsContainer: {
     flexDirection: 'row',
