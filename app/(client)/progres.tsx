@@ -28,8 +28,7 @@ export default function ProgresScreen() {
           colors={['#F5A623', '#E8941A']}
           style={styles.headerGradient}
         >
-          <Text style={styles.title}>EatFitByMax</Text>
-          <Text style={styles.subtitle}>Mes Projets</Text>
+          <Text style={styles.title}>Mes progrès</Text>
         </LinearGradient>
 
         {/* Tabs with improved design */}
@@ -211,22 +210,19 @@ const styles = StyleSheet.create({
   },
   headerGradient: {
     paddingHorizontal: 20,
-    paddingVertical: 30,
-    paddingTop: 15,
+    paddingVertical: 20,
+    paddingTop: 10,
     alignItems: 'center',
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
   },
   title: {
-    fontSize: 28,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 4,
+    marginBottom: 2,
   },
-  subtitle: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
-  },
+  
   tabsContainer: {
     flexDirection: 'row',
     paddingHorizontal: 20,
