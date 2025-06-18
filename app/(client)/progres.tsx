@@ -7,7 +7,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring } fr
 const { width } = Dimensions.get('window');
 
 export default function ProgresScreen() {
-  const [selectedTab, setSelectedTab] = useState('Poids');
+  const [selectedTab, setSelectedTab] = useState('Mesures');
   const progressAnimation = useSharedValue(0);
 
   React.useEffect(() => {
@@ -33,7 +33,7 @@ export default function ProgresScreen() {
 
         {/* Tabs with improved design */}
         <View style={styles.tabsContainer}>
-          {['Poids', 'Mensurations', 'Nutrition', 'Fitness'].map((tab) => (
+          {['Mesures', 'Nutrition', 'Sport'].map((tab) => (
             <TouchableOpacity 
               key={tab}
               style={[styles.tab, selectedTab === tab && styles.activeTab]}
