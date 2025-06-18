@@ -594,6 +594,189 @@ export default function ProgresScreen() {
           </View>
         )}
 
+        {/* Onglet Sport */}
+        {selectedTab === 'Sport' && (
+          <View style={styles.sportContainer}>
+            {/* Résumé de la semaine */}
+            <View style={styles.sportSummaryCard}>
+              <Text style={styles.chartTitle}>📈 Résumé de la semaine</Text>
+              <View style={styles.sportSummaryStats}>
+                <View style={styles.sportSummaryItem}>
+                  <Text style={styles.sportSummaryValue}>4</Text>
+                  <Text style={styles.sportSummaryLabel}>Séances</Text>
+                </View>
+                <View style={styles.sportSummaryItem}>
+                  <Text style={styles.sportSummaryValue}>5h 30min</Text>
+                  <Text style={styles.sportSummaryLabel}>Temps total</Text>
+                </View>
+                <View style={styles.sportSummaryItem}>
+                  <Text style={styles.sportSummaryValue}>1,247</Text>
+                  <Text style={styles.sportSummaryLabel}>Calories brûlées</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Graphique d'activité hebdomadaire */}
+            <View style={styles.chartContainer}>
+              <View style={styles.chartHeader}>
+                <Text style={styles.chartTitle}>Activité sportive</Text>
+                <View style={styles.chartPeriod}>
+                  <Text style={styles.chartPeriodText}>7 jours</Text>
+                </View>
+              </View>
+
+              <View style={styles.sportChartArea}>
+                {/* Axe Y pour les séances */}
+                <View style={styles.yAxis}>
+                  {['3', '2.5', '2', '1.5', '1', '0.5', '0'].map((label, index) => (
+                    <Text key={index} style={styles.yAxisLabel}>{label}</Text>
+                  ))}
+                </View>
+
+                <View style={styles.chartContent}>
+                  {/* Grille */}
+                  <View style={styles.gridContainer}>
+                    {[...Array(7)].map((_, i) => (
+                      <View key={i} style={styles.gridLine} />
+                    ))}
+                  </View>
+
+                  {/* Barres d'activité */}
+                  <View style={styles.sportBars}>
+                    {[
+                      { day: 'Lun', sessions: 1, calories: 320 },
+                      { day: 'Mar', sessions: 0, calories: 0 },
+                      { day: 'Mer', sessions: 2, calories: 480 },
+                      { day: 'Jeu', sessions: 1, calories: 275 },
+                      { day: 'Ven', sessions: 0, calories: 0 },
+                      { day: 'Sam', sessions: 1, calories: 380 },
+                      { day: 'Dim', sessions: 2, calories: 520 }
+                    ].map((data, index) => {
+                      const height = (data.sessions / 3) * 80;
+                      return (
+                        <View key={data.day} style={styles.sportBarContainer}>
+                          <View style={[styles.sportBar, { height: `${height}%` }]} />
+                          <Text style={styles.caloriesText}>{data.calories}</Text>
+                          <Text style={styles.dayLabel}>{data.day}</Text>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </View>
+              </View>
+            </View>
+
+            {/* Statistiques par type de sport */}
+            <View style={styles.sportTypeContainer}>
+              <Text style={styles.chartTitle}>Répartition par activité</Text>
+              
+              <View style={styles.sportTypeGrid}>
+                <View style={styles.sportTypeCard}>
+                  <View style={styles.sportTypeIcon}>
+                    <Text style={styles.sportTypeEmoji}>💪</Text>
+                  </View>
+                  <Text style={styles.sportTypeLabel}>Musculation</Text>
+                  <Text style={styles.sportTypeValue}>2 séances</Text>
+                  <Text style={styles.sportTypeTime}>2h 30min</Text>
+                </View>
+
+                <View style={styles.sportTypeCard}>
+                  <View style={styles.sportTypeIcon}>
+                    <Text style={styles.sportTypeEmoji}>🏃‍♂️</Text>
+                  </View>
+                  <Text style={styles.sportTypeLabel}>Course</Text>
+                  <Text style={styles.sportTypeValue}>1 séance</Text>
+                  <Text style={styles.sportTypeTime}>45min</Text>
+                </View>
+
+                <View style={styles.sportTypeCard}>
+                  <View style={styles.sportTypeIcon}>
+                    <Text style={styles.sportTypeEmoji}>🧘‍♀️</Text>
+                  </View>
+                  <Text style={styles.sportTypeLabel}>Yoga</Text>
+                  <Text style={styles.sportTypeValue}>1 séance</Text>
+                  <Text style={styles.sportTypeTime}>1h 15min</Text>
+                </View>
+
+                <View style={styles.sportTypeCard}>
+                  <View style={styles.sportTypeIcon}>
+                    <Text style={styles.sportTypeEmoji}>🚴‍♂️</Text>
+                  </View>
+                  <Text style={styles.sportTypeLabel}>Cyclisme</Text>
+                  <Text style={styles.sportTypeValue}>0 séance</Text>
+                  <Text style={styles.sportTypeTime}>0min</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Progression des objectifs sportifs */}
+            <View style={styles.sportObjectivesCard}>
+              <Text style={styles.chartTitle}>🎯 Objectifs de la semaine</Text>
+              
+              <View style={styles.objectiveItem}>
+                <View style={styles.objectiveHeader}>
+                  <Text style={styles.objectiveLabel}>Séances par semaine</Text>
+                  <Text style={styles.objectiveProgress}>4/5</Text>
+                </View>
+                <View style={styles.objectiveBar}>
+                  <View style={[styles.objectiveBarFill, { width: '80%' }]} />
+                </View>
+              </View>
+
+              <View style={styles.objectiveItem}>
+                <View style={styles.objectiveHeader}>
+                  <Text style={styles.objectiveLabel}>Temps d'entraînement</Text>
+                  <Text style={styles.objectiveProgress}>5h30/6h</Text>
+                </View>
+                <View style={styles.objectiveBar}>
+                  <View style={[styles.objectiveBarFill, { width: '92%' }]} />
+                </View>
+              </View>
+
+              <View style={styles.objectiveItem}>
+                <View style={styles.objectiveHeader}>
+                  <Text style={styles.objectiveLabel}>Calories brûlées</Text>
+                  <Text style={styles.objectiveProgress}>1,247/1,500</Text>
+                </View>
+                <View style={styles.objectiveBar}>
+                  <View style={[styles.objectiveBarFill, { width: '83%' }]} />
+                </View>
+              </View>
+            </View>
+
+            {/* Records personnels */}
+            <View style={styles.personalRecordsCard}>
+              <Text style={styles.chartTitle}>🏆 Records personnels</Text>
+              
+              <View style={styles.recordsGrid}>
+                <View style={styles.recordItem}>
+                  <Text style={styles.recordLabel}>Développé couché</Text>
+                  <Text style={styles.recordValue}>85 kg</Text>
+                  <Text style={styles.recordDate}>Il y a 3 jours</Text>
+                </View>
+
+                <View style={styles.recordItem}>
+                  <Text style={styles.recordLabel}>Course 5km</Text>
+                  <Text style={styles.recordValue}>24:32</Text>
+                  <Text style={styles.recordDate}>Il y a 1 semaine</Text>
+                </View>
+
+                <View style={styles.recordItem}>
+                  <Text style={styles.recordLabel}>Squat</Text>
+                  <Text style={styles.recordValue}>95 kg</Text>
+                  <Text style={styles.recordDate}>Il y a 5 jours</Text>
+                </View>
+
+                <View style={styles.recordItem}>
+                  <Text style={styles.recordLabel}>Planche</Text>
+                  <Text style={styles.recordValue}>2:45</Text>
+                  <Text style={styles.recordDate}>Hier</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
+
         {/* Statistiques selon l'onglet sélectionné */}
         {selectedTab === 'Nutrition' && (
           <View style={styles.nutritionContainer}>
@@ -1772,6 +1955,199 @@ const styles = StyleSheet.create({
     color: '#8B949E',
     marginBottom: 6,
     fontWeight: '500',
+  },
+
+  // Styles pour l'onglet Sport
+  sportContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 100,
+  },
+  sportSummaryCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    marginBottom: 25,
+  },
+  sportSummaryStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 16,
+  },
+  sportSummaryItem: {
+    alignItems: 'center',
+  },
+  sportSummaryValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#F5A623',
+    marginBottom: 4,
+  },
+  sportSummaryLabel: {
+    fontSize: 12,
+    color: '#8B949E',
+    textAlign: 'center',
+  },
+  sportChartArea: {
+    flexDirection: 'row',
+    height: 200,
+  },
+  sportBars: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    paddingBottom: 25,
+    paddingHorizontal: 10,
+  },
+  sportBarContainer: {
+    alignItems: 'center',
+    flex: 1,
+    height: '100%',
+    justifyContent: 'flex-end',
+  },
+  sportBar: {
+    width: 20,
+    backgroundColor: '#F5A623',
+    borderRadius: 10,
+    marginBottom: 8,
+    minHeight: 4,
+  },
+  caloriesText: {
+    fontSize: 10,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  sportTypeContainer: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    marginBottom: 25,
+  },
+  sportTypeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 16,
+  },
+  sportTypeCard: {
+    width: (width - 64) / 2,
+    backgroundColor: '#0D1117',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    alignItems: 'center',
+  },
+  sportTypeIcon: {
+    width: 40,
+    height: 40,
+    backgroundColor: '#21262D',
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  sportTypeEmoji: {
+    fontSize: 20,
+  },
+  sportTypeLabel: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  sportTypeValue: {
+    fontSize: 16,
+    color: '#F5A623',
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  sportTypeTime: {
+    fontSize: 12,
+    color: '#8B949E',
+  },
+  sportObjectivesCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    marginBottom: 25,
+  },
+  objectiveItem: {
+    marginBottom: 20,
+  },
+  objectiveHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  objectiveLabel: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '500',
+  },
+  objectiveProgress: {
+    fontSize: 14,
+    color: '#F5A623',
+    fontWeight: '600',
+  },
+  objectiveBar: {
+    height: 8,
+    backgroundColor: '#21262D',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  objectiveBarFill: {
+    height: '100%',
+    backgroundColor: '#F5A623',
+    borderRadius: 4,
+  },
+  personalRecordsCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    marginBottom: 25,
+  },
+  recordsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 16,
+  },
+  recordItem: {
+    width: (width - 64) / 2,
+    backgroundColor: '#0D1117',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    alignItems: 'center',
+  },
+  recordLabel: {
+    fontSize: 12,
+    color: '#8B949E',
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  recordValue: {
+    fontSize: 18,
+    color: '#28A745',
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  recordDate: {
+    fontSize: 10,
+    color: '#8B949E',
+    fontStyle: 'italic',
   },
 
   // Styles pour l'onglet Nutrition
