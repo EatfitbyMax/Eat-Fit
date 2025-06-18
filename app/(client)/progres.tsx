@@ -240,157 +240,6 @@ export default function ProgresScreen() {
     };
   });
 
-  // Fonction pour générer les libellés de l'axe des X basés sur l'inscription
-  const generateXAxisLabels = () => {
-    if (!userData?.createdAt) {
-      // Fallback si pas de date d'inscription
-      return ['Janv', 'Fév', 'Mars', 'Avr', 'Mai', 'Juin'];
-    }
-
-    const startDate = new Date(userData.createdAt);
-    const currentDate = new Date();
-    const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
-    
-    const labels = [];
-    let date = new Date(startDate);
-    
-    // Générer jusqu'à 6 mois ou jusqu'à maintenant
-    for (let i = 0; i < 6 && date <= currentDate; i++) {
-      labels.push(months[date.getMonth()]);
-      date.setMonth(date.getMonth() + 1);
-    }
-    
-    // Si moins de 6 mois, compléter avec les mois suivants
-    while (labels.length < 6) {
-      labels.push(months[date.getMonth()]);
-      date.setMonth(date.getMonth() + 1);
-    }
-    
-    return labels;
-  };
-
-  // Fonction pour générer les libellés de l'axe des Y
-  const generateYAxisLabels = () => {
-    const maxWeight = Math.max(weightData.startWeight, weightData.currentWeight, weightData.targetWeight) + 2;
-    const minWeight = Math.min(weightData.startWeight, weightData.currentWeight, weightData.targetWeight) - 2;
-    const range = maxWeight - minWeight;
-    const step = range / 5;
-    
-    const labels = [];
-    for (let i = 5; i >= 0; i--) {
-      labels.push(Math.round(minWeight + (step * i)));
-    }
-    
-    return labels;
-  };
-
-  // Fonction pour obtenir le texte de la période du graphique
-  const getChartPeriodText = () => {
-    if (!userData?.createdAt) return '6 mois';
-    
-    const startDate = new Date(userData.createdAt);
-    const currentDate = new Date();
-    const monthsDiff = Math.ceil((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
-    
-    if (monthsDiff < 1) return '1 mois';
-    if (monthsDiff >= 6) return '6 mois';
-    return `${monthsDiff} mois`;
-  };
-
-  // Fonction pour calculer la position d'un point sur le graphique
-  const getDataPointPosition = (weight: number, monthIndex: number, totalMonths: number) => {
-    const yAxisLabels = generateYAxisLabels();
-    const maxWeight = yAxisLabels[0];
-    const minWeight = yAxisLabels[yAxisLabels.length - 1];
-    
-    const leftPercent = (monthIndex / (totalMonths - 1)) * 80 + 10; // 10% de marge de chaque côté
-    const topPercent = ((maxWeight - weight) / (maxWeight - minWeight)) * 80 + 10; // 10% de marge en haut et en bas
-    
-    return {
-      left: `${Math.min(90, Math.max(10, leftPercent))}%`,
-      top: `${Math.min(90, Math.max(10, topPercent))}%`
-    };
-  };
-
-  // Fonction pour rendre le graphique de poids réel
-  const renderWeightChart = () => {
-    if (!userData?.createdAt) {
-      // Fallback avec des données factices
-      return (
-        <>
-          <LinearGradient
-            colors={['rgba(245, 166, 35, 0.3)', 'rgba(245, 166, 35, 0.1)']}
-            style={styles.weightLineGradient}
-          />
-          <View style={styles.weightLine} />
-          <View style={styles.dataPoints}>
-            <View style={[styles.dataPoint, { left: '10%', top: '20%' }]} />
-            <View style={[styles.dataPoint, { left: '90%', top: '70%' }]} />
-          </View>
-        </>
-      );
-    }
-
-    const startDate = new Date(userData.createdAt);
-    const currentDate = new Date();
-    const monthsDiff = Math.ceil((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
-    const displayMonths = Math.min(6, Math.max(1, monthsDiff + 1));
-
-    // Générer les points de données basés sur la progression réelle
-    const dataPoints = [];
-    
-    // Si moins d'un mois complet, afficher seulement le point actuel
-    if (monthsDiff < 1) {
-      const singlePosition = getDataPointPosition(weightData.currentWeight, 0, 1);
-      dataPoints.push(
-        <View key="single" style={[styles.dataPoint, { left: '50%', top: singlePosition.top }]} />
-      );
-    } else {
-      // Point de départ (inscription)
-      const startPosition = getDataPointPosition(weightData.startWeight, 0, displayMonths);
-      dataPoints.push(
-        <View key="start" style={[styles.dataPoint, startPosition]} />
-      );
-
-      // Points intermédiaires (simulation basée sur la progression)
-      if (displayMonths > 2) {
-        const totalWeightChange = weightData.currentWeight - weightData.startWeight;
-        for (let i = 1; i < displayMonths - 1; i++) {
-          const progressRatio = i / (displayMonths - 1);
-          const interpolatedWeight = weightData.startWeight + (totalWeightChange * progressRatio);
-          // Ajouter une petite variation réaliste
-          const variation = (Math.random() - 0.5) * 0.5;
-          const weightWithVariation = interpolatedWeight + variation;
-          
-          const position = getDataPointPosition(weightWithVariation, i, displayMonths);
-          dataPoints.push(
-            <View key={`point-${i}`} style={[styles.dataPoint, position]} />
-          );
-        }
-      }
-
-      // Point actuel (seulement si plus d'un mois)
-      if (displayMonths > 1) {
-        const currentPosition = getDataPointPosition(weightData.currentWeight, displayMonths - 1, displayMonths);
-        dataPoints.push(
-          <View key="current" style={[styles.dataPoint, currentPosition]} />
-        );
-      }
-    }
-
-    return (
-      <>
-        <LinearGradient
-          colors={['rgba(245, 166, 35, 0.3)', 'rgba(245, 166, 35, 0.1)')}
-          style={styles.weightLineGradient}
-        />
-        <View style={styles.dataPoints}>
-          {dataPoints}
-        </View>
-      </>
-    );
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -612,36 +461,53 @@ export default function ProgresScreen() {
           <View style={styles.chartHeader}>
             <Text style={styles.chartTitle}>Évolution du poids</Text>
             <View style={styles.chartPeriod}>
-              <Text style={styles.chartPeriodText}>
-                {getChartPeriodText()}
-              </Text>
+              <Text style={styles.chartPeriodText}>6 mois</Text>
             </View>
           </View>
 
           {/* Improved Chart */}
           <View style={styles.chartArea}>
             <View style={styles.yAxis}>
-              {generateYAxisLabels().map((label, index) => (
-                <Text key={index} style={styles.yAxisLabel}>{label}</Text>
-              ))}
+              <Text style={styles.yAxisLabel}>74</Text>
+              <Text style={styles.yAxisLabel}>72</Text>
+              <Text style={styles.yAxisLabel}>70</Text>
+              <Text style={styles.yAxisLabel}>68</Text>
+              <Text style={styles.yAxisLabel}>66</Text>
+              <Text style={styles.yAxisLabel}>64</Text>
             </View>
 
             <View style={styles.chartContent}>
               {/* Grid */}
               <View style={styles.gridContainer}>
-                {generateYAxisLabels().map((_, i) => (
+                {[...Array(6)].map((_, i) => (
                   <View key={i} style={styles.gridLine} />
                 ))}
               </View>
 
               {/* Enhanced Weight Line with Gradient */}
-              {renderWeightChart()}
+              <LinearGradient
+                colors={['rgba(245, 166, 35, 0.3)', 'rgba(245, 166, 35, 0.1)']}
+                style={styles.weightLineGradient}
+              />
+              <View style={styles.weightLine} />
+
+              {/* Data Points */}
+              <View style={styles.dataPoints}>
+                <View style={[styles.dataPoint, { left: '10%', top: '20%' }]} />
+                <View style={[styles.dataPoint, { left: '30%', top: '35%' }]} />
+                <View style={[styles.dataPoint, { left: '50%', top: '45%' }]} />
+                <View style={[styles.dataPoint, { left: '70%', top: '55%' }]} />
+                <View style={[styles.dataPoint, { left: '90%', top: '65%' }]} />
+              </View>
 
               {/* X-axis labels */}
               <View style={styles.xAxis}>
-                {generateXAxisLabels().map((label, index) => (
-                  <Text key={index} style={styles.xAxisLabel}>{label}</Text>
-                ))}
+                <Text style={styles.xAxisLabel}>Janv</Text>
+                <Text style={styles.xAxisLabel}>Mars</Text>
+                <Text style={styles.xAxisLabel}>Mai</Text>
+                <Text style={styles.xAxisLabel}>Juil</Text>
+                <Text style={styles.xAxisLabel}>Sept</Text>
+                <Text style={styles.xAxisLabel}>Déc</Text>
               </View>
             </View>
           </View>
@@ -654,42 +520,15 @@ export default function ProgresScreen() {
           <Text style={styles.summaryTitle}>Résumé de la période</Text>
           <View style={styles.summaryStats}>
             <View style={styles.summaryItem}>
-              <Text style={[styles.summaryValue, { color: getWeightTrend().color }]}>
-                {weightData.startWeight > weightData.currentWeight ? 
-                  `-${formatWeight(weightData.startWeight - weightData.currentWeight)} kg` :
-                  weightData.startWeight < weightData.currentWeight ?
-                  `+${formatWeight(weightData.currentWeight - weightData.startWeight)} kg` :
-                  '0 kg'
-                }
-              </Text>
-              <Text style={styles.summaryLabel}>
-                {weightData.startWeight > weightData.currentWeight ? 'Perte totale' :
-                 weightData.startWeight < weightData.currentWeight ? 'Prise totale' :
-                 'Changement total'}
-              </Text>
+              <Text style={styles.summaryValue}>-4.3 kg</Text>
+              <Text style={styles.summaryLabel}>Perte totale</Text>
             </View>
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryValue}>
-                {(() => {
-                  if (!userData?.createdAt) return '0 kg';
-                  const startDate = new Date(userData.createdAt);
-                  const currentDate = new Date();
-                  const monthsDiff = Math.max(1, Math.ceil((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30)));
-                  const avgChange = Math.abs(weightData.currentWeight - weightData.startWeight) / monthsDiff;
-                  return `${formatWeight(avgChange)} kg`;
-                })()}
-              </Text>
-              <Text style={styles.summaryLabel}>Moyenne/mois</Text>
+              <Text style={styles.summaryValue}>0.7 kg</Text>
+              <Text style={styles.summaryLabel}>Perte moyenne/mois</Text>
             </View>
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryValue}>
-                {(() => {
-                  // Calculer la régularité basée sur les mises à jour
-                  const totalWeeks = Math.max(1, Math.ceil((Date.now() - (weightData.lastWeekReset ? new Date(weightData.lastWeekReset).getTime() : Date.now())) / (1000 * 60 * 60 * 24 * 7)));
-                  const regularityPercentage = Math.min(100, Math.round((weightData.weeklyUpdates / totalWeeks) * 100));
-                  return `${regularityPercentage}%`;
-                })()}
-              </Text>
+              <Text style={styles.summaryValue}>86%</Text>
               <Text style={styles.summaryLabel}>Régularité</Text>
             </View>
           </View>
