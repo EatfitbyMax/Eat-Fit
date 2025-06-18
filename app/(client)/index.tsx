@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -280,7 +281,7 @@ export default function HomeScreen() {
               <View style={[styles.progressFill, { width: '75%' }]} />
             </View>
           </View>
-
+          
           <View style={styles.goalCard}>
             <View style={styles.goalHeader}>
               <Text style={styles.goalTitle}>Calories brûlées</Text>
@@ -301,11 +302,24 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0D1117',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#0D1117',
+  },
+  loadingText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+  },
+  scrollView: {
+    flex: 1,
+  },
   headerContainer: {
     marginBottom: 20,
   },
   headerGradient: {
-    paddingTop: 60, // Espace pour l'encoche et la barre de statut
+    paddingTop: 20,
     paddingBottom: 30,
     paddingHorizontal: 20,
   },
