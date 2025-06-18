@@ -29,7 +29,7 @@ export default function ProgresScreen() {
           style={styles.headerGradient}
         >
           <Text style={styles.title}>EatFitByMax</Text>
-          <Text style={styles.subtitle}>Suivi de vos progrès</Text>
+          <Text style={styles.subtitle}>Mes Projets</Text>
         </LinearGradient>
 
         {/* Tabs with improved design */}
