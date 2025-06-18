@@ -660,8 +660,9 @@ export default function ProgresScreen() {
         visible={showWeightTips}
         transparent={true}
         animationType="fade"
+        statusBarTranslucent={true}
       >
-        <View style={styles.modalOverlay}>
+        <View style={styles.tipsModalOverlay}>
           <View style={styles.tipsModalContent}>
             <View style={styles.tipsModalHeader}>
               <Text style={styles.tipsModalTitle}>Conseils pour la pesée</Text>
@@ -1160,6 +1161,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
+    zIndex: 1000,
   },
   modalContent: {
     backgroundColor: '#161B22',
@@ -1265,6 +1267,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  tipsModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    zIndex: 2000,
+  },
   tipsModalContent: {
     backgroundColor: '#161B22',
     borderRadius: 20,
@@ -1274,6 +1284,11 @@ const styles = StyleSheet.create({
     maxHeight: '80%',
     borderWidth: 1,
     borderColor: '#21262D',
+    elevation: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.8,
+    shadowRadius: 20,
   },
   tipsModalHeader: {
     flexDirection: 'row',
