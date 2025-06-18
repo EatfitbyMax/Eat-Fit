@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Alert, TextInput, Modal } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring } from 'react-native-reanimated';
 import { checkSubscriptionStatus } from '@/utils/subscription';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { PersistentStorage } from '@/utils/storage';
 
 const { width } = Dimensions.get('window');
 
@@ -11,9 +13,20 @@ export default function ProgresScreen() {
   const [isPremium, setIsPremium] = useState(false);
   const [selectedMeasurementTab, setSelectedMeasurementTab] = useState('Poids');
   const progressAnimation = useSharedValue(0);
+  const [userData, setUserData] = useState<any>(null);
+  const [weightData, setWeightData] = useState({
+    startWeight: 0,
+    currentWeight: 0,
+    targetWeight: 0,
+    lastWeightUpdate: null as string | null,
+  });
+  const [showWeightModal, setShowWeightModal] = useState(false);
+  const [showTargetModal, setShowTargetModal] = useState(false);
+  const [tempWeight, setTempWeight] = useState('');
+  const [tempTarget, setTempTarget] = useState('');
 
   useEffect(() => {
-    progressAnimation.value = withSpring(0.65); // 65% progress towards goal
+    loadUserData();
     
     // Vérifier le statut d'abonnement
     const checkPremiumStatus = async () => {
@@ -23,6 +36,135 @@ export default function ProgresScreen() {
     
     checkPremiumStatus();
   }, []);
+
+  const loadUserData = async () => {
+    try {
+      // Récupérer les données utilisateur
+      const currentUserString = await AsyncStorage.getItem('currentUser');
+      if (currentUserString) {
+        const user = JSON.parse(currentUserString);
+        setUserData(user);
+
+        // Charger les données de poids
+        const weightDataString = await AsyncStorage.getItem(`weight_data_${user.id}`);
+        if (weightDataString) {
+          const saved = JSON.parse(weightDataString);
+          setWeightData(saved);
+          // Calculer le pourcentage de progression
+          if (saved.targetWeight && saved.startWeight) {
+            const totalLoss = saved.startWeight - saved.targetWeight;
+            const currentLoss = saved.startWeight - saved.currentWeight;
+            const progress = Math.max(0, Math.min(1, currentLoss / totalLoss));
+            progressAnimation.value = withSpring(progress);
+          }
+        } else {
+          // Première utilisation - définir le poids de départ depuis l'inscription
+          const initialData = {
+            startWeight: user.weight || 0,
+            currentWeight: user.weight || 0,
+            targetWeight: 0,
+            lastWeightUpdate: null,
+          };
+          setWeightData(initialData);
+          // Demander de définir l'objectif si pas encore fait
+          if (!initialData.targetWeight) {
+            setTimeout(() => setShowTargetModal(true), 1000);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Erreur chargement données utilisateur:', error);
+    }
+  };
+
+  const saveWeightData = async (newData: any) => {
+    try {
+      if (userData) {
+        await AsyncStorage.setItem(`weight_data_${userData.id}`, JSON.stringify(newData));
+        setWeightData(newData);
+      }
+    } catch (error) {
+      console.error('Erreur sauvegarde données poids:', error);
+    }
+  };
+
+  const handleWeightUpdate = async () => {
+    const weight = parseFloat(tempWeight);
+    if (isNaN(weight) || weight <= 0) {
+      Alert.alert('Erreur', 'Veuillez entrer un poids valide');
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const newData = {
+      ...weightData,
+      currentWeight: weight,
+      lastWeightUpdate: now,
+    };
+
+    await saveWeightData(newData);
+    
+    // Mettre à jour l'animation de progression
+    if (newData.targetWeight && newData.startWeight) {
+      const totalLoss = newData.startWeight - newData.targetWeight;
+      const currentLoss = newData.startWeight - newData.currentWeight;
+      const progress = Math.max(0, Math.min(1, currentLoss / totalLoss));
+      progressAnimation.value = withSpring(progress);
+    }
+
+    setTempWeight('');
+    setShowWeightModal(false);
+    Alert.alert('Succès', 'Votre poids a été mis à jour !');
+  };
+
+  const handleTargetUpdate = async () => {
+    const target = parseFloat(tempTarget);
+    if (isNaN(target) || target <= 0) {
+      Alert.alert('Erreur', 'Veuillez entrer un objectif valide');
+      return;
+    }
+
+    const newData = {
+      ...weightData,
+      targetWeight: target,
+    };
+
+    await saveWeightData(newData);
+    
+    // Mettre à jour l'animation de progression
+    if (newData.currentWeight && newData.startWeight) {
+      const totalLoss = newData.startWeight - newData.targetWeight;
+      const currentLoss = newData.startWeight - newData.currentWeight;
+      const progress = Math.max(0, Math.min(1, currentLoss / totalLoss));
+      progressAnimation.value = withSpring(progress);
+    }
+
+    setTempTarget('');
+    setShowTargetModal(false);
+    Alert.alert('Succès', 'Votre objectif a été défini !');
+  };
+
+  const canUpdateWeight = () => {
+    if (!weightData.lastWeightUpdate) return true;
+    
+    const lastUpdate = new Date(weightData.lastWeightUpdate);
+    const now = new Date();
+    const daysDiff = Math.floor((now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    return daysDiff >= 7; // Peut mettre à jour après 7 jours
+  };
+
+  const getWeightTrend = () => {
+    if (!weightData.lastWeightUpdate) return '';
+    
+    const weightDiff = weightData.startWeight - weightData.currentWeight;
+    if (weightDiff > 0) {
+      return `↓ -${weightDiff.toFixed(1)} kg depuis le début`;
+    } else if (weightDiff < 0) {
+      return `↑ +${Math.abs(weightDiff).toFixed(1)} kg depuis le début`;
+    }
+    return 'Aucun changement';
+  };
 
   const animatedProgressStyle = useAnimatedStyle(() => {
     return {
@@ -99,31 +241,57 @@ export default function ProgresScreen() {
         {/* Statistiques selon l'onglet sélectionné */}
         {selectedTab === 'Mesures' && selectedMeasurementTab === 'Poids' && (
           <View style={styles.statsContainer}>
-            <View style={[styles.statCard, styles.currentWeightCard]}>
+            <TouchableOpacity 
+              style={[styles.statCard, styles.currentWeightCard]}
+              onPress={() => {
+                if (canUpdateWeight()) {
+                  setShowWeightModal(true);
+                } else {
+                  Alert.alert(
+                    'Mise à jour limitée',
+                    'Vous pouvez mettre à jour votre poids une fois par semaine seulement.',
+                    [{ text: 'OK' }]
+                  );
+                }
+              }}
+            >
               <View style={styles.statIcon}>
                 <Text style={styles.iconText}>⚖️</Text>
               </View>
               <Text style={styles.statLabel}>Poids actuel</Text>
-              <Text style={styles.statValue}>68.5 kg</Text>
-              <Text style={styles.statTrend}>↓ -0.8 kg cette semaine</Text>
-            </View>
+              <Text style={styles.statValue}>{weightData.currentWeight.toFixed(1)} kg</Text>
+              <Text style={styles.statTrend}>{getWeightTrend()}</Text>
+              {canUpdateWeight() && (
+                <Text style={styles.updateHint}>Appuyez pour mettre à jour</Text>
+              )}
+            </TouchableOpacity>
 
             <View style={styles.statCard}>
               <View style={styles.statIcon}>
                 <Text style={styles.iconText}>🎯</Text>
               </View>
               <Text style={styles.statLabel}>Poids de départ</Text>
-              <Text style={styles.statValue}>72.8 kg</Text>
+              <Text style={styles.statValue}>{weightData.startWeight.toFixed(1)} kg</Text>
             </View>
 
-            <View style={styles.statCard}>
+            <TouchableOpacity 
+              style={styles.statCard}
+              onPress={() => setShowTargetModal(true)}
+            >
               <View style={styles.statIcon}>
                 <Text style={styles.iconText}>🏆</Text>
               </View>
               <Text style={styles.statLabel}>Objectif</Text>
-              <Text style={styles.statValue}>65.0 kg</Text>
-              <Text style={styles.statSubtext}>- 3.5 kg restants</Text>
-            </View>
+              <Text style={styles.statValue}>
+                {weightData.targetWeight ? `${weightData.targetWeight.toFixed(1)} kg` : 'À définir'}
+              </Text>
+              {weightData.targetWeight > 0 && (
+                <Text style={styles.statSubtext}>
+                  {Math.abs(weightData.currentWeight - weightData.targetWeight).toFixed(1)} kg restants
+                </Text>
+              )}
+              <Text style={styles.updateHint}>Appuyez pour modifier</Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -193,11 +361,13 @@ export default function ProgresScreen() {
         )}
 
         {/* Progress Card - Affiché seulement pour le suivi du poids */}
-        {selectedTab === 'Mesures' && selectedMeasurementTab === 'Poids' && (
+        {selectedTab === 'Mesures' && selectedMeasurementTab === 'Poids' && weightData.targetWeight > 0 && (
         <View style={styles.progressCard}>
           <View style={styles.progressHeader}>
             <Text style={styles.progressTitle}>Progression vers l'objectif</Text>
-            <Text style={styles.progressPercentage}>65%</Text>
+            <Text style={styles.progressPercentage}>
+              {Math.round(((weightData.startWeight - weightData.currentWeight) / (weightData.startWeight - weightData.targetWeight)) * 100)}%
+            </Text>
           </View>
 
           <View style={styles.progressBarContainer}>
@@ -207,8 +377,8 @@ export default function ProgresScreen() {
           </View>
 
           <View style={styles.progressLabels}>
-            <Text style={styles.progressLabel}>72.8 kg</Text>
-            <Text style={styles.progressLabel}>65.0 kg</Text>
+            <Text style={styles.progressLabel}>{weightData.startWeight.toFixed(1)} kg</Text>
+            <Text style={styles.progressLabel}>{weightData.targetWeight.toFixed(1)} kg</Text>
           </View>
         </View>
         )}
@@ -312,6 +482,105 @@ export default function ProgresScreen() {
           </View>
         </LinearGradient>
       </ScrollView>
+
+      {/* Modal de mise à jour du poids */}
+      <Modal
+        visible={showWeightModal}
+        transparent={true}
+        animationType="fade"
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Mettre à jour votre poids</Text>
+            <Text style={styles.modalSubtitle}>
+              Dernière mise à jour : {weightData.lastWeightUpdate ? 
+                new Date(weightData.lastWeightUpdate).toLocaleDateString('fr-FR') : 
+                'Jamais'
+              }
+            </Text>
+            
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.modalInput}
+                value={tempWeight}
+                onChangeText={setTempWeight}
+                placeholder="Votre poids actuel en kg"
+                placeholderTextColor="#8B949E"
+                keyboardType="numeric"
+                autoFocus
+              />
+              <Text style={styles.inputUnit}>kg</Text>
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={styles.modalButtonSecondary}
+                onPress={() => {
+                  setTempWeight('');
+                  setShowWeightModal(false);
+                }}
+              >
+                <Text style={styles.modalButtonSecondaryText}>Annuler</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.modalButtonPrimary}
+                onPress={handleWeightUpdate}
+              >
+                <Text style={styles.modalButtonPrimaryText}>Confirmer</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal de définition de l'objectif */}
+      <Modal
+        visible={showTargetModal}
+        transparent={true}
+        animationType="fade"
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Définir votre objectif de poids</Text>
+            <Text style={styles.modalSubtitle}>
+              Poids actuel : {weightData.currentWeight.toFixed(1)} kg
+            </Text>
+            
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.modalInput}
+                value={tempTarget}
+                onChangeText={setTempTarget}
+                placeholder="Votre objectif en kg"
+                placeholderTextColor="#8B949E"
+                keyboardType="numeric"
+                autoFocus
+              />
+              <Text style={styles.inputUnit}>kg</Text>
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={styles.modalButtonSecondary}
+                onPress={() => {
+                  setTempTarget('');
+                  setShowTargetModal(false);
+                }}
+              >
+                <Text style={styles.modalButtonSecondaryText}>Annuler</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.modalButtonPrimary}
+                onPress={handleTargetUpdate}
+              >
+                <Text style={styles.modalButtonPrimaryText}>Confirmer</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -727,5 +996,93 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 8,
     fontWeight: '500',
+  },
+  updateHint: {
+    fontSize: 10,
+    color: '#F5A623',
+    marginTop: 4,
+    fontStyle: 'italic',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  modalContent: {
+    backgroundColor: '#161B22',
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#8B949E',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  inputContainer: {
+    position: 'relative',
+    marginBottom: 24,
+  },
+  modalInput: {
+    backgroundColor: '#0D1117',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    paddingRight: 50,
+    fontSize: 16,
+    color: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#21262D',
+    textAlign: 'center',
+  },
+  inputUnit: {
+    position: 'absolute',
+    right: 16,
+    top: 16,
+    fontSize: 16,
+    color: '#8B949E',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalButtonSecondary: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#21262D',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  modalButtonSecondaryText: {
+    color: '#8B949E',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalButtonPrimary: {
+    flex: 1,
+    backgroundColor: '#F5A623',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  modalButtonPrimaryText: {
+    color: '#000000',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
