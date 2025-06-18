@@ -22,6 +22,17 @@ export default function ProgresScreen() {
     weeklyUpdates: 0,
     lastWeekReset: null as string | null,
   });
+
+  // Fonction pour formater le poids avec la précision appropriée
+  const formatWeight = (weight: number) => {
+    if (weight % 1 === 0) {
+      return weight.toFixed(0); // Pas de décimales si c'est un nombre entier
+    } else if ((weight * 10) % 1 === 0) {
+      return weight.toFixed(1); // Une décimale si nécessaire
+    } else {
+      return weight.toFixed(2); // Deux décimales si nécessaire
+    }
+  };
   const [showWeightModal, setShowWeightModal] = useState(false);
   const [showTargetModal, setShowTargetModal] = useState(false);
   const [tempWeight, setTempWeight] = useState('');
@@ -93,7 +104,9 @@ export default function ProgresScreen() {
   };
 
   const handleWeightUpdate = async () => {
-    const weight = parseFloat(tempWeight);
+    // Remplacer la virgule par un point pour la conversion
+    const normalizedWeight = tempWeight.replace(',', '.');
+    const weight = parseFloat(normalizedWeight);
     if (isNaN(weight) || weight <= 0) {
       Alert.alert('Erreur', 'Veuillez entrer un poids valide');
       return;
@@ -142,7 +155,9 @@ export default function ProgresScreen() {
   };
 
   const handleTargetUpdate = async () => {
-    const target = parseFloat(tempTarget);
+    // Remplacer la virgule par un point pour la conversion
+    const normalizedTarget = tempTarget.replace(',', '.');
+    const target = parseFloat(normalizedTarget);
     if (isNaN(target) || target <= 0) {
       Alert.alert('Erreur', 'Veuillez entrer un objectif valide');
       return;
@@ -200,9 +215,9 @@ export default function ProgresScreen() {
     
     const weightDiff = weightData.startWeight - weightData.currentWeight;
     if (weightDiff > 0) {
-      return `↓ -${weightDiff.toFixed(1)} kg depuis le début`;
+      return `↓ -${formatWeight(weightDiff)} kg depuis le début`;
     } else if (weightDiff < 0) {
-      return `↑ +${Math.abs(weightDiff).toFixed(1)} kg depuis le début`;
+      return `↑ +${formatWeight(Math.abs(weightDiff))} kg depuis le début`;
     }
     return 'Aucun changement';
   };
@@ -301,7 +316,7 @@ export default function ProgresScreen() {
                 <Text style={styles.iconText}>⚖️</Text>
               </View>
               <Text style={styles.statLabel}>Poids actuel</Text>
-              <Text style={styles.statValue}>{weightData.currentWeight.toFixed(1)} kg</Text>
+              <Text style={styles.statValue}>{formatWeight(weightData.currentWeight)} kg</Text>
               <Text style={styles.statTrend}>{getWeightTrend()}</Text>
               {canUpdateWeight().canUpdate && (
                 <Text style={styles.updateHint}>
@@ -315,7 +330,7 @@ export default function ProgresScreen() {
                 <Text style={styles.iconText}>🎯</Text>
               </View>
               <Text style={styles.statLabel}>Poids de départ</Text>
-              <Text style={styles.statValue}>{weightData.startWeight.toFixed(1)} kg</Text>
+              <Text style={styles.statValue}>{formatWeight(weightData.startWeight)} kg</Text>
             </View>
 
             <TouchableOpacity 
@@ -327,11 +342,11 @@ export default function ProgresScreen() {
               </View>
               <Text style={styles.statLabel}>Objectif</Text>
               <Text style={styles.statValue}>
-                {weightData.targetWeight ? `${weightData.targetWeight.toFixed(1)} kg` : 'À définir'}
+                {weightData.targetWeight ? `${formatWeight(weightData.targetWeight)} kg` : 'À définir'}
               </Text>
               {weightData.targetWeight > 0 && (
                 <Text style={styles.statSubtext}>
-                  {Math.abs(weightData.currentWeight - weightData.targetWeight).toFixed(1)} kg restants
+                  {formatWeight(Math.abs(weightData.currentWeight - weightData.targetWeight))} kg restants
                 </Text>
               )}
               <Text style={styles.updateHint}>Appuyez pour modifier</Text>
@@ -421,8 +436,8 @@ export default function ProgresScreen() {
           </View>
 
           <View style={styles.progressLabels}>
-            <Text style={styles.progressLabel}>{weightData.startWeight.toFixed(1)} kg</Text>
-            <Text style={styles.progressLabel}>{weightData.targetWeight.toFixed(1)} kg</Text>
+            <Text style={styles.progressLabel}>{formatWeight(weightData.startWeight)} kg</Text>
+            <Text style={styles.progressLabel}>{formatWeight(weightData.targetWeight)} kg</Text>
           </View>
         </View>
         )}
@@ -588,7 +603,7 @@ export default function ProgresScreen() {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Définir votre objectif de poids</Text>
             <Text style={styles.modalSubtitle}>
-              Poids actuel : {weightData.currentWeight.toFixed(1)} kg
+              Poids actuel : {formatWeight(weightData.currentWeight)} kg
             </Text>
             
             <View style={styles.inputContainer}>
