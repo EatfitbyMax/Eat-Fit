@@ -10,7 +10,7 @@ import {
   Dimensions,
   Alert,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -21,7 +21,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getCurrentUser } from '@/utils/auth';
-import { syncWithExternalApps } from '@/utils/integrations';
+import { syncWithExternalApps, IntegrationsManager } from '@/utils/integrations';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { PersistentStorage } from '@/utils/storage';
 
 const { width, height } = Dimensions.get('window');
 
@@ -54,6 +56,15 @@ export default function HomeScreen() {
     startAnimations();
   }, []);
 
+  // Rechargement automatique quand l'écran est focalisé
+  useFocusEffect(
+    React.useCallback(() => {
+      if (user) {
+        loadTodayStats();
+      }
+    }, [user])
+  );
+
   const loadUserData = async () => {
     try {
       const currentUser = await getCurrentUser();
@@ -69,12 +80,90 @@ export default function HomeScreen() {
   };
 
   const loadTodayStats = async () => {
-    // Simuler le chargement des statistiques du jour
-    setTodayStats({
-      calories: 1450,
-      workouts: 1,
-      steps: 8430,
-    });
+    try {
+      const currentUser = await getCurrentUser();
+      if (!currentUser) return;
+
+      const today = new Date().toISOString().split('T')[0];
+      
+      // 1. Récupérer les calories depuis la nutrition
+      let totalCalories = 0;
+      try {
+        const foodEntries = await AsyncStorage.getItem(`food_entries_${currentUser.id}`);
+        if (foodEntries) {
+          const entries = JSON.parse(foodEntries);
+          const todayEntries = entries.filter((entry: any) => entry.date === today);
+          totalCalories = todayEntries.reduce((sum: number, entry: any) => sum + (entry.calories || 0), 0);
+        }
+      } catch (error) {
+        console.error('Erreur récupération calories:', error);
+      }
+
+      // 2. Récupérer le nombre de séances depuis les entraînements
+      let totalWorkouts = 0;
+      try {
+        const workouts = await PersistentStorage.getWorkouts(currentUser.id);
+        totalWorkouts = workouts.filter((workout: any) => workout.date === today).length;
+      } catch (error) {
+        console.error('Erreur récupération séances:', error);
+        // Fallback vers le stockage local
+        try {
+          const storedWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
+          if (storedWorkouts) {
+            const workouts = JSON.parse(storedWorkouts);
+            totalWorkouts = workouts.filter((workout: any) => workout.date === today).length;
+          }
+        } catch (localError) {
+          console.error('Erreur fallback local séances:', localError);
+        }
+      }
+
+      // 3. Récupérer les pas depuis Apple Health
+      let totalSteps = 0;
+      try {
+        const healthData = await IntegrationsManager.getHealthData(currentUser.id);
+        const todayHealthData = healthData.find((data: any) => data.date === today);
+        if (todayHealthData) {
+          totalSteps = todayHealthData.steps || 0;
+        }
+      } catch (error) {
+        console.error('Erreur récupération pas Apple Health:', error);
+      }
+
+      // Si aucune donnée Apple Health, essayer de synchroniser
+      if (totalSteps === 0) {
+        try {
+          const integrationStatus = await IntegrationsManager.getIntegrationStatus(currentUser.id);
+          if (integrationStatus.appleHealth.connected) {
+            console.log('Tentative de synchronisation Apple Health...');
+            await IntegrationsManager.syncAppleHealthData(currentUser.id);
+            const updatedHealthData = await IntegrationsManager.getHealthData(currentUser.id);
+            const todayData = updatedHealthData.find((data: any) => data.date === today);
+            if (todayData) {
+              totalSteps = todayData.steps || 0;
+            }
+          }
+        } catch (syncError) {
+          console.warn('Impossible de synchroniser Apple Health:', syncError);
+        }
+      }
+
+      setTodayStats({
+        calories: Math.round(totalCalories),
+        workouts: totalWorkouts,
+        steps: totalSteps,
+      });
+
+      console.log(`Statistiques du jour chargées: ${Math.round(totalCalories)} calories, ${totalWorkouts} séances, ${totalSteps} pas`);
+    } catch (error) {
+      console.error('Erreur chargement statistiques du jour:', error);
+      // En cas d'erreur, garder des valeurs par défaut
+      setTodayStats({
+        calories: 0,
+        workouts: 0,
+        steps: 0,
+      });
+    }
   };
 
   const startAnimations = () => {
