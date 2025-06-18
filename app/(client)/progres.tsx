@@ -19,6 +19,8 @@ export default function ProgresScreen() {
     currentWeight: 0,
     targetWeight: 0,
     lastWeightUpdate: null as string | null,
+    weeklyUpdates: 0,
+    lastWeekReset: null as string | null,
   });
   const [showWeightModal, setShowWeightModal] = useState(false);
   const [showTargetModal, setShowTargetModal] = useState(false);
@@ -64,6 +66,8 @@ export default function ProgresScreen() {
             currentWeight: user.weight || 0,
             targetWeight: 0,
             lastWeightUpdate: null,
+            weeklyUpdates: 0,
+            lastWeekReset: null,
           };
           setWeightData(initialData);
           // Demander de définir l'objectif si pas encore fait
@@ -95,11 +99,31 @@ export default function ProgresScreen() {
       return;
     }
 
-    const now = new Date().toISOString();
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const nowISO = now.toISOString();
+    
+    // Vérifier si on doit réinitialiser le compteur hebdomadaire
+    const lastWeekReset = weightData.lastWeekReset ? new Date(weightData.lastWeekReset) : null;
+    const daysSinceReset = lastWeekReset ? Math.floor((today.getTime() - lastWeekReset.getTime()) / (1000 * 60 * 60 * 24)) : 7;
+    
+    let newWeeklyUpdates = weightData.weeklyUpdates;
+    let newLastWeekReset = weightData.lastWeekReset;
+    
+    // Si plus de 7 jours, réinitialiser le compteur
+    if (daysSinceReset >= 7) {
+      newWeeklyUpdates = 1;
+      newLastWeekReset = today.toISOString();
+    } else {
+      newWeeklyUpdates = weightData.weeklyUpdates + 1;
+    }
+
     const newData = {
       ...weightData,
       currentWeight: weight,
-      lastWeightUpdate: now,
+      lastWeightUpdate: nowISO,
+      weeklyUpdates: newWeeklyUpdates,
+      lastWeekReset: newLastWeekReset,
     };
 
     await saveWeightData(newData);
@@ -145,13 +169,30 @@ export default function ProgresScreen() {
   };
 
   const canUpdateWeight = () => {
-    if (!weightData.lastWeightUpdate) return true;
-    
-    const lastUpdate = new Date(weightData.lastWeightUpdate);
     const now = new Date();
-    const daysDiff = Math.floor((now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24));
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     
-    return daysDiff >= 7; // Peut mettre à jour après 7 jours
+    // Si pas de dernière mise à jour, on peut toujours mettre à jour
+    if (!weightData.lastWeightUpdate) return { canUpdate: true, reason: '' };
+    
+    // Vérifier si on doit réinitialiser le compteur hebdomadaire
+    const lastWeekReset = weightData.lastWeekReset ? new Date(weightData.lastWeekReset) : null;
+    const daysSinceReset = lastWeekReset ? Math.floor((today.getTime() - lastWeekReset.getTime()) / (1000 * 60 * 60 * 24)) : 7;
+    
+    // Si plus de 7 jours depuis le dernier reset, on peut remettre à jour
+    if (daysSinceReset >= 7) {
+      return { canUpdate: true, reason: '' };
+    }
+    
+    // Sinon, vérifier si on a encore des mises à jour disponibles cette semaine
+    if (weightData.weeklyUpdates < 7) {
+      return { canUpdate: true, reason: '' };
+    }
+    
+    return { 
+      canUpdate: false, 
+      reason: 'Vous avez atteint la limite de 7 mises à jour par semaine.' 
+    };
   };
 
   const getWeightTrend = () => {
@@ -159,9 +200,9 @@ export default function ProgresScreen() {
     
     const weightDiff = weightData.startWeight - weightData.currentWeight;
     if (weightDiff > 0) {
-      return `↓ -${weightDiff} kg depuis le début`;
+      return `↓ -${weightDiff.toFixed(1)} kg depuis le début`;
     } else if (weightDiff < 0) {
-      return `↑ +${Math.abs(weightDiff)} kg depuis le début`;
+      return `↑ +${Math.abs(weightDiff).toFixed(1)} kg depuis le début`;
     }
     return 'Aucun changement';
   };
@@ -244,12 +285,13 @@ export default function ProgresScreen() {
             <TouchableOpacity 
               style={[styles.statCard, styles.currentWeightCard]}
               onPress={() => {
-                if (canUpdateWeight()) {
+                const updateStatus = canUpdateWeight();
+                if (updateStatus.canUpdate) {
                   setShowWeightModal(true);
                 } else {
                   Alert.alert(
                     'Mise à jour limitée',
-                    'Vous pouvez mettre à jour votre poids une fois par semaine seulement.',
+                    updateStatus.reason,
                     [{ text: 'OK' }]
                   );
                 }
@@ -259,10 +301,12 @@ export default function ProgresScreen() {
                 <Text style={styles.iconText}>⚖️</Text>
               </View>
               <Text style={styles.statLabel}>Poids actuel</Text>
-              <Text style={styles.statValue}>{weightData.currentWeight} kg</Text>
+              <Text style={styles.statValue}>{weightData.currentWeight.toFixed(1)} kg</Text>
               <Text style={styles.statTrend}>{getWeightTrend()}</Text>
-              {canUpdateWeight() && (
-                <Text style={styles.updateHint}>Appuyez pour mettre à jour</Text>
+              {canUpdateWeight().canUpdate && (
+                <Text style={styles.updateHint}>
+                  Appuyez pour mettre à jour ({7 - (weightData.weeklyUpdates || 0)} restantes cette semaine)
+                </Text>
               )}
             </TouchableOpacity>
 
@@ -271,7 +315,7 @@ export default function ProgresScreen() {
                 <Text style={styles.iconText}>🎯</Text>
               </View>
               <Text style={styles.statLabel}>Poids de départ</Text>
-              <Text style={styles.statValue}>{weightData.startWeight} kg</Text>
+              <Text style={styles.statValue}>{weightData.startWeight.toFixed(1)} kg</Text>
             </View>
 
             <TouchableOpacity 
@@ -283,11 +327,11 @@ export default function ProgresScreen() {
               </View>
               <Text style={styles.statLabel}>Objectif</Text>
               <Text style={styles.statValue}>
-                {weightData.targetWeight ? `${weightData.targetWeight} kg` : 'À définir'}
+                {weightData.targetWeight ? `${weightData.targetWeight.toFixed(1)} kg` : 'À définir'}
               </Text>
               {weightData.targetWeight > 0 && (
                 <Text style={styles.statSubtext}>
-                  {Math.abs(weightData.currentWeight - weightData.targetWeight)} kg restants
+                  {Math.abs(weightData.currentWeight - weightData.targetWeight).toFixed(1)} kg restants
                 </Text>
               )}
               <Text style={styles.updateHint}>Appuyez pour modifier</Text>
@@ -377,8 +421,8 @@ export default function ProgresScreen() {
           </View>
 
           <View style={styles.progressLabels}>
-            <Text style={styles.progressLabel}>{weightData.startWeight} kg</Text>
-            <Text style={styles.progressLabel}>{weightData.targetWeight} kg</Text>
+            <Text style={styles.progressLabel}>{weightData.startWeight.toFixed(1)} kg</Text>
+            <Text style={styles.progressLabel}>{weightData.targetWeight.toFixed(1)} kg</Text>
           </View>
         </View>
         )}
@@ -544,7 +588,7 @@ export default function ProgresScreen() {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Définir votre objectif de poids</Text>
             <Text style={styles.modalSubtitle}>
-              Poids actuel : {weightData.currentWeight} kg
+              Poids actuel : {weightData.currentWeight.toFixed(1)} kg
             </Text>
             
             <View style={styles.inputContainer}>
