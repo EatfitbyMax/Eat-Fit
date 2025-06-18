@@ -595,6 +595,169 @@ export default function ProgresScreen() {
         )}
 
         {/* Statistiques selon l'onglet sélectionné */}
+        {selectedTab === 'Nutrition' && (
+          <View style={styles.nutritionContainer}>
+            {/* Graphique des calories */}
+            <View style={styles.chartContainer}>
+              <View style={styles.chartHeader}>
+                <Text style={styles.chartTitle}>Apport calorique journalier</Text>
+                <View style={styles.chartPeriod}>
+                  <Text style={styles.chartPeriodText}>7 jours</Text>
+                </View>
+              </View>
+
+              <View style={styles.nutritionChartArea}>
+                {/* Axe Y pour les calories */}
+                <View style={styles.yAxis}>
+                  {['2500', '2000', '1500', '1000', '500', '0'].map((label, index) => (
+                    <Text key={index} style={styles.yAxisLabel}>{label}</Text>
+                  ))}
+                </View>
+
+                <View style={styles.chartContent}>
+                  {/* Grille */}
+                  <View style={styles.gridContainer}>
+                    {[...Array(6)].map((_, i) => (
+                      <View key={i} style={styles.gridLine} />
+                    ))}
+                  </View>
+
+                  {/* Barres de calories */}
+                  <View style={styles.caloriesBars}>
+                    {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map((day, index) => {
+                      const height = Math.random() * 80 + 20; // Simulation de données
+                      return (
+                        <View key={day} style={styles.barContainer}>
+                          <View style={[styles.calorieBar, { height: `${height}%` }]} />
+                          <Text style={styles.dayLabel}>{day}</Text>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </View>
+              </View>
+            </View>
+
+            {/* Statistiques nutritionnelles */}
+            <View style={styles.nutritionStatsContainer}>
+              <View style={styles.nutritionStatCard}>
+                <View style={styles.statIcon}>
+                  <Text style={styles.iconText}>🔥</Text>
+                </View>
+                <Text style={styles.statLabel}>Calories moyennes</Text>
+                <Text style={styles.statValue}>2,247 kcal</Text>
+                <Text style={[styles.statTrend, { color: '#28A745' }]}>↑ +150 kcal vs semaine précédente</Text>
+              </View>
+
+              <View style={styles.nutritionStatCard}>
+                <View style={styles.statIcon}>
+                  <Text style={styles.iconText}>💪</Text>
+                </View>
+                <Text style={styles.statLabel}>Protéines moyennes</Text>
+                <Text style={styles.statValue}>142g</Text>
+                <Text style={[styles.statTrend, { color: '#28A745' }]}>↑ +12g vs semaine précédente</Text>
+              </View>
+
+              <View style={styles.nutritionStatCard}>
+                <View style={styles.statIcon}>
+                  <Text style={styles.iconText}>🌾</Text>
+                </View>
+                <Text style={styles.statLabel}>Glucides moyens</Text>
+                <Text style={styles.statValue}>275g</Text>
+                <Text style={[styles.statTrend, { color: '#DC3545' }]}>↓ -18g vs semaine précédente</Text>
+              </View>
+
+              <View style={styles.nutritionStatCard}>
+                <View style={styles.statIcon}>
+                  <Text style={styles.iconText}>🥑</Text>
+                </View>
+                <Text style={styles.statLabel}>Lipides moyens</Text>
+                <Text style={styles.statValue}>89g</Text>
+                <Text style={[styles.statTrend, { color: '#28A745' }]}>↑ +5g vs semaine précédente</Text>
+              </View>
+            </View>
+
+            {/* Répartition des macronutriments */}
+            <View style={styles.macroDistributionCard}>
+              <Text style={styles.chartTitle}>Répartition des macronutriments</Text>
+              <Text style={styles.chartSubtitle}>Moyenne des 7 derniers jours</Text>
+
+              <View style={styles.macroCircularChart}>
+                <View style={styles.macroCircle}>
+                  <Text style={styles.macroMainText}>2,247</Text>
+                  <Text style={styles.macroSubText}>kcal moy.</Text>
+                </View>
+              </View>
+
+              <View style={styles.macroLegend}>
+                <View style={styles.macroLegendItem}>
+                  <View style={[styles.macroLegendColor, { backgroundColor: '#FF6B6B' }]} />
+                  <Text style={styles.macroLegendText}>Protéines 25%</Text>
+                </View>
+                <View style={styles.macroLegendItem}>
+                  <View style={[styles.macroLegendColor, { backgroundColor: '#4ECDC4' }]} />
+                  <Text style={styles.macroLegendText}>Glucides 50%</Text>
+                </View>
+                <View style={styles.macroLegendItem}>
+                  <View style={[styles.macroLegendColor, { backgroundColor: '#FFE66D' }]} />
+                  <Text style={styles.macroLegendText}>Lipides 25%</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Hydratation */}
+            <View style={styles.hydrationProgressCard}>
+              <View style={styles.chartHeader}>
+                <Text style={styles.chartTitle}>💧 Hydratation hebdomadaire</Text>
+                <Text style={styles.chartSubtitle}>Objectif: 2L/jour</Text>
+              </View>
+
+              <View style={styles.hydrationBars}>
+                {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map((day, index) => {
+                  const percentage = Math.random() * 100 + 50; // Simulation
+                  const achieved = percentage >= 100;
+                  return (
+                    <View key={day} style={styles.hydrationBarContainer}>
+                      <View style={styles.hydrationBarBackground}>
+                        <View 
+                          style={[
+                            styles.hydrationBarFill, 
+                            { 
+                              height: `${Math.min(percentage, 100)}%`,
+                              backgroundColor: achieved ? '#4ECDC4' : '#F5A623'
+                            }
+                          ]} 
+                        />
+                      </View>
+                      <Text style={styles.hydrationBarText}>{Math.round(percentage)}%</Text>
+                      <Text style={styles.dayLabel}>{day}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* Résumé nutritionnel */}
+            <View style={styles.nutritionSummaryCard}>
+              <Text style={styles.summaryTitle}>Résumé de la semaine</Text>
+              <View style={styles.summaryStats}>
+                <View style={styles.summaryItem}>
+                  <Text style={[styles.summaryValue, { color: '#28A745' }]}>6/7</Text>
+                  <Text style={styles.summaryLabel}>Jours objectif atteint</Text>
+                </View>
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryValue}>1,847</Text>
+                  <Text style={styles.summaryLabel}>Aliments scannés</Text>
+                </View>
+                <View style={styles.summaryItem}>
+                  <Text style={[styles.summaryValue, { color: '#4ECDC4' }]}>87%</Text>
+                  <Text style={styles.summaryLabel}>Hydratation moyenne</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
+
         {selectedTab === 'Mesures' && selectedMeasurementTab === 'Poids' && (
           <View style={styles.statsContainer}>
             <TouchableOpacity 
@@ -1609,5 +1772,159 @@ const styles = StyleSheet.create({
     color: '#8B949E',
     marginBottom: 6,
     fontWeight: '500',
+  },
+
+  // Styles pour l'onglet Nutrition
+  nutritionContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 100,
+  },
+  nutritionChartArea: {
+    flexDirection: 'row',
+    height: 180,
+  },
+  caloriesBars: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    paddingBottom: 25,
+    paddingHorizontal: 10,
+  },
+  barContainer: {
+    alignItems: 'center',
+    flex: 1,
+    height: '100%',
+    justifyContent: 'flex-end',
+  },
+  calorieBar: {
+    width: 18,
+    backgroundColor: '#F5A623',
+    borderRadius: 9,
+    marginBottom: 8,
+    minHeight: 4,
+  },
+  dayLabel: {
+    fontSize: 11,
+    color: '#8B949E',
+    fontWeight: '500',
+  },
+  nutritionStatsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 25,
+  },
+  nutritionStatCard: {
+    width: (width - 52) / 2,
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    alignItems: 'center',
+  },
+  macroDistributionCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    marginBottom: 25,
+    alignItems: 'center',
+  },
+  chartSubtitle: {
+    fontSize: 12,
+    color: '#8B949E',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  macroCircularChart: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  macroCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#21262D',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 8,
+    borderColor: '#F5A623',
+  },
+  macroMainText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  macroSubText: {
+    fontSize: 12,
+    color: '#8B949E',
+  },
+  macroLegend: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+  },
+  macroLegendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  macroLegendColor: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  macroLegendText: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: '500',
+  },
+  hydrationProgressCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    marginBottom: 25,
+  },
+  hydrationBars: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    height: 100,
+    paddingHorizontal: 10,
+  },
+  hydrationBarContainer: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  hydrationBarBackground: {
+    width: 16,
+    height: 60,
+    backgroundColor: '#21262D',
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginBottom: 6,
+    justifyContent: 'flex-end',
+  },
+  hydrationBarFill: {
+    width: '100%',
+    borderRadius: 8,
+  },
+  hydrationBarText: {
+    fontSize: 10,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  nutritionSummaryCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
   },
 });
