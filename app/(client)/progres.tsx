@@ -334,44 +334,54 @@ export default function ProgresScreen() {
     const startDate = new Date(userData.createdAt);
     const currentDate = new Date();
     const monthsDiff = Math.ceil((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
-    const displayMonths = Math.min(6, Math.max(2, monthsDiff + 1));
+    const displayMonths = Math.min(6, Math.max(1, monthsDiff + 1));
 
     // Générer les points de données basés sur la progression réelle
     const dataPoints = [];
     
-    // Point de départ (inscription)
-    const startPosition = getDataPointPosition(weightData.startWeight, 0, displayMonths);
-    dataPoints.push(
-      <View key="start" style={[styles.dataPoint, startPosition]} />
-    );
+    // Si moins d'un mois complet, afficher seulement le point actuel
+    if (monthsDiff < 1) {
+      const singlePosition = getDataPointPosition(weightData.currentWeight, 0, 1);
+      dataPoints.push(
+        <View key="single" style={[styles.dataPoint, { left: '50%', top: singlePosition.top }]} />
+      );
+    } else {
+      // Point de départ (inscription)
+      const startPosition = getDataPointPosition(weightData.startWeight, 0, displayMonths);
+      dataPoints.push(
+        <View key="start" style={[styles.dataPoint, startPosition]} />
+      );
 
-    // Points intermédiaires (simulation basée sur la progression)
-    if (displayMonths > 2) {
-      const totalWeightChange = weightData.currentWeight - weightData.startWeight;
-      for (let i = 1; i < displayMonths - 1; i++) {
-        const progressRatio = i / (displayMonths - 1);
-        const interpolatedWeight = weightData.startWeight + (totalWeightChange * progressRatio);
-        // Ajouter une petite variation réaliste
-        const variation = (Math.random() - 0.5) * 0.5;
-        const weightWithVariation = interpolatedWeight + variation;
-        
-        const position = getDataPointPosition(weightWithVariation, i, displayMonths);
+      // Points intermédiaires (simulation basée sur la progression)
+      if (displayMonths > 2) {
+        const totalWeightChange = weightData.currentWeight - weightData.startWeight;
+        for (let i = 1; i < displayMonths - 1; i++) {
+          const progressRatio = i / (displayMonths - 1);
+          const interpolatedWeight = weightData.startWeight + (totalWeightChange * progressRatio);
+          // Ajouter une petite variation réaliste
+          const variation = (Math.random() - 0.5) * 0.5;
+          const weightWithVariation = interpolatedWeight + variation;
+          
+          const position = getDataPointPosition(weightWithVariation, i, displayMonths);
+          dataPoints.push(
+            <View key={`point-${i}`} style={[styles.dataPoint, position]} />
+          );
+        }
+      }
+
+      // Point actuel (seulement si plus d'un mois)
+      if (displayMonths > 1) {
+        const currentPosition = getDataPointPosition(weightData.currentWeight, displayMonths - 1, displayMonths);
         dataPoints.push(
-          <View key={`point-${i}`} style={[styles.dataPoint, position]} />
+          <View key="current" style={[styles.dataPoint, currentPosition]} />
         );
       }
     }
 
-    // Point actuel
-    const currentPosition = getDataPointPosition(weightData.currentWeight, displayMonths - 1, displayMonths);
-    dataPoints.push(
-      <View key="current" style={[styles.dataPoint, currentPosition]} />
-    );
-
     return (
       <>
         <LinearGradient
-          colors={['rgba(245, 166, 35, 0.3)', 'rgba(245, 166, 35, 0.1)']}
+          colors={['rgba(245, 166, 35, 0.3)', 'rgba(245, 166, 35, 0.1)')}
           style={styles.weightLineGradient}
         />
         <View style={styles.dataPoints}>
