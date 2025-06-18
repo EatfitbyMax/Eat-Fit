@@ -154,9 +154,9 @@ export default function HomeScreen() {
         {/* Header avec gradient */}
         <Animated.View style={[styles.headerContainer, headerAnimatedStyle]}>
           <LinearGradient
-            colors={['#F5A623', '#FF8C00', '#FF6B35']}
+            colors={['#F5A623', '#0D1117']}
             start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+            end={{ x: 0, y: 1 }}
             style={styles.headerGradient}
           >
             <View style={styles.headerContent}>
