@@ -1,551 +1,531 @@
+
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
-  SafeAreaView, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  SafeAreaView,
   Dimensions,
   Alert,
-  Platform,
-  StatusBar 
 } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter } from 'expo-router';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSequence,
+  interpolate,
+  useAnimatedScrollHandler,
+} from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import { getCurrentUser } from '@/utils/auth';
-import { IntegrationsManager } from '@/utils/integrations';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '@/context/ThemeContext';
+import { syncWithExternalApps } from '@/utils/integrations';
 
 const { width, height } = Dimensions.get('window');
 
-export default function AccueilScreen() {
+interface User {
+  id: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  userType: 'client' | 'coach';
+}
+
+export default function HomeScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const [user, setUser] = useState<any>(null);
-  const [currentDate, setCurrentDate] = useState('');
-  const [steps, setSteps] = useState(0);
-  const [calories, setCalories] = useState(0);
-  const [caloriesGoal, setCaloriesGoal] = useState(2495);
-  const [training, setTraining] = useState(0);
-  const [fatigue, setFatigue] = useState(0);
-  const [sleepTime, setSleepTime] = useState('0h 0min');
-  const { theme } = useTheme();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [todayStats, setTodayStats] = useState({
+    calories: 0,
+    workouts: 0,
+    steps: 0,
+  });
+
+  // Animation values
+  const headerOpacity = useSharedValue(0);
+  const cardsScale = useSharedValue(0.8);
+  const statsOpacity = useSharedValue(0);
+  const scrollY = useSharedValue(0);
 
   useEffect(() => {
     loadUserData();
-    updateDate();
+    startAnimations();
   }, []);
-
-  // Recharger les données quand on revient sur la page
-  useFocusEffect(
-    React.useCallback(() => {
-      if (user) {
-        loadNutritionData(user.id);
-        loadTrainingData(user.id);
-      }
-    }, [user])
-  );
 
   const loadUserData = async () => {
     try {
       const currentUser = await getCurrentUser();
-      setUser(currentUser);
-
       if (currentUser) {
-        // Charger les données synchronisées
-        await loadSyncedData(currentUser.id);
+        setUser(currentUser);
+        await loadTodayStats();
       }
     } catch (error) {
       console.error('Erreur chargement utilisateur:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const loadSyncedData = async (userId: string) => {
+  const loadTodayStats = async () => {
+    // Simuler le chargement des statistiques du jour
+    setTodayStats({
+      calories: 1450,
+      workouts: 1,
+      steps: 8430,
+    });
+  };
+
+  const startAnimations = () => {
+    headerOpacity.value = withTiming(1, { duration: 800 });
+    cardsScale.value = withSequence(
+      withTiming(1.05, { duration: 600 }),
+      withTiming(1, { duration: 200 })
+    );
+    statsOpacity.value = withTiming(1, { duration: 1000 });
+  };
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+    },
+  });
+
+  const headerAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: headerOpacity.value,
+    transform: [{
+      translateY: interpolate(scrollY.value, [0, 100], [0, -20])
+    }],
+  }));
+
+  const cardsAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: cardsScale.value }],
+  }));
+
+  const statsAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: statsOpacity.value,
+  }));
+
+  const handleSync = async () => {
     try {
-      // Charger les données nutritionnelles du jour
-      await loadNutritionData(userId);
-      
-      // Charger les données d'entraînement de la semaine
-      await loadTrainingData(userId);
-
-      // Charger les données Apple Health
-      const healthData = await IntegrationsManager.getHealthData(userId);
-      if (healthData.length > 0) {
-        const todayData = healthData[healthData.length - 1];
-        setSteps(todayData.steps || 0);
-        if (todayData.sleep) {
-          const hours = Math.floor(todayData.sleep.duration / 60);
-          const minutes = todayData.sleep.duration % 60;
-          setSleepTime(`${hours}h ${minutes}min`);
-        }
-      }
-
-      // Charger les activités Strava
-      const stravaActivities = await IntegrationsManager.getStravaActivities(userId);
-      if (stravaActivities.length > 0) {
-        // Calculer le niveau de fatigue basé sur les activités récentes
-        const recentActivities = stravaActivities.filter(activity => {
-          const activityDate = new Date(activity.date);
-          const today = new Date();
-          const diffTime = Math.abs(today.getTime() - activityDate.getTime());
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-          return diffDays <= 7; // Activités de la semaine
-        });
-
-        const totalDuration = recentActivities.reduce((sum, activity) => sum + activity.duration, 0);
-        const fatigueLevel = Math.min(Math.floor(totalDuration / 3600), 10); // Max 10
-        setFatigue(fatigueLevel);
-      }
-    } catch (error) {
-      console.error('Erreur chargement données synchronisées:', error);
-    }
-  };
-
-  const loadNutritionData = async (userId: string) => {
-    try {
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-
-      // Charger les données alimentaires du jour
-      const stored = await AsyncStorage.getItem(`food_entries_${userId}`);
-      if (stored) {
-        const entries = JSON.parse(stored);
-        const today = new Date().toISOString().split('T')[0];
-        const todayEntries = entries.filter((entry: any) => entry.date === today);
-
-        const totalCalories = todayEntries.reduce((sum: number, entry: any) => sum + (entry.calories || 0), 0);
-        setCalories(totalCalories);
-      } else {
-        setCalories(0);
-      }
-    } catch (error) {
-      console.error('Erreur chargement données nutrition:', error);
-    }
-  };
-
-  const loadTrainingData = async (userId: string) => {
-    try {
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-
-      // Charger les séances d'entraînement de la semaine
-      const storedWorkouts = await AsyncStorage.getItem(`workouts_${userId}`);
-      if (storedWorkouts) {
-        const workouts = JSON.parse(storedWorkouts);
-        
-        // Calculer le début de la semaine actuelle
-        const now = new Date();
-        const startOfWeek = new Date(now);
-        const day = startOfWeek.getDay();
-        const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
-        startOfWeek.setDate(diff);
-        startOfWeek.setHours(0, 0, 0, 0);
-
-        const endOfWeek = new Date(startOfWeek);
-        endOfWeek.setDate(startOfWeek.getDate() + 6);
-        endOfWeek.setHours(23, 59, 59, 999);
-
-        // Compter les séances de cette semaine
-        const weekWorkouts = workouts.filter((workout: any) => {
-          const workoutDate = new Date(workout.date);
-          return workoutDate >= startOfWeek && workoutDate <= endOfWeek;
-        });
-
-        setTraining(weekWorkouts.length);
-      } else {
-        setTraining(0);
-      }
-
-      // Charger l'objectif calorique personnalisé basé sur le profil du client
-      const userProfile = await AsyncStorage.getItem(`user_profile_${userId}`);
-      if (userProfile) {
-        const profile = JSON.parse(userProfile);
-        // Calculer l'objectif calorique basé sur les données du client
-        if (profile.age && profile.weight && profile.height && profile.activity) {
-          const calculatedGoal = calculateCalorieGoal(profile);
-          setCaloriesGoal(calculatedGoal);
-        }
-      }
-
-      // Sinon, charger l'objectif personnalisé s'il existe
-      const caloriesGoalStored = await AsyncStorage.getItem(`calories_goal_${userId}`);
-      if (caloriesGoalStored) {
-        setCaloriesGoal(parseInt(caloriesGoalStored));
-      }
-    } catch (error) {
-      console.error('Erreur chargement données entraînement:', error);
-    }
-  };
-
-  const calculateCalorieGoal = (profile: any) => {
-    // Formule de Mifflin-St Jeor pour calculer le métabolisme de base
-    let bmr;
-    if (profile.gender === 'male') {
-      bmr = 88.362 + (13.397 * profile.weight) + (4.799 * profile.height) - (5.677 * profile.age);
-    } else {
-      bmr = 447.593 + (9.247 * profile.weight) + (3.098 * profile.height) - (4.330 * profile.age);
-    }
-
-    // Facteur d'activité
-    const activityFactors = {
-      'sedentaire': 1.2,
-      'leger': 1.375,
-      'modere': 1.55,
-      'intense': 1.725,
-      'tres_intense': 1.9
-    };
-
-    const activityFactor = activityFactors[profile.activity] || 1.2;
-    const totalCalories = Math.round(bmr * activityFactor);
-
-    // Ajuster selon l'objectif
-    if (profile.goal === 'lose_weight') {
-      return Math.round(totalCalories * 0.8); // Déficit de 20%
-    } else if (profile.goal === 'gain_weight') {
-      return Math.round(totalCalories * 1.15); // Surplus de 15%
-    }
-
-    return totalCalories;
-  };
-
-  const updateDate = () => {
-    const now = new Date();
-    const options: Intl.DateTimeFormatOptions = {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long'
-    };
-    const dateStr = now.toLocaleDateString('fr-FR', options);
-    setCurrentDate(dateStr);
-  };
-
-  const handleAddSteps = () => {
-    Alert.prompt(
-      'Ajouter des pas',
-      'Combien de pas voulez-vous ajouter ?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        { 
-          text: 'Ajouter', 
-          onPress: (value) => {
-            const newSteps = parseInt(value || '0');
-            if (!isNaN(newSteps)) {
-              setSteps(prev => prev + newSteps);
+      Alert.alert(
+        'Synchronisation',
+        'Voulez-vous synchroniser vos données avec vos applications de santé ?',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          {
+            text: 'Synchroniser',
+            onPress: async () => {
+              await syncWithExternalApps(user?.id || '');
+              Alert.alert('Succès', 'Synchronisation terminée');
             }
           }
-        }
-      ],
-      'plain-text',
-      '',
-      'numeric'
+        ]
+      );
+    } catch (error) {
+      Alert.alert('Erreur', 'Impossible de synchroniser les données');
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Chargement...</Text>
+      </View>
     );
+  }
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Bonjour';
+    if (hour < 18) return 'Bon après-midi';
+    return 'Bonsoir';
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: theme.background }]}>
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
-      <ScrollView 
+    <SafeAreaView style={styles.container}>
+      <Animated.ScrollView
+        style={styles.scrollView}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: insets.bottom + 100 } // Espace pour la tab bar
-        ]}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.greeting}>
-            Bonjour, {user?.firstName || user?.name || 'Utilisateur'}
-          </Text>
-          <Text style={styles.subtitle}>
-            Prêt à atteindre vos objectifs ?
-          </Text>
-        </View>
-
-        {/* Date */}
-        <Text style={styles.date}>{currentDate}</Text>
-
-        {/* Circular Gauges Row */}
-        <View style={styles.gaugesContainer}>
-          {/* Nutrition Gauge */}
-          <TouchableOpacity 
-            style={styles.gaugeCard}
-            onPress={() => router.push('/(client)/nutrition')}
+        {/* Header avec gradient */}
+        <Animated.View style={[styles.headerContainer, headerAnimatedStyle]}>
+          <LinearGradient
+            colors={['#F5A623', '#FF8C00', '#FF6B35']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.headerGradient}
           >
-            <View style={styles.circularGauge}>
-              <View style={[styles.circularGaugeFill, { 
-                transform: [{ rotate: `${Math.min((calories / caloriesGoal) * 360, 360)}deg` }],
-                borderTopColor: '#F5A623'
-              }]} />
-              <View style={styles.circularGaugeInner}>
-                <Text style={styles.gaugeValue}>{calories}</Text>
-                <Text style={styles.gaugeTarget}>/ {caloriesGoal}</Text>
-                <Text style={styles.gaugeUnit}>kcal</Text>
+            <View style={styles.headerContent}>
+              <View>
+                <Text style={styles.greetingText}>
+                  {getGreeting()}, {user?.firstName || 'Champion'} !
+                </Text>
+                <Text style={styles.motivationText}>
+                  Prêt pour une nouvelle journée ?
+                </Text>
+              </View>
+              <TouchableOpacity style={styles.profileButton}>
+                <Text style={styles.profileInitial}>
+                  {user?.firstName?.charAt(0) || 'U'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </LinearGradient>
+        </Animated.View>
+
+        {/* Statistiques du jour */}
+        <Animated.View style={[styles.statsContainer, statsAnimatedStyle]}>
+          <Text style={styles.sectionTitle}>Aujourd'hui</Text>
+          <View style={styles.statsGrid}>
+            <View style={[styles.statCard, styles.caloriesCard]}>
+              <Text style={styles.statNumber}>{todayStats.calories}</Text>
+              <Text style={styles.statLabel}>Calories</Text>
+              <View style={styles.statIcon}>
+                <Text style={styles.statEmoji}>🔥</Text>
               </View>
             </View>
-            <Text style={styles.gaugeLabel}>Nutrition</Text>
-            <Text style={styles.gaugeSubtext}>
-              {Math.max(0, caloriesGoal - calories)} kcal restantes
-            </Text>
-          </TouchableOpacity>
-
-          {/* Training Gauge */}
-          <TouchableOpacity 
-            style={styles.gaugeCard}
-            onPress={() => router.push('/(client)/entrainement')}
-          >
-            <View style={styles.circularGauge}>
-              <View style={[styles.circularGaugeFill, { 
-                transform: [{ rotate: `${Math.min((training / 7) * 360, 360)}deg` }],
-                borderTopColor: '#1F6FEB'
-              }]} />
-              <View style={styles.circularGaugeInner}>
-                <Text style={styles.gaugeValue}>{training}</Text>
-                <Text style={styles.gaugeTarget}>/ 7</Text>
-                <Text style={styles.gaugeUnit}>séances</Text>
+            <View style={[styles.statCard, styles.workoutCard]}>
+              <Text style={styles.statNumber}>{todayStats.workouts}</Text>
+              <Text style={styles.statLabel}>Séances</Text>
+              <View style={styles.statIcon}>
+                <Text style={styles.statEmoji}>💪</Text>
               </View>
             </View>
-            <Text style={styles.gaugeLabel}>Entraînement</Text>
-            <Text style={styles.gaugeSubtext}>
-              {Math.max(0, 7 - training)} séances restantes
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Steps and Sleep Gauges Row */}
-        <View style={styles.gaugesContainer}>
-          {/* Steps Gauge */}
-          <TouchableOpacity 
-            style={styles.gaugeCard}
-            onPress={handleAddSteps}
-          >
-            <View style={styles.circularGauge}>
-              <View style={[styles.circularGaugeFill, { 
-                transform: [{ rotate: `${Math.min((steps / 10000) * 360, 360)}deg` }],
-                borderTopColor: '#32D74B'
-              }]} />
-              <View style={styles.circularGaugeInner}>
-                <Text style={styles.gaugeValue}>{steps}</Text>
-                <Text style={styles.gaugeTarget}>/ 10000</Text>
-                <Text style={styles.gaugeUnit}>pas</Text>
-              </View>
-            </View>
-            <Text style={styles.gaugeLabel}>Compteur de pas</Text>
-            <Text style={styles.gaugeSubtext}>
-              {Math.max(0, 10000 - steps)} pas restants
-            </Text>
-          </TouchableOpacity>
-
-          {/* Sleep Gauge */}
-          <TouchableOpacity 
-            style={styles.gaugeCard}
-            onPress={() => router.push('/(client)/profil')}
-          >
-            <View style={styles.circularGauge}>
-              <View style={[styles.circularGaugeFill, { 
-                transform: [{ rotate: `${Math.min((parseInt(sleepTime.split('h')[0]) / 8) * 360, 360)}deg` }],
-                borderTopColor: '#AF52DE'
-              }]} />
-              <View style={styles.circularGaugeInner}>
-                <Text style={styles.gaugeValue}>{sleepTime.split('h')[0]}h</Text>
-                <Text style={styles.gaugeTarget}>/ 8h</Text>
-                <Text style={styles.gaugeUnit}>sommeil</Text>
-              </View>
-            </View>
-            <Text style={styles.gaugeLabel}>Suivi du sommeil</Text>
-            <Text style={styles.gaugeSubtext}>
-              {Math.max(0, 8 - parseInt(sleepTime.split('h')[0]))}h restantes
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Container for all cards */}
-        <View style={styles.cardsContainer}>
-          {/* Progrès Section */}
-          <View style={styles.progressSection}>
-            <Text style={styles.progressTitle}>📊 Vos Progrès</Text>
-
-            <View style={styles.progressRow}>
-              <View style={styles.progressCard}>
-                <Text style={styles.progressLabel}>Poids actuel</Text>
-                <Text style={styles.progressValue}>68.5 kg</Text>
-              </View>
-              <View style={styles.progressCard}>
-                <Text style={styles.progressLabel}>Objectif</Text>
-                <Text style={styles.progressValue}>65.0 kg</Text>
-                <Text style={styles.progressSubtext}>- 3.5 kg</Text>
+            <View style={[styles.statCard, styles.stepsCard]}>
+              <Text style={styles.statNumber}>{todayStats.steps.toLocaleString()}</Text>
+              <Text style={styles.statLabel}>Pas</Text>
+              <View style={styles.statIcon}>
+                <Text style={styles.statEmoji}>👟</Text>
               </View>
             </View>
           </View>
+        </Animated.View>
+
+        {/* Actions rapides */}
+        <Animated.View style={[styles.actionsContainer, cardsAnimatedStyle]}>
+          <Text style={styles.sectionTitle}>Actions rapides</Text>
+          <View style={styles.actionsGrid}>
+            <TouchableOpacity 
+              style={[styles.actionCard, styles.nutritionAction]}
+              onPress={() => router.push('/(client)/nutrition')}
+            >
+              <View style={styles.actionIcon}>
+                <Text style={styles.actionEmoji}>🥗</Text>
+              </View>
+              <Text style={styles.actionTitle}>Nutrition</Text>
+              <Text style={styles.actionSubtitle}>Suivre mon alimentation</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.actionCard, styles.workoutAction]}
+              onPress={() => router.push('/(client)/entrainement')}
+            >
+              <View style={styles.actionIcon}>
+                <Text style={styles.actionEmoji}>🏋️</Text>
+              </View>
+              <Text style={styles.actionTitle}>Entraînement</Text>
+              <Text style={styles.actionSubtitle}>Mes séances</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.actionCard, styles.progressAction]}
+              onPress={() => router.push('/(client)/progres')}
+            >
+              <View style={styles.actionIcon}>
+                <Text style={styles.actionEmoji}>📊</Text>
+              </View>
+              <Text style={styles.actionTitle}>Progrès</Text>
+              <Text style={styles.actionSubtitle}>Voir mon évolution</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.actionCard, styles.syncAction]}
+              onPress={handleSync}
+            >
+              <View style={styles.actionIcon}>
+                <Text style={styles.actionEmoji}>🔄</Text>
+              </View>
+              <Text style={styles.actionTitle}>Synchroniser</Text>
+              <Text style={styles.actionSubtitle}>Mettre à jour</Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+
+        {/* Conseils du jour */}
+        <View style={styles.tipsContainer}>
+          <Text style={styles.sectionTitle}>Conseil du jour</Text>
+          <View style={styles.tipCard}>
+            <View style={styles.tipHeader}>
+              <Text style={styles.tipEmoji}>💡</Text>
+              <Text style={styles.tipTitle}>Hydratation</Text>
+            </View>
+            <Text style={styles.tipContent}>
+              Buvez un verre d'eau dès votre réveil pour réveiller votre métabolisme et bien commencer la journée !
+            </Text>
+          </View>
         </View>
-      </ScrollView>
-    </View>
+
+        {/* Objectifs de la semaine */}
+        <View style={styles.goalsContainer}>
+          <Text style={styles.sectionTitle}>Objectifs de la semaine</Text>
+          <View style={styles.goalCard}>
+            <View style={styles.goalHeader}>
+              <Text style={styles.goalTitle}>Séances d'entraînement</Text>
+              <Text style={styles.goalProgress}>3/4</Text>
+            </View>
+            <View style={styles.progressBar}>
+              <View style={[styles.progressFill, { width: '75%' }]} />
+            </View>
+          </View>
+          
+          <View style={styles.goalCard}>
+            <View style={styles.goalHeader}>
+              <Text style={styles.goalTitle}>Calories brûlées</Text>
+              <Text style={styles.goalProgress}>1200/1500</Text>
+            </View>
+            <View style={styles.progressBar}>
+              <View style={[styles.progressFill, { width: '80%' }]} />
+            </View>
+          </View>
+        </View>
+      </Animated.ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: '#0D1117',
   },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 10,
-  },
-  greeting: {
-    fontSize: width < 375 ? 22 : 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 5,
-  },
-  subtitle: {
-    fontSize: width < 375 ? 14 : 16,
-    color: '#888888',
-    lineHeight: 22,
-  },
-  date: {
-    fontSize: 14,
-    color: '#CCCCCC',
-    paddingHorizontal: 20,
-    marginBottom: 16,
-  },
-  cardsContainer: {
-    paddingHorizontal: 16,
-    gap: 12,
-  },
-  gaugesContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    gap: 12,
-    marginBottom: 16,
-  },
-  gaugeCard: {
+  loadingContainer: {
     flex: 1,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 16,
-    padding: 18,
-    alignItems: 'center',
-    minHeight: 180,
-  },
-  circularGauge: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 6,
-    borderColor: '#333333',
     justifyContent: 'center',
     alignItems: 'center',
-    position: 'relative',
-    marginBottom: 12,
+    backgroundColor: '#0D1117',
   },
-  circularGaugeFill: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    borderRadius: 50,
-    borderWidth: 6,
-    borderColor: 'transparent',
+  loadingText: {
+    color: '#FFFFFF',
+    fontSize: 16,
   },
-  circularGaugeInner: {
+  scrollView: {
+    flex: 1,
+  },
+  headerContainer: {
+    marginBottom: 20,
+  },
+  headerGradient: {
+    paddingTop: 20,
+    paddingBottom: 30,
+    paddingHorizontal: 20,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  gaugeValue: {
+  greetingText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  motivationText: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.9)',
+  },
+  profileButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  profileInitial: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    lineHeight: 22,
   },
-  gaugeTarget: {
-    fontSize: 12,
-    color: '#888888',
-    lineHeight: 14,
-  },
-  gaugeUnit: {
-    fontSize: 10,
-    color: '#888888',
-    marginTop: 1,
-  },
-  gaugeLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 4,
-    textAlign: 'center',
-  },
-  gaugeSubtext: {
-    fontSize: 10,
-    color: '#888888',
-    textAlign: 'center',
-    lineHeight: 12,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  card: {
-    borderRadius: 16,
-    padding: 14,
-    flex: 1,
-    minHeight: 120,
-  },
-  cardTitle: {
-    fontSize: 11,
-    color: '#888888',
-    marginBottom: 8,
-    lineHeight: 14,
-  },
-  cardValue: {
-    fontSize: width < 375 ? 28 : 32,
+  sectionTitle: {
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 4,
+    marginBottom: 16,
+    paddingHorizontal: 20,
   },
-  cardLabel: {
-    fontSize: 13,
-    color: '#FFFFFF',
-    marginBottom: 2,
+  statsContainer: {
+    marginBottom: 30,
   },
-  cardSubLabel: {
-    fontSize: 11,
-    color: '#888888',
-  },
-  progressSection: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 16,
-    padding: 18,
-  },
-  progressTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 14,
-  },
-  progressRow: {
+  statsGrid: {
     flexDirection: 'row',
+    paddingHorizontal: 20,
     gap: 12,
   },
-  progressCard: {
+  statCard: {
     flex: 1,
-    backgroundColor: '#2A2A2A',
-    borderRadius: 12,
-    padding: 14,
-    alignItems: 'center',
+    padding: 16,
+    borderRadius: 16,
+    position: 'relative',
+    overflow: 'hidden',
   },
-  progressLabel: {
-    fontSize: 12,
-    color: '#888888',
-    marginBottom: 6,
+  caloriesCard: {
+    backgroundColor: '#1A1F36',
+    borderLeftWidth: 4,
+    borderLeftColor: '#FF6B6B',
   },
-  progressValue: {
-    fontSize: 16,
+  workoutCard: {
+    backgroundColor: '#1A1F36',
+    borderLeftWidth: 4,
+    borderLeftColor: '#4ECDC4',
+  },
+  stepsCard: {
+    backgroundColor: '#1A1F36',
+    borderLeftWidth: 4,
+    borderLeftColor: '#45B7D1',
+  },
+  statNumber: {
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    marginBottom: 4,
   },
-  progressSubtext: {
-    fontSize: 11,
-    color: '#888888',
-    marginTop: 2,
+  statLabel: {
+    fontSize: 12,
+    color: '#8B949E',
+  },
+  statIcon: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+  },
+  statEmoji: {
+    fontSize: 20,
+  },
+  actionsContainer: {
+    marginBottom: 30,
+  },
+  actionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 20,
+    gap: 12,
+  },
+  actionCard: {
+    width: (width - 52) / 2,
+    padding: 20,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  nutritionAction: {
+    backgroundColor: '#1A2332',
+    borderWidth: 1,
+    borderColor: '#2D3748',
+  },
+  workoutAction: {
+    backgroundColor: '#1A2332',
+    borderWidth: 1,
+    borderColor: '#2D3748',
+  },
+  progressAction: {
+    backgroundColor: '#1A2332',
+    borderWidth: 1,
+    borderColor: '#2D3748',
+  },
+  syncAction: {
+    backgroundColor: '#1A2332',
+    borderWidth: 1,
+    borderColor: '#2D3748',
+  },
+  actionIcon: {
+    marginBottom: 12,
+  },
+  actionEmoji: {
+    fontSize: 32,
+  },
+  actionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  actionSubtitle: {
+    fontSize: 12,
+    color: '#8B949E',
+    textAlign: 'center',
+  },
+  tipsContainer: {
+    marginBottom: 30,
+  },
+  tipCard: {
+    marginHorizontal: 20,
+    padding: 20,
+    backgroundColor: '#1A2332',
+    borderRadius: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#F5A623',
+  },
+  tipHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  tipEmoji: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  tipTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  tipContent: {
+    fontSize: 14,
+    color: '#8B949E',
+    lineHeight: 20,
+  },
+  goalsContainer: {
+    marginBottom: 40,
+    paddingHorizontal: 20,
+  },
+  goalCard: {
+    backgroundColor: '#1A2332',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  goalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  goalTitle: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '500',
+  },
+  goalProgress: {
+    fontSize: 14,
+    color: '#F5A623',
+    fontWeight: '600',
+  },
+  progressBar: {
+    height: 6,
+    backgroundColor: '#2D3748',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#F5A623',
+    borderRadius: 3,
   },
 });
