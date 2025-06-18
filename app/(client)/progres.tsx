@@ -35,7 +35,6 @@ export default function ProgresScreen() {
   };
   const [showWeightModal, setShowWeightModal] = useState(false);
   const [showTargetModal, setShowTargetModal] = useState(false);
-  const [showWeightTips, setShowWeightTips] = useState(false);
   const [tempWeight, setTempWeight] = useState('');
   const [tempTarget, setTempTarget] = useState('');
 
@@ -549,19 +548,7 @@ export default function ProgresScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Mettre à jour votre poids</Text>
-              <TouchableOpacity 
-                style={styles.helpButton}
-                onPress={() => {
-                  console.log('Bouton aide cliqué');
-                  setShowWeightTips(true);
-                }}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.helpButtonText}>?</Text>
-              </TouchableOpacity>
-            </View>
+            <Text style={styles.modalTitle}>Mettre à jour votre poids</Text>
             <Text style={styles.modalSubtitle}>
               Dernière mise à jour : {weightData.lastWeightUpdate ? 
                 new Date(weightData.lastWeightUpdate).toLocaleDateString('fr-FR') : 
@@ -651,85 +638,6 @@ export default function ProgresScreen() {
                 <Text style={styles.modalButtonPrimaryText}>Confirmer</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Modal des conseils de pesée */}
-      <Modal
-        visible={showWeightTips}
-        transparent={true}
-        animationType="fade"
-        statusBarTranslucent={true}
-      >
-        <View style={styles.tipsModalOverlay}>
-          <View style={styles.tipsModalContent}>
-            <View style={styles.tipsModalHeader}>
-              <Text style={styles.tipsModalTitle}>Conseils pour la pesée</Text>
-              <TouchableOpacity 
-                style={styles.tipsCloseButton}
-                onPress={() => setShowWeightTips(false)}
-              >
-                <Text style={styles.tipsCloseButtonText}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.tipsScrollView}>
-              <View style={styles.tipItem}>
-                <Text style={styles.tipIcon}>⏰</Text>
-                <View style={styles.tipContent}>
-                  <Text style={styles.tipTitle}>Moment idéal</Text>
-                  <Text style={styles.tipDescription}>Pesez-vous le matin à jeun, après être allé aux toilettes, pour une mesure plus précise.</Text>
-                </View>
-              </View>
-
-              <View style={styles.tipItem}>
-                <Text style={styles.tipIcon}>📅</Text>
-                <View style={styles.tipContent}>
-                  <Text style={styles.tipTitle}>Régularité</Text>
-                  <Text style={styles.tipDescription}>Pesez-vous toujours le même jour de la semaine, dans les mêmes conditions.</Text>
-                </View>
-              </View>
-
-              <View style={styles.tipItem}>
-                <Text style={styles.tipIcon}>👕</Text>
-                <View style={styles.tipContent}>
-                  <Text style={styles.tipTitle}>Tenue</Text>
-                  <Text style={styles.tipDescription}>Portez les mêmes vêtements ou pesez-vous nu pour éviter les variations dues aux habits.</Text>
-                </View>
-              </View>
-
-              <View style={styles.tipItem}>
-                <Text style={styles.tipIcon}>⚖️</Text>
-                <View style={styles.tipContent}>
-                  <Text style={styles.tipTitle}>Balance</Text>
-                  <Text style={styles.tipDescription}>Utilisez toujours la même balance, placée sur une surface plane et dure.</Text>
-                </View>
-              </View>
-
-              <View style={styles.tipItem}>
-                <Text style={styles.tipIcon}>📊</Text>
-                <View style={styles.tipContent}>
-                  <Text style={styles.tipTitle}>Variations normales</Text>
-                  <Text style={styles.tipDescription}>Le poids peut varier de 1-2 kg d'un jour à l'autre. Concentrez-vous sur la tendance générale.</Text>
-                </View>
-              </View>
-
-              <View style={styles.tipItem}>
-                <Text style={styles.tipIcon}>🚫</Text>
-                <View style={styles.tipContent}>
-                  <Text style={styles.tipTitle}>À éviter</Text>
-                  <Text style={styles.tipDescription}>Ne vous pesez pas après un repas copieux, une séance d'entraînement intense ou en cas de stress.</Text>
-                </View>
-              </View>
-            </ScrollView>
-
-            <TouchableOpacity 
-              style={styles.tipsOkButton}
-              onPress={() => setShowWeightTips(false)}
-            >
-              <Text style={styles.tipsOkButtonText}>Compris !</Text>
-            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -1161,7 +1069,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
-    zIndex: 1000,
   },
   modalContent: {
     backgroundColor: '#161B22',
@@ -1241,116 +1148,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalButtonPrimaryText: {
-    color: '#000000',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 8,
-  },
-  helpButton: {
-    width: 32,
-    height: 32,
-    backgroundColor: '#21262D',
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 12,
-    borderWidth: 1,
-    borderColor: '#F5A623',
-  },
-  helpButtonText: {
-    color: '#F5A623',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  tipsModalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    zIndex: 2000,
-  },
-  tipsModalContent: {
-    backgroundColor: '#161B22',
-    borderRadius: 20,
-    padding: 24,
-    width: '100%',
-    maxWidth: 400,
-    maxHeight: '80%',
-    borderWidth: 1,
-    borderColor: '#21262D',
-    elevation: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.8,
-    shadowRadius: 20,
-  },
-  tipsModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  tipsModalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  tipsCloseButton: {
-    width: 28,
-    height: 28,
-    backgroundColor: '#21262D',
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  tipsCloseButtonText: {
-    color: '#8B949E',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  tipsScrollView: {
-    maxHeight: 400,
-  },
-  tipItem: {
-    flexDirection: 'row',
-    marginBottom: 16,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#21262D',
-  },
-  tipIcon: {
-    fontSize: 20,
-    marginRight: 12,
-    marginTop: 2,
-  },
-  tipContent: {
-    flex: 1,
-  },
-  tipTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  tipDescription: {
-    fontSize: 13,
-    color: '#8B949E',
-    lineHeight: 18,
-  },
-  tipsOkButton: {
-    backgroundColor: '#F5A623',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  tipsOkButtonText: {
     color: '#000000',
     fontSize: 16,
     fontWeight: '600',
