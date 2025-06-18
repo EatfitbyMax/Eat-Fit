@@ -37,6 +37,34 @@ export default function ProgresScreen() {
   const [showTargetModal, setShowTargetModal] = useState(false);
   const [tempWeight, setTempWeight] = useState('');
   const [tempTarget, setTempTarget] = useState('');
+  
+  // États pour les mensurations
+  const [showMensurationModal, setShowMensurationModal] = useState(false);
+  const [selectedMuscle, setSelectedMuscle] = useState<string>('');
+  const [mensurationData, setMensurationData] = useState({
+    biceps: { start: 0, current: 0 },
+    bicepsGauche: { start: 0, current: 0 },
+    bicepsDroit: { start: 0, current: 0 },
+    cuisses: { start: 0, current: 0 },
+    cuissesGauche: { start: 0, current: 0 },
+    cuissesDroit: { start: 0, current: 0 },
+    pectoraux: { start: 0, current: 0 },
+    taille: { start: 0, current: 0 },
+    avantBras: { start: 0, current: 0 },
+    avantBrasGauche: { start: 0, current: 0 },
+    avantBrasDroit: { start: 0, current: 0 },
+    mollets: { start: 0, current: 0 },
+    molletsGauche: { start: 0, current: 0 },
+    molletsDroit: { start: 0, current: 0 },
+  });
+  const [tempMensuration, setTempMensuration] = useState({
+    start: '',
+    current: '',
+    startGauche: '',
+    currentGauche: '',
+    startDroit: '',
+    currentDroit: '',
+  });
 
   useEffect(() => {
     loadUserData();
@@ -49,6 +77,11 @@ export default function ProgresScreen() {
 
     checkPremiumStatus();
   }, []);
+
+  // Charger les données de mensurations
+  useEffect(() => {
+    loadMensurationData();
+  }, [userData]);
 
   const loadUserData = async () => {
     try {
@@ -181,6 +214,139 @@ export default function ProgresScreen() {
     setTempTarget('');
     setShowTargetModal(false);
     Alert.alert('Succès', 'Votre objectif a été défini !');
+  };
+
+  const loadMensurationData = async () => {
+    try {
+      if (userData) {
+        const mensurationDataString = await AsyncStorage.getItem(`mensuration_data_${userData.id}`);
+        if (mensurationDataString) {
+          const saved = JSON.parse(mensurationDataString);
+          setMensurationData(saved);
+        }
+      }
+    } catch (error) {
+      console.error('Erreur chargement données mensurations:', error);
+    }
+  };
+
+  const saveMensurationData = async (newData: any) => {
+    try {
+      if (userData) {
+        await AsyncStorage.setItem(`mensuration_data_${userData.id}`, JSON.stringify(newData));
+        setMensurationData(newData);
+      }
+    } catch (error) {
+      console.error('Erreur sauvegarde données mensurations:', error);
+    }
+  };
+
+  const getMuscleConfig = (muscle: string) => {
+    const configs = {
+      biceps: { name: 'Biceps', icon: '💪', hasLeftRight: true },
+      cuisses: { name: 'Cuisses', icon: '🦵', hasLeftRight: true },
+      pectoraux: { name: 'Pectoraux', icon: '🫸', hasLeftRight: false },
+      taille: { name: 'Taille', icon: '🤏', hasLeftRight: false },
+      avantBras: { name: 'Avant-bras', icon: '🦾', hasLeftRight: true },
+      mollets: { name: 'Mollets', icon: '🦵', hasLeftRight: true },
+    };
+    return configs[muscle] || { name: muscle, icon: '📏', hasLeftRight: false };
+  };
+
+  const formatMensuration = (value: number) => {
+    if (value === 0) return '0.0';
+    return value % 1 === 0 ? value.toFixed(1) : value.toFixed(1);
+  };
+
+  const getMensurationTrend = (muscle: string) => {
+    const config = getMuscleConfig(muscle);
+    const data = mensurationData[muscle];
+    
+    if (!data || data.start === 0 || data.current === 0) {
+      return { text: 'Non défini', color: '#8B949E' };
+    }
+
+    const diff = data.current - data.start;
+    if (diff > 0) {
+      return { text: `↑ +${formatMensuration(diff)} cm`, color: '#28A745' };
+    } else if (diff < 0) {
+      return { text: `↓ ${formatMensuration(diff)} cm`, color: '#DC3545' };
+    }
+    return { text: 'Aucun changement', color: '#8B949E' };
+  };
+
+  const handleOpenMensurationModal = (muscle: string) => {
+    setSelectedMuscle(muscle);
+    const config = getMuscleConfig(muscle);
+    const data = mensurationData[muscle] || { start: 0, current: 0 };
+    
+    if (config.hasLeftRight) {
+      const dataGauche = mensurationData[muscle + 'Gauche'] || { start: 0, current: 0 };
+      const dataDroit = mensurationData[muscle + 'Droit'] || { start: 0, current: 0 };
+      
+      setTempMensuration({
+        start: data.start ? data.start.toString() : '',
+        current: data.current ? data.current.toString() : '',
+        startGauche: dataGauche.start ? dataGauche.start.toString() : '',
+        currentGauche: dataGauche.current ? dataGauche.current.toString() : '',
+        startDroit: dataDroit.start ? dataDroit.start.toString() : '',
+        currentDroit: dataDroit.current ? dataDroit.current.toString() : '',
+      });
+    } else {
+      setTempMensuration({
+        start: data.start ? data.start.toString() : '',
+        current: data.current ? data.current.toString() : '',
+        startGauche: '',
+        currentGauche: '',
+        startDroit: '',
+        currentDroit: '',
+      });
+    }
+    
+    setShowMensurationModal(true);
+  };
+
+  const handleSaveMensuration = async () => {
+    const config = getMuscleConfig(selectedMuscle);
+    
+    // Validation des données
+    const start = parseFloat(tempMensuration.start.replace(',', '.')) || 0;
+    const current = parseFloat(tempMensuration.current.replace(',', '.')) || 0;
+    
+    if (start < 0 || current < 0) {
+      Alert.alert('Erreur', 'Veuillez entrer des valeurs positives');
+      return;
+    }
+
+    const newData = { ...mensurationData };
+    
+    // Sauvegarder les données principales
+    newData[selectedMuscle] = {
+      start: start,
+      current: current,
+    };
+
+    // Si le muscle a des côtés gauche/droit
+    if (config.hasLeftRight) {
+      const startGauche = parseFloat(tempMensuration.startGauche.replace(',', '.')) || 0;
+      const currentGauche = parseFloat(tempMensuration.currentGauche.replace(',', '.')) || 0;
+      const startDroit = parseFloat(tempMensuration.startDroit.replace(',', '.')) || 0;
+      const currentDroit = parseFloat(tempMensuration.currentDroit.replace(',', '.')) || 0;
+
+      newData[selectedMuscle + 'Gauche'] = {
+        start: startGauche,
+        current: currentGauche,
+      };
+      
+      newData[selectedMuscle + 'Droit'] = {
+        start: startDroit,
+        current: currentDroit,
+      };
+    }
+
+    await saveMensurationData(newData);
+    setShowMensurationModal(false);
+    Alert.alert('Succès', 'Vos mensurations ont été mises à jour !');
   };
 
   const canUpdateWeight = () => {
@@ -489,63 +655,111 @@ export default function ProgresScreen() {
         {selectedTab === 'Mesures' && selectedMeasurementTab === 'Mensurations' && isPremium && (
           <View style={styles.measurementsContainer}>
             <View style={styles.measurementRow}>
-              <View style={styles.measurementCard}>
+              <TouchableOpacity 
+                style={styles.measurementCard}
+                onPress={() => handleOpenMensurationModal('biceps')}
+              >
                 <View style={styles.statIcon}>
                   <Text style={styles.iconText}>💪</Text>
                 </View>
                 <Text style={styles.statLabel}>Biceps</Text>
-                <Text style={styles.statValue}>35.2 cm</Text>
-                <Text style={styles.statTrend}>↑ +0.5 cm</Text>
-              </View>
+                <Text style={styles.statValue}>
+                  {mensurationData.biceps?.current ? `${formatMensuration(mensurationData.biceps.current)} cm` : 'Non défini'}
+                </Text>
+                <Text style={[styles.statTrend, { color: getMensurationTrend('biceps').color }]}>
+                  {getMensurationTrend('biceps').text}
+                </Text>
+                <Text style={styles.updateHint}>Appuyez pour modifier</Text>
+              </TouchableOpacity>
 
-              <View style={styles.measurementCard}>
+              <TouchableOpacity 
+                style={styles.measurementCard}
+                onPress={() => handleOpenMensurationModal('cuisses')}
+              >
                 <View style={styles.statIcon}>
                   <Text style={styles.iconText}>🦵</Text>
                 </View>
                 <Text style={styles.statLabel}>Cuisses</Text>
-                <Text style={styles.statValue}>58.1 cm</Text>
-                <Text style={styles.statTrend}>↑ +1.2 cm</Text>
-              </View>
+                <Text style={styles.statValue}>
+                  {mensurationData.cuisses?.current ? `${formatMensuration(mensurationData.cuisses.current)} cm` : 'Non défini'}
+                </Text>
+                <Text style={[styles.statTrend, { color: getMensurationTrend('cuisses').color }]}>
+                  {getMensurationTrend('cuisses').text}
+                </Text>
+                <Text style={styles.updateHint}>Appuyez pour modifier</Text>
+              </TouchableOpacity>
             </View>
 
             <View style={styles.measurementRow}>
-              <View style={styles.measurementCard}>
+              <TouchableOpacity 
+                style={styles.measurementCard}
+                onPress={() => handleOpenMensurationModal('pectoraux')}
+              >
                 <View style={styles.statIcon}>
                   <Text style={styles.iconText}>🫸</Text>
                 </View>
                 <Text style={styles.statLabel}>Pectoraux</Text>
-                <Text style={styles.statValue}>102.5 cm</Text>
-                <Text style={styles.statTrend}>↑ +0.8 cm</Text>
-              </View>
+                <Text style={styles.statValue}>
+                  {mensurationData.pectoraux?.current ? `${formatMensuration(mensurationData.pectoraux.current)} cm` : 'Non défini'}
+                </Text>
+                <Text style={[styles.statTrend, { color: getMensurationTrend('pectoraux').color }]}>
+                  {getMensurationTrend('pectoraux').text}
+                </Text>
+                <Text style={styles.updateHint}>Appuyez pour modifier</Text>
+              </TouchableOpacity>
 
-              <View style={styles.measurementCard}>
+              <TouchableOpacity 
+                style={styles.measurementCard}
+                onPress={() => handleOpenMensurationModal('taille')}
+              >
                 <View style={styles.statIcon}>
                   <Text style={styles.iconText}>🤏</Text>
                 </View>
                 <Text style={styles.statLabel}>Taille</Text>
-                <Text style={styles.statValue}>82.3 cm</Text>
-                <Text style={styles.statTrend}>↓ -1.5 cm</Text>
-              </View>
+                <Text style={styles.statValue}>
+                  {mensurationData.taille?.current ? `${formatMensuration(mensurationData.taille.current)} cm` : 'Non défini'}
+                </Text>
+                <Text style={[styles.statTrend, { color: getMensurationTrend('taille').color }]}>
+                  {getMensurationTrend('taille').text}
+                </Text>
+                <Text style={styles.updateHint}>Appuyez pour modifier</Text>
+              </TouchableOpacity>
             </View>
 
             <View style={styles.measurementRow}>
-              <View style={styles.measurementCard}>
+              <TouchableOpacity 
+                style={styles.measurementCard}
+                onPress={() => handleOpenMensurationModal('avantBras')}
+              >
                 <View style={styles.statIcon}>
                   <Text style={styles.iconText}>🦾</Text>
                 </View>
                 <Text style={styles.statLabel}>Avant-bras</Text>
-                <Text style={styles.statValue}>28.4 cm</Text>
-                <Text style={styles.statTrend}>↑ +0.3 cm</Text>
-              </View>
+                <Text style={styles.statValue}>
+                  {mensurationData.avantBras?.current ? `${formatMensuration(mensurationData.avantBras.current)} cm` : 'Non défini'}
+                </Text>
+                <Text style={[styles.statTrend, { color: getMensurationTrend('avantBras').color }]}>
+                  {getMensurationTrend('avantBras').text}
+                </Text>
+                <Text style={styles.updateHint}>Appuyez pour modifier</Text>
+              </TouchableOpacity>
 
-              <View style={styles.measurementCard}>
+              <TouchableOpacity 
+                style={styles.measurementCard}
+                onPress={() => handleOpenMensurationModal('mollets')}
+              >
                 <View style={styles.statIcon}>
                   <Text style={styles.iconText}>🦵</Text>
                 </View>
                 <Text style={styles.statLabel}>Mollets</Text>
-                <Text style={styles.statValue}>36.8 cm</Text>
-                <Text style={styles.statTrend}>↑ +0.4 cm</Text>
-              </View>
+                <Text style={styles.statValue}>
+                  {mensurationData.mollets?.current ? `${formatMensuration(mensurationData.mollets.current)} cm` : 'Non défini'}
+                </Text>
+                <Text style={[styles.statTrend, { color: getMensurationTrend('mollets').color }]}>
+                  {getMensurationTrend('mollets').text}
+                </Text>
+                <Text style={styles.updateHint}>Appuyez pour modifier</Text>
+              </TouchableOpacity>
             </View>
           </View>
         )}
@@ -760,6 +974,152 @@ export default function ProgresScreen() {
                 onPress={handleTargetUpdate}
               >
                 <Text style={styles.modalButtonPrimaryText}>Confirmer</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal de mensuration */}
+      <Modal
+        visible={showMensurationModal}
+        transparent={true}
+        animationType="fade"
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>
+              Modifier {getMuscleConfig(selectedMuscle).name}
+            </Text>
+            <Text style={styles.modalSubtitle}>
+              Entrez vos mensurations en centimètres
+            </Text>
+
+            {/* Mesures globales */}
+            <View style={styles.mensurationSection}>
+              <Text style={styles.mensurationSectionTitle}>Mesure globale</Text>
+              
+              <View style={styles.inputRow}>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputLabel}>Valeur de départ</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    value={tempMensuration.start}
+                    onChangeText={(text) => setTempMensuration({...tempMensuration, start: text})}
+                    placeholder="0.0"
+                    placeholderTextColor="#8B949E"
+                    keyboardType="numeric"
+                  />
+                  <Text style={styles.inputUnit}>cm</Text>
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputLabel}>Valeur actuelle</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    value={tempMensuration.current}
+                    onChangeText={(text) => setTempMensuration({...tempMensuration, current: text})}
+                    placeholder="0.0"
+                    placeholderTextColor="#8B949E"
+                    keyboardType="numeric"
+                  />
+                  <Text style={styles.inputUnit}>cm</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Mesures gauche/droite si applicable */}
+            {getMuscleConfig(selectedMuscle).hasLeftRight && (
+              <>
+                <View style={styles.mensurationSection}>
+                  <Text style={styles.mensurationSectionTitle}>Côté gauche</Text>
+                  
+                  <View style={styles.inputRow}>
+                    <View style={styles.inputContainer}>
+                      <Text style={styles.inputLabel}>Valeur de départ</Text>
+                      <TextInput
+                        style={styles.modalInput}
+                        value={tempMensuration.startGauche}
+                        onChangeText={(text) => setTempMensuration({...tempMensuration, startGauche: text})}
+                        placeholder="0.0"
+                        placeholderTextColor="#8B949E"
+                        keyboardType="numeric"
+                      />
+                      <Text style={styles.inputUnit}>cm</Text>
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                      <Text style={styles.inputLabel}>Valeur actuelle</Text>
+                      <TextInput
+                        style={styles.modalInput}
+                        value={tempMensuration.currentGauche}
+                        onChangeText={(text) => setTempMensuration({...tempMensuration, currentGauche: text})}
+                        placeholder="0.0"
+                        placeholderTextColor="#8B949E"
+                        keyboardType="numeric"
+                      />
+                      <Text style={styles.inputUnit}>cm</Text>
+                    </View>
+                  </View>
+                </View>
+
+                <View style={styles.mensurationSection}>
+                  <Text style={styles.mensurationSectionTitle}>Côté droit</Text>
+                  
+                  <View style={styles.inputRow}>
+                    <View style={styles.inputContainer}>
+                      <Text style={styles.inputLabel}>Valeur de départ</Text>
+                      <TextInput
+                        style={styles.modalInput}
+                        value={tempMensuration.startDroit}
+                        onChangeText={(text) => setTempMensuration({...tempMensuration, startDroit: text})}
+                        placeholder="0.0"
+                        placeholderTextColor="#8B949E"
+                        keyboardType="numeric"
+                      />
+                      <Text style={styles.inputUnit}>cm</Text>
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                      <Text style={styles.inputLabel}>Valeur actuelle</Text>
+                      <TextInput
+                        style={styles.modalInput}
+                        value={tempMensuration.currentDroit}
+                        onChangeText={(text) => setTempMensuration({...tempMensuration, currentDroit: text})}
+                        placeholder="0.0"
+                        placeholderTextColor="#8B949E"
+                        keyboardType="numeric"
+                      />
+                      <Text style={styles.inputUnit}>cm</Text>
+                    </View>
+                  </View>
+                </View>
+              </>
+            )}
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={styles.modalButtonSecondary}
+                onPress={() => {
+                  setShowMensurationModal(false);
+                  setTempMensuration({
+                    start: '',
+                    current: '',
+                    startGauche: '',
+                    currentGauche: '',
+                    startDroit: '',
+                    currentDroit: '',
+                  });
+                }}
+              >
+                <Text style={styles.modalButtonSecondaryText}>Annuler</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.modalButtonPrimary}
+                onPress={handleSaveMensuration}
+              >
+                <Text style={styles.modalButtonPrimaryText}>Sauvegarder</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1230,5 +1590,24 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontSize: 16,
     fontWeight: '600',
+  },
+  mensurationSection: {
+    marginBottom: 20,
+  },
+  mensurationSectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 12,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  inputLabel: {
+    fontSize: 12,
+    color: '#8B949E',
+    marginBottom: 6,
+    fontWeight: '500',
   },
 });
