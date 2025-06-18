@@ -623,39 +623,45 @@ export default function ProgresScreen() {
           <Text style={styles.summaryTitle}>Résumé de la période</Text>
           <View style={styles.summaryStats}>
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryValue}>-4.3 kg</Text>
-              <Text style={styles.summaryLabel}>Perte totale</Text>
+              <Text style={[styles.summaryValue, { color: getWeightTrend().color }]}>
+                {weightData.startWeight > weightData.currentWeight ? 
+                  `-${formatWeight(weightData.startWeight - weightData.currentWeight)} kg` :
+                  weightData.currentWeight > weightData.startWeight ?
+                    `+${formatWeight(weightData.currentWeight - weightData.startWeight)} kg` :
+                    '0 kg'
+                }
+              </Text>
+              <Text style={styles.summaryLabel}>Évolution totale</Text>
             </View>
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryValue}>0.7 kg</Text>
-              <Text style={styles.summaryLabel}>Perte moyenne/mois</Text>
+              <Text style={styles.summaryValue}>
+                {(() => {
+                  if (!userData?.createdAt) return '0 kg';
+                  const startDate = new Date(userData.createdAt);
+                  const currentDate = new Date();
+                  const monthsDiff = Math.max(1, Math.ceil((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30)));
+                  const weightChange = Math.abs(weightData.startWeight - weightData.currentWeight);
+                  const avgPerMonth = weightChange / monthsDiff;
+                  return `${formatWeight(avgPerMonth)} kg`;
+                })()}
+              </Text>
+              <Text style={styles.summaryLabel}>Évolution moyenne/mois</Text>
             </View>
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryValue}>86%</Text>
+              <Text style={styles.summaryValue}>
+                {(() => {
+                  // Calculer la régularité basée sur les mises à jour
+                  const totalWeeks = Math.max(1, Math.floor((new Date().getTime() - new Date(userData?.createdAt || new Date()).getTime()) / (1000 * 60 * 60 * 24 * 7)));
+                  const updatesCount = weightData.lastWeightUpdate ? 1 : 0; // Simplification - en réalité il faudrait compter toutes les mises à jour
+                  const regularity = Math.min(100, Math.round((updatesCount / totalWeeks) * 100));
+                  return `${regularity}%`;
+                })()}
+              </Text>
               <Text style={styles.summaryLabel}>Régularité</Text>
             </View>
           </View>
         </View>
         )}
-
-        {/* Enhanced User Info */}
-        <LinearGradient
-          colors={['#1A2332', '#161B22']}
-          style={styles.userInfoContainer}
-        >
-          <View style={styles.userInfoHeader}>
-            <View style={styles.avatarContainer}>
-              <Text style={styles.avatarText}>MP</Text>
-            </View>
-            <View style={styles.userDetails}>
-              <Text style={styles.userInfoText}>Maxandre Pacault-Marqué</Text>
-              <Text style={styles.userInfoSubtext}>Maximum</Text>
-              <View style={styles.badgeContainer}>
-                <Text style={styles.badge}>🔥 Série de 7 jours</Text>
-              </View>
-            </View>
-          </View>
-        </LinearGradient>
       </ScrollView>
 
       {/* Modal de mise à jour du poids */}
@@ -1103,7 +1109,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderWidth: 1,
     borderColor: '#21262D',
-    marginBottom: 25,
+    marginBottom: 100,
   },
   summaryTitle: {
     fontSize: 16,
@@ -1129,59 +1135,7 @@ const styles = StyleSheet.create({
     color: '#8B949E',
     textAlign: 'center',
   },
-  userInfoContainer: {
-    margin: 20,
-    marginTop: 0,
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#21262D',
-    marginBottom: 100,
-  },
-  userInfoHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatarContainer: {
-    width: 50,
-    height: 50,
-    backgroundColor: '#F5A623',
-    borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  avatarText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  userDetails: {
-    flex: 1,
-  },
-  userInfoText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 2,
-  },
-  userInfoSubtext: {
-    fontSize: 14,
-    color: '#8B949E',
-    marginBottom: 8,
-  },
-  badgeContainer: {
-    alignSelf: 'flex-start',
-  },
-  badge: {
-    fontSize: 12,
-    color: '#F5A623',
-    backgroundColor: 'rgba(245, 166, 35, 0.1)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    fontWeight: '500',
-  },
+  
   updateHint: {
     fontSize: 10,
     color: '#F5A623',
