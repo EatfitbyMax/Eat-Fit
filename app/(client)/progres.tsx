@@ -553,7 +553,11 @@ export default function ProgresScreen() {
               <Text style={styles.modalTitle}>Mettre à jour votre poids</Text>
               <TouchableOpacity 
                 style={styles.helpButton}
-                onPress={() => setShowWeightTips(true)}
+                onPress={() => {
+                  console.log('Bouton aide cliqué');
+                  setShowWeightTips(true);
+                }}
+                activeOpacity={0.7}
               >
                 <Text style={styles.helpButtonText}>?</Text>
               </TouchableOpacity>
@@ -1246,17 +1250,19 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   helpButton: {
-    width: 28,
-    height: 28,
+    width: 32,
+    height: 32,
     backgroundColor: '#21262D',
-    borderRadius: 14,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 12,
+    borderWidth: 1,
+    borderColor: '#F5A623',
   },
   helpButtonText: {
     color: '#F5A623',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
   },
   tipsModalContent: {
