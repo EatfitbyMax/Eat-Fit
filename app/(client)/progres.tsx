@@ -211,15 +211,21 @@ export default function ProgresScreen() {
   };
 
   const getWeightTrend = () => {
-    if (!weightData.lastWeightUpdate) return '';
+    if (!weightData.lastWeightUpdate) return { text: '', color: '#28A745' };
     
     const weightDiff = weightData.startWeight - weightData.currentWeight;
     if (weightDiff > 0) {
-      return `↓ -${formatWeight(weightDiff)} kg depuis le début`;
+      return { 
+        text: `↓ -${formatWeight(weightDiff)} kg depuis le début`,
+        color: '#28A745' // Vert pour perte de poids
+      };
     } else if (weightDiff < 0) {
-      return `↑ +${formatWeight(Math.abs(weightDiff))} kg depuis le début`;
+      return { 
+        text: `↑ +${formatWeight(Math.abs(weightDiff))} kg depuis le début`,
+        color: '#DC3545' // Rouge pour prise de poids
+      };
     }
-    return 'Aucun changement';
+    return { text: 'Aucun changement', color: '#8B949E' };
   };
 
   const animatedProgressStyle = useAnimatedStyle(() => {
@@ -426,7 +432,9 @@ export default function ProgresScreen() {
             </Text>
           </View>
 
-          <Text style={styles.progressTrend}>{getWeightTrend()}</Text>
+          <Text style={[styles.progressTrend, { color: getWeightTrend().color }]}>
+            {getWeightTrend().text}
+          </Text>
 
           <View style={styles.progressBarContainer}>
             <View style={styles.progressBarBackground}>
@@ -845,7 +853,6 @@ const styles = StyleSheet.create({
   },
   progressTrend: {
     fontSize: 14,
-    color: '#28A745',
     fontWeight: '600',
     textAlign: 'center',
     marginTop: 8,
