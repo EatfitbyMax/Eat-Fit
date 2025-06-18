@@ -674,17 +674,17 @@ export default function ProgresScreen() {
 
               <TouchableOpacity 
                 style={styles.measurementCard}
-                onPress={() => handleOpenMensurationModal('cuisses')}
+                onPress={() => handleOpenMensurationModal('avantBras')}
               >
                 <View style={styles.statIcon}>
-                  <Text style={styles.iconText}>🦵</Text>
+                  <Text style={styles.iconText}>🦾</Text>
                 </View>
-                <Text style={styles.statLabel}>Cuisses</Text>
+                <Text style={styles.statLabel}>Avant-bras</Text>
                 <Text style={styles.statValue}>
-                  {mensurationData.cuisses?.current ? `${formatMensuration(mensurationData.cuisses.current)} cm` : 'Non défini'}
+                  {mensurationData.avantBras?.current ? `${formatMensuration(mensurationData.avantBras.current)} cm` : 'Non défini'}
                 </Text>
-                <Text style={[styles.statTrend, { color: getMensurationTrend('cuisses').color }]}>
-                  {getMensurationTrend('cuisses').text}
+                <Text style={[styles.statTrend, { color: getMensurationTrend('avantBras').color }]}>
+                  {getMensurationTrend('avantBras').text}
                 </Text>
                 <Text style={styles.updateHint}>Appuyez pour modifier</Text>
               </TouchableOpacity>
@@ -729,17 +729,17 @@ export default function ProgresScreen() {
             <View style={styles.measurementRow}>
               <TouchableOpacity 
                 style={styles.measurementCard}
-                onPress={() => handleOpenMensurationModal('avantBras')}
+                onPress={() => handleOpenMensurationModal('cuisses')}
               >
                 <View style={styles.statIcon}>
-                  <Text style={styles.iconText}>🦾</Text>
+                  <Text style={styles.iconText}>🦵</Text>
                 </View>
-                <Text style={styles.statLabel}>Avant-bras</Text>
+                <Text style={styles.statLabel}>Cuisses</Text>
                 <Text style={styles.statValue}>
-                  {mensurationData.avantBras?.current ? `${formatMensuration(mensurationData.avantBras.current)} cm` : 'Non défini'}
+                  {mensurationData.cuisses?.current ? `${formatMensuration(mensurationData.cuisses.current)} cm` : 'Non défini'}
                 </Text>
-                <Text style={[styles.statTrend, { color: getMensurationTrend('avantBras').color }]}>
-                  {getMensurationTrend('avantBras').text}
+                <Text style={[styles.statTrend, { color: getMensurationTrend('cuisses').color }]}>
+                  {getMensurationTrend('cuisses').text}
                 </Text>
                 <Text style={styles.updateHint}>Appuyez pour modifier</Text>
               </TouchableOpacity>
