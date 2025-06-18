@@ -316,12 +316,7 @@ export default function ProgresScreen() {
                 <Text style={styles.iconText}>⚖️</Text>
               </View>
               <Text style={styles.statLabel}>Poids actuel</Text>
-              <Text style={[
-                styles.statValue, 
-                weightData.currentWeight > weightData.startWeight && { color: '#DC3545' }
-              ]}>
-                {formatWeight(weightData.currentWeight)} kg
-              </Text>
+              <Text style={styles.statValue}>{formatWeight(weightData.currentWeight)} kg</Text>
               <Text style={styles.updateHint}>
                 Appuyez pour mettre à jour
               </Text>
