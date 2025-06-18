@@ -317,7 +317,6 @@ export default function ProgresScreen() {
               </View>
               <Text style={styles.statLabel}>Poids actuel</Text>
               <Text style={styles.statValue}>{formatWeight(weightData.currentWeight)} kg</Text>
-              <Text style={styles.statTrend}>{getWeightTrend()}</Text>
               <Text style={styles.updateHint}>
                 Appuyez pour mettre à jour
               </Text>
@@ -426,6 +425,8 @@ export default function ProgresScreen() {
               {Math.round(((weightData.startWeight - weightData.currentWeight) / (weightData.startWeight - weightData.targetWeight)) * 100)}%
             </Text>
           </View>
+
+          <Text style={styles.progressTrend}>{getWeightTrend()}</Text>
 
           <View style={styles.progressBarContainer}>
             <View style={styles.progressBarBackground}>
@@ -841,6 +842,14 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#F5A623',
+  },
+  progressTrend: {
+    fontSize: 14,
+    color: '#28A745',
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: 8,
+    marginBottom: 16,
   },
   progressBarContainer: {
     marginBottom: 12,
