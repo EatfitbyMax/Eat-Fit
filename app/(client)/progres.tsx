@@ -318,11 +318,9 @@ export default function ProgresScreen() {
               <Text style={styles.statLabel}>Poids actuel</Text>
               <Text style={styles.statValue}>{formatWeight(weightData.currentWeight)} kg</Text>
               <Text style={styles.statTrend}>{getWeightTrend()}</Text>
-              {canUpdateWeight().canUpdate && (
-                <Text style={styles.updateHint}>
-                  Appuyez pour mettre à jour ({7 - (weightData.weeklyUpdates || 0)} restantes cette semaine)
-                </Text>
-              )}
+              <Text style={styles.updateHint}>
+                Appuyez pour mettre à jour
+              </Text>
             </TouchableOpacity>
 
             <View style={styles.statCard}>
@@ -556,6 +554,9 @@ export default function ProgresScreen() {
                 new Date(weightData.lastWeightUpdate).toLocaleDateString('fr-FR') : 
                 'Jamais'
               }
+            </Text>
+            <Text style={styles.modalUpdateInfo}>
+              {7 - (weightData.weeklyUpdates || 0)} mises à jour restantes cette semaine
             </Text>
             
             <View style={styles.inputContainer}>
@@ -1089,7 +1090,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#8B949E',
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 8,
+  },
+  modalUpdateInfo: {
+    fontSize: 13,
+    color: '#F5A623',
+    textAlign: 'center',
+    marginBottom: 20,
+    fontWeight: '500',
   },
   inputContainer: {
     position: 'relative',
