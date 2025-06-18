@@ -33,13 +33,10 @@ export default function ProgresScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Header with Gradient */}
-        <LinearGradient
-          colors={['#F5A623', '#E8941A']}
-          style={styles.headerGradient}
-        >
+        {/* Header sans gradient */}
+        <View style={styles.header}>
           <Text style={styles.title}>Mes progrès</Text>
-        </LinearGradient>
+        </View>
 
         {/* Tabs with improved design */}
         <View style={styles.tabsContainer}>
@@ -327,13 +324,11 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  headerGradient: {
+  header: {
     paddingHorizontal: 20,
     paddingVertical: 20,
     paddingTop: 10,
     alignItems: 'center',
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
   },
   title: {
     fontSize: 20,
@@ -397,13 +392,13 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 10,
-    backgroundColor: '#161B22',
+    backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: '#21262D',
     alignItems: 'center',
   },
   activeMeasurementTab: {
-    backgroundColor: '#F5A623',
+    backgroundColor: 'transparent',
     borderColor: '#F5A623',
   },
   measurementTabContent: {
