@@ -214,15 +214,21 @@ export default function ProgresScreen() {
     if (!weightData.lastWeightUpdate) return { text: '', color: '#28A745' };
     
     const weightDiff = weightData.startWeight - weightData.currentWeight;
+    const progressPercentage = weightData.targetWeight && weightData.startWeight ? 
+      Math.round(((weightData.startWeight - weightData.currentWeight) / (weightData.startWeight - weightData.targetWeight)) * 100) : 0;
+    
+    // Couleur basée sur la progression vers l'objectif
+    const color = progressPercentage < 0 ? '#DC3545' : '#28A745'; // Rouge si négatif, vert si positif
+    
     if (weightDiff > 0) {
       return { 
         text: `↓ -${formatWeight(weightDiff)} kg depuis le début`,
-        color: '#28A745' // Vert pour perte de poids
+        color: color
       };
     } else if (weightDiff < 0) {
       return { 
         text: `↑ +${formatWeight(Math.abs(weightDiff))} kg depuis le début`,
-        color: '#DC3545' // Rouge pour prise de poids
+        color: color
       };
     }
     return { text: 'Aucun changement', color: '#8B949E' };
