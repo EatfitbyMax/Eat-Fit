@@ -40,13 +40,13 @@ export default function ProgresScreen() {
 
   useEffect(() => {
     loadUserData();
-    
+
     // Vérifier le statut d'abonnement
     const checkPremiumStatus = async () => {
       const premiumStatus = await checkSubscriptionStatus();
       setIsPremium(premiumStatus);
     };
-    
+
     checkPremiumStatus();
   }, []);
 
@@ -115,14 +115,14 @@ export default function ProgresScreen() {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const nowISO = now.toISOString();
-    
+
     // Vérifier si on doit réinitialiser le compteur hebdomadaire
     const lastWeekReset = weightData.lastWeekReset ? new Date(weightData.lastWeekReset) : null;
     const daysSinceReset = lastWeekReset ? Math.floor((today.getTime() - lastWeekReset.getTime()) / (1000 * 60 * 60 * 24)) : 7;
-    
+
     let newWeeklyUpdates = weightData.weeklyUpdates;
     let newLastWeekReset = weightData.lastWeekReset;
-    
+
     // Si plus de 7 jours, réinitialiser le compteur
     if (daysSinceReset >= 7) {
       newWeeklyUpdates = 1;
@@ -140,7 +140,7 @@ export default function ProgresScreen() {
     };
 
     await saveWeightData(newData);
-    
+
     // Mettre à jour l'animation de progression
     if (newData.targetWeight && newData.startWeight) {
       const totalLoss = newData.startWeight - newData.targetWeight;
@@ -169,7 +169,7 @@ export default function ProgresScreen() {
     };
 
     await saveWeightData(newData);
-    
+
     // Mettre à jour l'animation de progression
     if (newData.currentWeight && newData.startWeight) {
       const totalLoss = newData.startWeight - newData.targetWeight;
@@ -186,24 +186,24 @@ export default function ProgresScreen() {
   const canUpdateWeight = () => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
+
     // Si pas de dernière mise à jour, on peut toujours mettre à jour
     if (!weightData.lastWeightUpdate) return { canUpdate: true, reason: '' };
-    
+
     // Vérifier si on doit réinitialiser le compteur hebdomadaire
     const lastWeekReset = weightData.lastWeekReset ? new Date(weightData.lastWeekReset) : null;
     const daysSinceReset = lastWeekReset ? Math.floor((today.getTime() - lastWeekReset.getTime()) / (1000 * 60 * 60 * 24)) : 7;
-    
+
     // Si plus de 7 jours depuis le dernier reset, on peut remettre à jour
     if (daysSinceReset >= 7) {
       return { canUpdate: true, reason: '' };
     }
-    
+
     // Sinon, vérifier si on a encore des mises à jour disponibles cette semaine
     if (weightData.weeklyUpdates < 7) {
       return { canUpdate: true, reason: '' };
     }
-    
+
     return { 
       canUpdate: false, 
       reason: 'Vous avez atteint la limite de 7 mises à jour par semaine.' 
@@ -212,14 +212,14 @@ export default function ProgresScreen() {
 
   const getWeightTrend = () => {
     if (!weightData.lastWeightUpdate) return { text: '', color: '#28A745' };
-    
+
     const weightDiff = weightData.startWeight - weightData.currentWeight;
     const progressPercentage = weightData.targetWeight && weightData.startWeight ? 
       Math.round(((weightData.startWeight - weightData.currentWeight) / (weightData.startWeight - weightData.targetWeight)) * 100) : 0;
-    
+
     // Couleur basée sur la progression vers l'objectif
     const color = progressPercentage < 0 ? '#DC3545' : '#28A745'; // Rouge si négatif, vert si positif
-    
+
     if (weightDiff > 0) {
       return { 
         text: `↓ -${formatWeight(weightDiff)} kg depuis le début`,
@@ -239,6 +239,128 @@ export default function ProgresScreen() {
       width: `${progressAnimation.value * 100}%`,
     };
   });
+
+  const renderWeightChart = () => {
+    if (!userData?.createdAt) return null;
+
+    const startDate = new Date(userData.createdAt);
+    const currentDate = new Date();
+    const monthsDiff = Math.ceil((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
+    const displayMonths = Math.min(6, Math.max(1, monthsDiff + 1));
+
+    // Générer les points de données basés sur la progression réelle
+    const dataPoints = [];
+
+    // Si moins d'un mois complet, afficher seulement le point actuel
+    if (monthsDiff < 1) {
+      const singlePosition = getDataPointPosition(weightData.currentWeight, 0, 1);
+      dataPoints.push(
+        <View key="single" style={[styles.dataPoint, { left: '50%', top: singlePosition.top }]} />
+      );
+    } else {
+      // Point de départ (inscription)
+      const startPosition = getDataPointPosition(weightData.startWeight, 0, displayMonths);
+      dataPoints.push(
+        <View key="start" style={[styles.dataPoint, startPosition]} />
+      );
+
+      // Points intermédiaires (simulation basée sur la progression)
+      if (displayMonths > 2) {
+        const totalWeightChange = weightData.currentWeight - weightData.startWeight;
+        for (let i = 1; i < displayMonths - 1; i++) {
+          const progressRatio = i / (displayMonths - 1);
+          const interpolatedWeight = weightData.startWeight + (totalWeightChange * progressRatio);
+          // Ajouter une petite variation réaliste
+          const variation = (Math.random() - 0.5) * 0.5;
+          const weightWithVariation = interpolatedWeight + variation;
+
+          const position = getDataPointPosition(weightWithVariation, i, displayMonths);
+          dataPoints.push(
+            <View key={`point-${i}`} style={[styles.dataPoint, position]} />
+          );
+        }
+      }
+
+      // Point actuel (seulement si plus d'un mois)
+      if (displayMonths > 1) {
+        const currentPosition = getDataPointPosition(weightData.currentWeight, displayMonths - 1, displayMonths);
+        dataPoints.push(
+          <View key="current" style={[styles.dataPoint, currentPosition]} />
+        );
+      }
+    }
+
+    return (
+      <>
+        <LinearGradient
+          colors={['rgba(245, 166, 35, 0.3)', 'rgba(245, 166, 35, 0.1)']}
+          style={styles.weightLineGradient}
+        />
+        <View style={styles.dataPoints}>
+          {dataPoints}
+        </View>
+      </>
+    );
+  };
+
+  const getDataPointPosition = (weight: number, monthIndex: number, totalMonths: number) => {
+    // Calculer la position verticale basée sur le poids (range dynamique autour des données)
+    const minWeight = Math.min(weightData.startWeight, weightData.currentWeight, weightData.targetWeight || weightData.currentWeight) - 2;
+    const maxWeight = Math.max(weightData.startWeight, weightData.currentWeight, weightData.targetWeight || weightData.currentWeight) + 2;
+    const weightRange = Math.max(maxWeight - minWeight, 4); // Range minimum de 4kg
+    const weightPercentage = Math.max(0, Math.min(1, (maxWeight - weight) / weightRange));
+
+    // Calculer la position horizontale
+    const leftPercentage = totalMonths > 1 ? (monthIndex / (totalMonths - 1)) * 100 : 50;
+
+    return {
+      left: `${leftPercentage}%`,
+      top: `${weightPercentage * 80 + 10}%` // 10% de marge en haut et en bas
+    };
+  };
+
+  const generateYAxisLabels = () => {
+    if (!userData?.createdAt) return ['74', '72', '70', '68', '66', '64'];
+
+    const minWeight = Math.min(weightData.startWeight, weightData.currentWeight, weightData.targetWeight || weightData.currentWeight) - 2;
+    const maxWeight = Math.max(weightData.startWeight, weightData.currentWeight, weightData.targetWeight || weightData.currentWeight) + 2;
+    const weightRange = Math.max(maxWeight - minWeight, 4);
+
+    const labels = [];
+    for (let i = 0; i < 6; i++) {
+      const weight = maxWeight - (i * weightRange / 5);
+      labels.push(Math.round(weight).toString());
+    }
+
+    return labels;
+  };
+
+  const generateMonthLabels = () => {
+    if (!userData?.createdAt) return ['Janv', 'Mars', 'Mai', 'Juil', 'Sept', 'Déc'];
+
+    const startDate = new Date(userData.createdAt);
+    const currentDate = new Date();
+    const monthsDiff = Math.ceil((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
+    const displayMonths = Math.min(6, Math.max(1, monthsDiff + 1));
+
+    const monthNames = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
+    const labels = [];
+
+    for (let i = 0; i < displayMonths; i++) {
+      const monthDate = new Date(startDate);
+      monthDate.setMonth(startDate.getMonth() + i);
+      labels.push(monthNames[monthDate.getMonth()]);
+    }
+
+    // Si moins de 6 mois, compléter avec des mois futurs
+    while (labels.length < 6) {
+      const lastDate = new Date(startDate);
+      lastDate.setMonth(startDate.getMonth() + labels.length);
+      labels.push(monthNames[lastDate.getMonth()]);
+    }
+
+    return labels.slice(0, 6);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -281,7 +403,7 @@ export default function ProgresScreen() {
                 Poids
               </Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity 
               style={[styles.measurementTab, selectedMeasurementTab === 'Mensurations' && styles.activeMeasurementTab]}
               onPress={() => {
@@ -375,7 +497,7 @@ export default function ProgresScreen() {
                 <Text style={styles.statValue}>35.2 cm</Text>
                 <Text style={styles.statTrend}>↑ +0.5 cm</Text>
               </View>
-              
+
               <View style={styles.measurementCard}>
                 <View style={styles.statIcon}>
                   <Text style={styles.iconText}>🦵</Text>
@@ -395,7 +517,7 @@ export default function ProgresScreen() {
                 <Text style={styles.statValue}>102.5 cm</Text>
                 <Text style={styles.statTrend}>↑ +0.8 cm</Text>
               </View>
-              
+
               <View style={styles.measurementCard}>
                 <View style={styles.statIcon}>
                   <Text style={styles.iconText}>🤏</Text>
@@ -415,7 +537,7 @@ export default function ProgresScreen() {
                 <Text style={styles.statValue}>28.4 cm</Text>
                 <Text style={styles.statTrend}>↑ +0.3 cm</Text>
               </View>
-              
+
               <View style={styles.measurementCard}>
                 <View style={styles.statIcon}>
                   <Text style={styles.iconText}>🦵</Text>
@@ -468,12 +590,9 @@ export default function ProgresScreen() {
           {/* Improved Chart */}
           <View style={styles.chartArea}>
             <View style={styles.yAxis}>
-              <Text style={styles.yAxisLabel}>74</Text>
-              <Text style={styles.yAxisLabel}>72</Text>
-              <Text style={styles.yAxisLabel}>70</Text>
-              <Text style={styles.yAxisLabel}>68</Text>
-              <Text style={styles.yAxisLabel}>66</Text>
-              <Text style={styles.yAxisLabel}>64</Text>
+            {generateYAxisLabels().map((label, index) => (
+                <Text key={index} style={styles.yAxisLabel}>{label}</Text>
+              ))}
             </View>
 
             <View style={styles.chartContent}>
@@ -485,29 +604,13 @@ export default function ProgresScreen() {
               </View>
 
               {/* Enhanced Weight Line with Gradient */}
-              <LinearGradient
-                colors={['rgba(245, 166, 35, 0.3)', 'rgba(245, 166, 35, 0.1)']}
-                style={styles.weightLineGradient}
-              />
-              <View style={styles.weightLine} />
-
-              {/* Data Points */}
-              <View style={styles.dataPoints}>
-                <View style={[styles.dataPoint, { left: '10%', top: '20%' }]} />
-                <View style={[styles.dataPoint, { left: '30%', top: '35%' }]} />
-                <View style={[styles.dataPoint, { left: '50%', top: '45%' }]} />
-                <View style={[styles.dataPoint, { left: '70%', top: '55%' }]} />
-                <View style={[styles.dataPoint, { left: '90%', top: '65%' }]} />
-              </View>
+              {renderWeightChart()}
 
               {/* X-axis labels */}
               <View style={styles.xAxis}>
-                <Text style={styles.xAxisLabel}>Janv</Text>
-                <Text style={styles.xAxisLabel}>Mars</Text>
-                <Text style={styles.xAxisLabel}>Mai</Text>
-                <Text style={styles.xAxisLabel}>Juil</Text>
-                <Text style={styles.xAxisLabel}>Sept</Text>
-                <Text style={styles.xAxisLabel}>Déc</Text>
+              {generateMonthLabels().map((label, index) => (
+                  <Text key={index} style={styles.xAxisLabel}>{label}</Text>
+                ))}
               </View>
             </View>
           </View>
@@ -573,7 +676,7 @@ export default function ProgresScreen() {
             <Text style={styles.modalUpdateInfo}>
               {7 - (weightData.weeklyUpdates || 0)} mises à jour restantes cette semaine
             </Text>
-            
+
             <View style={styles.inputContainer}>
               <TextInput
                 style={styles.modalInput}
@@ -597,7 +700,7 @@ export default function ProgresScreen() {
               >
                 <Text style={styles.modalButtonSecondaryText}>Annuler</Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity 
                 style={styles.modalButtonPrimary}
                 onPress={handleWeightUpdate}
@@ -621,7 +724,7 @@ export default function ProgresScreen() {
             <Text style={styles.modalSubtitle}>
               Poids actuel : {formatWeight(weightData.currentWeight)} kg
             </Text>
-            
+
             <View style={styles.inputContainer}>
               <TextInput
                 style={styles.modalInput}
@@ -645,7 +748,7 @@ export default function ProgresScreen() {
               >
                 <Text style={styles.modalButtonSecondaryText}>Annuler</Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity 
                 style={styles.modalButtonPrimary}
                 onPress={handleTargetUpdate}
@@ -724,7 +827,7 @@ const styles = StyleSheet.create({
   activeTabText: {
     color: '#FFFFFF',
   },
-  
+
   measurementTabsContainer: {
     flexDirection: 'row',
     paddingHorizontal: 20,
@@ -761,7 +864,7 @@ const styles = StyleSheet.create({
   premiumBadge: {
     fontSize: 12,
   },
-  
+
   measurementsContainer: {
     paddingHorizontal: 20,
     marginBottom: 25,
