@@ -442,31 +442,6 @@ export default function EntrainementScreen() {
         <View style={styles.contentContainer}>
           {selectedTab === 'Journal' && (
             <View style={styles.daysContainer}>
-              {/* Statistiques de la semaine */}
-              <View style={styles.weekStats}>
-                <LinearGradient
-                  colors={['#F5A623', '#E6962C']}
-                  style={styles.statCard}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <Text style={styles.statIcon}>🏋️‍♂️</Text>
-                  <Text style={styles.statNumber}>{workouts.length}</Text>
-                  <Text style={styles.statLabel}>Séances planifiées</Text>
-                </LinearGradient>
-                
-                <LinearGradient
-                  colors={['#1F6FEB', '#0969DA']}
-                  style={styles.statCard}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <Text style={styles.statIcon}>🔥</Text>
-                  <Text style={styles.statNumber}>{workouts.reduce((acc, w) => acc + w.calories, 0)}</Text>
-                  <Text style={styles.statLabel}>Calories prévues</Text>
-                </LinearGradient>
-              </View>
-
               {/* Liste des jours avec design de cartes */}
               {daysOfWeek.map((jour) => {
                 const sessionCount = getWorkoutsCountForDay(jour);
@@ -725,42 +700,10 @@ const styles = StyleSheet.create({
   lockedTabText: {
     color: '#6A737D',
   },
-  weekStats: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    marginBottom: 20,
-    gap: 12,
-  },
-  statCard: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 16,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  statIcon: {
-    fontSize: 24,
-    marginBottom: 8,
-  },
-  statNumber: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.8)',
-    textAlign: 'center',
-    fontWeight: '500',
-  },
   daysContainer: {
     flex: 1,
     paddingHorizontal: 16,
+    paddingTop: 20,
   },
   dayCard: {
     backgroundColor: '#161B22',
