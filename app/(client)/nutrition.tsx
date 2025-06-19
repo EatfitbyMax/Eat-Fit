@@ -135,19 +135,31 @@ function NutritionScreen() {
 
   const handleFoodAdded = async (product: FoodProduct, quantity: number) => {
     try {
+      console.log('=== Début ajout aliment ===');
+      console.log('Produit:', product?.name);
+      console.log('Quantité:', quantity);
+      console.log('Type de repas:', selectedMealType);
+
       const user = await getCurrentUser();
       if (!user) {
+        console.log('Erreur: Utilisateur non connecté');
         Alert.alert('Erreur', 'Utilisateur non connecté');
+        setShowFoodModal(false);
         return;
       }
 
       // Vérifier que le produit et la quantité sont valides
       if (!product || !product.name || quantity <= 0) {
+        console.log('Erreur: Produit ou quantité invalide');
         Alert.alert('Erreur', 'Produit ou quantité invalide');
+        setShowFoodModal(false);
         return;
       }
 
+      console.log('Calcul nutrition...');
       const nutrition = OpenFoodFactsService.calculateNutrition(product, quantity);
+      console.log('Nutrition calculée:', nutrition);
+
       const newEntry: FoodEntry = {
         id: Date.now().toString(),
         product,
@@ -160,12 +172,15 @@ function NutritionScreen() {
         fat: nutrition.fat || 0,
       };
 
+      console.log('Nouvelle entrée créée:', newEntry);
+
       const updatedEntries = [...foodEntries, newEntry];
       setFoodEntries(updatedEntries);
 
       // Sauvegarder localement
       try {
         await AsyncStorage.setItem(`food_entries_${user.id}`, JSON.stringify(updatedEntries));
+        console.log('Sauvegarde réussie');
       } catch (storageError) {
         console.error('Erreur sauvegarde:', storageError);
         // Continuer même si la sauvegarde échoue
@@ -174,11 +189,21 @@ function NutritionScreen() {
       // Recalculer les totaux
       calculateDailyTotals(updatedEntries);
 
+      // Fermer la modal en premier
       setShowFoodModal(false);
-      Alert.alert('Succès', `${product.name || 'Aliment'} ajouté à ${selectedMealType}`);
+      
+      // Puis afficher le message de succès
+      setTimeout(() => {
+        Alert.alert('Succès', `${product.name || 'Aliment'} ajouté à ${selectedMealType}`);
+      }, 100);
+
+      console.log('=== Fin ajout aliment ===');
     } catch (error) {
       console.error('Erreur ajout aliment:', error);
-      Alert.alert('Erreur', 'Impossible d\'ajouter l\'aliment. Veuillez réessayer.');
+      setShowFoodModal(false);
+      setTimeout(() => {
+        Alert.alert('Erreur', 'Impossible d\'ajouter l\'aliment. Veuillez réessayer.');
+      }, 100);
     }
   };
 
