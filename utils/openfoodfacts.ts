@@ -114,13 +114,23 @@ export class OpenFoodFactsService {
     carbohydrates: number;
     fat: number;
   } {
-    const factor = quantityInGrams / 100; // OpenFoodFacts donne les valeurs pour 100g
+    try {
+      if (!product || !product.nutriments || quantityInGrams <= 0) {
+        return { calories: 0, proteins: 0, carbohydrates: 0, fat: 0 };
+      }
 
-    return {
-      calories: Math.round((product.nutriments.energy_kcal || 0) * factor),
-      proteins: Math.round((product.nutriments.proteins || 0) * factor * 10) / 10,
-      carbohydrates: Math.round((product.nutriments.carbohydrates || 0) * factor * 10) / 10,
-      fat: Math.round((product.nutriments.fat || 0) * factor * 10) / 10,
+      const factor = quantityInGrams / 100; // OpenFoodFacts donne les valeurs pour 100g
+
+      return {
+        calories: Math.round((product.nutriments.energy_kcal || 0) * factor),
+        proteins: Math.round((product.nutriments.proteins || 0) * factor * 10) / 10,
+        carbohydrates: Math.round((product.nutriments.carbohydrates || 0) * factor * 10) / 10,
+        fat: Math.round((product.nutriments.fat || 0) * factor * 10) / 10
+      };
+    } catch (error) {
+      console.error('Erreur calcul nutrition:', error);
+      return { calories: 0, proteins: 0, carbohydrates: 0, fat: 0 };
+    },
     };
   }
 

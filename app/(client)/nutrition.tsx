@@ -136,7 +136,16 @@ function NutritionScreen() {
   const handleFoodAdded = async (product: FoodProduct, quantity: number) => {
     try {
       const user = await getCurrentUser();
-      if (!user) return;
+      if (!user) {
+        Alert.alert('Erreur', 'Utilisateur non connecté');
+        return;
+      }
+
+      // Vérifier que le produit et la quantité sont valides
+      if (!product || !product.name || quantity <= 0) {
+        Alert.alert('Erreur', 'Produit ou quantité invalide');
+        return;
+      }
 
       const nutrition = OpenFoodFactsService.calculateNutrition(product, quantity);
       const newEntry: FoodEntry = {
@@ -145,23 +154,31 @@ function NutritionScreen() {
         quantity,
         mealType: selectedMealType as any,
         date: selectedDate.toISOString().split('T')[0],
-        ...nutrition,
+        calories: nutrition.calories || 0,
+        proteins: nutrition.proteins || 0,
+        carbohydrates: nutrition.carbohydrates || 0,
+        fat: nutrition.fat || 0,
       };
 
       const updatedEntries = [...foodEntries, newEntry];
       setFoodEntries(updatedEntries);
 
       // Sauvegarder localement
-      await AsyncStorage.setItem(`food_entries_${user.id}`, JSON.stringify(updatedEntries));
+      try {
+        await AsyncStorage.setItem(`food_entries_${user.id}`, JSON.stringify(updatedEntries));
+      } catch (storageError) {
+        console.error('Erreur sauvegarde:', storageError);
+        // Continuer même si la sauvegarde échoue
+      }
 
       // Recalculer les totaux
       calculateDailyTotals(updatedEntries);
 
       setShowFoodModal(false);
-      Alert.alert('Succès', `${product.name} ajouté à ${selectedMealType}`);
+      Alert.alert('Succès', `${product.name || 'Aliment'} ajouté à ${selectedMealType}`);
     } catch (error) {
       console.error('Erreur ajout aliment:', error);
-      Alert.alert('Erreur', 'Impossible d\'ajouter l\'aliment');
+      Alert.alert('Erreur', 'Impossible d\'ajouter l\'aliment. Veuillez réessayer.');
     }
   };
 
