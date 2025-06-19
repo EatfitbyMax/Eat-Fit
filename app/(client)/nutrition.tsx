@@ -354,13 +354,8 @@ function NutritionScreen() {
                 {dailyTotals.calories > 0 && (
                   <>
                     <View style={[styles.circularGaugeFill, { 
-                      transform: [{ rotate: `${Math.min((dailyTotals.calories / calorieGoals.calories) * 180, 180)}deg` }] 
+                      transform: [{ rotate: `${Math.min((dailyTotals.calories / calorieGoals.calories) * 360, 360)}deg` }] 
                     }]} />
-                    {(dailyTotals.calories / calorieGoals.calories) > 0.5 && (
-                      <View style={[styles.circularGaugeFillSecond, { 
-                        transform: [{ rotate: `${Math.min(((dailyTotals.calories / calorieGoals.calories) - 0.5) * 180, 180)}deg` }] 
-                      }]} />
-                    )}
                   </>
                 )}
                 <View style={styles.circularGaugeInner}>
@@ -733,18 +728,10 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
     borderTopColor: '#FFA500',
     borderRightColor: '#FFA500',
-    transformOrigin: 'center',
-  },
-  circularGaugeFillSecond: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    borderRadius: width < 375 ? 50 : 55,
-    borderWidth: 8,
-    borderColor: 'transparent',
     borderBottomColor: '#FFA500',
     borderLeftColor: '#FFA500',
     transformOrigin: 'center',
+    transform: [{ rotate: '-90deg' }], // Commencer en haut
   },
   circularGaugeInner: {
     alignItems: 'center',
