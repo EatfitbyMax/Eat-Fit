@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Modal, Alert } from 'react-native';
+import Svg, { Circle } from 'react-native-svg';
 import FoodSearchModal from '@/components/FoodSearchModal';
 import { FoodProduct, OpenFoodFactsService, FoodEntry } from '@/utils/openfoodfacts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -351,13 +352,30 @@ function NutritionScreen() {
             {/* Calories Circular Gauge - Left Side */}
             <View style={styles.caloriesSection}>
               <View style={styles.circularGauge}>
-                {dailyTotals.calories > 0 && (
-                  <>
-                    <View style={[styles.circularGaugeFill, { 
-                      transform: [{ rotate: `${Math.min((dailyTotals.calories / calorieGoals.calories) * 360, 360)}deg` }] 
-                    }]} />
-                  </>
-                )}
+                <Svg width={width < 375 ? 110 : 120} height={width < 375 ? 110 : 120} style={styles.svgGauge}>
+                  {/* Background circle */}
+                  <Circle
+                    cx={(width < 375 ? 110 : 120) / 2}
+                    cy={(width < 375 ? 110 : 120) / 2}
+                    r={(width < 375 ? 110 : 120) / 2 - 8}
+                    stroke="rgba(33, 38, 45, 0.8)"
+                    strokeWidth="8"
+                    fill="transparent"
+                  />
+                  {/* Progress circle */}
+                  <Circle
+                    cx={(width < 375 ? 110 : 120) / 2}
+                    cy={(width < 375 ? 110 : 120) / 2}
+                    r={(width < 375 ? 110 : 120) / 2 - 8}
+                    stroke="#FFA500"
+                    strokeWidth="8"
+                    fill="transparent"
+                    strokeDasharray={`${2 * Math.PI * ((width < 375 ? 110 : 120) / 2 - 8)}`}
+                    strokeDashoffset={`${2 * Math.PI * ((width < 375 ? 110 : 120) / 2 - 8) * (1 - Math.min(dailyTotals.calories / calorieGoals.calories, 1))}`}
+                    strokeLinecap="round"
+                    transform={`rotate(-90 ${(width < 375 ? 110 : 120) / 2} ${(width < 375 ? 110 : 120) / 2})`}
+                  />
+                </Svg>
                 <View style={styles.circularGaugeInner}>
                   <Text style={styles.caloriesValue}>{dailyTotals.calories}</Text>
                   <Text style={styles.caloriesTarget}>/ {calorieGoals.calories}</Text>
@@ -704,34 +722,15 @@ const styles = StyleSheet.create({
     minWidth: width < 375 ? 130 : 140,
   },
   circularGauge: {
-    width: width < 375 ? 100 : 110,
-    height: width < 375 ? 100 : 110,
-    borderRadius: width < 375 ? 50 : 55,
-    borderWidth: 8,
-    borderColor: 'rgba(33, 38, 45, 0.8)',
+    width: width < 375 ? 110 : 120,
+    height: width < 375 ? 110 : 120,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
     marginBottom: 12,
-    shadowColor: '#FFA500',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 6,
   },
-  circularGaugeFill: {
+  svgGauge: {
     position: 'absolute',
-    width: '100%',
-    height: '100%',
-    borderRadius: width < 375 ? 50 : 55,
-    borderWidth: 8,
-    borderColor: 'transparent',
-    borderTopColor: '#FFA500',
-    borderRightColor: '#FFA500',
-    borderBottomColor: '#FFA500',
-    borderLeftColor: '#FFA500',
-    transformOrigin: 'center',
-    transform: [{ rotate: '-90deg' }], // Commencer en haut
   },
   circularGaugeInner: {
     alignItems: 'center',
