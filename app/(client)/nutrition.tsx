@@ -351,27 +351,9 @@ function NutritionScreen() {
             {/* Calories Circular Gauge - Left Side */}
             <View style={styles.caloriesSection}>
               <View style={styles.circularGauge}>
-                {/* Background circle */}
-                <View style={styles.circularGaugeBackground} />
-                
-                {/* Progress circle */}
-                <View style={styles.circularGaugeProgress}>
-                  <View style={[
-                    styles.circularGaugeProgressFill,
-                    {
-                      transform: [
-                        { rotate: `-90deg` }, // Commencer à 12h
-                        { 
-                          rotate: `${Math.min((dailyTotals.calories / calorieGoals.calories) * 360, 360)}deg` 
-                        }
-                      ]
-                    }
-                  ]}>
-                    <View style={styles.circularGaugeProgressInner} />
-                  </View>
-                </View>
-                
-                {/* Inner content */}
+                <View style={[styles.circularGaugeFill, { 
+                  transform: [{ rotate: `${(dailyTotals.calories / calorieGoals.calories) * 360}deg` }] 
+                }]} />
                 <View style={styles.circularGaugeInner}>
                   <Text style={styles.caloriesValue}>{dailyTotals.calories}</Text>
                   <Text style={styles.caloriesTarget}>/ {calorieGoals.calories}</Text>
@@ -721,6 +703,8 @@ const styles = StyleSheet.create({
     width: width < 375 ? 100 : 110,
     height: width < 375 ? 100 : 110,
     borderRadius: width < 375 ? 50 : 55,
+    borderWidth: 8,
+    borderColor: 'rgba(33, 38, 45, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
@@ -731,43 +715,18 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 6,
   },
-  circularGaugeBackground: {
+  circularGaugeFill: {
     position: 'absolute',
     width: '100%',
     height: '100%',
     borderRadius: width < 375 ? 50 : 55,
     borderWidth: 8,
-    borderColor: 'rgba(33, 38, 45, 0.8)',
-    zIndex: 1,
-  },
-  circularGaugeProgress: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    borderRadius: width < 375 ? 50 : 55,
-    zIndex: 2,
-    overflow: 'hidden',
-  },
-  circularGaugeProgressFill: {
-    width: '100%',
-    height: '100%',
-    borderRadius: width < 375 ? 50 : 55,
-  },
-  circularGaugeProgressInner: {
-    width: '100%',
-    height: '50%',
-    backgroundColor: '#FFA500',
-    borderTopLeftRadius: width < 375 ? 50 : 55,
-    borderTopRightRadius: width < 375 ? 50 : 55,
-    transformOrigin: 'center bottom',
+    borderColor: 'transparent',
+    borderTopColor: '#FFA500',
+    borderRightColor: '#FFD700',
   },
   circularGaugeInner: {
-    position: 'absolute',
     alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 3,
-    width: '100%',
-    height: '100%',
   },
   caloriesValue: {
     fontSize: width < 375 ? 20 : 22,
