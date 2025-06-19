@@ -1099,7 +1099,7 @@ const styles = StyleSheet.create({
   },
   waterProgressFill: {
     height: '100%',
-    backgroundColor: 'linear-gradient(90deg, #4ECDC4, #44A08D)',
+    backgroundColor: '#4ECDC4',
     borderRadius: 6,
     shadowColor: '#4ECDC4',
     shadowOffset: { width: 0, height: 2 },
