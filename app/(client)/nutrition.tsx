@@ -352,9 +352,16 @@ function NutritionScreen() {
             <View style={styles.caloriesSection}>
               <View style={styles.circularGauge}>
                 {dailyTotals.calories > 0 && (
-                  <View style={[styles.circularGaugeFill, { 
-                    transform: [{ rotate: `${Math.min((dailyTotals.calories / calorieGoals.calories) * 360, 360)}deg` }] 
-                  }]} />
+                  <>
+                    <View style={[styles.circularGaugeFill, { 
+                      transform: [{ rotate: `${Math.min((dailyTotals.calories / calorieGoals.calories) * 180, 180)}deg` }] 
+                    }]} />
+                    {(dailyTotals.calories / calorieGoals.calories) > 0.5 && (
+                      <View style={[styles.circularGaugeFillSecond, { 
+                        transform: [{ rotate: `${Math.min(((dailyTotals.calories / calorieGoals.calories) - 0.5) * 180, 180)}deg` }] 
+                      }]} />
+                    )}
+                  </>
                 )}
                 <View style={styles.circularGaugeInner}>
                   <Text style={styles.caloriesValue}>{dailyTotals.calories}</Text>
@@ -725,6 +732,18 @@ const styles = StyleSheet.create({
     borderWidth: 8,
     borderColor: 'transparent',
     borderTopColor: '#FFA500',
+    borderRightColor: '#FFA500',
+    transformOrigin: 'center',
+  },
+  circularGaugeFillSecond: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    borderRadius: width < 375 ? 50 : 55,
+    borderWidth: 8,
+    borderColor: 'transparent',
+    borderBottomColor: '#FFA500',
+    borderLeftColor: '#FFA500',
     transformOrigin: 'center',
   },
   circularGaugeInner: {
