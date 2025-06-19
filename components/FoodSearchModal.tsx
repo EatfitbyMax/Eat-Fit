@@ -163,15 +163,29 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
   };
 
   const handleAddFood = () => {
-    if (selectedProduct) {
-      const quantityNum = parseFloat(quantity);
-      if (isNaN(quantityNum) || quantityNum <= 0) {
-        Alert.alert('Erreur', 'Veuillez entrer une quantité valide');
+    try {
+      if (!selectedProduct) {
+        Alert.alert('Erreur', 'Aucun produit sélectionné');
         return;
       }
-      
+
+      const quantityNum = parseFloat(quantity);
+      if (isNaN(quantityNum) || quantityNum <= 0) {
+        Alert.alert('Erreur', 'Veuillez entrer une quantité valide (nombre positif)');
+        return;
+      }
+
+      // Vérifier que le produit a les propriétés nécessaires
+      if (!selectedProduct.name) {
+        Alert.alert('Erreur', 'Produit invalide - nom manquant');
+        return;
+      }
+
       onAddFood(selectedProduct, quantityNum);
       resetModal();
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout:', error);
+      Alert.alert('Erreur', 'Une erreur est survenue lors de l\'ajout de l\'aliment');
     }
   };
 
@@ -186,21 +200,31 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
   };
 
   const renderNutritionInfo = (product: FoodProduct) => {
-    const nutrition = OpenFoodFactsService.calculateNutrition(product, parseFloat(quantity) || 100);
-    
-    return (
-      <View style={styles.nutritionInfo}>
-        <Text style={styles.nutritionTitle}>Pour {quantity}g :</Text>
-        <View style={styles.nutritionRow}>
-          <Text style={styles.nutritionText}>Calories: {nutrition.calories} kcal</Text>
-          <Text style={styles.nutritionText}>Protéines: {nutrition.proteins}g</Text>
+    try {
+      const quantityNum = parseFloat(quantity) || 100;
+      const nutrition = OpenFoodFactsService.calculateNutrition(product, quantityNum);
+      
+      return (
+        <View style={styles.nutritionInfo}>
+          <Text style={styles.nutritionTitle}>Pour {quantityNum}g :</Text>
+          <View style={styles.nutritionRow}>
+            <Text style={styles.nutritionText}>Calories: {nutrition.calories || 0} kcal</Text>
+            <Text style={styles.nutritionText}>Protéines: {nutrition.proteins || 0}g</Text>
+          </View>
+          <View style={styles.nutritionRow}>
+            <Text style={styles.nutritionText}>Glucides: {nutrition.carbohydrates || 0}g</Text>
+            <Text style={styles.nutritionText}>Lipides: {nutrition.fat || 0}g</Text>
+          </View>
         </View>
-        <View style={styles.nutritionRow}>
-          <Text style={styles.nutritionText}>Glucides: {nutrition.carbohydrates}g</Text>
-          <Text style={styles.nutritionText}>Lipides: {nutrition.fat}g</Text>
+      );
+    } catch (error) {
+      console.error('Erreur calcul nutrition:', error);
+      return (
+        <View style={styles.nutritionInfo}>
+          <Text style={styles.nutritionTitle}>Informations nutritionnelles non disponibles</Text>
         </View>
-      </View>
-    );
+      );
+    }
   };
 
   if (showScanner && BarCodeScanner && Platform.OS !== 'web') {
