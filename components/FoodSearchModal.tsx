@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -93,7 +92,7 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
   const handleBarCodeScanned = async ({ data }: { data: string }) => {
     setShowScanner(false);
     setLoading(true);
-    
+
     try {
       const product = await OpenFoodFactsService.getProductByBarcode(data);
       if (product) {
@@ -117,23 +116,23 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
       );
       return;
     }
-    
+
     if (!BarCodeScanner) {
       Alert.alert('Erreur', 'Le scanner de code-barres n\'est pas disponible sur cet appareil.');
       return;
     }
-    
+
     if (hasPermission === false) {
       Alert.alert('Permission requise', 'L\'accès à la caméra est nécessaire pour scanner les codes-barres');
       return;
     }
-    
+
     setShowScanner(true);
   };
 
   const handleTakePhoto = async () => {
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-    
+
     if (permissionResult.granted === false) {
       Alert.alert('Permission requise', 'L\'accès à la caméra est nécessaire pour prendre une photo');
       return;
@@ -162,31 +161,9 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
     setShowQuantityModal(true);
   };
 
-  const handleAddFood = () => {
-    try {
-      if (!selectedProduct) {
-        Alert.alert('Erreur', 'Aucun produit sélectionné');
-        return;
-      }
-
-      const quantityNum = parseFloat(quantity);
-      if (isNaN(quantityNum) || quantityNum <= 0) {
-        Alert.alert('Erreur', 'Veuillez entrer une quantité valide (nombre positif)');
-        return;
-      }
-
-      // Vérifier que le produit a les propriétés nécessaires
-      if (!selectedProduct.name) {
-        Alert.alert('Erreur', 'Produit invalide - nom manquant');
-        return;
-      }
-
-      onAddFood(selectedProduct, quantityNum);
-      resetModal();
-    } catch (error) {
-      console.error('Erreur lors de l\'ajout:', error);
-      Alert.alert('Erreur', 'Une erreur est survenue lors de l\'ajout de l\'aliment');
-    }
+  const handleAddFood = async (product: FoodProduct, quantity: number) => {
+    // Cette fonction sera appelée depuis le parent (nutrition.tsx)
+    onAddFood(product, quantity);
   };
 
   const resetModal = () => {
@@ -203,7 +180,7 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
     try {
       const quantityNum = parseFloat(quantity) || 100;
       const nutrition = OpenFoodFactsService.calculateNutrition(product, quantityNum);
-      
+
       return (
         <View style={styles.nutritionInfo}>
           <Text style={styles.nutritionTitle}>Pour {quantityNum}g :</Text>
@@ -347,7 +324,7 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
               <Text style={styles.quantityModalTitle}>
                 {selectedProduct?.name}
               </Text>
-              
+
               <View style={styles.quantitySection}>
                 <Text style={styles.quantityLabel}>Quantité (grammes) :</Text>
                 <TextInput
