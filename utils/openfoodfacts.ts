@@ -130,8 +130,7 @@ export class OpenFoodFactsService {
     } catch (error) {
       console.error('Erreur calcul nutrition:', error);
       return { calories: 0, proteins: 0, carbohydrates: 0, fat: 0 };
-    },
-    };
+    }
   }
 
   // Suggestions d'aliments populaires
