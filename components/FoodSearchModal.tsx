@@ -161,9 +161,23 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
     setShowQuantityModal(true);
   };
 
-  const handleAddFood = async (product: FoodProduct, quantity: number) => {
-    // Cette fonction sera appelée depuis le parent (nutrition.tsx)
-    onAddFood(product, quantity);
+  const handleAddFood = () => {
+    if (!selectedProduct) {
+      Alert.alert('Erreur', 'Aucun produit sélectionné');
+      return;
+    }
+
+    const quantityNum = parseFloat(quantity);
+    if (isNaN(quantityNum) || quantityNum <= 0) {
+      Alert.alert('Erreur', 'Veuillez entrer une quantité valide');
+      return;
+    }
+
+    // Fermer la modal de quantité d'abord
+    setShowQuantityModal(false);
+    
+    // Appeler la fonction parent avec le produit et la quantité
+    onAddFood(selectedProduct, quantityNum);
   };
 
   const resetModal = () => {
