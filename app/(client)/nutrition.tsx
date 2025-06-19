@@ -351,9 +351,11 @@ function NutritionScreen() {
             {/* Calories Circular Gauge - Left Side */}
             <View style={styles.caloriesSection}>
               <View style={styles.circularGauge}>
-                <View style={[styles.circularGaugeFill, { 
-                  transform: [{ rotate: `${(dailyTotals.calories / calorieGoals.calories) * 360}deg` }] 
-                }]} />
+                {dailyTotals.calories > 0 && (
+                  <View style={[styles.circularGaugeFill, { 
+                    transform: [{ rotate: `${Math.min((dailyTotals.calories / calorieGoals.calories) * 360, 360)}deg` }] 
+                  }]} />
+                )}
                 <View style={styles.circularGaugeInner}>
                   <Text style={styles.caloriesValue}>{dailyTotals.calories}</Text>
                   <Text style={styles.caloriesTarget}>/ {calorieGoals.calories}</Text>
@@ -723,7 +725,7 @@ const styles = StyleSheet.create({
     borderWidth: 8,
     borderColor: 'transparent',
     borderTopColor: '#FFA500',
-    borderRightColor: '#FFD700',
+    transformOrigin: 'center',
   },
   circularGaugeInner: {
     alignItems: 'center',
