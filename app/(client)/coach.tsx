@@ -60,7 +60,7 @@ export default function CoachScreen() {
       // Récupérer les vraies données du coach depuis le serveur
       const users = await PersistentStorage.getUsers();
       const coach = users.find(user => user.userType === 'coach' && user.email === 'eatfitbymax@gmail.com');
-      
+
       if (coach) {
         setCoachInfo({
           prenom: coach.firstName || coach.name.split(' ')[0] || 'Maxime',
@@ -222,10 +222,13 @@ export default function CoachScreen() {
             </View>
           </View>
 
-          {/* Messages Interface */}
-          <View style={styles.messagesContainer}>
-            <View style={styles.messagesHeader}>
-              <Text style={styles.messagesTitle}>💬 Messages avec votre coach</Text>
+          {/* Section Messages */}
+          <View style={styles.messagesSection}>
+            <View style={styles.messagesSectionHeader}>
+              <View style={styles.messagesSectionIcon}>
+                <Text style={styles.messagesSectionIconText}>💬</Text>
+              </View>
+              <Text style={styles.messagesSectionTitle}>Messages avec votre coach</Text>
             </View>
 
             <FlatList
@@ -489,37 +492,63 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
   },
-  messagesContainer: {
+  messagesSection: {
     flex: 1,
     marginHorizontal: 16,
     marginBottom: 16,
     backgroundColor: '#161B22',
     borderRadius: 16,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#21262D',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  messagesHeader: {
+  messagesSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 18,
+    backgroundColor: '#1C2128',
     borderBottomWidth: 1,
     borderBottomColor: '#21262D',
   },
-  messagesTitle: {
+  messagesSectionIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F5A623',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  messagesSectionIconText: {
+    fontSize: 16,
+  },
+  messagesSectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 2,
+    flex: 1,
   },
   messagesList: {
     flex: 1,
     paddingHorizontal: 16,
   },
   messagesListContent: {
-    paddingVertical: 6,
-    paddingBottom: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingBottom: 16,
     flexGrow: 1,
   },
   messageContainer: {
-    marginBottom: 8,
-    maxWidth: '85%',
+    marginBottom: 12,
+    maxWidth: '80%',
     position: 'relative',
   },
   messageFromClient: {
@@ -604,43 +633,51 @@ const styles = StyleSheet.create({
   messageInputContainer: {
     flexDirection: 'row',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 12,
-    backgroundColor: '#161B22',
+    paddingVertical: 16,
+    backgroundColor: '#1C2128',
     borderTopWidth: 1,
     borderTopColor: '#21262D',
     alignItems: 'flex-end',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 5,
+    minHeight: 68,
   },
   messageInput: {
     flex: 1,
     backgroundColor: '#0D1117',
-    borderRadius: 22,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     color: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#21262D',
     maxHeight: 100,
-    minHeight: 44,
     marginRight: 12,
-    fontSize: 15,
+    fontSize: 14,
     lineHeight: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   sendButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: '#F5A623',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 2,
+    shadowColor: '#F5A623',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 6,
   },
   sendButtonDisabled: {
     backgroundColor: '#21262D',
