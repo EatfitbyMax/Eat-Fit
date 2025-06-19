@@ -372,14 +372,9 @@ export default function EntrainementScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView style={styles.scrollView}>
-        {/* Header avec gradient */}
-        <LinearGradient
-          colors={['#1F6FEB', '#0969DA']}
-          style={styles.headerGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
-          <Text style={styles.title}>💪 {t('training')}</Text>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.title}>Entraînement</Text>
 
           {/* Navigation par semaines */}
           <View style={styles.weekNavigation}>
@@ -401,7 +396,7 @@ export default function EntrainementScreen() {
               <Text style={styles.arrowText}>›</Text>
             </TouchableOpacity>
           </View>
-        </LinearGradient>
+        </View>
 
         {/* Tabs avec design amélioré */}
         <View style={styles.tabsContainer}>
@@ -610,59 +605,66 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  headerGradient: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 16,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    shadowColor: '#1F6FEB',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 20,
+    backgroundColor: 'rgba(13, 17, 23, 0.95)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 165, 0, 0.1)',
   },
   title: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontWeight: '700',
     color: '#FFFFFF',
-    marginBottom: 12,
+    marginBottom: 16,
     textAlign: 'center',
+    letterSpacing: 0.5,
   },
   weekNavigation: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
     paddingHorizontal: 8,
   },
   weekArrow: {
-    padding: 10,
-    borderRadius: 8,
-    backgroundColor: '#161B22',
-    borderWidth: 1,
-    borderColor: '#21262D',
-    width: 40,
-    height: 40,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: 'rgba(22, 27, 34, 0.8)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 165, 0, 0.3)',
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#FFA500',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   arrowText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#FFA500',
   },
   weekContainer: {
     flex: 1,
     alignItems: 'center',
-    marginHorizontal: 12,
+    marginHorizontal: 20,
+    backgroundColor: 'rgba(22, 27, 34, 0.6)',
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 165, 0, 0.2)',
   },
   weekRange: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
     textAlign: 'center',
-    textTransform: 'capitalize',
+    letterSpacing: 0.3,
   },
   tabsContainer: {
     flexDirection: 'row',
