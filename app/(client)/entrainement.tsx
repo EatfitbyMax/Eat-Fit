@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { IntegrationsManager, StravaActivity } from '../../utils/integrations';
 import { getCurrentUser } from '../../utils/auth';
 import { checkSubscriptionStatus } from '../../utils/subscription';
@@ -371,9 +372,14 @@ export default function EntrainementScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView style={styles.scrollView}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>{t('training')}</Text>
+        {/* Header avec gradient */}
+        <LinearGradient
+          colors={['#1F6FEB', '#0969DA']}
+          style={styles.headerGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <Text style={styles.title}>💪 {t('training')}</Text>
 
           {/* Navigation par semaines */}
           <View style={styles.weekNavigation}>
@@ -395,38 +401,45 @@ export default function EntrainementScreen() {
               <Text style={styles.arrowText}>›</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </LinearGradient>
 
-        {/* Tabs */}
+        {/* Tabs avec design amélioré */}
         <View style={styles.tabsContainer}>
           <TouchableOpacity 
             style={[styles.tab, selectedTab === 'Journal' && styles.activeTab]}
             onPress={() => setSelectedTab('Journal')}
           >
-            <Text style={[styles.tabText, selectedTab === 'Journal' && styles.activeTabText]}>
-              À venir
-            </Text>
+            <View style={styles.tabContent}>
+              <Text style={styles.tabIcon}>📅</Text>
+              <Text style={[styles.tabText, selectedTab === 'Journal' && styles.activeTabText]}>
+                À venir
+              </Text>
+            </View>
+            {selectedTab === 'Journal' && <View style={styles.tabIndicator} />}
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.tab, selectedTab === 'Strava' && styles.activeTab]}
             onPress={() => setSelectedTab('Strava')}
           >
-            <Text style={[styles.tabText, selectedTab === 'Strava' && styles.activeTabText]}>
-              Terminées
-            </Text>
+            <View style={styles.tabContent}>
+              <Text style={styles.tabIcon}>✅</Text>
+              <Text style={[styles.tabText, selectedTab === 'Strava' && styles.activeTabText]}>
+                Terminées
+              </Text>
+            </View>
+            {selectedTab === 'Strava' && <View style={styles.tabIndicator} />}
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.tab, selectedTab === 'Programmes' && styles.activeTab, !hasSubscription && styles.lockedTab]}
             onPress={handleProgrammesTab}
           >
             <View style={styles.tabContent}>
+              <Text style={styles.tabIcon}>👑</Text>
               <Text style={[styles.tabText, selectedTab === 'Programmes' && styles.activeTabText, !hasSubscription && styles.lockedTabText]}>
                 {t('programs')}
               </Text>
-              <Text style={[styles.crownIcon, selectedTab === 'Programmes' && styles.activeCrownIcon]}>
-                👑
-              </Text>
             </View>
+            {selectedTab === 'Programmes' && <View style={styles.tabIndicator} />}
           </TouchableOpacity>
         </View>
 
@@ -434,21 +447,78 @@ export default function EntrainementScreen() {
         <View style={styles.contentContainer}>
           {selectedTab === 'Journal' && (
             <View style={styles.daysContainer}>
-              {/* Liste des jours avec style compact */}
+              {/* Statistiques de la semaine */}
+              <View style={styles.weekStats}>
+                <LinearGradient
+                  colors={['#F5A623', '#E6962C']}
+                  style={styles.statCard}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Text style={styles.statIcon}>🏋️‍♂️</Text>
+                  <Text style={styles.statNumber}>{workouts.length}</Text>
+                  <Text style={styles.statLabel}>Séances planifiées</Text>
+                </LinearGradient>
+                
+                <LinearGradient
+                  colors={['#1F6FEB', '#0969DA']}
+                  style={styles.statCard}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Text style={styles.statIcon}>🔥</Text>
+                  <Text style={styles.statNumber}>{workouts.reduce((acc, w) => acc + w.calories, 0)}</Text>
+                  <Text style={styles.statLabel}>Calories prévues</Text>
+                </LinearGradient>
+              </View>
+
+              {/* Liste des jours avec design de cartes */}
               {daysOfWeek.map((jour) => {
                 const sessionCount = getWorkoutsCountForDay(jour);
+                const { start } = getWeekRange();
+                const dayIndex = daysOfWeek.indexOf(jour);
+                const targetDate = new Date(start);
+                targetDate.setDate(start.getDate() + dayIndex);
+                const isToday = targetDate.toDateString() === new Date().toDateString();
+                
                 return (
                   <TouchableOpacity 
                     key={jour}
-                    style={styles.dayRow}
+                    style={[styles.dayCard, isToday && styles.todayCard]}
                     onPress={() => handleDayPress(jour)}
                   >
-                    <Text style={styles.dayName}>{jour}</Text>
-                    <View style={styles.dayInfo}>
-                      <Text style={styles.sessionCount}>
-                        {sessionCount} séance{sessionCount > 1 ? 's' : ''}
+                    <View style={styles.dayHeader}>
+                      <View style={styles.dayTitleContainer}>
+                        <Text style={[styles.dayName, isToday && styles.todayDayName]}>{jour}</Text>
+                        <Text style={styles.dayDate}>{targetDate.getDate()}</Text>
+                      </View>
+                      
+                      <View style={styles.dayStatus}>
+                        {sessionCount > 0 ? (
+                          <View style={styles.sessionBadge}>
+                            <Text style={styles.sessionBadgeText}>{sessionCount}</Text>
+                          </View>
+                        ) : (
+                          <View style={styles.emptyBadge}>
+                            <Text style={styles.emptyBadgeText}>+</Text>
+                          </View>
+                        )}
+                        <Text style={styles.arrowIcon}>›</Text>
+                      </View>
+                    </View>
+                    
+                    <View style={styles.dayFooter}>
+                      <Text style={styles.sessionDetails}>
+                        {sessionCount > 0 
+                          ? `${sessionCount} séance${sessionCount > 1 ? 's' : ''} planifiée${sessionCount > 1 ? 's' : ''}`
+                          : 'Aucune séance planifiée'
+                        }
                       </Text>
-                      <Text style={styles.arrowIcon}>›</Text>
+                      {isToday && (
+                        <View style={styles.todayIndicator}>
+                          <Text style={styles.todayText}>Aujourd'hui</Text>
+                        </View>
+                      )}
                     </View>
                   </TouchableOpacity>
                 );
@@ -540,13 +610,20 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  header: {
+  headerGradient: {
     paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 16,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    shadowColor: '#1F6FEB',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   title: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 12,
@@ -590,44 +667,55 @@ const styles = StyleSheet.create({
   tabsContainer: {
     flexDirection: 'row',
     paddingHorizontal: 16,
-    marginBottom: 16,
+    marginBottom: 20,
+    marginTop: 16,
   },
   tab: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 8,
-    borderRadius: 8,
-    marginHorizontal: 2,
+    borderRadius: 16,
+    marginHorizontal: 4,
     backgroundColor: '#161B22',
     borderWidth: 1,
     borderColor: '#21262D',
     alignItems: 'center',
+    position: 'relative',
   },
   activeTab: {
     backgroundColor: '#1F6FEB',
     borderColor: '#1F6FEB',
+    shadowColor: '#1F6FEB',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   tabText: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#8B949E',
-    fontWeight: '500',
+    fontWeight: '600',
+    marginTop: 2,
   },
   activeTabText: {
     color: '#FFFFFF',
   },
   tabContent: {
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  crownIcon: {
-    fontSize: 10,
-    marginLeft: 4,
-    color: '#8B949E',
-    opacity: 0.6,
+  tabIcon: {
+    fontSize: 16,
+    marginBottom: 2,
   },
-  activeCrownIcon: {
-    opacity: 1,
+  tabIndicator: {
+    position: 'absolute',
+    bottom: -1,
+    left: '25%',
+    right: '25%',
+    height: 3,
+    backgroundColor: '#F5A623',
+    borderRadius: 2,
   },
   lockedTab: {
     opacity: 0.7,
@@ -635,33 +723,145 @@ const styles = StyleSheet.create({
   lockedTabText: {
     color: '#6A737D',
   },
+  weekStats: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    marginBottom: 20,
+    gap: 12,
+  },
+  statCard: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  statIcon: {
+    fontSize: 24,
+    marginBottom: 8,
+  },
+  statNumber: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
   daysContainer: {
     flex: 1,
-    paddingTop: 8,
+    paddingHorizontal: 16,
   },
-  dayRow: {
+  dayCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  todayCard: {
+    borderColor: '#F5A623',
+    borderWidth: 2,
+    shadowColor: '#F5A623',
+    shadowOpacity: 0.2,
+  },
+  dayHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 20,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#21262D',
+    marginBottom: 8,
   },
-  dayName: {
-    fontSize: 17,
-    fontWeight: '500',
-    color: '#FFFFFF',
-  },
-  dayInfo: {
+  dayTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
   },
-  sessionCount: {
-    fontSize: 15,
+  dayName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  todayDayName: {
     color: '#F5A623',
+  },
+  dayDate: {
+    fontSize: 14,
+    color: '#8B949E',
+    backgroundColor: '#21262D',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
     fontWeight: '500',
-    marginRight: 12,
+  },
+  dayStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  sessionBadge: {
+    backgroundColor: '#F5A623',
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sessionBadgeText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  emptyBadge: {
+    backgroundColor: '#21262D',
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#8B949E',
+    borderStyle: 'dashed',
+  },
+  emptyBadgeText: {
+    fontSize: 14,
+    color: '#8B949E',
+    fontWeight: 'bold',
+  },
+  dayFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  sessionDetails: {
+    fontSize: 13,
+    color: '#8B949E',
+    flex: 1,
+  },
+  todayIndicator: {
+    backgroundColor: '#F5A623',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  todayText: {
+    fontSize: 10,
+    color: '#000',
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
   },
   arrowIcon: {
     fontSize: 18,
