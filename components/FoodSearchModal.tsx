@@ -44,10 +44,13 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
   const [showScanner, setShowScanner] = useState(false);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [showQuantityModal, setShowQuantityModal] = useState(false);
+  const [favoriteFoods, setFavoriteFoods] = useState<FoodProduct[]>([]);
+  const [manualBarcode, setManualBarcode] = useState('');
+  const [showManualBarcode, setShowManualBarcode] = useState(false);
 
   useEffect(() => {
     if (visible) {
-      loadPopularFoods();
+      loadFavoriteFoods();
     }
   }, [visible]);
 
@@ -67,14 +70,34 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
     })();
   }, []);
 
-  const loadPopularFoods = () => {
-    const popularFoods = OpenFoodFactsService.getPopularFoods();
-    setSearchResults(popularFoods);
+  const loadFavoriteFoods = async () => {
+    try {
+      const { getCurrentUser } = require('@/utils/auth');
+      const user = await getCurrentUser();
+      if (user) {
+        const favorites = await OpenFoodFactsService.getFavoriteFoods(user.id);
+        setFavoriteFoods(favorites);
+        if (favorites.length > 0) {
+          setSearchResults(favorites);
+        } else {
+          // Si pas de favoris, afficher les aliments populaires
+          const popularFoods = OpenFoodFactsService.getPopularFoods();
+          setSearchResults(popularFoods);
+        }
+      } else {
+        const popularFoods = OpenFoodFactsService.getPopularFoods();
+        setSearchResults(popularFoods);
+      }
+    } catch (error) {
+      console.error('Erreur chargement favoris:', error);
+      const popularFoods = OpenFoodFactsService.getPopularFoods();
+      setSearchResults(popularFoods);
+    }
   };
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
-      loadPopularFoods();
+      loadFavoriteFoods();
       return;
     }
 
@@ -83,7 +106,9 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
       const results = await OpenFoodFactsService.searchFood(searchQuery);
       setSearchResults(results);
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible de rechercher les aliments');
+      Alert.alert('Erreur', 'Impossible de rechercher les aliments. Vérifiez votre connexion internet.');
+      // En cas d'erreur, afficher les favoris
+      loadFavoriteFoods();
     } finally {
       setLoading(false);
     }
@@ -111,23 +136,66 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
   const handleScannerPress = () => {
     if (Platform.OS === 'web') {
       Alert.alert(
-        'Fonctionnalité non disponible', 
-        'Le scanner de code-barres n\'est disponible que sur les appareils mobiles. Utilisez la recherche manuelle ou testez sur votre téléphone.'
+        'Saisie manuelle de code-barres', 
+        'Le scanner automatique n\'est pas disponible sur web. Voulez-vous saisir manuellement un code-barres ?',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          { text: 'Saisir', onPress: () => setShowManualBarcode(true) }
+        ]
       );
       return;
     }
 
     if (!BarCodeScanner) {
-      Alert.alert('Erreur', 'Le scanner de code-barres n\'est pas disponible sur cet appareil.');
+      Alert.alert(
+        'Scanner non disponible',
+        'Le scanner automatique n\'est pas disponible. Voulez-vous saisir manuellement un code-barres ?',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          { text: 'Saisir', onPress: () => setShowManualBarcode(true) }
+        ]
+      );
       return;
     }
 
     if (hasPermission === false) {
-      Alert.alert('Permission requise', 'L\'accès à la caméra est nécessaire pour scanner les codes-barres');
+      Alert.alert(
+        'Permission requise',
+        'L\'accès à la caméra est nécessaire pour scanner les codes-barres. Voulez-vous saisir manuellement un code-barres ?',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          { text: 'Saisir', onPress: () => setShowManualBarcode(true) }
+        ]
+      );
       return;
     }
 
     setShowScanner(true);
+  };
+
+  const handleManualBarcodeSubmit = async () => {
+    if (!manualBarcode.trim()) {
+      Alert.alert('Erreur', 'Veuillez saisir un code-barres valide');
+      return;
+    }
+
+    setShowManualBarcode(false);
+    setLoading(true);
+
+    try {
+      const product = await OpenFoodFactsService.getProductByBarcode(manualBarcode.trim());
+      if (product) {
+        setSelectedProduct(product);
+        setShowQuantityModal(true);
+      } else {
+        Alert.alert('Produit non trouvé', 'Ce code-barres n\'est pas reconnu dans la base de données.');
+      }
+    } catch (error) {
+      Alert.alert('Erreur', 'Impossible de récupérer les informations du produit');
+    } finally {
+      setLoading(false);
+      setManualBarcode('');
+    }
   };
 
   const handleTakePhoto = async () => {
@@ -161,7 +229,7 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
     setShowQuantityModal(true);
   };
 
-  const handleAddFood = () => {
+  const handleAddFood = async () => {
     if (!selectedProduct) {
       Alert.alert('Erreur', 'Aucun produit sélectionné');
       return;
@@ -171,6 +239,17 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
     if (isNaN(quantityNum) || quantityNum <= 0) {
       Alert.alert('Erreur', 'Veuillez entrer une quantité valide');
       return;
+    }
+
+    // Ajouter aux favoris si ce n'est pas déjà fait
+    try {
+      const { getCurrentUser } = require('@/utils/auth');
+      const user = await getCurrentUser();
+      if (user) {
+        await OpenFoodFactsService.addToFavorites(user.id, selectedProduct);
+      }
+    } catch (error) {
+      console.error('Erreur ajout favori:', error);
     }
 
     // Fermer la modal de quantité d'abord
@@ -186,7 +265,9 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
     setQuantity('100');
     setShowQuantityModal(false);
     setShowScanner(false);
-    loadPopularFoods();
+    setShowManualBarcode(false);
+    setManualBarcode('');
+    loadFavoriteFoods();
     onClose();
   };
 
@@ -297,7 +378,9 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
           ) : (
             <>
               {searchQuery === '' && (
-                <Text style={styles.sectionTitle}>Aliments populaires</Text>
+                <Text style={styles.sectionTitle}>
+                  {favoriteFoods.length > 0 ? 'Mes aliments favoris' : 'Aliments populaires'}
+                </Text>
               )}
               {searchResults.map((product) => (
                 <TouchableOpacity
@@ -325,6 +408,49 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
             </>
           )}
         </ScrollView>
+
+        {/* Manual Barcode Modal */}
+        <Modal
+          visible={showManualBarcode}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowManualBarcode(false)}
+        >
+          <View style={styles.quantityModalOverlay}>
+            <View style={styles.quantityModalContent}>
+              <Text style={styles.quantityModalTitle}>
+                Saisir un code-barres
+              </Text>
+
+              <View style={styles.quantitySection}>
+                <Text style={styles.quantityLabel}>Code-barres :</Text>
+                <TextInput
+                  style={styles.quantityInput}
+                  value={manualBarcode}
+                  onChangeText={setManualBarcode}
+                  keyboardType="numeric"
+                  placeholder="Entrez le code-barres"
+                  placeholderTextColor="#8B949E"
+                />
+              </View>
+
+              <View style={styles.quantityButtons}>
+                <TouchableOpacity
+                  style={styles.quantityCancelButton}
+                  onPress={() => setShowManualBarcode(false)}
+                >
+                  <Text style={styles.quantityCancelText}>Annuler</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.quantityAddButton}
+                  onPress={handleManualBarcodeSubmit}
+                >
+                  <Text style={styles.quantityAddText}>Rechercher</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
 
         {/* Quantity Modal */}
         <Modal

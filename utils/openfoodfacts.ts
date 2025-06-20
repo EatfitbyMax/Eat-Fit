@@ -39,8 +39,9 @@ export class OpenFoodFactsService {
   // Rechercher des aliments par nom
   static async searchFood(query: string): Promise<FoodProduct[]> {
     try {
+      // Utiliser l'API v0 qui est plus stable
       const response = await fetch(
-        `${this.BASE_URL}/search?search_terms=${encodeURIComponent(query)}&page_size=20&json=true`
+        `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=20`
       );
       
       if (!response.ok) {
@@ -49,10 +50,18 @@ export class OpenFoodFactsService {
 
       const data = await response.json();
       
-      return data.products?.map((product: any) => this.formatProduct(product)) || [];
+      // Filtrer les produits avec des données nutritionnelles valides
+      const validProducts = data.products?.filter((product: any) => 
+        product.product_name && 
+        product.nutriments && 
+        (product.nutriments['energy-kcal_100g'] || product.nutriments['energy_100g'])
+      ) || [];
+      
+      return validProducts.map((product: any) => this.formatProduct(product));
     } catch (error) {
       console.error('Erreur recherche OpenFoodFacts:', error);
-      throw new Error('Impossible de rechercher les aliments');
+      // En cas d'erreur, retourner les aliments populaires
+      return this.getPopularFoods();
     }
   }
 
@@ -80,16 +89,23 @@ export class OpenFoodFactsService {
 
   // Formater les données du produit OpenFoodFacts
   private static formatProduct(product: any): FoodProduct {
+    // Récupérer l'énergie en kcal, avec fallback sur kJ converti
+    let energyKcal = this.parseNutriment(product.nutriments?.['energy-kcal_100g']);
+    if (!energyKcal && product.nutriments?.['energy_100g']) {
+      // Convertir kJ en kcal (1 kcal = 4.184 kJ)
+      energyKcal = Math.round(this.parseNutriment(product.nutriments['energy_100g']) / 4.184);
+    }
+
     return {
       id: product.code || product._id || Date.now().toString(),
       name: product.product_name || product.product_name_fr || 'Produit sans nom',
       brand: product.brands || undefined,
       barcode: product.code,
       nutriments: {
-        energy_kcal: this.parseNutriment(product.nutriments?.['energy-kcal_100g']),
-        proteins: this.parseNutriment(product.nutriments?.proteins_100g),
-        carbohydrates: this.parseNutriment(product.nutriments?.carbohydrates_100g),
-        fat: this.parseNutriment(product.nutriments?.fat_100g),
+        energy_kcal: energyKcal || 0,
+        proteins: this.parseNutriment(product.nutriments?.proteins_100g) || 0,
+        carbohydrates: this.parseNutriment(product.nutriments?.carbohydrates_100g) || 0,
+        fat: this.parseNutriment(product.nutriments?.fat_100g) || 0,
         fiber: this.parseNutriment(product.nutriments?.fiber_100g),
         sugars: this.parseNutriment(product.nutriments?.sugars_100g),
         salt: this.parseNutriment(product.nutriments?.salt_100g),
@@ -99,6 +115,50 @@ export class OpenFoodFactsService {
       categories: product.categories,
       ingredients_text: product.ingredients_text || product.ingredients_text_fr,
     };
+  }
+
+  // Obtenir les aliments favoris de l'utilisateur
+  static async getFavoriteFoods(userId: string): Promise<FoodProduct[]> {
+    try {
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      const stored = await AsyncStorage.getItem(`favorite_foods_${userId}`);
+      if (stored) {
+        return JSON.parse(stored);
+      }
+      return [];
+    } catch (error) {
+      console.error('Erreur récupération favoris:', error);
+      return [];
+    }
+  }
+
+  // Ajouter un aliment aux favoris
+  static async addToFavorites(userId: string, product: FoodProduct): Promise<void> {
+    try {
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      const favorites = await this.getFavoriteFoods(userId);
+      
+      // Vérifier si l'aliment n'est pas déjà dans les favoris
+      const exists = favorites.find(fav => fav.id === product.id);
+      if (!exists) {
+        favorites.push(product);
+        await AsyncStorage.setItem(`favorite_foods_${userId}`, JSON.stringify(favorites));
+      }
+    } catch (error) {
+      console.error('Erreur ajout favori:', error);
+    }
+  }
+
+  // Retirer un aliment des favoris
+  static async removeFromFavorites(userId: string, productId: string): Promise<void> {
+    try {
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      const favorites = await this.getFavoriteFoods(userId);
+      const filtered = favorites.filter(fav => fav.id !== productId);
+      await AsyncStorage.setItem(`favorite_foods_${userId}`, JSON.stringify(filtered));
+    } catch (error) {
+      console.error('Erreur suppression favori:', error);
+    }
   }
 
   private static parseNutriment(value: any): number | undefined {

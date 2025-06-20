@@ -174,6 +174,32 @@ app.post('/api/strava/:userId', async (req, res) => {
   }
 });
 
+// Routes pour les données nutritionnelles
+app.get('/api/nutrition/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const data = await fs.readFile(path.join(DATA_DIR, `nutrition_${userId}.json`), 'utf8');
+    res.json(JSON.parse(data));
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      res.json([]);
+    } else {
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
+});
+
+app.post('/api/nutrition/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const nutritionData = req.body;
+    await fs.writeFile(path.join(DATA_DIR, `nutrition_${userId}.json`), JSON.stringify(nutritionData, null, 2));
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur sauvegarde données nutrition' });
+  }
+});
+
 // Route de test
 app.get('/api/health-check', (req, res) => {
   res.json({ status: 'OK', message: 'Serveur VPS fonctionnel' });
