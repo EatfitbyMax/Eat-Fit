@@ -310,10 +310,10 @@ export default function HomeScreen() {
 
   // Fonction pour calculer l'objectif d'entraînement personnalisé
   const getTrainingGoal = () => {
-    if (!user) return 4;
+    if (!user) return 3;
 
     // Objectif basé sur le niveau d'activité et les objectifs de l'utilisateur
-    let baseGoal = 3; // Par défaut 3 séances par semaine
+    let baseGoal = 2; // Par défaut 2 séances par semaine (plus réaliste)
 
     // Ajuster selon le niveau d'activité
     switch (user.activityLevel) {
@@ -324,17 +324,17 @@ export default function HomeScreen() {
         baseGoal = 3;
         break;
       case 'modere':
-        baseGoal = 4;
+        baseGoal = 3;
         break;
       case 'actif':
-        baseGoal = 5;
+        baseGoal = 4;
         break;
       case 'extreme':
-        baseGoal = 6;
+        baseGoal = 5;
         break;
     }
 
-    // Ajuster selon les objectifs
+    // Ajuster selon les objectifs (modération des ajustements)
     if (user.goals?.includes('Me muscler')) {
       baseGoal += 1;
     }
@@ -342,10 +342,10 @@ export default function HomeScreen() {
       baseGoal += 1;
     }
     if (user.goals?.includes('Perdre du poids')) {
-      baseGoal = Math.max(baseGoal, 4); // Minimum 4 séances pour perdre du poids
+      baseGoal = Math.max(baseGoal, 3); // Minimum 3 séances pour perdre du poids
     }
 
-    return Math.min(baseGoal, 7); // Maximum 7 séances par semaine
+    return Math.min(baseGoal, 5); // Maximum 5 séances par semaine (plus réaliste)
   };
 
   // Charger les données de poids depuis le stockage local
