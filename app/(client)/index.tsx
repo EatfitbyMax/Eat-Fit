@@ -221,60 +221,20 @@ export default function HomeScreen() {
     }
   };
 
-  // Fonction pour calculer le nombre de séances de la semaine
-  const getWeeklyWorkouts = async () => {
-    try {
-      const currentUser = await getCurrentUser();
-      if (!currentUser) return 0;
-
-      // Calculer les dates de début et fin de semaine
-      const today = new Date();
-      const startOfWeek = new Date(today);
-      const dayOfWeek = today.getDay();
-      const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Lundi comme début de semaine
-      startOfWeek.setDate(diff);
-      startOfWeek.setHours(0, 0, 0, 0);
-
-      const endOfWeek = new Date(startOfWeek);
-      endOfWeek.setDate(startOfWeek.getDate() + 6);
-      endOfWeek.setHours(23, 59, 59, 999);
-
-      let weeklyWorkouts = 0;
-      try {
-        const workouts = await PersistentStorage.getWorkouts(currentUser.id);
-        weeklyWorkouts = workouts.filter((workout: any) => {
-          const workoutDate = new Date(workout.date);
-          return workoutDate >= startOfWeek && workoutDate <= endOfWeek;
-        }).length;
-      } catch (error) {
-        // Fallback vers le stockage local
-        try {
-          const storedWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
-          if (storedWorkouts) {
-            const workouts = JSON.parse(storedWorkouts);
-            weeklyWorkouts = workouts.filter((workout: any) => {
-              const workoutDate = new Date(workout.date);
-              return workoutDate >= startOfWeek && workoutDate <= endOfWeek;
-            }).length;
-          }
-        } catch (localError) {
-          console.error('Erreur fallback local séances hebdomadaires:', localError);
-        }
-      }
-
-      return weeklyWorkouts;
-    } catch (error) {
-      console.error('Erreur calcul séances hebdomadaires:', error);
-      return 0;
-    }
-  };
-
   // États pour les données de poids
   const [weightData, setWeightData] = useState({
     startWeight: 0,
     currentWeight: 0,
     targetWeight: 0,
   });
+
+  // État pour stocker le nombre de séances hebdomadaires
+  const [weeklyWorkouts, setWeeklyWorkouts] = useState(0);
+
+  // Fonction synchrone pour obtenir les séances hebdomadaires
+  const getWeeklyWorkouts = () => {
+    return weeklyWorkouts;
+  };
 
   // Charger les données de poids depuis le stockage local
   const loadWeightData = async () => {
@@ -340,14 +300,6 @@ export default function HomeScreen() {
     }
     
     return `${Math.round(remaining * 10) / 10} kg restants à perdre`;
-  };
-
-  // État pour stocker le nombre de séances hebdomadaires
-  const [weeklyWorkouts, setWeeklyWorkouts] = useState(0);
-
-  // Fonction synchrone pour obtenir les séances hebdomadaires
-  const getWeeklyWorkouts = () => {
-    return weeklyWorkouts;
   };
 
   // Fonction asynchrone pour calculer et mettre à jour les séances hebdomadaires
