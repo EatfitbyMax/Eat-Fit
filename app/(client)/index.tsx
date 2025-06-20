@@ -420,7 +420,7 @@ export default function HomeScreen() {
       const currentUser = await getCurrentUser();
       if (!currentUser) return;
 
-      // Calculer les dates de début et fin de semaine
+      // Calculer les dates de début et fin de semaine (Lundi à Dimanche)
       const today = new Date();
       const startOfWeek = new Date(today);
       const dayOfWeek = today.getDay();
@@ -432,23 +432,45 @@ export default function HomeScreen() {
       endOfWeek.setDate(startOfWeek.getDate() + 6);
       endOfWeek.setHours(23, 59, 59, 999);
 
+      console.log(`Calcul séances semaine du ${startOfWeek.toISOString().split('T')[0]} au ${endOfWeek.toISOString().split('T')[0]}`);
+
       let weeklyWorkoutsCount = 0;
       try {
         const workouts = await PersistentStorage.getWorkouts(currentUser.id);
-        weeklyWorkoutsCount = workouts.filter((workout: any) => {
-          const workoutDate = new Date(workout.date);
-          return workoutDate >= startOfWeek && workoutDate <= endOfWeek;
-        }).length;
+        console.log(`Total entraînements trouvés: ${workouts.length}`);
+        
+        // Filtrer les entraînements de la semaine en cours
+        const weekWorkouts = workouts.filter((workout: any) => {
+          const workoutDate = new Date(workout.date + 'T00:00:00');
+          const isInWeek = workoutDate >= startOfWeek && workoutDate <= endOfWeek;
+          if (isInWeek) {
+            console.log(`Séance trouvée: ${workout.name} le ${workout.date}`);
+          }
+          return isInWeek;
+        });
+        
+        weeklyWorkoutsCount = weekWorkouts.length;
+        console.log(`Séances planifiées cette semaine: ${weeklyWorkoutsCount}`);
       } catch (error) {
+        console.error('Erreur PersistentStorage, tentative fallback local:', error);
         // Fallback vers le stockage local
         try {
           const storedWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
           if (storedWorkouts) {
             const workouts = JSON.parse(storedWorkouts);
-            weeklyWorkoutsCount = workouts.filter((workout: any) => {
-              const workoutDate = new Date(workout.date);
-              return workoutDate >= startOfWeek && workoutDate <= endOfWeek;
-            }).length;
+            console.log(`Fallback - Total entraînements trouvés: ${workouts.length}`);
+            
+            const weekWorkouts = workouts.filter((workout: any) => {
+              const workoutDate = new Date(workout.date + 'T00:00:00');
+              const isInWeek = workoutDate >= startOfWeek && workoutDate <= endOfWeek;
+              if (isInWeek) {
+                console.log(`Fallback - Séance trouvée: ${workout.name} le ${workout.date}`);
+              }
+              return isInWeek;
+            });
+            
+            weeklyWorkoutsCount = weekWorkouts.length;
+            console.log(`Fallback - Séances planifiées cette semaine: ${weeklyWorkoutsCount}`);
           }
         } catch (localError) {
           console.error('Erreur fallback local séances hebdomadaires:', localError);
