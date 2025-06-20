@@ -14,6 +14,7 @@ import {
   Platform,
 } from 'react-native';
 import { OpenFoodFactsService, FoodProduct } from '@/utils/openfoodfacts';
+import { ImageRecognitionService } from '@/utils/imageRecognition';
 import * as ImagePicker from 'expo-image-picker';
 
 const { width } = Dimensions.get('window');
@@ -210,17 +211,42 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
-      quality: 1,
+      quality: 0.7,
+      base64: true,
     });
 
-    if (!result.canceled) {
-      // Pour l'instant, on affiche juste un message
-      // L'OCR et la reconnaissance d'image nécessiteraient une API supplémentaire
-      Alert.alert(
-        'Photo prise',
-        'La reconnaissance d\'aliments par photo sera disponible prochainement. Utilisez la recherche ou le scan de code-barres en attendant.',
-        [{ text: 'OK' }]
-      );
+    if (!result.canceled && result.assets[0]) {
+      setLoading(true);
+      try {
+        const recognizedFoods = await ImageRecognitionService.recognizeFood(
+          result.assets[0].base64 || ''
+        );
+        
+        if (recognizedFoods.length > 0) {
+          setSearchResults(recognizedFoods);
+          setSearchQuery(''); // Clear search query to show photo results
+          Alert.alert(
+            'Aliments détectés !',
+            `${recognizedFoods.length} aliment(s) reconnu(s) dans votre photo. Sélectionnez celui qui correspond le mieux.`,
+            [{ text: 'OK' }]
+          );
+        } else {
+          Alert.alert(
+            'Aucun aliment détecté',
+            'Impossible de reconnaître des aliments dans cette image. Essayez une photo plus claire ou utilisez la recherche manuelle.',
+            [{ text: 'OK' }]
+          );
+        }
+      } catch (error) {
+        console.error('Erreur reconnaissance photo:', error);
+        Alert.alert(
+          'Erreur',
+          'Impossible d\'analyser la photo. Réessayez avec une image plus claire.',
+          [{ text: 'OK' }]
+        );
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -363,7 +389,7 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
               style={styles.actionButton}
               onPress={handleTakePhoto}
             >
-              <Text style={styles.actionButtonText}>📸 Photo</Text>
+              <Text style={styles.actionButtonText}>📸 Reconnaître</Text>
             </TouchableOpacity>
           </View>
         </View>
