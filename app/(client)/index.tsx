@@ -656,21 +656,21 @@ export default function HomeScreen() {
           <View style={styles.goalCard}>
             <View style={styles.goalHeader}>
               <Text style={styles.goalTitle}>💪 Séances d'entraînement</Text>
-              <Text style={styles.goalProgress}>{getWeeklyWorkouts()}/4</Text>
+              <Text style={styles.goalProgress}>{getWeeklyWorkouts()}/3</Text>
             </View>
             <View style={styles.progressBar}>
               <View style={[
                 styles.progressFill, 
                 { 
-                  width: `${Math.min((getWeeklyWorkouts() / 4) * 100, 100)}%`,
-                  backgroundColor: getWeeklyWorkouts() >= 4 ? '#28A745' : '#F5A623'
+                  width: `${Math.min((getWeeklyWorkouts() / 3) * 100, 100)}%`,
+                  backgroundColor: getWeeklyWorkouts() >= 3 ? '#28A745' : '#F5A623'
                 }
               ]} />
             </View>
             <Text style={styles.goalSubtext}>
-              {getWeeklyWorkouts() >= 4 
+              {getWeeklyWorkouts() >= 3 
                 ? 'Objectif hebdomadaire atteint !' 
-                : `${Math.max(0, 4 - getWeeklyWorkouts())} séances restantes cette semaine`
+                : `${Math.max(0, 3 - getWeeklyWorkouts())} séances restantes cette semaine`
               }
             </Text>
           </View>
