@@ -375,7 +375,7 @@ export default function HomeScreen() {
                 <Text style={styles.actionEmoji}>🏋️</Text>
               </View>
               <Text style={styles.actionTitle}>Entraînement</Text>
-              <Text style={styles.actionSubtitle}>Mes séances</Text>
+              <Text style={styles.actionSubtitle}>Enregistrer mes séances</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
