@@ -48,10 +48,10 @@ export default function HomeScreen() {
   const [formeScore, setFormeScore] = useState(0);
   const [currentTip, setCurrentTip] = useState('');
   const [calorieGoals, setCalorieGoals] = useState({
-    calories: 2495,
-    proteins: 125,
-    carbohydrates: 312,
-    fat: 83,
+    calories: 2286,
+    proteins: 171,
+    carbohydrates: 257,
+    fat: 64,
   });
 
   // Animation values
@@ -100,6 +100,73 @@ export default function HomeScreen() {
     setCurrentTip(tips[randomIndex]);
   };
 
+  const calculatePersonalizedGoals = (user: any) => {
+    if (!user || !user.age || !user.weight || !user.height || !user.gender) {
+      return {
+        calories: 2286,
+        proteins: 171,
+        carbohydrates: 257,
+        fat: 64,
+      };
+    }
+
+    // Calcul du métabolisme de base (BMR) avec la formule de Mifflin-St Jeor
+    let bmr;
+    if (user.gender === 'Homme') {
+      bmr = 88.362 + (13.397 * user.weight) + (4.799 * user.height) - (5.677 * user.age);
+    } else {
+      bmr = 447.593 + (9.247 * user.weight) + (3.098 * user.height) - (4.330 * user.age);
+    }
+
+    // Facteurs d'activité physique
+    const activityFactors = {
+      'sedentaire': 1.2,
+      'leger': 1.375,
+      'modere': 1.55,
+      'actif': 1.725,
+      'extreme': 1.9
+    };
+
+    const activityFactor = activityFactors[user.activityLevel] || 1.2;
+    let totalCalories = Math.round(bmr * activityFactor);
+
+    // Ajustements selon les objectifs
+    const goals = user.goals || [];
+    
+    if (goals.includes('Perdre du poids')) {
+      totalCalories -= 200; // Déficit de 200 kcal
+    }
+    
+    // Calcul des macronutriments selon les objectifs
+    let proteinRatio = 0.20; // 20% par défaut
+    let carbRatio = 0.50;    // 50% par défaut
+    let fatRatio = 0.30;     // 30% par défaut
+
+    if (goals.includes('Me muscler')) {
+      // Augmenter les protéines, réduire les lipides
+      proteinRatio = 0.30; // 30%
+      carbRatio = 0.45;    // 45%
+      fatRatio = 0.25;     // 25%
+    } else if (goals.includes('Gagner en performance')) {
+      // Ratio glucides/protéines optimal pour la performance
+      proteinRatio = 0.25; // 25%
+      carbRatio = 0.55;    // 55%
+      fatRatio = 0.20;     // 20%
+    }
+
+    // Calcul des grammes de macronutriments
+    const proteins = Math.round((totalCalories * proteinRatio) / 4); // 4 kcal par gramme
+    const carbohydrates = Math.round((totalCalories * carbRatio) / 4); // 4 kcal par gramme
+    const fat = Math.round((totalCalories * fatRatio) / 9); // 9 kcal par gramme
+
+    return {
+      calories: Math.max(totalCalories, 1200), // Minimum 1200 kcal pour la santé
+      proteins,
+      carbohydrates,
+      fat,
+    };
+  };
+
   const calculateFormeScore = async () => {
     try {
       // Simulation du calcul du score de forme basé sur le sommeil et la variabilité cardiaque
@@ -125,6 +192,11 @@ export default function HomeScreen() {
       const currentUser = await getCurrentUser();
       if (currentUser) {
         setUser(currentUser);
+        
+        // Calculer les objectifs personnalisés
+        const personalizedGoals = calculatePersonalizedGoals(currentUser);
+        setCalorieGoals(personalizedGoals);
+        
         await loadTodayStats();
       }
     } catch (error) {
