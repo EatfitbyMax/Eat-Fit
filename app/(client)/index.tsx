@@ -308,6 +308,46 @@ export default function HomeScreen() {
     return weeklyWorkouts;
   };
 
+  // Fonction pour calculer l'objectif d'entraînement personnalisé
+  const getTrainingGoal = () => {
+    if (!user) return 4;
+
+    // Objectif basé sur le niveau d'activité et les objectifs de l'utilisateur
+    let baseGoal = 3; // Par défaut 3 séances par semaine
+
+    // Ajuster selon le niveau d'activité
+    switch (user.activityLevel) {
+      case 'sedentaire':
+        baseGoal = 2;
+        break;
+      case 'leger':
+        baseGoal = 3;
+        break;
+      case 'modere':
+        baseGoal = 4;
+        break;
+      case 'actif':
+        baseGoal = 5;
+        break;
+      case 'extreme':
+        baseGoal = 6;
+        break;
+    }
+
+    // Ajuster selon les objectifs
+    if (user.goals?.includes('Me muscler')) {
+      baseGoal += 1;
+    }
+    if (user.goals?.includes('Gagner en performance')) {
+      baseGoal += 1;
+    }
+    if (user.goals?.includes('Perdre du poids')) {
+      baseGoal = Math.max(baseGoal, 4); // Minimum 4 séances pour perdre du poids
+    }
+
+    return Math.min(baseGoal, 7); // Maximum 7 séances par semaine
+  };
+
   // Charger les données de poids depuis le stockage local
   const loadWeightData = async () => {
     try {
@@ -656,21 +696,21 @@ export default function HomeScreen() {
           <View style={styles.goalCard}>
             <View style={styles.goalHeader}>
               <Text style={styles.goalTitle}>💪 Séances d'entraînement</Text>
-              <Text style={styles.goalProgress}>{getWeeklyWorkouts()}/3</Text>
+              <Text style={styles.goalProgress}>{getWeeklyWorkouts()}/{getTrainingGoal()}</Text>
             </View>
             <View style={styles.progressBar}>
               <View style={[
                 styles.progressFill, 
                 { 
-                  width: `${Math.min((getWeeklyWorkouts() / 3) * 100, 100)}%`,
-                  backgroundColor: getWeeklyWorkouts() >= 3 ? '#28A745' : '#F5A623'
+                  width: `${Math.min((getWeeklyWorkouts() / getTrainingGoal()) * 100, 100)}%`,
+                  backgroundColor: getWeeklyWorkouts() >= getTrainingGoal() ? '#28A745' : '#F5A623'
                 }
               ]} />
             </View>
             <Text style={styles.goalSubtext}>
-              {getWeeklyWorkouts() >= 3 
+              {getWeeklyWorkouts() >= getTrainingGoal() 
                 ? 'Objectif hebdomadaire atteint !' 
-                : `${Math.max(0, 3 - getWeeklyWorkouts())} séances restantes cette semaine`
+                : `${Math.max(0, getTrainingGoal() - getWeeklyWorkouts())} séances restantes cette semaine`
               }
             </Text>
           </View>
