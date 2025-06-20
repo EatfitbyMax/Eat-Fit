@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   Dimensions,
   Alert,
+  Image,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import Animated, {
@@ -44,6 +45,14 @@ export default function HomeScreen() {
     workouts: 0,
     steps: 0,
   });
+  const [formeScore, setFormeScore] = useState(0);
+  const [currentTip, setCurrentTip] = useState('');
+  const [calorieGoals, setCalorieGoals] = useState({
+    calories: 2495,
+    proteins: 125,
+    carbohydrates: 312,
+    fat: 83,
+  });
 
   // Animation values
   const headerOpacity = useSharedValue(0);
@@ -51,9 +60,24 @@ export default function HomeScreen() {
   const statsOpacity = useSharedValue(0);
   const scrollY = useSharedValue(0);
 
+  const tips = [
+    "Buvez un verre d'eau dès votre réveil pour réveiller votre métabolisme et bien commencer la journée !",
+    "Prenez 5 minutes pour vous étirer entre vos séances de travail, votre corps vous remerciera.",
+    "Mangez des protéines à chaque repas pour maintenir votre masse musculaire et votre satiété.",
+    "Dormez 7-8h par nuit : c'est pendant le sommeil que vos muscles se réparent et grandissent.",
+    "Variez vos exercices chaque semaine pour éviter la routine et stimuler votre progression.",
+    "Privilégiez les aliments non transformés : ils sont plus riches en nutriments essentiels.",
+    "Écoutez votre corps : une journée de repos peut être plus bénéfique qu'un entraînement forcé.",
+    "Planifiez vos repas à l'avance pour éviter les choix alimentaires impulsifs.",
+    "Respirez profondément pendant vos exercices pour optimiser vos performances.",
+    "Célébrez vos petites victoires : chaque progrès compte sur votre chemin vers vos objectifs !",
+  ];
+
   useEffect(() => {
     loadUserData();
     startAnimations();
+    generateRandomTip();
+    calculateFormeScore();
   }, []);
 
   // Rechargement automatique quand l'écran est focalisé
@@ -61,9 +85,36 @@ export default function HomeScreen() {
     React.useCallback(() => {
       if (user) {
         loadTodayStats();
+        generateRandomTip();
+        calculateFormeScore();
       }
     }, [user])
   );
+
+  const generateRandomTip = () => {
+    const randomIndex = Math.floor(Math.random() * tips.length);
+    setCurrentTip(tips[randomIndex]);
+  };
+
+  const calculateFormeScore = async () => {
+    try {
+      // Simulation du calcul du score de forme basé sur le sommeil et la variabilité cardiaque
+      // En réalité, ces données viendraient des intégrations Apple Health/Strava
+      const currentUser = await getCurrentUser();
+      if (!currentUser) return;
+
+      // Valeurs simulées pour la démonstration
+      const sleepQuality = Math.floor(Math.random() * 40) + 60; // 60-100
+      const heartRateVariability = Math.floor(Math.random() * 30) + 70; // 70-100
+      
+      // Calcul du score de forme (moyenne pondérée)
+      const score = Math.round((sleepQuality * 0.6) + (heartRateVariability * 0.4));
+      setFormeScore(score);
+    } catch (error) {
+      console.error('Erreur calcul score de forme:', error);
+      setFormeScore(75); // Valeur par défaut
+    }
+  };
 
   const loadUserData = async () => {
     try {
@@ -254,10 +305,20 @@ export default function HomeScreen() {
                   Prêt pour une nouvelle journée ?
                 </Text>
               </View>
-              <TouchableOpacity style={styles.profileButton}>
-                <Text style={styles.profileInitial}>
-                  {user?.firstName?.charAt(0) || 'U'}
-                </Text>
+              <TouchableOpacity 
+                style={styles.profileButton}
+                onPress={() => router.push('/(client)/profil')}
+              >
+                {user?.profileImage ? (
+                  <Image 
+                    source={{ uri: user.profileImage }} 
+                    style={styles.profileImage}
+                  />
+                ) : (
+                  <Text style={styles.profileInitial}>
+                    {user?.firstName?.charAt(0) || 'U'}
+                  </Text>
+                )}
               </TouchableOpacity>
             </View>
           </LinearGradient>
@@ -329,54 +390,75 @@ export default function HomeScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity 
-              style={[styles.actionCard, styles.syncAction]}
-              onPress={handleSync}
+              style={[styles.actionCard, styles.formeAction]}
+              onPress={() => router.push('/(client)/forme')}
             >
               <View style={styles.actionIcon}>
-                <Text style={styles.actionEmoji}>🔄</Text>
+                <Text style={styles.actionEmoji}>💓</Text>
               </View>
-              <Text style={styles.actionTitle}>Synchroniser</Text>
-              <Text style={styles.actionSubtitle}>Mettre à jour</Text>
+              <Text style={styles.actionTitle}>Forme</Text>
+              <Text style={styles.actionSubtitle}>Score: {formeScore}/100</Text>
             </TouchableOpacity>
           </View>
         </Animated.View>
 
-        {/* Conseils du jour */}
+        {/* Conseils */}
         <View style={styles.tipsContainer}>
-          <Text style={styles.sectionTitle}>Conseil du jour</Text>
+          <View style={styles.tipsHeader}>
+            <Text style={styles.sectionTitle}>Conseils</Text>
+            <TouchableOpacity onPress={generateRandomTip}>
+              <Text style={styles.refreshTip}>🔄</Text>
+            </TouchableOpacity>
+          </View>
           <View style={styles.tipCard}>
             <View style={styles.tipHeader}>
               <Text style={styles.tipEmoji}>💡</Text>
-              <Text style={styles.tipTitle}>Hydratation</Text>
+              <Text style={styles.tipTitle}>Conseil personnalisé</Text>
             </View>
             <Text style={styles.tipContent}>
-              Buvez un verre d'eau dès votre réveil pour réveiller votre métabolisme et bien commencer la journée !
+              {currentTip}
             </Text>
           </View>
         </View>
 
         {/* Objectifs de la semaine */}
         <View style={styles.goalsContainer}>
-          <Text style={styles.sectionTitle}>Objectifs de la semaine</Text>
-          <View style={styles.goalCard}>
-            <View style={styles.goalHeader}>
-              <Text style={styles.goalTitle}>Séances d'entraînement</Text>
-              <Text style={styles.goalProgress}>3/4</Text>
-            </View>
-            <View style={styles.progressBar}>
-              <View style={[styles.progressFill, { width: '75%' }]} />
-            </View>
-          </View>
+          <Text style={styles.sectionTitle}>Mes objectifs de la semaine</Text>
           
+          {/* Objectif Nutrition */}
           <View style={styles.goalCard}>
             <View style={styles.goalHeader}>
-              <Text style={styles.goalTitle}>Calories brûlées</Text>
-              <Text style={styles.goalProgress}>1200/1500</Text>
+              <Text style={styles.goalTitle}>🥗 Objectif calories journalier</Text>
+              <Text style={styles.goalProgress}>{todayStats.calories}/{calorieGoals.calories}</Text>
             </View>
             <View style={styles.progressBar}>
-              <View style={[styles.progressFill, { width: '80%' }]} />
+              <View style={[styles.progressFill, { width: `${Math.min((todayStats.calories / calorieGoals.calories) * 100, 100)}%` }]} />
             </View>
           </View>
+
+          {/* Objectif Entraînement */}
+          <View style={styles.goalCard}>
+            <View style={styles.goalHeader}>
+              <Text style={styles.goalTitle}>💪 Séances d'entraînement</Text>
+              <Text style={styles.goalProgress}>{todayStats.workouts * 7}/4</Text>
+            </View>
+            <View style={styles.progressBar}>
+              <View style={[styles.progressFill, { width: `${Math.min(((todayStats.workouts * 7) / 4) * 100, 100)}%` }]} />
+            </View>
+          </View>
+
+          {/* Objectif personnalisé basé sur les objectifs de l'utilisateur */}
+          {user?.goals && user.goals.length > 0 && (
+            <View style={styles.goalCard}>
+              <View style={styles.goalHeader}>
+                <Text style={styles.goalTitle}>🎯 {user.goals[0]}</Text>
+                <Text style={styles.goalProgress}>En cours</Text>
+              </View>
+              <View style={styles.progressBar}>
+                <View style={[styles.progressFill, { width: '65%' }]} />
+              </View>
+            </View>
+          )}
         </View>
       </Animated.ScrollView>
     </SafeAreaView>
@@ -524,10 +606,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#2D3748',
   },
-  syncAction: {
+  formeAction: {
     backgroundColor: '#1A2332',
     borderWidth: 1,
     borderColor: '#2D3748',
+  },
+  profileImage: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
   },
   actionIcon: {
     marginBottom: 12,
@@ -549,6 +636,17 @@ const styles = StyleSheet.create({
   },
   tipsContainer: {
     marginBottom: 30,
+  },
+  tipsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  refreshTip: {
+    fontSize: 18,
+    color: '#F5A623',
   },
   tipCard: {
     marginHorizontal: 20,
