@@ -29,6 +29,7 @@ function NutritionScreen() {
     fat: 83,
   });
   const [waterIntake, setWaterIntake] = useState(0); // en ml
+  const [dailyWaterGoal, setDailyWaterGoal] = useState(2000); // objectif de base en ml
 
   const formatDate = (date: Date) => {
     const options: Intl.DateTimeFormatOptions = {
@@ -37,6 +38,40 @@ function NutritionScreen() {
       month: 'long'
     };
     return date.toLocaleDateString('fr-FR', options);
+  };
+
+  const calculateDailyWaterGoal = async () => {
+    try {
+      const user = await getCurrentUser();
+      if (!user) return 2000;
+
+      let baseGoal = 2000; // 2L de base
+      
+      // Récupérer les entraînements du jour
+      const dateString = selectedDate.toISOString().split('T')[0];
+      const workoutsStored = await AsyncStorage.getItem(`workouts_${user.id}`);
+      
+      if (workoutsStored) {
+        const workouts = JSON.parse(workoutsStored);
+        const dayWorkouts = workouts.filter((workout: any) => {
+          const workoutDate = new Date(workout.date).toISOString().split('T')[0];
+          return workoutDate === dateString;
+        });
+
+        // Ajouter 500ml par heure d'entraînement
+        dayWorkouts.forEach((workout: any) => {
+          if (workout.duration) {
+            const hours = workout.duration / 60; // convertir minutes en heures
+            baseGoal += Math.round(hours * 500);
+          }
+        });
+      }
+
+      return baseGoal;
+    } catch (error) {
+      console.error('Erreur calcul objectif hydratation:', error);
+      return 2000;
+    }
   };
 
   const calculatePersonalizedGoals = (user: any) => {
@@ -178,10 +213,31 @@ function NutritionScreen() {
       const updatedEntries = [...foodEntries, newEntry];
       setFoodEntries(updatedEntries);
 
-      // Sauvegarder localement
+      // Sauvegarder localement et sur le serveur
       try {
         await AsyncStorage.setItem(`food_entries_${user.id}`, JSON.stringify(updatedEntries));
-        console.log('Sauvegarde réussie');
+        console.log('Sauvegarde locale réussie');
+
+        // Sauvegarder sur le serveur VPS
+        try {
+          const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.replit.app';
+          const response = await fetch(`${VPS_URL}/api/nutrition/${user.id}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updatedEntries),
+          });
+
+          if (response.ok) {
+            console.log('Sauvegarde serveur réussie');
+          } else {
+            console.log('Erreur sauvegarde serveur, données conservées localement');
+          }
+        } catch (serverError) {
+          console.error('Erreur serveur nutrition:', serverError);
+          // Continuer avec la sauvegarde locale uniquement
+        }
       } catch (storageError) {
         console.error('Erreur sauvegarde:', storageError);
         // Continuer même si la sauvegarde échoue
@@ -233,6 +289,10 @@ function NutritionScreen() {
       // Calculer les objectifs personnalisés
       const personalizedGoals = calculatePersonalizedGoals(user);
       setCalorieGoals(personalizedGoals);
+
+      // Calculer l'objectif d'hydratation dynamique
+      const waterGoal = await calculateDailyWaterGoal();
+      setDailyWaterGoal(waterGoal);
 
       const stored = await AsyncStorage.getItem(`food_entries_${user.id}`);
       if (stored) {
@@ -473,11 +533,11 @@ function NutritionScreen() {
               <View style={styles.waterProgress}>
                 <View style={styles.waterProgressBar}>
                   <View style={[styles.waterProgressFill, { 
-                    width: `${Math.min((waterIntake / 2000) * 100, 100)}%` 
+                    width: `${Math.min((waterIntake / dailyWaterGoal) * 100, 100)}%` 
                   }]} />
                 </View>
                 <Text style={styles.waterText}>
-                  {waterIntake} ml / 2000 ml
+                  {waterIntake} ml / {dailyWaterGoal} ml
                 </Text>
               </View>
 
@@ -650,9 +710,9 @@ const styles = StyleSheet.create({
   dateNavigation: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     marginBottom: 8,
-    paddingHorizontal: 8,
+    paddingHorizontal: 16,
   },
   dateArrow: {
     padding: 12,
@@ -678,10 +738,10 @@ const styles = StyleSheet.create({
   dateContainer: {
     flex: 1,
     alignItems: 'center',
-    marginHorizontal: 20,
+    marginHorizontal: 16,
     backgroundColor: 'rgba(22, 27, 34, 0.6)',
-    paddingVertical: 8,
-    borderRadius: 10,
+    paddingVertical: 10,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(255, 165, 0, 0.2)',
   },
