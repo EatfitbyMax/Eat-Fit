@@ -78,6 +78,8 @@ export default function HomeScreen() {
     startAnimations();
     generateRandomTip();
     calculateFormeScore();
+    loadWeightData();
+    calculateWeeklyWorkouts();
   }, []);
 
   // Rechargement automatique quand l'écran est focalisé
@@ -87,6 +89,8 @@ export default function HomeScreen() {
         loadTodayStats();
         generateRandomTip();
         calculateFormeScore();
+        loadWeightData();
+        calculateWeeklyWorkouts();
       }
     }, [user])
   );
@@ -214,6 +218,182 @@ export default function HomeScreen() {
         workouts: 0,
         steps: 0,
       });
+    }
+  };
+
+  // Fonction pour calculer le nombre de séances de la semaine
+  const getWeeklyWorkouts = async () => {
+    try {
+      const currentUser = await getCurrentUser();
+      if (!currentUser) return 0;
+
+      // Calculer les dates de début et fin de semaine
+      const today = new Date();
+      const startOfWeek = new Date(today);
+      const dayOfWeek = today.getDay();
+      const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Lundi comme début de semaine
+      startOfWeek.setDate(diff);
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      endOfWeek.setHours(23, 59, 59, 999);
+
+      let weeklyWorkouts = 0;
+      try {
+        const workouts = await PersistentStorage.getWorkouts(currentUser.id);
+        weeklyWorkouts = workouts.filter((workout: any) => {
+          const workoutDate = new Date(workout.date);
+          return workoutDate >= startOfWeek && workoutDate <= endOfWeek;
+        }).length;
+      } catch (error) {
+        // Fallback vers le stockage local
+        try {
+          const storedWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
+          if (storedWorkouts) {
+            const workouts = JSON.parse(storedWorkouts);
+            weeklyWorkouts = workouts.filter((workout: any) => {
+              const workoutDate = new Date(workout.date);
+              return workoutDate >= startOfWeek && workoutDate <= endOfWeek;
+            }).length;
+          }
+        } catch (localError) {
+          console.error('Erreur fallback local séances hebdomadaires:', localError);
+        }
+      }
+
+      return weeklyWorkouts;
+    } catch (error) {
+      console.error('Erreur calcul séances hebdomadaires:', error);
+      return 0;
+    }
+  };
+
+  // États pour les données de poids
+  const [weightData, setWeightData] = useState({
+    startWeight: 0,
+    currentWeight: 0,
+    targetWeight: 0,
+  });
+
+  // Charger les données de poids depuis le stockage local
+  const loadWeightData = async () => {
+    try {
+      const currentUser = await getCurrentUser();
+      if (!currentUser) return;
+
+      const weightDataString = await AsyncStorage.getItem(`weight_data_${currentUser.id}`);
+      if (weightDataString) {
+        const saved = JSON.parse(weightDataString);
+        setWeightData(saved);
+      } else {
+        // Utiliser le poids d'inscription comme poids de départ
+        setWeightData({
+          startWeight: currentUser.weight || 0,
+          currentWeight: currentUser.weight || 0,
+          targetWeight: 0,
+        });
+      }
+    } catch (error) {
+      console.error('Erreur chargement données poids:', error);
+    }
+  };
+
+  // Fonctions pour les objectifs de perte de poids
+  const getWeightLossProgress = () => {
+    if (!weightData.targetWeight || !weightData.startWeight) return 'À définir';
+    
+    const totalLoss = weightData.startWeight - weightData.targetWeight;
+    const currentLoss = weightData.startWeight - weightData.currentWeight;
+    
+    if (totalLoss <= 0) return 'À définir';
+    
+    return `${Math.round(currentLoss * 10) / 10}/${Math.round(totalLoss * 10) / 10} kg`;
+  };
+
+  const getWeightLossPercentage = () => {
+    if (!weightData.targetWeight || !weightData.startWeight) return 0;
+    
+    const totalLoss = weightData.startWeight - weightData.targetWeight;
+    const currentLoss = weightData.startWeight - weightData.currentWeight;
+    
+    if (totalLoss <= 0) return 0;
+    
+    return Math.min(100, Math.max(0, (currentLoss / totalLoss) * 100));
+  };
+
+  const getWeightLossDescription = () => {
+    if (!weightData.targetWeight || !weightData.startWeight) {
+      return 'Définissez votre objectif de poids dans Progrès';
+    }
+    
+    const totalLoss = weightData.startWeight - weightData.targetWeight;
+    const currentLoss = weightData.startWeight - weightData.currentWeight;
+    const remaining = totalLoss - currentLoss;
+    
+    if (totalLoss <= 0) {
+      return 'Objectif de poids non défini';
+    }
+    
+    if (remaining <= 0) {
+      return 'Objectif atteint ! Félicitations !';
+    }
+    
+    return `${Math.round(remaining * 10) / 10} kg restants à perdre`;
+  };
+
+  // État pour stocker le nombre de séances hebdomadaires
+  const [weeklyWorkouts, setWeeklyWorkouts] = useState(0);
+
+  // Fonction synchrone pour obtenir les séances hebdomadaires
+  const getWeeklyWorkouts = () => {
+    return weeklyWorkouts;
+  };
+
+  // Fonction asynchrone pour calculer et mettre à jour les séances hebdomadaires
+  const calculateWeeklyWorkouts = async () => {
+    try {
+      const currentUser = await getCurrentUser();
+      if (!currentUser) return;
+
+      // Calculer les dates de début et fin de semaine
+      const today = new Date();
+      const startOfWeek = new Date(today);
+      const dayOfWeek = today.getDay();
+      const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Lundi comme début de semaine
+      startOfWeek.setDate(diff);
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      endOfWeek.setHours(23, 59, 59, 999);
+
+      let weeklyWorkoutsCount = 0;
+      try {
+        const workouts = await PersistentStorage.getWorkouts(currentUser.id);
+        weeklyWorkoutsCount = workouts.filter((workout: any) => {
+          const workoutDate = new Date(workout.date);
+          return workoutDate >= startOfWeek && workoutDate <= endOfWeek;
+        }).length;
+      } catch (error) {
+        // Fallback vers le stockage local
+        try {
+          const storedWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
+          if (storedWorkouts) {
+            const workouts = JSON.parse(storedWorkouts);
+            weeklyWorkoutsCount = workouts.filter((workout: any) => {
+              const workoutDate = new Date(workout.date);
+              return workoutDate >= startOfWeek && workoutDate <= endOfWeek;
+            }).length;
+          }
+        } catch (localError) {
+          console.error('Erreur fallback local séances hebdomadaires:', localError);
+        }
+      }
+
+      setWeeklyWorkouts(weeklyWorkoutsCount);
+    } catch (error) {
+      console.error('Erreur calcul séances hebdomadaires:', error);
     }
   };
 
@@ -425,30 +605,76 @@ export default function HomeScreen() {
         <View style={styles.goalsContainer}>
           <Text style={styles.sectionTitle}>Mes objectifs de la semaine</Text>
           
-          {/* Objectif Nutrition */}
+          {/* Objectif Nutrition - Basé sur les objectifs nutritionnels personnalisés */}
           <View style={styles.goalCard}>
             <View style={styles.goalHeader}>
               <Text style={styles.goalTitle}>🥗 Objectif calories journalier</Text>
               <Text style={styles.goalProgress}>{todayStats.calories}/{calorieGoals.calories}</Text>
             </View>
             <View style={styles.progressBar}>
-              <View style={[styles.progressFill, { width: `${Math.min((todayStats.calories / calorieGoals.calories) * 100, 100)}%` }]} />
+              <View style={[
+                styles.progressFill, 
+                { 
+                  width: `${Math.min((todayStats.calories / calorieGoals.calories) * 100, 100)}%`,
+                  backgroundColor: todayStats.calories >= calorieGoals.calories * 0.8 ? '#28A745' : '#F5A623'
+                }
+              ]} />
             </View>
+            <Text style={styles.goalSubtext}>
+              {todayStats.calories >= calorieGoals.calories 
+                ? 'Objectif atteint !' 
+                : `${Math.max(0, calorieGoals.calories - todayStats.calories)} kcal restantes`
+              }
+            </Text>
           </View>
 
-          {/* Objectif Entraînement */}
+          {/* Objectif Entraînement - Basé sur les séances réelles de la semaine */}
           <View style={styles.goalCard}>
             <View style={styles.goalHeader}>
               <Text style={styles.goalTitle}>💪 Séances d'entraînement</Text>
-              <Text style={styles.goalProgress}>{todayStats.workouts * 7}/4</Text>
+              <Text style={styles.goalProgress}>{getWeeklyWorkouts()}/4</Text>
             </View>
             <View style={styles.progressBar}>
-              <View style={[styles.progressFill, { width: `${Math.min(((todayStats.workouts * 7) / 4) * 100, 100)}%` }]} />
+              <View style={[
+                styles.progressFill, 
+                { 
+                  width: `${Math.min((getWeeklyWorkouts() / 4) * 100, 100)}%`,
+                  backgroundColor: getWeeklyWorkouts() >= 4 ? '#28A745' : '#F5A623'
+                }
+              ]} />
             </View>
+            <Text style={styles.goalSubtext}>
+              {getWeeklyWorkouts() >= 4 
+                ? 'Objectif hebdomadaire atteint !' 
+                : `${Math.max(0, 4 - getWeeklyWorkouts())} séances restantes cette semaine`
+              }
+            </Text>
           </View>
 
-          {/* Objectif personnalisé basé sur les objectifs de l'utilisateur */}
-          {user?.goals && user.goals.length > 0 && (
+          {/* Objectif Perte de poids - Basé sur les données de progression réelles */}
+          {user?.goals?.includes('Perdre du poids') && (
+            <View style={styles.goalCard}>
+              <View style={styles.goalHeader}>
+                <Text style={styles.goalTitle}>🎯 Perte du poids</Text>
+                <Text style={styles.goalProgress}>{getWeightLossProgress()}</Text>
+              </View>
+              <View style={styles.progressBar}>
+                <View style={[
+                  styles.progressFill, 
+                  { 
+                    width: `${getWeightLossPercentage()}%`,
+                    backgroundColor: getWeightLossPercentage() >= 50 ? '#28A745' : '#F5A623'
+                  }
+                ]} />
+              </View>
+              <Text style={styles.goalSubtext}>
+                {getWeightLossDescription()}
+              </Text>
+            </View>
+          )}
+
+          {/* Objectif secondaire basé sur les autres objectifs de l'utilisateur */}
+          {user?.goals && user.goals.length > 0 && !user.goals.includes('Perdre du poids') && (
             <View style={styles.goalCard}>
               <View style={styles.goalHeader}>
                 <Text style={styles.goalTitle}>🎯 {user.goals[0]}</Text>
@@ -457,6 +683,7 @@ export default function HomeScreen() {
               <View style={styles.progressBar}>
                 <View style={[styles.progressFill, { width: '65%' }]} />
               </View>
+              <Text style={styles.goalSubtext}>Progression constante vers votre objectif</Text>
             </View>
           )}
         </View>
@@ -711,5 +938,11 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: '#F5A623',
     borderRadius: 3,
+  },
+  goalSubtext: {
+    fontSize: 12,
+    color: '#8B949E',
+    marginTop: 8,
+    textAlign: 'center',
   },
 });
