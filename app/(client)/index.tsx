@@ -308,44 +308,30 @@ export default function HomeScreen() {
     return weeklyWorkouts;
   };
 
-  // Fonction pour calculer l'objectif d'entraînement personnalisé
+  // Fonction pour calculer l'objectif d'entraînement personnalisé basé sur les données réelles
   const getTrainingGoal = () => {
-    if (!user) return 3;
+    if (!user) return Math.max(weeklyWorkouts, 1);
 
-    // Objectif basé sur le niveau d'activité et les objectifs de l'utilisateur
-    let baseGoal = 2; // Par défaut 2 séances par semaine (plus réaliste)
+    // Si l'utilisateur a des séances planifiées, utiliser ce nombre comme objectif minimum
+    let baseGoal = Math.max(weeklyWorkouts, 1); // Au minimum, le nombre de séances planifiées
 
-    // Ajuster selon le niveau d'activité
-    switch (user.activityLevel) {
-      case 'sedentaire':
-        baseGoal = 2;
-        break;
-      case 'leger':
-        baseGoal = 3;
-        break;
-      case 'modere':
-        baseGoal = 3;
-        break;
-      case 'actif':
-        baseGoal = 4;
-        break;
-      case 'extreme':
-        baseGoal = 5;
-        break;
+    // Ajuster légèrement selon les objectifs de l'utilisateur
+    if (user.goals?.includes('Me muscler') || user.goals?.includes('Gagner en performance')) {
+      // Pour ces objectifs, suggérer une séance supplémentaire si possible
+      baseGoal = Math.max(baseGoal, weeklyWorkouts + 1);
     }
-
-    // Ajuster selon les objectifs (modération des ajustements)
-    if (user.goals?.includes('Me muscler')) {
-      baseGoal += 1;
-    }
-    if (user.goals?.includes('Gagner en performance')) {
-      baseGoal += 1;
-    }
+    
     if (user.goals?.includes('Perdre du poids')) {
-      baseGoal = Math.max(baseGoal, 3); // Minimum 3 séances pour perdre du poids
+      // Pour la perte de poids, suggérer au minimum 2 séances
+      baseGoal = Math.max(baseGoal, 2);
     }
 
-    return Math.min(baseGoal, 5); // Maximum 5 séances par semaine (plus réaliste)
+    // Si aucune séance n'est planifiée, suggérer un objectif minimal
+    if (weeklyWorkouts === 0) {
+      return user.goals?.includes('Perdre du poids') ? 2 : 1;
+    }
+
+    return baseGoal;
   };
 
   // Charger les données de poids depuis le stockage local
@@ -731,8 +717,10 @@ export default function HomeScreen() {
             </View>
             <Text style={styles.goalSubtext}>
               {getWeeklyWorkouts() >= getTrainingGoal() 
-                ? 'Objectif hebdomadaire atteint !' 
-                : `${Math.max(0, getTrainingGoal() - getWeeklyWorkouts())} séances restantes cette semaine`
+                ? 'Objectif hebdomadaire atteint ! 🎉' 
+                : weeklyWorkouts === 0 
+                  ? 'Planifiez vos séances dans Entraînement'
+                  : `${Math.max(0, getTrainingGoal() - getWeeklyWorkouts())} séance${getTrainingGoal() - getWeeklyWorkouts() > 1 ? 's' : ''} supplémentaire${getTrainingGoal() - getWeeklyWorkouts() > 1 ? 's' : ''} suggérée${getTrainingGoal() - getWeeklyWorkouts() > 1 ? 's' : ''}`
               }
             </Text>
           </View>
