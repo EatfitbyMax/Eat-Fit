@@ -215,32 +215,40 @@ function NutritionScreen() {
 
       // Sauvegarder localement et sur le serveur
       try {
+        // Toujours sauvegarder en local d'abord
         await AsyncStorage.setItem(`food_entries_${user.id}`, JSON.stringify(updatedEntries));
         console.log('Sauvegarde locale réussie');
 
         // Sauvegarder sur le serveur VPS
         try {
           const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.replit.app';
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 secondes timeout
+
           const response = await fetch(`${VPS_URL}/api/nutrition/${user.id}`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify(updatedEntries),
+            signal: controller.signal
           });
 
+          clearTimeout(timeoutId);
+
           if (response.ok) {
-            console.log('Sauvegarde serveur réussie');
+            console.log('Données nutrition sauvegardées sur le serveur VPS');
           } else {
-            console.log('Erreur sauvegarde serveur, données conservées localement');
+            console.warn('Échec sauvegarde nutrition sur serveur VPS, données conservées localement');
           }
         } catch (serverError) {
-          console.error('Erreur serveur nutrition:', serverError);
-          // Continuer avec la sauvegarde locale uniquement
+          console.warn('Erreur serveur nutrition:', serverError);
+          console.log('Les données nutrition restent disponibles localement');
         }
       } catch (storageError) {
-        console.error('Erreur sauvegarde:', storageError);
-        // Continuer même si la sauvegarde échoue
+        console.error('Erreur sauvegarde nutrition:', storageError);
+        Alert.alert('Erreur', 'Impossible de sauvegarder les données nutrition');
+        return;
       }
 
       // Recalculer les totaux
@@ -294,11 +302,29 @@ function NutritionScreen() {
       const waterGoal = await calculateDailyWaterGoal();
       setDailyWaterGoal(waterGoal);
 
-      const stored = await AsyncStorage.getItem(`food_entries_${user.id}`);
-      if (stored) {
-        const entries = JSON.parse(stored);
-        setFoodEntries(entries);
-        calculateDailyTotals(entries);
+      // Essayer de charger depuis le serveur VPS d'abord
+      try {
+        const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.replit.app';
+        const response = await fetch(`${VPS_URL}/api/nutrition/${user.id}`);
+        
+        if (response.ok) {
+          const serverEntries = await response.json();
+          console.log('Données nutrition chargées depuis le serveur VPS');
+          setFoodEntries(serverEntries);
+          calculateDailyTotals(serverEntries);
+          // Sauvegarder en local comme backup
+          await AsyncStorage.setItem(`food_entries_${user.id}`, JSON.stringify(serverEntries));
+        } else {
+          throw new Error('Serveur indisponible');
+        }
+      } catch (serverError) {
+        console.log('Fallback vers le stockage local pour la nutrition');
+        const stored = await AsyncStorage.getItem(`food_entries_${user.id}`);
+        if (stored) {
+          const entries = JSON.parse(stored);
+          setFoodEntries(entries);
+          calculateDailyTotals(entries);
+        }
       }
 
       // Charger les données d'hydratation
@@ -356,10 +382,32 @@ function NutritionScreen() {
       const updatedEntries = foodEntries.filter(entry => entry.id !== entryId);
       setFoodEntries(updatedEntries);
 
+      // Sauvegarder localement
       await AsyncStorage.setItem(`food_entries_${user.id}`, JSON.stringify(updatedEntries));
       calculateDailyTotals(updatedEntries);
+
+      // Sauvegarder sur le serveur VPS
+      try {
+        const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.replit.app';
+        const response = await fetch(`${VPS_URL}/api/nutrition/${user.id}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(updatedEntries),
+        });
+
+        if (response.ok) {
+          console.log('Suppression aliment synchronisée sur le serveur VPS');
+        } else {
+          console.warn('Échec synchronisation suppression sur serveur VPS');
+        }
+      } catch (serverError) {
+        console.warn('Erreur serveur lors de la suppression:', serverError);
+      }
     } catch (error) {
       console.error('Erreur suppression aliment:', error);
+      Alert.alert('Erreur', 'Impossible de supprimer l\'aliment');
     }
   };
 

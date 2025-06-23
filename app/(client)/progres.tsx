@@ -37,7 +37,7 @@ export default function ProgresScreen() {
   const [showTargetModal, setShowTargetModal] = useState(false);
   const [tempWeight, setTempWeight] = useState('');
   const [tempTarget, setTempTarget] = useState('');
-  
+
   // États pour les mensurations
   const [showMensurationModal, setShowMensurationModal] = useState(false);
   const [selectedMuscle, setSelectedMuscle] = useState<string>('');
@@ -65,17 +65,26 @@ export default function ProgresScreen() {
     startDroit: '',
     currentDroit: '',
   });
+  const [weeklyData, setWeeklyData] = useState([]);
+  const [personalRecords, setPersonalRecords] = useState({
+    maxWeight: { value: 0, date: '', exercise: '' },
+    longestRun: { value: 0, date: '', unit: 'km' },
+    bestTime5k: { value: '', date: '' },
+    totalWorkouts: 0
+  });
+
+  const [nutritionStats, setNutritionStats] = useState({
+    weeklyCalories: [],
+    averageCalories: 0,
+    averageProteins: 0,
+    averageCarbs: 0,
+    daysWithData: 0
+  });
 
   useEffect(() => {
     loadUserData();
-
-    // Vérifier le statut d'abonnement
-    const checkPremiumStatus = async () => {
-      const premiumStatus = await checkSubscriptionStatus();
-      setIsPremium(premiumStatus);
-    };
-
-    checkPremiumStatus();
+    loadProgressData();
+    loadNutritionData();
   }, []);
 
   // Charger les données de mensurations
@@ -261,7 +270,7 @@ export default function ProgresScreen() {
   const getMensurationTrend = (muscle: string) => {
     const config = getMuscleConfig(muscle);
     const data = mensurationData[muscle];
-    
+
     if (!data || data.start === 0 || data.current === 0) {
       return { text: 'Non défini', color: '#8B949E' };
     }
@@ -279,11 +288,11 @@ export default function ProgresScreen() {
     setSelectedMuscle(muscle);
     const config = getMuscleConfig(muscle);
     const data = mensurationData[muscle] || { start: 0, current: 0 };
-    
+
     if (config.hasLeftRight) {
       const dataGauche = mensurationData[muscle + 'Gauche'] || { start: 0, current: 0 };
       const dataDroit = mensurationData[muscle + 'Droit'] || { start: 0, current: 0 };
-      
+
       setTempMensuration({
         start: data.start ? data.start.toString() : '',
         current: data.current ? data.current.toString() : '',
@@ -302,24 +311,24 @@ export default function ProgresScreen() {
         currentDroit: '',
       });
     }
-    
+
     setShowMensurationModal(true);
   };
 
   const handleSaveMensuration = async () => {
     const config = getMuscleConfig(selectedMuscle);
-    
+
     // Validation des données
     const start = parseFloat(tempMensuration.start.replace(',', '.')) || 0;
     const current = parseFloat(tempMensuration.current.replace(',', '.')) || 0;
-    
+
     if (start < 0 || current < 0) {
       Alert.alert('Erreur', 'Veuillez entrer des valeurs positives');
       return;
     }
 
     const newData = { ...mensurationData };
-    
+
     // Sauvegarder les données principales
     newData[selectedMuscle] = {
       start: start,
@@ -337,7 +346,7 @@ export default function ProgresScreen() {
         start: startGauche,
         current: currentGauche,
       };
-      
+
       newData[selectedMuscle + 'Droit'] = {
         start: startDroit,
         current: currentDroit,
@@ -528,6 +537,122 @@ export default function ProgresScreen() {
     return labels.slice(0, 6);
   };
 
+  const loadProgressData = async () => {
+    try {
+      const user = await PersistentStorage.getCurrentUser();
+      if (!user) return;
+
+      // Charger les données d'entraînement
+      const workouts = await PersistentStorage.getWorkouts(user.id);
+
+      // Calculer les statistiques des 7 derniers jours
+      const last7Days = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateString = date.toISOString().split('T')[0];
+
+        const dayWorkouts = workouts.filter((workout: any) => 
+          workout.date === dateString
+        );
+
+        const totalMinutes = dayWorkouts.reduce((sum: number, workout: any) => 
+          sum + (workout.duration || 0), 0
+        );
+
+        last7Days.push({
+          date: dateString,
+          day: date.toLocaleDateString('fr-FR', { weekday: 'short' }),
+          minutes: totalMinutes,
+          workouts: dayWorkouts.length
+        });
+      }
+
+      setWeeklyData(last7Days);
+
+      // Calculer les records personnels (données simulées pour l'exemple)
+      setPersonalRecords({
+        maxWeight: { value: 85, date: '2024-01-15', exercise: 'Développé couché' },
+        longestRun: { value: 12.5, date: '2024-01-20', unit: 'km' },
+        bestTime5k: { value: '22:45', date: '2024-01-18' },
+        totalWorkouts: workouts.length
+      });
+
+    } catch (error) {
+      console.error('Erreur chargement données de progrès:', error);
+    }
+  };
+
+  const loadNutritionData = async () => {
+    try {
+      const user = await PersistentStorage.getCurrentUser();
+      if (!user) return;
+
+      // Charger les données nutritionnelles réelles
+      const nutritionEntries = await PersistentStorage.getNutritionData(user.id);
+
+      // Calculer les statistiques des 7 derniers jours
+      const last7DaysNutrition = [];
+      let totalCaloriesWeek = 0;
+      let totalProteinsWeek = 0;
+      let totalCarbsWeek = 0;
+      let daysWithData = 0;
+
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateString = date.toISOString().split('T')[0];
+
+        const dayEntries = nutritionEntries.filter((entry: any) => 
+          entry.date === dateString
+        );
+
+        const dayCalories = dayEntries.reduce((sum: number, entry: any) => 
+          sum + (entry.calories || 0), 0
+        );
+
+        const dayProteins = dayEntries.reduce((sum: number, entry: any) => 
+          sum + (entry.proteins || 0), 0
+        );
+
+        const dayCarbonhydrates = dayEntries.reduce((sum: number, entry: any) => 
+          sum + (entry.carbohydrates || 0), 0
+        );
+
+        if (dayCalories > 0) {
+          totalCaloriesWeek += dayCalories;
+          totalProteinsWeek += dayProteins;
+          totalCarbsWeek += dayCarbonhydrates;
+          daysWithData++;
+        }
+
+        last7DaysNutrition.push({
+          date: dateString,
+          day: date.toLocaleDateString('fr-FR', { weekday: 'short' }),
+          calories: dayCalories,
+          proteins: dayProteins,
+          carbohydrates: dayCarbonhydrates
+        });
+      }
+
+      // Calculer les moyennes
+      const avgCalories = daysWithData > 0 ? Math.round(totalCaloriesWeek / daysWithData) : 0;
+      const avgProteins = daysWithData > 0 ? Math.round(totalProteinsWeek / daysWithData) : 0;
+      const avgCarbs = daysWithData > 0 ? Math.round(totalCarbsWeek / daysWithData) : 0;
+
+      setNutritionStats({
+        weeklyCalories: last7DaysNutrition,
+        averageCalories: avgCalories,
+        averageProteins: avgProteins,
+        averageCarbs: avgCarbs,
+        daysWithData
+      });
+
+    } catch (error) {
+      console.error('Erreur chargement données nutrition:', error);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -669,7 +794,7 @@ export default function ProgresScreen() {
             {/* Statistiques par type de sport */}
             <View style={styles.sportTypeContainer}>
               <Text style={styles.chartTitle}>Répartition par activité</Text>
-              
+
               <View style={styles.sportTypeGrid}>
                 <View style={styles.sportTypeCard}>
                   <View style={styles.sportTypeIcon}>
@@ -712,7 +837,7 @@ export default function ProgresScreen() {
             {/* Progression des objectifs sportifs */}
             <View style={styles.sportObjectivesCard}>
               <Text style={styles.chartTitle}>🎯 Objectifs de la semaine</Text>
-              
+
               <View style={styles.objectiveItem}>
                 <View style={styles.objectiveHeader}>
                   <Text style={styles.objectiveLabel}>Séances par semaine</Text>
@@ -747,7 +872,7 @@ export default function ProgresScreen() {
             {/* Records personnels */}
             <View style={styles.personalRecordsCard}>
               <Text style={styles.chartTitle}>🏆 Records personnels</Text>
-              
+
               <View style={styles.recordsGrid}>
                 <View style={styles.recordItem}>
                   <Text style={styles.recordLabel}>Développé couché</Text>
@@ -828,7 +953,7 @@ export default function ProgresScreen() {
                   <Text style={styles.iconText}>🔥</Text>
                 </View>
                 <Text style={styles.statLabel}>Calories moyennes</Text>
-                <Text style={styles.statValue}>2,247 kcal</Text>
+                <Text style={styles.statValue}>{nutritionStats.averageCalories} kcal</Text>
                 <Text style={[styles.statTrend, { color: '#28A745' }]}>↑ +150 kcal vs semaine précédente</Text>
               </View>
 
@@ -837,7 +962,7 @@ export default function ProgresScreen() {
                   <Text style={styles.iconText}>💪</Text>
                 </View>
                 <Text style={styles.statLabel}>Protéines moyennes</Text>
-                <Text style={styles.statValue}>142g</Text>
+                <Text style={styles.statValue}>{nutritionStats.averageProteins}g</Text>
                 <Text style={[styles.statTrend, { color: '#28A745' }]}>↑ +12g vs semaine précédente</Text>
               </View>
 
@@ -846,7 +971,7 @@ export default function ProgresScreen() {
                   <Text style={styles.iconText}>🌾</Text>
                 </View>
                 <Text style={styles.statLabel}>Glucides moyens</Text>
-                <Text style={styles.statValue}>275g</Text>
+                <Text style={styles.statValue}>{nutritionStats.averageCarbs}g</Text>
                 <Text style={[styles.statTrend, { color: '#DC3545' }]}>↓ -18g vs semaine précédente</Text>
               </View>
 
@@ -1344,7 +1469,7 @@ export default function ProgresScreen() {
             {/* Mesures globales */}
             <View style={styles.mensurationSection}>
               <Text style={styles.mensurationSectionTitle}>Mesure globale</Text>
-              
+
               <View style={styles.inputRow}>
                 <View style={styles.inputContainer}>
                   <Text style={styles.inputLabel}>Valeur de départ</Text>
@@ -1379,7 +1504,7 @@ export default function ProgresScreen() {
               <>
                 <View style={styles.mensurationSection}>
                   <Text style={styles.mensurationSectionTitle}>Côté gauche</Text>
-                  
+
                   <View style={styles.inputRow}>
                     <View style={styles.inputContainer}>
                       <Text style={styles.inputLabel}>Valeur de départ</Text>
@@ -1411,7 +1536,7 @@ export default function ProgresScreen() {
 
                 <View style={styles.mensurationSection}>
                   <Text style={styles.mensurationSectionTitle}>Côté droit</Text>
-                  
+
                   <View style={styles.inputRow}>
                     <View style={styles.inputContainer}>
                       <Text style={styles.inputLabel}>Valeur de départ</Text>
@@ -1462,7 +1587,7 @@ export default function ProgresScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity 
-                style={styles.modalButtonPrimary}
+                style={stylesIncorporated nutrition data loading and display in the progress screen..modalButtonPrimary}
                 onPress={handleSaveMensuration}
               >
                 <Text style={styles.modalButtonPrimaryText}>Sauvegarder</Text>
@@ -1841,7 +1966,7 @@ const styles = StyleSheet.create({
     color: '#8B949E',
     textAlign: 'center',
   },
-  
+
   updateHint: {
     fontSize: 10,
     color: '#F5A623',

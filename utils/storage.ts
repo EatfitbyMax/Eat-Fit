@@ -205,6 +205,72 @@ export class PersistentStorage {
     }
   }
 
+  // Méthodes pour les données nutritionnelles
+  static async getNutritionData(userId: string): Promise<any[]> {
+    try {
+      const isConnected = await this.testConnection();
+      if (isConnected) {
+        const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`);
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Données nutrition récupérées depuis le serveur VPS');
+          // Sauvegarder en local comme backup
+          const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+          await AsyncStorage.setItem(`food_entries_${userId}`, JSON.stringify(data));
+          return data;
+        }
+      }
+
+      // Fallback vers le stockage local
+      console.log('Fallback vers le stockage local pour la nutrition');
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+      const localData = await AsyncStorage.getItem(`food_entries_${userId}`);
+      return localData ? JSON.parse(localData) : [];
+    } catch (error) {
+      console.error('Erreur récupération données nutrition:', error);
+      try {
+        const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+        const localData = await AsyncStorage.getItem(`food_entries_${userId}`);
+        return localData ? JSON.parse(localData) : [];
+      } catch (localError) {
+        console.error('Erreur stockage local nutrition:', localError);
+        return [];
+      }
+    }
+  }
+
+  static async saveNutritionData(userId: string, nutritionData: any[]): Promise<void> {
+    try {
+      // Toujours sauvegarder en local d'abord
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+      await AsyncStorage.setItem(`food_entries_${userId}`, JSON.stringify(nutritionData));
+
+      const isConnected = await this.testConnection();
+      if (isConnected) {
+        const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(nutritionData),
+        });
+
+        if (response.ok) {
+          console.log('Données nutrition sauvegardées sur le serveur VPS');
+        } else {
+          console.log('Données nutrition sauvegardées localement (serveur indisponible)');
+        }
+      } else {
+        console.log('Données nutrition sauvegardées localement (serveur indisponible)');
+      }
+    } catch (error) {
+      console.error('Erreur sauvegarde données nutrition:', error);
+      // Au moins garder la sauvegarde locale
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+      await AsyncStorage.setItem(`food_entries_${userId}`, JSON.stringify(nutritionData));
+    }
+  }
+
   // Méthodes pour les entraînements (workouts)
   static async getWorkouts(userId: string): Promise<any[]> {
     try {
