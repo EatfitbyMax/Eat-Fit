@@ -238,6 +238,44 @@ export default function ProfilScreen() {
               <Text style={styles.infoValue}>{user?.weight ? `${user.weight} kg` : 'Non renseigné'}</Text>
             </View>
             <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>
+                {user?.favoriteSport ? (
+                  [
+                    { id: 'musculation', emoji: '💪' },
+                    { id: 'course', emoji: '🏃' },
+                    { id: 'cyclisme', emoji: '🚴' },
+                    { id: 'natation', emoji: '🏊' },
+                    { id: 'yoga', emoji: '🧘' },
+                    { id: 'boxe', emoji: '🥊' },
+                    { id: 'tennis', emoji: '🎾' },
+                    { id: 'football', emoji: '⚽' },
+                    { id: 'basketball', emoji: '🏀' },
+                    { id: 'escalade', emoji: '🧗' },
+                    { id: 'crossfit', emoji: '🏋️' },
+                    { id: 'danse', emoji: '💃' }
+                  ].find(sport => sport.id === user.favoriteSport)?.emoji || '🏃'
+                ) : '🏃'} Sport favori:
+              </Text>
+              <Text style={styles.infoValue}>
+                {user?.favoriteSport ? (
+                  [
+                    { id: 'musculation', name: 'Musculation' },
+                    { id: 'course', name: 'Course à pied' },
+                    { id: 'cyclisme', name: 'Cyclisme' },
+                    { id: 'natation', name: 'Natation' },
+                    { id: 'yoga', name: 'Yoga' },
+                    { id: 'boxe', name: 'Boxe/Arts martiaux' },
+                    { id: 'tennis', name: 'Tennis' },
+                    { id: 'football', name: 'Football' },
+                    { id: 'basketball', name: 'Basketball' },
+                    { id: 'escalade', name: 'Escalade' },
+                    { id: 'crossfit', name: 'CrossFit' },
+                    { id: 'danse', name: 'Danse' }
+                  ].find(sport => sport.id === user.favoriteSport)?.name || 'Non renseigné'
+                ) : 'Non renseigné'}
+              </Text>
+            </View>
+            <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>🏃‍♂️ Activité:</Text>
               <Text style={styles.infoValue}>{user?.activityLevel || 'Non renseigné'}</Text>
             </View>
