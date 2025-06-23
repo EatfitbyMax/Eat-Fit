@@ -370,6 +370,18 @@ export const getClients = async (): Promise<any[]> => {
   return users.filter(user => user.userType === 'client');
 };
 
+// Fonction pour récupérer les données utilisateur
+export const getUserData = async (): Promise<any | null> => {
+  try {
+    const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+    const userData = await AsyncStorage.getItem('current_user');
+    return userData ? JSON.parse(userData) : null;
+  } catch (error) {
+    console.error('Erreur récupération données utilisateur:', error);
+    return null;
+  }
+};
+
 // Adding message management functions here
 export const getMessages = async (userId: string): Promise<any[]> => {
   try {
