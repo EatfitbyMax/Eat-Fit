@@ -47,9 +47,20 @@ export default function ClientLayout() {
         name="index"
         options={{
           title: 'Accueil',
-          tabBarIcon: ({ color, focused }) => (
-            <IconSymbol size={28} name={focused ? 'house.fill' : 'house'} color={color} />
-          ),
+          tabBarIcon: ({ color }) => {
+            const isActive = pathname === '/(client)' || pathname === '/(client)/index' || pathname === '/(client)/progres';
+            return (
+              <IconSymbol 
+                size={28} 
+                name={isActive ? 'house.fill' : 'house'} 
+                color={isActive ? '#F5A623' : color} 
+              />
+            );
+          },
+          tabBarLabelStyle: (() => {
+            const isActive = pathname === '/(client)' || pathname === '/(client)/index' || pathname === '/(client)/progres';
+            return isActive ? { color: '#F5A623' } : {};
+          })(),
         }}
       />
       <Tabs.Screen
