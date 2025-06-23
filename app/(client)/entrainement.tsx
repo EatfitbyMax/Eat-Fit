@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { IntegrationsManager, StravaActivity } from '../../utils/integrations';
 import { getCurrentUser } from '../../utils/auth';
 import { checkSubscriptionStatus } from '../../utils/subscription';
+import { getUserData } from '../../utils/storage';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { getRecommendedPrograms, getSportEmoji, getSportName, WorkoutProgram } from '@/utils/sportPrograms';
@@ -378,7 +379,7 @@ export default function EntrainementScreen() {
 
   const checkUserAccess = async () => {
     try {
-      const userData = await (await import('../../utils/storage')).getUserData();
+      const userData = await getUserData();
       if (!userData) {
         router.replace('/auth/login');
         return;
