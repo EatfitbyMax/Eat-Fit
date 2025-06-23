@@ -20,7 +20,7 @@ export default function RegisterProfileScreen() {
         height: height.trim(),
         weight: weight.trim(),
       });
-      router.push('/auth/register-activity');
+      router.push('/auth/register-sport');
     }
   };
 

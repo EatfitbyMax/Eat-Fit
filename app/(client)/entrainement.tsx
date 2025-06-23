@@ -7,6 +7,7 @@ import { getCurrentUser } from '../../utils/auth';
 import { checkSubscriptionStatus } from '../../utils/subscription';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { getRecommendedPrograms, getSportEmoji, getSportName, WorkoutProgram } from '@/utils/sportPrograms';
 
 export default function EntrainementScreen() {
   const router = useRouter();
@@ -20,6 +21,8 @@ export default function EntrainementScreen() {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [workouts, setWorkouts] = useState<any[]>([]);
   const [selectedStravaActivity, setSelectedStravaActivity] = useState<StravaActivity | null>(null);
+  const [userSport, setUserSport] = useState<string>('');
+  const [recommendedPrograms, setRecommendedPrograms] = useState<WorkoutProgram[]>([]);
 
 
 
@@ -369,6 +372,31 @@ export default function EntrainementScreen() {
     return `${minutes}:${seconds.toString().padStart(2, '0')}/km`;
   };
 
+  useEffect(() => {
+    checkUserAccess();
+  }, []);
+
+  const checkUserAccess = async () => {
+    try {
+      const userData = await (await import('../../utils/storage')).getUserData();
+      if (!userData) {
+        router.replace('/auth/login');
+        return;
+      }
+
+      // Récupérer le sport favori de l'utilisateur
+      const favoriteSport = userData.favoriteSport || 'musculation';
+      setUserSport(favoriteSport);
+
+      // Charger les programmes recommandés pour ce sport
+      const programs = getRecommendedPrograms(favoriteSport);
+      setRecommendedPrograms(programs);
+    } catch (error) {
+      console.error('Erreur vérification utilisateur:', error);
+      router.replace('/auth/login');
+    }
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView style={styles.scrollView}>
@@ -450,7 +478,7 @@ export default function EntrainementScreen() {
                 const targetDate = new Date(start);
                 targetDate.setDate(start.getDate() + dayIndex);
                 const isToday = targetDate.toDateString() === new Date().toDateString();
-                
+
                 return (
                   <TouchableOpacity 
                     key={jour}
@@ -462,7 +490,7 @@ export default function EntrainementScreen() {
                         <Text style={[styles.dayName, isToday && styles.todayDayName]}>{jour}</Text>
                         <Text style={styles.dayDate}>{targetDate.getDate()}</Text>
                       </View>
-                      
+
                       <View style={styles.dayStatus}>
                         {sessionCount > 0 ? (
                           <View style={styles.sessionBadge}>
@@ -476,7 +504,7 @@ export default function EntrainementScreen() {
                         <Text style={styles.arrowIcon}>›</Text>
                       </View>
                     </View>
-                    
+
                     <View style={styles.dayFooter}>
                       <Text style={styles.sessionDetails}>
                         {sessionCount > 0 
@@ -1072,5 +1100,55 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     textAlign: 'center',
   },
-
+  exerciseCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  exerciseHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  exerciseTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  exerciseReps: {
+    fontSize: 12,
+    color: '#8B949E',
+  },
+  favoriteSportSection: {
+    marginHorizontal: 20,
+    marginBottom: 25,
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  favoriteSportHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  favoriteSportEmoji: {
+    fontSize: 32,
+    marginRight: 16,
+  },
+  favoriteSportTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  favoriteSportSubtitle: {
+    fontSize: 14,
+    color: '#F5A623',
+    fontWeight: '500',
+  },
 });
