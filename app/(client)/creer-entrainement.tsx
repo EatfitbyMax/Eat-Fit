@@ -48,6 +48,38 @@ const WORKOUT_TYPES = [
   'Danse', 'Escalade', 'Football', 'Basketball', 'Tennis'
 ];
 
+const getOrderedWorkoutTypes = (favoriteSport: string) => {
+  const sportName = getSportNameFromId(favoriteSport);
+  const types = [...WORKOUT_TYPES];
+  
+  // Mettre le sport favori en premier
+  if (sportName && types.includes(sportName)) {
+    const index = types.indexOf(sportName);
+    types.splice(index, 1);
+    types.unshift(sportName);
+  }
+  
+  return types;
+};
+
+const getSportNameFromId = (sportId: string): string => {
+  const sportMap: Record<string, string> = {
+    'musculation': 'Musculation',
+    'course': 'Course à pied',
+    'cyclisme': 'Cyclisme',
+    'natation': 'Natation',
+    'yoga': 'Yoga',
+    'boxe': 'Boxe',
+    'tennis': 'Tennis',
+    'football': 'Football',
+    'basketball': 'Basketball',
+    'escalade': 'Escalade',
+    'crossfit': 'CrossFit',
+    'danse': 'Danse'
+  };
+  return sportMap[sportId] || 'Musculation';
+};
+
 const SPECIFICITIES = [
   'Force', 'Endurance', 'Vitesse', 'Souplesse', 'Équilibre', 
   'Coordination', 'Puissance', 'Récupération', 'Technique', 'Cardio'
@@ -159,11 +191,51 @@ export default function CreerEntrainementScreen() {
   });
   const [editingExerciseIndex, setEditingExerciseIndex] = useState<number | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [userFavoriteSport, setUserFavoriteSport] = useState<string>('');
+
+  useEffect(() => {
+    loadUserData();
+  }, []);
 
   useEffect(() => {
     // Calculer les calories estimées basées sur le type et la durée
     calculateCalories();
   }, [workout.type, workout.duration, workout.difficulty]);
+
+  const loadUserData = async () => {
+    try {
+      const currentUser = await getCurrentUser();
+      if (currentUser && currentUser.favoriteSport) {
+        setUserFavoriteSport(currentUser.favoriteSport);
+        
+        // Pré-remplir le type d'entraînement avec le sport favori
+        const sportName = getSportNameFromId(currentUser.favoriteSport);
+        setWorkout(prev => ({ ...prev, type: sportName }));
+        
+        console.log('Sport favori de l\'utilisateur:', currentUser.favoriteSport, '-> Type:', sportName);
+      }
+    } catch (error) {
+      console.error('Erreur chargement données utilisateur:', error);
+    }
+  };
+
+  const getSportNameFromId = (sportId: string): string => {
+    const sportMap: Record<string, string> = {
+      'musculation': 'Musculation',
+      'course': 'Course à pied',
+      'cyclisme': 'Cyclisme',
+      'natation': 'Natation',
+      'yoga': 'Yoga',
+      'boxe': 'Boxe',
+      'tennis': 'Tennis',
+      'football': 'Football',
+      'basketball': 'Basketball',
+      'escalade': 'Escalade',
+      'crossfit': 'CrossFit',
+      'danse': 'Danse'
+    };
+    return sportMap[sportId] || 'Musculation';
+  };
 
   const calculateCalories = () => {
     if (!workout.duration || !workout.type) return;
@@ -417,34 +489,56 @@ export default function CreerEntrainementScreen() {
     title: string,
     options: string[],
     onSelect: (value: string) => void
-  ) => (
-    <Modal visible={visible} transparent animationType="slide">
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{title}</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>×</Text>
-            </TouchableOpacity>
-          </View>
-          <ScrollView style={styles.modalContent}>
-            {options.map((option) => (
-              <TouchableOpacity
-                key={option}
-                style={styles.optionItem}
-                onPress={() => {
-                  onSelect(option);
-                  onClose();
-                }}
-              >
-                <Text style={styles.optionText}>{option}</Text>
+  ) => {
+    const favoriteSportName = getSportNameFromId(userFavoriteSport);
+    
+    return (
+      <Modal visible={visible} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{title}</Text>
+              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>×</Text>
               </TouchableOpacity>
-            ))}
-          </ScrollView>
+            </View>
+            <ScrollView style={styles.modalContent}>
+              {options.map((option) => {
+                const isFavorite = option === favoriteSportName;
+                return (
+                  <TouchableOpacity
+                    key={option}
+                    style={[
+                      styles.optionItem,
+                      isFavorite && styles.favoriteOptionItem
+                    ]}
+                    onPress={() => {
+                      onSelect(option);
+                      onClose();
+                    }}
+                  >
+                    <View style={styles.optionContent}>
+                      <Text style={[
+                        styles.optionText,
+                        isFavorite && styles.favoriteOptionText
+                      ]}>
+                        {option}
+                      </Text>
+                      {isFavorite && (
+                        <View style={styles.favoriteIndicator}>
+                          <Text style={styles.favoriteIndicatorText}>⭐ Favori</Text>
+                        </View>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
         </View>
-      </View>
-    </Modal>
-  );
+      </Modal>
+    );
+  };
 
   const renderExerciseModal = () => {
     const fieldsToShow = getFieldsForSport(workout.type);
@@ -705,7 +799,14 @@ export default function CreerEntrainementScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Type d'entraînement *</Text>
+              <View style={styles.labelWithHint}>
+                <Text style={styles.label}>Type d'entraînement *</Text>
+                {userFavoriteSport && (
+                  <Text style={styles.favoriteHint}>
+                    ⭐ {getSportNameFromId(userFavoriteSport)} suggéré
+                  </Text>
+                )}
+              </View>
               <TouchableOpacity
                 style={styles.dropdown}
                 onPress={() => setShowTypeModal(true)}
@@ -857,7 +958,7 @@ export default function CreerEntrainementScreen() {
         showTypeModal,
         () => setShowTypeModal(false),
         'Type d\'entraînement',
-        WORKOUT_TYPES,
+        getOrderedWorkoutTypes(userFavoriteSport),
         (value) => setWorkout(prev => ({ ...prev, type: value }))
       )}
 
@@ -947,6 +1048,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#FFFFFF',
     marginBottom: 8,
+    fontWeight: '500',
+  },
+  labelWithHint: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  favoriteHint: {
+    fontSize: 12,
+    color: '#F5A623',
     fontWeight: '500',
   },
   input: {
@@ -1162,6 +1274,31 @@ const styles = StyleSheet.create({
   optionText: {
     color: '#FFFFFF',
     fontSize: 16,
+  },
+  favoriteOptionItem: {
+    backgroundColor: '#21262D',
+    borderLeftWidth: 3,
+    borderLeftColor: '#F5A623',
+  },
+  optionContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  favoriteOptionText: {
+    color: '#F5A623',
+    fontWeight: '600',
+  },
+  favoriteIndicator: {
+    backgroundColor: '#F5A623',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+  },
+  favoriteIndicatorText: {
+    color: '#000000',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   saveButton: {
     backgroundColor: '#F5A623',
