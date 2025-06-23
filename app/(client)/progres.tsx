@@ -1587,7 +1587,7 @@ export default function ProgresScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity 
-                style={stylesIncorporated nutrition data loading and display in the progress screen..modalButtonPrimary}
+                style={styles.modalButtonPrimary}
                 onPress={handleSaveMensuration}
               >
                 <Text style={styles.modalButtonPrimaryText}>Sauvegarder</Text>
