@@ -188,44 +188,86 @@ export default function InformationsPersonnellesScreen() {
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Sport favori</Text>
-            <View style={styles.sportContainer}>
-              {[
-                { id: 'musculation', name: 'Musculation', emoji: '💪' },
-                { id: 'course', name: 'Course à pied', emoji: '🏃' },
-                { id: 'cyclisme', name: 'Cyclisme', emoji: '🚴' },
-                { id: 'natation', name: 'Natation', emoji: '🏊' },
-                { id: 'yoga', name: 'Yoga', emoji: '🧘' },
-                { id: 'boxe', name: 'Boxe/Arts martiaux', emoji: '🥊' },
-                { id: 'tennis', name: 'Tennis', emoji: '🎾' },
-                { id: 'football', name: 'Football', emoji: '⚽' },
-                { id: 'basketball', name: 'Basketball', emoji: '🏀' },
-                { id: 'escalade', name: 'Escalade', emoji: '🧗' },
-                { id: 'crossfit', name: 'CrossFit', emoji: '🏋️' },
-                { id: 'danse', name: 'Danse', emoji: '💃' }
-              ].map((sport) => (
-                <TouchableOpacity
-                  key={sport.id}
-                  style={[
-                    styles.sportButton,
-                    formData.favoriteSport === sport.id && styles.selectedSport,
-                    !isEditing && styles.disabledButton
-                  ]}
-                  onPress={() => isEditing && setFormData(prev => ({ ...prev, favoriteSport: sport.id }))}
-                  disabled={!isEditing}
-                >
-                  <Text style={styles.sportEmoji}>{sport.emoji}</Text>
-                  <Text style={[
-                    styles.sportText,
-                    formData.favoriteSport === sport.id && styles.selectedSportText
-                  ]}>
-                    {sport.name}
-                  </Text>
-                  {formData.favoriteSport === sport.id && (
-                    <Text style={styles.checkMark}>✓</Text>
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
+            {!isEditing && formData.favoriteSport ? (
+              // Affichage du sport favori en mode lecture seule
+              <View style={styles.selectedSportDisplay}>
+                <Text style={styles.selectedSportEmoji}>
+                  {[
+                    { id: 'musculation', emoji: '💪' },
+                    { id: 'course', emoji: '🏃' },
+                    { id: 'cyclisme', emoji: '🚴' },
+                    { id: 'natation', emoji: '🏊' },
+                    { id: 'yoga', emoji: '🧘' },
+                    { id: 'boxe', emoji: '🥊' },
+                    { id: 'tennis', emoji: '🎾' },
+                    { id: 'football', emoji: '⚽' },
+                    { id: 'basketball', emoji: '🏀' },
+                    { id: 'escalade', emoji: '🧗' },
+                    { id: 'crossfit', emoji: '🏋️' },
+                    { id: 'danse', emoji: '💃' }
+                  ].find(sport => sport.id === formData.favoriteSport)?.emoji || '🏃'}
+                </Text>
+                <Text style={styles.selectedSportName}>
+                  {[
+                    { id: 'musculation', name: 'Musculation' },
+                    { id: 'course', name: 'Course à pied' },
+                    { id: 'cyclisme', name: 'Cyclisme' },
+                    { id: 'natation', name: 'Natation' },
+                    { id: 'yoga', name: 'Yoga' },
+                    { id: 'boxe', name: 'Boxe/Arts martiaux' },
+                    { id: 'tennis', name: 'Tennis' },
+                    { id: 'football', name: 'Football' },
+                    { id: 'basketball', name: 'Basketball' },
+                    { id: 'escalade', name: 'Escalade' },
+                    { id: 'crossfit', name: 'CrossFit' },
+                    { id: 'danse', name: 'Danse' }
+                  ].find(sport => sport.id === formData.favoriteSport)?.name || 'Non défini'}
+                </Text>
+              </View>
+            ) : (
+              // Mode édition avec tous les sports
+              <View style={styles.sportContainer}>
+                {[
+                  { id: 'musculation', name: 'Musculation', emoji: '💪' },
+                  { id: 'course', name: 'Course à pied', emoji: '🏃' },
+                  { id: 'cyclisme', name: 'Cyclisme', emoji: '🚴' },
+                  { id: 'natation', name: 'Natation', emoji: '🏊' },
+                  { id: 'yoga', name: 'Yoga', emoji: '🧘' },
+                  { id: 'boxe', name: 'Boxe/Arts martiaux', emoji: '🥊' },
+                  { id: 'tennis', name: 'Tennis', emoji: '🎾' },
+                  { id: 'football', name: 'Football', emoji: '⚽' },
+                  { id: 'basketball', name: 'Basketball', emoji: '🏀' },
+                  { id: 'escalade', name: 'Escalade', emoji: '🧗' },
+                  { id: 'crossfit', name: 'CrossFit', emoji: '🏋️' },
+                  { id: 'danse', name: 'Danse', emoji: '💃' }
+                ].map((sport) => (
+                  <TouchableOpacity
+                    key={sport.id}
+                    style={[
+                      styles.sportButton,
+                      formData.favoriteSport === sport.id && styles.selectedSport,
+                      !isEditing && styles.disabledButton
+                    ]}
+                    onPress={() => isEditing && setFormData(prev => ({ ...prev, favoriteSport: sport.id }))}
+                    disabled={!isEditing}
+                  >
+                    <Text style={styles.sportEmoji}>{sport.emoji}</Text>
+                    <Text style={[
+                      styles.sportText,
+                      formData.favoriteSport === sport.id && styles.selectedSportText
+                    ]}>
+                      {sport.name}
+                    </Text>
+                    {formData.favoriteSport === sport.id && (
+                      <Text style={styles.checkMark}>✓</Text>
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+            {!formData.favoriteSport && !isEditing && (
+              <Text style={styles.noSportText}>Aucun sport favori défini</Text>
+            )}
           </View>
         </View>
       </ScrollView>
@@ -360,5 +402,29 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#FFFFFF',
     fontWeight: 'bold',
+  },
+  selectedSportDisplay: {
+    backgroundColor: '#161B22',
+    borderWidth: 1,
+    borderColor: '#21262D',
+    borderRadius: 8,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  selectedSportEmoji: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  selectedSportName: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  noSportText: {
+    fontSize: 16,
+    color: '#8B949E',
+    fontStyle: 'italic',
+    paddingVertical: 16,
   },
 });
