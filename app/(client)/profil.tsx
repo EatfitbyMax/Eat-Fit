@@ -276,7 +276,7 @@ export default function ProfilScreen() {
               </Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>🏃‍♂️ Activité:</Text>
+              <Text style={styles.infoLabel}>📊 Activité:</Text>
               <Text style={styles.infoValue}>{user?.activityLevel || 'Non renseigné'}</Text>
             </View>
           </View>
