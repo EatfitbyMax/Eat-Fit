@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { logout, getCurrentUser } from '@/utils/auth';
 import { IntegrationsManager, IntegrationStatus } from '@/utils/integrations';
 
@@ -18,9 +18,17 @@ export default function ProfilScreen() {
     loadIntegrationStatus();
   }, []);
 
+  // Recharger les données quand la page est focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadUserData();
+    }, [])
+  );
+
   const loadUserData = async () => {
     try {
       const currentUser = await getCurrentUser();
+      console.log('Données utilisateur récupérées:', currentUser);
       setUser(currentUser);
     } catch (error) {
       console.error('Erreur chargement utilisateur:', error);
