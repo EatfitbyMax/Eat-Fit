@@ -47,8 +47,9 @@ export default function ClientLayout() {
         name="index"
         options={{
           title: 'Accueil',
-          tabBarIcon: ({ color }) => {
-            const isActive = pathname === '/(client)' || pathname === '/(client)/index' || pathname === '/(client)/progres';
+          tabBarIcon: ({ color, focused }) => {
+            const isOnProgressPage = pathname.includes('/progres');
+            const isActive = focused || isOnProgressPage;
             return (
               <IconSymbol 
                 size={28} 
@@ -57,10 +58,9 @@ export default function ClientLayout() {
               />
             );
           },
-          tabBarLabelStyle: (() => {
-            const isActive = pathname === '/(client)' || pathname === '/(client)/index' || pathname === '/(client)/progres';
-            return isActive ? { color: '#F5A623' } : {};
-          })(),
+          tabBarLabelStyle: {
+            color: pathname.includes('/progres') ? '#F5A623' : undefined,
+          },
         }}
       />
       <Tabs.Screen
