@@ -9,6 +9,7 @@ interface RegistrationData {
   age: string;
   height: string;
   weight: string;
+  favoriteSport: string;
   activityLevel: string;
   email: string;
   password: string;
@@ -28,6 +29,7 @@ const initialData: RegistrationData = {
   age: '',
   height: '',
   weight: '',
+  favoriteSport: '',
   activityLevel: '',
   email: '',
   password: '',
