@@ -8,7 +8,7 @@ export class PersistentStorage {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
+
       const response = await fetch(`${SERVER_URL}/api/health-check`, {
         method: 'GET',
         headers: {
@@ -16,7 +16,7 @@ export class PersistentStorage {
         },
         signal: controller.signal
       });
-      
+
       clearTimeout(timeoutId);
       return response.ok;
     } catch (error) {
@@ -219,7 +219,7 @@ export class PersistentStorage {
           return data;
         }
       }
-      
+
       // Fallback vers le stockage local
       console.log('Fallback vers le stockage local pour les entraînements');
       const localData = await AsyncStorage.getItem(`workouts_${userId}`);
@@ -241,7 +241,7 @@ export class PersistentStorage {
     try {
       // Toujours sauvegarder en local d'abord
       await AsyncStorage.setItem(`workouts_${userId}`, JSON.stringify(workouts));
-      
+
       const isConnected = await this.testConnection();
       if (isConnected) {
         const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`, {
@@ -264,6 +264,26 @@ export class PersistentStorage {
       console.error('Erreur sauvegarde entraînements:', error);
       // Au moins garder la sauvegarde locale
       await AsyncStorage.setItem(`workouts_${userId}`, JSON.stringify(workouts));
+    }
+  }
+
+  // Gestion de l'utilisateur actuel
+  static async getCurrentUser(): Promise<any> {
+    try {
+      const userData = await AsyncStorage.getItem('currentUser');
+      return userData ? JSON.parse(userData) : null;
+    } catch (error) {
+      console.error('Erreur récupération utilisateur:', error);
+      return null;
+    }
+  }
+
+  static async setCurrentUser(user: any): Promise<void> {
+    try {
+      await AsyncStorage.setItem('currentUser', JSON.stringify(user));
+    } catch (error) {
+      console.error('Erreur sauvegarde utilisateur actuel:', error);
+      throw error;
     }
   }
 
