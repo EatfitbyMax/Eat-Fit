@@ -799,14 +799,7 @@ export default function CreerEntrainementScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <View style={styles.labelWithHint}>
-                <Text style={styles.label}>Type d'entraînement *</Text>
-                {userFavoriteSport && (
-                  <Text style={styles.favoriteHint}>
-                    ⭐ {getSportNameFromId(userFavoriteSport)} suggéré
-                  </Text>
-                )}
-              </View>
+              <Text style={styles.label}>Type d'entraînement *</Text>
               <TouchableOpacity
                 style={styles.dropdown}
                 onPress={() => setShowTypeModal(true)}
