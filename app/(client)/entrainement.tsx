@@ -379,14 +379,18 @@ export default function EntrainementScreen() {
 
   const checkUserAccess = async () => {
     try {
-      const userData = await getUserData();
-      if (!userData) {
+      // Utiliser getCurrentUser au lieu de getUserData
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        console.log('Aucun utilisateur connecté, redirection vers login');
         router.replace('/auth/login');
         return;
       }
 
+      console.log('Utilisateur trouvé dans entrainement:', currentUser.email);
+
       // Récupérer le sport favori de l'utilisateur
-      const favoriteSport = userData.favoriteSport || 'musculation';
+      const favoriteSport = currentUser.favoriteSport || 'musculation';
       setUserSport(favoriteSport);
 
       // Charger les programmes recommandés pour ce sport
@@ -394,7 +398,8 @@ export default function EntrainementScreen() {
       setRecommendedPrograms(programs);
     } catch (error) {
       console.error('Erreur vérification utilisateur:', error);
-      router.replace('/auth/login');
+      // Ne pas rediriger automatiquement en cas d'erreur, juste logger
+      console.log('Erreur lors de la vérification, mais ne pas déconnecter');
     }
   };
 
