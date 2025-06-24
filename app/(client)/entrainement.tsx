@@ -736,7 +736,7 @@ const styles = StyleSheet.create({
   },
   daysContainer: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 1,
     paddingTop: 20,
   },
   dayCard: {
