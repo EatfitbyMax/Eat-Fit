@@ -74,7 +74,7 @@ function NutritionScreen() {
     }
   };
 
-  const calculatePersonalizedGoals = (user: any) => {
+  const calculatePersonalizedGoals = async (user: any) => {
     if (!user || !user.age || !user.weight || !user.height || !user.gender) {
       return {
         calories: 2495,
@@ -109,6 +109,27 @@ function NutritionScreen() {
     
     if (goals.includes('Perdre du poids')) {
       totalCalories -= 200; // Déficit de 200 kcal
+    }
+
+    // Vérifier s'il y a un entraînement programmé le jour sélectionné
+    try {
+      const dateString = selectedDate.toISOString().split('T')[0];
+      const workoutsStored = await AsyncStorage.getItem(`workouts_${user.id}`);
+      
+      if (workoutsStored) {
+        const workouts = JSON.parse(workoutsStored);
+        const hasWorkoutToday = workouts.some((workout: any) => {
+          const workoutDate = new Date(workout.date).toISOString().split('T')[0];
+          return workoutDate === dateString;
+        });
+
+        if (hasWorkoutToday) {
+          totalCalories += 150; // Ajouter 150 kcal si un entraînement est programmé
+          console.log('Entraînement détecté le', dateString, '- Ajout de 150 kcal');
+        }
+      }
+    } catch (error) {
+      console.error('Erreur vérification entraînements:', error);
     }
     
     // Calcul des macronutriments selon les objectifs
@@ -295,7 +316,7 @@ function NutritionScreen() {
       if (!user) return;
 
       // Calculer les objectifs personnalisés
-      const personalizedGoals = calculatePersonalizedGoals(user);
+      const personalizedGoals = await calculatePersonalizedGoals(user);
       setCalorieGoals(personalizedGoals);
 
       // Calculer l'objectif d'hydratation dynamique
