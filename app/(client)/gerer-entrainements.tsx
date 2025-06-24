@@ -44,32 +44,47 @@ export default function GererEntrainementsScreen() {
   const loadWorkouts = async () => {
     try {
       const currentUser = await getCurrentUser();
-      if (currentUser) {
-        // Utiliser la nouvelle méthode avec fallback
-        const { PersistentStorage } = await import('../../utils/storage');
-        const allWorkouts = await PersistentStorage.getWorkouts(currentUser.id);
-        const dayWorkouts = allWorkouts.filter((workout: Workout) => workout.date === selectedDate);
-        setWorkouts(dayWorkouts);
-        console.log(`Entraînements du jour chargés: ${dayWorkouts.length} séances trouvées`);
+      if (!currentUser) {
+        console.log('Aucun utilisateur connecté pour charger les entraînements');
+        return;
       }
+
+      console.log(`=== CHARGEMENT ENTRAINEMENTS POUR ${selectedDate} ===`);
+      
+      // D'abord essayer le stockage local direct
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+      const storedWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
+      
+      if (storedWorkouts) {
+        const allWorkouts = JSON.parse(storedWorkouts);
+        console.log(`Total entraînements stockés: ${allWorkouts.length}`);
+        
+        // Debug: afficher tous les entraînements avec leurs dates
+        allWorkouts.forEach((workout: any, index: number) => {
+          console.log(`Entraînement ${index + 1}: ${workout.name} - Date: ${workout.date} - Type: ${workout.type}`);
+        });
+        
+        const dayWorkouts = allWorkouts.filter((workout: Workout) => {
+          const match = workout.date === selectedDate;
+          console.log(`Workout "${workout.name}" (${workout.date}) - Match avec ${selectedDate}: ${match}`);
+          return match;
+        });
+        
+        console.log(`Entraînements trouvés pour ${selectedDate}: ${dayWorkouts.length}`);
+        dayWorkouts.forEach((workout: any, index: number) => {
+          console.log(`  ${index + 1}. ${workout.name} (${workout.type})`);
+        });
+        
+        setWorkouts(dayWorkouts);
+      } else {
+        console.log('Aucun entraînement stocké trouvé');
+        setWorkouts([]);
+      }
+      
+      console.log('=== FIN CHARGEMENT ENTRAINEMENTS ===');
     } catch (error) {
       console.error('Erreur chargement entraînements:', error);
-      // En cas d'erreur, essayer le stockage local direct
-      try {
-        const currentUser = await getCurrentUser();
-        if (currentUser) {
-          const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-          const storedWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
-          if (storedWorkouts) {
-            const allWorkouts = JSON.parse(storedWorkouts);
-            const dayWorkouts = allWorkouts.filter((workout: Workout) => workout.date === selectedDate);
-            setWorkouts(dayWorkouts);
-            console.log(`Fallback local: ${dayWorkouts.length} séances trouvées`);
-          }
-        }
-      } catch (localError) {
-        console.error('Erreur fallback local:', localError);
-      }
+      setWorkouts([]);
     }
   };
 

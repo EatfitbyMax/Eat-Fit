@@ -53,29 +53,45 @@ export default function EntrainementScreen() {
   const loadWorkouts = async () => {
     try {
       const currentUser = await getCurrentUser();
-      if (currentUser) {
-        // Utiliser la nouvelle méthode avec fallback
-        const { PersistentStorage } = await import('../../utils/storage');
-        const storedWorkouts = await PersistentStorage.getWorkouts(currentUser.id);
-        setWorkouts(storedWorkouts);
-        console.log(`Entraînements chargés: ${storedWorkouts.length} séances trouvées`);
+      if (!currentUser) {
+        console.log('Aucun utilisateur connecté pour charger les entraînements');
+        return;
       }
+
+      console.log('=== CHARGEMENT TOUS LES ENTRAINEMENTS ===');
+      
+      // Utiliser directement le stockage local pour plus de fiabilité
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+      const storedWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
+      
+      if (storedWorkouts) {
+        const allWorkouts = JSON.parse(storedWorkouts);
+        console.log(`Total entraînements chargés: ${allWorkouts.length}`);
+        
+        // Debug: grouper par date
+        const workoutsByDate = allWorkouts.reduce((acc: any, workout: any) => {
+          if (!acc[workout.date]) acc[workout.date] = [];
+          acc[workout.date].push(workout);
+          return acc;
+        }, {});
+        
+        Object.keys(workoutsByDate).forEach(date => {
+          console.log(`${date}: ${workoutsByDate[date].length} entraînement(s)`);
+          workoutsByDate[date].forEach((w: any, i: number) => {
+            console.log(`  ${i + 1}. ${w.name} (${w.type})`);
+          });
+        });
+        
+        setWorkouts(allWorkouts);
+      } else {
+        console.log('Aucun entraînement stocké trouvé');
+        setWorkouts([]);
+      }
+      
+      console.log('=== FIN CHARGEMENT TOUS LES ENTRAINEMENTS ===');
     } catch (error) {
       console.error('Erreur chargement entraînements:', error);
-      // En cas d'erreur, essayer le stockage local direct
-      try {
-        const currentUser = await getCurrentUser();
-        if (currentUser) {
-          const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-          const storedWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
-          if (storedWorkouts) {
-            setWorkouts(JSON.parse(storedWorkouts));
-            console.log(`Fallback local: ${JSON.parse(storedWorkouts).length} séances trouvées`);
-          }
-        }
-      } catch (localError) {
-        console.error('Erreur fallback local:', localError);
-      }
+      setWorkouts([]);
     }
   };
 
