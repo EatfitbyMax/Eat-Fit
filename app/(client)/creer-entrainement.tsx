@@ -85,7 +85,7 @@ const SPECIFICITIES = [
   'Coordination', 'Puissance', 'Récupération', 'Technique', 'Cardio'
 ];
 
-const DIFFICULTIES = ['Débutant', 'Intermédiaire', 'Avancé', 'Expert'];
+const DIFFICULTIES = ['Facile', 'Modéré', 'Difficile', 'Effort maximal'];
 
 const EXERCISE_SUGGESTIONS = {
   'Musculation': [
@@ -269,16 +269,16 @@ export default function CreerEntrainementScreen() {
 
     // Ajustement selon la difficulté
     switch (workout.difficulty) {
-      case 'Débutant':
+      case 'Facile':
         caloriesPerMinute *= 0.8;
         break;
-      case 'Intermédiaire':
+      case 'Modéré':
         caloriesPerMinute *= 1.0;
         break;
-      case 'Avancé':
+      case 'Difficile':
         caloriesPerMinute *= 1.2;
         break;
-      case 'Expert':
+      case 'Effort maximal':
         caloriesPerMinute *= 1.4;
         break;
     }
