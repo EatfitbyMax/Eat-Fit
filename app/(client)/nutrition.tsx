@@ -45,7 +45,23 @@ function NutritionScreen() {
       const user = await getCurrentUser();
       if (!user) return 2000;
 
-      let baseGoal = 2000; // 2L de base
+      // Calcul de base personnalisé selon le poids et l'âge
+      let baseGoal = 2000; // Valeur par défaut
+      
+      if (user.weight && user.age) {
+        // Formule: 35ml par kg de poids corporel + ajustement selon l'âge
+        baseGoal = user.weight * 35;
+        
+        // Ajustement selon l'âge (les personnes âgées ont besoin de plus d'hydratation)
+        if (user.age > 65) {
+          baseGoal += 300; // +300ml pour les seniors
+        } else if (user.age > 50) {
+          baseGoal += 200; // +200ml pour les 50-65 ans
+        }
+        
+        // Arrondir au supérieur à la centaine la plus proche
+        baseGoal = Math.ceil(baseGoal / 100) * 100;
+      }
       
       // Récupérer les entraînements du jour
       const dateString = selectedDate.toISOString().split('T')[0];
@@ -58,16 +74,31 @@ function NutritionScreen() {
           return workoutDate === dateString;
         });
 
-        // Ajouter 500ml par heure d'entraînement
+        // Ajouter 500ml par séance d'entraînement
         dayWorkouts.forEach((workout: any) => {
-          if (workout.duration) {
-            const hours = workout.duration / 60; // convertir minutes en heures
-            baseGoal += Math.round(hours * 500);
+          baseGoal += 500;
+          
+          // Ajouter 250ml supplémentaires si période chaude (été ou température élevée)
+          const currentMonth = new Date().getMonth(); // 0 = janvier, 11 = décembre
+          const isSummerPeriod = currentMonth >= 5 && currentMonth <= 8; // Juin à septembre
+          
+          if (isSummerPeriod) {
+            baseGoal += 250;
           }
+          
+          console.log(`Séance "${workout.name}" ajoutée: +${isSummerPeriod ? 750 : 500}ml`);
         });
+        
+        if (dayWorkouts.length > 0) {
+          console.log(`${dayWorkouts.length} séance(s) d'entraînement détectée(s) le ${dateString}`);
+        }
       }
 
-      return baseGoal;
+      // Arrondir au supérieur à la centaine la plus proche
+      const finalGoal = Math.ceil(baseGoal / 100) * 100;
+      console.log(`Objectif hydratation calculé: ${finalGoal}ml (base: ${Math.ceil((user.weight * 35) / 100) * 100}ml)`);
+      
+      return finalGoal;
     } catch (error) {
       console.error('Erreur calcul objectif hydratation:', error);
       return 2000;
