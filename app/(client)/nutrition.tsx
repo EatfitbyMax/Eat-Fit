@@ -59,8 +59,8 @@ function NutritionScreen() {
           baseGoal += 200; // +200ml pour les 50-65 ans
         }
         
-        // Arrondir au supérieur à la centaine la plus proche
-        baseGoal = Math.ceil(baseGoal / 100) * 100;
+        // Arrondir au supérieur au multiple de 250ml le plus proche
+        baseGoal = Math.ceil(baseGoal / 250) * 250;
       }
       
       // Récupérer les entraînements du jour
@@ -94,9 +94,10 @@ function NutritionScreen() {
         }
       }
 
-      // Arrondir au supérieur à la centaine la plus proche
-      const finalGoal = Math.ceil(baseGoal / 100) * 100;
-      console.log(`Objectif hydratation calculé: ${finalGoal}ml (base: ${Math.ceil((user.weight * 35) / 100) * 100}ml)`);
+      // Arrondir pour être réalisable avec les boutons disponibles (250ml, 500ml, 1000ml)
+      // L'objectif doit être un multiple de 250ml pour être atteignable facilement
+      const finalGoal = Math.ceil(baseGoal / 250) * 250;
+      console.log(`Objectif hydratation calculé: ${finalGoal}ml (base: ${Math.ceil((user.weight * 35) / 250) * 250}ml)`);
       
       return finalGoal;
     } catch (error) {
