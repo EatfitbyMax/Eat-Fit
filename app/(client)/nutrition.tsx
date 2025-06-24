@@ -124,8 +124,15 @@ function NutritionScreen() {
         });
 
         if (hasWorkoutToday) {
-          totalCalories += 150; // Ajouter 150 kcal si un entraînement est programmé
-          console.log('Entraînement détecté le', dateString, '- Ajout de 150 kcal');
+          // Ajouter 150 kcal pour le premier entraînement + 50 kcal par séance supplémentaire
+          const workoutCount = workouts.filter((workout: any) => {
+            const workoutDate = new Date(workout.date).toISOString().split('T')[0];
+            return workoutDate === dateString;
+          }).length;
+          
+          const bonusCalories = 150 + (workoutCount - 1) * 50;
+          totalCalories += bonusCalories;
+          console.log(`${workoutCount} entraînement(s) détecté(s) le ${dateString} - Ajout de ${bonusCalories} kcal`);
         }
       }
     } catch (error) {
