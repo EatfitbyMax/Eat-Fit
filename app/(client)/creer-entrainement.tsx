@@ -173,8 +173,6 @@ export default function CreerEntrainementScreen() {
     exercises: []
   });
 
-  const [isEditing, setIsEditing] = useState(false);
-
   const [showTypeModal, setShowTypeModal] = useState(false);
   const [showSpecificityModal, setShowSpecificityModal] = useState(false);
   const [showDifficultyModal, setShowDifficultyModal] = useState(false);
@@ -197,22 +195,7 @@ export default function CreerEntrainementScreen() {
 
   useEffect(() => {
     loadUserData();
-    checkEditMode();
   }, []);
-
-  const checkEditMode = () => {
-    const editWorkoutParam = params.editWorkout as string;
-    if (editWorkoutParam) {
-      try {
-        const workoutToEdit = JSON.parse(editWorkoutParam);
-        setWorkout(workoutToEdit);
-        setIsEditing(true);
-        console.log('Mode édition activé pour:', workoutToEdit.name);
-      } catch (error) {
-        console.error('Erreur parsing workout à éditer:', error);
-      }
-    }
-  };
 
   useEffect(() => {
     // Calculer les calories estimées basées sur le type et la durée
@@ -324,47 +307,32 @@ export default function CreerEntrainementScreen() {
 
       const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
       
+      const workoutToSave: Workout = {
+        ...workout,
+        id: Date.now().toString()
+      };
+
       // Récupérer les entraînements existants
       const existingWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
       const workouts = existingWorkouts ? JSON.parse(existingWorkouts) : [];
       
-      if (isEditing) {
-        // Mode édition : remplacer l'entraînement existant
-        const updatedWorkouts = workouts.map((w: Workout) => 
-          w.id === workout.id ? workout : w
-        );
-        await AsyncStorage.setItem(`workouts_${currentUser.id}`, JSON.stringify(updatedWorkouts));
-        
-        Alert.alert(
-          'Succès', 
-          'Entraînement modifié avec succès !',
-          [{ 
-            text: 'OK', 
-            onPress: () => {
-              router.replace('/(client)/entrainement?refresh=true');
-            }
-          }]
-        );
-      } else {
-        // Mode création : ajouter un nouvel entraînement
-        const workoutToSave: Workout = {
-          ...workout,
-          id: Date.now().toString()
-        };
-        workouts.push(workoutToSave);
-        await AsyncStorage.setItem(`workouts_${currentUser.id}`, JSON.stringify(workouts));
-        
-        Alert.alert(
-          'Succès', 
-          'Entraînement créé avec succès !',
-          [{ 
-            text: 'OK', 
-            onPress: () => {
-              router.replace('/(client)/entrainement?refresh=true');
-            }
-          }]
-        );
-      }
+      // Ajouter le nouvel entraînement
+      workouts.push(workoutToSave);
+      
+      // Sauvegarder
+      await AsyncStorage.setItem(`workouts_${currentUser.id}`, JSON.stringify(workouts));
+      
+      Alert.alert(
+        'Succès', 
+        'Entraînement créé avec succès !',
+        [{ 
+          text: 'OK', 
+          onPress: () => {
+            // Redirection avec paramètre pour forcer le rechargement
+            router.replace('/(client)/entrainement?refresh=true');
+          }
+        }]
+      );
     } catch (error) {
       console.error('Erreur sauvegarde entraînement:', error);
       Alert.alert('Erreur', 'Impossible de sauvegarder l\'entraînement');
@@ -805,9 +773,7 @@ export default function CreerEntrainementScreen() {
         <TouchableOpacity style={styles.backButton} onPress={() => router.push('/(client)/entrainement')}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>
-          {isEditing ? 'Modifier l\'entraînement' : 'Nouvel entraînement'}
-        </Text>
+        <Text style={styles.headerTitle}>Nouvel entraînement</Text>
         <View style={{ width: 32 }} />
       </View>
 
@@ -976,9 +942,7 @@ export default function CreerEntrainementScreen() {
       {/* Bouton de sauvegarde */}
       <View style={styles.footer}>
         <TouchableOpacity style={styles.saveWorkoutButton} onPress={handleSaveWorkout}>
-          <Text style={styles.saveWorkoutButtonText}>
-            {isEditing ? 'Modifier l\'entraînement' : 'Créer l\'entraînement'}
-          </Text>
+          <Text style={styles.saveWorkoutButtonText}>Créer l'entraînement</Text>
         </TouchableOpacity>
       </View>
 
