@@ -98,11 +98,22 @@ export default function EntrainementScreen() {
   const getWorkoutsCountForDay = (day: string) => {
     const { start } = getWeekRange();
     const dayIndex = daysOfWeek.indexOf(day);
-    const targetDate = new Date(start);
+    
+    // Créer une nouvelle date pour éviter les mutations
+    const targetDate = new Date(start.getTime());
     targetDate.setDate(start.getDate() + dayIndex);
+    targetDate.setHours(12, 0, 0, 0); // Définir à midi pour éviter les problèmes de timezone
+    
     const dateString = targetDate.toISOString().split('T')[0];
 
-    return workouts.filter(workout => workout.date === dateString).length;
+    const count = workouts.filter(workout => workout.date === dateString).length;
+    
+    // Debug uniquement si nécessaire
+    if (day === 'Mercredi' && count > 0) {
+      console.log(`DEBUG ${day}: date=${dateString}, count=${count}`);
+    }
+    
+    return count;
   };
 
   const loadStravaActivities = async () => {
@@ -210,12 +221,28 @@ export default function EntrainementScreen() {
   const handleDayPress = (jour: string) => {
     const { start } = getWeekRange();
     const dayIndex = daysOfWeek.indexOf(jour);
-    const targetDate = new Date(start);
+    
+    // Créer une nouvelle date pour éviter les mutations
+    const targetDate = new Date(start.getTime());
     targetDate.setDate(start.getDate() + dayIndex);
+    targetDate.setHours(12, 0, 0, 0); // Définir à midi pour éviter les problèmes de timezone
+    
     const dateString = targetDate.toISOString().split('T')[0];
+    
+    console.log(`=== CLIC SUR ${jour.toUpperCase()} ===`);
+    console.log(`Index du jour: ${dayIndex}`);
+    console.log(`Date de début de semaine: ${start.toISOString().split('T')[0]}`);
+    console.log(`Date calculée: ${dateString}`);
 
-    // Récupérer les entraînements du jour
-    const dayWorkouts = workouts.filter(workout => workout.date === dateString);
+    // Récupérer les entraînements du jour avec debug
+    const dayWorkouts = workouts.filter(workout => {
+      const match = workout.date === dateString;
+      console.log(`Workout "${workout.name}" (${workout.date}) - Match: ${match}`);
+      return match;
+    });
+    
+    console.log(`Entraînements trouvés pour ${dateString}: ${dayWorkouts.length}`);
+    console.log('=== FIN DEBUG CLIC ===');
 
     if (dayWorkouts.length > 0) {
       // S'il y a des entraînements, naviguer vers la gestion
