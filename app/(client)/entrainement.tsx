@@ -244,26 +244,15 @@ export default function EntrainementScreen() {
     console.log(`Entraînements trouvés pour ${dateString}: ${dayWorkouts.length}`);
     console.log('=== FIN DEBUG CLIC ===');
 
-    if (dayWorkouts.length > 0) {
-      // S'il y a des entraînements, naviguer vers la gestion
-      router.push({
-        pathname: '/(client)/gerer-entrainements',
-        params: {
-          selectedDay: jour,
-          selectedDate: dateString,
-          workouts: JSON.stringify(dayWorkouts)
-        }
-      });
-    } else {
-      // S'il n'y en a pas, créer un nouvel entraînement
-      router.push({
-        pathname: '/(client)/creer-entrainement',
-        params: {
-          selectedDay: jour,
-          selectedDate: dateString
-        }
-      });
-    }
+    // Toujours naviguer vers la page de gestion des entraînements
+    // Elle gèrera l'affichage des séances existantes ou l'état vide
+    router.push({
+      pathname: '/(client)/gerer-entrainements',
+      params: {
+        selectedDay: jour,
+        selectedDate: dateString
+      }
+    });
   };
 
   const getActivityIcon = (type: string) => {
