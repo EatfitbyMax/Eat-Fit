@@ -205,16 +205,16 @@ const AppointmentModal = ({ visible, onClose, coachInfo, currentUser, onAppointm
       // Charger les rendez-vous existants du client
       const existingAppointments = await AsyncStorage.getItem(`appointments-${currentUser.id}`);
       const appointments = existingAppointments ? JSON.parse(existingAppointments) : [];
-      
+
       // Ajouter le nouveau rendez-vous
       appointments.push(appointment);
-      
+
       // Sauvegarder dans AsyncStorage
       await AsyncStorage.setItem(`appointments-${currentUser.id}`, JSON.stringify(appointments));
-      
+
       // Mettre à jour l'état local via le callback
       onAppointmentBooked(appointment);
-      
+
       Alert.alert(
         'Rendez-vous demandé',
         `Votre demande de rendez-vous pour le ${formatDate(selectedDate)} à ${selectedTime} a été envoyée au coach. Vous recevrez une confirmation prochainement.`,
@@ -475,7 +475,7 @@ export default function CoachScreen() {
   useEffect(() => {
     if (currentUser && isPremium) {
       loadAppointments();
-      
+
       // Recharger les rendez-vous toutes les 10 secondes quand l'onglet RDV est actif
       const interval = setInterval(() => {
         if (activeTab === 'appointments') {
@@ -1831,6 +1831,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     flex: 1,
     marginRight: 12,
+    width: '70%',
   },
   appointmentItemType: {
     color: '#F5A623',
