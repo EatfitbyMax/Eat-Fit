@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, TextInput, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, TextInput, FlatList, KeyboardAvoidingView, Platform, Modal, Alert } from 'react-native';
 import { getMessages, saveMessages, PersistentStorage } from '../../utils/storage';
 import { getCurrentUser } from '../../utils/auth';
+import { checkSubscriptionStatus } from '../../utils/subscription';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PanGestureHandler, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
@@ -31,6 +32,8 @@ export default function CoachScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isPremium, setIsPremium] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [coachInfo, setCoachInfo] = useState<CoachInfo>({
     prenom: 'Maxime',
     nom: 'Renard',
@@ -47,12 +50,18 @@ export default function CoachScreen() {
   useEffect(() => {
     if (currentUser) {
       loadMessages();
+      checkPremiumStatus();
     }
   }, [currentUser]);
 
   const initUser = async () => {
     const user = await getCurrentUser();
     setCurrentUser(user);
+  };
+
+  const checkPremiumStatus = async () => {
+    const premium = await checkSubscriptionStatus();
+    setIsPremium(premium);
   };
 
   const loadCoachInfo = async () => {
@@ -90,6 +99,11 @@ export default function CoachScreen() {
   };
 
   const sendMessage = async () => {
+    if (!isPremium) {
+      setShowSubscriptionModal(true);
+      return;
+    }
+
     if (messageText.trim() && currentUser?.id) {
       const newMessage: Message = {
         id: Date.now().toString(),
@@ -108,6 +122,15 @@ export default function CoachScreen() {
         console.error('Erreur sauvegarde messages:', error);
       }
     }
+  };
+
+  const handleSubscribe = (plan: string) => {
+    setShowSubscriptionModal(false);
+    Alert.alert(
+      'Abonnement ' + plan,
+      `Vous avez choisi l'abonnement ${plan}. Fonctionnalité d'abonnement en cours de développement.`,
+      [{ text: 'OK' }]
+    );
   };
 
   const SwipeableMessage = ({ message }: { message: Message }) => {
@@ -216,7 +239,20 @@ export default function CoachScreen() {
             </View>
 
             <View style={styles.coachActions}>
-              <TouchableOpacity style={styles.appointmentButton}>
+              <TouchableOpacity 
+                style={styles.appointmentButton}
+                onPress={() => {
+                  if (!isPremium) {
+                    setShowSubscriptionModal(true);
+                  } else {
+                    Alert.alert(
+                      'Rendez-vous',
+                      'Fonctionnalité de prise de rendez-vous en cours de développement.',
+                      [{ text: 'OK' }]
+                    );
+                  }
+                }}
+              >
                 <Text style={styles.appointmentButtonText}>📅 Prendre rendez-vous avec le coach</Text>
               </TouchableOpacity>
             </View>
@@ -232,7 +268,7 @@ export default function CoachScreen() {
             </View>
 
             <FlatList
-              data={messages}
+              data={isPremium ? messages : []}
               renderItem={renderMessage}
               keyExtractor={(item) => item.id}
               style={styles.messagesList}
@@ -242,12 +278,31 @@ export default function CoachScreen() {
               keyboardShouldPersistTaps="handled"
               ListEmptyComponent={
                 <View style={styles.emptyMessages}>
-                  <Text style={styles.emptyMessagesText}>
-                    Aucun message avec votre coach.
-                  </Text>
-                  <Text style={styles.emptyMessagesSubtext}>
-                    Envoyez un message pour commencer !
-                  </Text>
+                  {isPremium ? (
+                    <>
+                      <Text style={styles.emptyMessagesText}>
+                        Aucun message avec votre coach.
+                      </Text>
+                      <Text style={styles.emptyMessagesSubtext}>
+                        Envoyez un message pour commencer !
+                      </Text>
+                    </>
+                  ) : (
+                    <>
+                      <Text style={styles.emptyMessagesText}>
+                        🔒 Messagerie Premium
+                      </Text>
+                      <Text style={styles.emptyMessagesSubtext}>
+                        Communiquez directement avec votre coach personnel avec un abonnement Premium.
+                      </Text>
+                      <TouchableOpacity 
+                        style={styles.upgradeButton}
+                        onPress={() => setShowSubscriptionModal(true)}
+                      >
+                        <Text style={styles.upgradeButtonText}>Découvrir nos offres</Text>
+                      </TouchableOpacity>
+                    </>
+                  )}
                 </View>
               }
             />
@@ -255,19 +310,20 @@ export default function CoachScreen() {
             {/* Zone de saisie intégrée */}
             <View style={styles.integratedMessageInput}>
               <TextInput
-                style={styles.messageInput}
-                placeholder="Tapez votre message..."
+                style={[styles.messageInput, !isPremium && styles.messageInputDisabled]}
+                placeholder={isPremium ? "Tapez votre message..." : "Abonnement Premium requis pour envoyer des messages"}
                 placeholderTextColor="#8B949E"
                 value={messageText}
                 onChangeText={setMessageText}
                 multiline
                 maxLength={500}
                 textAlignVertical="top"
+                editable={isPremium}
               />
               <TouchableOpacity 
-                style={[styles.sendButton, !messageText.trim() && styles.sendButtonDisabled]}
+                style={[styles.sendButton, (!messageText.trim() || !isPremium) && styles.sendButtonDisabled]}
                 onPress={sendMessage}
-                disabled={!messageText.trim()}
+                disabled={!messageText.trim() || !isPremium}
               >
                 <Text style={styles.sendButtonText}>➤</Text>
               </TouchableOpacity>
@@ -275,6 +331,81 @@ export default function CoachScreen() {
           </View>
         </View>
         </KeyboardAvoidingView>
+
+        {/* Modal d'abonnement */}
+        <Modal
+          visible={showSubscriptionModal}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowSubscriptionModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.subscriptionModal}>
+              <Text style={styles.modalTitle}>Choisissez votre abonnement</Text>
+              <Text style={styles.modalSubtitle}>
+                Accédez à tous les services de coaching personnalisé
+              </Text>
+
+              {/* Plan Bronze */}
+              <TouchableOpacity 
+                style={[styles.subscriptionPlan, styles.bronzePlan]}
+                onPress={() => handleSubscribe('Bronze')}
+              >
+                <View style={styles.planHeader}>
+                  <Text style={styles.planName}>🥉 BRONZE</Text>
+                  <Text style={styles.planPrice}>19,99€/mois</Text>
+                </View>
+                <View style={styles.planFeatures}>
+                  <Text style={styles.planFeature}>✓ Messagerie avec le coach</Text>
+                  <Text style={styles.planFeature}>✓ 1 programme nutrition de base</Text>
+                  <Text style={styles.planFeature}>✓ Suivi hebdomadaire</Text>
+                </View>
+              </TouchableOpacity>
+
+              {/* Plan Argent */}
+              <TouchableOpacity 
+                style={[styles.subscriptionPlan, styles.silverPlan]}
+                onPress={() => handleSubscribe('Argent')}
+              >
+                <View style={styles.planHeader}>
+                  <Text style={styles.planName}>🥈 ARGENT</Text>
+                  <Text style={styles.planPrice}>39,99€/mois</Text>
+                </View>
+                <View style={styles.planFeatures}>
+                  <Text style={styles.planFeature}>✓ Tout du plan Bronze</Text>
+                  <Text style={styles.planFeature}>✓ Programmes nutrition personnalisés</Text>
+                  <Text style={styles.planFeature}>✓ Programmes d'entraînement</Text>
+                  <Text style={styles.planFeature}>✓ Rendez-vous vidéo (2/mois)</Text>
+                </View>
+              </TouchableOpacity>
+
+              {/* Plan Or */}
+              <TouchableOpacity 
+                style={[styles.subscriptionPlan, styles.goldPlan]}
+                onPress={() => handleSubscribe('Or')}
+              >
+                <View style={styles.planHeader}>
+                  <Text style={styles.planName}>🥇 OR</Text>
+                  <Text style={styles.planPrice}>69,99€/mois</Text>
+                </View>
+                <View style={styles.planFeatures}>
+                  <Text style={styles.planFeature}>✓ Tout du plan Argent</Text>
+                  <Text style={styles.planFeature}>✓ Coaching 24h/24 7j/7</Text>
+                  <Text style={styles.planFeature}>✓ Programmes ultra-personnalisés</Text>
+                  <Text style={styles.planFeature}>✓ Rendez-vous vidéo illimités</Text>
+                  <Text style={styles.planFeature}>✓ Suivi en temps réel</Text>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.closeModalButton}
+                onPress={() => setShowSubscriptionModal(false)}
+              >
+                <Text style={styles.closeModalButtonText}>Peut-être plus tard</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
     </GestureHandlerRootView>
   );
@@ -686,5 +817,106 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: '#000000',
     fontWeight: 'bold',
+  },
+  messageInputDisabled: {
+    backgroundColor: '#21262D',
+    opacity: 0.6,
+  },
+  upgradeButton: {
+    backgroundColor: '#F5A623',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    marginTop: 16,
+  },
+  upgradeButtonText: {
+    color: '#000000',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  subscriptionModal: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 16,
+    color: '#8B949E',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  subscriptionPlan: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 2,
+  },
+  bronzePlan: {
+    backgroundColor: '#2D1810',
+    borderColor: '#CD7F32',
+  },
+  silverPlan: {
+    backgroundColor: '#1A1A1A',
+    borderColor: '#C0C0C0',
+  },
+  goldPlan: {
+    backgroundColor: '#2D2416',
+    borderColor: '#FFD700',
+  },
+  planHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  planName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  planPrice: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#F5A623',
+  },
+  planFeatures: {
+    gap: 6,
+  },
+  planFeature: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    lineHeight: 20,
+  },
+  closeModalButton: {
+    backgroundColor: '#21262D',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  closeModalButtonText: {
+    color: '#8B949E',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
