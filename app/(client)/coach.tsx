@@ -28,6 +28,322 @@ interface CoachInfo {
   disponibilites: string;
 }
 
+interface Appointment {
+  id: string;
+  date: string;
+  time: string;
+  duration: number;
+  type: 'consultation' | 'suivi' | 'urgence';
+  clientId: string;
+  coachId: string;
+  status: 'pending' | 'confirmed' | 'cancelled';
+  notes?: string;
+}
+
+// Composant modal de prise de rendez-vous
+const AppointmentModal = ({ visible, onClose, coachInfo, currentUser }: {
+  visible: boolean;
+  onClose: () => void;
+  coachInfo: CoachInfo;
+  currentUser: any;
+}) => {
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedTime, setSelectedTime] = useState<string>('');
+  const [appointmentType, setAppointmentType] = useState<'consultation' | 'suivi' | 'urgence'>('consultation');
+  const [notes, setNotes] = useState<string>('');
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [currentWeek, setCurrentWeek] = useState<Date>(new Date());
+
+  useEffect(() => {
+    if (visible) {
+      generateAvailableSlots();
+    }
+  }, [visible, selectedDate]);
+
+  const generateAvailableSlots = () => {
+    // Générer des créneaux horaires disponibles
+    const slots = [];
+    const start = 8; // 8h
+    const end = 18; // 18h
+    
+    for (let hour = start; hour < end; hour++) {
+      slots.push(`${hour}:00`);
+      slots.push(`${hour}:30`);
+    }
+    
+    setAvailableSlots(slots);
+  };
+
+  const getDaysOfWeek = () => {
+    const startOfWeek = new Date(currentWeek);
+    const day = startOfWeek.getDay();
+    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1); // Lundi
+    startOfWeek.setDate(diff);
+
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(startOfWeek);
+      date.setDate(startOfWeek.getDate() + i);
+      days.push(date);
+    }
+    return days;
+  };
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit'
+    });
+  };
+
+  const getDayName = (date: Date) => {
+    return date.toLocaleDateString('fr-FR', { weekday: 'short' });
+  };
+
+  const isToday = (date: Date) => {
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
+  };
+
+  const isSameDate = (date1: Date, date2: Date) => {
+    return date1.toDateString() === date2.toDateString();
+  };
+
+  const nextWeek = () => {
+    const newWeek = new Date(currentWeek);
+    newWeek.setDate(newWeek.getDate() + 7);
+    setCurrentWeek(newWeek);
+  };
+
+  const previousWeek = () => {
+    const newWeek = new Date(currentWeek);
+    newWeek.setDate(newWeek.getDate() - 7);
+    setCurrentWeek(newWeek);
+  };
+
+  const bookAppointment = async () => {
+    if (!selectedTime || !currentUser) {
+      Alert.alert('Erreur', 'Veuillez sélectionner une date et une heure');
+      return;
+    }
+
+    const appointment: Appointment = {
+      id: Date.now().toString(),
+      date: selectedDate.toISOString().split('T')[0],
+      time: selectedTime,
+      duration: appointmentType === 'urgence' ? 30 : 60,
+      type: appointmentType,
+      clientId: currentUser.id,
+      coachId: 'coach-id',
+      status: 'pending',
+      notes: notes
+    };
+
+    try {
+      // Sauvegarder le rendez-vous (ici vous pouvez implémenter la logique de sauvegarde)
+      Alert.alert(
+        'Rendez-vous demandé',
+        `Votre demande de rendez-vous pour le ${formatDate(selectedDate)} à ${selectedTime} a été envoyée au coach. Vous recevrez une confirmation prochainement.`,
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              onClose();
+              setSelectedTime('');
+              setNotes('');
+            }
+          }
+        ]
+      );
+    } catch (error) {
+      Alert.alert('Erreur', 'Impossible de réserver le rendez-vous');
+    }
+  };
+
+  return (
+    <Modal
+      visible={visible}
+      transparent={true}
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.appointmentModal}>
+          <ScrollView showsVerticalScrollIndicator={false}>
+            {/* Header */}
+            <View style={styles.appointmentHeader}>
+              <Text style={styles.appointmentTitle}>Prendre rendez-vous</Text>
+              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.appointmentSubtitle}>
+              Avec {coachInfo.prenom} {coachInfo.nom}
+            </Text>
+
+            {/* Type de rendez-vous */}
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionTitle}>Type de consultation</Text>
+              <View style={styles.typeContainer}>
+                <TouchableOpacity
+                  style={[styles.typeButton, appointmentType === 'consultation' && styles.typeButtonActive]}
+                  onPress={() => setAppointmentType('consultation')}
+                >
+                  <Text style={[styles.typeButtonText, appointmentType === 'consultation' && styles.typeButtonTextActive]}>
+                    🎯 Consultation (60min)
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.typeButton, appointmentType === 'suivi' && styles.typeButtonActive]}
+                  onPress={() => setAppointmentType('suivi')}
+                >
+                  <Text style={[styles.typeButtonText, appointmentType === 'suivi' && styles.typeButtonTextActive]}>
+                    📊 Suivi (60min)
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.typeButton, appointmentType === 'urgence' && styles.typeButtonActive]}
+                  onPress={() => setAppointmentType('urgence')}
+                >
+                  <Text style={[styles.typeButtonText, appointmentType === 'urgence' && styles.typeButtonTextActive]}>
+                    ⚡ Urgence (30min)
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Calendrier */}
+            <View style={styles.sectionContainer}>
+              <View style={styles.calendarHeader}>
+                <TouchableOpacity onPress={previousWeek} style={styles.weekNavButton}>
+                  <Text style={styles.weekNavText}>‹</Text>
+                </TouchableOpacity>
+                <Text style={styles.sectionTitle}>
+                  {currentWeek.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+                </Text>
+                <TouchableOpacity onPress={nextWeek} style={styles.weekNavButton}>
+                  <Text style={styles.weekNavText}>›</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.weekContainer}>
+                {getDaysOfWeek().map((date, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.dayButton,
+                      isSameDate(date, selectedDate) && styles.dayButtonSelected,
+                      isToday(date) && styles.dayButtonToday
+                    ]}
+                    onPress={() => setSelectedDate(date)}
+                  >
+                    <Text style={[
+                      styles.dayButtonTextDay,
+                      isSameDate(date, selectedDate) && styles.dayButtonTextSelected
+                    ]}>
+                      {getDayName(date)}
+                    </Text>
+                    <Text style={[
+                      styles.dayButtonTextDate,
+                      isSameDate(date, selectedDate) && styles.dayButtonTextSelected
+                    ]}>
+                      {formatDate(date)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Créneaux horaires */}
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionTitle}>Créneaux disponibles</Text>
+              <View style={styles.slotsContainer}>
+                {availableSlots.map((slot, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.slotButton,
+                      selectedTime === slot && styles.slotButtonSelected
+                    ]}
+                    onPress={() => setSelectedTime(slot)}
+                  >
+                    <Text style={[
+                      styles.slotButtonText,
+                      selectedTime === slot && styles.slotButtonTextSelected
+                    ]}>
+                      {slot}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Notes */}
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionTitle}>Notes (optionnel)</Text>
+              <TextInput
+                style={styles.notesInput}
+                placeholder="Décrivez brièvement l'objet de votre rendez-vous..."
+                placeholderTextColor="#8B949E"
+                value={notes}
+                onChangeText={setNotes}
+                multiline
+                numberOfLines={3}
+                maxLength={200}
+              />
+            </View>
+
+            {/* Récapitulatif */}
+            {selectedTime && (
+              <View style={styles.summaryContainer}>
+                <Text style={styles.summaryTitle}>Récapitulatif</Text>
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Date:</Text>
+                  <Text style={styles.summaryValue}>
+                    {selectedDate.toLocaleDateString('fr-FR', {
+                      weekday: 'long',
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
+                    })}
+                  </Text>
+                </View>
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Heure:</Text>
+                  <Text style={styles.summaryValue}>{selectedTime}</Text>
+                </View>
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Type:</Text>
+                  <Text style={styles.summaryValue}>
+                    {appointmentType === 'consultation' ? 'Consultation (60min)' :
+                     appointmentType === 'suivi' ? 'Suivi (60min)' : 'Urgence (30min)'}
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            {/* Boutons */}
+            <View style={styles.appointmentButtons}>
+              <TouchableOpacity
+                style={[styles.bookButton, !selectedTime && styles.bookButtonDisabled]}
+                onPress={bookAppointment}
+                disabled={!selectedTime}
+              >
+                <Text style={styles.bookButtonText}>Confirmer le rendez-vous</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.cancelAppointmentButton} onPress={onClose}>
+                <Text style={styles.cancelAppointmentButtonText}>Annuler</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
 export default function CoachScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
@@ -412,28 +728,12 @@ export default function CoachScreen() {
         </Modal>
 
         {/* Modal de prise de rendez-vous */}
-        <Modal
+        <AppointmentModal 
           visible={showAppointmentModal}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={() => setShowAppointmentModal(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.subscriptionModal}>
-              <Text style={styles.modalTitle}>Prise de Rendez-vous</Text>
-              <Text style={styles.modalSubtitle}>
-                Choisissez la date et l'heure de votre rendez-vous avec votre coach
-              </Text>
-
-              <TouchableOpacity
-                style={styles.closeModalButton}
-                onPress={() => setShowAppointmentModal(false)}
-              >
-                <Text style={styles.closeModalButtonText}>Fermer</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
+          onClose={() => setShowAppointmentModal(false)}
+          coachInfo={coachInfo}
+          currentUser={currentUser}
+        />
       </SafeAreaView>
     </GestureHandlerRootView>
   );
@@ -953,6 +1253,229 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 24,
     marginTop: 40,
+  },
+  // Styles pour le modal de rendez-vous
+  appointmentModal: {
+    backgroundColor: '#161B22',
+    borderRadius: 20,
+    margin: 20,
+    maxHeight: '90%',
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  appointmentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#21262D',
+  },
+  appointmentTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  appointmentSubtitle: {
+    fontSize: 16,
+    color: '#8B949E',
+    textAlign: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  closeButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#21262D',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeButtonText: {
+    color: '#8B949E',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  sectionContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 12,
+  },
+  typeContainer: {
+    gap: 8,
+  },
+  typeButton: {
+    backgroundColor: '#21262D',
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  typeButtonActive: {
+    backgroundColor: '#F5A623',
+    borderColor: '#F5A623',
+  },
+  typeButtonText: {
+    color: '#8B949E',
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  typeButtonTextActive: {
+    color: '#000000',
+    fontWeight: 'bold',
+  },
+  calendarHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  weekNavButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#21262D',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  weekNavText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  weekContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 4,
+  },
+  dayButton: {
+    flex: 1,
+    backgroundColor: '#21262D',
+    borderRadius: 8,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  dayButtonSelected: {
+    backgroundColor: '#F5A623',
+    borderColor: '#F5A623',
+  },
+  dayButtonToday: {
+    borderColor: '#F5A623',
+  },
+  dayButtonTextDay: {
+    color: '#8B949E',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  dayButtonTextDate: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginTop: 2,
+  },
+  dayButtonTextSelected: {
+    color: '#000000',
+  },
+  slotsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  slotButton: {
+    backgroundColor: '#21262D',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  slotButtonSelected: {
+    backgroundColor: '#F5A623',
+    borderColor: '#F5A623',
+  },
+  slotButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  slotButtonTextSelected: {
+    color: '#000000',
+    fontWeight: 'bold',
+  },
+  notesInput: {
+    backgroundColor: '#21262D',
+    borderRadius: 8,
+    padding: 12,
+    color: '#FFFFFF',
+    fontSize: 14,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    textAlignVertical: 'top',
+  },
+  summaryContainer: {
+    marginHorizontal: 20,
+    backgroundColor: '#21262D',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+  },
+  summaryTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 12,
+  },
+  summaryItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  summaryLabel: {
+    color: '#8B949E',
+    fontSize: 14,
+  },
+  summaryValue: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  appointmentButtons: {
+    padding: 20,
+    gap: 12,
+  },
+  bookButton: {
+    backgroundColor: '#F5A623',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  bookButtonDisabled: {
+    backgroundColor: '#21262D',
+    opacity: 0.5,
+  },
+  bookButtonText: {
+    color: '#000000',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  cancelAppointmentButton: {
+    backgroundColor: '#21262D',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  cancelAppointmentButtonText: {
+    color: '#8B949E',
+    fontSize: 16,
+    fontWeight: '500',
   },
   premiumIcon: {
     width: 80,
