@@ -106,7 +106,12 @@ export default function RdvScreen() {
   const updateAppointmentStatus = async (appointmentId: string, newStatus: 'confirmed' | 'cancelled' | 'completed', newNotes?: string) => {
     try {
       const appointment = appointments.find(apt => apt.id === appointmentId);
-      if (!appointment) return;
+      if (!appointment) {
+        console.error('Rendez-vous non trouvé:', appointmentId);
+        return;
+      }
+
+      console.log(`Mise à jour RDV ${appointmentId} vers statut ${newStatus} pour client ${appointment.clientId}`);
 
       // Mettre à jour dans AsyncStorage du client
       const clientAppointments = await AsyncStorage.getItem(`appointments-${appointment.clientId}`);
@@ -114,20 +119,42 @@ export default function RdvScreen() {
         const parsed = JSON.parse(clientAppointments);
         const updatedAppointments = parsed.map((apt: Appointment) => 
           apt.id === appointmentId 
-            ? { ...apt, status: newStatus, notes: newNotes || apt.notes }
+            ? { 
+                ...apt, 
+                status: newStatus, 
+                notes: newNotes || apt.notes,
+                updatedAt: new Date().toISOString()
+              }
             : apt
         );
+        
         await AsyncStorage.setItem(`appointments-${appointment.clientId}`, JSON.stringify(updatedAppointments));
+        console.log('Rendez-vous mis à jour dans AsyncStorage du client');
+      } else {
+        console.error('Aucun rendez-vous trouvé pour le client:', appointment.clientId);
       }
 
-      // Mettre à jour l'état local
+      // Mettre à jour l'état local côté coach
       setAppointments(prev => prev.map(apt => 
         apt.id === appointmentId 
-          ? { ...apt, status: newStatus, notes: newNotes || apt.notes }
+          ? { 
+              ...apt, 
+              status: newStatus, 
+              notes: newNotes || apt.notes,
+              updatedAt: new Date().toISOString()
+            }
           : apt
       ));
 
-      Alert.alert('Succès', `Rendez-vous ${newStatus === 'confirmed' ? 'confirmé' : newStatus === 'cancelled' ? 'annulé' : 'marqué comme terminé'}`);
+      const statusMessage = newStatus === 'confirmed' ? 'confirmé' : 
+                           newStatus === 'cancelled' ? 'annulé' : 'marqué comme terminé';
+      Alert.alert('Succès', `Rendez-vous ${statusMessage}`);
+      
+      // Recharger les données pour s'assurer de la cohérence
+      setTimeout(() => {
+        loadData();
+      }, 1000);
+      
     } catch (error) {
       console.error('Erreur mise à jour RDV:', error);
       Alert.alert('Erreur', 'Impossible de mettre à jour le rendez-vous');

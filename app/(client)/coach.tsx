@@ -471,6 +471,22 @@ export default function CoachScreen() {
     }
   }, [currentUser]);
 
+  // Rechargement périodique des rendez-vous pour détecter les changements de statut
+  useEffect(() => {
+    if (currentUser && isPremium) {
+      loadAppointments();
+      
+      // Recharger les rendez-vous toutes les 10 secondes quand l'onglet RDV est actif
+      const interval = setInterval(() => {
+        if (activeTab === 'appointments') {
+          loadAppointments();
+        }
+      }, 10000);
+
+      return () => clearInterval(interval);
+    }
+  }, [currentUser, isPremium, activeTab]);
+
   const initUser = async () => {
     const user = await getCurrentUser();
     setCurrentUser(user);
@@ -633,7 +649,11 @@ export default function CoachScreen() {
       // Charger les rendez-vous depuis AsyncStorage
       const appointmentsData = await AsyncStorage.getItem(`appointments-${currentUser.id}`);
       if (appointmentsData) {
-        setAppointments(JSON.parse(appointmentsData));
+        const parsedAppointments = JSON.parse(appointmentsData);
+        setAppointments(parsedAppointments);
+        console.log(`Rendez-vous chargés pour ${currentUser.id}:`, parsedAppointments);
+      } else {
+        setAppointments([]);
       }
     } catch (error) {
       console.error('Erreur chargement rendez-vous:', error);
@@ -652,13 +672,67 @@ export default function CoachScreen() {
     }
   };
 
-  const renderAppointmentItem = ({ item }: { item: Appointment }) => (
-    <View style={styles.appointmentItem}>
-      <Text style={styles.appointmentItemText}>
-        {item.date} - {item.time} ({item.type})
-      </Text>
-    </View>
-  );
+  const renderAppointmentItem = ({ item }: { item: Appointment }) => {
+    const getStatusColor = (status: string) => {
+      switch (status) {
+        case 'pending': return '#F5A623';
+        case 'confirmed': return '#00D26A';
+        case 'cancelled': return '#DA3633';
+        case 'completed': return '#8B949E';
+        default: return '#8B949E';
+      }
+    };
+
+    const getStatusText = (status: string) => {
+      switch (status) {
+        case 'pending': return 'En attente';
+        case 'confirmed': return 'Confirmé';
+        case 'cancelled': return 'Annulé';
+        case 'completed': return 'Terminé';
+        default: return status;
+      }
+    };
+
+    const getTypeText = (type: string) => {
+      switch (type) {
+        case 'consultation': return 'Consultation';
+        case 'suivi': return 'Suivi';
+        case 'urgence': return 'Urgence';
+        default: return type;
+      }
+    };
+
+    const formatDate = (dateString: string) => {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('fr-FR', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    };
+
+    return (
+      <View style={styles.appointmentItem}>
+        <View style={styles.appointmentItemHeader}>
+          <Text style={styles.appointmentItemDate}>
+            {formatDate(item.date)} à {item.time}
+          </Text>
+          <View style={[styles.appointmentStatusBadge, { backgroundColor: getStatusColor(item.status) }]}>
+            <Text style={styles.appointmentStatusText}>{getStatusText(item.status)}</Text>
+          </View>
+        </View>
+        <Text style={styles.appointmentItemType}>
+          {getTypeText(item.type)} • {item.duration}min
+        </Text>
+        {item.notes && (
+          <Text style={styles.appointmentItemNotes}>
+            💬 {item.notes}
+          </Text>
+        )}
+      </View>
+    );
+  };
 
   return (
     <GestureHandlerRootView style={styles.container}>
@@ -741,7 +815,11 @@ export default function CoachScreen() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.tab, activeTab === 'appointments' && styles.activeTab]}
-                  onPress={() => setActiveTab('appointments')}
+                  onPress={() => {
+                    setActiveTab('appointments');
+                    // Recharger immédiatement les rendez-vous quand on clique sur l'onglet
+                    loadAppointments();
+                  }}
                 >
                   <Text style={[styles.tabText, activeTab === 'appointments' && styles.activeTabText]}>
                     📅 Mes RDV ({appointments.length})
@@ -1735,12 +1813,45 @@ const styles = StyleSheet.create({
   },
   appointmentItem: {
     backgroundColor: '#21262D',
-    padding: 12,
-    borderRadius: 8,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#30363D',
+  },
+  appointmentItemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: 8,
   },
-  appointmentItemText: {
+  appointmentItemDate: {
     color: '#FFFFFF',
     fontSize: 14,
+    fontWeight: 'bold',
+    flex: 1,
+    marginRight: 12,
+  },
+  appointmentItemType: {
+    color: '#F5A623',
+    fontSize: 12,
+    fontWeight: '500',
+    marginBottom: 8,
+  },
+  appointmentItemNotes: {
+    color: '#8B949E',
+    fontSize: 12,
+    fontStyle: 'italic',
+    lineHeight: 16,
+  },
+  appointmentStatusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  appointmentStatusText: {
+    fontSize: 10,
+    color: '#000000',
+    fontWeight: '600',
   },
 });
