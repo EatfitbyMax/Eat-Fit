@@ -107,7 +107,6 @@ export default function ClientLayout() {
           tabBarIcon: ({ color, focused }) => (
             <IconSymbol size={28} name={focused ? 'crown.fill' : 'crown'} color={color} />
           ),
-          href: hasSubscription ? undefined : null, // Cache cette page si pas d'abonnement
         }}
       />
       <Tabs.Screen
