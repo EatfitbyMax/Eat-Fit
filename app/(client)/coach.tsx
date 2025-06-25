@@ -1501,15 +1501,19 @@ const styles = StyleSheet.create({
   slotsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 6,
   },
   slotButton: {
     backgroundColor: '#21262D',
     borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
     borderWidth: 1,
     borderColor: '#21262D',
+    flex: 1,
+    minWidth: '18%',
+    maxWidth: '19%',
+    alignItems: 'center',
   },
   slotButtonSelected: {
     backgroundColor: '#F5A623',
@@ -1517,12 +1521,14 @@ const styles = StyleSheet.create({
   },
   slotButtonText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
+    textAlign: 'center',
   },
   slotButtonTextSelected: {
     color: '#000000',
     fontWeight: 'bold',
+    textAlign: 'center',
   },
   notesInput: {
     backgroundColor: '#21262D',
