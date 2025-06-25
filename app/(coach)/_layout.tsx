@@ -39,6 +39,13 @@ export default function CoachTabLayout() {
         }}
       />
       <Tabs.Screen
+        name="rdv"
+        options={{
+          title: 'RDV',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="calendar" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="profil"
         options={{
           title: 'Profil',
