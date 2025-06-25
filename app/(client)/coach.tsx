@@ -42,11 +42,12 @@ interface Appointment {
 }
 
 // Composant modal de prise de rendez-vous
-const AppointmentModal = ({ visible, onClose, coachInfo, currentUser }: {
+const AppointmentModal = ({ visible, onClose, coachInfo, currentUser, onAppointmentBooked }: {
   visible: boolean;
   onClose: () => void;
   coachInfo: CoachInfo;
   currentUser: any;
+  onAppointmentBooked: (appointment: Appointment) => void;
 }) => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTime, setSelectedTime] = useState<string>('');
@@ -211,8 +212,8 @@ const AppointmentModal = ({ visible, onClose, coachInfo, currentUser }: {
       // Sauvegarder dans AsyncStorage
       await AsyncStorage.setItem(`appointments-${currentUser.id}`, JSON.stringify(appointments));
       
-      // Mettre à jour l'état local
-      setAppointments(appointments);
+      // Mettre à jour l'état local via le callback
+      onAppointmentBooked(appointment);
       
       Alert.alert(
         'Rendez-vous demandé',
@@ -916,6 +917,9 @@ export default function CoachScreen() {
           onClose={() => setShowAppointmentModal(false)}
           coachInfo={coachInfo}
           currentUser={currentUser}
+          onAppointmentBooked={(appointment) => {
+            setAppointments(prev => [...prev, appointment]);
+          }}
         />
       </SafeAreaView>
     </GestureHandlerRootView>
