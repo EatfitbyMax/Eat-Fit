@@ -1501,19 +1501,21 @@ const styles = StyleSheet.create({
   slotsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    justifyContent: 'space-between',
     gap: 8,
   },
   slotButton: {
     backgroundColor: '#21262D',
     borderRadius: 8,
     paddingVertical: 12,
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     borderWidth: 1,
     borderColor: '#21262D',
     width: '22%',
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 45,
+    minHeight: 50,
+    alignSelf: 'stretch',
   },
   slotButtonSelected: {
     backgroundColor: '#F5A623',
@@ -1521,9 +1523,10 @@ const styles = StyleSheet.create({
   },
   slotButtonText: {
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 13,
+    fontWeight: '600',
     textAlign: 'center',
+    lineHeight: 18,
   },
   slotButtonTextSelected: {
     color: '#000000',
