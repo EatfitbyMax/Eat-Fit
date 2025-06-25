@@ -60,15 +60,69 @@ const AppointmentModal = ({ visible, onClose, coachInfo, currentUser }: {
     }
   }, [visible, selectedDate]);
 
+  const parseCoachAvailability = (availabilityString: string) => {
+    // Parse une chaîne comme "Lun-Ven, 8h-18h / Sam, 9h-12h"
+    const availability: { [key: string]: { start: number; end: number } } = {};
+    
+    try {
+      const parts = availabilityString.split('/').map(part => part.trim());
+      
+      for (const part of parts) {
+        const [days, hours] = part.split(',').map(s => s.trim());
+        const [startHour, endHour] = hours.replace(/h/g, '').split('-').map(h => parseInt(h.trim()));
+        
+        if (days.includes('-')) {
+          // Plage de jours comme "Lun-Ven"
+          const dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+          const [startDay, endDay] = days.split('-').map(d => d.trim());
+          const startIndex = dayNames.indexOf(startDay);
+          const endIndex = dayNames.indexOf(endDay);
+          
+          if (startIndex !== -1 && endIndex !== -1) {
+            for (let i = startIndex; i <= endIndex; i++) {
+              availability[dayNames[i]] = { start: startHour, end: endHour };
+            }
+          }
+        } else {
+          // Jour unique comme "Sam"
+          availability[days] = { start: startHour, end: endHour };
+        }
+      }
+    } catch (error) {
+      console.log('Erreur parsing disponibilités:', error);
+      // Fallback sur les horaires par défaut
+      const defaultDays = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'];
+      defaultDays.forEach(day => {
+        availability[day] = { start: 8, end: 18 };
+      });
+    }
+    
+    return availability;
+  };
+
+  const getDayAvailability = (date: Date) => {
+    const dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+    const dayName = dayNames[date.getDay()];
+    const availability = parseCoachAvailability(coachInfo.disponibilites);
+    
+    return availability[dayName] || null;
+  };
+
   const generateAvailableSlots = () => {
-    // Générer des créneaux horaires disponibles
+    const dayAvailability = getDayAvailability(selectedDate);
+    
+    if (!dayAvailability) {
+      // Le coach n'est pas disponible ce jour-là
+      setAvailableSlots([]);
+      return;
+    }
+    
     const slots = [];
-    const start = 8; // 8h
-    const end = 18; // 18h
+    const { start, end } = dayAvailability;
     
     for (let hour = start; hour < end; hour++) {
-      slots.push(`${hour}:00`);
-      slots.push(`${hour}:30`);
+      slots.push(`${hour.toString().padStart(2, '0')}:00`);
+      slots.push(`${hour.toString().padStart(2, '0')}:30`);
     }
     
     setAvailableSlots(slots);
@@ -107,6 +161,10 @@ const AppointmentModal = ({ visible, onClose, coachInfo, currentUser }: {
 
   const isSameDate = (date1: Date, date2: Date) => {
     return date1.toDateString() === date2.toDateString();
+  };
+
+  const isCoachAvailable = (date: Date) => {
+    return getDayAvailability(date) !== null;
   };
 
   const nextWeek = () => {
@@ -228,55 +286,76 @@ const AppointmentModal = ({ visible, onClose, coachInfo, currentUser }: {
               </View>
 
               <View style={styles.weekContainer}>
-                {getDaysOfWeek().map((date, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={[
-                      styles.dayButton,
-                      isSameDate(date, selectedDate) && styles.dayButtonSelected,
-                      isToday(date) && styles.dayButtonToday
-                    ]}
-                    onPress={() => setSelectedDate(date)}
-                  >
-                    <Text style={[
-                      styles.dayButtonTextDay,
-                      isSameDate(date, selectedDate) && styles.dayButtonTextSelected
-                    ]}>
-                      {getDayName(date)}
-                    </Text>
-                    <Text style={[
-                      styles.dayButtonTextDate,
-                      isSameDate(date, selectedDate) && styles.dayButtonTextSelected
-                    ]}>
-                      {formatDate(date)}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                {getDaysOfWeek().map((date, index) => {
+                  const available = isCoachAvailable(date);
+                  return (
+                    <TouchableOpacity
+                      key={index}
+                      style={[
+                        styles.dayButton,
+                        isSameDate(date, selectedDate) && styles.dayButtonSelected,
+                        isToday(date) && styles.dayButtonToday,
+                        !available && styles.dayButtonUnavailable
+                      ]}
+                      onPress={() => available && setSelectedDate(date)}
+                      disabled={!available}
+                    >
+                      <Text style={[
+                        styles.dayButtonTextDay,
+                        isSameDate(date, selectedDate) && styles.dayButtonTextSelected,
+                        !available && styles.dayButtonTextUnavailable
+                      ]}>
+                        {getDayName(date)}
+                      </Text>
+                      <Text style={[
+                        styles.dayButtonTextDate,
+                        isSameDate(date, selectedDate) && styles.dayButtonTextSelected,
+                        !available && styles.dayButtonTextUnavailable
+                      ]}>
+                        {formatDate(date)}
+                      </Text>
+                      {!available && (
+                        <Text style={styles.dayButtonUnavailableIndicator}>✕</Text>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
 
             {/* Créneaux horaires */}
             <View style={styles.sectionContainer}>
               <Text style={styles.sectionTitle}>Créneaux disponibles</Text>
-              <View style={styles.slotsContainer}>
-                {availableSlots.map((slot, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={[
-                      styles.slotButton,
-                      selectedTime === slot && styles.slotButtonSelected
-                    ]}
-                    onPress={() => setSelectedTime(slot)}
-                  >
-                    <Text style={[
-                      styles.slotButtonText,
-                      selectedTime === slot && styles.slotButtonTextSelected
-                    ]}>
-                      {slot}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+              {availableSlots.length > 0 ? (
+                <View style={styles.slotsContainer}>
+                  {availableSlots.map((slot, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={[
+                        styles.slotButton,
+                        selectedTime === slot && styles.slotButtonSelected
+                      ]}
+                      onPress={() => setSelectedTime(slot)}
+                    >
+                      <Text style={[
+                        styles.slotButtonText,
+                        selectedTime === slot && styles.slotButtonTextSelected
+                      ]}>
+                        {slot}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              ) : (
+                <View style={styles.noSlotsContainer}>
+                  <Text style={styles.noSlotsText}>
+                    Le coach n'est pas disponible ce jour-là
+                  </Text>
+                  <Text style={styles.noSlotsSubtext}>
+                    Veuillez sélectionner un autre jour
+                  </Text>
+                </View>
+              )}
             </View>
 
             {/* Notes */}
@@ -1383,6 +1462,39 @@ const styles = StyleSheet.create({
   },
   dayButtonTextSelected: {
     color: '#000000',
+  },
+  dayButtonUnavailable: {
+    backgroundColor: '#161B22',
+    borderColor: '#21262D',
+    opacity: 0.5,
+  },
+  dayButtonTextUnavailable: {
+    color: '#6B7280',
+  },
+  dayButtonUnavailableIndicator: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    fontSize: 8,
+    color: '#EF4444',
+    fontWeight: 'bold',
+  },
+  noSlotsContainer: {
+    alignItems: 'center',
+    paddingVertical: 32,
+    paddingHorizontal: 16,
+  },
+  noSlotsText: {
+    color: '#8B949E',
+    fontSize: 16,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  noSlotsSubtext: {
+    color: '#6B7280',
+    fontSize: 14,
+    textAlign: 'center',
   },
   slotsContainer: {
     flexDirection: 'row',
