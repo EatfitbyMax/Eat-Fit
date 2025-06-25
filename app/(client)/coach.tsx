@@ -38,6 +38,7 @@ interface Appointment {
   coachId: string;
   status: 'pending' | 'confirmed' | 'cancelled';
   notes?: string;
+  createdAt: string;
 }
 
 // Composant modal de prise de rendez-vous
@@ -195,11 +196,24 @@ const AppointmentModal = ({ visible, onClose, coachInfo, currentUser }: {
       clientId: currentUser.id,
       coachId: 'coach-id',
       status: 'pending',
-      notes: notes
+      notes: notes,
+      createdAt: new Date().toISOString()
     };
 
     try {
-      // Sauvegarder le rendez-vous (ici vous pouvez implémenter la logique de sauvegarde)
+      // Charger les rendez-vous existants du client
+      const existingAppointments = await AsyncStorage.getItem(`appointments-${currentUser.id}`);
+      const appointments = existingAppointments ? JSON.parse(existingAppointments) : [];
+      
+      // Ajouter le nouveau rendez-vous
+      appointments.push(appointment);
+      
+      // Sauvegarder dans AsyncStorage
+      await AsyncStorage.setItem(`appointments-${currentUser.id}`, JSON.stringify(appointments));
+      
+      // Mettre à jour l'état local
+      setAppointments(appointments);
+      
       Alert.alert(
         'Rendez-vous demandé',
         `Votre demande de rendez-vous pour le ${formatDate(selectedDate)} à ${selectedTime} a été envoyée au coach. Vous recevrez une confirmation prochainement.`,
@@ -215,6 +229,7 @@ const AppointmentModal = ({ visible, onClose, coachInfo, currentUser }: {
         ]
       );
     } catch (error) {
+      console.error('Erreur sauvegarde rendez-vous:', error);
       Alert.alert('Erreur', 'Impossible de réserver le rendez-vous');
     }
   };
