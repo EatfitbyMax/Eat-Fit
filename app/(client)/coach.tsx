@@ -63,21 +63,21 @@ const AppointmentModal = ({ visible, onClose, coachInfo, currentUser }: {
   const parseCoachAvailability = (availabilityString: string) => {
     // Parse une chaîne comme "Lun-Ven, 8h-18h / Sam, 9h-12h"
     const availability: { [key: string]: { start: number; end: number } } = {};
-    
+
     try {
       const parts = availabilityString.split('/').map(part => part.trim());
-      
+
       for (const part of parts) {
         const [days, hours] = part.split(',').map(s => s.trim());
         const [startHour, endHour] = hours.replace(/h/g, '').split('-').map(h => parseInt(h.trim()));
-        
+
         if (days.includes('-')) {
           // Plage de jours comme "Lun-Ven"
           const dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
           const [startDay, endDay] = days.split('-').map(d => d.trim());
           const startIndex = dayNames.indexOf(startDay);
           const endIndex = dayNames.indexOf(endDay);
-          
+
           if (startIndex !== -1 && endIndex !== -1) {
             for (let i = startIndex; i <= endIndex; i++) {
               availability[dayNames[i]] = { start: startHour, end: endHour };
@@ -96,7 +96,7 @@ const AppointmentModal = ({ visible, onClose, coachInfo, currentUser }: {
         availability[day] = { start: 8, end: 18 };
       });
     }
-    
+
     return availability;
   };
 
@@ -104,27 +104,27 @@ const AppointmentModal = ({ visible, onClose, coachInfo, currentUser }: {
     const dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
     const dayName = dayNames[date.getDay()];
     const availability = parseCoachAvailability(coachInfo.disponibilites);
-    
+
     return availability[dayName] || null;
   };
 
   const generateAvailableSlots = () => {
     const dayAvailability = getDayAvailability(selectedDate);
-    
+
     if (!dayAvailability) {
       // Le coach n'est pas disponible ce jour-là
       setAvailableSlots([]);
       return;
     }
-    
+
     const slots = [];
     const { start, end } = dayAvailability;
-    
+
     for (let hour = start; hour < end; hour++) {
       slots.push(`${hour.toString().padStart(2, '0')}:00`);
       slots.push(`${hour.toString().padStart(2, '0')}:30`);
     }
-    
+
     setAvailableSlots(slots);
   };
 
@@ -412,7 +412,7 @@ const AppointmentModal = ({ visible, onClose, coachInfo, currentUser }: {
               >
                 <Text style={styles.bookButtonText}>Confirmer le rendez-vous</Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity style={styles.cancelAppointmentButton} onPress={onClose}>
                 <Text style={styles.cancelAppointmentButtonText}>Annuler</Text>
               </TouchableOpacity>
@@ -439,10 +439,13 @@ export default function CoachScreen() {
   });
 
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<'messages' | 'appointments'>('messages');
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
 
   useEffect(() => {
     initUser();
     loadCoachInfo();
+	  loadAppointments();
   }, []);
 
   useEffect(() => {
@@ -607,6 +610,40 @@ export default function CoachScreen() {
     <SwipeableMessage message={item} />
   );
 
+  const loadAppointments = async () => {
+    if (!currentUser?.id) return;
+
+    try {
+      // Charger les rendez-vous depuis AsyncStorage
+      const appointmentsData = await AsyncStorage.getItem(`appointments-${currentUser.id}`);
+      if (appointmentsData) {
+        setAppointments(JSON.parse(appointmentsData));
+      }
+    } catch (error) {
+      console.error('Erreur chargement rendez-vous:', error);
+    }
+  };
+
+  const saveAppointments = async (newAppointments: Appointment[]) => {
+    if (!currentUser?.id) return;
+
+    try {
+      // Sauvegarder les rendez-vous dans AsyncStorage
+      await AsyncStorage.setItem(`appointments-${currentUser.id}`, JSON.stringify(newAppointments));
+      setAppointments(newAppointments);
+    } catch (error) {
+      console.error('Erreur sauvegarde rendez-vous:', error);
+    }
+  };
+
+  const renderAppointmentItem = ({ item }: { item: Appointment }) => (
+    <View style={styles.appointmentItem}>
+      <Text style={styles.appointmentItemText}>
+        {item.date} - {item.time} ({item.type})
+      </Text>
+    </View>
+  );
+
   return (
     <GestureHandlerRootView style={styles.container}>
       <SafeAreaView style={styles.container}>
@@ -676,57 +713,108 @@ export default function CoachScreen() {
                 </View>
               </View>
 
-              {/* Section Messages */}
-              <View style={styles.messagesSection}>
-                <View style={styles.messagesSectionHeader}>
-                  <View style={styles.messagesSectionIcon}>
-                    <Text style={styles.messagesSectionIconText}>💬</Text>
-                  </View>
-                  <Text style={styles.messagesSectionTitle}>Messages avec votre coach</Text>
-                </View>
-
-                <FlatList
-                  data={messages}
-                  renderItem={renderMessage}
-                  keyExtractor={(item) => item.id}
-                  style={styles.messagesList}
-                  contentContainerStyle={styles.messagesListContent}
-                  showsVerticalScrollIndicator={false}
-                  inverted={false}
-                  keyboardShouldPersistTaps="handled"
-                  ListEmptyComponent={
-                    <View style={styles.emptyMessages}>
-                      <Text style={styles.emptyMessagesText}>
-                        Aucun message avec votre coach.
-                      </Text>
-                      <Text style={styles.emptyMessagesSubtext}>
-                        Envoyez un message pour commencer !
-                      </Text>
-                    </View>
-                  }
-                />
-
-                {/* Zone de saisie intégrée */}
-                <View style={styles.integratedMessageInput}>
-                  <TextInput
-                    style={styles.messageInput}
-                    placeholder="Tapez votre message..."
-                    placeholderTextColor="#8B949E"
-                    value={messageText}
-                    onChangeText={setMessageText}
-                    multiline
-                    maxLength={500}
-                    textAlignVertical="top"
-                  />
-                  <TouchableOpacity 
-                    style={[styles.sendButton, !messageText.trim() && styles.sendButtonDisabled]}
-                    onPress={sendMessage}
-                    disabled={!messageText.trim()}
-                  >
-                    <Text style={styles.sendButtonText}>➤</Text>
-                  </TouchableOpacity>
-                </View>
+              {/* Onglets */}
+              <View style={styles.tabsContainer}>
+                <TouchableOpacity
+                  style={[styles.tab, activeTab === 'messages' && styles.activeTab]}
+                  onPress={() => setActiveTab('messages')}
+                >
+                  <Text style={[styles.tabText, activeTab === 'messages' && styles.activeTabText]}>
+                    💬 Messages
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.tab, activeTab === 'appointments' && styles.activeTab]}
+                  onPress={() => setActiveTab('appointments')}
+                >
+                  <Text style={[styles.tabText, activeTab === 'appointments' && styles.activeTabText]}>
+                    📅 Mes RDV ({appointments.length})
+                  </Text>
+                </TouchableOpacity>
               </View>
+
+              {activeTab === 'messages' ? (
+                /* Section Messages */
+                <View style={styles.messagesSection}>
+                  <View style={styles.messagesSectionHeader}>
+                    <View style={styles.messagesSectionIcon}>
+                      <Text style={styles.messagesSectionIconText}>💬</Text>
+                    </View>
+                    <Text style={styles.messagesSectionTitle}>Messages avec votre coach</Text>
+                  </View>
+
+                  <FlatList
+                    data={messages}
+                    renderItem={renderMessage}
+                    keyExtractor={(item) => item.id}
+                    style={styles.messagesList}
+                    contentContainerStyle={styles.messagesListContent}
+                    showsVerticalScrollIndicator={false}
+                    inverted={false}
+                    keyboardShouldPersistTaps="handled"
+                    ListEmptyComponent={
+                      <View style={styles.emptyMessages}>
+                        <Text style={styles.emptyMessagesText}>
+                          Aucun message avec votre coach.
+                        </Text>
+                        <Text style={styles.emptyMessagesSubtext}>
+                          Envoyez un message pour commencer !
+                        </Text>
+                      </View>
+                    }
+                  />
+
+                  {/* Zone de saisie intégrée */}
+                  <View style={styles.integratedMessageInput}>
+                    <TextInput
+                      style={styles.messageInput}
+                      placeholder="Tapez votre message..."
+                      placeholderTextColor="#8B949E"
+                      value={messageText}
+                      onChangeText={setMessageText}
+                      multiline
+                      maxLength={500}
+                      textAlignVertical="top"
+                    />
+                    <TouchableOpacity 
+                      style={[styles.sendButton, !messageText.trim() && styles.sendButtonDisabled]}
+                      onPress={sendMessage}
+                      disabled={!messageText.trim()}
+                    >
+                      <Text style={styles.sendButtonText}>➤</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ) : (
+                /* Section Rendez-vous */
+                <View style={styles.messagesSection}>
+                  <View style={styles.messagesSectionHeader}>
+                    <View style={styles.messagesSectionIcon}>
+                      <Text style={styles.messagesSectionIconText}>📅</Text>
+                    </View>
+                    <Text style={styles.messagesSectionTitle}>Vos rendez-vous</Text>
+                  </View>
+                  <FlatList
+                    data={appointments}
+                    renderItem={renderAppointmentItem}
+                    keyExtractor={(item) => item.id}
+                    style={styles.messagesList}
+                    contentContainerStyle={styles.messagesListContent}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                    ListEmptyComponent={
+                      <View style={styles.emptyMessages}>
+                        <Text style={styles.emptyMessagesText}>
+                          Aucun rendez-vous pour le moment.
+                        </Text>
+                        <Text style={styles.emptyMessagesSubtext}>
+                          Prenez un rendez-vous avec votre coach !
+                        </Text>
+                      </View>
+                    }
+                  />
+                </View>
+              )}
             </>
           )}
         </View>
@@ -833,6 +921,7 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     alignItems: 'center',
   },
+  The code implements appointment management, including loading, saving, and displaying appointments in a separate tab.```text
   title: {
     fontSize: 18,
     fontWeight: 'bold',
@@ -1664,5 +1753,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  appointmentItem: {
+    backgroundColor: '#21262D',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  appointmentItemText: {
+    color: '#FFFFFF',
+    fontSize: 14,
   },
 });
