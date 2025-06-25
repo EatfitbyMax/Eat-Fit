@@ -135,7 +135,8 @@ const AppointmentModal = ({ visible, onClose, coachInfo, currentUser }: {
     startOfWeek.setDate(diff);
 
     const days = [];
-    for (let i = 0; i < 7; i++) {
+    // Seulement du lundi au vendredi (5 jours)
+    for (let i = 0; i < 5; i++) {
       const date = new Date(startOfWeek);
       date.setDate(startOfWeek.getDate() + i);
       days.push(date);
@@ -1431,16 +1432,17 @@ const styles = StyleSheet.create({
   weekContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 4,
+    gap: 6,
   },
   dayButton: {
     flex: 1,
     backgroundColor: '#21262D',
-    borderRadius: 8,
-    paddingVertical: 8,
+    borderRadius: 10,
+    paddingVertical: 12,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#21262D',
+    minHeight: 60,
   },
   dayButtonSelected: {
     backgroundColor: '#F5A623',
