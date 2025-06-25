@@ -42,6 +42,8 @@ export default function CoachScreen() {
     disponibilites: 'Lun-Ven, 8h-18h'
   });
 
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+
   useEffect(() => {
     initUser();
     loadCoachInfo();
@@ -229,13 +231,13 @@ export default function CoachScreen() {
               <View style={styles.premiumIcon}>
                 <Text style={styles.premiumIconText}>👑</Text>
               </View>
-              
+
               <Text style={styles.premiumTitle}>Accès Premium Requis</Text>
-              
+
               <Text style={styles.premiumDescription}>
                 Cette fonctionnalité est disponible uniquement avec un abonnement Premium.
               </Text>
-              
+
               <View style={styles.premiumFeatures}>
                 <Text style={styles.featureItem}>✨ Accès direct à votre coach personnel</Text>
                 <Text style={styles.featureItem}>💬 Messagerie illimitée</Text>
@@ -271,13 +273,7 @@ export default function CoachScreen() {
                 <View style={styles.coachActions}>
                   <TouchableOpacity 
                     style={styles.appointmentButton}
-                    onPress={() => {
-                      Alert.alert(
-                        'Rendez-vous',
-                        'Fonctionnalité de prise de rendez-vous en cours de développement.',
-                        [{ text: 'OK' }]
-                      );
-                    }}
+                    onPress={() => setShowAppointmentModal(true)}
                   >
                     <Text style={styles.appointmentButtonText}>📅 Prendre rendez-vous avec le coach</Text>
                   </TouchableOpacity>
@@ -410,6 +406,30 @@ export default function CoachScreen() {
                 onPress={() => setShowSubscriptionModal(false)}
               >
                 <Text style={styles.closeModalButtonText}>Peut-être plus tard</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Modal de prise de rendez-vous */}
+        <Modal
+          visible={showAppointmentModal}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowAppointmentModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.subscriptionModal}>
+              <Text style={styles.modalTitle}>Prise de Rendez-vous</Text>
+              <Text style={styles.modalSubtitle}>
+                Choisissez la date et l'heure de votre rendez-vous avec votre coach
+              </Text>
+
+              <TouchableOpacity
+                style={styles.closeModalButton}
+                onPress={() => setShowAppointmentModal(false)}
+              >
+                <Text style={styles.closeModalButtonText}>Fermer</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -984,7 +1004,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 32,
     borderRadius: 12,
-    shadowColor: '#F5A623',
+    shadowColor: '#F5A6A623',
     shadowOffset: {
       width: 0,
       height: 4,
