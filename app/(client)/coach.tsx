@@ -223,112 +223,120 @@ export default function CoachScreen() {
             <Text style={styles.title}>Coach</Text>
           </View>
 
-          {/* Coach Info fixe */}
-          <View style={styles.coachCard}>
-            <View style={styles.coachHeader}>
-              <View style={styles.coachAvatar}>
-                <Text style={styles.coachAvatarText}>
-                  {coachInfo.prenom[0]?.toUpperCase()}{coachInfo.nom[0]?.toUpperCase()}
-                </Text>
+          {!isPremium ? (
+            /* Affichage pour les non-abonnés */
+            <View style={styles.premiumRequiredContainer}>
+              <View style={styles.premiumIcon}>
+                <Text style={styles.premiumIconText}>👑</Text>
               </View>
-              <View style={styles.coachInfo}>
-                <Text style={styles.coachName}>{coachInfo.prenom} {coachInfo.nom}</Text>
-                <Text style={styles.coachRole}>{coachInfo.specialite}</Text>
-                <Text style={styles.coachLocation}>Disponibilité: {coachInfo.disponibilites}</Text>
+              
+              <Text style={styles.premiumTitle}>Accès Premium Requis</Text>
+              
+              <Text style={styles.premiumDescription}>
+                Cette fonctionnalité est disponible uniquement avec un abonnement Premium.
+              </Text>
+              
+              <View style={styles.premiumFeatures}>
+                <Text style={styles.featureItem}>✨ Accès direct à votre coach personnel</Text>
+                <Text style={styles.featureItem}>💬 Messagerie illimitée</Text>
+                <Text style={styles.featureItem}>📅 Prise de rendez-vous</Text>
+                <Text style={styles.featureItem}>🎯 Programmes personnalisés</Text>
               </View>
-            </View>
 
-            <View style={styles.coachActions}>
               <TouchableOpacity 
-                style={styles.appointmentButton}
-                onPress={() => {
-                  if (!isPremium) {
-                    setShowSubscriptionModal(true);
-                  } else {
-                    Alert.alert(
-                      'Rendez-vous',
-                      'Fonctionnalité de prise de rendez-vous en cours de développement.',
-                      [{ text: 'OK' }]
-                    );
-                  }
-                }}
+                style={styles.subscribeNowButton}
+                onPress={() => setShowSubscriptionModal(true)}
               >
-                <Text style={styles.appointmentButtonText}>📅 Prendre rendez-vous avec le coach</Text>
+                <Text style={styles.subscribeNowButtonText}>Découvrir nos offres Premium</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          ) : (
+            /* Affichage pour les abonnés Premium */
+            <>
+              {/* Coach Info fixe */}
+              <View style={styles.coachCard}>
+                <View style={styles.coachHeader}>
+                  <View style={styles.coachAvatar}>
+                    <Text style={styles.coachAvatarText}>
+                      {coachInfo.prenom[0]?.toUpperCase()}{coachInfo.nom[0]?.toUpperCase()}
+                    </Text>
+                  </View>
+                  <View style={styles.coachInfo}>
+                    <Text style={styles.coachName}>{coachInfo.prenom} {coachInfo.nom}</Text>
+                    <Text style={styles.coachRole}>{coachInfo.specialite}</Text>
+                    <Text style={styles.coachLocation}>Disponibilité: {coachInfo.disponibilites}</Text>
+                  </View>
+                </View>
 
-          {/* Section Messages */}
-          <View style={styles.messagesSection}>
-            <View style={styles.messagesSectionHeader}>
-              <View style={styles.messagesSectionIcon}>
-                <Text style={styles.messagesSectionIconText}>💬</Text>
+                <View style={styles.coachActions}>
+                  <TouchableOpacity 
+                    style={styles.appointmentButton}
+                    onPress={() => {
+                      Alert.alert(
+                        'Rendez-vous',
+                        'Fonctionnalité de prise de rendez-vous en cours de développement.',
+                        [{ text: 'OK' }]
+                      );
+                    }}
+                  >
+                    <Text style={styles.appointmentButtonText}>📅 Prendre rendez-vous avec le coach</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-              <Text style={styles.messagesSectionTitle}>Messages avec votre coach</Text>
-            </View>
 
-            <FlatList
-              data={isPremium ? messages : []}
-              renderItem={renderMessage}
-              keyExtractor={(item) => item.id}
-              style={styles.messagesList}
-              contentContainerStyle={styles.messagesListContent}
-              showsVerticalScrollIndicator={false}
-              inverted={false}
-              keyboardShouldPersistTaps="handled"
-              ListEmptyComponent={
-                <View style={styles.emptyMessages}>
-                  {isPremium ? (
-                    <>
+              {/* Section Messages */}
+              <View style={styles.messagesSection}>
+                <View style={styles.messagesSectionHeader}>
+                  <View style={styles.messagesSectionIcon}>
+                    <Text style={styles.messagesSectionIconText}>💬</Text>
+                  </View>
+                  <Text style={styles.messagesSectionTitle}>Messages avec votre coach</Text>
+                </View>
+
+                <FlatList
+                  data={messages}
+                  renderItem={renderMessage}
+                  keyExtractor={(item) => item.id}
+                  style={styles.messagesList}
+                  contentContainerStyle={styles.messagesListContent}
+                  showsVerticalScrollIndicator={false}
+                  inverted={false}
+                  keyboardShouldPersistTaps="handled"
+                  ListEmptyComponent={
+                    <View style={styles.emptyMessages}>
                       <Text style={styles.emptyMessagesText}>
                         Aucun message avec votre coach.
                       </Text>
                       <Text style={styles.emptyMessagesSubtext}>
                         Envoyez un message pour commencer !
                       </Text>
-                    </>
-                  ) : (
-                    <>
-                      <Text style={styles.emptyMessagesText}>
-                        🔒 Messagerie Premium
-                      </Text>
-                      <Text style={styles.emptyMessagesSubtext}>
-                        Communiquez directement avec votre coach personnel avec un abonnement Premium.
-                      </Text>
-                      <TouchableOpacity 
-                        style={styles.upgradeButton}
-                        onPress={() => setShowSubscriptionModal(true)}
-                      >
-                        <Text style={styles.upgradeButtonText}>Découvrir nos offres</Text>
-                      </TouchableOpacity>
-                    </>
-                  )}
-                </View>
-              }
-            />
+                    </View>
+                  }
+                />
 
-            {/* Zone de saisie intégrée */}
-            <View style={styles.integratedMessageInput}>
-              <TextInput
-                style={[styles.messageInput, !isPremium && styles.messageInputDisabled]}
-                placeholder={isPremium ? "Tapez votre message..." : "Abonnement Premium requis pour envoyer des messages"}
-                placeholderTextColor="#8B949E"
-                value={messageText}
-                onChangeText={setMessageText}
-                multiline
-                maxLength={500}
-                textAlignVertical="top"
-                editable={isPremium}
-              />
-              <TouchableOpacity 
-                style={[styles.sendButton, (!messageText.trim() || !isPremium) && styles.sendButtonDisabled]}
-                onPress={sendMessage}
-                disabled={!messageText.trim() || !isPremium}
-              >
-                <Text style={styles.sendButtonText}>➤</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+                {/* Zone de saisie intégrée */}
+                <View style={styles.integratedMessageInput}>
+                  <TextInput
+                    style={styles.messageInput}
+                    placeholder="Tapez votre message..."
+                    placeholderTextColor="#8B949E"
+                    value={messageText}
+                    onChangeText={setMessageText}
+                    multiline
+                    maxLength={500}
+                    textAlignVertical="top"
+                  />
+                  <TouchableOpacity 
+                    style={[styles.sendButton, !messageText.trim() && styles.sendButtonDisabled]}
+                    onPress={sendMessage}
+                    disabled={!messageText.trim()}
+                  >
+                    <Text style={styles.sendButtonText}>➤</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </>
+          )}
         </View>
         </KeyboardAvoidingView>
 
@@ -918,5 +926,77 @@ const styles = StyleSheet.create({
     color: '#8B949E',
     fontSize: 14,
     fontWeight: '500',
+  },
+  premiumRequiredContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    marginTop: 40,
+  },
+  premiumIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#F5A623',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+    shadowColor: '#F5A623',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  premiumIconText: {
+    fontSize: 32,
+  },
+  premiumTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  premiumDescription: {
+    fontSize: 16,
+    color: '#8B949E',
+    textAlign: 'center',
+    marginBottom: 32,
+    lineHeight: 22,
+  },
+  premiumFeatures: {
+    alignSelf: 'stretch',
+    marginBottom: 32,
+  },
+  featureItem: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    marginBottom: 12,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  subscribeNowButton: {
+    backgroundColor: '#F5A623',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    shadowColor: '#F5A623',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  subscribeNowButtonText: {
+    color: '#000000',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
