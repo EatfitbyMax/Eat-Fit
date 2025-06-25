@@ -921,7 +921,6 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     alignItems: 'center',
   },
-  The code implements appointment management, including loading, saving, and displaying appointments in a separate tab.```text
   title: {
     fontSize: 18,
     fontWeight: 'bold',
@@ -1091,35 +1090,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#000000',
   },
-  tabsContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    backgroundColor: '#21262D',
-    alignItems: 'center',
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
-    marginHorizontal: 2,
-  },
-  activeTab: {
-    backgroundColor: '#161B22',
-    borderBottomWidth: 3,
-    borderBottomColor: '#F5A623',
-  },
-  tabText: {
-    fontSize: 14,
-    color: '#8B949E',
-    fontWeight: '500',
-  },
-  activeTabText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
   messagesSection: {
     flex: 1,
     marginHorizontal: 16,
@@ -1257,16 +1227,6 @@ const styles = StyleSheet.create({
     borderTopColor: '#21262D',
     alignItems: 'flex-end',
     backgroundColor: '#161B22',
-  },
-  messageInputContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: '#1C2128',
-    borderTopWidth: 1,
-    borderTopColor: '#21262D',
-    alignItems: 'flex-end',
-    minHeight: 68,
   },
   messageInput: {
     flex: 1,
