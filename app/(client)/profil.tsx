@@ -246,10 +246,7 @@ export default function ProfilScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Mon profil</Text>
-        </View>
+        
 
         {/* User Info */}
         <View style={styles.userCard}>
