@@ -12,6 +12,20 @@ export default function ProfilScreen() {
     appleHealth: { connected: false, lastSync: null },
     strava: { connected: false, lastSync: null, athleteId: null },
   });
+  const [editingObjectifs, setEditingObjectifs] = useState(false);
+  const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
+
+  const availableGoals = [
+    'Perdre du poids',
+    'Maintenir poids',
+    'Prendre du poids',
+    'Me muscler',
+    'Planifier mes repas',
+    'Gagner en performance',
+    'Améliorer ma santé',
+    'Réduire le stress',
+    'Mieux dormir'
+  ];
 
   useEffect(() => {
     loadUserData();
@@ -164,6 +178,36 @@ export default function ProfilScreen() {
     }
   };
 
+  const toggleGoal = (goal: string) => {
+    setSelectedGoals(prev => 
+      prev.includes(goal) 
+        ? prev.filter(g => g !== goal)
+        : [...prev, goal]
+    );
+  };
+
+  const handleSaveObjectifs = async () => {
+    try {
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        Alert.alert("Erreur", "Utilisateur non connecté");
+        return;
+      }
+      
+      // Assuming you have a function to update user goals
+      // Replace this with your actual implementation
+      const updatedUser = { ...currentUser, goals: selectedGoals };
+      setUser(updatedUser); // Update local state
+
+      Alert.alert('Succès', 'Objectifs mis à jour avec succès');
+    } catch (error) {
+      console.error('Erreur sauvegarde objectifs:', error);
+      Alert.alert('Erreur', 'Impossible de sauvegarder les modifications');
+    } finally {
+      setEditingObjectifs(false);
+    }
+  };
+
   const handleLogout = async () => {
     Alert.alert(
       'Déconnexion',
@@ -303,7 +347,7 @@ export default function ProfilScreen() {
             )}
           </View>
 
-          
+
 
           <TouchableOpacity 
             style={styles.menuItem}
@@ -728,5 +772,95 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#FFFFFF',
     lineHeight: 20,
+  },
+  itemArrow: {
+    fontSize: 18,
+    color: '#8B949E',
+    marginLeft: 8,
+  },
+  profileSection: {
+    backgroundColor: '#161B22',
+    borderRadius: 12,
+    margin: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  editButton: {
+    padding: 8,
+  },
+  editText: {
+    fontSize: 14,
+    color: '#1F6FEB',
+    fontWeight: '600',
+  },
+  objectifsDisplay: {
+    gap: 8,
+  },
+  objectifItem: {
+    paddingVertical: 4,
+  },
+  objectifText: {
+    fontSize: 15,
+    color: '#FFFFFF',
+    lineHeight: 20,
+  },
+  noObjectifsText: {
+    fontSize: 15,
+    color: '#8B949E',
+    fontStyle: 'italic',
+  },
+  objectifsEdit: {
+    gap: 12,
+  },
+  goalButton: {
+    backgroundColor: '#0D1117',
+    borderWidth: 1,
+    borderColor: '#21262D',
+    borderRadius: 8,
+    padding: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  selectedGoal: {
+    backgroundColor: '#1F6FEB',
+    borderColor: '#1F6FEB',
+  },
+  goalText: {
+    fontSize: 15,
+    color: '#FFFFFF',
+    flex: 1,
+  },
+  selectedGoalText: {
+    fontWeight: '600',
+  },
+  checkmark: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
+  saveButton: {
+    backgroundColor: '#1F6FEB',
+    borderRadius: 8,
+    padding: 14,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  saveButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 });
