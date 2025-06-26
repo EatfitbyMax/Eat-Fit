@@ -118,6 +118,7 @@ export class PaymentService {
           requiredBillingContactFields: ['name', 'email'],
           requiredShippingContactFields: [],
         },
+        returnURL: 'eatfitbymax://payment-success',
         style: 'automatic',
         appearance: {
           colors: {
@@ -180,6 +181,7 @@ export class PaymentService {
           currencyCode: plan.currency,
           testEnv: __DEV__,
         },
+        returnURL: 'eatfitbymax://payment-success',
         style: 'automatic',
         appearance: {
           colors: {
