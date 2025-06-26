@@ -408,19 +408,7 @@ export default function ProfilScreen() {
           )}
         </View>
 
-        {/* Notifications */}
-        <View style={styles.section}>
-
-
-
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={() => router.push('/notifications')}
-          >
-            <Text style={styles.menuItemText}>🔔 Notifications</Text>
-            <Text style={styles.menuItemArrow}>›</Text>
-          </TouchableOpacity>
-        </View>
+        
 
         {/* Integrations */}
         <View style={styles.section}>

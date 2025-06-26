@@ -328,6 +328,22 @@ export default function ParametresApplicationScreen() {
           </View>
         </View>
 
+        {/* Notifications */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>🔔 Notifications</Text>
+
+          <TouchableOpacity 
+            style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}
+            onPress={() => router.push('/(client)/notifications')}
+          >
+            <View style={styles.settingInfo}>
+              <Text style={[styles.settingTitle, { color: theme.text }]}>Paramètres de notifications</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Gérer vos préférences de notifications</Text>
+            </View>
+            <Text style={[styles.settingArrow, { color: theme.textSecondary }]}>›</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Actions */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>⚙️ Actions</Text>
