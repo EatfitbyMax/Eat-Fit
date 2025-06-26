@@ -400,134 +400,59 @@ export default function ProfilScreen() {
         {/* Objectifs */}
         <View style={[styles.section, {marginTop: 20}]}>
           <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleContainer}>
-              <LinearGradient
-                colors={['#4CAF50', '#2E7D32']}
-                style={styles.sectionIconGradient}
-              >
-                <Text style={styles.sectionIcon}>🎯</Text>
-              </LinearGradient>
-              <Text style={styles.sectionTitle}>Mes objectifs</Text>
-            </View>
+            <Text style={styles.sectionTitle}> Mes objectifs</Text>
             <TouchableOpacity 
               onPress={() => setEditingObjectifs(!editingObjectifs)}
               style={styles.modifyButton}
             >
-              <LinearGradient
-                colors={editingObjectifs ? ['#FF6B6B', '#FF4444'] : ['#F5A623', '#E89611']}
-                style={styles.modifyButtonGradient}
-              >
-                <Text style={styles.modifyText}>
-                  {editingObjectifs ? '✕ Annuler' : '✎ Modifier'}
-                </Text>
-              </LinearGradient>
+              <Text style={styles.modifyText}>
+                {editingObjectifs ? 'Annuler' : 'Modifier'}
+              </Text>
             </TouchableOpacity>
           </View>
 
           {editingObjectifs ? (
             <View style={styles.objectifsEdit}>
-              {availableGoals.map((goal) => {
-                const goalIcons = {
-                  'Perdre du poids': '🏃‍♂️',
-                  'Maintenir poids': '⚖️',
-                  'Prendre du poids': '📈',
-                  'Me muscler': '💪',
-                  'Planifier mes repas': '🍽️',
-                  'Gagner en performance': '🏆',
-                  'Améliorer ma santé': '❤️',
-                  'Réduire le stress': '🧘‍♂️',
-                  'Mieux dormir': '😴'
-                };
-                return (
-                  <TouchableOpacity
-                    key={goal}
-                    style={[
-                      styles.goalButton,
-                      selectedGoals.includes(goal) && styles.selectedGoal
-                    ]}
-                    onPress={() => toggleGoal(goal)}
-                  >
-                    <LinearGradient
-                      colors={selectedGoals.includes(goal) 
-                        ? ['#4CAF50', '#2E7D32'] 
-                        : ['#161B22', '#21262D']}
-                      style={styles.goalButtonGradient}
-                    >
-                      <View style={styles.goalContent}>
-                        <Text style={styles.goalEmoji}>
-                          {goalIcons[goal as keyof typeof goalIcons] || '🎯'}
-                        </Text>
-                        <Text style={[
-                          styles.goalText,
-                          selectedGoals.includes(goal) && styles.selectedGoalText
-                        ]}>
-                          {goal}
-                        </Text>
-                        {selectedGoals.includes(goal) && (
-                          <View style={styles.checkmarkContainer}>
-                            <Text style={styles.checkmark}>✓</Text>
-                          </View>
-                        )}
-                      </View>
-                    </LinearGradient>
-                  </TouchableOpacity>
-                );
-              })}
+              {availableGoals.map((goal) => (
+                <TouchableOpacity
+                  key={goal}
+                  style={[
+                    styles.goalButton,
+                    selectedGoals.includes(goal) && styles.selectedGoal
+                  ]}
+                  onPress={() => toggleGoal(goal)}
+                >
+                  <Text style={[
+                    styles.goalText,
+                    selectedGoals.includes(goal) && styles.selectedGoalText
+                  ]}>
+                    {goal}
+                  </Text>
+                  {selectedGoals.includes(goal) && (
+                    <Text style={styles.checkmark}>✓</Text>
+                  )}
+                </TouchableOpacity>
+              ))}
 
               <TouchableOpacity 
                 style={styles.saveButton}
                 onPress={handleSaveObjectifs}
               >
-                <LinearGradient
-                  colors={['#4CAF50', '#2E7D32']}
-                  style={styles.saveButtonGradient}
-                >
-                  <Text style={styles.saveButtonText}>💾 Sauvegarder</Text>
-                </LinearGradient>
+                <Text style={styles.saveButtonText}>Sauvegarder</Text>
               </TouchableOpacity>
             </View>
           ) : (
-            <LinearGradient
-              colors={['#161B22', '#1C2128']}
-              style={styles.infoCardGradient}
-            >
-              <View style={styles.infoCard}>
-                {user?.goals && user.goals.length > 0 ? (
-                  user.goals.map((goal: string, index: number) => {
-                    const goalIcons = {
-                      'Perdre du poids': '🏃‍♂️',
-                      'Maintenir poids': '⚖️',
-                      'Prendre du poids': '📈',
-                      'Me muscler': '💪',
-                      'Planifier mes repas': '🍽️',
-                      'Gagner en performance': '🏆',
-                      'Améliorer ma santé': '❤️',
-                      'Réduire le stress': '🧘‍♂️',
-                      'Mieux dormir': '😴'
-                    };
-                    return (
-                      <View key={index} style={styles.goalItemDisplay}>
-                        <LinearGradient
-                          colors={['#F5A623', '#E89611']}
-                          style={styles.goalIconContainer}
-                        >
-                          <Text style={styles.goalDisplayEmoji}>
-                            {goalIcons[goal as keyof typeof goalIcons] || '🎯'}
-                          </Text>
-                        </LinearGradient>
-                        <Text style={styles.goalDisplayText}>{goal}</Text>
-                      </View>
-                    );
-                  })
-                ) : (
-                  <View style={styles.noGoalsContainer}>
-                    <Text style={styles.noGoalsEmoji}>🎯</Text>
-                    <Text style={styles.infoValue}>Aucun objectif défini</Text>
-                    <Text style={styles.noGoalsSubtext}>Définissez vos objectifs pour commencer</Text>
+            <View style={styles.infoCard}>
+              {user?.goals && user.goals.length > 0 ? (
+                user.goals.map((goal: string, index: number) => (
+                  <View key={index} style={styles.goalItem}>
+                    <Text style={styles.goalText}>• {goal}</Text>
                   </View>
-                )}
-              </View>
-            </LinearGradient>
+                ))
+              ) : (
+                <Text style={styles.infoValue}>Aucun objectif défini</Text>
+              )}
+            </View>
           )}
         </View>
 
@@ -535,91 +460,57 @@ export default function ProfilScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionTitleContainer}>
-              <LinearGradient
-                colors={['#FFD700', '#FFA500']}
-                style={styles.sectionIconGradient}
-              >
-                <Text style={styles.sectionIcon}>💎</Text>
-              </LinearGradient>
+              <Text style={styles.sectionIcon}>💎</Text>
               <Text style={styles.sectionTitle}>Mon Abonnement</Text>
             </View>
           </View>
 
-          <LinearGradient
-            colors={currentSubscription?.planId === 'free' 
-              ? ['#1A1A1A', '#2A2A2A'] 
-              : ['#2D1810', '#3D2820']}
-            style={styles.subscriptionCardGradient}
-          >
-            <View style={styles.subscriptionCard}>
-              <View style={styles.currentPlan}>
-                <LinearGradient
-                  colors={currentSubscription?.planId === 'free' 
-                    ? ['#4A4A4A', '#6A6A6A'] 
-                    : ['#FFD700', '#FFA500']}
-                  style={styles.planBadgeGradient}
-                >
-                  <Text style={[styles.planBadgeText, currentSubscription?.planId !== 'free' && styles.planBadgeTextPremium]}>
-                    {currentSubscription?.planId === 'free' ? 'FREE' : 
-                     currentSubscription?.planId === 'bronze' ? 'BRONZE' :
-                     currentSubscription?.planId === 'silver' ? 'SILVER' :
-                     currentSubscription?.planId === 'gold' ? 'GOLD' : 'FREE'}
-                  </Text>
-                </LinearGradient>
-                <Text style={styles.planTitle}>
-                  {currentSubscription?.planName || 'Version Gratuite'}
+          <View style={styles.subscriptionCard}>
+            <View style={styles.currentPlan}>
+              <View style={styles.planBadge}>
+                <Text style={styles.planBadgeText}>
+                  {currentSubscription?.planId === 'free' ? 'FREE' : 
+                   currentSubscription?.planId === 'bronze' ? 'BRONZE' :
+                   currentSubscription?.planId === 'silver' ? 'SILVER' :
+                   currentSubscription?.planId === 'gold' ? 'GOLD' : 'FREE'}
                 </Text>
-                <Text style={styles.planDescription}>
-                  {currentSubscription?.planId === 'free' 
-                    ? 'Fonctionnalités de base disponibles'
-                    : `Abonnement actif${currentSubscription?.price ? ` - ${currentSubscription.price}€/mois` : ''}`}
-                </Text>
-                {currentSubscription?.status === 'expired' && (
-                  <View style={styles.expiredBadge}>
-                    <Text style={styles.expiredText}>⚠️ Abonnement expiré</Text>
-                  </View>
-                )}
               </View>
-
-              <View style={styles.premiumFeatures}>
-                <View style={styles.featureRow}>
-                  <LinearGradient colors={['#FFD700', '#FFA500']} style={styles.featureIcon}>
-                    <Text style={styles.featureEmoji}>🏆</Text>
-                  </LinearGradient>
-                  <Text style={styles.premiumFeatureText}>Coach personnel 24h/24</Text>
-                </View>
-                <View style={styles.featureRow}>
-                  <LinearGradient colors={['#32CD32', '#228B22']} style={styles.featureIcon}>
-                    <Text style={styles.featureEmoji}>🍎</Text>
-                  </LinearGradient>
-                  <Text style={styles.premiumFeatureText}>Programmes nutrition personnalisés</Text>
-                </View>
-                <View style={styles.featureRow}>
-                  <LinearGradient colors={['#FF6B6B', '#FF4444']} style={styles.featureIcon}>
-                    <Text style={styles.featureEmoji}>💪</Text>
-                  </LinearGradient>
-                  <Text style={styles.premiumFeatureText}>Entraînements sur mesure</Text>
-                </View>
-              </View>
-
-              <TouchableOpacity 
-                style={styles.upgradeButton}
-                onPress={() => setSubscriptionModalVisible(true)}
-              >
-                <LinearGradient
-                  colors={['#FFD700', '#FFA500', '#FF8C00']}
-                  style={styles.upgradeGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <Text style={styles.upgradeButtonText}>
-                    {currentSubscription?.planId === 'free' ? '✨ Découvrir Premium' : '🔄 Changer d\'abonnement'}
-                  </Text>
-                  <Text style={styles.upgradeArrow}>→</Text>
-                </LinearGradient>
-              </TouchableOpacity>
+              <Text style={styles.planTitle}>
+                {currentSubscription?.planName || 'Version Gratuite'}
+              </Text>
+              <Text style={styles.planDescription}>
+                {currentSubscription?.planId === 'free' 
+                  ? 'Fonctionnalités de base disponibles'
+                  : `Abonnement actif${currentSubscription?.price ? ` - ${currentSubscription.price}€/mois` : ''}`}
+              </Text>
+              {currentSubscription?.status === 'expired' && (
+                <Text style={styles.expiredText}>⚠️ Abonnement expiré</Text>
+              )}
             </View>
-          </LinearGradient>
+
+            <View style={styles.premiumFeatures}>
+              <Text style={styles.premiumTitle}>🏆 Coach personnel 24h/24</Text>
+              <Text style={styles.premiumTitle}>🍎 Programmes nutrition personnalisés</Text>
+              <Text style={styles.premiumTitle}>💪 Entraînements sur mesure</Text>
+            </View>
+
+            <TouchableOpacity 
+              style={styles.upgradeButton}
+              onPress={() => setSubscriptionModalVisible(true)}
+            >
+              <LinearGradient
+                colors={['#D4A574', '#B8935A']}
+                style={styles.upgradeGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <Text style={styles.upgradeButtonText}>
+                  {currentSubscription?.planId === 'free' ? '✨ Découvrir Premium' : '🔄 Changer d\'abonnement'}
+                </Text>
+                <Text style={styles.upgradeArrow}>→</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
         </View>
 
         
@@ -1212,161 +1103,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   // Styles pour la section abonnement améliorée
-  sectionTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  sectionIconGradient: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sectionIcon: {
-    fontSize: 16,
-  },
-  subscriptionCardGradient: {
-    borderRadius: 16,
-    padding: 2,
-    shadowColor: '#FFD700',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  subscriptionCard: {
-    backgroundColor: 'transparent',
-    borderRadius: 14,
-    padding: 20,
-  },
-  planBadgeGradient: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginBottom: 12,
-    alignSelf: 'flex-start',
-  },
-  planBadgeTextPremium: {
-    color: '#000000',
-    fontWeight: 'bold',
-  },
-  expiredBadge: {
-    backgroundColor: 'rgba(255, 107, 107, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    alignSelf: 'flex-start',
-    marginTop: 8,
-  },
-  premiumFeatures: {
-    marginVertical: 20,
-    gap: 16,
-  },
-  featureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  featureIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  featureEmoji: {
-    fontSize: 16,
-  },
-  premiumFeatureText: {
-    fontSize: 15,
-    color: '#FFFFFF',
-    fontWeight: '500',
-    flex: 1,
-  },
-  modifyButtonGradient: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  objectifsEdit: {
-    gap: 12,
-  },
-  goalButtonGradient: {
-    borderRadius: 12,
-    padding: 2,
-  },
-  goalContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    backgroundColor: 'transparent',
-    borderRadius: 10,
-  },
-  goalEmoji: {
-    fontSize: 20,
-    marginRight: 12,
-  },
-  checkmarkContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 'auto',
-  },
-  saveButtonGradient: {
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-  },
-  infoCardGradient: {
-    borderRadius: 12,
-    padding: 2,
-  },
-  goalItemDisplay: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#21262D',
-    gap: 12,
-  },
-  goalIconContainer: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  goalDisplayEmoji: {
-    fontSize: 14,
-  },
-  goalDisplayText: {
-    fontSize: 15,
-    color: '#FFFFFF',
-    fontWeight: '500',
-    flex: 1,
-  },
-  noGoalsContainer: {
-    alignItems: 'center',
-    padding: 20,
-  },
-  noGoalsEmoji: {
-    fontSize: 48,
-    marginBottom: 12,
-  },
-  noGoalsSubtext: {
-    fontSize: 12,
-    color: '#8B949E',
-    marginTop: 4,
-    textAlign: 'center',
-  },
   premiumCard: {
     borderRadius: 16,
     padding: 24,
