@@ -250,11 +250,20 @@ export default function ProfilScreen() {
 
         {/* User Info */}
         <View style={styles.userCard}>
-        <TouchableOpacity onPress={() => router.push('/(client)/abonnement')} style={{ position: 'absolute', top: 10, right: 10, zIndex: 1 }}>
+          <TouchableOpacity onPress={() => router.push('/(client)/abonnement')} style={{ position: 'absolute', top: 10, right: 10, zIndex: 1 }}>
             <View style={{ backgroundColor: '#28A745', width: 20, height: 20, borderRadius: 10, justifyContent: 'center', alignItems: 'center' }}>
               <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: 'bold' }}>+</Text>
             </View>
           </TouchableOpacity>
+          
+          {/* Notification Premium */}
+          <TouchableOpacity 
+            style={styles.premiumNotification}
+            onPress={() => router.push('/(client)/abonnement')}
+          >
+            <Text style={styles.premiumNotificationText}>Passer premium</Text>
+          </TouchableOpacity>
+          
           <View style={styles.userAvatar}>
             <Text style={styles.userAvatarText}>
               {user ? (
@@ -561,6 +570,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#21262D',
     alignItems: 'center',
+    position: 'relative',
+  },
+  premiumNotification: {
+    position: 'absolute',
+    top: -8,
+    right: 60,
+    backgroundColor: 'rgba(139, 148, 158, 0.9)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    zIndex: 2,
+  },
+  premiumNotificationText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '500',
   },
   userAvatar: {
     width: 80,
