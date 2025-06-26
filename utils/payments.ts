@@ -1,4 +1,3 @@
-
 import { Platform } from 'react-native';
 import { initPaymentSheet, presentPaymentSheet, confirmPaymentSheetPayment } from '@stripe/stripe-react-native';
 
@@ -249,10 +248,10 @@ export class PaymentService {
     try {
       const AsyncStorage = require('@react-native-async-storage/async-storage').default;
       const subscriptionData = await AsyncStorage.getItem(`subscription_${userId}`);
-      
+
       if (subscriptionData) {
         const subscription = JSON.parse(subscriptionData);
-        
+
         // Vérifier si l'abonnement est encore valide
         if (subscription.endDate && new Date(subscription.endDate) > new Date()) {
           return subscription;
@@ -262,7 +261,7 @@ export class PaymentService {
           await AsyncStorage.setItem(`subscription_${userId}`, JSON.stringify(subscription));
           return subscription;
         }
-        
+
         return subscription;
       }
 
@@ -277,7 +276,7 @@ export class PaymentService {
       };
     } catch (error) {
       console.error('Erreur récupération abonnement:', error);
-      
+
       // En cas d'erreur, retourner un abonnement gratuit par défaut
       return {
         planId: 'free',
@@ -288,26 +287,23 @@ export class PaymentService {
         paymentMethod: 'none'
       };
     }
-  }ror);
-      return null;
-    }
   }
 
   static async cancelSubscription(userId: string): Promise<boolean> {
     try {
       const { PersistentStorage } = await import('./storage');
       const subscriptionData = await PersistentStorage.getItem(`subscription_${userId}`);
-      
+
       if (subscriptionData) {
         const subscription = JSON.parse(subscriptionData);
         subscription.status = 'cancelled';
         subscription.cancelledAt = new Date().toISOString();
-        
+
         await PersistentStorage.setItem(`subscription_${userId}`, JSON.stringify(subscription));
         console.log('✅ Abonnement annulé');
         return true;
       }
-      
+
       return false;
     } catch (error) {
       console.error('Erreur annulation abonnement:', error);
