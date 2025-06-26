@@ -431,46 +431,105 @@ export default function ProfilScreen() {
 
         {/* Abonnement */}
         <View style={[styles.section, {marginTop: 20}]}>
-          <Text style={[styles.sectionTitle, {marginBottom: 16}]}>Mon Abonnement</Text>
+          <Text style={[styles.sectionTitle, {marginBottom: 16}]}>💎 Mon Abonnement</Text>
           
-          <View style={styles.subscriptionCard}>
-            <View style={styles.subscriptionHeader}>
-              <View style={styles.subscriptionIcon}>
-                <Text style={styles.subscriptionIconText}>
-                  {isPremium ? '👑' : '🔒'}
-                </Text>
+          {isPremium ? (
+            <LinearGradient
+              colors={['#FFD700', '#FFA500', '#FF8C00']}
+              style={styles.premiumCard}
+              start={{x: 0, y: 0}}
+              end={{x: 1, y: 1}}
+            >
+              <View style={styles.premiumHeader}>
+                <View style={styles.premiumIconContainer}>
+                  <Text style={styles.premiumIcon}>👑</Text>
+                </View>
+                <View style={styles.premiumTextContainer}>
+                  <Text style={styles.premiumTitle}>Premium Actif</Text>
+                  <Text style={styles.premiumSubtitle}>Profitez de tous les avantages</Text>
+                </View>
+                <View style={styles.premiumBadge}>
+                  <Text style={styles.premiumBadgeText}>PRO</Text>
+                </View>
               </View>
-              <View style={styles.subscriptionInfo}>
-                <Text style={styles.subscriptionPlan}>
-                  {isPremium ? 'Premium Actif' : 'Gratuit'}
+              
+              <View style={styles.premiumBenefitsContainer}>
+                <Text style={styles.benefitsTitle}>🌟 Vos avantages exclusifs :</Text>
+                <View style={styles.benefitsList}>
+                  <View style={styles.benefitRow}>
+                    <Text style={styles.benefitIcon}>🧑‍💼</Text>
+                    <Text style={styles.benefitText}>Coach personnel 24h/24</Text>
+                  </View>
+                  <View style={styles.benefitRow}>
+                    <Text style={styles.benefitIcon}>🥗</Text>
+                    <Text style={styles.benefitText}>Programmes nutrition personnalisés</Text>
+                  </View>
+                  <View style={styles.benefitRow}>
+                    <Text style={styles.benefitIcon}>💪</Text>
+                    <Text style={styles.benefitText}>Programmes d'entraînement sur mesure</Text>
+                  </View>
+                  <View style={styles.benefitRow}>
+                    <Text style={styles.benefitIcon}>📹</Text>
+                    <Text style={styles.benefitText}>Rendez-vous vidéo avec coach</Text>
+                  </View>
+                  <View style={styles.benefitRow}>
+                    <Text style={styles.benefitIcon}>📊</Text>
+                    <Text style={styles.benefitText}>Suivi en temps réel</Text>
+                  </View>
+                </View>
+              </View>
+            </LinearGradient>
+          ) : (
+            <View style={styles.freeSubscriptionCard}>
+              <View style={styles.freeHeader}>
+                <View style={styles.freeIconContainer}>
+                  <Text style={styles.freeIcon}>🆓</Text>
+                </View>
+                <View style={styles.freeTextContainer}>
+                  <Text style={styles.freeTitle}>Version Gratuite</Text>
+                  <Text style={styles.freeSubtitle}>Fonctionnalités de base disponibles</Text>
+                </View>
+              </View>
+
+              <View style={styles.upgradeSection}>
+                <Text style={styles.upgradeTitle}>🚀 Passez au niveau supérieur</Text>
+                <Text style={styles.upgradeDescription}>
+                  Débloquez l'accès complet à votre coach personnel et à tous nos programmes premium
                 </Text>
-                <Text style={styles.subscriptionDescription}>
-                  {isPremium 
-                    ? 'Accès complet à toutes les fonctionnalités' 
-                    : 'Accès limité aux fonctionnalités de base'
-                  }
-                </Text>
+                
+                <View style={styles.previewBenefits}>
+                  <View style={styles.previewBenefit}>
+                    <Text style={styles.previewIcon}>🧑‍💼</Text>
+                    <Text style={styles.previewText}>Coach personnel 24h/24</Text>
+                  </View>
+                  <View style={styles.previewBenefit}>
+                    <Text style={styles.previewIcon}>🥗</Text>
+                    <Text style={styles.previewText}>Programmes nutrition personnalisés</Text>
+                  </View>
+                  <View style={styles.previewBenefit}>
+                    <Text style={styles.previewIcon}>💪</Text>
+                    <Text style={styles.previewText}>Entraînements sur mesure</Text>
+                  </View>
+                </View>
+
+                <LinearGradient
+                  colors={['#F5A623', '#FF8C00']}
+                  style={styles.upgradeButton}
+                  start={{x: 0, y: 0}}
+                  end={{x: 1, y: 0}}
+                >
+                  <TouchableOpacity 
+                    style={styles.upgradeButtonTouchable}
+                    onPress={() => setShowSubscriptionModal(true)}
+                  >
+                    <Text style={styles.upgradeButtonIcon}>✨</Text>
+                    <Text style={styles.upgradeButtonText}>Découvrir Premium</Text>
+                    <Text style={styles.upgradeButtonArrow}>→</Text>
+                  </TouchableOpacity>
+                </LinearGradient>
               </View>
             </View>
-            
-            {isPremium ? (
-              <View style={styles.premiumBenefits}>
-                <Text style={styles.benefitTitle}>Avantages Premium :</Text>
-                <Text style={styles.benefitItem}>✓ Coach personnel 24h/24</Text>
-                <Text style={styles.benefitItem}>✓ Programmes nutrition personnalisés</Text>
-                <Text style={styles.benefitItem}>✓ Programmes d'entraînement sur mesure</Text>
-                <Text style={styles.benefitItem}>✓ Rendez-vous vidéo avec coach</Text>
-                <Text style={styles.benefitItem}>✓ Suivi en temps réel</Text>
-              </View>
-            ) : (
-              <TouchableOpacity 
-                style={styles.upgradeButton}
-                onPress={() => setShowSubscriptionModal(true)}
-              >
-                <Text style={styles.upgradeButtonText}>Passer à Premium</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+          )}
         </View>
 
         {/* Integrations */}
@@ -1053,71 +1112,190 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
   },
-  // Styles pour la section abonnement
-  subscriptionCard: {
-    backgroundColor: '#161B22',
-    borderRadius: 12,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#21262D',
+  // Styles pour la section abonnement améliorée
+  premiumCard: {
+    borderRadius: 16,
+    padding: 24,
+    marginBottom: 16,
+    shadowColor: '#FFD700',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  subscriptionHeader: {
+  premiumHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
-  subscriptionIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#F5A623',
+  premiumIconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
   },
-  subscriptionIconText: {
-    fontSize: 24,
+  premiumIcon: {
+    fontSize: 28,
   },
-  subscriptionInfo: {
+  premiumTextContainer: {
     flex: 1,
   },
-  subscriptionPlan: {
+  premiumTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginBottom: 4,
+  },
+  premiumSubtitle: {
+    fontSize: 14,
+    color: '#333333',
+  },
+  premiumBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  premiumBadgeText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#FF8C00',
+  },
+  premiumBenefitsContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    padding: 16,
+  },
+  benefitsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginBottom: 16,
+  },
+  benefitsList: {
+    gap: 12,
+  },
+  benefitRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  benefitIcon: {
+    fontSize: 18,
+    marginRight: 12,
+    width: 24,
+    textAlign: 'center',
+  },
+  benefitText: {
+    fontSize: 14,
+    color: '#000000',
+    fontWeight: '500',
+    flex: 1,
+  },
+  freeSubscriptionCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  freeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  freeIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#6C757D',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  freeIcon: {
+    fontSize: 24,
+  },
+  freeTextContainer: {
+    flex: 1,
+  },
+  freeTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 4,
   },
-  subscriptionDescription: {
+  freeSubtitle: {
     fontSize: 14,
     color: '#8B949E',
   },
-  premiumBenefits: {
+  upgradeSection: {
     backgroundColor: '#0D1117',
-    borderRadius: 8,
+    borderRadius: 12,
     padding: 16,
   },
-  benefitTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+  upgradeTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 12,
+    marginBottom: 8,
   },
-  benefitItem: {
+  upgradeDescription: {
     fontSize: 14,
-    color: '#FFFFFF',
-    marginBottom: 6,
+    color: '#8B949E',
     lineHeight: 20,
+    marginBottom: 16,
+  },
+  previewBenefits: {
+    marginBottom: 20,
+    gap: 8,
+  },
+  previewBenefit: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  previewIcon: {
+    fontSize: 16,
+    marginRight: 8,
+    width: 20,
+    textAlign: 'center',
+  },
+  previewText: {
+    fontSize: 13,
+    color: '#FFFFFF',
+    opacity: 0.8,
   },
   upgradeButton: {
-    backgroundColor: '#F5A623',
-    borderRadius: 8,
-    padding: 14,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  upgradeButtonTouchable: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  upgradeButtonIcon: {
+    fontSize: 16,
+    marginRight: 8,
   },
   upgradeButtonText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
     color: '#000000',
+    flex: 1,
+    textAlign: 'center',
+  },
+  upgradeButtonArrow: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginLeft: 8,
   },
   // Styles pour le modal d'abonnement
   modalOverlay: {
