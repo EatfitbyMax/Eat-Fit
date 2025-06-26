@@ -9,7 +9,8 @@ import {
   Switch,
   Modal,
   ActivityIndicator,
-  Platform
+  Platform,
+  SafeAreaView
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useFocusEffect } from 'expo-router';
