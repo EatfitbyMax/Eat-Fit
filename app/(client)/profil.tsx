@@ -494,7 +494,7 @@ export default function ProfilScreen() {
 
         {/* Settings */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Paramètres</Text>
+          <Text style={[styles.sectionTitle, {marginBottom: 16}]}>Paramètres</Text>
 
           <TouchableOpacity 
             style={styles.menuItem}
