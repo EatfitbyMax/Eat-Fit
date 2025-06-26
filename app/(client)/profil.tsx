@@ -413,7 +413,7 @@ export default function ProfilScreen() {
         {/* Integrations */}
         <View style={[styles.section, {marginTop: 20}]}>
           <Text style={styles.sectionTitle}>Mes Intégrations</Text>
-
+          
           <View style={styles.integrationItem}>
             <View style={styles.integrationInfo}>
               <Text style={styles.integrationName}>🍎 Apple Health</Text>
