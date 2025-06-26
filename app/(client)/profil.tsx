@@ -1,10 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert, Modal } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  Switch,
+  Modal,
+  ActivityIndicator,
+  Platform
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { logout, getCurrentUser } from '@/utils/auth';
 import { IntegrationsManager, IntegrationStatus } from '@/utils/integrations';
 import { checkSubscriptionStatus } from '@/utils/subscription';
+import { PaymentService } from '@/utils/payments';
+import SubscriptionModal from '@/components/SubscriptionModal';
 
 export default function ProfilScreen() {
   const router = useRouter();
@@ -18,6 +31,8 @@ export default function ProfilScreen() {
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
   const [isPremium, setIsPremium] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [currentSubscription, setCurrentSubscription] = useState<any>(null);
+  const [subscriptionModalVisible, setSubscriptionModalVisible] = useState(false);
 
   const availableGoals = [
     'Perdre du poids',
@@ -55,6 +70,9 @@ export default function ProfilScreen() {
       const currentUser = await getCurrentUser();
       console.log('Données utilisateur récupérées:', currentUser);
       setUser(currentUser);
+      if (currentUser?.id) {
+        await loadSubscriptionData(currentUser.id);
+      }
     } catch (error) {
       console.error('Erreur chargement utilisateur:', error);
     }
@@ -78,6 +96,15 @@ export default function ProfilScreen() {
       setIsPremium(premiumStatus);
     } catch (error) {
       console.error("Failed to load subscription status:", error);
+    }
+  };
+
+  const loadSubscriptionData = async (userId: string) => {
+    try {
+      const subscription = await PaymentService.getCurrentSubscription(userId);
+      setCurrentSubscription(subscription);
+    } catch (error) {
+      console.error('Erreur chargement abonnement:', error);
     }
   };
 
@@ -269,7 +296,7 @@ export default function ProfilScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
-        
+
 
         {/* User Info */}
         <View style={styles.userCard}>
@@ -428,12 +455,67 @@ export default function ProfilScreen() {
           )}
         </View>
 
+        {/* Section Abonnement */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleContainer}>
+              <Text style={styles.sectionIcon}>💎</Text>
+              <Text style={styles.sectionTitle}>Mon Abonnement</Text>
+            </View>
+          </View>
 
+          <View style={styles.subscriptionCard}>
+            <View style={styles.currentPlan}>
+              <View style={styles.planBadge}>
+                <Text style={styles.planBadgeText}>
+                  {currentSubscription?.planId === 'free' ? 'FREE' : 
+                   currentSubscription?.planId === 'bronze' ? 'BRONZE' :
+                   currentSubscription?.planId === 'silver' ? 'SILVER' :
+                   currentSubscription?.planId === 'gold' ? 'GOLD' : 'FREE'}
+                </Text>
+              </View>
+              <Text style={styles.planTitle}>
+                {currentSubscription?.planName || 'Version Gratuite'}
+              </Text>
+              <Text style={styles.planDescription}>
+                {currentSubscription?.planId === 'free' 
+                  ? 'Fonctionnalités de base disponibles'
+                  : `Abonnement actif - ${currentSubscription?.price}€/mois`}
+              </Text>
+              {currentSubscription?.status === 'expired' && (
+                <Text style={styles.expiredText}>⚠️ Abonnement expiré</Text>
+              )}
+            </View>
+
+            <View style={styles.premiumFeatures}>
+              <Text style={styles.premiumTitle}>🏆 Coach personnel 24h/24</Text>
+              <Text style={styles.premiumTitle}>🍎 Programmes nutrition personnalisés</Text>
+              <Text style={styles.premiumTitle}>💪 Entraînements sur mesure</Text>
+            </View>
+
+            <TouchableOpacity 
+              style={styles.upgradeButton}
+              onPress={() => setSubscriptionModalVisible(true)}
+            >
+              <LinearGradient
+                colors={['#D4A574', '#B8935A']}
+                style={styles.upgradeGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <Text style={styles.upgradeButtonText}>
+                  {currentSubscription?.planId === 'free' ? '✨ Découvrir Premium' : '🔄 Changer d\'abonnement'}
+                </Text>
+                <Text style={styles.upgradeArrow}>→</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </View>
 
         {/* Abonnement */}
         <View style={[styles.section, {marginTop: 20}]}>
           <Text style={[styles.sectionTitle, {marginBottom: 16}]}>💎 Mon Abonnement</Text>
-          
+
           {isPremium ? (
             <LinearGradient
               colors={['#FFD700', '#FFA500', '#FF8C00']}
@@ -453,7 +535,7 @@ export default function ProfilScreen() {
                   <Text style={styles.premiumBadgeText}>PRO</Text>
                 </View>
               </View>
-              
+
               <View style={styles.premiumBenefitsContainer}>
                 <Text style={styles.benefitsTitle}>🌟 Vos avantages exclusifs :</Text>
                 <View style={styles.benefitsList}>
@@ -497,7 +579,7 @@ export default function ProfilScreen() {
                 <Text style={styles.upgradeDescription}>
                   Débloquez l'accès complet à votre coach personnel et à tous nos programmes premium
                 </Text>
-                
+
                 <View style={styles.previewBenefits}>
                   <View style={styles.previewBenefit}>
                     <Text style={styles.previewIcon}>🧑‍💼</Text>
@@ -536,7 +618,7 @@ export default function ProfilScreen() {
         {/* Integrations */}
         <View style={[styles.section, {marginTop: 20}]}>
           <Text style={[styles.sectionTitle, {marginBottom: 16}]}>Mes Intégrations</Text>
-          
+
           <View style={styles.integrationItem}>
             <View style={styles.integrationInfo}>
               <Text style={styles.integrationName}>🍎 Apple Health</Text>
@@ -653,8 +735,15 @@ export default function ProfilScreen() {
         </View>
       </ScrollView>
 
-      {/* Modal d'abonnement */}
-      <Modal
+      <SubscriptionModal
+        visible={subscriptionModalVisible}
+        onClose={() => setSubscriptionModalVisible(false)}
+        userId={user?.id || ''}
+        currentPlanId={currentSubscription?.planId}
+        onSubscriptionUpdate={loadSubscriptionData}
+      />
+       {/* Modal d'abonnement */}
+       <Modal
         visible={showSubscriptionModal}
         transparent={true}
         animationType="slide"
@@ -788,7 +877,7 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space between',
     alignItems: 'center',
     marginBottom: 16,
   },
@@ -1370,6 +1459,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#FFFFFF',
     lineHeight: 20,
+  },
+   planDescription: {
+    fontSize: 14,
+    color: '#CCCCCC',
+    marginBottom: 16,
+  },
+  expiredText: {
+    fontSize: 12,
+    color: '#FF6B6B',
+    fontWeight: '600',
+    marginTop: 4,
   },
   closeModalButton: {
     backgroundColor: '#21262D',
