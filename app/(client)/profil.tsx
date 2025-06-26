@@ -246,10 +246,15 @@ export default function ProfilScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
-        
+
 
         {/* User Info */}
         <View style={styles.userCard}>
+        <TouchableOpacity onPress={() => router.push('/(client)/abonnement')} style={{ position: 'absolute', top: 10, right: 10, zIndex: 1 }}>
+            <View style={{ backgroundColor: '#28A745', width: 20, height: 20, borderRadius: 10, justifyContent: 'center', alignItems: 'center' }}>
+              <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: 'bold' }}>+</Text>
+            </View>
+          </TouchableOpacity>
           <View style={styles.userAvatar}>
             <Text style={styles.userAvatarText}>
               {user ? (
@@ -410,7 +415,7 @@ export default function ProfilScreen() {
         {/* Integrations */}
         <View style={[styles.section, {marginTop: 20}]}>
           <Text style={[styles.sectionTitle, {marginBottom: 16}]}>Mes Intégrations</Text>
-          
+
           <View style={styles.integrationItem}>
             <View style={styles.integrationInfo}>
               <Text style={styles.integrationName}>🍎 Apple Health</Text>
