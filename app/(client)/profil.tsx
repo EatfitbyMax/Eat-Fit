@@ -352,7 +352,7 @@ export default function ProfilScreen() {
         {/* Objectifs */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>🎯 Mes objectifs</Text>
+            <Text style={styles.sectionTitle}> Mes objectifs</Text>
             <TouchableOpacity 
               onPress={() => setEditingObjectifs(!editingObjectifs)}
               style={styles.modifyButton}
