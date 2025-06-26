@@ -347,64 +347,69 @@ export default function ProfilScreen() {
             </View>
           </View>
 
-          {/* Objectifs */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.infoSectionTitle}> Mes objectifs</Text>
+          </View>
+
+        {/* Objectifs */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>🎯 Mes objectifs</Text>
+            <TouchableOpacity 
+              onPress={() => setEditingObjectifs(!editingObjectifs)}
+              style={styles.modifyButton}
+            >
+              <Text style={styles.modifyText}>
+                {editingObjectifs ? 'Annuler' : 'Modifier'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {editingObjectifs ? (
+            <View style={styles.objectifsEdit}>
+              {availableGoals.map((goal) => (
+                <TouchableOpacity
+                  key={goal}
+                  style={[
+                    styles.goalButton,
+                    selectedGoals.includes(goal) && styles.selectedGoal
+                  ]}
+                  onPress={() => toggleGoal(goal)}
+                >
+                  <Text style={[
+                    styles.goalText,
+                    selectedGoals.includes(goal) && styles.selectedGoalText
+                  ]}>
+                    {goal}
+                  </Text>
+                  {selectedGoals.includes(goal) && (
+                    <Text style={styles.checkmark}>✓</Text>
+                  )}
+                </TouchableOpacity>
+              ))}
+              
               <TouchableOpacity 
-                onPress={() => setEditingObjectifs(!editingObjectifs)}
-                style={styles.modifyButton}
+                style={styles.saveButton}
+                onPress={handleSaveObjectifs}
               >
-                <Text style={styles.modifyText}>
-                  {editingObjectifs ? 'Annuler' : 'Modifier'}
-                </Text>
+                <Text style={styles.saveButtonText}>Sauvegarder</Text>
               </TouchableOpacity>
             </View>
+          ) : (
+            <View style={styles.infoCard}>
+              {user?.goals && user.goals.length > 0 ? (
+                user.goals.map((goal: string, index: number) => (
+                  <View key={index} style={styles.goalItem}>
+                    <Text style={styles.goalText}>• {goal}</Text>
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.infoValue}>Aucun objectif défini</Text>
+              )}
+            </View>
+          )}
+        </View>
 
-            {editingObjectifs ? (
-              <View style={styles.objectifsEdit}>
-                {availableGoals.map((goal) => (
-                  <TouchableOpacity
-                    key={goal}
-                    style={[
-                      styles.goalButton,
-                      selectedGoals.includes(goal) && styles.selectedGoal
-                    ]}
-                    onPress={() => toggleGoal(goal)}
-                  >
-                    <Text style={[
-                      styles.goalText,
-                      selectedGoals.includes(goal) && styles.selectedGoalText
-                    ]}>
-                      {goal}
-                    </Text>
-                    {selectedGoals.includes(goal) && (
-                      <Text style={styles.checkmark}>✓</Text>
-                    )}
-                  </TouchableOpacity>
-                ))}
-                
-                <TouchableOpacity 
-                  style={styles.saveButton}
-                  onPress={handleSaveObjectifs}
-                >
-                  <Text style={styles.saveButtonText}>Sauvegarder</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View style={styles.infoCard}>
-                {user?.goals && user.goals.length > 0 ? (
-                  user.goals.map((goal: string, index: number) => (
-                    <View key={index} style={styles.goalItem}>
-                      <Text style={styles.goalText}>• {goal}</Text>
-                    </View>
-                  ))
-                ) : (
-                  <Text style={styles.infoValue}>Aucun objectif défini</Text>
-                )}
-              </View>
-            )}
-          </View>
+        {/* Notifications */}
+        <View style={styles.section}>
 
 
 
