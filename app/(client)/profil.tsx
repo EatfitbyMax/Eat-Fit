@@ -456,60 +456,127 @@ export default function ProfilScreen() {
           )}
         </View>
 
-        {/* Section Abonnement */}
+        {/* Section Abonnement Améliorée */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleContainer}>
-              <Text style={styles.sectionIcon}>💎</Text>
-              <Text style={styles.sectionTitle}>Mon Abonnement</Text>
-            </View>
-          </View>
-
-          <View style={styles.subscriptionCard}>
-            <View style={styles.currentPlan}>
-              <View style={styles.planBadge}>
-                <Text style={styles.planBadgeText}>
-                  {currentSubscription?.planId === 'free' ? 'FREE' : 
-                   currentSubscription?.planId === 'bronze' ? 'BRONZE' :
-                   currentSubscription?.planId === 'silver' ? 'SILVER' :
-                   currentSubscription?.planId === 'gold' ? 'GOLD' : 'FREE'}
-                </Text>
-              </View>
-              <Text style={styles.planTitle}>
-                {currentSubscription?.planName || 'Version Gratuite'}
-              </Text>
-              <Text style={styles.planDescription}>
-                {currentSubscription?.planId === 'free' 
-                  ? 'Fonctionnalités de base disponibles'
-                  : `Abonnement actif${currentSubscription?.price ? ` - ${currentSubscription.price}€/mois` : ''}`}
-              </Text>
-              {currentSubscription?.status === 'expired' && (
-                <Text style={styles.expiredText}>⚠️ Abonnement expiré</Text>
-              )}
-            </View>
-
-            <View style={styles.premiumFeatures}>
-              <Text style={styles.premiumTitle}>🏆 Coach personnel 24h/24</Text>
-              <Text style={styles.premiumTitle}>🍎 Programmes nutrition personnalisés</Text>
-              <Text style={styles.premiumTitle}>💪 Entraînements sur mesure</Text>
-            </View>
-
-            <TouchableOpacity 
-              style={styles.upgradeButton}
-              onPress={() => setSubscriptionModalVisible(true)}
+          <View style={styles.subscriptionMainCard}>
+            <LinearGradient
+              colors={
+                currentSubscription?.planId === 'free' 
+                  ? ['#1a1a1a', '#2a2a2a']
+                  : currentSubscription?.planId === 'gold'
+                  ? ['#FFD700', '#FFA500', '#FF8C00']
+                  : currentSubscription?.planId === 'silver'
+                  ? ['#C0C0C0', '#A8A8A8', '#909090']
+                  : ['#CD7F32', '#B8860B', '#A0522D']
+              }
+              style={styles.subscriptionGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
             >
-              <LinearGradient
-                colors={['#D4A574', '#B8935A']}
-                style={styles.upgradeGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
+              <View style={styles.subscriptionHeader}>
+                <View style={styles.planIconContainer}>
+                  <Text style={styles.planMainIcon}>
+                    {currentSubscription?.planId === 'free' ? '💎' : 
+                     currentSubscription?.planId === 'gold' ? '👑' :
+                     currentSubscription?.planId === 'silver' ? '🥈' : '🥉'}
+                  </Text>
+                </View>
+                <View style={styles.planInfoContainer}>
+                  <Text style={styles.planMainTitle}>Mon Abonnement</Text>
+                  <View style={styles.currentPlanBadge}>
+                    <Text style={styles.currentPlanText}>
+                      {currentSubscription?.planId === 'free' ? 'GRATUIT' : 
+                       currentSubscription?.planId === 'bronze' ? 'BRONZE' :
+                       currentSubscription?.planId === 'silver' ? 'ARGENT' :
+                       currentSubscription?.planId === 'gold' ? 'OR' : 'GRATUIT'}
+                    </Text>
+                  </View>
+                </View>
+                {currentSubscription?.planId !== 'free' && (
+                  <View style={styles.priceContainer}>
+                    <Text style={styles.priceText}>
+                      {currentSubscription?.price || '0'}€
+                    </Text>
+                    <Text style={styles.priceUnit}>/mois</Text>
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.subscriptionBody}>
+                {currentSubscription?.planId === 'free' ? (
+                  <View style={styles.freeContent}>
+                    <Text style={styles.freeDescription}>
+                      Vous utilisez actuellement la version gratuite d'EatFitByMax
+                    </Text>
+                    <View style={styles.limitationsList}>
+                      <Text style={styles.limitation}>• Fonctionnalités de base</Text>
+                      <Text style={styles.limitation}>• Accès limité au coach</Text>
+                      <Text style={styles.limitation}>• 1 programme de base</Text>
+                    </View>
+                  </View>
+                ) : (
+                  <View style={styles.premiumContent}>
+                    <Text style={styles.premiumDescription}>
+                      Abonnement actif jusqu'au {currentSubscription?.endDate ? 
+                        new Date(currentSubscription.endDate).toLocaleDateString('fr-FR') : 
+                        'Non défini'
+                      }
+                    </Text>
+                    {currentSubscription?.status === 'expired' && (
+                      <View style={styles.expiredBanner}>
+                        <Text style={styles.expiredBannerText}>⚠️ Abonnement expiré</Text>
+                      </View>
+                    )}
+                  </View>
+                )}
+
+                <View style={styles.benefitsPreview}>
+                  <Text style={styles.benefitsTitle}>
+                    {currentSubscription?.planId === 'free' ? 
+                      '🚀 Passez au Premium pour débloquer :' : 
+                      '✅ Vos avantages Premium :'}
+                  </Text>
+                  <View style={styles.benefitsList}>
+                    <View style={styles.benefitItem}>
+                      <Text style={styles.benefitIcon}>🤖</Text>
+                      <Text style={styles.benefitText}>Coach IA personnalisé 24h/24</Text>
+                    </View>
+                    <View style={styles.benefitItem}>
+                      <Text style={styles.benefitIcon}>🍽️</Text>
+                      <Text style={styles.benefitText}>Plans nutrition sur mesure</Text>
+                    </View>
+                    <View style={styles.benefitItem}>
+                      <Text style={styles.benefitIcon}>💪</Text>
+                      <Text style={styles.benefitText}>Programmes d'entraînement avancés</Text>
+                    </View>
+                    <View style={styles.benefitItem}>
+                      <Text style={styles.benefitIcon}>📊</Text>
+                      <Text style={styles.benefitText}>Analyses détaillées des progrès</Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              <TouchableOpacity 
+                style={styles.subscriptionAction}
+                onPress={() => setSubscriptionModalVisible(true)}
+                activeOpacity={0.8}
               >
-                <Text style={styles.upgradeButtonText}>
-                  {currentSubscription?.planId === 'free' ? '✨ Découvrir Premium' : '🔄 Changer d\'abonnement'}
-                </Text>
-                <Text style={styles.upgradeArrow}>→</Text>
-              </LinearGradient>
-            </TouchableOpacity>
+                <LinearGradient
+                  colors={['#FFFFFF', '#F0F0F0']}
+                  style={styles.actionButton}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <Text style={styles.actionButtonText}>
+                    {currentSubscription?.planId === 'free' ? 
+                      '⭐ Passer au Premium' : 
+                      '🔄 Gérer mon abonnement'}
+                  </Text>
+                  <Text style={styles.actionArrow}>→</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </LinearGradient>
           </View>
         </View>
 
@@ -777,9 +844,17 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     flexDirection: 'row',
-    justifyContent: 'space between',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
+  },
+  sectionTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sectionIcon: {
+    fontSize: 20,
+    marginRight: 8,
   },
   sectionTitle: {
     fontSize: 18,
@@ -1102,19 +1177,176 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
   },
-  // Styles pour la section abonnement améliorée
-  premiumCard: {
-    borderRadius: 16,
-    padding: 24,
+  // Styles pour la section abonnement nouvelle version
+  subscriptionMainCard: {
+    borderRadius: 20,
+    overflow: 'hidden',
     marginBottom: 16,
-    shadowColor: '#FFD700',
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 8,
     },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowRadius: 12,
+    elevation: 12,
+  },
+  subscriptionGradient: {
+    padding: 24,
+  },
+  subscriptionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  planIconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  planMainIcon: {
+    fontSize: 28,
+  },
+  planInfoContainer: {
+    flex: 1,
+  },
+  planMainTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginBottom: 6,
+  },
+  currentPlanBadge: {
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+  },
+  currentPlanText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    letterSpacing: 1,
+  },
+  priceContainer: {
+    alignItems: 'flex-end',
+  },
+  priceText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#000000',
+  },
+  priceUnit: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333333',
+    marginTop: -4,
+  },
+  subscriptionBody: {
+    marginBottom: 24,
+  },
+  freeContent: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+  },
+  freeDescription: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  limitationsList: {
+    gap: 6,
+  },
+  limitation: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
+  },
+  premiumContent: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+  },
+  premiumDescription: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  expiredBanner: {
+    backgroundColor: '#FF4444',
+    borderRadius: 8,
+    padding: 8,
+    marginTop: 12,
+  },
+  expiredBannerText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  benefitsPreview: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 16,
+    padding: 20,
+  },
+  benefitsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  benefitsList: {
+    gap: 12,
+  },
+  benefitItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  benefitIcon: {
+    fontSize: 18,
+    marginRight: 12,
+    width: 24,
+    textAlign: 'center',
+  },
+  benefitText: {
+    fontSize: 14,
+    color: '#000000',
+    fontWeight: '500',
+    flex: 1,
+  },
+  subscriptionAction: {
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 18,
+  },
+  actionButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000000',
+    flex: 1,
+    textAlign: 'center',
+  },
+  actionArrow: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginLeft: 8,
   },
   premiumHeader: {
     flexDirection: 'row',
