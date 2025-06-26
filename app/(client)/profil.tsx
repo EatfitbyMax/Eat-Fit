@@ -412,7 +412,7 @@ export default function ProfilScreen() {
 
         {/* Integrations */}
         <View style={[styles.section, {marginTop: 20}]}>
-          <Text style={styles.sectionTitle}>Mes Intégrations</Text>
+          <Text style={[styles.sectionTitle, {marginBottom: 16}]}>Mes Intégrations</Text>
           
           <View style={styles.integrationItem}>
             <View style={styles.integrationInfo}>
