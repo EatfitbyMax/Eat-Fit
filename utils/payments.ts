@@ -247,21 +247,23 @@ export class PaymentService {
 
   static async getCurrentSubscription(userId: string) {
     try {
-      const { PersistentStorage } = await import('./storage');
-      const subscriptionData = await PersistentStorage.getItem(`subscription_${userId}`);
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      const subscriptionData = await AsyncStorage.getItem(`subscription_${userId}`);
       
       if (subscriptionData) {
         const subscription = JSON.parse(subscriptionData);
         
         // Vérifier si l'abonnement est encore valide
-        if (new Date(subscription.endDate) > new Date()) {
+        if (subscription.endDate && new Date(subscription.endDate) > new Date()) {
           return subscription;
-        } else {
+        } else if (subscription.endDate) {
           // Abonnement expiré
           subscription.status = 'expired';
-          await PersistentStorage.setItem(`subscription_${userId}`, JSON.stringify(subscription));
+          await AsyncStorage.setItem(`subscription_${userId}`, JSON.stringify(subscription));
           return subscription;
         }
+        
+        return subscription;
       }
 
       // Aucun abonnement trouvé, retourner gratuit
@@ -275,6 +277,18 @@ export class PaymentService {
       };
     } catch (error) {
       console.error('Erreur récupération abonnement:', error);
+      
+      // En cas d'erreur, retourner un abonnement gratuit par défaut
+      return {
+        planId: 'free',
+        planName: 'Version Gratuite',
+        price: 0,
+        currency: 'EUR',
+        status: 'active',
+        paymentMethod: 'none'
+      };
+    }
+  }ror);
       return null;
     }
   }
