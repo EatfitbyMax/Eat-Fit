@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert, Modal } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { logout, getCurrentUser } from '@/utils/auth';
 import { IntegrationsManager, IntegrationStatus } from '@/utils/integrations';
 import { checkSubscriptionStatus } from '@/utils/subscription';
