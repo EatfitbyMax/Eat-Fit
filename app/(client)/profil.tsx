@@ -246,7 +246,7 @@ export default function ProfilScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
-
+        
 
         {/* User Info */}
         <View style={styles.userCard}>
@@ -405,26 +405,12 @@ export default function ProfilScreen() {
           )}
         </View>
 
-        {/* Add Subscriptions section here */}
-        <View style={[styles.section, {marginTop: 20}]}>
-            <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Abonnements</Text>
-                <TouchableOpacity style={styles.modifyButton}>
-                    <Text style={styles.modifyText}>Gérer</Text>
-                </TouchableOpacity>
-            </View>
-            <View style={styles.infoCard}>
-                <Text style={styles.infoValue}>Vous n'avez pas d'abonnement actif.</Text>
-                <TouchableOpacity style={styles.subscribeButton}>
-                    <Text style={styles.subscribeButtonText}>S'abonner</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
+
 
         {/* Integrations */}
         <View style={[styles.section, {marginTop: 20}]}>
           <Text style={[styles.sectionTitle, {marginBottom: 16}]}>Mes Intégrations</Text>
-
+          
           <View style={styles.integrationItem}>
             <View style={styles.integrationInfo}>
               <Text style={styles.integrationName}>🍎 Apple Health</Text>
@@ -926,17 +912,4 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
   },
-  subscribeButton: {
-        backgroundColor: '#28A745',
-        paddingVertical: 8,
-        paddingHorizontal: 16,
-        borderRadius: 6,
-        alignItems: 'center',
-        marginTop: 8,
-    },
-    subscribeButtonText: {
-        fontSize: 14,
-        color: '#FFFFFF',
-        fontWeight: '600',
-    },
 });
