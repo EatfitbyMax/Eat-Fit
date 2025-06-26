@@ -481,7 +481,7 @@ export default function ProfilScreen() {
               <Text style={styles.planDescription}>
                 {currentSubscription?.planId === 'free' 
                   ? 'Fonctionnalités de base disponibles'
-                  : `Abonnement actif - ${currentSubscription?.price}€/mois`}
+                  : `Abonnement actif${currentSubscription?.price ? ` - ${currentSubscription.price}€/mois` : ''}`}
               </Text>
               {currentSubscription?.status === 'expired' && (
                 <Text style={styles.expiredText}>⚠️ Abonnement expiré</Text>
@@ -513,108 +513,7 @@ export default function ProfilScreen() {
           </View>
         </View>
 
-        {/* Abonnement */}
-        <View style={[styles.section, {marginTop: 20}]}>
-          <Text style={[styles.sectionTitle, {marginBottom: 16}]}>💎 Mon Abonnement</Text>
-
-          {isPremium ? (
-            <LinearGradient
-              colors={['#FFD700', '#FFA500', '#FF8C00']}
-              style={styles.premiumCard}
-              start={{x: 0, y: 0}}
-              end={{x: 1, y: 1}}
-            >
-              <View style={styles.premiumHeader}>
-                <View style={styles.premiumIconContainer}>
-                  <Text style={styles.premiumIcon}>👑</Text>
-                </View>
-                <View style={styles.premiumTextContainer}>
-                  <Text style={styles.premiumTitle}>Premium Actif</Text>
-                  <Text style={styles.premiumSubtitle}>Profitez de tous les avantages</Text>
-                </View>
-                <View style={styles.premiumBadge}>
-                  <Text style={styles.premiumBadgeText}>PRO</Text>
-                </View>
-              </View>
-
-              <View style={styles.premiumBenefitsContainer}>
-                <Text style={styles.benefitsTitle}>🌟 Vos avantages exclusifs :</Text>
-                <View style={styles.benefitsList}>
-                  <View style={styles.benefitRow}>
-                    <Text style={styles.benefitIcon}>🧑‍💼</Text>
-                    <Text style={styles.benefitText}>Coach personnel 24h/24</Text>
-                  </View>
-                  <View style={styles.benefitRow}>
-                    <Text style={styles.benefitIcon}>🥗</Text>
-                    <Text style={styles.benefitText}>Programmes nutrition personnalisés</Text>
-                  </View>
-                  <View style={styles.benefitRow}>
-                    <Text style={styles.benefitIcon}>💪</Text>
-                    <Text style={styles.benefitText}>Programmes d'entraînement sur mesure</Text>
-                  </View>
-                  <View style={styles.benefitRow}>
-                    <Text style={styles.benefitIcon}>📹</Text>
-                    <Text style={styles.benefitText}>Rendez-vous vidéo avec coach</Text>
-                  </View>
-                  <View style={styles.benefitRow}>
-                    <Text style={styles.benefitIcon}>📊</Text>
-                    <Text style={styles.benefitText}>Suivi en temps réel</Text>
-                  </View>
-                </View>
-              </View>
-            </LinearGradient>
-          ) : (
-            <View style={styles.freeSubscriptionCard}>
-              <View style={styles.freeHeader}>
-                <View style={styles.freeIconContainer}>
-                  <Text style={styles.freeIcon}>🆓</Text>
-                </View>
-                <View style={styles.freeTextContainer}>
-                  <Text style={styles.freeTitle}>Version Gratuite</Text>
-                  <Text style={styles.freeSubtitle}>Fonctionnalités de base disponibles</Text>
-                </View>
-              </View>
-
-              <View style={styles.upgradeSection}>
-                <Text style={styles.upgradeTitle}>🚀 Passez au niveau supérieur</Text>
-                <Text style={styles.upgradeDescription}>
-                  Débloquez l'accès complet à votre coach personnel et à tous nos programmes premium
-                </Text>
-
-                <View style={styles.previewBenefits}>
-                  <View style={styles.previewBenefit}>
-                    <Text style={styles.previewIcon}>🧑‍💼</Text>
-                    <Text style={styles.previewText}>Coach personnel 24h/24</Text>
-                  </View>
-                  <View style={styles.previewBenefit}>
-                    <Text style={styles.previewIcon}>🥗</Text>
-                    <Text style={styles.previewText}>Programmes nutrition personnalisés</Text>
-                  </View>
-                  <View style={styles.previewBenefit}>
-                    <Text style={styles.previewIcon}>💪</Text>
-                    <Text style={styles.previewText}>Entraînements sur mesure</Text>
-                  </View>
-                </View>
-
-                <LinearGradient
-                  colors={['#F5A623', '#FF8C00']}
-                  style={styles.upgradeButton}
-                  start={{x: 0, y: 0}}
-                  end={{x: 1, y: 0}}
-                >
-                  <TouchableOpacity 
-                    style={styles.upgradeButtonTouchable}
-                    onPress={() => setShowSubscriptionModal(true)}
-                  >
-                    <Text style={styles.upgradeButtonIcon}>✨</Text>
-                    <Text style={styles.upgradeButtonText}>Découvrir Premium</Text>
-                    <Text style={styles.upgradeButtonArrow}>→</Text>
-                  </TouchableOpacity>
-                </LinearGradient>
-              </View>
-            </View>
-          )}
-        </View>
+        
 
         {/* Integrations */}
         <View style={[styles.section, {marginTop: 20}]}>
