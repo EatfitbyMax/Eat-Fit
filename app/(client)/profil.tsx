@@ -456,64 +456,41 @@ export default function ProfilScreen() {
           )}
         </View>
 
-        {/* Section Abonnement - Nouveau Design */}
+        {/* Section Abonnement - Version Compacte */}
         <View style={styles.section}>
-          <View style={styles.modernSubscriptionCard}>
+          <View style={styles.compactSubscriptionCard}>
             {/* Header avec badge FREE */}
-            <View style={styles.modernHeader}>
-              <View style={styles.freeBadgeContainer}>
-                <View style={styles.freeBadge}>
-                  <Text style={styles.freeBadgeText}>FREE</Text>
-                </View>
+            <View style={styles.compactHeader}>
+              <View style={styles.compactFreeBadge}>
+                <Text style={styles.compactFreeBadgeText}>FREE</Text>
               </View>
-              <View style={styles.modernHeaderText}>
-                <Text style={styles.modernTitle}>Version Gratuite</Text>
-                <Text style={styles.modernSubtitle}>Fonctionnalités de base disponibles</Text>
+              <View style={styles.compactHeaderText}>
+                <Text style={styles.compactTitle}>Version Gratuite</Text>
+                <Text style={styles.compactSubtitle}>Fonctionnalités de base</Text>
               </View>
             </View>
 
             {/* Upgrade Section */}
-            <View style={styles.modernUpgradeSection}>
-              <View style={styles.upgradeHeader}>
-                <Text style={styles.upgradeIcon}>🚀</Text>
-                <Text style={styles.upgradeTitle}>Passez au niveau supérieur</Text>
-              </View>
+            <View style={styles.compactUpgradeSection}>
+              <Text style={styles.compactUpgradeTitle}>🚀 Passez au niveau supérieur</Text>
               
-              <Text style={styles.upgradeDescription}>
-                Débloquez l'accès complet à votre coach personnel et à tous nos programmes premium
+              <Text style={styles.compactUpgradeDescription}>
+                Débloquez votre coach personnel et tous nos programmes premium
               </Text>
-
-              {/* Benefits List */}
-              <View style={styles.modernBenefitsList}>
-                <View style={styles.modernBenefitItem}>
-                  <Text style={styles.modernBenefitIcon}>👨‍💼</Text>
-                  <Text style={styles.modernBenefitText}>Coach personnel 24h/24</Text>
-                </View>
-                <View style={styles.modernBenefitItem}>
-                  <Text style={styles.modernBenefitIcon}>🥗</Text>
-                  <Text style={styles.modernBenefitText}>Programmes nutrition personnalisés</Text>
-                </View>
-                <View style={styles.modernBenefitItem}>
-                  <Text style={styles.modernBenefitIcon}>💪</Text>
-                  <Text style={styles.modernBenefitText}>Entraînements sur mesure</Text>
-                </View>
-              </View>
 
               {/* CTA Button */}
               <TouchableOpacity 
-                style={styles.modernUpgradeButton}
+                style={styles.compactUpgradeButton}
                 onPress={() => setSubscriptionModalVisible(true)}
                 activeOpacity={0.8}
               >
                 <LinearGradient
                   colors={['#FF8C42', '#FF6B35']}
-                  style={styles.modernUpgradeGradient}
+                  style={styles.compactUpgradeGradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                 >
-                  <Text style={styles.modernUpgradeIcon}>✨</Text>
-                  <Text style={styles.modernUpgradeButtonText}>Découvrir Premium</Text>
-                  <Text style={styles.modernUpgradeArrow}>→</Text>
+                  <Text style={styles.compactUpgradeButtonText}>✨ Découvrir Premium →</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </View>
@@ -1117,123 +1094,79 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
   },
-  // Styles pour le nouveau design d'abonnement moderne
-  modernSubscriptionCard: {
+  // Styles pour la version compacte d'abonnement
+  compactSubscriptionCard: {
     backgroundColor: '#1C1C1E',
-    borderRadius: 24,
-    padding: 24,
+    borderRadius: 16,
+    padding: 16,
     marginBottom: 16,
     borderWidth: 1,
     borderColor: '#2C2C2E',
   },
-  modernHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  freeBadgeContainer: {
-    marginRight: 20,
-  },
-  freeBadge: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#8E8E93',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  freeBadgeText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    letterSpacing: 1,
-  },
-  modernHeaderText: {
-    flex: 1,
-  },
-  modernTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 6,
-  },
-  modernSubtitle: {
-    fontSize: 16,
-    color: '#8E8E93',
-    lineHeight: 22,
-  },
-  modernUpgradeSection: {
-    backgroundColor: '#0A0A0A',
-    borderRadius: 20,
-    padding: 24,
-  },
-  upgradeHeader: {
+  compactHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
   },
-  upgradeIcon: {
-    fontSize: 24,
-    marginRight: 12,
-  },
-  upgradeTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  upgradeDescription: {
-    fontSize: 16,
-    color: '#8E8E93',
-    lineHeight: 24,
-    marginBottom: 24,
-  },
-  modernBenefitsList: {
-    marginBottom: 32,
-    gap: 16,
-  },
-  modernBenefitItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  modernBenefitIcon: {
-    fontSize: 20,
-    marginRight: 16,
-    width: 24,
-    textAlign: 'center',
-  },
-  modernBenefitText: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    fontWeight: '500',
-    flex: 1,
-  },
-  modernUpgradeButton: {
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  modernUpgradeGradient: {
-    flexDirection: 'row',
+  compactFreeBadge: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#8E8E93',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 18,
-    paddingHorizontal: 24,
+    marginRight: 12,
   },
-  modernUpgradeIcon: {
-    fontSize: 16,
-    marginRight: 8,
-  },
-  modernUpgradeButtonText: {
-    fontSize: 18,
+  compactFreeBadgeText: {
+    fontSize: 12,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    letterSpacing: 1,
+  },
+  compactHeaderText: {
     flex: 1,
-    textAlign: 'center',
   },
-  modernUpgradeArrow: {
+  compactTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginLeft: 8,
+    marginBottom: 2,
+  },
+  compactSubtitle: {
+    fontSize: 14,
+    color: '#8E8E93',
+  },
+  compactUpgradeSection: {
+    backgroundColor: '#0A0A0A',
+    borderRadius: 12,
+    padding: 16,
+  },
+  compactUpgradeTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  compactUpgradeDescription: {
+    fontSize: 14,
+    color: '#8E8E93',
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  compactUpgradeButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  compactUpgradeGradient: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  compactUpgradeButtonText: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
   },
   premiumHeader: {
     flexDirection: 'row',
