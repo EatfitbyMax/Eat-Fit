@@ -199,14 +199,14 @@ export default function ProfilScreen() {
         Alert.alert("Erreur", "Utilisateur non connecté");
         return;
       }
-      
+
       // Importer PersistentStorage
       const { PersistentStorage } = require('@/utils/storage');
-      
+
       // Récupérer les utilisateurs et mettre à jour
       const users = await PersistentStorage.getUsers();
       const userIndex = users.findIndex((u: any) => u.email === currentUser.email);
-      
+
       if (userIndex !== -1) {
         users[userIndex] = { ...users[userIndex], goals: selectedGoals };
         await PersistentStorage.saveUsers(users);
@@ -350,7 +350,7 @@ export default function ProfilScreen() {
           </View>
 
         {/* Objectifs */}
-        <View style={styles.section}>
+        <View style={[styles.section, {marginTop: 20}]}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}> Mes objectifs</Text>
             <TouchableOpacity 
@@ -385,7 +385,7 @@ export default function ProfilScreen() {
                   )}
                 </TouchableOpacity>
               ))}
-              
+
               <TouchableOpacity 
                 style={styles.saveButton}
                 onPress={handleSaveObjectifs}
@@ -408,10 +408,10 @@ export default function ProfilScreen() {
           )}
         </View>
 
-        
+
 
         {/* Integrations */}
-        <View style={styles.section}>
+        <View style={[styles.section, {marginTop: 20}]}>
           <Text style={styles.sectionTitle}>Mes Intégrations</Text>
 
           <View style={styles.integrationItem}>
