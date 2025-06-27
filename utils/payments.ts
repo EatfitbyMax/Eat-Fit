@@ -150,7 +150,8 @@ export class PaymentService {
         return false;
       }
 
-      // Paiement réussi
+      // Paiement réussi - confirmer côté serveur
+      await this.confirmPaymentOnServer(clientSecret.split('_secret_')[0], userId);
       await this.handleSuccessfulPayment(plan, userId);
       return true;
 
@@ -213,7 +214,8 @@ export class PaymentService {
         return false;
       }
 
-      // Paiement réussi
+      // Paiement réussi - confirmer côté serveur
+      await this.confirmPaymentOnServer(clientSecret.split('_secret_')[0], userId);
       await this.handleSuccessfulPayment(plan, userId);
       return true;
 
@@ -310,6 +312,34 @@ export class PaymentService {
     } catch (error) {
       console.error('Erreur annulation abonnement:', error);
       return false;
+    }
+  }
+
+  private static async confirmPaymentOnServer(paymentIntentId: string, userId: string): Promise<void> {
+    try {
+      // Remplacez par l'URL de votre endpoint de confirmation sur le serveur
+      const response = await fetch('/api/confirm-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          paymentIntentId: paymentIntentId,
+          userId: userId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Erreur confirmation PaymentIntent sur le serveur:', errorData);
+        throw new Error('Erreur lors de la confirmation du PaymentIntent sur le serveur');
+      }
+
+      const confirmationResult = await response.json();
+      console.log('✅ PaymentIntent confirmé sur le serveur:', confirmationResult);
+    } catch (error) {
+      console.error('Erreur lors de la communication avec le serveur de confirmation:', error);
+      throw error;
     }
   }
 }

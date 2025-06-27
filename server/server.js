@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs').promises;
 const path = require('path');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -198,6 +199,192 @@ app.post('/api/nutrition/:userId', async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: 'Erreur sauvegarde données nutrition' });
   }
+});
+
+// Routes Stripe pour les paiements
+app.post('/api/stripe/create-payment-intent', async (req, res) => {
+  try {
+    const { planId, userId, amount, currency } = req.body;
+
+    if (!planId || !userId || !amount) {
+      return res.status(400).json({ error: 'Paramètres manquants' });
+    }
+
+    // Créer ou récupérer le client Stripe
+    let customer;
+    try {
+      const customers = await stripe.customers.list({
+        email: `user-${userId}@eatfitbymax.com`,
+        limit: 1
+      });
+      
+      if (customers.data.length > 0) {
+        customer = customers.data[0];
+      } else {
+        customer = await stripe.customers.create({
+          email: `user-${userId}@eatfitbymax.com`,
+          metadata: {
+            userId: userId,
+            planId: planId
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Erreur création client:', error);
+      return res.status(500).json({ error: 'Erreur création client' });
+    }
+
+    // Créer le PaymentIntent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(amount * 100), // Stripe utilise les centimes
+      currency: currency || 'eur',
+      customer: customer.id,
+      automatic_payment_methods: {
+        enabled: true,
+      },
+      metadata: {
+        userId: userId,
+        planId: planId,
+        planName: req.body.planName || `Plan ${planId}`
+      }
+    });
+
+    // Créer une clé éphémère pour le client
+    const ephemeralKey = await stripe.ephemeralKeys.create(
+      { customer: customer.id },
+      { apiVersion: '2024-06-20' }
+    );
+
+    res.json({
+      clientSecret: paymentIntent.client_secret,
+      ephemeralKey: ephemeralKey.secret,
+      customer: customer.id,
+      paymentIntentId: paymentIntent.id
+    });
+
+  } catch (error) {
+    console.error('Erreur création PaymentIntent:', error);
+    res.status(500).json({ error: 'Erreur serveur lors de la création du paiement' });
+  }
+});
+
+// Route pour confirmer le paiement et activer l'abonnement
+app.post('/api/stripe/confirm-payment', async (req, res) => {
+  try {
+    const { paymentIntentId, userId } = req.body;
+
+    if (!paymentIntentId || !userId) {
+      return res.status(400).json({ error: 'Paramètres manquants' });
+    }
+
+    // Récupérer le PaymentIntent pour vérifier son statut
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    if (paymentIntent.status === 'succeeded') {
+      // Activer l'abonnement côté serveur
+      const subscription = {
+        userId: userId,
+        planId: paymentIntent.metadata.planId,
+        planName: paymentIntent.metadata.planName,
+        price: paymentIntent.amount / 100,
+        currency: paymentIntent.currency.toUpperCase(),
+        status: 'active',
+        startDate: new Date().toISOString(),
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 jours
+        stripePaymentIntentId: paymentIntentId,
+        stripeCustomerId: paymentIntent.customer
+      };
+
+      // Sauvegarder l'abonnement
+      await fs.writeFile(
+        path.join(DATA_DIR, `subscription_${userId}.json`), 
+        JSON.stringify(subscription, null, 2)
+      );
+
+      res.json({ success: true, subscription });
+    } else {
+      res.status(400).json({ error: 'Paiement non confirmé' });
+    }
+
+  } catch (error) {
+    console.error('Erreur confirmation paiement:', error);
+    res.status(500).json({ error: 'Erreur serveur lors de la confirmation' });
+  }
+});
+
+// Route pour récupérer le statut d'abonnement
+app.get('/api/stripe/subscription/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    const subscriptionData = await fs.readFile(
+      path.join(DATA_DIR, `subscription_${userId}.json`), 
+      'utf8'
+    );
+    
+    const subscription = JSON.parse(subscriptionData);
+    
+    // Vérifier si l'abonnement est encore valide
+    if (subscription.endDate && new Date(subscription.endDate) < new Date()) {
+      subscription.status = 'expired';
+      await fs.writeFile(
+        path.join(DATA_DIR, `subscription_${userId}.json`), 
+        JSON.stringify(subscription, null, 2)
+      );
+    }
+    
+    res.json(subscription);
+    
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      // Aucun abonnement trouvé, retourner gratuit
+      res.json({
+        planId: 'free',
+        planName: 'Version Gratuite',
+        price: 0,
+        currency: 'EUR',
+        status: 'active',
+        paymentMethod: 'none'
+      });
+    } else {
+      console.error('Erreur récupération abonnement:', error);
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
+});
+
+// Webhook Stripe pour les événements de paiement
+app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+  } catch (err) {
+    console.error('Erreur vérification webhook:', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  // Gérer les événements Stripe
+  switch (event.type) {
+    case 'payment_intent.succeeded':
+      const paymentIntent = event.data.object;
+      console.log('✅ Paiement réussi:', paymentIntent.id);
+      
+      // Ici vous pouvez ajouter une logique supplémentaire
+      // comme l'envoi d'emails de confirmation, etc.
+      break;
+      
+    case 'payment_intent.payment_failed':
+      const failedPayment = event.data.object;
+      console.log('❌ Paiement échoué:', failedPayment.id);
+      break;
+      
+    default:
+      console.log(`Événement non géré: ${event.type}`);
+  }
+
+  res.json({received: true});
 });
 
 // Route de test
