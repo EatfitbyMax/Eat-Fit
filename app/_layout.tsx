@@ -129,7 +129,8 @@ export default function RootLayout() {
     return null;
   }
 
-  if (showSplash) {
+  // Empêcher l'affichage prématuré de l'interface avant la vérification d'authentification
+  if (showSplash || !authChecked) {
     return <SplashScreenComponent onFinish={() => {}} />;
   }
 
