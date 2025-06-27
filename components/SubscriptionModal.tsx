@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -52,7 +51,7 @@ export default function SubscriptionModal({
     }
 
     setSelectedPlan(plan);
-    
+
     Alert.alert(
       `Abonnement ${plan.name}`,
       `Prix: ${plan.price}€/${plan.duration}\n\nFonctionnalités incluses:\n${plan.features.join('\n• ')}`,
@@ -68,10 +67,10 @@ export default function SubscriptionModal({
 
   const handlePayment = async (plan: SubscriptionPlan) => {
     setLoading(true);
-    
+
     try {
       let success = false;
-      
+
       if (Platform.OS === 'ios') {
         success = await PaymentService.presentApplePayPayment(plan, userId);
       } else if (Platform.OS === 'android') {
@@ -120,10 +119,12 @@ export default function SubscriptionModal({
 
   const getPlanColor = (planId: string) => {
     switch (planId) {
+      case 'free': return ['#2A2A2A', '#3A3A3A'];
       case 'bronze': return ['#CD7F32', '#8B4513'];
       case 'silver': return ['#C0C0C0', '#808080'];
-      case 'gold': return ['#FFD700', '#B8860B'];
-      default: return ['#4A4A4A', '#2A2A2A'];
+      case 'gold': return ['#FFD700', '#FFA500'];
+      case 'diamond': return ['#B9F2FF', '#00BFFF'];
+      default: return ['#2A2A2A', '#3A3A3A'];
     }
   };
 
