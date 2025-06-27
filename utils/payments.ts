@@ -26,35 +26,51 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     currency: 'EUR',
     duration: 'mois',
     features: [
-      'Coach personnel 24h/24',
-      'Programmes nutrition personnalisés',
-      'Entraînements sur mesure'
+      'Messagerie avec le coach',
+      '1 programme nutrition de base',
+      'Suivi hebdomadaire'
     ]
   },
   {
     id: 'silver',
-    name: 'Abonnement Silver',
+    name: 'Abonnement Argent',
     price: 19.99,
     currency: 'EUR',
     duration: 'mois',
     features: [
       'Tout du Bronze',
-      'Suivi avancé des performances',
-      'Analyses nutritionnelles détaillées',
-      'Support prioritaire'
+      'Programmes nutrition personnalisés',
+      'Programmes d\'entraînement',
+      'Rendez-vous vidéo (2/mois)'
     ]
   },
   {
     id: 'gold',
-    name: 'Abonnement Gold',
-    price: 29.99,
+    name: 'Abonnement Or',
+    price: 49.99,
     currency: 'EUR',
     duration: 'mois',
     features: [
-      'Tout du Silver',
-      'Coach personnel dédié',
-      'Plans de repas personnalisés',
-      'Consultations vidéo illimitées'
+      'Tout de l\'Argent',
+      'Coaching 24h/24 7j/7',
+      'Programmes ultra-personnalisés',
+      'Rendez-vous vidéo illimités',
+      'Suivi en temps réel'
+    ]
+  },
+  {
+    id: 'diamond',
+    name: 'Abonnement Diamant',
+    price: 99.99,
+    currency: 'EUR',
+    duration: 'mois',
+    features: [
+      'Tout de l\'Or',
+      'Coach personnel dédié VIP',
+      'Accès aux événements exclusifs',
+      'Consultations nutrition expert',
+      'Support premium 24h/24',
+      'Programmes sur mesure illimités'
     ]
   }
 ];
