@@ -89,9 +89,8 @@ export class PaymentService {
         throw new Error('Plan invalide ou gratuit');
       }
 
-      // Dans un vrai projet, ceci serait un appel à votre serveur backend
-      // Pour la demo, on simule la réponse
-      const response = await this.mockServerCall(plan, userId);
+      // Appel au vrai serveur backend
+      const response = await this.callServerAPI(plan, userId);
       return response;
     } catch (error) {
       console.error('Erreur création PaymentIntent:', error);
@@ -99,17 +98,39 @@ export class PaymentService {
     }
   }
 
-  private static async mockServerCall(plan: SubscriptionPlan, userId: string) {
-    // Simulation d'un appel serveur - remplacez par votre vraie API
-    return new Promise<{ clientSecret: string; ephemeralKey: string; customer: string }>((resolve) => {
-      setTimeout(() => {
-        resolve({
-          clientSecret: `pi_mock_${Date.now()}_secret_mock`,
-          ephemeralKey: `ek_mock_${Date.now()}`,
-          customer: `cus_mock_${userId}`
-        });
-      }, 1000);
-    });
+  private static async callServerAPI(plan: SubscriptionPlan, userId: string): Promise<{ clientSecret: string; ephemeralKey: string; customer: string }> {
+    try {
+      const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://workspace.eatfitbymax.replit.dev:5000';
+      
+      const response = await fetch(`${serverUrl}/api/stripe/create-payment-intent`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          planId: plan.id,
+          planName: plan.name,
+          userId: userId,
+          amount: plan.price,
+          currency: plan.currency.toLowerCase()
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Erreur serveur: ${errorData.error || 'Erreur inconnue'}`);
+      }
+
+      const data = await response.json();
+      return {
+        clientSecret: data.clientSecret,
+        ephemeralKey: data.ephemeralKey,
+        customer: data.customer
+      };
+    } catch (error) {
+      console.error('Erreur appel serveur:', error);
+      throw new Error('Impossible de créer le paiement. Vérifiez votre connexion.');
+    }
   }
 
   static async presentApplePayPayment(plan: SubscriptionPlan, userId: string): Promise<boolean> {
@@ -333,8 +354,9 @@ export class PaymentService {
 
   private static async confirmPaymentOnServer(paymentIntentId: string, userId: string): Promise<void> {
     try {
-      // Remplacez par l'URL de votre endpoint de confirmation sur le serveur
-      const response = await fetch('/api/confirm-payment', {
+      const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://workspace.eatfitbymax.replit.dev:5000';
+      
+      const response = await fetch(`${serverUrl}/api/stripe/confirm-payment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
