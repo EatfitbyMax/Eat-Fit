@@ -438,12 +438,15 @@ export default function ProgresScreen() {
     // Générer les points de données basés sur les données traitées
     processedData.forEach((entry, index) => {
       const position = getDataPointPosition(entry.weight, index, processedData.length, allLabels);
-      dataPoints.push(
-        <View 
-          key={`weight-${entry.date.toISOString()}-${index}`} 
-          style={[styles.dataPoint, position]} 
-        />
-      );
+      // Ne rendre que les points avec une position valide (visibles)
+      if (position) {
+        dataPoints.push(
+          <View 
+            key={`weight-${entry.date.toISOString()}-${index}`} 
+            style={[styles.dataPoint, position]} 
+          />
+        );
+      }
     });
 
     return (
@@ -474,22 +477,46 @@ export default function ProgresScreen() {
     
     const weightPercentage = Math.max(0, Math.min(1, (maxWeight - weight) / weightRange));
 
-    // Calculer la position horizontale en fonction des labels disponibles
-    // Les labels sont espacés uniformément, donc chaque point doit s'aligner avec son label correspondant
+    // Pour les semaines, calculer la position basée sur la semaine réelle dans l'historique
+    if (selectedPeriod === 'Semaines' && weightData.weightHistory && weightData.weightHistory.length > 0) {
+      const entry = weightData.weightHistory[dataIndex];
+      if (entry) {
+        const entryDate = new Date(entry.date);
+        const startOfYear = new Date(entryDate.getFullYear(), 0, 1);
+        const entryWeekNum = Math.ceil(((entryDate.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7);
+        
+        // Calculer si cette semaine est visible dans la fenêtre actuelle
+        const currentWindowStart = weekOffset + 1;
+        const currentWindowEnd = weekOffset + visibleWeeks;
+        
+        if (entryWeekNum >= currentWindowStart && entryWeekNum <= currentWindowEnd) {
+          const positionInWindow = entryWeekNum - currentWindowStart;
+          const leftPercentage = (positionInWindow / (visibleWeeks - 1)) * 100;
+          return {
+            left: `${leftPercentage}%`,
+            top: `${weightPercentage * 80 + 10}%`
+          };
+        } else {
+          // Point en dehors de la fenêtre visible, ne pas l'afficher
+          return null;
+        }
+      }
+    }
+
+    // Logique par défaut pour les autres périodes
     const totalLabels = allLabels.length;
     let leftPercentage = 0;
     
     if (totalLabels > 1) {
-      // Calculer la position basée sur l'index du point parmi les labels disponibles
       const labelIndex = Math.min(dataIndex, totalLabels - 1);
       leftPercentage = (labelIndex / (totalLabels - 1)) * 100;
     } else {
-      leftPercentage = 50; // Point unique au centre
+      leftPercentage = 50;
     }
 
     return {
       left: `${leftPercentage}%`,
-      top: `${weightPercentage * 80 + 10}%` // 10% de marge en haut et en bas
+      top: `${weightPercentage * 80 + 10}%`
     };
   };
 
@@ -530,9 +557,22 @@ export default function ProgresScreen() {
     return labels;
   };
 
+  // États pour le scroll horizontal des semaines
+  const [weekOffset, setWeekOffset] = useState(0);
+  const maxWeeks = 52;
+  const visibleWeeks = 6;
+
   const generatePeriodLabels = () => {
     if (!weightData.startWeight) {
-      if (selectedPeriod === 'Semaines') return ['S1', 'S2', 'S3', 'S4', 'S5', 'S6'];
+      if (selectedPeriod === 'Semaines') {
+        // Générer 6 semaines consécutives à partir de weekOffset
+        const labels = [];
+        for (let i = 0; i < visibleWeeks; i++) {
+          const weekNum = (weekOffset + i) % maxWeeks + 1;
+          labels.push(`S${weekNum}`);
+        }
+        return labels;
+      }
       if (selectedPeriod === 'Mois') return ['Janv', 'Mars', 'Mai', 'Juil', 'Sept', 'Déc'];
       return ['2023', '2024', '2025'];
     }
@@ -542,15 +582,9 @@ export default function ProgresScreen() {
     const monthNames = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
 
     if (selectedPeriod === 'Semaines') {
-      // Pour les semaines, générer 6 labels en incluant la semaine actuelle
-      const currentDate = new Date();
-      const currentYear = currentDate.getFullYear();
-      const startOfYear = new Date(currentYear, 0, 1);
-      const currentWeekNum = Math.ceil(((currentDate.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7);
-      
-      // Générer les 6 dernières semaines en terminant par la semaine actuelle
-      for (let i = 5; i >= 0; i--) {
-        const weekNum = Math.max(1, currentWeekNum - i);
+      // Générer 6 semaines consécutives à partir de weekOffset
+      for (let i = 0; i < visibleWeeks; i++) {
+        const weekNum = (weekOffset + i) % maxWeeks + 1;
         labels.push(`S${weekNum}`);
       }
     } else {
@@ -1507,7 +1541,16 @@ export default function ProgresScreen() {
               <TouchableOpacity 
                 key={period}
                 style={[styles.periodTab, selectedPeriod === period && styles.activePeriodTab]}
-                onPress={() => setSelectedPeriod(period)}
+                onPress={() => {
+                  setSelectedPeriod(period);
+                  if (period === 'Semaines') {
+                    // Réinitialiser à la semaine actuelle
+                    const currentDate = new Date();
+                    const startOfYear = new Date(currentDate.getFullYear(), 0, 1);
+                    const currentWeekNum = Math.ceil(((currentDate.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7);
+                    setWeekOffset(Math.max(0, currentWeekNum - visibleWeeks));
+                  }
+                }}
               >
                 <Text style={[styles.periodTabText, selectedPeriod === period && styles.activePeriodTabText]}>
                   {period}
@@ -1515,6 +1558,37 @@ export default function ProgresScreen() {
               </TouchableOpacity>
             ))}
           </View>
+
+          {/* Contrôles de navigation pour les semaines */}
+          {selectedPeriod === 'Semaines' && (
+            <View style={styles.weekNavigationContainer}>
+              <TouchableOpacity 
+                style={[styles.weekNavButton, weekOffset === 0 && styles.weekNavButtonDisabled]}
+                onPress={() => setWeekOffset(Math.max(0, weekOffset - 1))}
+                disabled={weekOffset === 0}
+              >
+                <Text style={[styles.weekNavButtonText, weekOffset === 0 && styles.weekNavButtonTextDisabled]}>
+                  ← Précédent
+                </Text>
+              </TouchableOpacity>
+
+              <View style={styles.weekIndicator}>
+                <Text style={styles.weekIndicatorText}>
+                  Semaines {weekOffset + 1} - {Math.min(weekOffset + visibleWeeks, maxWeeks)}
+                </Text>
+              </View>
+
+              <TouchableOpacity 
+                style={[styles.weekNavButton, weekOffset >= maxWeeks - visibleWeeks && styles.weekNavButtonDisabled]}
+                onPress={() => setWeekOffset(Math.min(maxWeeks - visibleWeeks, weekOffset + 1))}
+                disabled={weekOffset >= maxWeeks - visibleWeeks}
+              >
+                <Text style={[styles.weekNavButtonText, weekOffset >= maxWeeks - visibleWeeks && styles.weekNavButtonTextDisabled]}>
+                  Suivant →
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* Improved Chart */}
           <View style={styles.chartArea}>
@@ -1975,6 +2049,48 @@ const styles = StyleSheet.create({
   },
   activePeriodTabText: {
     color: '#000000',
+  },
+
+  weekNavigationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingHorizontal: 4,
+  },
+  weekNavButton: {
+    backgroundColor: '#21262D',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    minWidth: 80,
+  },
+  weekNavButtonDisabled: {
+    backgroundColor: '#0D1117',
+    opacity: 0.5,
+  },
+  weekNavButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  weekNavButtonTextDisabled: {
+    color: '#8B949E',
+  },
+  weekIndicator: {
+    backgroundColor: '#161B22',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  weekIndicatorText: {
+    color: '#F5A623',
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 
   measurementsContainer: {
