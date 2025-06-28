@@ -539,11 +539,18 @@ export default function ProgresScreen() {
   };
 
   const getDataPointPosition = (weight: number, monthIndex: number, totalMonths: number) => {
-    // Calculer la position verticale basée sur le poids avec une échelle plus resserrée
-    const baseWeight = Math.max(weightData.startWeight, weightData.currentWeight, weightData.targetWeight || weightData.currentWeight);
-    const minWeight = Math.max(0, baseWeight - 8); // 8kg en dessous du poids max
-    const maxWeight = baseWeight + 8; // 8kg au dessus du poids max
+    // Déterminer la plage de poids pour correspondre aux labels
+    const weights = [weightData.startWeight, weightData.currentWeight];
+    if (weightData.targetWeight) weights.push(weightData.targetWeight);
+    
+    const minDataWeight = Math.min(...weights.filter(w => w > 0));
+    const maxDataWeight = Math.max(...weights.filter(w => w > 0));
+    
+    // Utiliser la même logique que generateYAxisLabels
+    const minWeight = Math.floor((minDataWeight - 10) / 5) * 5;
+    const maxWeight = Math.ceil((maxDataWeight + 10) / 5) * 5;
     const weightRange = maxWeight - minWeight;
+    
     const weightPercentage = Math.max(0, Math.min(1, (maxWeight - weight) / weightRange));
 
     // Calculer la position horizontale - le premier point doit être à 0%
@@ -564,20 +571,29 @@ export default function ProgresScreen() {
 
   const generateYAxisLabels = () => {
     if (!weightData.startWeight && !weightData.currentWeight) {
-      return ['78', '76', '74', '72', '70', '68', '66', '64'];
+      return ['90', '85', '80', '75', '70', '65'];
     }
 
-    // Utiliser une plage plus resserrée autour du poids actuel
-    const baseWeight = Math.max(weightData.startWeight, weightData.currentWeight, weightData.targetWeight || weightData.currentWeight);
-    const minWeight = Math.max(0, baseWeight - 8); // 8kg en dessous
-    const maxWeight = baseWeight + 8; // 8kg au dessus
-    const weightRange = maxWeight - minWeight;
-
+    // Déterminer la plage de poids basée sur les données réelles
+    const weights = [weightData.startWeight, weightData.currentWeight];
+    if (weightData.targetWeight) weights.push(weightData.targetWeight);
+    
+    const minDataWeight = Math.min(...weights.filter(w => w > 0));
+    const maxDataWeight = Math.max(...weights.filter(w => w > 0));
+    
+    // Arrondir vers le bas pour min et vers le haut pour max, par tranches de 5
+    const minWeight = Math.floor((minDataWeight - 10) / 5) * 5;
+    const maxWeight = Math.ceil((maxDataWeight + 10) / 5) * 5;
+    
+    // Générer 6 labels avec des intervalles de 5 kg
     const labels = [];
-    // Générer 8 labels au lieu de 6 pour plus de précision
-    for (let i = 0; i < 8; i++) {
-      const weight = maxWeight - (i * weightRange / 7);
-      labels.push(Math.round(weight).toString());
+    const step = (maxWeight - minWeight) / 5;
+    
+    for (let i = 0; i < 6; i++) {
+      const weight = maxWeight - (i * step);
+      // Arrondir au multiple de 5 le plus proche
+      const roundedWeight = Math.round(weight / 5) * 5;
+      labels.push(roundedWeight.toString());
     }
 
     return labels;
@@ -1447,7 +1463,7 @@ export default function ProgresScreen() {
           {/* Improved Chart */}
           <View style={styles.chartArea}>
             <View style={styles.yAxis}>
-              {generateYAxisLabels().map((label, index) => (
+            {generateYAxisLabels().map((label, index) => (
                 <Text key={index} style={styles.yAxisLabel}>{label}</Text>
               ))}
             </View>
@@ -1455,7 +1471,7 @@ export default function ProgresScreen() {
             <View style={styles.chartContent}>
               {/* Grid */}
               <View style={styles.gridContainer}>
-                {[...Array(8)].map((_, i) => (
+                {[...Array(6)].map((_, i) => (
                   <View key={i} style={styles.gridLine} />
                 ))}
               </View>
