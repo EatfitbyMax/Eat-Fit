@@ -431,95 +431,15 @@ export default function ProgresScreen() {
   const renderWeightChart = () => {
     if (!weightData.startWeight) return null;
 
-    const history = weightData.weightHistory || [];
+    const processedData = getProcessedWeightData();
     const dataPoints = [];
 
-    // Créer l'historique complet en s'assurant que le poids de départ est inclus
-    let completeHistory = [...history];
-    
-    // Vérifier si le poids de départ est déjà dans l'historique
-    const hasStartWeight = history.some(entry => 
-      Math.abs(entry.weight - weightData.startWeight) < 0.1 && 
-      new Date(entry.date).getTime() <= new Date(userData?.createdAt || new Date()).getTime() + 24 * 60 * 60 * 1000
-    );
-
-    // Si le poids de départ n'est pas dans l'historique, l'ajouter au début
-    if (!hasStartWeight) {
-      const startDate = userData?.createdAt || new Date().toISOString();
-      completeHistory.unshift({
-        weight: weightData.startWeight,
-        date: startDate
-      });
-    }
-
-    // Trier par date
-    completeHistory.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-    // Filtrer l'historique selon la période sélectionnée
-    const currentDate = new Date();
-    let filteredHistory = [...completeHistory];
-
-    if (selectedPeriod === 'Semaines') {
-      const sixWeeksAgo = new Date(currentDate.getTime() - (6 * 7 * 24 * 60 * 60 * 1000));
-      filteredHistory = completeHistory.filter(entry => new Date(entry.date) >= sixWeeksAgo);
-    } else if (selectedPeriod === 'Mois') {
-      const sixMonthsAgo = new Date(currentDate.getTime() - (6 * 30 * 24 * 60 * 60 * 1000));
-      filteredHistory = completeHistory.filter(entry => new Date(entry.date) >= sixMonthsAgo);
-    } else { // Années
-      const sixYearsAgo = new Date(currentDate.getTime() - (6 * 365 * 24 * 60 * 60 * 1000));
-      filteredHistory = completeHistory.filter(entry => new Date(entry.date) >= sixYearsAgo);
-    }
-
-    // S'assurer qu'on a au moins le poids de départ si la période le permet
-    if (filteredHistory.length === 0 && userData?.createdAt) {
-      const startDate = new Date(userData.createdAt);
-      const periodStart = selectedPeriod === 'Semaines' ? 
-        new Date(currentDate.getTime() - (6 * 7 * 24 * 60 * 60 * 1000)) :
-        selectedPeriod === 'Mois' ?
-        new Date(currentDate.getTime() - (6 * 30 * 24 * 60 * 60 * 1000)) :
-        new Date(currentDate.getTime() - (6 * 365 * 24 * 60 * 60 * 1000));
-
-      if (startDate >= periodStart) {
-        filteredHistory.push({
-          weight: weightData.startWeight,
-          date: userData.createdAt
-        });
-      }
-    }
-
-    // Limiter à 6 points maximum pour l'affichage
-    if (filteredHistory.length > 6) {
-      const step = Math.floor(filteredHistory.length / 6);
-      const sampledHistory = [];
-      
-      // Toujours inclure le premier point (poids de départ)
-      sampledHistory.push(filteredHistory[0]);
-      
-      // Échantillonner le reste
-      for (let i = step; i < filteredHistory.length; i += step) {
-        if (sampledHistory.length < 5) { // Laisser de la place pour le dernier point
-          sampledHistory.push(filteredHistory[i]);
-        }
-      }
-      
-      // Toujours inclure le dernier point si différent du premier
-      if (filteredHistory.length > 1 && sampledHistory[sampledHistory.length - 1] !== filteredHistory[filteredHistory.length - 1]) {
-        if (sampledHistory.length === 6) {
-          sampledHistory[5] = filteredHistory[filteredHistory.length - 1];
-        } else {
-          sampledHistory.push(filteredHistory[filteredHistory.length - 1]);
-        }
-      }
-      
-      filteredHistory = sampledHistory;
-    }
-
-    // Générer les points de données basés sur l'historique réel
-    filteredHistory.forEach((entry, index) => {
-      const position = getDataPointPosition(entry.weight, index, filteredHistory.length);
+    // Générer les points de données basés sur les données traitées
+    processedData.forEach((entry, index) => {
+      const position = getDataPointPosition(entry.weight, index, processedData.length);
       dataPoints.push(
         <View 
-          key={`weight-${entry.date}-${index}`} 
+          key={`weight-${entry.date.toISOString()}-${index}`} 
           style={[styles.dataPoint, position]} 
         />
       );
@@ -574,9 +494,16 @@ export default function ProgresScreen() {
       return ['90', '85', '80', '75', '70', '65'];
     }
 
-    // Déterminer la plage de poids basée sur les données réelles
+    const processedData = getProcessedWeightData();
+    
+    // Déterminer la plage de poids basée sur les données traitées + données de base
     const weights = [weightData.startWeight, weightData.currentWeight];
     if (weightData.targetWeight) weights.push(weightData.targetWeight);
+    
+    // Ajouter les poids des données traitées
+    processedData.forEach(entry => {
+      if (entry.weight > 0) weights.push(entry.weight);
+    });
     
     const minDataWeight = Math.min(...weights.filter(w => w > 0));
     const maxDataWeight = Math.max(...weights.filter(w => w > 0));
@@ -606,6 +533,32 @@ export default function ProgresScreen() {
       return ['2023', '2024', '2025'];
     }
 
+    const processedData = getProcessedWeightData();
+    const labels = [];
+    const monthNames = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
+
+    processedData.forEach((entry, index) => {
+      if (selectedPeriod === 'Semaines') {
+        const startOfYear = new Date(entry.date.getFullYear(), 0, 1);
+        const weekNum = Math.ceil(((entry.date.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7);
+        labels.push(`S${weekNum}`);
+      } else if (selectedPeriod === 'Mois') {
+        labels.push(monthNames[entry.date.getMonth()]);
+      } else { // Années
+        labels.push(entry.date.getFullYear().toString());
+      }
+    });
+
+    // Compléter avec des labels vides si nécessaire
+    while (labels.length < 6) {
+      labels.push('');
+    }
+
+    return labels.slice(0, 6);
+  };
+
+  // Nouvelle fonction pour traiter les données selon la période
+  const getProcessedWeightData = () => {
     const history = weightData.weightHistory || [];
     
     // Créer l'historique complet en s'assurant que le poids de départ est inclus
@@ -660,57 +613,146 @@ export default function ProgresScreen() {
       }
     }
 
-    // Échantillonner si trop de données
-    if (filteredHistory.length > 6) {
-      const step = Math.floor(filteredHistory.length / 6);
-      const sampledHistory = [];
-      
-      // Toujours inclure le premier point
-      sampledHistory.push(filteredHistory[0]);
-      
-      // Échantillonner le reste
-      for (let i = step; i < filteredHistory.length; i += step) {
-        if (sampledHistory.length < 5) {
-          sampledHistory.push(filteredHistory[i]);
+    // Traitement selon la période sélectionnée
+    if (selectedPeriod === 'Semaines') {
+      // Pour les semaines, on garde les données individuelles (échantillonnage si nécessaire)
+      if (filteredHistory.length > 6) {
+        const step = Math.floor(filteredHistory.length / 6);
+        const sampledHistory = [];
+        
+        sampledHistory.push(filteredHistory[0]);
+        for (let i = step; i < filteredHistory.length; i += step) {
+          if (sampledHistory.length < 5) {
+            sampledHistory.push(filteredHistory[i]);
+          }
         }
-      }
-      
-      // Toujours inclure le dernier point si différent du premier
-      if (filteredHistory.length > 1 && sampledHistory[sampledHistory.length - 1] !== filteredHistory[filteredHistory.length - 1]) {
-        if (sampledHistory.length === 6) {
-          sampledHistory[5] = filteredHistory[filteredHistory.length - 1];
-        } else {
-          sampledHistory.push(filteredHistory[filteredHistory.length - 1]);
+        
+        if (filteredHistory.length > 1 && sampledHistory[sampledHistory.length - 1] !== filteredHistory[filteredHistory.length - 1]) {
+          if (sampledHistory.length === 6) {
+            sampledHistory[5] = filteredHistory[filteredHistory.length - 1];
+          } else {
+            sampledHistory.push(filteredHistory[filteredHistory.length - 1]);
+          }
         }
+        
+        filteredHistory = sampledHistory;
       }
       
-      filteredHistory = sampledHistory;
-    }
-
-    const labels = [];
-    const monthNames = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
-
-    filteredHistory.forEach((entry, index) => {
-      const date = new Date(entry.date);
+      return filteredHistory.map(entry => ({
+        weight: entry.weight,
+        date: new Date(entry.date)
+      }));
       
-      if (selectedPeriod === 'Semaines') {
-        // Pour les semaines, afficher la semaine de l'année ou relative au début
-        const startOfYear = new Date(date.getFullYear(), 0, 1);
-        const weekNum = Math.ceil(((date.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7);
-        labels.push(`S${weekNum}`);
-      } else if (selectedPeriod === 'Mois') {
-        labels.push(monthNames[date.getMonth()]);
-      } else { // Années
-        labels.push(date.getFullYear().toString());
-      }
-    });
-
-    // Compléter avec des labels vides si nécessaire
-    while (labels.length < 6) {
-      labels.push('');
+    } else if (selectedPeriod === 'Mois') {
+      // Pour les mois, faire la moyenne par semaine puis regrouper par mois
+      const weeklyAverages = new Map();
+      
+      filteredHistory.forEach(entry => {
+        const date = new Date(entry.date);
+        const startOfWeek = new Date(date);
+        startOfWeek.setDate(date.getDate() - date.getDay()); // Début de la semaine (dimanche)
+        const weekKey = startOfWeek.toISOString().split('T')[0];
+        
+        if (!weeklyAverages.has(weekKey)) {
+          weeklyAverages.set(weekKey, { total: 0, count: 0, date: startOfWeek });
+        }
+        
+        const weekData = weeklyAverages.get(weekKey);
+        weekData.total += entry.weight;
+        weekData.count += 1;
+      });
+      
+      // Convertir en moyennes hebdomadaires
+      const weeklyData = Array.from(weeklyAverages.values()).map(week => ({
+        weight: week.total / week.count,
+        date: week.date
+      }));
+      
+      // Regrouper par mois et faire la moyenne des semaines
+      const monthlyAverages = new Map();
+      
+      weeklyData.forEach(week => {
+        const monthKey = `${week.date.getFullYear()}-${week.date.getMonth()}`;
+        
+        if (!monthlyAverages.has(monthKey)) {
+          monthlyAverages.set(monthKey, { 
+            total: 0, 
+            count: 0, 
+            date: new Date(week.date.getFullYear(), week.date.getMonth(), 1) 
+          });
+        }
+        
+        const monthData = monthlyAverages.get(monthKey);
+        monthData.total += week.weight;
+        monthData.count += 1;
+      });
+      
+      const monthlyData = Array.from(monthlyAverages.values())
+        .map(month => ({
+          weight: month.total / month.count,
+          date: month.date
+        }))
+        .sort((a, b) => a.date.getTime() - b.date.getTime())
+        .slice(-6); // Garder les 6 derniers mois
+      
+      return monthlyData;
+      
+    } else { // Années
+      // Pour les années, faire la moyenne par mois puis regrouper par année
+      const monthlyAverages = new Map();
+      
+      filteredHistory.forEach(entry => {
+        const date = new Date(entry.date);
+        const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+        
+        if (!monthlyAverages.has(monthKey)) {
+          monthlyAverages.set(monthKey, { 
+            total: 0, 
+            count: 0, 
+            date: new Date(date.getFullYear(), date.getMonth(), 1) 
+          });
+        }
+        
+        const monthData = monthlyAverages.get(monthKey);
+        monthData.total += entry.weight;
+        monthData.count += 1;
+      });
+      
+      // Convertir en moyennes mensuelles
+      const monthlyData = Array.from(monthlyAverages.values()).map(month => ({
+        weight: month.total / month.count,
+        date: month.date
+      }));
+      
+      // Regrouper par année et faire la moyenne des mois
+      const yearlyAverages = new Map();
+      
+      monthlyData.forEach(month => {
+        const yearKey = month.date.getFullYear().toString();
+        
+        if (!yearlyAverages.has(yearKey)) {
+          yearlyAverages.set(yearKey, { 
+            total: 0, 
+            count: 0, 
+            date: new Date(month.date.getFullYear(), 0, 1) 
+          });
+        }
+        
+        const yearData = yearlyAverages.get(yearKey);
+        yearData.total += month.weight;
+        yearData.count += 1;
+      });
+      
+      const yearlyData = Array.from(yearlyAverages.values())
+        .map(year => ({
+          weight: year.total / year.count,
+          date: year.date
+        }))
+        .sort((a, b) => a.date.getTime() - b.date.getTime())
+        .slice(-6); // Garder les 6 dernières années
+      
+      return yearlyData;
     }
-
-    return labels.slice(0, 6);
   };
 
   const loadProgressData = async () => {
