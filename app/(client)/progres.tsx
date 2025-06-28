@@ -432,11 +432,12 @@ export default function ProgresScreen() {
     if (!weightData.startWeight) return null;
 
     const processedData = getProcessedWeightData();
+    const allLabels = generatePeriodLabels();
     const dataPoints = [];
 
     // Générer les points de données basés sur les données traitées
     processedData.forEach((entry, index) => {
-      const position = getDataPointPosition(entry.weight, index, processedData.length);
+      const position = getDataPointPosition(entry.weight, index, processedData.length, allLabels);
       dataPoints.push(
         <View 
           key={`weight-${entry.date.toISOString()}-${index}`} 
@@ -458,7 +459,7 @@ export default function ProgresScreen() {
     );
   };
 
-  const getDataPointPosition = (weight: number, monthIndex: number, totalMonths: number) => {
+  const getDataPointPosition = (weight: number, dataIndex: number, totalDataPoints: number, allLabels: string[]) => {
     // Déterminer la plage de poids pour correspondre aux labels
     const weights = [weightData.startWeight, weightData.currentWeight];
     if (weightData.targetWeight) weights.push(weightData.targetWeight);
@@ -473,12 +474,15 @@ export default function ProgresScreen() {
     
     const weightPercentage = Math.max(0, Math.min(1, (maxWeight - weight) / weightRange));
 
-    // Calculer la position horizontale - le premier point doit être à 0%
+    // Calculer la position horizontale en fonction des labels disponibles
+    // Les labels sont espacés uniformément, donc chaque point doit s'aligner avec son label correspondant
+    const totalLabels = allLabels.length;
     let leftPercentage = 0;
-    if (totalMonths > 1) {
-      leftPercentage = (monthIndex / (totalMonths - 1)) * 100;
-    } else if (monthIndex === 0) {
-      leftPercentage = 0; // Premier point toujours à gauche
+    
+    if (totalLabels > 1) {
+      // Calculer la position basée sur l'index du point parmi les labels disponibles
+      const labelIndex = Math.min(dataIndex, totalLabels - 1);
+      leftPercentage = (labelIndex / (totalLabels - 1)) * 100;
     } else {
       leftPercentage = 50; // Point unique au centre
     }
@@ -537,21 +541,31 @@ export default function ProgresScreen() {
     const labels = [];
     const monthNames = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
 
-    processedData.forEach((entry, index) => {
-      if (selectedPeriod === 'Semaines') {
-        const startOfYear = new Date(entry.date.getFullYear(), 0, 1);
-        const weekNum = Math.ceil(((entry.date.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7);
+    if (selectedPeriod === 'Semaines') {
+      // Pour les semaines, générer 6 labels en incluant la semaine actuelle
+      const currentDate = new Date();
+      const currentYear = currentDate.getFullYear();
+      const startOfYear = new Date(currentYear, 0, 1);
+      const currentWeekNum = Math.ceil(((currentDate.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7);
+      
+      // Générer les 6 dernières semaines en terminant par la semaine actuelle
+      for (let i = 5; i >= 0; i--) {
+        const weekNum = Math.max(1, currentWeekNum - i);
         labels.push(`S${weekNum}`);
-      } else if (selectedPeriod === 'Mois') {
-        labels.push(monthNames[entry.date.getMonth()]);
-      } else { // Années
-        labels.push(entry.date.getFullYear().toString());
       }
-    });
+    } else {
+      processedData.forEach((entry, index) => {
+        if (selectedPeriod === 'Mois') {
+          labels.push(monthNames[entry.date.getMonth()]);
+        } else { // Années
+          labels.push(entry.date.getFullYear().toString());
+        }
+      });
 
-    // Compléter avec des labels vides si nécessaire
-    while (labels.length < 6) {
-      labels.push('');
+      // Compléter avec des labels vides si nécessaire
+      while (labels.length < 6) {
+        labels.push('');
+      }
     }
 
     return labels.slice(0, 6);
