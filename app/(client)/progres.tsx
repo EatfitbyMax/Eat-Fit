@@ -539,14 +539,22 @@ export default function ProgresScreen() {
   };
 
   const getDataPointPosition = (weight: number, monthIndex: number, totalMonths: number) => {
-    // Calculer la position verticale basée sur le poids (range dynamique autour des données)
-    const minWeight = Math.min(weightData.startWeight, weightData.currentWeight, weightData.targetWeight || weightData.currentWeight) - 2;
-    const maxWeight = Math.max(weightData.startWeight, weightData.currentWeight, weightData.targetWeight || weightData.currentWeight) + 2;
-    const weightRange = Math.max(maxWeight - minWeight, 4); // Range minimum de 4kg
+    // Calculer la position verticale basée sur le poids avec une échelle plus large
+    const baseWeight = Math.max(weightData.startWeight, weightData.currentWeight, weightData.targetWeight || weightData.currentWeight);
+    const minWeight = Math.max(0, baseWeight - 15); // 15kg en dessous du poids max
+    const maxWeight = baseWeight + 15; // 15kg au dessus du poids max
+    const weightRange = maxWeight - minWeight;
     const weightPercentage = Math.max(0, Math.min(1, (maxWeight - weight) / weightRange));
 
-    // Calculer la position horizontale
-    const leftPercentage = totalMonths > 1 ? (monthIndex / (totalMonths - 1)) * 100 : 50;
+    // Calculer la position horizontale - le premier point doit être à 0%
+    let leftPercentage = 0;
+    if (totalMonths > 1) {
+      leftPercentage = (monthIndex / (totalMonths - 1)) * 100;
+    } else if (monthIndex === 0) {
+      leftPercentage = 0; // Premier point toujours à gauche
+    } else {
+      leftPercentage = 50; // Point unique au centre
+    }
 
     return {
       left: `${leftPercentage}%`,
@@ -555,14 +563,15 @@ export default function ProgresScreen() {
   };
 
   const generateYAxisLabels = () => {
-    if (!weightData.weightHistory?.length) return ['74', '72', '70', '68', '66', '64'];
+    if (!weightData.startWeight && !weightData.currentWeight) {
+      return ['90', '85', '80', '75', '70', '65'];
+    }
 
-    const weights = weightData.weightHistory.map(entry => entry.weight);
-    if (weightData.targetWeight) weights.push(weightData.targetWeight);
-    
-    const minWeight = Math.min(...weights) - 1;
-    const maxWeight = Math.max(...weights) + 1;
-    const weightRange = Math.max(maxWeight - minWeight, 4);
+    // Utiliser le même calcul que pour les positions des points
+    const baseWeight = Math.max(weightData.startWeight, weightData.currentWeight, weightData.targetWeight || weightData.currentWeight);
+    const minWeight = Math.max(0, baseWeight - 15); // 15kg en dessous
+    const maxWeight = baseWeight + 15; // 15kg au dessus
+    const weightRange = maxWeight - minWeight;
 
     const labels = [];
     for (let i = 0; i < 6; i++) {
