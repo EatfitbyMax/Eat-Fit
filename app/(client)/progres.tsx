@@ -23,6 +23,7 @@ export default function ProgresScreen() {
     weeklyUpdates: 0,
     lastWeekReset: null as string | null,
     targetAsked: false,
+    weightHistory: [] as Array<{ weight: number; date: string }>,
   });
 
   // Fonction pour formater le poids avec la précision appropriée
@@ -116,14 +117,16 @@ export default function ProgresScreen() {
           }
         } else {
           // Première utilisation - définir le poids de départ depuis l'inscription
+          const startWeight = user.weight || 0;
           const initialData = {
-            startWeight: user.weight || 0,
-            currentWeight: user.weight || 0,
+            startWeight: startWeight,
+            currentWeight: startWeight,
             targetWeight: 0,
             lastWeightUpdate: null,
             weeklyUpdates: 0,
             lastWeekReset: null,
             targetAsked: false, // Nouveau flag pour savoir si l'objectif a déjà été demandé
+            weightHistory: startWeight > 0 ? [{ weight: startWeight, date: user.createdAt || new Date().toISOString() }] : [],
           };
           setWeightData(initialData);
           await saveWeightData(initialData);
@@ -177,12 +180,17 @@ export default function ProgresScreen() {
       newWeeklyUpdates = weightData.weeklyUpdates + 1;
     }
 
+    // Ajouter la nouvelle pesée à l'historique
+    const newWeightHistory = [...(weightData.weightHistory || [])];
+    newWeightHistory.push({ weight: weight, date: nowISO });
+
     const newData = {
       ...weightData,
       currentWeight: weight,
       lastWeightUpdate: nowISO,
       weeklyUpdates: newWeeklyUpdates,
       lastWeekReset: newLastWeekReset,
+      weightHistory: newWeightHistory,
     };
 
     await saveWeightData(newData);
@@ -421,65 +429,49 @@ export default function ProgresScreen() {
   });
 
   const renderWeightChart = () => {
-    if (!userData?.createdAt) return null;
+    if (!userData?.createdAt || !weightData.weightHistory?.length) return null;
 
-    const startDate = new Date(userData.createdAt);
-    const currentDate = new Date();
-    
-    let periodDiff, displayPeriods;
-    
-    if (selectedPeriod === 'Semaines') {
-      periodDiff = Math.ceil((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 7));
-      displayPeriods = Math.min(6, Math.max(1, periodDiff + 1));
-    } else if (selectedPeriod === 'Mois') {
-      periodDiff = Math.ceil((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
-      displayPeriods = Math.min(6, Math.max(1, periodDiff + 1));
-    } else { // Années
-      periodDiff = Math.ceil((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 365));
-      displayPeriods = Math.min(6, Math.max(1, periodDiff + 1));
-    }
-
-    // Générer les points de données basés sur la progression réelle
+    const history = weightData.weightHistory || [];
     const dataPoints = [];
 
-    // Si moins d'une période complète, afficher seulement le point actuel
-    if (periodDiff < 1) {
-      const singlePosition = getDataPointPosition(weightData.currentWeight, 0, 1);
-      dataPoints.push(
-        <View key="single" style={[styles.dataPoint, { left: '50%', top: singlePosition.top }]} />
-      );
-    } else {
-      // Point de départ (inscription)
-      const startPosition = getDataPointPosition(weightData.startWeight, 0, displayPeriods);
-      dataPoints.push(
-        <View key="start" style={[styles.dataPoint, startPosition]} />
-      );
+    // Filtrer l'historique selon la période sélectionnée
+    const currentDate = new Date();
+    let filteredHistory = [...history];
 
-      // Points intermédiaires (simulation basée sur la progression)
-      if (displayPeriods > 2) {
-        const totalWeightChange = weightData.currentWeight - weightData.startWeight;
-        for (let i = 1; i < displayPeriods - 1; i++) {
-          const progressRatio = i / (displayPeriods - 1);
-          const interpolatedWeight = weightData.startWeight + (totalWeightChange * progressRatio);
-          // Ajouter une petite variation réaliste
-          const variation = (Math.random() - 0.5) * 0.5;
-          const weightWithVariation = interpolatedWeight + variation;
-
-          const position = getDataPointPosition(weightWithVariation, i, displayPeriods);
-          dataPoints.push(
-            <View key={`point-${i}`} style={[styles.dataPoint, position]} />
-          );
-        }
-      }
-
-      // Point actuel (seulement si plus d'une période)
-      if (displayPeriods > 1) {
-        const currentPosition = getDataPointPosition(weightData.currentWeight, displayPeriods - 1, displayPeriods);
-        dataPoints.push(
-          <View key="current" style={[styles.dataPoint, currentPosition]} />
-        );
-      }
+    if (selectedPeriod === 'Semaines') {
+      const sixWeeksAgo = new Date(currentDate.getTime() - (6 * 7 * 24 * 60 * 60 * 1000));
+      filteredHistory = history.filter(entry => new Date(entry.date) >= sixWeeksAgo);
+    } else if (selectedPeriod === 'Mois') {
+      const sixMonthsAgo = new Date(currentDate.getTime() - (6 * 30 * 24 * 60 * 60 * 1000));
+      filteredHistory = history.filter(entry => new Date(entry.date) >= sixMonthsAgo);
+    } else { // Années
+      const sixYearsAgo = new Date(currentDate.getTime() - (6 * 365 * 24 * 60 * 60 * 1000));
+      filteredHistory = history.filter(entry => new Date(entry.date) >= sixYearsAgo);
     }
+
+    // Limiter à 6 points maximum pour l'affichage
+    if (filteredHistory.length > 6) {
+      const step = Math.floor(filteredHistory.length / 6);
+      const sampledHistory = [];
+      for (let i = 0; i < filteredHistory.length; i += step) {
+        sampledHistory.push(filteredHistory[i]);
+      }
+      if (sampledHistory[sampledHistory.length - 1] !== filteredHistory[filteredHistory.length - 1]) {
+        sampledHistory[sampledHistory.length - 1] = filteredHistory[filteredHistory.length - 1];
+      }
+      filteredHistory = sampledHistory.slice(0, 6);
+    }
+
+    // Générer les points de données basés sur l'historique réel
+    filteredHistory.forEach((entry, index) => {
+      const position = getDataPointPosition(entry.weight, index, filteredHistory.length);
+      dataPoints.push(
+        <View 
+          key={`weight-${entry.date}-${index}`} 
+          style={[styles.dataPoint, position]} 
+        />
+      );
+    });
 
     return (
       <>
@@ -511,10 +503,13 @@ export default function ProgresScreen() {
   };
 
   const generateYAxisLabels = () => {
-    if (!userData?.createdAt) return ['74', '72', '70', '68', '66', '64'];
+    if (!weightData.weightHistory?.length) return ['74', '72', '70', '68', '66', '64'];
 
-    const minWeight = Math.min(weightData.startWeight, weightData.currentWeight, weightData.targetWeight || weightData.currentWeight) - 2;
-    const maxWeight = Math.max(weightData.startWeight, weightData.currentWeight, weightData.targetWeight || weightData.currentWeight) + 2;
+    const weights = weightData.weightHistory.map(entry => entry.weight);
+    if (weightData.targetWeight) weights.push(weightData.targetWeight);
+    
+    const minWeight = Math.min(...weights) - 1;
+    const maxWeight = Math.max(...weights) + 1;
     const weightRange = Math.max(maxWeight - minWeight, 4);
 
     const labels = [];
@@ -527,61 +522,60 @@ export default function ProgresScreen() {
   };
 
   const generatePeriodLabels = () => {
-    if (!userData?.createdAt) {
+    if (!userData?.createdAt || !weightData.weightHistory?.length) {
       if (selectedPeriod === 'Semaines') return ['S1', 'S2', 'S3', 'S4', 'S5', 'S6'];
       if (selectedPeriod === 'Mois') return ['Janv', 'Mars', 'Mai', 'Juil', 'Sept', 'Déc'];
       return ['2023', '2024', '2025'];
     }
 
-    const startDate = new Date(userData.createdAt);
+    const history = weightData.weightHistory || [];
     const currentDate = new Date();
-    const labels = [];
+    let filteredHistory = [...history];
 
+    // Filtrer l'historique selon la période
     if (selectedPeriod === 'Semaines') {
-      const weeksDiff = Math.ceil((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 7));
-      const displayWeeks = Math.min(6, Math.max(1, weeksDiff + 1));
-      
-      for (let i = 0; i < displayWeeks; i++) {
-        const weekDate = new Date(startDate);
-        weekDate.setDate(startDate.getDate() + (i * 7));
-        const weekNumber = Math.ceil(weekDate.getDate() / 7);
-        labels.push(`S${weekNumber}`);
-      }
-
-      while (labels.length < 6) {
-        labels.push(`S${labels.length + 1}`);
-      }
+      const sixWeeksAgo = new Date(currentDate.getTime() - (6 * 7 * 24 * 60 * 60 * 1000));
+      filteredHistory = history.filter(entry => new Date(entry.date) >= sixWeeksAgo);
     } else if (selectedPeriod === 'Mois') {
-      const monthsDiff = Math.ceil((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
-      const displayMonths = Math.min(6, Math.max(1, monthsDiff + 1));
-
-      const monthNames = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
-
-      for (let i = 0; i < displayMonths; i++) {
-        const monthDate = new Date(startDate);
-        monthDate.setMonth(startDate.getMonth() + i);
-        labels.push(monthNames[monthDate.getMonth()]);
-      }
-
-      while (labels.length < 6) {
-        const lastDate = new Date(startDate);
-        lastDate.setMonth(startDate.getMonth() + labels.length);
-        labels.push(monthNames[lastDate.getMonth()]);
-      }
+      const sixMonthsAgo = new Date(currentDate.getTime() - (6 * 30 * 24 * 60 * 60 * 1000));
+      filteredHistory = history.filter(entry => new Date(entry.date) >= sixMonthsAgo);
     } else { // Années
-      const yearsDiff = Math.ceil((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 365));
-      const displayYears = Math.min(6, Math.max(1, yearsDiff + 1));
+      const sixYearsAgo = new Date(currentDate.getTime() - (6 * 365 * 24 * 60 * 60 * 1000));
+      filteredHistory = history.filter(entry => new Date(entry.date) >= sixYearsAgo);
+    }
 
-      for (let i = 0; i < displayYears; i++) {
-        const yearDate = new Date(startDate);
-        yearDate.setFullYear(startDate.getFullYear() + i);
-        labels.push(yearDate.getFullYear().toString());
+    // Échantillonner si trop de données
+    if (filteredHistory.length > 6) {
+      const step = Math.floor(filteredHistory.length / 6);
+      const sampledHistory = [];
+      for (let i = 0; i < filteredHistory.length; i += step) {
+        sampledHistory.push(filteredHistory[i]);
       }
+      if (sampledHistory[sampledHistory.length - 1] !== filteredHistory[filteredHistory.length - 1]) {
+        sampledHistory[sampledHistory.length - 1] = filteredHistory[filteredHistory.length - 1];
+      }
+      filteredHistory = sampledHistory.slice(0, 6);
+    }
 
-      while (labels.length < 6) {
-        const lastYear = parseInt(labels[labels.length - 1] || startDate.getFullYear().toString());
-        labels.push((lastYear + 1).toString());
+    const labels = [];
+    const monthNames = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
+
+    filteredHistory.forEach((entry, index) => {
+      const date = new Date(entry.date);
+      
+      if (selectedPeriod === 'Semaines') {
+        const weekNum = Math.ceil(date.getDate() / 7);
+        labels.push(`S${weekNum}`);
+      } else if (selectedPeriod === 'Mois') {
+        labels.push(monthNames[date.getMonth()]);
+      } else { // Années
+        labels.push(date.getFullYear().toString());
       }
+    });
+
+    // Compléter avec des labels vides si nécessaire
+    while (labels.length < 6) {
+      labels.push('');
     }
 
     return labels.slice(0, 6);
