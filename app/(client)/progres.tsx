@@ -1250,7 +1250,18 @@ export default function ProgresScreen() {
                 </View>
                 <Text style={styles.statLabel}>Calories moyennes</Text>
                 <Text style={styles.statValue}>{nutritionStats.averageCalories} kcal</Text>
-                <Text style={[styles.statTrend, { color: '#28A745' }]}>↑ +150 kcal vs semaine précédente</Text>
+                <Text style={[styles.statTrend, { 
+                  color: nutritionStats.averageCalories > 0 ? 
+                    (nutritionStats.averageCalories >= 1800 ? '#28A745' : '#F5A623') : 
+                    '#8B949E' 
+                }]}>
+                  {nutritionStats.averageCalories > 0 ? 
+                    (nutritionStats.averageCalories >= 1800 ? 
+                      `✓ Objectif atteint (${Math.round((nutritionStats.averageCalories / 2200) * 100)}%)` : 
+                      `${Math.round((nutritionStats.averageCalories / 2200) * 100)}% de l'objectif`) :
+                    'Aucune donnée disponible'
+                  }
+                </Text>
               </View>
 
               <View style={styles.nutritionStatCard}>
@@ -1259,7 +1270,18 @@ export default function ProgresScreen() {
                 </View>
                 <Text style={styles.statLabel}>Protéines moyennes</Text>
                 <Text style={styles.statValue}>{nutritionStats.averageProteins}g</Text>
-                <Text style={[styles.statTrend, { color: '#28A745' }]}>↑ +12g vs semaine précédente</Text>
+                <Text style={[styles.statTrend, { 
+                  color: nutritionStats.averageProteins > 0 ? 
+                    (nutritionStats.averageProteins >= 100 ? '#28A745' : '#F5A623') : 
+                    '#8B949E' 
+                }]}>
+                  {nutritionStats.averageProteins > 0 ? 
+                    (nutritionStats.averageProteins >= 100 ? 
+                      `✓ Excellent apport (${Math.round((nutritionStats.averageProteins / 120) * 100)}%)` : 
+                      `${Math.round((nutritionStats.averageProteins / 120) * 100)}% de l'objectif`) :
+                    'Aucune donnée disponible'
+                  }
+                </Text>
               </View>
 
               <View style={styles.nutritionStatCard}>
@@ -1268,7 +1290,18 @@ export default function ProgresScreen() {
                 </View>
                 <Text style={styles.statLabel}>Glucides moyens</Text>
                 <Text style={styles.statValue}>{nutritionStats.averageCarbs}g</Text>
-                <Text style={[styles.statTrend, { color: '#DC3545' }]}>↓ -18g vs semaine précédente</Text>
+                <Text style={[styles.statTrend, { 
+                  color: nutritionStats.averageCarbs > 0 ? 
+                    (nutritionStats.averageCarbs >= 200 && nutritionStats.averageCarbs <= 350 ? '#28A745' : '#F5A623') : 
+                    '#8B949E' 
+                }]}>
+                  {nutritionStats.averageCarbs > 0 ? 
+                    (nutritionStats.averageCarbs >= 200 && nutritionStats.averageCarbs <= 350 ? 
+                      '✓ Équilibre optimal' : 
+                      nutritionStats.averageCarbs < 200 ? 'Apport faible' : 'Apport élevé') :
+                    'Aucune donnée disponible'
+                  }
+                </Text>
               </View>
 
               <View style={styles.nutritionStatCard}>
@@ -1277,8 +1310,17 @@ export default function ProgresScreen() {
                 </View>
                 <Text style={styles.statLabel}>Lipides moyens</Text>
                 <Text style={styles.statValue}>{nutritionStats.averageFat}g</Text>
-                <Text style={[styles.statTrend, { color: nutritionStats.averageFat > 0 ? '#28A745' : '#8B949E' }]}>
-                  {nutritionStats.averageFat > 0 ? '↑ Données disponibles' : 'Aucune donnée'}
+                <Text style={[styles.statTrend, { 
+                  color: nutritionStats.averageFat > 0 ? 
+                    (nutritionStats.averageFat >= 50 && nutritionStats.averageFat <= 100 ? '#28A745' : '#F5A623') : 
+                    '#8B949E' 
+                }]}>
+                  {nutritionStats.averageFat > 0 ? 
+                    (nutritionStats.averageFat >= 50 && nutritionStats.averageFat <= 100 ? 
+                      '✓ Équilibre optimal' : 
+                      nutritionStats.averageFat < 50 ? 'Apport insuffisant' : 'Apport élevé') :
+                    'Aucune donnée disponible'
+                  }
                 </Text>
               </View>
             </View>
@@ -1357,18 +1399,18 @@ export default function ProgresScreen() {
               <Text style={styles.summaryTitle}>Résumé de la semaine</Text>
               <View style={styles.summaryStats}>
                 <View style={styles.summaryItem}>
-                  <Text style={[styles.summaryValue, { color: nutritionStats.daysWithData >= 5 ? '#28A745' : '#F5A623' }]}>
+                  <Text style={[styles.summaryValue, { color: nutritionStats.daysWithData >= 5 ? '#28A745' : nutritionStats.daysWithData >= 3 ? '#F5A623' : '#DC3545' }]}>
                     {nutritionStats.daysWithData}/7
                   </Text>
                   <Text style={styles.summaryLabel}>Jours avec données</Text>
                 </View>
                 <View style={styles.summaryItem}>
-                  <Text style={styles.summaryValue}>
-                    {nutritionStats.weeklyCalories.reduce((sum, day) => 
-                      sum + day.calories + day.proteins + day.carbohydrates + day.fat, 0
-                    )}
+                  <Text style={[styles.summaryValue, { 
+                    color: nutritionStats.weeklyCalories.reduce((sum, day) => sum + day.calories, 0) >= 12000 ? '#28A745' : '#F5A623'
+                  }]}>
+                    {Math.round(nutritionStats.weeklyCalories.reduce((sum, day) => sum + day.calories, 0)).toLocaleString()}
                   </Text>
-                  <Text style={styles.summaryLabel}>Nutriments totaux (g)</Text>
+                  <Text style={styles.summaryLabel}>Calories totales</Text>
                 </View>
                 <View style={styles.summaryItem}>
                   <Text style={[styles.summaryValue, { color: nutritionStats.averageHydration >= 1600 ? '#4ECDC4' : '#F5A623' }]}>
@@ -1376,6 +1418,22 @@ export default function ProgresScreen() {
                   </Text>
                   <Text style={styles.summaryLabel}>Hydratation moyenne</Text>
                 </View>
+              </View>
+              
+              {/* Indicateur de régularité */}
+              <View style={styles.regularityIndicator}>
+                <Text style={styles.regularityTitle}>📊 Régularité du suivi</Text>
+                <View style={styles.regularityBar}>
+                  <View style={[styles.regularityBarFill, { 
+                    width: `${Math.round((nutritionStats.daysWithData / 7) * 100)}%`,
+                    backgroundColor: nutritionStats.daysWithData >= 5 ? '#28A745' : nutritionStats.daysWithData >= 3 ? '#F5A623' : '#DC3545'
+                  }]} />
+                </View>
+                <Text style={styles.regularityText}>
+                  {nutritionStats.daysWithData >= 5 ? 'Excellent suivi !' : 
+                   nutritionStats.daysWithData >= 3 ? 'Suivi correct, continuez !' : 
+                   'Pensez à enregistrer vos repas plus régulièrement'}
+                </Text>
               </View>
             </View>
           </View>
@@ -2788,5 +2846,34 @@ const styles = StyleSheet.create({
     padding: 20,
     borderWidth: 1,
     borderColor: '#21262D',
+  },
+  regularityIndicator: {
+    marginTop: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#21262D',
+  },
+  regularityTitle: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  regularityBar: {
+    height: 8,
+    backgroundColor: '#21262D',
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  regularityBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  regularityText: {
+    fontSize: 12,
+    color: '#8B949E',
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });
