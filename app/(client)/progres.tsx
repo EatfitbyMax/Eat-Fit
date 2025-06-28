@@ -21,6 +21,7 @@ export default function ProgresScreen() {
     lastWeightUpdate: null as string | null,
     weeklyUpdates: 0,
     lastWeekReset: null as string | null,
+    targetAsked: false,
   });
 
   // Fonction pour formater le poids avec la précision appropriée
@@ -121,10 +122,12 @@ export default function ProgresScreen() {
             lastWeightUpdate: null,
             weeklyUpdates: 0,
             lastWeekReset: null,
+            targetAsked: false, // Nouveau flag pour savoir si l'objectif a déjà été demandé
           };
           setWeightData(initialData);
-          // Demander de définir l'objectif si pas encore fait
-          if (!initialData.targetWeight) {
+          await saveWeightData(initialData);
+          // Demander de définir l'objectif seulement si jamais demandé
+          if (!initialData.targetAsked) {
             setTimeout(() => setShowTargetModal(true), 1000);
           }
         }
@@ -208,6 +211,7 @@ export default function ProgresScreen() {
     const newData = {
       ...weightData,
       targetWeight: target,
+      targetAsked: true, // Marquer comme demandé
     };
 
     await saveWeightData(newData);
@@ -1432,7 +1436,12 @@ export default function ProgresScreen() {
             <View style={styles.modalButtons}>
               <TouchableOpacity 
                 style={styles.modalButtonSecondary}
-                onPress={() => {
+                onPress={async () => {
+                  const newData = {
+                    ...weightData,
+                    targetAsked: true, // Marquer comme demandé même si annulé
+                  };
+                  await saveWeightData(newData);
                   setTempTarget('');
                   setShowTargetModal(false);
                 }}
