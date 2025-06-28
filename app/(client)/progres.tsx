@@ -429,37 +429,89 @@ export default function ProgresScreen() {
   });
 
   const renderWeightChart = () => {
-    if (!userData?.createdAt || !weightData.weightHistory?.length) return null;
+    if (!weightData.startWeight) return null;
 
     const history = weightData.weightHistory || [];
     const dataPoints = [];
 
+    // Créer l'historique complet en s'assurant que le poids de départ est inclus
+    let completeHistory = [...history];
+    
+    // Vérifier si le poids de départ est déjà dans l'historique
+    const hasStartWeight = history.some(entry => 
+      Math.abs(entry.weight - weightData.startWeight) < 0.1 && 
+      new Date(entry.date).getTime() <= new Date(userData?.createdAt || new Date()).getTime() + 24 * 60 * 60 * 1000
+    );
+
+    // Si le poids de départ n'est pas dans l'historique, l'ajouter au début
+    if (!hasStartWeight) {
+      const startDate = userData?.createdAt || new Date().toISOString();
+      completeHistory.unshift({
+        weight: weightData.startWeight,
+        date: startDate
+      });
+    }
+
+    // Trier par date
+    completeHistory.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
     // Filtrer l'historique selon la période sélectionnée
     const currentDate = new Date();
-    let filteredHistory = [...history];
+    let filteredHistory = [...completeHistory];
 
     if (selectedPeriod === 'Semaines') {
       const sixWeeksAgo = new Date(currentDate.getTime() - (6 * 7 * 24 * 60 * 60 * 1000));
-      filteredHistory = history.filter(entry => new Date(entry.date) >= sixWeeksAgo);
+      filteredHistory = completeHistory.filter(entry => new Date(entry.date) >= sixWeeksAgo);
     } else if (selectedPeriod === 'Mois') {
       const sixMonthsAgo = new Date(currentDate.getTime() - (6 * 30 * 24 * 60 * 60 * 1000));
-      filteredHistory = history.filter(entry => new Date(entry.date) >= sixMonthsAgo);
+      filteredHistory = completeHistory.filter(entry => new Date(entry.date) >= sixMonthsAgo);
     } else { // Années
       const sixYearsAgo = new Date(currentDate.getTime() - (6 * 365 * 24 * 60 * 60 * 1000));
-      filteredHistory = history.filter(entry => new Date(entry.date) >= sixYearsAgo);
+      filteredHistory = completeHistory.filter(entry => new Date(entry.date) >= sixYearsAgo);
+    }
+
+    // S'assurer qu'on a au moins le poids de départ si la période le permet
+    if (filteredHistory.length === 0 && userData?.createdAt) {
+      const startDate = new Date(userData.createdAt);
+      const periodStart = selectedPeriod === 'Semaines' ? 
+        new Date(currentDate.getTime() - (6 * 7 * 24 * 60 * 60 * 1000)) :
+        selectedPeriod === 'Mois' ?
+        new Date(currentDate.getTime() - (6 * 30 * 24 * 60 * 60 * 1000)) :
+        new Date(currentDate.getTime() - (6 * 365 * 24 * 60 * 60 * 1000));
+
+      if (startDate >= periodStart) {
+        filteredHistory.push({
+          weight: weightData.startWeight,
+          date: userData.createdAt
+        });
+      }
     }
 
     // Limiter à 6 points maximum pour l'affichage
     if (filteredHistory.length > 6) {
       const step = Math.floor(filteredHistory.length / 6);
       const sampledHistory = [];
-      for (let i = 0; i < filteredHistory.length; i += step) {
-        sampledHistory.push(filteredHistory[i]);
+      
+      // Toujours inclure le premier point (poids de départ)
+      sampledHistory.push(filteredHistory[0]);
+      
+      // Échantillonner le reste
+      for (let i = step; i < filteredHistory.length; i += step) {
+        if (sampledHistory.length < 5) { // Laisser de la place pour le dernier point
+          sampledHistory.push(filteredHistory[i]);
+        }
       }
-      if (sampledHistory[sampledHistory.length - 1] !== filteredHistory[filteredHistory.length - 1]) {
-        sampledHistory[sampledHistory.length - 1] = filteredHistory[filteredHistory.length - 1];
+      
+      // Toujours inclure le dernier point si différent du premier
+      if (filteredHistory.length > 1 && sampledHistory[sampledHistory.length - 1] !== filteredHistory[filteredHistory.length - 1]) {
+        if (sampledHistory.length === 6) {
+          sampledHistory[5] = filteredHistory[filteredHistory.length - 1];
+        } else {
+          sampledHistory.push(filteredHistory[filteredHistory.length - 1]);
+        }
       }
-      filteredHistory = sampledHistory.slice(0, 6);
+      
+      filteredHistory = sampledHistory;
     }
 
     // Générer les points de données basés sur l'historique réel
@@ -522,39 +574,91 @@ export default function ProgresScreen() {
   };
 
   const generatePeriodLabels = () => {
-    if (!userData?.createdAt || !weightData.weightHistory?.length) {
+    if (!weightData.startWeight) {
       if (selectedPeriod === 'Semaines') return ['S1', 'S2', 'S3', 'S4', 'S5', 'S6'];
       if (selectedPeriod === 'Mois') return ['Janv', 'Mars', 'Mai', 'Juil', 'Sept', 'Déc'];
       return ['2023', '2024', '2025'];
     }
 
     const history = weightData.weightHistory || [];
+    
+    // Créer l'historique complet en s'assurant que le poids de départ est inclus
+    let completeHistory = [...history];
+    
+    // Vérifier si le poids de départ est déjà dans l'historique
+    const hasStartWeight = history.some(entry => 
+      Math.abs(entry.weight - weightData.startWeight) < 0.1 && 
+      new Date(entry.date).getTime() <= new Date(userData?.createdAt || new Date()).getTime() + 24 * 60 * 60 * 1000
+    );
+
+    // Si le poids de départ n'est pas dans l'historique, l'ajouter au début
+    if (!hasStartWeight && userData?.createdAt) {
+      completeHistory.unshift({
+        weight: weightData.startWeight,
+        date: userData.createdAt
+      });
+    }
+
+    // Trier par date
+    completeHistory.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
     const currentDate = new Date();
-    let filteredHistory = [...history];
+    let filteredHistory = [...completeHistory];
 
     // Filtrer l'historique selon la période
     if (selectedPeriod === 'Semaines') {
       const sixWeeksAgo = new Date(currentDate.getTime() - (6 * 7 * 24 * 60 * 60 * 1000));
-      filteredHistory = history.filter(entry => new Date(entry.date) >= sixWeeksAgo);
+      filteredHistory = completeHistory.filter(entry => new Date(entry.date) >= sixWeeksAgo);
     } else if (selectedPeriod === 'Mois') {
       const sixMonthsAgo = new Date(currentDate.getTime() - (6 * 30 * 24 * 60 * 60 * 1000));
-      filteredHistory = history.filter(entry => new Date(entry.date) >= sixMonthsAgo);
+      filteredHistory = completeHistory.filter(entry => new Date(entry.date) >= sixMonthsAgo);
     } else { // Années
       const sixYearsAgo = new Date(currentDate.getTime() - (6 * 365 * 24 * 60 * 60 * 1000));
-      filteredHistory = history.filter(entry => new Date(entry.date) >= sixYearsAgo);
+      filteredHistory = completeHistory.filter(entry => new Date(entry.date) >= sixYearsAgo);
+    }
+
+    // S'assurer qu'on a au moins le poids de départ si la période le permet
+    if (filteredHistory.length === 0 && userData?.createdAt) {
+      const startDate = new Date(userData.createdAt);
+      const periodStart = selectedPeriod === 'Semaines' ? 
+        new Date(currentDate.getTime() - (6 * 7 * 24 * 60 * 60 * 1000)) :
+        selectedPeriod === 'Mois' ?
+        new Date(currentDate.getTime() - (6 * 30 * 24 * 60 * 60 * 1000)) :
+        new Date(currentDate.getTime() - (6 * 365 * 24 * 60 * 60 * 1000));
+
+      if (startDate >= periodStart) {
+        filteredHistory.push({
+          weight: weightData.startWeight,
+          date: userData.createdAt
+        });
+      }
     }
 
     // Échantillonner si trop de données
     if (filteredHistory.length > 6) {
       const step = Math.floor(filteredHistory.length / 6);
       const sampledHistory = [];
-      for (let i = 0; i < filteredHistory.length; i += step) {
-        sampledHistory.push(filteredHistory[i]);
+      
+      // Toujours inclure le premier point
+      sampledHistory.push(filteredHistory[0]);
+      
+      // Échantillonner le reste
+      for (let i = step; i < filteredHistory.length; i += step) {
+        if (sampledHistory.length < 5) {
+          sampledHistory.push(filteredHistory[i]);
+        }
       }
-      if (sampledHistory[sampledHistory.length - 1] !== filteredHistory[filteredHistory.length - 1]) {
-        sampledHistory[sampledHistory.length - 1] = filteredHistory[filteredHistory.length - 1];
+      
+      // Toujours inclure le dernier point si différent du premier
+      if (filteredHistory.length > 1 && sampledHistory[sampledHistory.length - 1] !== filteredHistory[filteredHistory.length - 1]) {
+        if (sampledHistory.length === 6) {
+          sampledHistory[5] = filteredHistory[filteredHistory.length - 1];
+        } else {
+          sampledHistory.push(filteredHistory[filteredHistory.length - 1]);
+        }
       }
-      filteredHistory = sampledHistory.slice(0, 6);
+      
+      filteredHistory = sampledHistory;
     }
 
     const labels = [];
@@ -564,7 +668,9 @@ export default function ProgresScreen() {
       const date = new Date(entry.date);
       
       if (selectedPeriod === 'Semaines') {
-        const weekNum = Math.ceil(date.getDate() / 7);
+        // Pour les semaines, afficher la semaine de l'année ou relative au début
+        const startOfYear = new Date(date.getFullYear(), 0, 1);
+        const weekNum = Math.ceil(((date.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7);
         labels.push(`S${weekNum}`);
       } else if (selectedPeriod === 'Mois') {
         labels.push(monthNames[date.getMonth()]);
