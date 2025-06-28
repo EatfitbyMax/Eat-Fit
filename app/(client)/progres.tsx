@@ -2082,9 +2082,9 @@ const styles = StyleSheet.create({
   yAxis: {
     justifyContent: 'space-between',
     width: 35,
-    paddingRight: 12,
-    paddingTop: 2,
-    paddingBottom: 27,
+    paddingRight: 15,
+    paddingTop: -10,
+    paddingBottom: 20,
   },
   yAxisLabel: {
     fontSize: 12,
@@ -2098,7 +2098,7 @@ const styles = StyleSheet.create({
   },
   gridContainer: {
     position: 'absolute',
-    top: 0,
+    top: 5,
     left: 0,
     right: 0,
     bottom: 25,
