@@ -81,7 +81,10 @@ export default function ProgresScreen() {
     averageCalories: 0,
     averageProteins: 0,
     averageCarbs: 0,
-    daysWithData: 0
+    averageFat: 0,
+    daysWithData: 0,
+    weeklyHydration: [],
+    averageHydration: 0
   });
 
   useEffect(() => {
@@ -821,20 +824,43 @@ export default function ProgresScreen() {
       if (!user) return;
 
       // Charger les données nutritionnelles réelles
-      const nutritionEntries = await PersistentStorage.getNutritionData(user.id);
+      let nutritionEntries = [];
+      try {
+        // Essayer de charger depuis le serveur VPS d'abord
+        const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.replit.app';
+        const response = await fetch(`${VPS_URL}/api/nutrition/${user.id}`);
+        
+        if (response.ok) {
+          nutritionEntries = await response.json();
+          console.log('Données nutrition chargées depuis le serveur VPS pour les progrès');
+        } else {
+          throw new Error('Serveur indisponible');
+        }
+      } catch (serverError) {
+        console.log('Fallback vers le stockage local pour nutrition (progrès)');
+        const stored = await AsyncStorage.getItem(`food_entries_${user.id}`);
+        if (stored) {
+          nutritionEntries = JSON.parse(stored);
+        }
+      }
 
       // Calculer les statistiques des 7 derniers jours
       const last7DaysNutrition = [];
+      const last7DaysHydration = [];
       let totalCaloriesWeek = 0;
       let totalProteinsWeek = 0;
       let totalCarbsWeek = 0;
+      let totalFatWeek = 0;
+      let totalHydrationWeek = 0;
       let daysWithData = 0;
+      let daysWithHydration = 0;
 
       for (let i = 6; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
         const dateString = date.toISOString().split('T')[0];
 
+        // Données nutritionnelles
         const dayEntries = nutritionEntries.filter((entry: any) => 
           entry.date === dateString
         );
@@ -851,10 +877,15 @@ export default function ProgresScreen() {
           sum + (entry.carbohydrates || 0), 0
         );
 
+        const dayFat = dayEntries.reduce((sum: number, entry: any) => 
+          sum + (entry.fat || 0), 0
+        );
+
         if (dayCalories > 0) {
           totalCaloriesWeek += dayCalories;
           totalProteinsWeek += dayProteins;
           totalCarbsWeek += dayCarbonhydrates;
+          totalFatWeek += dayFat;
           daysWithData++;
         }
 
@@ -863,21 +894,53 @@ export default function ProgresScreen() {
           day: date.toLocaleDateString('fr-FR', { weekday: 'short' }),
           calories: dayCalories,
           proteins: dayProteins,
-          carbohydrates: dayCarbonhydrates
+          carbohydrates: dayCarbonhydrates,
+          fat: dayFat
         });
+
+        // Données d'hydratation
+        try {
+          const waterStored = await AsyncStorage.getItem(`water_intake_${user.id}_${dateString}`);
+          const dayWater = waterStored ? parseInt(waterStored) : 0;
+          
+          if (dayWater > 0) {
+            totalHydrationWeek += dayWater;
+            daysWithHydration++;
+          }
+
+          last7DaysHydration.push({
+            date: dateString,
+            day: date.toLocaleDateString('fr-FR', { weekday: 'short' }),
+            water: dayWater,
+            goal: 2000 // Objectif de base, sera calculé dynamiquement dans l'affichage
+          });
+        } catch (error) {
+          console.error('Erreur récupération hydratation pour', dateString, error);
+          last7DaysHydration.push({
+            date: dateString,
+            day: date.toLocaleDateString('fr-FR', { weekday: 'short' }),
+            water: 0,
+            goal: 2000
+          });
+        }
       }
 
       // Calculer les moyennes
       const avgCalories = daysWithData > 0 ? Math.round(totalCaloriesWeek / daysWithData) : 0;
       const avgProteins = daysWithData > 0 ? Math.round(totalProteinsWeek / daysWithData) : 0;
       const avgCarbs = daysWithData > 0 ? Math.round(totalCarbsWeek / daysWithData) : 0;
+      const avgFat = daysWithData > 0 ? Math.round(totalFatWeek / daysWithData) : 0;
+      const avgHydration = daysWithHydration > 0 ? Math.round(totalHydrationWeek / daysWithHydration) : 0;
 
       setNutritionStats({
         weeklyCalories: last7DaysNutrition,
         averageCalories: avgCalories,
         averageProteins: avgProteins,
         averageCarbs: avgCarbs,
-        daysWithData
+        averageFat: avgFat,
+        daysWithData,
+        weeklyHydration: last7DaysHydration,
+        averageHydration: avgHydration
       });
 
     } catch (error) {
@@ -1164,12 +1227,13 @@ export default function ProgresScreen() {
 
                   {/* Barres de calories */}
                   <View style={styles.caloriesBars}>
-                    {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map((day, index) => {
-                      const height = Math.random() * 80 + 20; // Simulation de données
+                    {nutritionStats.weeklyCalories.map((dayData, index) => {
+                      const maxCalories = Math.max(...nutritionStats.weeklyCalories.map(d => d.calories), 2500);
+                      const height = dayData.calories > 0 ? (dayData.calories / maxCalories) * 80 + 10 : 5;
                       return (
-                        <View key={day} style={styles.barContainer}>
-                          <View style={[styles.calorieBar, { height: `${height}%` }]} />
-                          <Text style={styles.dayLabel}>{day}</Text>
+                        <View key={dayData.day} style={styles.barContainer}>
+                          <View style={[styles.calorieBar, { height: `${Math.min(height, 85)}%` }]} />
+                          <Text style={styles.dayLabel}>{dayData.day}</Text>
                         </View>
                       );
                     })}
@@ -1212,8 +1276,10 @@ export default function ProgresScreen() {
                   <Text style={styles.iconText}>🥑</Text>
                 </View>
                 <Text style={styles.statLabel}>Lipides moyens</Text>
-                <Text style={styles.statValue}>89g</Text>
-                <Text style={[styles.statTrend, { color: '#28A745' }]}>↑ +5g vs semaine précédente</Text>
+                <Text style={styles.statValue}>{nutritionStats.averageFat}g</Text>
+                <Text style={[styles.statTrend, { color: nutritionStats.averageFat > 0 ? '#28A745' : '#8B949E' }]}>
+                  {nutritionStats.averageFat > 0 ? '↑ Données disponibles' : 'Aucune donnée'}
+                </Text>
               </View>
             </View>
 
@@ -1224,7 +1290,7 @@ export default function ProgresScreen() {
 
               <View style={styles.macroCircularChart}>
                 <View style={styles.macroCircle}>
-                  <Text style={styles.macroMainText}>2,247</Text>
+                  <Text style={styles.macroMainText}>{nutritionStats.averageCalories.toLocaleString()}</Text>
                   <Text style={styles.macroSubText}>kcal moy.</Text>
                 </View>
               </View>
@@ -1232,15 +1298,24 @@ export default function ProgresScreen() {
               <View style={styles.macroLegend}>
                 <View style={styles.macroLegendItem}>
                   <View style={[styles.macroLegendColor, { backgroundColor: '#FF6B6B' }]} />
-                  <Text style={styles.macroLegendText}>Protéines 25%</Text>
+                  <Text style={styles.macroLegendText}>
+                    Protéines {nutritionStats.averageCalories > 0 ? 
+                      Math.round((nutritionStats.averageProteins * 4 / nutritionStats.averageCalories) * 100) : 0}%
+                  </Text>
                 </View>
                 <View style={styles.macroLegendItem}>
                   <View style={[styles.macroLegendColor, { backgroundColor: '#4ECDC4' }]} />
-                  <Text style={styles.macroLegendText}>Glucides 50%</Text>
+                  <Text style={styles.macroLegendText}>
+                    Glucides {nutritionStats.averageCalories > 0 ? 
+                      Math.round((nutritionStats.averageCarbs * 4 / nutritionStats.averageCalories) * 100) : 0}%
+                  </Text>
                 </View>
                 <View style={styles.macroLegendItem}>
                   <View style={[styles.macroLegendColor, { backgroundColor: '#FFE66D' }]} />
-                  <Text style={styles.macroLegendText}>Lipides 25%</Text>
+                  <Text style={styles.macroLegendText}>
+                    Lipides {nutritionStats.averageCalories > 0 ? 
+                      Math.round((nutritionStats.averageFat * 9 / nutritionStats.averageCalories) * 100) : 0}%
+                  </Text>
                 </View>
               </View>
             </View>
@@ -1253,11 +1328,11 @@ export default function ProgresScreen() {
               </View>
 
               <View style={styles.hydrationBars}>
-                {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map((day, index) => {
-                  const percentage = Math.random() * 100 + 50; // Simulation
+                {nutritionStats.weeklyHydration.map((dayData, index) => {
+                  const percentage = dayData.goal > 0 ? (dayData.water / dayData.goal) * 100 : 0;
                   const achieved = percentage >= 100;
                   return (
-                    <View key={day} style={styles.hydrationBarContainer}>
+                    <View key={dayData.day} style={styles.hydrationBarContainer}>
                       <View style={styles.hydrationBarBackground}>
                         <View 
                           style={[
@@ -1270,7 +1345,7 @@ export default function ProgresScreen() {
                         />
                       </View>
                       <Text style={styles.hydrationBarText}>{Math.round(percentage)}%</Text>
-                      <Text style={styles.dayLabel}>{day}</Text>
+                      <Text style={styles.dayLabel}>{dayData.day}</Text>
                     </View>
                   );
                 })}
@@ -1282,15 +1357,23 @@ export default function ProgresScreen() {
               <Text style={styles.summaryTitle}>Résumé de la semaine</Text>
               <View style={styles.summaryStats}>
                 <View style={styles.summaryItem}>
-                  <Text style={[styles.summaryValue, { color: '#28A745' }]}>6/7</Text>
-                  <Text style={styles.summaryLabel}>Jours objectif atteint</Text>
+                  <Text style={[styles.summaryValue, { color: nutritionStats.daysWithData >= 5 ? '#28A745' : '#F5A623' }]}>
+                    {nutritionStats.daysWithData}/7
+                  </Text>
+                  <Text style={styles.summaryLabel}>Jours avec données</Text>
                 </View>
                 <View style={styles.summaryItem}>
-                  <Text style={styles.summaryValue}>1,847</Text>
-                  <Text style={styles.summaryLabel}>Aliments scannés</Text>
+                  <Text style={styles.summaryValue}>
+                    {nutritionStats.weeklyCalories.reduce((sum, day) => 
+                      sum + day.calories + day.proteins + day.carbohydrates + day.fat, 0
+                    )}
+                  </Text>
+                  <Text style={styles.summaryLabel}>Nutriments totaux (g)</Text>
                 </View>
                 <View style={styles.summaryItem}>
-                  <Text style={[styles.summaryValue, { color: '#4ECDC4' }]}>87%</Text>
+                  <Text style={[styles.summaryValue, { color: nutritionStats.averageHydration >= 1600 ? '#4ECDC4' : '#F5A623' }]}>
+                    {nutritionStats.averageHydration > 0 ? Math.round((nutritionStats.averageHydration / 2000) * 100) : 0}%
+                  </Text>
                   <Text style={styles.summaryLabel}>Hydratation moyenne</Text>
                 </View>
               </View>
