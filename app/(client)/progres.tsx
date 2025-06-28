@@ -539,10 +539,10 @@ export default function ProgresScreen() {
   };
 
   const getDataPointPosition = (weight: number, monthIndex: number, totalMonths: number) => {
-    // Calculer la position verticale basée sur le poids avec une échelle plus large
+    // Calculer la position verticale basée sur le poids avec une échelle plus resserrée
     const baseWeight = Math.max(weightData.startWeight, weightData.currentWeight, weightData.targetWeight || weightData.currentWeight);
-    const minWeight = Math.max(0, baseWeight - 15); // 15kg en dessous du poids max
-    const maxWeight = baseWeight + 15; // 15kg au dessus du poids max
+    const minWeight = Math.max(0, baseWeight - 8); // 8kg en dessous du poids max
+    const maxWeight = baseWeight + 8; // 8kg au dessus du poids max
     const weightRange = maxWeight - minWeight;
     const weightPercentage = Math.max(0, Math.min(1, (maxWeight - weight) / weightRange));
 
@@ -564,18 +564,19 @@ export default function ProgresScreen() {
 
   const generateYAxisLabels = () => {
     if (!weightData.startWeight && !weightData.currentWeight) {
-      return ['90', '85', '80', '75', '70', '65'];
+      return ['78', '76', '74', '72', '70', '68', '66', '64'];
     }
 
-    // Utiliser le même calcul que pour les positions des points
+    // Utiliser une plage plus resserrée autour du poids actuel
     const baseWeight = Math.max(weightData.startWeight, weightData.currentWeight, weightData.targetWeight || weightData.currentWeight);
-    const minWeight = Math.max(0, baseWeight - 15); // 15kg en dessous
-    const maxWeight = baseWeight + 15; // 15kg au dessus
+    const minWeight = Math.max(0, baseWeight - 8); // 8kg en dessous
+    const maxWeight = baseWeight + 8; // 8kg au dessus
     const weightRange = maxWeight - minWeight;
 
     const labels = [];
-    for (let i = 0; i < 6; i++) {
-      const weight = maxWeight - (i * weightRange / 5);
+    // Générer 8 labels au lieu de 6 pour plus de précision
+    for (let i = 0; i < 8; i++) {
+      const weight = maxWeight - (i * weightRange / 7);
       labels.push(Math.round(weight).toString());
     }
 
@@ -1446,7 +1447,7 @@ export default function ProgresScreen() {
           {/* Improved Chart */}
           <View style={styles.chartArea}>
             <View style={styles.yAxis}>
-            {generateYAxisLabels().map((label, index) => (
+              {generateYAxisLabels().map((label, index) => (
                 <Text key={index} style={styles.yAxisLabel}>{label}</Text>
               ))}
             </View>
@@ -1454,7 +1455,7 @@ export default function ProgresScreen() {
             <View style={styles.chartContent}>
               {/* Grid */}
               <View style={styles.gridContainer}>
-                {[...Array(6)].map((_, i) => (
+                {[...Array(8)].map((_, i) => (
                   <View key={i} style={styles.gridLine} />
                 ))}
               </View>
