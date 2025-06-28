@@ -12,6 +12,7 @@ export default function ProgresScreen() {
   const [selectedTab, setSelectedTab] = useState('Mesures');
   const [isPremium, setIsPremium] = useState(false);
   const [selectedMeasurementTab, setSelectedMeasurementTab] = useState('Poids');
+  const [selectedPeriod, setSelectedPeriod] = useState('Mois');
   const progressAnimation = useSharedValue(0);
   const [userData, setUserData] = useState<any>(null);
   const [weightData, setWeightData] = useState({
@@ -424,45 +425,56 @@ export default function ProgresScreen() {
 
     const startDate = new Date(userData.createdAt);
     const currentDate = new Date();
-    const monthsDiff = Math.ceil((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
-    const displayMonths = Math.min(6, Math.max(1, monthsDiff + 1));
+    
+    let periodDiff, displayPeriods;
+    
+    if (selectedPeriod === 'Semaines') {
+      periodDiff = Math.ceil((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 7));
+      displayPeriods = Math.min(6, Math.max(1, periodDiff + 1));
+    } else if (selectedPeriod === 'Mois') {
+      periodDiff = Math.ceil((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
+      displayPeriods = Math.min(6, Math.max(1, periodDiff + 1));
+    } else { // Années
+      periodDiff = Math.ceil((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 365));
+      displayPeriods = Math.min(6, Math.max(1, periodDiff + 1));
+    }
 
     // Générer les points de données basés sur la progression réelle
     const dataPoints = [];
 
-    // Si moins d'un mois complet, afficher seulement le point actuel
-    if (monthsDiff < 1) {
+    // Si moins d'une période complète, afficher seulement le point actuel
+    if (periodDiff < 1) {
       const singlePosition = getDataPointPosition(weightData.currentWeight, 0, 1);
       dataPoints.push(
         <View key="single" style={[styles.dataPoint, { left: '50%', top: singlePosition.top }]} />
       );
     } else {
       // Point de départ (inscription)
-      const startPosition = getDataPointPosition(weightData.startWeight, 0, displayMonths);
+      const startPosition = getDataPointPosition(weightData.startWeight, 0, displayPeriods);
       dataPoints.push(
         <View key="start" style={[styles.dataPoint, startPosition]} />
       );
 
       // Points intermédiaires (simulation basée sur la progression)
-      if (displayMonths > 2) {
+      if (displayPeriods > 2) {
         const totalWeightChange = weightData.currentWeight - weightData.startWeight;
-        for (let i = 1; i < displayMonths - 1; i++) {
-          const progressRatio = i / (displayMonths - 1);
+        for (let i = 1; i < displayPeriods - 1; i++) {
+          const progressRatio = i / (displayPeriods - 1);
           const interpolatedWeight = weightData.startWeight + (totalWeightChange * progressRatio);
           // Ajouter une petite variation réaliste
           const variation = (Math.random() - 0.5) * 0.5;
           const weightWithVariation = interpolatedWeight + variation;
 
-          const position = getDataPointPosition(weightWithVariation, i, displayMonths);
+          const position = getDataPointPosition(weightWithVariation, i, displayPeriods);
           dataPoints.push(
             <View key={`point-${i}`} style={[styles.dataPoint, position]} />
           );
         }
       }
 
-      // Point actuel (seulement si plus d'un mois)
-      if (displayMonths > 1) {
-        const currentPosition = getDataPointPosition(weightData.currentWeight, displayMonths - 1, displayMonths);
+      // Point actuel (seulement si plus d'une période)
+      if (displayPeriods > 1) {
+        const currentPosition = getDataPointPosition(weightData.currentWeight, displayPeriods - 1, displayPeriods);
         dataPoints.push(
           <View key="current" style={[styles.dataPoint, currentPosition]} />
         );
@@ -514,28 +526,62 @@ export default function ProgresScreen() {
     return labels;
   };
 
-  const generateMonthLabels = () => {
-    if (!userData?.createdAt) return ['Janv', 'Mars', 'Mai', 'Juil', 'Sept', 'Déc'];
+  const generatePeriodLabels = () => {
+    if (!userData?.createdAt) {
+      if (selectedPeriod === 'Semaines') return ['S1', 'S2', 'S3', 'S4', 'S5', 'S6'];
+      if (selectedPeriod === 'Mois') return ['Janv', 'Mars', 'Mai', 'Juil', 'Sept', 'Déc'];
+      return ['2023', '2024', '2025'];
+    }
 
     const startDate = new Date(userData.createdAt);
     const currentDate = new Date();
-    const monthsDiff = Math.ceil((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
-    const displayMonths = Math.min(6, Math.max(1, monthsDiff + 1));
-
-    const monthNames = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
     const labels = [];
 
-    for (let i = 0; i < displayMonths; i++) {
-      const monthDate = new Date(startDate);
-      monthDate.setMonth(startDate.getMonth() + i);
-      labels.push(monthNames[monthDate.getMonth()]);
-    }
+    if (selectedPeriod === 'Semaines') {
+      const weeksDiff = Math.ceil((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 7));
+      const displayWeeks = Math.min(6, Math.max(1, weeksDiff + 1));
+      
+      for (let i = 0; i < displayWeeks; i++) {
+        const weekDate = new Date(startDate);
+        weekDate.setDate(startDate.getDate() + (i * 7));
+        const weekNumber = Math.ceil(weekDate.getDate() / 7);
+        labels.push(`S${weekNumber}`);
+      }
 
-    // Si moins de 6 mois, compléter avec des mois futurs
-    while (labels.length < 6) {
-      const lastDate = new Date(startDate);
-      lastDate.setMonth(startDate.getMonth() + labels.length);
-      labels.push(monthNames[lastDate.getMonth()]);
+      while (labels.length < 6) {
+        labels.push(`S${labels.length + 1}`);
+      }
+    } else if (selectedPeriod === 'Mois') {
+      const monthsDiff = Math.ceil((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
+      const displayMonths = Math.min(6, Math.max(1, monthsDiff + 1));
+
+      const monthNames = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
+
+      for (let i = 0; i < displayMonths; i++) {
+        const monthDate = new Date(startDate);
+        monthDate.setMonth(startDate.getMonth() + i);
+        labels.push(monthNames[monthDate.getMonth()]);
+      }
+
+      while (labels.length < 6) {
+        const lastDate = new Date(startDate);
+        lastDate.setMonth(startDate.getMonth() + labels.length);
+        labels.push(monthNames[lastDate.getMonth()]);
+      }
+    } else { // Années
+      const yearsDiff = Math.ceil((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 365));
+      const displayYears = Math.min(6, Math.max(1, yearsDiff + 1));
+
+      for (let i = 0; i < displayYears; i++) {
+        const yearDate = new Date(startDate);
+        yearDate.setFullYear(startDate.getFullYear() + i);
+        labels.push(yearDate.getFullYear().toString());
+      }
+
+      while (labels.length < 6) {
+        const lastYear = parseInt(labels[labels.length - 1] || startDate.getFullYear().toString());
+        labels.push((lastYear + 1).toString());
+      }
     }
 
     return labels.slice(0, 6);
@@ -1271,9 +1317,21 @@ export default function ProgresScreen() {
         <View style={styles.chartContainer}>
           <View style={styles.chartHeader}>
             <Text style={styles.chartTitle}>Évolution du poids</Text>
-            <View style={styles.chartPeriod}>
-              <Text style={styles.chartPeriodText}>6 mois</Text>
-            </View>
+          </View>
+
+          {/* Onglets de période */}
+          <View style={styles.periodTabsContainer}>
+            {['Semaines', 'Mois', 'Années'].map((period) => (
+              <TouchableOpacity 
+                key={period}
+                style={[styles.periodTab, selectedPeriod === period && styles.activePeriodTab]}
+                onPress={() => setSelectedPeriod(period)}
+              >
+                <Text style={[styles.periodTabText, selectedPeriod === period && styles.activePeriodTabText]}>
+                  {period}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
 
           {/* Improved Chart */}
@@ -1297,7 +1355,7 @@ export default function ProgresScreen() {
 
               {/* X-axis labels */}
               <View style={styles.xAxis}>
-              {generateMonthLabels().map((label, index) => (
+              {generatePeriodLabels().map((label, index) => (
                   <Text key={index} style={styles.xAxisLabel}>{label}</Text>
                 ))}
               </View>
@@ -1709,6 +1767,32 @@ const styles = StyleSheet.create({
   },
   premiumBadge: {
     fontSize: 12,
+  },
+
+  periodTabsContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+    backgroundColor: '#0D1117',
+    borderRadius: 8,
+    padding: 4,
+  },
+  periodTab: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  activePeriodTab: {
+    backgroundColor: '#F5A623',
+  },
+  periodTabText: {
+    fontSize: 13,
+    color: '#8B949E',
+    fontWeight: '600',
+  },
+  activePeriodTabText: {
+    color: '#000000',
   },
 
   measurementsContainer: {
