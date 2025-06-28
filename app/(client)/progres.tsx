@@ -466,22 +466,22 @@ export default function ProgresScreen() {
     // Déterminer la plage de poids pour correspondre aux labels
     const weights = [weightData.startWeight, weightData.currentWeight];
     if (weightData.targetWeight) weights.push(weightData.targetWeight);
-
+    
     const minDataWeight = Math.min(...weights.filter(w => w > 0));
     const maxDataWeight = Math.max(...weights.filter(w => w > 0));
-
+    
     // Utiliser la même logique que generateYAxisLabels
     const minWeight = Math.floor((minDataWeight - 10) / 5) * 5;
     const maxWeight = Math.ceil((maxDataWeight + 10) / 5) * 5;
     const weightRange = maxWeight - minWeight;
-
+    
     const weightPercentage = Math.max(0, Math.min(1, (maxWeight - weight) / weightRange));
 
     // Calculer la position horizontale en fonction des labels disponibles
     // Les labels sont espacés uniformément, donc chaque point doit s'aligner avec son label correspondant
     const totalLabels = allLabels.length;
     let leftPercentage = 0;
-
+    
     if (totalLabels > 1) {
       // Calculer la position basée sur l'index du point parmi les labels disponibles
       const labelIndex = Math.min(dataIndex, totalLabels - 1);
@@ -502,27 +502,27 @@ export default function ProgresScreen() {
     }
 
     const processedData = getProcessedWeightData();
-
+    
     // Déterminer la plage de poids basée sur les données traitées + données de base
     const weights = [weightData.startWeight, weightData.currentWeight];
     if (weightData.targetWeight) weights.push(weightData.targetWeight);
-
+    
     // Ajouter les poids des données traitées
     processedData.forEach(entry => {
       if (entry.weight > 0) weights.push(entry.weight);
     });
-
+    
     const minDataWeight = Math.min(...weights.filter(w => w > 0));
     const maxDataWeight = Math.max(...weights.filter(w => w > 0));
-
+    
     // Arrondir vers le bas pour min et vers le haut pour max, par tranches de 5
     const minWeight = Math.floor((minDataWeight - 10) / 5) * 5;
     const maxWeight = Math.ceil((maxDataWeight + 10) / 5) * 5;
-
+    
     // Générer 6 labels avec des intervalles de 5 kg
     const labels = [];
     const step = (maxWeight - minWeight) / 5;
-
+    
     for (let i = 0; i < 6; i++) {
       const weight = maxWeight - (i * step);
       // Arrondir au multiple de 5 le plus proche
@@ -550,7 +550,7 @@ export default function ProgresScreen() {
       const currentYear = currentDate.getFullYear();
       const startOfYear = new Date(currentYear, 0, 1);
       const currentWeekNum = Math.ceil(((currentDate.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7);
-
+      
       // Générer les 6 dernières semaines en terminant par la semaine actuelle
       for (let i = 5; i >= 0; i--) {
         const weekNum = Math.max(1, currentWeekNum - i);
@@ -577,10 +577,10 @@ export default function ProgresScreen() {
   // Nouvelle fonction pour traiter les données selon la période
   const getProcessedWeightData = () => {
     const history = weightData.weightHistory || [];
-
+    
     // Créer l'historique complet en s'assurant que le poids de départ est inclus
     let completeHistory = [...history];
-
+    
     // Vérifier si le poids de départ est déjà dans l'historique
     const hasStartWeight = history.some(entry => 
       Math.abs(entry.weight - weightData.startWeight) < 0.1 && 
@@ -636,14 +636,14 @@ export default function ProgresScreen() {
       if (filteredHistory.length > 6) {
         const step = Math.floor(filteredHistory.length / 6);
         const sampledHistory = [];
-
+        
         sampledHistory.push(filteredHistory[0]);
         for (let i = step; i < filteredHistory.length; i += step) {
           if (sampledHistory.length < 5) {
             sampledHistory.push(filteredHistory[i]);
           }
         }
-
+        
         if (filteredHistory.length > 1 && sampledHistory[sampledHistory.length - 1] !== filteredHistory[filteredHistory.length - 1]) {
           if (sampledHistory.length === 6) {
             sampledHistory[5] = filteredHistory[filteredHistory.length - 1];
@@ -651,46 +651,46 @@ export default function ProgresScreen() {
             sampledHistory.push(filteredHistory[filteredHistory.length - 1]);
           }
         }
-
+        
         filteredHistory = sampledHistory;
       }
-
+      
       return filteredHistory.map(entry => ({
         weight: entry.weight,
         date: new Date(entry.date)
       }));
-
+      
     } else if (selectedPeriod === 'Mois') {
       // Pour les mois, faire la moyenne par semaine puis regrouper par mois
       const weeklyAverages = new Map();
-
+      
       filteredHistory.forEach(entry => {
         const date = new Date(entry.date);
         const startOfWeek = new Date(date);
         startOfWeek.setDate(date.getDate() - date.getDay()); // Début de la semaine (dimanche)
         const weekKey = startOfWeek.toISOString().split('T')[0];
-
+        
         if (!weeklyAverages.has(weekKey)) {
           weeklyAverages.set(weekKey, { total: 0, count: 0, date: startOfWeek });
         }
-
+        
         const weekData = weeklyAverages.get(weekKey);
         weekData.total += entry.weight;
         weekData.count += 1;
       });
-
+      
       // Convertir en moyennes hebdomadaires
       const weeklyData = Array.from(weeklyAverages.values()).map(week => ({
         weight: week.total / week.count,
         date: week.date
       }));
-
+      
       // Regrouper par mois et faire la moyenne des semaines
       const monthlyAverages = new Map();
-
+      
       weeklyData.forEach(week => {
         const monthKey = `${week.date.getFullYear()}-${week.date.getMonth()}`;
-
+        
         if (!monthlyAverages.has(monthKey)) {
           monthlyAverages.set(monthKey, { 
             total: 0, 
@@ -698,12 +698,12 @@ export default function ProgresScreen() {
             date: new Date(week.date.getFullYear(), week.date.getMonth(), 1) 
           });
         }
-
+        
         const monthData = monthlyAverages.get(monthKey);
         monthData.total += week.weight;
         monthData.count += 1;
       });
-
+      
       const monthlyData = Array.from(monthlyAverages.values())
         .map(month => ({
           weight: month.total / month.count,
@@ -711,17 +711,17 @@ export default function ProgresScreen() {
         }))
         .sort((a, b) => a.date.getTime() - b.date.getTime())
         .slice(-6); // Garder les 6 derniers mois
-
+      
       return monthlyData;
-
+      
     } else { // Années
       // Pour les années, faire la moyenne par mois puis regrouper par année
       const monthlyAverages = new Map();
-
+      
       filteredHistory.forEach(entry => {
         const date = new Date(entry.date);
         const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
-
+        
         if (!monthlyAverages.has(monthKey)) {
           monthlyAverages.set(monthKey, { 
             total: 0, 
@@ -729,24 +729,24 @@ export default function ProgresScreen() {
             date: new Date(date.getFullYear(), date.getMonth(), 1) 
           });
         }
-
+        
         const monthData = monthlyAverages.get(monthKey);
         monthData.total += entry.weight;
         monthData.count += 1;
       });
-
+      
       // Convertir en moyennes mensuelles
       const monthlyData = Array.from(monthlyAverages.values()).map(month => ({
         weight: month.total / month.count,
         date: month.date
       }));
-
+      
       // Regrouper par année et faire la moyenne des mois
       const yearlyAverages = new Map();
-
+      
       monthlyData.forEach(month => {
         const yearKey = month.date.getFullYear().toString();
-
+        
         if (!yearlyAverages.has(yearKey)) {
           yearlyAverages.set(yearKey, { 
             total: 0, 
@@ -754,12 +754,12 @@ export default function ProgresScreen() {
             date: new Date(month.date.getFullYear(), 0, 1) 
           });
         }
-
+        
         const yearData = yearlyAverages.get(yearKey);
         yearData.total += month.weight;
         yearData.count += 1;
       });
-
+      
       const yearlyData = Array.from(yearlyAverages.values())
         .map(year => ({
           weight: year.total / year.count,
@@ -767,7 +767,7 @@ export default function ProgresScreen() {
         }))
         .sort((a, b) => a.date.getTime() - b.date.getTime())
         .slice(-6); // Garder les 6 dernières années
-
+      
       return yearlyData;
     }
   };
@@ -780,7 +780,7 @@ export default function ProgresScreen() {
       // Charger les données d'entraînement
       const workouts = await PersistentStorage.getWorkouts(user.id);
 
-      // Calculer les statistiques des derniers 7 jours
+      // Calculer les statistiques des 7 derniers jours
       const last7Days = [];
       for (let i = 6; i >= 0; i--) {
         const date = new Date();
@@ -829,7 +829,7 @@ export default function ProgresScreen() {
         // Essayer de charger depuis le serveur VPS d'abord
         const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.replit.app';
         const response = await fetch(`${VPS_URL}/api/nutrition/${user.id}`);
-
+        
         if (response.ok) {
           nutritionEntries = await response.json();
           console.log('Données nutrition chargées depuis le serveur VPS pour les progrès');
@@ -902,7 +902,7 @@ export default function ProgresScreen() {
         try {
           const waterStored = await AsyncStorage.getItem(`water_intake_${user.id}_${dateString}`);
           const dayWater = waterStored ? parseInt(waterStored) : 0;
-
+          
           if (dayWater > 0) {
             totalHydrationWeek += dayWater;
             daysWithHydration++;
@@ -1419,7 +1419,7 @@ export default function ProgresScreen() {
                   <Text style={styles.summaryLabel}>Hydratation moyenne</Text>
                 </View>
               </View>
-
+              
               {/* Indicateur de régularité */}
               <View style={styles.regularityIndicator}>
                 <Text style={styles.regularityTitle}>📊 Régularité du suivi</Text>
@@ -2695,47 +2695,14 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
 
-  // Styles pour l'onglet Nutrition amélioré
+  // Styles pour l'onglet Nutrition
   nutritionContainer: {
     paddingHorizontal: 20,
     paddingBottom: 100,
   },
-
-  // Graphique des calories redesigné
-  nutritionChartContainer: {
-    marginBottom: 25,
-    borderRadius: 20,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(245, 166, 35, 0.3)',
-    shadowColor: '#F5A623',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  chartGradientBackground: {
-    padding: 20,
-  },
-  chartTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  chartTitleEmoji: {
-    fontSize: 20,
-  },
-  chartPeriodBadge: {
-    backgroundColor: 'rgba(245, 166, 35, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(245, 166, 35, 0.4)',
-  },
   nutritionChartArea: {
     flexDirection: 'row',
-    height: 200,
+    height: 180,
   },
   caloriesBars: {
     flex: 1,
@@ -2745,27 +2712,25 @@ const styles = StyleSheet.create({
     paddingBottom: 25,
     paddingHorizontal: 10,
   },
-  enhancedBarContainer: {
+  barContainer: {
     alignItems: 'center',
     flex: 1,
     height: '100%',
     justifyContent: 'flex-end',
   },
   calorieBar: {
-    width: 22,
-    borderRadius: 11,
+    width: 18,
+    backgroundColor: '#F5A623',
+    borderRadius: 9,
     marginBottom: 8,
-    minHeight: 6,
+    minHeight: 4,
   },
-  calorieValueText: {
-    fontSize: 10,
-    color: '#FFFFFF',
-    fontWeight: '700',
-    marginBottom: 4,
+  dayLabel: {
+    fontSize: 11,
+    color: '#8B949E',
+    fontWeight: '500',
   },
-
-  // Statistiques nutritionnelles redesignées
-  nutritionStatsGrid: {
+  nutritionStatsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
@@ -2773,330 +2738,143 @@ const styles = StyleSheet.create({
   },
   nutritionStatCard: {
     width: (width - 52) / 2,
-    borderRadius: 18,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  statCardGradient: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
     padding: 16,
+    borderWidth: 1,
+    borderColor: '#21262D',
     alignItems: 'center',
   },
-  statIconContainer: {
-    width: 48,
-    height: 48,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 24,
-    justifyContent: 'center',
+  macroDistributionCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    marginBottom: 25,
     alignItems: 'center',
-    marginBottom: 12,
   },
-  statEmoji: {
-    fontSize: 24,
-  },
-  statLabel: {
+  chartSubtitle: {
     fontSize: 12,
     color: '#8B949E',
-    marginBottom: 8,
     textAlign: 'center',
-    fontWeight: '600',
-  },
-  statMainValue: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    marginBottom: 2,
-  },
-  statUnit: {
-    fontSize: 14,
-    color: '#8B949E',
-    marginBottom: 12,
-    fontWeight: '500',
-  },
-  statProgressIndicator: {
-    width: '100%',
-    height: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 2,
-    overflow: 'hidden',
-    marginBottom: 8,
-  },
-  statProgressBar: {
-    height: '100%',
-    borderRadius: 2,
-  },
-  statTrendText: {
-    fontSize: 11,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-
-  // Répartition des macronutriments améliorée
-  macroDistributionCard: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    marginBottom: 25,
-    borderWidth: 1,
-    borderColor: 'rgba(245, 166, 35, 0.2)',
-    shadowColor: '#F5A623',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 6,
-  },
-  macroCardGradient: {
-    padding: 20,
-  },
-  macroHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
     marginBottom: 20,
-  },
-  macroTitleEmoji: {
-    fontSize: 24,
-  },
-  macroVisualization: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 20,
   },
   macroCircularChart: {
     alignItems: 'center',
+    marginBottom: 20,
   },
   macroCircle: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: 'rgba(33, 38, 45, 0.8)',
+    backgroundColor: '#21262D',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 6,
+    borderWidth: 8,
     borderColor: '#F5A623',
-    shadowColor: '#F5A623',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
   },
   macroMainText: {
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: 20,
+    fontWeight: 'bold',
     color: '#FFFFFF',
   },
   macroSubText: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#8B949E',
-    fontWeight: '600',
   },
-  macroLegendContainer: {
-    flex: 1,
-    gap: 12,
+  macroLegend: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
   },
   macroLegendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 6,
   },
   macroLegendColor: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 2,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
   },
-  macroLegendTextContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  macroLegendLabel: {
-    fontSize: 14,
+  macroLegendText: {
+    fontSize: 12,
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontWeight: '500',
   },
-  macroLegendPercentage: {
-    fontSize: 14,
-    color: '#F5A623',
-    fontWeight: '700',
-  },
-
-  // Hydratation améliorée
-  hydrationCard: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    marginBottom: 25,
-    borderWidth: 1,
-    borderColor: 'rgba(78, 205, 196, 0.3)',
-    shadowColor: '#4ECDC4',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  hydrationGradient: {
+  hydrationProgressCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
     padding: 20,
-  },
-  hydrationHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 20,
-  },
-  hydrationTitleEmoji: {
-    fontSize: 24,
-  },
-  hydrationVisualization: {
-    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#21262D',
+    marginBottom: 25,
   },
   hydrationBars: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
-    height: 120,
+    height: 100,
     paddingHorizontal: 10,
-    width: '100%',
   },
   hydrationBarContainer: {
     alignItems: 'center',
     flex: 1,
   },
   hydrationBarBackground: {
-    width: 20,
-    height: 80,
-    backgroundColor: 'rgba(33, 38, 45, 0.8)',
-    borderRadius: 10,
+    width: 16,
+    height: 60,
+    backgroundColor: '#21262D',
+    borderRadius: 8,
     overflow: 'hidden',
-    marginBottom: 8,
+    marginBottom: 6,
     justifyContent: 'flex-end',
-    borderWidth: 1,
-    borderColor: 'rgba(78, 205, 196, 0.2)',
   },
   hydrationBarFill: {
     width: '100%',
-    borderRadius: 10,
+    borderRadius: 8,
   },
   hydrationBarText: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#FFFFFF',
-    fontWeight: '700',
+    fontWeight: '600',
     marginBottom: 4,
   },
-
-  // Résumé nutritionnel redesigné
   nutritionSummaryCard: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.2,
-    shadowRadius: 15,
-    elevation: 10,
-  },
-  summaryGradient: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
     padding: 20,
-  },
-  summaryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 20,
-  },
-  summaryTitleEmoji: {
-    fontSize: 24,
-  },
-  summaryTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  summaryStatsGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 24,
-  },
-  summaryStatItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  summaryStatValue: {
-    fontSize: 20,
-    fontWeight: '800',
-    marginBottom: 6,
-  },
-  summaryStatLabel: {
-    fontSize: 12,
-    color: '#8B949E',
-    textAlign: 'center',
-    fontWeight: '600',
+    borderWidth: 1,
+    borderColor: '#21262D',
   },
   regularityIndicator: {
-    paddingTop: 20,
+    marginTop: 20,
+    paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  regularityHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
-  },
-  regularityEmoji: {
-    fontSize: 20,
+    borderTopColor: '#21262D',
   },
   regularityTitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#FFFFFF',
-    fontWeight: '700',
-  },
-  regularityBarContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+    fontWeight: '600',
     marginBottom: 12,
   },
   regularityBar: {
-    flex: 1,
-    height: 10,
-    backgroundColor: 'rgba(33, 38, 45, 0.8)',
-    borderRadius: 5,
+    height: 8,
+    backgroundColor: '#21262D',
+    borderRadius: 4,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    marginBottom: 8,
   },
   regularityBarFill: {
     height: '100%',
-    borderRadius: 5,
-  },
-  regularityPercentage: {
-    fontSize: 14,
-    color: '#FFFFFF',
-    fontWeight: '700',
-    minWidth: 40,
-    textAlign: 'right',
+    borderRadius: 4,
   },
   regularityText: {
-    fontSize: 13,
-    color: '#8B949E',
-    textAlign: 'center',
-    fontWeight: '500',
-    lineHeight: 18,
-  },
-
-  chartSubtitle: {
     fontSize: 12,
     color: '#8B949E',
-    marginTop: 2,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });
