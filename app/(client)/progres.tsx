@@ -2083,11 +2083,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: 35,
     paddingRight: 12,
+    paddingTop: 2,
+    paddingBottom: 27,
   },
   yAxisLabel: {
     fontSize: 12,
     color: '#8B949E',
     textAlign: 'right',
+    lineHeight: 12,
   },
   chartContent: {
     flex: 1,
