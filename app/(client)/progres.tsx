@@ -2282,10 +2282,10 @@ const styles = StyleSheet.create({
   },
   yAxis: {
     justifyContent: 'space-between',
-    width: 35,
-    paddingRight: 15,
-    paddingTop: -10,
-    paddingBottom: 20,
+    width: 40,
+    paddingRight: 10,
+    paddingTop: 5,
+    paddingBottom: 25,
   },
   yAxisLabel: {
     fontSize: 12,
@@ -2705,7 +2705,7 @@ const styles = StyleSheet.create({
   },
   nutritionChartArea: {
     flexDirection: 'row',
-    height: 180,
+    height: 160,
   },
   caloriesBars: {
     flex: 1,
@@ -2713,7 +2713,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     justifyContent: 'space-between',
     paddingBottom: 0,
-    paddingHorizontal: 5,
+    paddingHorizontal: 8,
   },
   barContainer: {
     alignItems: 'center',
@@ -2722,11 +2722,16 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   calorieBar: {
-    width: 18,
+    width: 16,
     backgroundColor: '#F5A623',
-    borderRadius: 9,
+    borderRadius: 8,
     marginBottom: 8,
     minHeight: 4,
+    shadowColor: '#F5A623',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   dayLabel: {
     fontSize: 11,
