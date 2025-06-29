@@ -78,14 +78,15 @@ export default function ProgresScreen() {
 
   const [nutritionStats, setNutritionStats] = useState({
     weeklyCalories: [],
+    monthlyCalories: [],
     averageCalories: 0,
     averageProteins: 0,
     averageCarbs: 0,
     averageFat: 0,
     daysWithData: 0,
-    weeklyHydration: [],
-    averageHydration: 0
+    weeklyHydration: []
   });
+  const [selectedNutritionPeriod, setSelectedNutritionPeriod] = useState('7 jours');
 
   useEffect(() => {
     loadUserData();
@@ -468,22 +469,22 @@ export default function ProgresScreen() {
     // Déterminer la plage de poids pour correspondre aux labels
     const weights = [weightData.startWeight, weightData.currentWeight];
     if (weightData.targetWeight) weights.push(weightData.targetWeight);
-    
+
     const minDataWeight = Math.min(...weights.filter(w => w > 0));
     const maxDataWeight = Math.max(...weights.filter(w => w > 0));
-    
+
     // Utiliser la même logique que generateYAxisLabels
     const minWeight = Math.floor((minDataWeight - 10) / 5) * 5;
     const maxWeight = Math.ceil((maxDataWeight + 10) / 5) * 5;
     const weightRange = maxWeight - minWeight;
-    
+
     const weightPercentage = Math.max(0, Math.min(1, (maxWeight - weight) / weightRange));
 
     // Calculer la position horizontale en fonction des labels disponibles
     // Les labels sont espacés uniformément, donc chaque point doit s'aligner avec son label correspondant
     const totalLabels = allLabels.length;
     let leftPercentage = 0;
-    
+
     if (totalLabels > 1) {
       // Calculer la position basée sur l'index du point parmi les labels disponibles
       const labelIndex = Math.min(dataIndex, totalLabels - 1);
@@ -504,27 +505,27 @@ export default function ProgresScreen() {
     }
 
     const processedData = getProcessedWeightData();
-    
+
     // Déterminer la plage de poids basée sur les données traitées + données de base
     const weights = [weightData.startWeight, weightData.currentWeight];
     if (weightData.targetWeight) weights.push(weightData.targetWeight);
-    
+
     // Ajouter les poids des données traitées
     processedData.forEach(entry => {
       if (entry.weight > 0) weights.push(entry.weight);
     });
-    
+
     const minDataWeight = Math.min(...weights.filter(w => w > 0));
     const maxDataWeight = Math.max(...weights.filter(w => w > 0));
-    
+
     // Arrondir vers le bas pour min et vers le haut pour max, par tranches de 5
     const minWeight = Math.floor((minDataWeight - 10) / 5) * 5;
     const maxWeight = Math.ceil((maxDataWeight + 10) / 5) * 5;
-    
+
     // Générer 6 labels avec des intervalles de 5 kg
     const labels = [];
     const step = (maxWeight - minWeight) / 5;
-    
+
     for (let i = 0; i < 6; i++) {
       const weight = maxWeight - (i * step);
       // Arrondir au multiple de 5 le plus proche
@@ -552,7 +553,7 @@ export default function ProgresScreen() {
       const currentYear = currentDate.getFullYear();
       const startOfYear = new Date(currentYear, 0, 1);
       const currentWeekNum = Math.ceil(((currentDate.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7);
-      
+
       // Générer les 6 dernières semaines en terminant par la semaine actuelle
       for (let i = 5; i >= 0; i--) {
         const weekNum = Math.max(1, currentWeekNum - i);
@@ -579,10 +580,10 @@ export default function ProgresScreen() {
   // Nouvelle fonction pour traiter les données selon la période
   const getProcessedWeightData = () => {
     const history = weightData.weightHistory || [];
-    
+
     // Créer l'historique complet en s'assurant que le poids de départ est inclus
     let completeHistory = [...history];
-    
+
     // Vérifier si le poids de départ est déjà dans l'historique
     const hasStartWeight = history.some(entry => 
       Math.abs(entry.weight - weightData.startWeight) < 0.1 && 
@@ -638,14 +639,14 @@ export default function ProgresScreen() {
       if (filteredHistory.length > 6) {
         const step = Math.floor(filteredHistory.length / 6);
         const sampledHistory = [];
-        
+
         sampledHistory.push(filteredHistory[0]);
         for (let i = step; i < filteredHistory.length; i += step) {
           if (sampledHistory.length < 5) {
             sampledHistory.push(filteredHistory[i]);
           }
         }
-        
+
         if (filteredHistory.length > 1 && sampledHistory[sampledHistory.length - 1] !== filteredHistory[filteredHistory.length - 1]) {
           if (sampledHistory.length === 6) {
             sampledHistory[5] = filteredHistory[filteredHistory.length - 1];
@@ -653,46 +654,46 @@ export default function ProgresScreen() {
             sampledHistory.push(filteredHistory[filteredHistory.length - 1]);
           }
         }
-        
+
         filteredHistory = sampledHistory;
       }
-      
+
       return filteredHistory.map(entry => ({
         weight: entry.weight,
         date: new Date(entry.date)
       }));
-      
+
     } else if (selectedPeriod === 'Mois') {
       // Pour les mois, faire la moyenne par semaine puis regrouper par mois
       const weeklyAverages = new Map();
-      
+
       filteredHistory.forEach(entry => {
         const date = new Date(entry.date);
         const startOfWeek = new Date(date);
         startOfWeek.setDate(date.getDate() - date.getDay()); // Début de la semaine (dimanche)
         const weekKey = startOfWeek.toISOString().split('T')[0];
-        
+
         if (!weeklyAverages.has(weekKey)) {
           weeklyAverages.set(weekKey, { total: 0, count: 0, date: startOfWeek });
         }
-        
+
         const weekData = weeklyAverages.get(weekKey);
         weekData.total += entry.weight;
         weekData.count += 1;
       });
-      
+
       // Convertir en moyennes hebdomadaires
       const weeklyData = Array.from(weeklyAverages.values()).map(week => ({
         weight: week.total / week.count,
         date: week.date
       }));
-      
+
       // Regrouper par mois et faire la moyenne des semaines
       const monthlyAverages = new Map();
-      
+
       weeklyData.forEach(week => {
         const monthKey = `${week.date.getFullYear()}-${week.date.getMonth()}`;
-        
+
         if (!monthlyAverages.has(monthKey)) {
           monthlyAverages.set(monthKey, { 
             total: 0, 
@@ -700,12 +701,12 @@ export default function ProgresScreen() {
             date: new Date(week.date.getFullYear(), week.date.getMonth(), 1) 
           });
         }
-        
+
         const monthData = monthlyAverages.get(monthKey);
         monthData.total += week.weight;
         monthData.count += 1;
       });
-      
+
       const monthlyData = Array.from(monthlyAverages.values())
         .map(month => ({
           weight: month.total / month.count,
@@ -713,17 +714,17 @@ export default function ProgresScreen() {
         }))
         .sort((a, b) => a.date.getTime() - b.date.getTime())
         .slice(-6); // Garder les 6 derniers mois
-      
+
       return monthlyData;
-      
+
     } else { // Années
       // Pour les années, faire la moyenne par mois puis regrouper par année
       const monthlyAverages = new Map();
-      
+
       filteredHistory.forEach(entry => {
         const date = new Date(entry.date);
         const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
-        
+
         if (!monthlyAverages.has(monthKey)) {
           monthlyAverages.set(monthKey, { 
             total: 0, 
@@ -731,24 +732,24 @@ export default function ProgresScreen() {
             date: new Date(date.getFullYear(), date.getMonth(), 1) 
           });
         }
-        
+
         const monthData = monthlyAverages.get(monthKey);
         monthData.total += entry.weight;
         monthData.count += 1;
       });
-      
+
       // Convertir en moyennes mensuelles
       const monthlyData = Array.from(monthlyAverages.values()).map(month => ({
         weight: month.total / month.count,
         date: month.date
       }));
-      
+
       // Regrouper par année et faire la moyenne des mois
       const yearlyAverages = new Map();
-      
+
       monthlyData.forEach(month => {
         const yearKey = month.date.getFullYear().toString();
-        
+
         if (!yearlyAverages.has(yearKey)) {
           yearlyAverages.set(yearKey, { 
             total: 0, 
@@ -756,20 +757,20 @@ export default function ProgresScreen() {
             date: new Date(month.date.getFullYear(), 0, 1) 
           });
         }
-        
+
         const yearData = yearlyAverages.get(yearKey);
         yearData.total += month.weight;
         yearData.count += 1;
       });
-      
+
       const yearlyData = Array.from(yearlyAverages.values())
         .map(year => ({
           weight: year.total / year.count,
           date: year.date
         }))
         .sort((a, b) => a.date.getTime() - b.date.getTime())
-        .slice(-6); // Garder les 6 dernières années
-      
+        .slice(-6); // Garder les 6 dernières années```python
+
       return yearlyData;
     }
   };
@@ -831,7 +832,7 @@ export default function ProgresScreen() {
         // Essayer de charger depuis le serveur VPS d'abord
         const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.replit.app';
         const response = await fetch(`${VPS_URL}/api/nutrition/${user.id}`);
-        
+
         if (response.ok) {
           nutritionEntries = await response.json();
           console.log('Données nutrition chargées depuis le serveur VPS pour les progrès');
@@ -904,7 +905,7 @@ export default function ProgresScreen() {
         try {
           const waterStored = await AsyncStorage.getItem(`water_intake_${user.id}_${dateString}`);
           const dayWater = waterStored ? parseInt(waterStored) : 0;
-          
+
           if (dayWater > 0) {
             totalHydrationWeek += dayWater;
             daysWithHydration++;
@@ -927,6 +928,29 @@ export default function ProgresScreen() {
         }
       }
 
+       // Calculer les statistiques des 30 derniers jours
+       const last30DaysNutrition = [];
+       for (let i = 29; i >= 0; i--) {
+         const date = new Date();
+         date.setDate(date.getDate() - i);
+         const dateString = date.toISOString().split('T')[0];
+ 
+         // Données nutritionnelles
+         const dayEntries = nutritionEntries.filter((entry: any) => 
+           entry.date === dateString
+         );
+ 
+         const dayCalories = dayEntries.reduce((sum: number, entry: any) => 
+           sum + (entry.calories || 0), 0
+         );
+ 
+         last30DaysNutrition.push({
+           date: dateString,
+           day: date.toLocaleDateString('fr-FR', { weekday: 'short' }),
+           calories: dayCalories,
+         });
+       }
+
       // Calculer les moyennes
       const avgCalories = daysWithData > 0 ? Math.round(totalCaloriesWeek / daysWithData) : 0;
       const avgProteins = daysWithData > 0 ? Math.round(totalProteinsWeek / daysWithData) : 0;
@@ -936,13 +960,13 @@ export default function ProgresScreen() {
 
       setNutritionStats({
         weeklyCalories: last7DaysNutrition,
+        monthlyCalories: last30DaysNutrition,
         averageCalories: avgCalories,
         averageProteins: avgProteins,
         averageCarbs: avgCarbs,
         averageFat: avgFat,
         daysWithData,
-        weeklyHydration: last7DaysHydration,
-        averageHydration: avgHydration
+        weeklyHydration: last7DaysHydration
       });
 
     } catch (error) {
@@ -1206,8 +1230,39 @@ export default function ProgresScreen() {
             <View style={styles.chartContainer}>
               <View style={styles.chartHeader}>
                 <Text style={styles.chartTitle}>Apport calorique journalier</Text>
-                <View style={styles.chartPeriod}>
-                  <Text style={styles.chartPeriodText}>7 jours</Text>
+                <View style={styles.periodSelector}>
+                  <TouchableOpacity
+                    style={[
+                      styles.periodButton,
+                      selectedNutritionPeriod === '7 jours' && styles.activePeriodButton,
+                    ]}
+                    onPress={() => setSelectedNutritionPeriod('7 jours')}
+                  >
+                    <Text
+                      style={[
+                        styles.periodButtonText,
+                        selectedNutritionPeriod === '7 jours' && styles.activePeriodButtonText,
+                      ]}
+                    >
+                      7 jours
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.periodButton,
+                      selectedNutritionPeriod === '30 jours' && styles.activePeriodButton,
+                    ]}
+                    onPress={() => setSelectedNutritionPeriod('30 jours')}
+                  >
+                    <Text
+                      style={[
+                        styles.periodButtonText,
+                        selectedNutritionPeriod === '30 jours' && styles.activePeriodButtonText,
+                      ]}
+                    >
+                      30 jours
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
 
@@ -1229,13 +1284,27 @@ export default function ProgresScreen() {
 
                   {/* Barres de calories */}
                   <View style={styles.caloriesBars}>
-                    {nutritionStats.weeklyCalories.map((dayData, index) => {
-                      const maxCalories = Math.max(...nutritionStats.weeklyCalories.map(d => d.calories), 2500);
+                    {(selectedNutritionPeriod === '7 jours' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories).map((dayData, index) => {
+                      const currentData = selectedNutritionPeriod === '7 jours' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories;
+                      const maxCalories = Math.max(...currentData.map(d => d.calories), 2500);
                       const height = dayData.calories > 0 ? (dayData.calories / maxCalories) * 80 + 10 : 5;
                       return (
-                        <View key={dayData.day} style={styles.barContainer}>
-                          <View style={[styles.calorieBar, { height: `${Math.min(height, 85)}%` }]} />
-                          <Text style={styles.dayLabel}>{dayData.day}</Text>
+                        <View key={`${dayData.day}-${index}`} style={[
+                          styles.barContainer,
+                          selectedNutritionPeriod === '30 jours' && styles.monthlyBarContainer
+                        ]}>
+                          <View style={[
+                            styles.calorieBar, 
+                            { height: `${Math.min(height, 85)}%` },
+                            selectedNutritionPeriod === '30 jours' && styles.monthlyBar
+                          ]}
+                          />
+                          <Text style={[
+                            styles.dayLabel,
+                            selectedNutritionPeriod === '30 jours' && styles.monthlyDayLabel
+                          ]}>
+                            {dayData.day}
+                          </Text>
                         </View>
                       );
                     })}
@@ -1421,7 +1490,7 @@ export default function ProgresScreen() {
                   <Text style={styles.summaryLabel}>Hydratation moyenne</Text>
                 </View>
               </View>
-              
+
               {/* Indicateur de régularité */}
               <View style={styles.regularityIndicator}>
                 <Text style={styles.regularityTitle}>📊 Régularité du suivi</Text>
@@ -1472,7 +1541,7 @@ export default function ProgresScreen() {
               <View style={styles.statIcon}>
                 <Text style={styles.iconText}>🎯</Text>
               </View>
-              <Text style={styles.statLabel}>Poids de départ</Text>
+              <Text style={styles.statLabel}>Poids de départ</Text```python
               <Text style={styles.statValue}>{formatWeight(weightData.startWeight)} kg</Text>
             </View>
 
@@ -2265,16 +2334,31 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
   },
-  chartPeriod: {
+  periodSelector: {
+    flexDirection: 'row',
     backgroundColor: '#21262D',
+    borderRadius: 12,
+    padding: 2,
+    borderWidth: 1,
+    borderColor: '#30363D',
+  },
+  periodButton: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: 10,
+    minWidth: 40,
+    alignItems: 'center',
   },
-  chartPeriodText: {
+  activePeriodButton: {
+    backgroundColor: '#F5A623',
+  },
+  periodButtonText: {
     fontSize: 12,
     color: '#8B949E',
-    fontWeight: '500',
+    fontWeight: '600',
+  },
+  activePeriodButtonText: {
+    color: '#FFFFFF',
   },
   chartArea: {
     flexDirection: 'row',
@@ -2879,5 +2963,15 @@ const styles = StyleSheet.create({
     color: '#8B949E',
     textAlign: 'center',
     fontStyle: 'italic',
+  },
+
+  monthlyBarContainer: {
+    width: '3%', // Ajustez selon le nombre de jours affichés
+  },
+  monthlyBar: {
+    borderRadius: 4,
+  },
+  monthlyDayLabel: {
+    fontSize: 8,
   },
 });
