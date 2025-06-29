@@ -86,7 +86,7 @@ export default function ProgresScreen() {
     daysWithData: 0,
     weeklyHydration: []
   });
-  const [selectedNutritionPeriod, setSelectedNutritionPeriod] = useState('7 jours');
+  const [selectedNutritionPeriod, setSelectedNutritionPeriod] = useState('Semaine');
 
   useEffect(() => {
     loadUserData();
@@ -1234,33 +1234,33 @@ export default function ProgresScreen() {
                   <TouchableOpacity
                     style={[
                       styles.periodButton,
-                      selectedNutritionPeriod === '7 jours' && styles.activePeriodButton,
+                      selectedNutritionPeriod === 'Semaine' && styles.activePeriodButton,
                     ]}
-                    onPress={() => setSelectedNutritionPeriod('7 jours')}
+                    onPress={() => setSelectedNutritionPeriod('Semaine')}
                   >
                     <Text
                       style={[
                         styles.periodButtonText,
-                        selectedNutritionPeriod === '7 jours' && styles.activePeriodButtonText,
+                        selectedNutritionPeriod === 'Semaine' && styles.activePeriodButtonText,
                       ]}
                     >
-                      7 jours
+                      Semaine
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[
                       styles.periodButton,
-                      selectedNutritionPeriod === '30 jours' && styles.activePeriodButton,
+                      selectedNutritionPeriod === 'Mois' && styles.activePeriodButton,
                     ]}
-                    onPress={() => setSelectedNutritionPeriod('30 jours')}
+                    onPress={() => setSelectedNutritionPeriod('Mois')}
                   >
                     <Text
                       style={[
                         styles.periodButtonText,
-                        selectedNutritionPeriod === '30 jours' && styles.activePeriodButtonText,
+                        selectedNutritionPeriod === 'Mois' && styles.activePeriodButtonText,
                       ]}
                     >
-                      30 jours
+                      Mois
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -1284,24 +1284,24 @@ export default function ProgresScreen() {
 
                   {/* Barres de calories */}
                   <View style={styles.caloriesBars}>
-                    {(selectedNutritionPeriod === '7 jours' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories).map((dayData, index) => {
-                      const currentData = selectedNutritionPeriod === '7 jours' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories;
+                    {(selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories).map((dayData, index) => {
+                      const currentData = selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories;
                       const maxCalories = Math.max(...currentData.map(d => d.calories), 2500);
                       const height = dayData.calories > 0 ? (dayData.calories / maxCalories) * 80 + 10 : 5;
                       return (
                         <View key={`${dayData.day}-${index}`} style={[
                           styles.barContainer,
-                          selectedNutritionPeriod === '30 jours' && styles.monthlyBarContainer
+                          selectedNutritionPeriod === 'Mois' && styles.monthlyBarContainer
                         ]}>
                           <View style={[
                             styles.calorieBar, 
                             { height: `${Math.min(height, 85)}%` },
-                            selectedNutritionPeriod === '30 jours' && styles.monthlyBar
+                            selectedNutritionPeriod === 'Mois' && styles.monthlyBar
                           ]}
                           />
                           <Text style={[
                             styles.dayLabel,
-                            selectedNutritionPeriod === '30 jours' && styles.monthlyDayLabel
+                            selectedNutritionPeriod === 'Mois' && styles.monthlyDayLabel
                           ]}>
                             {dayData.day}
                           </Text>
