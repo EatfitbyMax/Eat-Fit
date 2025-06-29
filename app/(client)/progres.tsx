@@ -133,8 +133,10 @@ export default function ProgresScreen() {
           };
           setWeightData(initialData);
           await saveWeightData(initialData);
-          // Demander de définir l'objectif seulement si jamais demandé
-          if (!initialData.targetAsked) {
+          // Demander de définir l'objectif seulement si jamais demandé ET si pas d'objectif défini
+          // Également vérifier si l'utilisateur n'a pas déjà un objectif dans ses données de profil
+          const hasExistingGoal = user.targetWeight && user.targetWeight > 0;
+          if (!initialData.targetAsked && initialData.targetWeight === 0 && !hasExistingGoal) {
             setTimeout(() => setShowTargetModal(true), 1000);
           }
         }
@@ -1818,9 +1820,10 @@ export default function ProgresScreen() {
               <TouchableOpacity 
                 style={styles.modalButtonSecondary}
                 onPress={async () => {
+                  // Marquer comme demandé même si annulé pour éviter de redemander
                   const newData = {
                     ...weightData,
-                    targetAsked: true, // Marquer comme demandé même si annulé
+                    targetAsked: true,
                   };
                   await saveWeightData(newData);
                   setTempTarget('');
