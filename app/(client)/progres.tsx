@@ -1230,37 +1230,37 @@ export default function ProgresScreen() {
             <View style={styles.chartContainer}>
               <View style={styles.chartHeader}>
                 <Text style={styles.chartTitle}>Apport calorique journalier</Text>
-                <View style={styles.periodSelector}>
+                <View style={styles.nutritionPeriodSelector}>
                   <TouchableOpacity
                     style={[
-                      styles.periodButton,
-                      selectedNutritionPeriod === 'Semaine' && styles.activePeriodButton,
+                      styles.nutritionPeriodButton,
+                      selectedNutritionPeriod === 'Semaine' && styles.activeNutritionPeriodButton,
                     ]}
                     onPress={() => setSelectedNutritionPeriod('Semaine')}
                   >
                     <Text
                       style={[
-                        styles.periodButtonText,
-                        selectedNutritionPeriod === 'Semaine' && styles.activePeriodButtonText,
+                        styles.nutritionPeriodButtonText,
+                        selectedNutritionPeriod === 'Semaine' && styles.activeNutritionPeriodButtonText,
                       ]}
                     >
-                      Semaine
+                      7j
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[
-                      styles.periodButton,
-                      selectedNutritionPeriod === 'Mois' && styles.activePeriodButton,
+                      styles.nutritionPeriodButton,
+                      selectedNutritionPeriod === 'Mois' && styles.activeNutritionPeriodButton,
                     ]}
                     onPress={() => setSelectedNutritionPeriod('Mois')}
                   >
                     <Text
                       style={[
-                        styles.periodButtonText,
-                        selectedNutritionPeriod === 'Mois' && styles.activePeriodButtonText,
+                        styles.nutritionPeriodButtonText,
+                        selectedNutritionPeriod === 'Mois' && styles.activeNutritionPeriodButtonText,
                       ]}
                     >
-                      Mois
+                      30j
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -2358,6 +2358,32 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   activePeriodButtonText: {
+    color: '#FFFFFF',
+  },
+  nutritionPeriodSelector: {
+    flexDirection: 'row',
+    backgroundColor: '#21262D',
+    borderRadius: 12,
+    padding: 2,
+    borderWidth: 1,
+    borderColor: '#30363D',
+  },
+  nutritionPeriodButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 10,
+    minWidth: 50,
+    alignItems: 'center',
+  },
+  activeNutritionPeriodButton: {
+    backgroundColor: '#F5A623',
+  },
+  nutritionPeriodButtonText: {
+    fontSize: 13,
+    color: '#8B949E',
+    fontWeight: '600',
+  },
+  activeNutritionPeriodButtonText: {
     color: '#FFFFFF',
   },
   chartArea: {
