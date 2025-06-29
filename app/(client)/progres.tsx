@@ -1226,10 +1226,10 @@ export default function ProgresScreen() {
         {/* Statistiques selon l'onglet sélectionné */}
         {selectedTab === 'Nutrition' && (
           <View style={styles.nutritionContainer}>
-            {/* Graphique des calories */}
-            <View style={styles.chartContainer}>
+            {/* Graphique des calories élargi */}
+            <View style={styles.expandedChartContainer}>
               <View style={styles.chartHeader}>
-                <Text style={styles.chartTitle}>Apport calorique journalier</Text>
+                <Text style={styles.expandedChartTitle}>Apport calorique journalier</Text>
               </View>
 
               {/* Onglets de période */}
@@ -1247,15 +1247,15 @@ export default function ProgresScreen() {
                 ))}
               </View>
 
-              <View style={styles.nutritionChartArea}>
+              <View style={styles.expandedNutritionChartArea}>
                 {/* Axe Y pour les calories */}
-                <View style={styles.yAxis}>
+                <View style={styles.expandedYAxis}>
                   {['2500', '2000', '1500', '1000', '500', '0'].map((label, index) => (
-                    <Text key={index} style={styles.yAxisLabel}>{label}</Text>
+                    <Text key={index} style={styles.expandedYAxisLabel}>{label}</Text>
                   ))}
                 </View>
 
-                <View style={styles.chartContent}>
+                <View style={styles.expandedChartContent}>
                   {/* Grille */}
                   <View style={styles.gridContainer}>
                     {[...Array(6)].map((_, i) => (
@@ -1264,24 +1264,30 @@ export default function ProgresScreen() {
                   </View>
 
                   {/* Barres de calories */}
-                  <View style={styles.caloriesBars}>
+                  <View style={styles.expandedCaloriesBars}>
                     {(selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories).map((dayData, index) => {
                       const currentData = selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories;
                       const maxCalories = Math.max(...currentData.map(d => d.calories), 2500);
                       const height = dayData.calories > 0 ? (dayData.calories / maxCalories) * 80 + 10 : 5;
                       return (
                         <View key={`${dayData.day}-${index}`} style={[
-                          styles.barContainer,
+                          styles.expandedBarContainer,
                           selectedNutritionPeriod === 'Mois' && styles.monthlyBarContainer
                         ]}>
+                          {/* Valeur au-dessus de la barre */}
+                          {dayData.calories > 0 && (
+                            <Text style={styles.calorieValue}>
+                              {dayData.calories}
+                            </Text>
+                          )}
                           <View style={[
-                            styles.calorieBar, 
+                            styles.expandedCalorieBar, 
                             { height: `${Math.min(height, 85)}%` },
                             selectedNutritionPeriod === 'Mois' && styles.monthlyBar
                           ]}
                           />
                           <Text style={[
-                            styles.dayLabel,
+                            styles.expandedDayLabel,
                             selectedNutritionPeriod === 'Mois' && styles.monthlyDayLabel
                           ]}>
                             {dayData.day}
@@ -1291,6 +1297,13 @@ export default function ProgresScreen() {
                     })}
                   </View>
                 </View>
+              </View>
+
+              {/* Indicateur de moyenne */}
+              <View style={styles.averageIndicator}>
+                <Text style={styles.averageText}>
+                  Moyenne: {nutritionStats.averageCalories} kcal/jour
+                </Text>
               </View>
             </View>
 
@@ -2768,6 +2781,99 @@ const styles = StyleSheet.create({
   nutritionContainer: {
     paddingHorizontal: 20,
     paddingBottom: 100,
+  },
+  expandedChartContainer: {
+    marginHorizontal: 20,
+    marginVertical: 25,
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    minHeight: 320,
+  },
+  expandedChartTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  expandedNutritionChartArea: {
+    flexDirection: 'row',
+    height: 220,
+    marginTop: 10,
+  },
+  expandedYAxis: {
+    justifyContent: 'space-between',
+    width: 50,
+    paddingRight: 15,
+    paddingTop: 10,
+    paddingBottom: 25,
+  },
+  expandedYAxisLabel: {
+    fontSize: 14,
+    color: '#8B949E',
+    textAlign: 'right',
+    lineHeight: 14,
+    fontWeight: '600',
+  },
+  expandedChartContent: {
+    flex: 1,
+    position: 'relative',
+  },
+  expandedCaloriesBars: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    paddingBottom: 0,
+    paddingHorizontal: 8,
+  },
+  expandedBarContainer: {
+    alignItems: 'center',
+    flex: 1,
+    height: '100%',
+    justifyContent: 'flex-end',
+    position: 'relative',
+  },
+  expandedCalorieBar: {
+    width: 28,
+    backgroundColor: '#F5A623',
+    borderRadius: 14,
+    marginBottom: 12,
+    minHeight: 6,
+    shadowColor: '#F5A623',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  expandedDayLabel: {
+    fontSize: 13,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  calorieValue: {
+    fontSize: 12,
+    color: '#F5A623',
+    fontWeight: '700',
+    marginBottom: 6,
+    textAlign: 'center',
+    minHeight: 16,
+  },
+  averageIndicator: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#21262D',
+    alignItems: 'center',
+  },
+  averageText: {
+    fontSize: 15,
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   nutritionChartArea: {
     flexDirection: 'row',
