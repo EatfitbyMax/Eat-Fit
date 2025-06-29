@@ -2709,8 +2709,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
-    paddingBottom: 25,
-    paddingHorizontal: 10,
+    paddingBottom: 0,
+    paddingHorizontal: 5,
   },
   barContainer: {
     alignItems: 'center',
