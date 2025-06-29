@@ -1227,7 +1227,7 @@ export default function ProgresScreen() {
         {selectedTab === 'Nutrition' && (
           <View style={styles.nutritionContainer}>
             {/* Graphique des calories */}
-            <View style={styles.chartContainer}>
+            <View style={styles.nutritionChartContainer}>
               <View style={styles.chartHeader}>
                 <Text style={styles.chartTitle}>Apport calorique journalier</Text>
               </View>
@@ -2768,6 +2768,14 @@ const styles = StyleSheet.create({
   nutritionContainer: {
     paddingHorizontal: 20,
     paddingBottom: 100,
+  },
+  nutritionChartContainer: {
+    marginBottom: 25,
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
   },
   nutritionChartArea: {
     flexDirection: 'row',
