@@ -1541,7 +1541,7 @@ export default function ProgresScreen() {
               <View style={styles.statIcon}>
                 <Text style={styles.iconText}>🎯</Text>
               </View>
-              <Text style={styles.statLabel}>Poids de départ</Text```python
+              <Text style={styles.statLabel}>Poids de départ</Text>
               <Text style={styles.statValue}>{formatWeight(weightData.startWeight)} kg</Text>
             </View>
 
