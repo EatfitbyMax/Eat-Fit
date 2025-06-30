@@ -84,6 +84,9 @@ export default function HomeScreen() {
   // Rechargement automatique quand l'écran est focalisé
   useFocusEffect(
     React.useCallback(() => {
+      // Recharger les données utilisateur d'abord
+      loadUserData();
+      
       if (user) {
         loadTodayStats();
         generateRandomTip();
@@ -190,7 +193,9 @@ export default function HomeScreen() {
     try {
       const currentUser = await getCurrentUser();
       if (currentUser) {
+        // Toujours mettre à jour l'état utilisateur avec les dernières données
         setUser(currentUser);
+        console.log('Données utilisateur rechargées:', currentUser.firstName, currentUser.lastName);
 
         // Calculer les objectifs personnalisés
         const personalizedGoals = calculatePersonalizedGoals(currentUser);
