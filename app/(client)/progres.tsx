@@ -1380,15 +1380,13 @@ export default function ProgresScreen() {
                       const minAxisValue = 1000;
                       
                       // Calculer la hauteur relative entre min et max
-                      let height = 5; // Hauteur minimale si pas de données
+                      let barHeight = 5; // Hauteur minimale si pas de données
                       if (dayData.calories > 0) {
                         // Calculer le pourcentage entre la valeur min (1000) et max de l'axe
                         const adjustedCalories = Math.max(minAxisValue, dayData.calories);
                         const percentage = (adjustedCalories - minAxisValue) / (roundedMax - minAxisValue);
-                        height = percentage * 80 + 10; // 10% minimum, 90% maximum
+                        barHeight = percentage * 80 + 10; // 10% minimum, 90% maximum
                       }
-                      
-                      const height = dayData.calories > 0 ? height : 5;
                       return (
                         <View key={`${dayData.day}-${index}`} style={[
                           styles.barContainer,
@@ -1396,7 +1394,7 @@ export default function ProgresScreen() {
                         ]}>
                           <View style={[
                             styles.calorieBar, 
-                            { height: `${Math.min(height, 85)}%` },
+                            { height: `${Math.min(barHeight, 85)}%` },
                             selectedNutritionPeriod === 'Mois' && styles.monthlyBar
                           ]}
                           />
