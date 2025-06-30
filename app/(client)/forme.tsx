@@ -31,6 +31,12 @@ interface FormeData {
     workoutId?: string;
     notes: string;
   };
+  cycle?: {
+    phase: 'Menstruel' | 'Folliculaire' | 'Ovulation' | 'Lutéal';
+    dayOfCycle: number; // 1-28+
+    symptoms: string[];
+    notes: string;
+  };
   date: string;
 }
 
@@ -43,6 +49,7 @@ export default function FormeScreen() {
     stress: { level: 5, factors: [], notes: '' },
     heartRate: { resting: 0, variability: 0 },
     rpe: { value: 5, notes: '' },
+    cycle: userData?.gender === 'Femme' ? { phase: 'Menstruel', dayOfCycle: 1, symptoms: [], notes: '' } : undefined,
     date: new Date().toISOString().split('T')[0]
   });
   const [weeklyData, setWeeklyData] = useState<FormeData[]>([]);
@@ -53,15 +60,22 @@ export default function FormeScreen() {
   const [showStressModal, setShowStressModal] = useState(false);
   const [showHeartRateModal, setShowHeartRateModal] = useState(false);
   const [showRPEModal, setShowRPEModal] = useState(false);
+  const [showCycleModal, setShowCycleModal] = useState(false);
 
   // Temporary form data
   const [tempSleep, setTempSleep] = useState({ hours: '', quality: 'Moyen', bedTime: '', wakeTime: '' });
   const [tempStress, setTempStress] = useState({ level: 5, factors: [], notes: '' });
   const [tempHeartRate, setTempHeartRate] = useState({ resting: '', variability: '' });
   const [tempRPE, setTempRPE] = useState({ value: 5, notes: '' });
+  const [tempCycle, setTempCycle] = useState({ phase: 'Menstruel', dayOfCycle: 1, symptoms: [], notes: '' });
 
   const stressFactors = [
     'Travail', 'Famille', 'Finances', 'Santé', 'Relations', 'Transport'
+  ];
+
+  const cycleSymptoms = [
+    'Crampes', 'Fatigue', 'Irritabilité', 'Sensibilité mammaire', 'Ballonnements', 
+    'Maux de tête', 'Humeur changeante', 'Fringales', 'Acné', 'Douleurs lombaires'
   ];
 
   useEffect(() => {
@@ -130,6 +144,7 @@ export default function FormeScreen() {
             stress: { level: 5, factors: [], notes: '' },
             heartRate: { resting: 0, variability: 0 },
             rpe: { value: 5, notes: '' },
+            cycle: userData?.gender === 'Femme' ? { phase: 'Menstruel', dayOfCycle: 1, symptoms: [], notes: '' } : undefined,
             date: today
           };
           console.log('Création de nouvelles données de forme par défaut');
@@ -178,6 +193,7 @@ export default function FormeScreen() {
               stress: { level: 5, factors: [], notes: '' },
               heartRate: { resting: 0, variability: 0 },
               rpe: { value: 5, notes: '' },
+              cycle: userData?.gender === 'Femme' ? { phase: 'Menstruel', dayOfCycle: 1, symptoms: [], notes: '' } : undefined,
               date: dateString
             };
           }
@@ -280,6 +296,34 @@ export default function FormeScreen() {
 
       totalScore += rpeScore * 0.15;
       totalWeight += 0.15;
+    }
+
+    // Ajustement cycle hormonal pour les femmes (5% du score)
+    if (userData?.gender === 'Femme' && formeData.cycle) {
+      let cycleScore = 75; // Score de base
+      
+      // Ajustements selon la phase
+      switch (formeData.cycle.phase) {
+        case 'Menstruel':
+          cycleScore = 60; // Phase généralement plus difficile
+          break;
+        case 'Folliculaire':
+          cycleScore = 85; // Phase d'énergie croissante
+          break;
+        case 'Ovulation':
+          cycleScore = 90; // Pic d'énergie
+          break;
+        case 'Lutéal':
+          cycleScore = 70; // Fatigue pré-menstruelle possible
+          break;
+      }
+
+      // Réduction selon les symptômes
+      const symptomPenalty = Math.min(formeData.cycle.symptoms.length * 5, 25);
+      cycleScore = Math.max(40, cycleScore - symptomPenalty);
+
+      totalScore += cycleScore * 0.05;
+      totalWeight += 0.05;
     }
 
     // Calculer le score final
@@ -401,6 +445,33 @@ export default function FormeScreen() {
     setShowRPEModal(false);
     setTempRPE({ value: 5, notes: '' });
     Alert.alert('Succès', 'RPE post-entraînement enregistré !');
+  };
+
+  const handleSaveCycle = async () => {
+    if (userData?.gender !== 'Femme') {
+      Alert.alert('Erreur', 'Le suivi du cycle hormonal est réservé aux femmes.');
+      return;
+    }
+
+    if (tempCycle.dayOfCycle < 1 || tempCycle.dayOfCycle > 50) {
+      Alert.alert('Erreur', 'Veuillez entrer un jour de cycle valide (1-50)');
+      return;
+    }
+
+    const newData = {
+      ...formeData,
+      cycle: {
+        phase: tempCycle.phase as 'Menstruel' | 'Folliculaire' | 'Ovulation' | 'Lutéal',
+        dayOfCycle: tempCycle.dayOfCycle,
+        symptoms: tempCycle.symptoms,
+        notes: tempCycle.notes
+      }
+    };
+
+    await saveFormeData(newData);
+    setShowCycleModal(false);
+    setTempCycle({ phase: 'Menstruel', dayOfCycle: 1, symptoms: [], notes: '' });
+    Alert.alert('Succès', 'Informations sur le cycle hormonal enregistrées !');
   };
 
   const getLatestActivityRPE = async () => {
@@ -725,6 +796,34 @@ export default function FormeScreen() {
       totalWeight += 0.15;
     }
 
+    // Ajustement cycle hormonal pour les femmes (5% du score)
+    if (userData?.gender === 'Femme' && dayData.cycle) {
+      let cycleScore = 75; // Score de base
+      
+      // Ajustements selon la phase
+      switch (dayData.cycle.phase) {
+        case 'Menstruel':
+          cycleScore = 60;
+          break;
+        case 'Folliculaire':
+          cycleScore = 85;
+          break;
+        case 'Ovulation':
+          cycleScore = 90;
+          break;
+        case 'Lutéal':
+          cycleScore = 70;
+          break;
+      }
+
+      // Réduction selon les symptômes
+      const symptomPenalty = Math.min(dayData.cycle.symptoms.length * 5, 25);
+      cycleScore = Math.max(40, cycleScore - symptomPenalty);
+
+      totalScore += cycleScore * 0.05;
+      totalWeight += 0.05;
+    }
+
     // Calculer le score final
     let finalScore;
     if (totalWeight === 0) {
@@ -760,7 +859,7 @@ export default function FormeScreen() {
             {getScoreStatus(formeScore)}
           </Text>
           <Text style={styles.scoreDescription}>
-            Basé sur votre sommeil, stress{isPremium ? ', FC et RPE' : ''}
+            Basé sur votre sommeil, stress{isPremium ? ', FC et RPE' : ''}{userData?.gender === 'Femme' ? ', cycle hormonal' : ''}
           </Text>
         </View>
 
@@ -924,6 +1023,36 @@ export default function FormeScreen() {
                 }
               </Text>
             </TouchableOpacity>
+
+            {/* Cycle Hormonal - Femmes uniquement */}
+            {userData?.gender === 'Femme' && (
+              <TouchableOpacity 
+                style={styles.metricCard}
+                onPress={() => {
+                  setTempCycle({
+                    phase: formeData.cycle?.phase || 'Menstruel',
+                    dayOfCycle: formeData.cycle?.dayOfCycle || 1,
+                    symptoms: formeData.cycle?.symptoms || [],
+                    notes: formeData.cycle?.notes || ''
+                  });
+                  setShowCycleModal(true);
+                }}
+              >
+                <View style={styles.metricIcon}>
+                  <Text style={styles.iconText}>🌸</Text>
+                </View>
+                <View style={styles.metricInfo}>
+                  <Text style={styles.metricLabel}>Cycle Hormonal</Text>
+                  <Text style={styles.metricValue}>
+                    {formeData.cycle ? `Jour ${formeData.cycle.dayOfCycle}` : 'Non renseigné'}
+                  </Text>
+                  <Text style={styles.metricDetail}>
+                    {formeData.cycle?.phase || 'Phase non définie'}
+                  </Text>
+                </View>
+                <Text style={styles.updateHint}>Appuyez pour modifier</Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
 
@@ -1212,6 +1341,112 @@ export default function FormeScreen() {
               </TouchableOpacity>
             </View>
           </View>
+        </View>
+      </Modal>
+
+      {/* Modal Cycle Hormonal */}
+      <Modal visible={showCycleModal} transparent={true} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <ScrollView contentContainerStyle={styles.modalScrollContent}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Cycle Hormonal</Text>
+              <Text style={styles.modalSubtitle}>
+                Suivez votre cycle pour mieux comprendre votre forme
+              </Text>
+
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Jour du cycle</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  value={tempCycle.dayOfCycle.toString()}
+                  onChangeText={(text) => {
+                    const day = parseInt(text) || 1;
+                    setTempCycle({...tempCycle, dayOfCycle: day});
+                  }}
+                  placeholder="1-28+"
+                  keyboardType="numeric"
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Phase du cycle</Text>
+                <View style={styles.qualityButtons}>
+                  {['Menstruel', 'Folliculaire', 'Ovulation', 'Lutéal'].map((phase) => (
+                    <TouchableOpacity
+                      key={phase}
+                      style={[
+                        styles.qualityButton,
+                        tempCycle.phase === phase && styles.selectedQualityButton
+                      ]}
+                      onPress={() => setTempCycle({...tempCycle, phase})}
+                    >
+                      <Text style={[
+                        styles.qualityButtonText,
+                        tempCycle.phase === phase && styles.selectedQualityButtonText
+                      ]}>
+                        {phase}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Symptômes</Text>
+                <View style={styles.symptomsGrid}>
+                  {cycleSymptoms.map((symptom) => (
+                    <TouchableOpacity
+                      key={symptom}
+                      style={[
+                        styles.symptomButton,
+                        tempCycle.symptoms.includes(symptom) && styles.selectedSymptomButton
+                      ]}
+                      onPress={() => {
+                        const symptoms = tempCycle.symptoms.includes(symptom)
+                          ? tempCycle.symptoms.filter(s => s !== symptom)
+                          : [...tempCycle.symptoms, symptom];
+                        setTempCycle({...tempCycle, symptoms});
+                      }}
+                    >
+                      <Text style={[
+                        styles.symptomButtonText,
+                        tempCycle.symptoms.includes(symptom) && styles.selectedSymptomButtonText
+                      ]}>
+                        {symptom}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Notes (optionnel)</Text>
+                <TextInput
+                  style={[styles.modalInput, styles.notesInput]}
+                  value={tempCycle.notes}
+                  onChangeText={(text) => setTempCycle({...tempCycle, notes: text})}
+                  placeholder="Ressenti général, humeur..."
+                  multiline={true}
+                  numberOfLines={3}
+                />
+              </View>
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity 
+                  style={styles.modalButtonSecondary}
+                  onPress={() => setShowCycleModal(false)}
+                >
+                  <Text style={styles.modalButtonSecondaryText}>Annuler</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.modalButtonPrimary}
+                  onPress={handleSaveCycle}
+                >
+                  <Text style={styles.modalButtonPrimaryText}>Sauvegarder</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </ScrollView>
         </View>
       </Modal>
     </SafeAreaView>
@@ -1644,6 +1879,41 @@ const styles = StyleSheet.create({
   rpeLabel: {
     fontSize: 12,
     color: '#8B949E',
+  },
+  modalScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
+  symptomsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'space-between',
+  },
+  symptomButton: {
+    backgroundColor: '#21262D',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: '#30363D',
+    width: '48%',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  selectedSymptomButton: {
+    backgroundColor: '#F5A623',
+    borderColor: '#F5A623',
+  },
+  symptomButtonText: {
+    fontSize: 11,
+    color: '#8B949E',
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  selectedSymptomButtonText: {
+    color: '#000000',
   },
   modalButtons: {
     flexDirection: 'row',
