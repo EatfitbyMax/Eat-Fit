@@ -126,10 +126,7 @@ export default function ClientLayout() {
       <Tabs.Screen
         name="forme"
         options={{
-          title: 'Forme',
-          tabBarIcon: ({ color, focused }) => (
-            <IconSymbol size={28} name={focused ? 'heart.fill' : 'heart'} color={color} />
-          ),
+          href: null, // Cache cette page de la navigation
         }}
       />
       <Tabs.Screen
