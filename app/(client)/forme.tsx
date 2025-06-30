@@ -645,9 +645,7 @@ export default function FormeScreen() {
                 placeholder="7.30 (pour 7h30min)"
                 keyboardType="numeric"
               />
-              <Text style={styles.inputHint}>
-                Format: 7.30 = 7h30min, 8.15 = 8h15min, 7.59 = 7h59min
-              </Text>
+              
             </View>
 
             <View style={styles.inputContainer}>
