@@ -1367,46 +1367,52 @@ export default function ProgresScreen() {
                     ))}
                   </View>
 
-                  {/* Barres de calories */}
-                  <View style={styles.caloriesBars}>
-                    {(selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories).map((dayData, index) => {
-                      const currentData = selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories;
-                      const maxDataCalories = Math.max(...currentData.map(d => d.calories), nutritionStats.averageCalories);
-                      
-                      // Utiliser la même logique que pour l'axe Y avec minimum 1500 et paliers de 500
-                      const clientGoal = calorieGoals?.calories || 2200;
-                      const maxAxisValue = Math.max(maxDataCalories, clientGoal * 1.2, 1500);
-                      const roundedMax = Math.max(1500, Math.ceil(maxAxisValue / 500) * 500);
-                      const minAxisValue = 1500;
-                      
-                      // Calculer la hauteur relative entre min et max
-                      let barHeight = 5; // Hauteur minimale si pas de données
-                      if (dayData.calories > 0) {
-                        // Calculer le pourcentage entre la valeur min (1500) et max de l'axe
-                        const adjustedCalories = Math.max(minAxisValue, dayData.calories);
-                        const percentage = (adjustedCalories - minAxisValue) / (roundedMax - minAxisValue);
-                        barHeight = percentage * 80 + 10; // 10% minimum, 90% maximum
-                      }
-                      return (
-                        <View key={`${dayData.day}-${index}`} style={[
-                          styles.barContainer,
-                          selectedNutritionPeriod === 'Mois' && styles.monthlyBarContainer
-                        ]}>
-                          <View style={[
-                            styles.calorieBar, 
-                            { height: `${Math.min(barHeight, 85)}%` },
-                            selectedNutritionPeriod === 'Mois' && styles.monthlyBar
-                          ]}
-                          />
-                          <Text style={[
-                            styles.dayLabel,
-                            selectedNutritionPeriod === 'Mois' && styles.monthlyDayLabel
+                  {/* Barres de calories avec wrapper pour positionnement correct */}
+                  <View style={styles.caloriesBarsWrapper}>
+                    <View style={styles.caloriesBars}>
+                      {(selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories).map((dayData, index) => {
+                        const currentData = selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories;
+                        const maxDataCalories = Math.max(...currentData.map(d => d.calories), nutritionStats.averageCalories);
+                        
+                        // Utiliser la même logique que pour l'axe Y avec minimum 1500 et paliers de 500
+                        const clientGoal = calorieGoals?.calories || 2200;
+                        const maxAxisValue = Math.max(maxDataCalories, clientGoal * 1.2, 1500);
+                        const roundedMax = Math.max(1500, Math.ceil(maxAxisValue / 500) * 500);
+                        const minAxisValue = 1500;
+                        
+                        // Calculer la hauteur relative entre min et max
+                        let barHeight = 3; // Hauteur minimale si pas de données (très petite)
+                        if (dayData.calories > 0) {
+                          // Si les calories sont inférieures à 1500, ne pas afficher la barre
+                          if (dayData.calories < minAxisValue) {
+                            barHeight = 0;
+                          } else {
+                            // Calculer le pourcentage entre la valeur min (1500) et max de l'axe
+                            const percentage = (dayData.calories - minAxisValue) / (roundedMax - minAxisValue);
+                            barHeight = percentage * 75; // Maximum 75% de la hauteur disponible
+                          }
+                        }
+                        return (
+                          <View key={`${dayData.day}-${index}`} style={[
+                            styles.barContainer,
+                            selectedNutritionPeriod === 'Mois' && styles.monthlyBarContainer
                           ]}>
-                            {dayData.day}
-                          </Text>
-                        </View>
-                      );
-                    })}
+                            <View style={[
+                              styles.calorieBar, 
+                              { height: `${Math.max(barHeight, 0)}%` },
+                              selectedNutritionPeriod === 'Mois' && styles.monthlyBar
+                            ]}
+                            />
+                            <Text style={[
+                              styles.dayLabel,
+                              selectedNutritionPeriod === 'Mois' && styles.monthlyDayLabel
+                            ]}>
+                              {dayData.day}
+                            </Text>
+                          </View>
+                        );
+                      })}
+                    </View>
                   </View>
                 </View>
               </View>
@@ -2902,13 +2908,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     height: 180,
   },
+  caloriesBarsWrapper: {
+    flex: 1,
+    paddingTop: 15, // Décalage vers le bas pour commencer sous la ligne 1500
+  },
   caloriesBars: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
-    paddingBottom: 0,
+    paddingBottom: 25, // Espace pour les labels des jours
     paddingHorizontal: 5,
+    height: '85%', // Réduire la hauteur pour laisser de l'espace
   },
   barContainer: {
     alignItems: 'center',
