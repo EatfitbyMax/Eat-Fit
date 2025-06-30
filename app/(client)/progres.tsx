@@ -2532,7 +2532,7 @@ const styles = StyleSheet.create({
   },
   xAxis: {
     position: 'absolute',
-    bottom: 0,
+    bottom: -30,
     left: 0,
     right: 0,
     flexDirection: 'row',
@@ -2901,6 +2901,7 @@ const styles = StyleSheet.create({
   nutritionChartArea: {
     flexDirection: 'row',
     height: 180,
+    paddingBottom: 35,
   },
   caloriesBars: {
     flex: 1,
