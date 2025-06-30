@@ -1341,15 +1341,15 @@ export default function ProgresScreen() {
                     // Arrondir au multiple de 500 supérieur, avec minimum 1000
                     const roundedMax = Math.max(1000, Math.ceil(maxAxisValue / 500) * 500);
                     
-                    // Générer 6 labels par paliers de 500, en partant du maximum vers 1000
+                    // Générer 5 labels par paliers de 500, en partant du maximum vers 1500
                     const labels = [];
                     const step = 500;
-                    const numberOfSteps = Math.max(5, Math.floor((roundedMax - 1000) / step));
+                    const numberOfSteps = Math.max(4, Math.floor((roundedMax - 1500) / step));
                     
-                    for (let i = 0; i < 6; i++) {
-                      const value = roundedMax - (i * (roundedMax - 1000) / 5);
-                      // Arrondir au multiple de 500 le plus proche, avec minimum 1000
-                      const roundedValue = Math.max(1000, Math.round(value / 500) * 500);
+                    for (let i = 0; i < 5; i++) {
+                      const value = roundedMax - (i * (roundedMax - 1500) / 4);
+                      // Arrondir au multiple de 500 le plus proche, avec minimum 1500
+                      const roundedValue = Math.max(1500, Math.round(value / 500) * 500);
                       labels.push(roundedValue.toString());
                     }
                     
@@ -1362,7 +1362,7 @@ export default function ProgresScreen() {
                 <View style={styles.chartContent}>
                   {/* Grille */}
                   <View style={styles.gridContainer}>
-                    {[...Array(6)].map((_, i) => (
+                    {[...Array(5)].map((_, i) => (
                       <View key={i} style={styles.gridLine} />
                     ))}
                   </View>
@@ -1373,16 +1373,16 @@ export default function ProgresScreen() {
                       const currentData = selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories;
                       const maxDataCalories = Math.max(...currentData.map(d => d.calories), nutritionStats.averageCalories);
                       
-                      // Utiliser la même logique que pour l'axe Y avec minimum 1000 et paliers de 500
+                      // Utiliser la même logique que pour l'axe Y avec minimum 1500 et paliers de 500
                       const clientGoal = calorieGoals?.calories || 2200;
-                      const maxAxisValue = Math.max(maxDataCalories, clientGoal * 1.2, 1000);
-                      const roundedMax = Math.max(1000, Math.ceil(maxAxisValue / 500) * 500);
-                      const minAxisValue = 1000;
+                      const maxAxisValue = Math.max(maxDataCalories, clientGoal * 1.2, 1500);
+                      const roundedMax = Math.max(1500, Math.ceil(maxAxisValue / 500) * 500);
+                      const minAxisValue = 1500;
                       
                       // Calculer la hauteur relative entre min et max
                       let barHeight = 5; // Hauteur minimale si pas de données
                       if (dayData.calories > 0) {
-                        // Calculer le pourcentage entre la valeur min (1000) et max de l'axe
+                        // Calculer le pourcentage entre la valeur min (1500) et max de l'axe
                         const adjustedCalories = Math.max(minAxisValue, dayData.calories);
                         const percentage = (adjustedCalories - minAxisValue) / (roundedMax - minAxisValue);
                         barHeight = percentage * 80 + 10; // 10% minimum, 90% maximum
