@@ -775,7 +775,7 @@ export default function ProgresScreen() {
           date: year.date
         }))
         .sort((a, b) => a.date.getTime() - b.date.getTime())
-        .slice(-6); // Garder les 6 dernières années```python
+        .slice(-6); // Garder les 6 dernières années
 
       return yearlyData;
     }

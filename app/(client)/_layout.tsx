@@ -1,4 +1,3 @@
-
 import { Tabs, usePathname } from 'expo-router';
 import React, { useState, useEffect } from 'react';
 import { Platform } from 'react-native';
@@ -122,6 +121,15 @@ export default function ClientLayout() {
         name="progres"
         options={{
           href: null, // Cache cette page de la navigation
+        }}
+      />
+      <Tabs.Screen
+        name="forme"
+        options={{
+          title: 'Forme',
+          tabBarIcon: ({ color, focused }) => (
+            <IconSymbol size={28} name={focused ? 'heart.fill' : 'heart'} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
