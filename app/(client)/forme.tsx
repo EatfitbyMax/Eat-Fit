@@ -1347,106 +1347,117 @@ export default function FormeScreen() {
       {/* Modal Cycle Hormonal */}
       <Modal visible={showCycleModal} transparent={true} animationType="fade">
         <View style={styles.modalOverlay}>
-          <ScrollView contentContainerStyle={styles.modalScrollContent}>
-            <View style={styles.modalContent}>
+          <View style={styles.cycleModalContainer}>
+            <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Cycle Hormonal</Text>
-              <Text style={styles.modalSubtitle}>
-                Suivez votre cycle pour mieux comprendre votre forme
-              </Text>
-
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Jour du cycle</Text>
-                <TextInput
-                  style={styles.modalInput}
-                  value={tempCycle.dayOfCycle.toString()}
-                  onChangeText={(text) => {
-                    const day = parseInt(text) || 1;
-                    setTempCycle({...tempCycle, dayOfCycle: day});
-                  }}
-                  placeholder="1-28+"
-                  keyboardType="numeric"
-                />
-              </View>
-
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Phase du cycle</Text>
-                <View style={styles.qualityButtons}>
-                  {['Menstruel', 'Folliculaire', 'Ovulation', 'Lutéal'].map((phase) => (
-                    <TouchableOpacity
-                      key={phase}
-                      style={[
-                        styles.qualityButton,
-                        tempCycle.phase === phase && styles.selectedQualityButton
-                      ]}
-                      onPress={() => setTempCycle({...tempCycle, phase})}
-                    >
-                      <Text style={[
-                        styles.qualityButtonText,
-                        tempCycle.phase === phase && styles.selectedQualityButtonText
-                      ]}>
-                        {phase}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Symptômes</Text>
-                <View style={styles.symptomsGrid}>
-                  {cycleSymptoms.map((symptom) => (
-                    <TouchableOpacity
-                      key={symptom}
-                      style={[
-                        styles.symptomButton,
-                        tempCycle.symptoms.includes(symptom) && styles.selectedSymptomButton
-                      ]}
-                      onPress={() => {
-                        const symptoms = tempCycle.symptoms.includes(symptom)
-                          ? tempCycle.symptoms.filter(s => s !== symptom)
-                          : [...tempCycle.symptoms, symptom];
-                        setTempCycle({...tempCycle, symptoms});
-                      }}
-                    >
-                      <Text style={[
-                        styles.symptomButtonText,
-                        tempCycle.symptoms.includes(symptom) && styles.selectedSymptomButtonText
-                      ]}>
-                        {symptom}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Notes (optionnel)</Text>
-                <TextInput
-                  style={[styles.modalInput, styles.notesInput]}
-                  value={tempCycle.notes}
-                  onChangeText={(text) => setTempCycle({...tempCycle, notes: text})}
-                  placeholder="Ressenti général, humeur..."
-                  multiline={true}
-                  numberOfLines={3}
-                />
-              </View>
-
-              <View style={styles.modalButtons}>
-                <TouchableOpacity 
-                  style={styles.modalButtonSecondary}
-                  onPress={() => setShowCycleModal(false)}
-                >
-                  <Text style={styles.modalButtonSecondaryText}>Annuler</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={styles.modalButtonPrimary}
-                  onPress={handleSaveCycle}
-                >
-                  <Text style={styles.modalButtonPrimaryText}>Sauvegarder</Text>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity 
+                style={styles.cycleCloseButton}
+                onPress={() => setShowCycleModal(false)}
+              >
+                <Text style={styles.cycleCloseButtonText}>✕</Text>
+              </TouchableOpacity>
             </View>
-          </ScrollView>
+
+            <ScrollView style={styles.cycleModalScrollView} showsVerticalScrollIndicator={false}>
+              <View style={styles.cycleModalContent}>
+                <Text style={styles.cycleModalSubtitle}>
+                  Suivez votre cycle pour mieux comprendre votre forme
+                </Text>
+
+                <View style={styles.cycleInputContainer}>
+                  <Text style={styles.inputLabel}>Jour du cycle</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    value={tempCycle.dayOfCycle.toString()}
+                    onChangeText={(text) => {
+                      const day = parseInt(text) || 1;
+                      setTempCycle({...tempCycle, dayOfCycle: day});
+                    }}
+                    placeholder="1-28+"
+                    keyboardType="numeric"
+                  />
+                </View>
+
+                <View style={styles.cycleInputContainer}>
+                  <Text style={styles.inputLabel}>Phase du cycle</Text>
+                  <View style={styles.cyclePhaseButtons}>
+                    {['Menstruel', 'Folliculaire', 'Ovulation', 'Lutéal'].map((phase) => (
+                      <TouchableOpacity
+                        key={phase}
+                        style={[
+                          styles.cyclePhaseButton,
+                          tempCycle.phase === phase && styles.selectedCyclePhaseButton
+                        ]}
+                        onPress={() => setTempCycle({...tempCycle, phase})}
+                      >
+                        <Text style={[
+                          styles.cyclePhaseButtonText,
+                          tempCycle.phase === phase && styles.selectedCyclePhaseButtonText
+                        ]}>
+                          {phase}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                <View style={styles.cycleInputContainer}>
+                  <Text style={styles.inputLabel}>Symptômes</Text>
+                  <View style={styles.cycleSymptomsGrid}>
+                    {cycleSymptoms.map((symptom) => (
+                      <TouchableOpacity
+                        key={symptom}
+                        style={[
+                          styles.cycleSymptomButton,
+                          tempCycle.symptoms.includes(symptom) && styles.selectedCycleSymptomButton
+                        ]}
+                        onPress={() => {
+                          const symptoms = tempCycle.symptoms.includes(symptom)
+                            ? tempCycle.symptoms.filter(s => s !== symptom)
+                            : [...tempCycle.symptoms, symptom];
+                          setTempCycle({...tempCycle, symptoms});
+                        }}
+                      >
+                        <Text style={[
+                          styles.cycleSymptomButtonText,
+                          tempCycle.symptoms.includes(symptom) && styles.selectedCycleSymptomButtonText
+                        ]}>
+                          {symptom}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                <View style={styles.cycleInputContainer}>
+                  <Text style={styles.inputLabel}>Notes (optionnel)</Text>
+                  <TextInput
+                    style={[styles.modalInput, styles.cycleNotesInput]}
+                    value={tempCycle.notes}
+                    onChangeText={(text) => setTempCycle({...tempCycle, notes: text})}
+                    placeholder="Ressenti général, humeur..."
+                    multiline={true}
+                    numberOfLines={2}
+                  />
+                </View>
+              </View>
+            </ScrollView>
+
+            <View style={styles.cycleModalButtons}>
+              <TouchableOpacity 
+                style={styles.modalButtonSecondary}
+                onPress={() => setShowCycleModal(false)}
+              >
+                <Text style={styles.modalButtonSecondaryText}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.modalButtonPrimary}
+                onPress={handleSaveCycle}
+              >
+                <Text style={styles.modalButtonPrimaryText}>Sauvegarder</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
       </Modal>
     </SafeAreaView>
@@ -1885,6 +1896,128 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 20,
   },
+  // Styles spécifiques pour la modal du cycle hormonal
+  cycleModalContainer: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    width: '95%',
+    maxHeight: '85%',
+    borderWidth: 1,
+    borderColor: '#21262D',
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#21262D',
+  },
+  cycleCloseButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#21262D',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cycleCloseButtonText: {
+    color: '#8B949E',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  cycleModalScrollView: {
+    flex: 1,
+  },
+  cycleModalContent: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 20,
+  },
+  cycleModalSubtitle: {
+    fontSize: 14,
+    color: '#8B949E',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 18,
+  },
+  cycleInputContainer: {
+    marginBottom: 16,
+  },
+  cyclePhaseButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    justifyContent: 'space-between',
+  },
+  cyclePhaseButton: {
+    flex: 1,
+    backgroundColor: '#21262D',
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#30363D',
+    alignItems: 'center',
+    minWidth: '22%',
+  },
+  selectedCyclePhaseButton: {
+    backgroundColor: '#F5A623',
+    borderColor: '#F5A623',
+  },
+  cyclePhaseButtonText: {
+    fontSize: 10,
+    color: '#8B949E',
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  selectedCyclePhaseButtonText: {
+    color: '#000000',
+  },
+  cycleSymptomsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  cycleSymptomButton: {
+    backgroundColor: '#21262D',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: '#30363D',
+    width: '48%',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  selectedCycleSymptomButton: {
+    backgroundColor: '#F5A623',
+    borderColor: '#F5A623',
+  },
+  cycleSymptomButtonText: {
+    fontSize: 10,
+    color: '#8B949E',
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  selectedCycleSymptomButtonText: {
+    color: '#000000',
+  },
+  cycleNotesInput: {
+    height: 60,
+    textAlignVertical: 'top',
+  },
+  cycleModalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#21262D',
+  },
+  // Anciens styles pour compatibilité
   symptomsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
