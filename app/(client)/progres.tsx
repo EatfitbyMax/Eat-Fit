@@ -775,7 +775,7 @@ export default function ProgresScreen() {
           date: year.date
         }))
         .sort((a, b) => a.date.getTime() - b.date.getTime())
-        .slice(-6); // Garder les 6 dernières années
+        .slice(-6); // Garder les 6 dernières années```python
 
       return yearlyData;
     }
@@ -940,16 +940,16 @@ export default function ProgresScreen() {
          const date = new Date();
          date.setDate(date.getDate() - i);
          const dateString = date.toISOString().split('T')[0];
-
+ 
          // Données nutritionnelles
          const dayEntries = nutritionEntries.filter((entry: any) => 
            entry.date === dateString
          );
-
+ 
          const dayCalories = dayEntries.reduce((sum: number, entry: any) => 
            sum + (entry.calories || 0), 0
          );
-
+ 
          last30DaysNutrition.push({
            date: dateString,
            day: date.toLocaleDateString('fr-FR', { weekday: 'short' }),
@@ -1011,7 +1011,7 @@ export default function ProgresScreen() {
 
       // Ajustements selon les objectifs
       const goals = user.goals || [];
-
+      
       if (goals.includes('Perdre du poids')) {
         totalCalories -= 300; // Déficit de 300 kcal
       } else if (goals.includes('Prendre du muscle')) {
@@ -1326,35 +1326,35 @@ export default function ProgresScreen() {
 
               <View style={styles.nutritionChartArea}>
                 {/* Axe Y pour les calories */}
-                <View style={styles.nutritionYAxis}>
+                <View style={styles.yAxis}>
                   {(() => {
                     // Générer l'axe Y adapté aux données du client avec minimum 1000 kcal et paliers de 500
                     const currentData = selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories;
                     const maxDataCalories = Math.max(...currentData.map(d => d.calories), nutritionStats.averageCalories);
-
+                    
                     // Utiliser l'objectif calorique du client comme référence principale
                     const clientGoal = calorieGoals?.calories || 2200;
-
+                    
                     // Déterminer la valeur max de l'axe Y
                     const maxAxisValue = Math.max(maxDataCalories, clientGoal * 1.2, 1000);
-
+                    
                     // Arrondir au multiple de 500 supérieur, avec minimum 1000
                     const roundedMax = Math.max(1000, Math.ceil(maxAxisValue / 500) * 500);
-
-                    // Générer 5 labels par paliers de 500, en partant du maximum vers 1500
+                    
+                    // Générer 6 labels par paliers de 500, en partant du maximum vers 1000
                     const labels = [];
                     const step = 500;
-                    const numberOfSteps = Math.max(4, Math.floor((roundedMax - 1500) / step));
-
-                    for (let i = 0; i < 5; i++) {
-                      const value = roundedMax - (i * (roundedMax - 1500) / 4);
-                      // Arrondir au multiple de 500 le plus proche, avec minimum 1500
-                      const roundedValue = Math.max(1500, Math.round(value / 500) * 500);
+                    const numberOfSteps = Math.max(5, Math.floor((roundedMax - 1000) / step));
+                    
+                    for (let i = 0; i < 6; i++) {
+                      const value = roundedMax - (i * (roundedMax - 1000) / 5);
+                      // Arrondir au multiple de 500 le plus proche, avec minimum 1000
+                      const roundedValue = Math.max(1000, Math.round(value / 500) * 500);
                       labels.push(roundedValue.toString());
                     }
-
+                    
                     return labels.map((label, index) => (
-                      <Text key={index} style={styles.nutritionYAxisLabel}>{label}</Text>
+                      <Text key={index} style={styles.yAxisLabel}>{label}</Text>
                     ));
                   })()}
                 </View>
@@ -1362,7 +1362,7 @@ export default function ProgresScreen() {
                 <View style={styles.chartContent}>
                   {/* Grille */}
                   <View style={styles.gridContainer}>
-                    {[...Array(5)].map((_, i) => (
+                    {[...Array(6)].map((_, i) => (
                       <View key={i} style={styles.gridLine} />
                     ))}
                   </View>
@@ -1372,17 +1372,17 @@ export default function ProgresScreen() {
                     {(selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories).map((dayData, index) => {
                       const currentData = selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories;
                       const maxDataCalories = Math.max(...currentData.map(d => d.calories), nutritionStats.averageCalories);
-
-                      // Utiliser la même logique que pour l'axe Y avec minimum 1500 et paliers de 500
+                      
+                      // Utiliser la même logique que pour l'axe Y avec minimum 1000 et paliers de 500
                       const clientGoal = calorieGoals?.calories || 2200;
-                      const maxAxisValue = Math.max(maxDataCalories, clientGoal * 1.2, 1500);
-                      const roundedMax = Math.max(1500, Math.ceil(maxAxisValue / 500) * 500);
-                      const minAxisValue = 1500;
-
+                      const maxAxisValue = Math.max(maxDataCalories, clientGoal * 1.2, 1000);
+                      const roundedMax = Math.max(1000, Math.ceil(maxAxisValue / 500) * 500);
+                      const minAxisValue = 1000;
+                      
                       // Calculer la hauteur relative entre min et max
                       let barHeight = 5; // Hauteur minimale si pas de données
                       if (dayData.calories > 0) {
-                        // Calculer le pourcentage entre la valeur min (1500) et max de l'axe
+                        // Calculer le pourcentage entre la valeur min (1000) et max de l'axe
                         const adjustedCalories = Math.max(minAxisValue, dayData.calories);
                         const percentage = (adjustedCalories - minAxisValue) / (roundedMax - minAxisValue);
                         barHeight = percentage * 80 + 10; // 10% minimum, 90% maximum
@@ -1400,8 +1400,7 @@ export default function ProgresScreen() {
                           />
                           <Text style={[
                             styles.dayLabel,
-                            selectedNutritionPeriod === 'Mois' && styles.monthlyDayLabel,
-                            { position: 'absolute', bottom: -25 }
+                            selectedNutritionPeriod === 'Mois' && styles.monthlyDayLabel
                           ]}>
                             {dayData.day}
                           </Text>
@@ -1530,7 +1529,8 @@ export default function ProgresScreen() {
                       Math.round((nutritionStats.averageFat * 9 / nutritionStats.averageCalories) * 100) : 0}%
                   </Text>
                 </View>
-              </View>            </View>
+              </View>
+            </View>
 
             {/* Hydratation */}
             <View style={styles.hydrationProgressCard}>
@@ -2459,25 +2459,23 @@ const styles = StyleSheet.create({
   activePeriodButtonText: {
     color: '#FFFFFF',
   },
-
+  
   chartArea: {
     flexDirection: 'row',
     height: 200,
   },
   yAxis: {
     justifyContent: 'space-between',
-    width: 50,
-    paddingRight: 8,
-    paddingLeft: 4,
-    paddingTop: 0,
-    paddingBottom: 0,
+    width: 35,
+    paddingRight: 15,
+    paddingTop: -10,
+    paddingBottom: 20,
   },
   yAxisLabel: {
     fontSize: 12,
     color: '#8B949E',
-    textAlign: 'left',
+    textAlign: 'right',
     lineHeight: 12,
-    height: 12,
   },
   chartContent: {
     flex: 1,
@@ -2485,12 +2483,11 @@ const styles = StyleSheet.create({
   },
   gridContainer: {
     position: 'absolute',
-    top: 0,
+    top: 5,
     left: 0,
     right: 0,
-    bottom: 0,
+    bottom: 25,
     justifyContent: 'space-between',
-    paddingVertical: 6,
   },
   gridLine: {
     height: 1,
@@ -2532,7 +2529,7 @@ const styles = StyleSheet.create({
   },
   xAxis: {
     position: 'absolute',
-    bottom: -50,
+    bottom: 0,
     left: 0,
     right: 0,
     flexDirection: 'row',
@@ -2900,15 +2897,14 @@ const styles = StyleSheet.create({
   },
   nutritionChartArea: {
     flexDirection: 'row',
-    height: 150,
-    paddingBottom: 10,
+    height: 180,
   },
   caloriesBars: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
-    paddingBottom: 30,
+    paddingBottom: 0,
     paddingHorizontal: 5,
   },
   barContainer: {
@@ -2928,7 +2924,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#8B949E',
     fontWeight: '500',
-    textAlign: 'center',
   },
   nutritionStatsContainer: {
     flexDirection: 'row',
@@ -3086,24 +3081,5 @@ const styles = StyleSheet.create({
   },
   monthlyDayLabel: {
     fontSize: 8,
-    textAlign: 'center',
-  },
-
-  // Styles spécifiques pour l'axe Y du graphique nutrition
-  nutritionYAxis: {
-    justifyContent: 'space-between',
-    width: 50,
-    paddingRight: 8,
-    paddingLeft: 4,
-    paddingTop: 0,
-    paddingBottom: 0,
-    height: '100%',
-  },
-  nutritionYAxisLabel: {
-    fontSize: 12,
-    color: '#8B949E',
-    textAlign: 'left',
-    lineHeight: 12,
-    height: 12,
   },
 });
