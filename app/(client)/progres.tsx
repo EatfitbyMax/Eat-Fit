@@ -87,6 +87,12 @@ export default function ProgresScreen() {
     weeklyHydration: []
   });
   const [selectedNutritionPeriod, setSelectedNutritionPeriod] = useState('Semaine');
+  const [calorieGoals, setCalorieGoals] = useState({
+    calories: 2200,
+    proteins: 110,
+    carbohydrates: 275,
+    fat: 73,
+  });
 
   useEffect(() => {
     loadUserData();
@@ -969,6 +975,77 @@ export default function ProgresScreen() {
         weeklyHydration: last7DaysHydration
       });
 
+      // Charger les objectifs caloriques personnalisés
+      await loadPersonalizedGoals(user);
+
+    } catch (error) {
+      console.error('Erreur chargement données nutrition:', error);
+    }
+  };
+
+  const loadPersonalizedGoals = async (user: any) => {
+    try {
+      if (!user || !user.age || !user.weight || !user.height || !user.gender) {
+        return;
+      }
+
+      // Calcul du métabolisme de base (BMR) avec la formule de Mifflin-St Jeor
+      let bmr;
+      if (user.gender === 'Homme') {
+        bmr = 88.362 + (13.397 * user.weight) + (4.799 * user.height) - (5.677 * user.age);
+      } else {
+        bmr = 447.593 + (9.247 * user.weight) + (3.098 * user.height) - (4.330 * user.age);
+      }
+
+      // Facteurs d'activité physique
+      const activityFactors = {
+        'sedentaire': 1.2,
+        'leger': 1.375,
+        'modere': 1.55,
+        'actif': 1.725,
+        'extreme': 1.9
+      };
+
+      const activityFactor = activityFactors[user.activityLevel] || 1.2;
+      let totalCalories = Math.round(bmr * activityFactor);
+
+      // Ajustements selon les objectifs
+      const goals = user.goals || [];
+      
+      if (goals.includes('Perdre du poids')) {
+        totalCalories -= 300; // Déficit de 300 kcal
+      } else if (goals.includes('Prendre du muscle')) {
+        totalCalories += 200; // Surplus de 200 kcal
+      } else if (goals.includes('Maintenir mon poids')) {
+        totalCalories -= 0; // Maintien
+      }
+
+      // Calcul des macronutriments
+      let proteinRatio = 0.20; // 20% par défaut
+      let carbRatio = 0.50;    // 50% par défaut
+      let fatRatio = 0.30;     // 30% par défaut
+
+      if (goals.includes('Prendre du muscle')) {
+        proteinRatio = 0.25;
+        carbRatio = 0.45;
+        fatRatio = 0.30;
+      } else if (goals.includes('Perdre du poids')) {
+        proteinRatio = 0.30;
+        carbRatio = 0.40;
+        fatRatio = 0.30;
+      }
+
+      const proteins = Math.round((totalCalories * proteinRatio) / 4);
+      const carbohydrates = Math.round((totalCalories * carbRatio) / 4);
+      const fat = Math.round((totalCalories * fatRatio) / 9);
+
+      setCalorieGoals({
+        calories: totalCalories,
+        proteins: proteins,
+        carbohydrates: carbohydrates,
+        fat: fat,
+      });
+
     } catch (error) {
       console.error('Erreur chargement données nutrition:', error);
     }
@@ -1250,9 +1327,32 @@ export default function ProgresScreen() {
               <View style={styles.nutritionChartArea}>
                 {/* Axe Y pour les calories */}
                 <View style={styles.yAxis}>
-                  {['2500', '2000', '1500', '1000', '500', '0'].map((label, index) => (
-                    <Text key={index} style={styles.yAxisLabel}>{label}</Text>
-                  ))}
+                  {(() => {
+                    // Générer l'axe Y adapté aux données du client
+                    const currentData = selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories;
+                    const maxDataCalories = Math.max(...currentData.map(d => d.calories), nutritionStats.averageCalories);
+                    
+                    // Utiliser l'objectif calorique du client comme référence principale
+                    const clientGoal = calorieGoals?.calories || 2200; // Valeur par défaut si pas d'objectif
+                    
+                    // Déterminer la valeur max de l'axe Y
+                    // Prendre le maximum entre les données réelles et 120% de l'objectif
+                    const maxAxisValue = Math.max(maxDataCalories, clientGoal * 1.2);
+                    
+                    // Arrondir au multiple de 250 supérieur
+                    const roundedMax = Math.ceil(maxAxisValue / 250) * 250;
+                    
+                    // Générer 6 labels uniformément répartis
+                    const labels = [];
+                    for (let i = 0; i < 6; i++) {
+                      const value = Math.round(roundedMax - (i * roundedMax / 5));
+                      labels.push(value.toString());
+                    }
+                    
+                    return labels.map((label, index) => (
+                      <Text key={index} style={styles.yAxisLabel}>{label}</Text>
+                    ));
+                  })()}
                 </View>
 
                 <View style={styles.chartContent}>
@@ -1267,8 +1367,14 @@ export default function ProgresScreen() {
                   <View style={styles.caloriesBars}>
                     {(selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories).map((dayData, index) => {
                       const currentData = selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories;
-                      const maxCalories = Math.max(...currentData.map(d => d.calories), 2500);
-                      const height = dayData.calories > 0 ? (dayData.calories / maxCalories) * 80 + 10 : 5;
+                      const maxDataCalories = Math.max(...currentData.map(d => d.calories), nutritionStats.averageCalories);
+                      
+                      // Utiliser la même logique que pour l'axe Y
+                      const clientGoal = calorieGoals?.calories || 2200;
+                      const maxAxisValue = Math.max(maxDataCalories, clientGoal * 1.2);
+                      const roundedMax = Math.ceil(maxAxisValue / 250) * 250;
+                      
+                      const height = dayData.calories > 0 ? (dayData.calories / roundedMax) * 80 + 10 : 5;
                       return (
                         <View key={`${dayData.day}-${index}`} style={[
                           styles.barContainer,
