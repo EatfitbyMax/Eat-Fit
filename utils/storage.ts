@@ -333,6 +333,85 @@ export class PersistentStorage {
     }
   }
 
+  // Méthodes pour les données de forme
+  static async getFormeData(userId: string, date: string): Promise<any> {
+    try {
+      const isConnected = await this.testConnection();
+      if (isConnected) {
+        const response = await fetch(`${SERVER_URL}/api/forme/${userId}/${date}`);
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Données de forme récupérées depuis le serveur VPS');
+          // Sauvegarder en local comme backup
+          await AsyncStorage.setItem(`forme_data_${userId}_${date}`, JSON.stringify(data));
+          return data;
+        }
+      }
+
+      // Fallback vers le stockage local
+      console.log('Fallback vers le stockage local pour les données de forme');
+      const localData = await AsyncStorage.getItem(`forme_data_${userId}_${date}`);
+      return localData ? JSON.parse(localData) : {
+        sleep: { hours: 0, quality: 'Moyen', bedTime: '', wakeTime: '' },
+        stress: { level: 5, factors: [], notes: '' },
+        heartRate: { resting: 0, variability: 0 },
+        rpe: { value: 5, notes: '' },
+        date: date
+      };
+    } catch (error) {
+      console.error('Erreur récupération données forme:', error);
+      try {
+        const localData = await AsyncStorage.getItem(`forme_data_${userId}_${date}`);
+        return localData ? JSON.parse(localData) : {
+          sleep: { hours: 0, quality: 'Moyen', bedTime: '', wakeTime: '' },
+          stress: { level: 5, factors: [], notes: '' },
+          heartRate: { resting: 0, variability: 0 },
+          rpe: { value: 5, notes: '' },
+          date: date
+        };
+      } catch (localError) {
+        console.error('Erreur stockage local forme:', localError);
+        return {
+          sleep: { hours: 0, quality: 'Moyen', bedTime: '', wakeTime: '' },
+          stress: { level: 5, factors: [], notes: '' },
+          heartRate: { resting: 0, variability: 0 },
+          rpe: { value: 5, notes: '' },
+          date: date
+        };
+      }
+    }
+  }
+
+  static async saveFormeData(userId: string, date: string, formeData: any): Promise<void> {
+    try {
+      // Toujours sauvegarder en local d'abord
+      await AsyncStorage.setItem(`forme_data_${userId}_${date}`, JSON.stringify(formeData));
+
+      const isConnected = await this.testConnection();
+      if (isConnected) {
+        const response = await fetch(`${SERVER_URL}/api/forme/${userId}/${date}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formeData),
+        });
+
+        if (response.ok) {
+          console.log('Données de forme sauvegardées sur le serveur VPS');
+        } else {
+          console.log('Données de forme sauvegardées localement (serveur indisponible)');
+        }
+      } else {
+        console.log('Données de forme sauvegardées localement (serveur indisponible)');
+      }
+    } catch (error) {
+      console.error('Erreur sauvegarde données forme:', error);
+      // Au moins garder la sauvegarde locale
+      await AsyncStorage.setItem(`forme_data_${userId}_${date}`, JSON.stringify(formeData));
+    }
+  }
+
   // Gestion de l'utilisateur actuel
   static async getCurrentUser(): Promise<any> {
     try {

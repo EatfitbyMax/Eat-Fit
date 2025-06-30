@@ -201,6 +201,64 @@ app.post('/api/nutrition/:userId', async (req, res) => {
   }
 });
 
+// Routes pour les données de forme
+app.get('/api/forme/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const data = await fs.readFile(path.join(DATA_DIR, `forme_${userId}.json`), 'utf8');
+    res.json(JSON.parse(data));
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      res.json({});
+    } else {
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
+});
+
+app.post('/api/forme/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const formeData = req.body;
+    await fs.writeFile(path.join(DATA_DIR, `forme_${userId}.json`), JSON.stringify(formeData, null, 2));
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur sauvegarde données forme' });
+  }
+});
+
+// Routes pour récupérer les données de forme par date
+app.get('/api/forme/:userId/:date', async (req, res) => {
+  try {
+    const { userId, date } = req.params;
+    const data = await fs.readFile(path.join(DATA_DIR, `forme_data_${userId}_${date}.json`), 'utf8');
+    res.json(JSON.parse(data));
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      res.json({
+        sleep: { hours: 0, quality: 'Moyen', bedTime: '', wakeTime: '' },
+        stress: { level: 5, factors: [], notes: '' },
+        heartRate: { resting: 0, variability: 0 },
+        rpe: { value: 5, notes: '' },
+        date: date
+      });
+    } else {
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
+});
+
+app.post('/api/forme/:userId/:date', async (req, res) => {
+  try {
+    const { userId, date } = req.params;
+    const formeData = req.body;
+    await fs.writeFile(path.join(DATA_DIR, `forme_data_${userId}_${date}.json`), JSON.stringify(formeData, null, 2));
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur sauvegarde données forme' });
+  }
+});
+
 // Routes Stripe pour les paiements
 app.post('/api/stripe/create-payment-intent', async (req, res) => {
   try {
