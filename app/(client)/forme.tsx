@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Alert, TextInput, Modal } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring } from 'react-native-reanimated';
+import { useFocusEffect } from 'expo-router';
 import { checkSubscriptionStatus } from '@/utils/subscription';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PersistentStorage } from '@/utils/storage';
@@ -72,6 +73,16 @@ export default function FormeScreen() {
       loadFormeData();
     }
   }, [userData]);
+
+  // Recharger les données quand l'écran devient visible
+  useFocusEffect(
+    useCallback(() => {
+      if (userData) {
+        console.log('Écran Forme refocalisé - rechargement des données RPE');
+        loadFormeData();
+      }
+    }, [userData])
+  );
 
   useEffect(() => {
     calculateFormeScore();
@@ -312,17 +323,35 @@ export default function FormeScreen() {
       const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
       const storedRatings = await AsyncStorage.getItem(`activity_ratings_${userData.id}`);
       
-      if (!storedRatings) return null;
+      if (!storedRatings) {
+        console.log('Aucune note RPE trouvée dans le stockage');
+        return null;
+      }
 
       const ratings = JSON.parse(storedRatings);
+      console.log('Notes RPE trouvées:', ratings);
+      
       const today = new Date().toISOString().split('T')[0];
+      console.log('Date du jour recherchée:', today);
       
       // Chercher les activités notées aujourd'hui
-      const todayRatings = Object.values(ratings).filter((rating: any) => 
-        rating.date.startsWith(today)
-      ).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      const todayRatings = Object.entries(ratings)
+        .map(([activityId, rating]: [string, any]) => ({
+          activityId,
+          ...rating
+        }))
+        .filter((rating: any) => {
+          const ratingDate = rating.date.split('T')[0]; // Extraire seulement la date
+          const isToday = ratingDate === today;
+          console.log(`Activité ${rating.activityId}: date=${ratingDate}, isToday=${isToday}, RPE=${rating.rpe}`);
+          return isToday;
+        })
+        .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      console.log(`Activités notées aujourd'hui: ${todayRatings.length}`);
 
       if (todayRatings.length > 0) {
+        console.log('RPE du jour trouvé:', todayRatings[0]);
         return todayRatings[0]; // La plus récente
       }
 
@@ -330,10 +359,17 @@ export default function FormeScreen() {
       const threeDaysAgo = new Date();
       threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
       
-      const recentRatings = Object.values(ratings).filter((rating: any) => 
-        new Date(rating.date) >= threeDaysAgo
-      ).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      const recentRatings = Object.entries(ratings)
+        .map(([activityId, rating]: [string, any]) => ({
+          activityId,
+          ...rating
+        }))
+        .filter((rating: any) => 
+          new Date(rating.date) >= threeDaysAgo
+        )
+        .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+      console.log(`Activités récentes (3 derniers jours): ${recentRatings.length}`);
       return recentRatings.length > 0 ? recentRatings[0] : null;
     } catch (error) {
       console.error('Erreur récupération RPE activités:', error);
