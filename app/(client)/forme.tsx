@@ -59,8 +59,7 @@ export default function FormeScreen() {
   const [tempRPE, setTempRPE] = useState({ value: 5, notes: '' });
 
   const stressFactors = [
-    'Travail', 'Famille', 'Finances', 'Santé', 'Relations',
-    'Transport', 'Sommeil', 'Alimentation', 'Exercice', 'Autre'
+    'Travail', 'Famille', 'Finances', 'Santé', 'Relations', 'Transport'
   ];
 
   useEffect(() => {
@@ -1236,6 +1235,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+    justifyContent: 'space-between',
   },
   factorButton: {
     backgroundColor: '#21262D',
@@ -1244,6 +1244,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderWidth: 1,
     borderColor: '#30363D',
+    width: '31%',
+    alignItems: 'center',
   },
   selectedFactorButton: {
     backgroundColor: '#F5A623',
