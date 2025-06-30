@@ -1400,7 +1400,8 @@ export default function ProgresScreen() {
                           />
                           <Text style={[
                             styles.dayLabel,
-                            selectedNutritionPeriod === 'Mois' && styles.monthlyDayLabel
+                            selectedNutritionPeriod === 'Mois' && styles.monthlyDayLabel,
+                            { position: 'absolute', bottom: -25 }
                           ]}>
                             {dayData.day}
                           </Text>
@@ -2927,6 +2928,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#8B949E',
     fontWeight: '500',
+    textAlign: 'center',
   },
   nutritionStatsContainer: {
     flexDirection: 'row',
@@ -3084,6 +3086,7 @@ const styles = StyleSheet.create({
   },
   monthlyDayLabel: {
     fontSize: 8,
+    textAlign: 'center',
   },
 
   // Styles spécifiques pour l'axe Y du graphique nutrition
