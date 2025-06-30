@@ -264,23 +264,18 @@ export default function HomeScreen() {
         console.error('Erreur récupération calories:', error);
       }
 
-      // 2. Récupérer le nombre de séances depuis les entraînements
+      // 2. Récupérer le nombre de séances terminées depuis Strava
       let totalWorkouts = 0;
       try {
-        const workouts = await PersistentStorage.getWorkouts(currentUser.id);
-        totalWorkouts = workouts.filter((workout: any) => workout.date === today).length;
+        const stravaActivities = await IntegrationsManager.getStravaActivities(currentUser.id);
+        // Filtrer les activités du jour actuel
+        totalWorkouts = stravaActivities.filter((activity: any) => {
+          const activityDate = new Date(activity.date).toISOString().split('T')[0];
+          return activityDate === today;
+        }).length;
+        console.log(`Séances terminées aujourd'hui (Strava): ${totalWorkouts}`);
       } catch (error) {
-        console.error('Erreur récupération séances:', error);
-        // Fallback vers le stockage local
-        try {
-          const storedWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
-          if (storedWorkouts) {
-            const workouts = JSON.parse(storedWorkouts);
-            totalWorkouts = workouts.filter((workout: any) => workout.date === today).length;
-          }
-        } catch (localError) {
-          console.error('Erreur fallback local séances:', localError);
-        }
+        console.error('Erreur récupération séances Strava:', error);
       }
 
       // 3. Récupérer les pas depuis Apple Health
