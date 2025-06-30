@@ -33,7 +33,7 @@ interface FormeData {
   };
   cycle?: {
     phase: 'Menstruel' | 'Folliculaire' | 'Ovulation' | 'Lutéal';
-    dayOfCycle: number; // 1-28+
+    dayOfCycle: number; // 1-35 (moyenne 28 jours)
     symptoms: string[];
     notes: string;
   };
@@ -453,8 +453,8 @@ export default function FormeScreen() {
       return;
     }
 
-    if (tempCycle.dayOfCycle < 1 || tempCycle.dayOfCycle > 50) {
-      Alert.alert('Erreur', 'Veuillez entrer un jour de cycle valide (1-50)');
+    if (tempCycle.dayOfCycle < 1 || tempCycle.dayOfCycle > 35) {
+      Alert.alert('Erreur', 'Veuillez entrer un jour de cycle valide (1-35)\nUn cycle dure en moyenne 28 jours');
       return;
     }
 
@@ -1368,7 +1368,7 @@ export default function FormeScreen() {
                       const day = parseInt(text) || 1;
                       setTempCycle({...tempCycle, dayOfCycle: day});
                     }}
-                    placeholder="1-28+"
+                    placeholder="1-35 (moy. 28j)"
                     keyboardType="numeric"
                   />
                 </View>
