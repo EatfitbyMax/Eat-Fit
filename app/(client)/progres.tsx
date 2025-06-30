@@ -1326,7 +1326,7 @@ export default function ProgresScreen() {
 
               <View style={styles.nutritionChartArea}>
                 {/* Axe Y pour les calories */}
-                <View style={styles.yAxis}>
+                <View style={styles.nutritionYAxis}>
                   {(() => {
                     // Générer l'axe Y adapté aux données du client avec minimum 1000 kcal et paliers de 500
                     const currentData = selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories;
@@ -1354,7 +1354,7 @@ export default function ProgresScreen() {
                     }
                     
                     return labels.map((label, index) => (
-                      <Text key={index} style={styles.yAxisLabel}>{label}</Text>
+                      <Text key={index} style={styles.nutritionYAxisLabel}>{label}</Text>
                     ));
                   })()}
                 </View>
@@ -3081,5 +3081,22 @@ const styles = StyleSheet.create({
   },
   monthlyDayLabel: {
     fontSize: 8,
+  },
+
+  // Styles spécifiques pour l'axe Y du graphique nutrition
+  nutritionYAxis: {
+    justifyContent: 'space-between',
+    width: 35,
+    paddingRight: 15,
+    paddingTop: 5,
+    paddingBottom: 25,
+    height: '100%',
+  },
+  nutritionYAxisLabel: {
+    fontSize: 12,
+    color: '#8B949E',
+    textAlign: 'right',
+    lineHeight: 14,
+    height: 14,
   },
 });
