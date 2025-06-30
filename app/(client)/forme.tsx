@@ -5,6 +5,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring } fr
 import { checkSubscriptionStatus } from '@/utils/subscription';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PersistentStorage } from '@/utils/storage';
+import { IntegrationsManager } from '@/utils/integrations';
 
 const { width } = Dimensions.get('window');
 
@@ -286,6 +287,107 @@ export default function FormeScreen() {
     Alert.alert('Succès', 'RPE post-entraînement enregistré !');
   };
 
+  const handleSyncHeartRate = async () => {
+    if (!isPremium) {
+      Alert.alert('Fonctionnalité Premium', 'Le suivi de la fréquence cardiaque est réservé aux abonnés premium.');
+      return;
+    }
+
+    if (!userData) {
+      Alert.alert('Erreur', 'Utilisateur non connecté');
+      return;
+    }
+
+    try {
+      Alert.alert(
+        'Synchronisation FC',
+        'Synchroniser les données de fréquence cardiaque depuis Apple Health, votre montre connectée ou d\'autres capteurs ?',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          { 
+            text: 'Synchroniser', 
+            onPress: async () => {
+              try {
+                // Vérifier le statut de l'intégration Apple Health
+                const integrationStatus = await IntegrationsManager.getIntegrationStatus(userData.id);
+                
+                if (!integrationStatus.appleHealth.connected) {
+                  Alert.alert(
+                    'Apple Health requis',
+                    'Pour synchroniser vos données de fréquence cardiaque, vous devez d\'abord connecter Apple Health dans votre profil.',
+                    [
+                      { text: 'OK', style: 'default' },
+                      { 
+                        text: 'Connecter maintenant', 
+                        onPress: async () => {
+                          const success = await IntegrationsManager.connectAppleHealth(userData.id);
+                          if (success) {
+                            await syncHeartRateData();
+                          }
+                        }
+                      }
+                    ]
+                  );
+                  return;
+                }
+
+                await syncHeartRateData();
+              } catch (error) {
+                console.error('Erreur synchronisation FC:', error);
+                Alert.alert('Erreur', 'Impossible de synchroniser les données de fréquence cardiaque');
+              }
+            }
+          }
+        ]
+      );
+    } catch (error) {
+      console.error('Erreur gestion sync FC:', error);
+      Alert.alert('Erreur', 'Une erreur est survenue');
+    }
+  };
+
+  const syncHeartRateData = async () => {
+    try {
+      if (!userData) return;
+
+      // Synchroniser les données Apple Health
+      const healthData = await IntegrationsManager.syncAppleHealthData(userData.id);
+      
+      if (healthData && healthData.length > 0) {
+        const latestData = healthData[0];
+        
+        if (latestData.heartRate && latestData.heartRate > 0) {
+          const newData = {
+            ...formeData,
+            heartRate: {
+              resting: latestData.heartRate,
+              variability: formeData.heartRate.variability // Garder la variabilité existante si pas de nouvelle donnée
+            }
+          };
+
+          await saveFormeData(newData);
+          Alert.alert(
+            'Synchronisation réussie',
+            `FC repos mise à jour: ${latestData.heartRate} bpm\n\nDonnées récupérées depuis Apple Health, votre montre connectée ou vos capteurs.`
+          );
+        } else {
+          Alert.alert(
+            'Aucune donnée trouvée',
+            'Aucune donnée de fréquence cardiaque récente trouvée dans Apple Health.\n\nAssurez-vous que votre montre connectée ou vos capteurs synchronisent correctement avec Apple Health.'
+          );
+        }
+      } else {
+        Alert.alert(
+          'Synchronisation échouée',
+          'Impossible de récupérer les données de fréquence cardiaque. Vérifiez les autorisations Apple Health.'
+        );
+      }
+    } catch (error) {
+      console.error('Erreur sync données FC:', error);
+      Alert.alert('Erreur', 'Erreur lors de la synchronisation des données de fréquence cardiaque');
+    }
+  };
+
   const getScoreColor = (score: number) => {
     if (score >= 80) return '#28A745';
     if (score >= 60) return '#F5A623';
@@ -504,11 +606,7 @@ export default function FormeScreen() {
                   Alert.alert('Fonctionnalité Premium', 'Le suivi de la fréquence cardiaque est réservé aux abonnés premium.');
                   return;
                 }
-                setTempHeartRate({
-                  resting: formeData.heartRate.resting.toString(),
-                  variability: formeData.heartRate.variability.toString()
-                });
-                setShowHeartRateModal(true);
+                handleSyncHeartRate();
               }}
             >
               <View style={styles.metricIcon}>
@@ -531,7 +629,7 @@ export default function FormeScreen() {
                 )}
               </View>
               <Text style={styles.updateHint}>
-                {isPremium ? 'Appuyez pour modifier' : 'Mise à niveau requise'}
+                {isPremium ? 'Appuyez pour synchroniser' : 'Mise à niveau requise'}
               </Text>
             </TouchableOpacity>
 
