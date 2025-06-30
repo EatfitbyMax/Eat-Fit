@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Alert, TextInput, Modal } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -79,7 +78,7 @@ export default function FormeScreen() {
       if (currentUserString) {
         const user = JSON.parse(currentUserString);
         setUserData(user);
-        
+
         // Vérifier le statut premium
         const subscription = await checkSubscriptionStatus();
         setIsPremium(subscription.planId !== 'free');
@@ -92,10 +91,10 @@ export default function FormeScreen() {
   const loadFormeData = async () => {
     try {
       if (!userData) return;
-      
+
       const today = new Date().toISOString().split('T')[0];
       const formeDataString = await AsyncStorage.getItem(`forme_data_${userData.id}_${today}`);
-      
+
       if (formeDataString) {
         const savedData = JSON.parse(formeDataString);
         setFormeData(savedData);
@@ -107,7 +106,7 @@ export default function FormeScreen() {
         const date = new Date();
         date.setDate(date.getDate() - i);
         const dateString = date.toISOString().split('T')[0];
-        
+
         const dayDataString = await AsyncStorage.getItem(`forme_data_${userData.id}_${dateString}`);
         if (dayDataString) {
           weekData.push(JSON.parse(dayDataString));
@@ -131,10 +130,10 @@ export default function FormeScreen() {
   const saveFormeData = async (newData: FormeData) => {
     try {
       if (!userData) return;
-      
+
       await AsyncStorage.setItem(`forme_data_${userData.id}_${newData.date}`, JSON.stringify(newData));
       setFormeData(newData);
-      
+
       // Essayer de sauvegarder sur le serveur
       try {
         // Implementation future pour le serveur VPS
@@ -297,11 +296,11 @@ export default function FormeScreen() {
 
   const renderWeeklyChart = () => {
     const maxScore = Math.max(...weeklyData.map(d => calculateDayScore(d)), 100);
-    
+
     return (
       <View style={styles.chartContainer}>
         <Text style={styles.chartTitle}>Évolution de la forme (7 jours)</Text>
-        
+
         <View style={styles.chartArea}>
           <View style={styles.yAxis}>
             {['100', '80', '60', '40', '20', '0'].map((label, index) => (
@@ -563,35 +562,35 @@ export default function FormeScreen() {
         {selectedTab === 'Historique' && (
           <View style={styles.historyContainer}>
             {renderWeeklyChart()}
-            
+
             {/* Recommandations */}
             <View style={styles.recommendationsCard}>
               <Text style={styles.recommendationsTitle}>💡 Recommandations</Text>
-              
+
               {formeData.sleep.hours < 7 && (
                 <Text style={styles.recommendation}>
                   • Essayez de dormir au moins 7-8h par nuit pour une meilleure récupération
                 </Text>
               )}
-              
+
               {formeData.stress.level > 6 && (
                 <Text style={styles.recommendation}>
                   • Votre niveau de stress est élevé. Considérez des techniques de relaxation
                 </Text>
               )}
-              
+
               {isPremium && formeData.heartRate.resting > 80 && (
                 <Text style={styles.recommendation}>
                   • Votre FC repos est élevée. Augmentez progressivement votre activité cardio
                 </Text>
               )}
-              
+
               {isPremium && formeData.rpe.value > 7 && (
                 <Text style={styles.recommendation}>
                   • RPE élevé détecté. Prévoyez une récupération active ou un jour de repos
                 </Text>
               )}
-              
+
               {formeScore > 80 && (
                 <Text style={styles.recommendation}>
                   • Excellente forme ! C'est le moment idéal pour un entraînement intensif
@@ -607,7 +606,7 @@ export default function FormeScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Sommeil</Text>
-            
+
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Heures de sommeil</Text>
               <TextInput
@@ -665,7 +664,7 @@ export default function FormeScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Niveau de stress</Text>
-            
+
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Niveau (1-10)</Text>
               <View style={styles.stressSlider}>
@@ -740,7 +739,7 @@ export default function FormeScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Fréquence Cardiaque</Text>
-            
+
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>FC au repos (bpm)</Text>
               <TextInput
@@ -789,7 +788,7 @@ export default function FormeScreen() {
             <Text style={styles.modalSubtitle}>
               Évaluez la difficulté ressentie lors de votre dernier entraînement
             </Text>
-            
+
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Difficulté ressentie (1-10)</Text>
               <View style={styles.rpeSlider}>
@@ -1176,9 +1175,10 @@ const styles = StyleSheet.create({
     borderColor: '#F5A623',
   },
   qualityButtonText: {
-    fontSize: 10,
+    fontSize: 11,
     color: '#8B949E',
     fontWeight: '500',
+    textAlign: 'center',
   },
   selectedQualityButtonText: {
     color: '#000000',
