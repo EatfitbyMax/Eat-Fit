@@ -329,48 +329,59 @@ export default function FormeScreen() {
       }
 
       const ratings = JSON.parse(storedRatings);
-      console.log('Notes RPE trouvées:', ratings);
+      console.log('Notes RPE trouvées:', Object.keys(ratings).length, 'activités');
       
       const today = new Date().toISOString().split('T')[0];
       console.log('Date du jour recherchée:', today);
       
-      // Chercher les activités notées aujourd'hui
-      const todayRatings = Object.entries(ratings)
+      // Récupérer toutes les activités notées et les trier par date (plus récente en premier)
+      const allRatings = Object.entries(ratings)
         .map(([activityId, rating]: [string, any]) => ({
           activityId,
           ...rating
         }))
-        .filter((rating: any) => {
-          const ratingDate = rating.date.split('T')[0]; // Extraire seulement la date
-          const isToday = ratingDate === today;
-          console.log(`Activité ${rating.activityId}: date=${ratingDate}, isToday=${isToday}, RPE=${rating.rpe}`);
-          return isToday;
-        })
         .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-      console.log(`Activités notées aujourd'hui: ${todayRatings.length}`);
+      console.log('Toutes les activités notées:', allRatings.map(r => ({ 
+        id: r.activityId, 
+        date: r.date.split('T')[0], 
+        rpe: r.rpe 
+      })));
+
+      // Chercher d'abord les activités du jour
+      const todayRatings = allRatings.filter((rating: any) => {
+        const ratingDate = rating.date.split('T')[0];
+        return ratingDate === today;
+      });
 
       if (todayRatings.length > 0) {
         console.log('RPE du jour trouvé:', todayRatings[0]);
-        return todayRatings[0]; // La plus récente
+        return todayRatings[0];
       }
 
-      // Si pas d'activité aujourd'hui, chercher la plus récente des 3 derniers jours
-      const threeDaysAgo = new Date();
-      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+      // Si pas d'activité aujourd'hui, prendre la plus récente des 7 derniers jours
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       
-      const recentRatings = Object.entries(ratings)
-        .map(([activityId, rating]: [string, any]) => ({
-          activityId,
-          ...rating
-        }))
-        .filter((rating: any) => 
-          new Date(rating.date) >= threeDaysAgo
-        )
-        .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      const recentRatings = allRatings.filter((rating: any) => {
+        const activityDate = new Date(rating.date);
+        return activityDate >= sevenDaysAgo;
+      });
 
-      console.log(`Activités récentes (3 derniers jours): ${recentRatings.length}`);
-      return recentRatings.length > 0 ? recentRatings[0] : null;
+      console.log(`Activités récentes (7 derniers jours): ${recentRatings.length}`);
+      
+      if (recentRatings.length > 0) {
+        console.log('RPE récent trouvé:', recentRatings[0]);
+        return recentRatings[0];
+      }
+
+      // Si rien dans les 7 derniers jours, prendre la plus récente de toutes
+      if (allRatings.length > 0) {
+        console.log('RPE le plus récent (toutes périodes):', allRatings[0]);
+        return allRatings[0];
+      }
+
+      return null;
     } catch (error) {
       console.error('Erreur récupération RPE activités:', error);
       return null;
