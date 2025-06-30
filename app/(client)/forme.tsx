@@ -164,48 +164,81 @@ export default function FormeScreen() {
   };
 
   const calculateFormeScore = () => {
-    let score = 0;
-    let factors = 0;
+    let totalScore = 0;
+    let totalWeight = 0;
 
-    // Sommeil (30% du score)
+    // Sommeil (35% du score)
     if (formeData.sleep.hours > 0) {
-      const sleepScore = Math.min(100, (formeData.sleep.hours / 8) * 100);
+      // Score basé sur les heures de sommeil (optimal: 7-9h)
+      let sleepHoursScore;
+      if (formeData.sleep.hours >= 7 && formeData.sleep.hours <= 9) {
+        sleepHoursScore = 100;
+      } else if (formeData.sleep.hours >= 6 && formeData.sleep.hours <= 10) {
+        sleepHoursScore = 80;
+      } else if (formeData.sleep.hours >= 5 && formeData.sleep.hours <= 11) {
+        sleepHoursScore = 60;
+      } else {
+        sleepHoursScore = 30;
+      }
+
+      // Multiplicateur qualité
       const qualityMultiplier = {
-        'Excellent': 1.2,
-        'Bien': 1.0,
-        'Moyen': 0.8,
-        'Mauvais': 0.6
+        'Excellent': 1.0,
+        'Bien': 0.85,
+        'Moyen': 0.65,
+        'Mauvais': 0.4
       };
-      score += sleepScore * qualityMultiplier[formeData.sleep.quality] * 0.3;
-      factors++;
+
+      const sleepScore = sleepHoursScore * qualityMultiplier[formeData.sleep.quality];
+      totalScore += sleepScore * 0.35;
+      totalWeight += 0.35;
     }
 
-    // Stress (25% du score) - inversé
-    const stressScore = (10 - formeData.stress.level) * 10;
-    score += stressScore * 0.25;
-    factors++;
+    // Stress (30% du score) - inversé (1 = excellent, 10 = très mauvais)
+    const stressScore = Math.max(0, ((10 - formeData.stress.level) / 9) * 100);
+    totalScore += stressScore * 0.30;
+    totalWeight += 0.30;
 
-    // FC repos (25% du score) - Premium
+    // FC repos (20% du score) - Premium
     if (isPremium && formeData.heartRate.resting > 0) {
       const optimalResting = userData?.gender === 'Homme' ? 65 : 70;
       const diff = Math.abs(formeData.heartRate.resting - optimalResting);
-      const hrScore = Math.max(0, 100 - (diff * 2));
-      score += hrScore * 0.25;
-      factors++;
+      
+      // Score FC: 100 à l'optimal, diminue avec l'écart
+      let hrScore;
+      if (diff <= 5) hrScore = 100;
+      else if (diff <= 10) hrScore = 85;
+      else if (diff <= 15) hrScore = 70;
+      else if (diff <= 20) hrScore = 55;
+      else hrScore = 30;
+
+      totalScore += hrScore * 0.20;
+      totalWeight += 0.20;
     }
 
-    // RPE (20% du score) - Premium
+    // RPE (15% du score) - Premium (1-3 = excellent, 8-10 = épuisé)
     if (isPremium && formeData.rpe.value > 0) {
-      const rpeScore = (10 - formeData.rpe.value) * 10;
-      score += rpeScore * 0.2;
-      factors++;
+      let rpeScore;
+      if (formeData.rpe.value <= 3) rpeScore = 100;      // Très facile
+      else if (formeData.rpe.value <= 5) rpeScore = 80;  // Modéré
+      else if (formeData.rpe.value <= 7) rpeScore = 60;  // Difficile
+      else rpeScore = 30;                                // Très difficile
+
+      totalScore += rpeScore * 0.15;
+      totalWeight += 0.15;
     }
 
-    if (factors === 0) {
-      setFormeScore(50);
+    // Calculer le score final
+    let finalScore;
+    if (totalWeight === 0) {
+      finalScore = 50; // Score par défaut si aucune donnée
     } else {
-      setFormeScore(Math.round(score / (factors * 0.01)));
+      finalScore = totalScore / totalWeight;
     }
+
+    // S'assurer que le score est entre 0 et 100
+    finalScore = Math.max(0, Math.min(100, Math.round(finalScore)));
+    setFormeScore(finalScore);
   };
 
   const handleSaveSleep = async () => {
@@ -577,34 +610,76 @@ export default function FormeScreen() {
   };
 
   const calculateDayScore = (dayData: FormeData) => {
-    let score = 0;
-    let factors = 0;
+    let totalScore = 0;
+    let totalWeight = 0;
 
+    // Sommeil (35% du score)
     if (dayData.sleep.hours > 0) {
-      const sleepScore = Math.min(100, (dayData.sleep.hours / 8) * 100);
+      let sleepHoursScore;
+      if (dayData.sleep.hours >= 7 && dayData.sleep.hours <= 9) {
+        sleepHoursScore = 100;
+      } else if (dayData.sleep.hours >= 6 && dayData.sleep.hours <= 10) {
+        sleepHoursScore = 80;
+      } else if (dayData.sleep.hours >= 5 && dayData.sleep.hours <= 11) {
+        sleepHoursScore = 60;
+      } else {
+        sleepHoursScore = 30;
+      }
+
       const qualityMultiplier = {
-        'Excellent': 1.2,
-        'Bien': 1.0,
-        'Moyen': 0.8,
-        'Mauvais': 0.6
+        'Excellent': 1.0,
+        'Bien': 0.85,
+        'Moyen': 0.65,
+        'Mauvais': 0.4
       };
-      score += sleepScore * qualityMultiplier[dayData.sleep.quality] * 0.4;
-      factors++;
+
+      const sleepScore = sleepHoursScore * qualityMultiplier[dayData.sleep.quality];
+      totalScore += sleepScore * 0.35;
+      totalWeight += 0.35;
     }
 
-    const stressScore = (10 - dayData.stress.level) * 10;
-    score += stressScore * 0.3;
-    factors++;
+    // Stress (30% du score)
+    const stressScore = Math.max(0, ((10 - dayData.stress.level) / 9) * 100);
+    totalScore += stressScore * 0.30;
+    totalWeight += 0.30;
 
+    // FC repos (20% du score) - Premium
     if (isPremium && dayData.heartRate.resting > 0) {
       const optimalResting = userData?.gender === 'Homme' ? 65 : 70;
       const diff = Math.abs(dayData.heartRate.resting - optimalResting);
-      const hrScore = Math.max(0, 100 - (diff * 2));
-      score += hrScore * 0.3;
-      factors++;
+      
+      let hrScore;
+      if (diff <= 5) hrScore = 100;
+      else if (diff <= 10) hrScore = 85;
+      else if (diff <= 15) hrScore = 70;
+      else if (diff <= 20) hrScore = 55;
+      else hrScore = 30;
+
+      totalScore += hrScore * 0.20;
+      totalWeight += 0.20;
     }
 
-    return factors > 0 ? Math.round(score / (factors * 0.01)) : 50;
+    // RPE (15% du score) - Premium
+    if (isPremium && dayData.rpe.value > 0) {
+      let rpeScore;
+      if (dayData.rpe.value <= 3) rpeScore = 100;
+      else if (dayData.rpe.value <= 5) rpeScore = 80;
+      else if (dayData.rpe.value <= 7) rpeScore = 60;
+      else rpeScore = 30;
+
+      totalScore += rpeScore * 0.15;
+      totalWeight += 0.15;
+    }
+
+    // Calculer le score final
+    let finalScore;
+    if (totalWeight === 0) {
+      finalScore = 50;
+    } else {
+      finalScore = totalScore / totalWeight;
+    }
+
+    return Math.max(0, Math.min(100, Math.round(finalScore)));
   };
 
   return (
