@@ -65,8 +65,13 @@ export default function FormeScreen() {
 
   useEffect(() => {
     loadUserData();
-    loadFormeData();
   }, []);
+
+  useEffect(() => {
+    if (userData) {
+      loadFormeData();
+    }
+  }, [userData]);
 
   useEffect(() => {
     calculateFormeScore();
