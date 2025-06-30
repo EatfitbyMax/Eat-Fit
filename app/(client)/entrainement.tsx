@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert, TextInput } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { IntegrationsManager, StravaActivity } from '../../utils/integrations';
@@ -24,6 +24,11 @@ export default function EntrainementScreen() {
   const [selectedStravaActivity, setSelectedStravaActivity] = useState<StravaActivity | null>(null);
   const [userSport, setUserSport] = useState<string>('');
   const [recommendedPrograms, setRecommendedPrograms] = useState<WorkoutProgram[]>([]);
+  const [showRPEModal, setShowRPEModal] = useState(false);
+  const [activityToRate, setActivityToRate] = useState<StravaActivity | null>(null);
+  const [rpeRating, setRpeRating] = useState(5);
+  const [rpeNotes, setRpeNotes] = useState('');
+  const [activityRatings, setActivityRatings] = useState<{[key: string]: {rpe: number, notes: string, date: string}}>({});
 
 
 
@@ -41,6 +46,7 @@ export default function EntrainementScreen() {
     loadStravaActivities();
     checkUserSubscription();
     loadWorkouts();
+    loadActivityRatings();
   }, []);
 
   // Rechargement automatique quand l'écran est focalisé
@@ -93,6 +99,69 @@ export default function EntrainementScreen() {
       console.error('Erreur chargement entraînements:', error);
       setWorkouts([]);
     }
+  };
+
+  const loadActivityRatings = async () => {
+    try {
+      const currentUser = await getCurrentUser();
+      if (!currentUser) return;
+
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+      const storedRatings = await AsyncStorage.getItem(`activity_ratings_${currentUser.id}`);
+      
+      if (storedRatings) {
+        setActivityRatings(JSON.parse(storedRatings));
+      }
+    } catch (error) {
+      console.error('Erreur chargement notes RPE:', error);
+    }
+  };
+
+  const saveActivityRating = async (activityId: string, rpe: number, notes: string, activityDate: string) => {
+    try {
+      const currentUser = await getCurrentUser();
+      if (!currentUser) return;
+
+      const newRatings = {
+        ...activityRatings,
+        [activityId]: {
+          rpe,
+          notes,
+          date: activityDate
+        }
+      };
+
+      setActivityRatings(newRatings);
+
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+      await AsyncStorage.setItem(`activity_ratings_${currentUser.id}`, JSON.stringify(newRatings));
+
+      console.log(`Note RPE sauvegardée pour activité ${activityId}: ${rpe}/10`);
+    } catch (error) {
+      console.error('Erreur sauvegarde note RPE:', error);
+    }
+  };
+
+  const handleRateActivity = (activity: StravaActivity) => {
+    setActivityToRate(activity);
+    const existingRating = activityRatings[activity.id];
+    if (existingRating) {
+      setRpeRating(existingRating.rpe);
+      setRpeNotes(existingRating.notes);
+    } else {
+      setRpeRating(5);
+      setRpeNotes('');
+    }
+    setShowRPEModal(true);
+  };
+
+  const handleSaveRPE = async () => {
+    if (!activityToRate) return;
+
+    await saveActivityRating(activityToRate.id, rpeRating, rpeNotes, activityToRate.date);
+    setShowRPEModal(false);
+    setActivityToRate(null);
+    Alert.alert('Succès', 'Note RPE enregistrée !');
   };
 
   const getWorkoutsCountForDay = (day: string) => {
@@ -287,50 +356,81 @@ export default function EntrainementScreen() {
 
 
 
-  const renderStravaActivity = (activity: StravaActivity) => (
-    <TouchableOpacity 
-      key={activity.id} 
-      style={styles.activityCard}
-      onPress={() => setSelectedStravaActivity(activity)}
-    >
-      <View style={styles.activityHeader}>
-        <Text style={styles.activityIcon}>{getActivityIcon(activity.type)}</Text>
-        <View style={styles.activityInfo}>
-          <Text style={styles.activityName}>{activity.name}</Text>
-          <Text style={styles.activityDate}>{formatDate(activity.date)}</Text>
-        </View>
-        <View style={styles.activityTypeContainer}>
-          <Text style={styles.activityType}>{activity.type}</Text>
-          <Text style={styles.arrowIcon}>›</Text>
-        </View>
-      </View>
+  const renderStravaActivity = (activity: StravaActivity) => {
+    const hasRating = activityRatings[activity.id];
+    
+    return (
+      <View key={activity.id} style={styles.activityCard}>
+        <TouchableOpacity 
+          style={styles.activityContent}
+          onPress={() => setSelectedStravaActivity(activity)}
+        >
+          <View style={styles.activityHeader}>
+            <Text style={styles.activityIcon}>{getActivityIcon(activity.type)}</Text>
+            <View style={styles.activityInfo}>
+              <Text style={styles.activityName}>{activity.name}</Text>
+              <Text style={styles.activityDate}>{formatDate(activity.date)}</Text>
+            </View>
+            <View style={styles.activityTypeContainer}>
+              <Text style={styles.activityType}>{activity.type}</Text>
+              <Text style={styles.arrowIcon}>›</Text>
+            </View>
+          </View>
 
-      <View style={styles.activityStats}>
-        {activity.distance > 0 && (
-          <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Distance</Text>
-            <Text style={styles.statValue}>{formatDistance(activity.distance)}</Text>
+          <View style={styles.activityStats}>
+            {activity.distance > 0 && (
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>Distance</Text>
+                <Text style={styles.statValue}>{formatDistance(activity.distance)}</Text>
+              </View>
+            )}
+            <View style={styles.statItem}>
+              <Text style={styles.statLabel}>Durée</Text>
+              <Text style={styles.statValue}>{formatDuration(activity.duration)}</Text>
+            </View>
+            {activity.calories > 0 && (
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>Calories</Text>
+                <Text style={styles.statValue}>{activity.calories}</Text>
+              </View>
+            )}
+            {activity.avgHeartRate && (
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>FC moy.</Text>
+                <Text style={styles.statValue}>{Math.round(activity.avgHeartRate)} bpm</Text>
+              </View>
+            )}
           </View>
-        )}
-        <View style={styles.statItem}>
-          <Text style={styles.statLabel}>Durée</Text>
-          <Text style={styles.statValue}>{formatDuration(activity.duration)}</Text>
+        </TouchableOpacity>
+
+        {/* Section RPE */}
+        <View style={styles.rpeSection}>
+          <View style={styles.rpeSectionHeader}>
+            <Text style={styles.rpeSectionTitle}>💪 Ressenti (RPE)</Text>
+            {hasRating && (
+              <View style={styles.rpeDisplay}>
+                <Text style={styles.rpeValue}>{hasRating.rpe}/10</Text>
+                <Text style={styles.rpeLabel}>
+                  {hasRating.rpe <= 3 ? 'Très facile' :
+                   hasRating.rpe <= 5 ? 'Modéré' :
+                   hasRating.rpe <= 7 ? 'Difficile' : 'Très difficile'}
+                </Text>
+              </View>
+            )}
+          </View>
+          
+          <TouchableOpacity 
+            style={[styles.rpeButton, hasRating && styles.rpeButtonRated]}
+            onPress={() => handleRateActivity(activity)}
+          >
+            <Text style={[styles.rpeButtonText, hasRating && styles.rpeButtonTextRated]}>
+              {hasRating ? 'Modifier la note' : 'Noter cette séance'}
+            </Text>
+          </TouchableOpacity>
         </View>
-        {activity.calories > 0 && (
-          <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Calories</Text>
-            <Text style={styles.statValue}>{activity.calories}</Text>
-          </View>
-        )}
-        {activity.avgHeartRate && (
-          <View style={styles.statItem}>
-            <Text style={styles.statLabel}>FC moy.</Text>
-            <Text style={styles.statValue}>{Math.round(activity.avgHeartRate)} bpm</Text>
-          </View>
-        )}
       </View>
-    </TouchableOpacity>
-  );
+    );
+  };
 
   const renderStravaActivityDetail = () => {
     if (!selectedStravaActivity) return null;
@@ -645,6 +745,72 @@ export default function EntrainementScreen() {
 
     {/* Modal pour les détails de l'activité Strava */}
       {selectedStravaActivity && renderStravaActivityDetail()}
+
+      {/* Modal RPE */}
+      {showRPEModal && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Noter cette séance</Text>
+            <Text style={styles.modalSubtitle}>
+              Évaluez la difficulté ressentie lors de cette séance
+            </Text>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Difficulté ressentie (1-10)</Text>
+              <View style={styles.rpeSlider}>
+                {[...Array(10)].map((_, i) => (
+                  <TouchableOpacity
+                    key={i}
+                    style={[
+                      styles.rpeLevel,
+                      rpeRating === i + 1 && styles.selectedRPELevel
+                    ]}
+                    onPress={() => setRpeRating(i + 1)}
+                  >
+                    <Text style={[
+                      styles.rpeLevelText,
+                      rpeRating === i + 1 && styles.selectedRPELevelText
+                    ]}>
+                      {i + 1}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <View style={styles.rpeLabels}>
+                <Text style={styles.rpeLabel}>Très facile</Text>
+                <Text style={styles.rpeLabel}>Très difficile</Text>
+              </View>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Notes (optionnel)</Text>
+              <TextInput
+                style={[styles.modalInput, styles.notesInput]}
+                value={rpeNotes}
+                onChangeText={setRpeNotes}
+                placeholder="Ressenti général, zones difficiles..."
+                multiline={true}
+                numberOfLines={3}
+              />
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={styles.modalButtonSecondary}
+                onPress={() => setShowRPEModal(false)}
+              >
+                <Text style={styles.modalButtonSecondaryText}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.modalButtonPrimary}
+                onPress={handleSaveRPE}
+              >
+                <Text style={styles.modalButtonPrimaryText}>Sauvegarder</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -1148,6 +1314,154 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
     textAlign: 'center',
+  },
+  activityContent: {
+    flex: 1,
+  },
+  rpeSection: {
+    borderTopWidth: 1,
+    borderTopColor: '#21262D',
+    paddingTop: 12,
+    marginTop: 12,
+  },
+  rpeSectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  rpeSectionTitle: {
+    fontSize: 13,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  rpeDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  rpeValue: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#F5A623',
+  },
+  rpeLabel: {
+    fontSize: 11,
+    color: '#8B949E',
+  },
+  rpeButton: {
+    backgroundColor: '#21262D',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#30363D',
+    borderStyle: 'dashed',
+    alignItems: 'center',
+  },
+  rpeButtonRated: {
+    backgroundColor: 'rgba(245, 166, 35, 0.1)',
+    borderColor: '#F5A623',
+    borderStyle: 'solid',
+  },
+  rpeButtonText: {
+    fontSize: 12,
+    color: '#8B949E',
+    fontWeight: '500',
+  },
+  rpeButtonTextRated: {
+    color: '#F5A623',
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    marginBottom: 8,
+    fontWeight: '500',
+  },
+  modalInput: {
+    backgroundColor: '#0D1117',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  notesInput: {
+    height: 80,
+    textAlignVertical: 'top',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#8B949E',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  rpeSlider: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  rpeLevel: {
+    width: 28,
+    height: 28,
+    backgroundColor: '#21262D',
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#30363D',
+  },
+  selectedRPELevel: {
+    backgroundColor: '#F5A623',
+    borderColor: '#F5A623',
+  },
+  rpeLevelText: {
+    fontSize: 12,
+    color: '#8B949E',
+    fontWeight: '600',
+  },
+  selectedRPELevelText: {
+    color: '#000000',
+  },
+  rpeLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+  },
+  modalButtonSecondary: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#21262D',
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  modalButtonSecondaryText: {
+    color: '#8B949E',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalButtonPrimary: {
+    flex: 1,
+    backgroundColor: '#F5A623',
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  modalButtonPrimaryText: {
+    color: '#000000',
+    fontSize: 16,
+    fontWeight: '600',
   },
   exerciseCard: {
     backgroundColor: '#161B22',
