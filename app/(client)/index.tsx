@@ -81,20 +81,27 @@ export default function HomeScreen() {
     calculateWeeklyWorkouts();
   }, []);
 
+  // Générer un nouveau conseil seulement quand on clique sur le bouton refresh
+  const handleRefreshTip = () => {
+    generateRandomTip();
+  };
+
   // Rechargement automatique quand l'écran est focalisé
   useFocusEffect(
     React.useCallback(() => {
-      // Recharger les données utilisateur d'abord
-      loadUserData();
-      
-      if (user) {
-        loadTodayStats();
-        generateRandomTip();
+      const loadDataOnFocus = async () => {
+        // Recharger les données utilisateur d'abord
+        await loadUserData();
+        
+        // Ensuite charger les autres données
+        await loadTodayStats();
         calculateFormeScore();
         loadWeightData();
         calculateWeeklyWorkouts();
-      }
-    }, [user])
+      };
+      
+      loadDataOnFocus();
+    }, []) // Pas de dépendance pour éviter les boucles infinies
   );
 
   const generateRandomTip = () => {
@@ -662,7 +669,7 @@ export default function HomeScreen() {
         <View style={styles.tipsContainer}>
           <View style={styles.tipsHeader}>
             <Text style={styles.sectionTitle}>Conseils</Text>
-            <TouchableOpacity onPress={generateRandomTip}>
+            <TouchableOpacity onPress={handleRefreshTip}>
               <Text style={styles.refreshTip}>🔄</Text>
             </TouchableOpacity>
           </View>
