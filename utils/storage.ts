@@ -356,6 +356,7 @@ export class PersistentStorage {
         stress: { level: 5, factors: [], notes: '' },
         heartRate: { resting: 0, variability: 0 },
         rpe: { value: 5, notes: '' },
+        cycle: { phase: 'Menstruel', dayOfCycle: 1, symptoms: [], notes: '' },
         date: date
       };
     } catch (error) {
@@ -376,6 +377,7 @@ export class PersistentStorage {
           stress: { level: 5, factors: [], notes: '' },
           heartRate: { resting: 0, variability: 0 },
           rpe: { value: 5, notes: '' },
+          cycle: { phase: 'Menstruel', dayOfCycle: 1, symptoms: [], notes: '' },
           date: date
         };
       }
