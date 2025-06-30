@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -132,11 +131,11 @@ export default function HomeScreen() {
 
     // Ajustements selon les objectifs
     const goals = user.goals || [];
-    
+
     if (goals.includes('Perdre du poids')) {
       totalCalories -= 200; // Déficit de 200 kcal
     }
-    
+
     // Calcul des macronutriments selon les objectifs
     let proteinRatio = 0.20; // 20% par défaut
     let carbRatio = 0.50;    // 50% par défaut
@@ -177,7 +176,7 @@ export default function HomeScreen() {
       // Valeurs simulées pour la démonstration
       const sleepQuality = Math.floor(Math.random() * 40) + 60; // 60-100
       const heartRateVariability = Math.floor(Math.random() * 30) + 70; // 70-100
-      
+
       // Calcul du score de forme (moyenne pondérée)
       const score = Math.round((sleepQuality * 0.6) + (heartRateVariability * 0.4));
       setFormeScore(score);
@@ -192,11 +191,11 @@ export default function HomeScreen() {
       const currentUser = await getCurrentUser();
       if (currentUser) {
         setUser(currentUser);
-        
+
         // Calculer les objectifs personnalisés
         const personalizedGoals = calculatePersonalizedGoals(currentUser);
         setCalorieGoals(personalizedGoals);
-        
+
         await loadTodayStats();
       }
     } catch (error) {
@@ -212,7 +211,7 @@ export default function HomeScreen() {
       if (!currentUser) return;
 
       const today = new Date().toISOString().split('T')[0];
-      
+
       // 1. Récupérer les calories depuis la nutrition
       let totalCalories = 0;
       try {
@@ -320,7 +319,7 @@ export default function HomeScreen() {
       // Pour ces objectifs, suggérer une séance supplémentaire si possible
       baseGoal = Math.max(baseGoal, weeklyWorkouts + 1);
     }
-    
+
     if (user.goals?.includes('Perdre du poids')) {
       // Pour la perte de poids, suggérer au minimum 2 séances
       baseGoal = Math.max(baseGoal, 2);
@@ -360,23 +359,23 @@ export default function HomeScreen() {
   // Fonctions pour les objectifs de perte de poids
   const getWeightLossProgress = () => {
     if (!weightData.targetWeight || !weightData.startWeight) return 'À définir';
-    
+
     const totalLoss = weightData.startWeight - weightData.targetWeight;
     const currentLoss = weightData.startWeight - weightData.currentWeight;
-    
+
     if (totalLoss <= 0) return 'À définir';
-    
+
     return `${Math.round(currentLoss * 10) / 10}/${Math.round(totalLoss * 10) / 10} kg`;
   };
 
   const getWeightLossPercentage = () => {
     if (!weightData.targetWeight || !weightData.startWeight) return 0;
-    
+
     const totalLoss = weightData.startWeight - weightData.targetWeight;
     const currentLoss = weightData.startWeight - weightData.currentWeight;
-    
+
     if (totalLoss <= 0) return 0;
-    
+
     return Math.min(100, Math.max(0, (currentLoss / totalLoss) * 100));
   };
 
@@ -384,19 +383,19 @@ export default function HomeScreen() {
     if (!weightData.targetWeight || !weightData.startWeight) {
       return 'Définissez votre objectif de poids dans Progrès';
     }
-    
+
     const totalLoss = weightData.startWeight - weightData.targetWeight;
     const currentLoss = weightData.startWeight - weightData.currentWeight;
     const remaining = totalLoss - currentLoss;
-    
+
     if (totalLoss <= 0) {
       return 'Objectif de poids non défini';
     }
-    
+
     if (remaining <= 0) {
       return 'Objectif atteint ! Félicitations !';
     }
-    
+
     return `${Math.round(remaining * 10) / 10} kg restants à perdre`;
   };
 
@@ -424,7 +423,7 @@ export default function HomeScreen() {
       try {
         const workouts = await PersistentStorage.getWorkouts(currentUser.id);
         console.log(`Total entraînements trouvés: ${workouts.length}`);
-        
+
         // Filtrer les entraînements de la semaine en cours
         const weekWorkouts = workouts.filter((workout: any) => {
           const workoutDate = new Date(workout.date + 'T00:00:00');
@@ -434,7 +433,7 @@ export default function HomeScreen() {
           }
           return isInWeek;
         });
-        
+
         weeklyWorkoutsCount = weekWorkouts.length;
         console.log(`Séances planifiées cette semaine: ${weeklyWorkoutsCount}`);
       } catch (error) {
@@ -445,7 +444,7 @@ export default function HomeScreen() {
           if (storedWorkouts) {
             const workouts = JSON.parse(storedWorkouts);
             console.log(`Fallback - Total entraînements trouvés: ${workouts.length}`);
-            
+
             const weekWorkouts = workouts.filter((workout: any) => {
               const workoutDate = new Date(workout.date + 'T00:00:00');
               const isInWeek = workoutDate >= startOfWeek && workoutDate <= endOfWeek;
@@ -454,7 +453,7 @@ export default function HomeScreen() {
               }
               return isInWeek;
             });
-            
+
             weeklyWorkoutsCount = weekWorkouts.length;
             console.log(`Fallback - Séances planifiées cette semaine: ${weeklyWorkoutsCount}`);
           }
@@ -676,7 +675,7 @@ export default function HomeScreen() {
         {/* Objectifs de la semaine */}
         <View style={styles.goalsContainer}>
           <Text style={styles.sectionTitle}>Mes objectifs de la semaine</Text>
-          
+
           {/* Objectif Nutrition - Basé sur les objectifs nutritionnels personnalisés */}
           <View style={styles.goalCard}>
             <View style={styles.goalHeader}>
