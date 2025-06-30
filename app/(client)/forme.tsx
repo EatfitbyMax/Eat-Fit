@@ -1158,16 +1158,18 @@ const styles = StyleSheet.create({
   },
   qualityButtons: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    justifyContent: 'space-between',
     gap: 8,
   },
   qualityButton: {
+    flex: 1,
     backgroundColor: '#21262D',
     borderRadius: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     paddingVertical: 8,
     borderWidth: 1,
     borderColor: '#30363D',
+    alignItems: 'center',
   },
   selectedQualityButton: {
     backgroundColor: '#F5A623',
