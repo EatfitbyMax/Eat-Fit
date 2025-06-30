@@ -191,16 +191,31 @@ export default function FormeScreen() {
   };
 
   const handleSaveSleep = async () => {
-    const hours = parseFloat(tempSleep.hours.replace(',', '.'));
+    const inputValue = tempSleep.hours.replace(',', '.');
+    
+    // Validation pour format décimal (ex: 7.5 = 7h30min)
+    const hours = parseFloat(inputValue);
     if (isNaN(hours) || hours < 0 || hours > 24) {
-      Alert.alert('Erreur', 'Veuillez entrer un nombre d\'heures valide (0-24)');
+      Alert.alert('Erreur', 'Veuillez entrer un nombre d\'heures valide (0-24)\nExemple: 7.5 pour 7h30min');
       return;
     }
+
+    // Vérifier que les minutes ne dépassent pas 59
+    const wholeHours = Math.floor(hours);
+    const minutes = Math.round((hours - wholeHours) * 60);
+    
+    if (minutes >= 60) {
+      Alert.alert('Erreur', 'Format invalide. Utilisez le format décimal.\nExemple: 7.5 pour 7h30min (pas 7.60)');
+      return;
+    }
+
+    // Reconvertir en décimal pour stockage cohérent
+    const correctedHours = wholeHours + (minutes / 60);
 
     const newData = {
       ...formeData,
       sleep: {
-        hours: hours,
+        hours: correctedHours,
         quality: tempSleep.quality as 'Excellent' | 'Bien' | 'Moyen' | 'Mauvais',
         bedTime: tempSleep.bedTime,
         wakeTime: tempSleep.wakeTime
@@ -292,6 +307,19 @@ export default function FormeScreen() {
     if (score >= 80) return 'Excellente forme';
     if (score >= 60) return 'Forme correcte';
     return 'Fatigue détectée';
+  };
+
+  const formatSleepHours = (hours: number) => {
+    if (hours === 0) return 'Non renseigné';
+    
+    const wholeHours = Math.floor(hours);
+    const minutes = Math.round((hours - wholeHours) * 60);
+    
+    if (minutes === 0) {
+      return `${wholeHours}h`;
+    } else {
+      return `${wholeHours}h${minutes.toString().padStart(2, '0')}min`;
+    }
   };
 
   const renderWeeklyChart = () => {
@@ -444,7 +472,7 @@ export default function FormeScreen() {
               <View style={styles.metricInfo}>
                 <Text style={styles.metricLabel}>Sommeil</Text>
                 <Text style={styles.metricValue}>
-                  {formeData.sleep.hours > 0 ? `${formeData.sleep.hours}h` : 'Non renseigné'}
+                  {formatSleepHours(formeData.sleep.hours)}
                 </Text>
                 <Text style={styles.metricDetail}>
                   {formeData.sleep.quality}
@@ -613,9 +641,12 @@ export default function FormeScreen() {
                 style={styles.modalInput}
                 value={tempSleep.hours}
                 onChangeText={(text) => setTempSleep({...tempSleep, hours: text})}
-                placeholder="7.5"
+                placeholder="7.5 (pour 7h30min)"
                 keyboardType="numeric"
               />
+              <Text style={styles.inputHint}>
+                Format: 7.5 = 7h30min, 8.25 = 8h15min
+              </Text>
             </View>
 
             <View style={styles.inputContainer}>
@@ -1301,5 +1332,11 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontSize: 16,
     fontWeight: '600',
+  },
+  inputHint: {
+    fontSize: 12,
+    color: '#8B949E',
+    marginTop: 4,
+    fontStyle: 'italic',
   },
 });
