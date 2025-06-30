@@ -49,7 +49,8 @@ export default function ClientLayout() {
           tabBarIcon: ({ color, focused }) => {
             const isOnHomePage = pathname === '/(client)' || pathname === '/(client)/index' || pathname === '/';
             const isOnProgressPage = pathname.includes('/progres');
-            const isActive = focused || isOnHomePage || isOnProgressPage;
+            const isOnFormePage = pathname.includes('/forme');
+            const isActive = focused || isOnHomePage || isOnProgressPage || isOnFormePage;
             return (
               <IconSymbol 
                 size={28} 
@@ -61,7 +62,8 @@ export default function ClientLayout() {
           tabBarLabelStyle: (() => {
             const isOnHomePage = pathname === '/(client)' || pathname === '/(client)/index' || pathname === '/';
             const isOnProgressPage = pathname.includes('/progres');
-            const isActive = isOnHomePage || isOnProgressPage;
+            const isOnFormePage = pathname.includes('/forme');
+            const isActive = isOnHomePage || isOnProgressPage || isOnFormePage;
             return {
               color: isActive ? '#F5A623' : '#8B949E',
             };
