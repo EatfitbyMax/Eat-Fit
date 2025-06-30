@@ -93,12 +93,10 @@ export default function FormeScreen() {
       if (!userData) return;
 
       const today = new Date().toISOString().split('T')[0];
-      const formeDataString = await AsyncStorage.getItem(`forme_data_${userData.id}_${today}`);
-
-      if (formeDataString) {
-        const savedData = JSON.parse(formeDataString);
-        setFormeData(savedData);
-      }
+      
+      // Charger les données du jour depuis le serveur
+      const todayData = await PersistentStorage.getFormeData(userData.id, today);
+      setFormeData(todayData);
 
       // Charger les données de la semaine
       const weekData = [];
@@ -107,18 +105,8 @@ export default function FormeScreen() {
         date.setDate(date.getDate() - i);
         const dateString = date.toISOString().split('T')[0];
 
-        const dayDataString = await AsyncStorage.getItem(`forme_data_${userData.id}_${dateString}`);
-        if (dayDataString) {
-          weekData.push(JSON.parse(dayDataString));
-        } else {
-          weekData.push({
-            sleep: { hours: 0, quality: 'Moyen', bedTime: '', wakeTime: '' },
-            stress: { level: 5, factors: [], notes: '' },
-            heartRate: { resting: 0, variability: 0 },
-            rpe: { value: 5, notes: '' },
-            date: dateString
-          });
-        }
+        const dayData = await PersistentStorage.getFormeData(userData.id, dateString);
+        weekData.push(dayData);
       }
       setWeeklyData(weekData);
 
@@ -131,17 +119,13 @@ export default function FormeScreen() {
     try {
       if (!userData) return;
 
-      await AsyncStorage.setItem(`forme_data_${userData.id}_${newData.date}`, JSON.stringify(newData));
+      // Sauvegarder sur le serveur VPS et en local
+      await PersistentStorage.saveFormeData(userData.id, newData.date, newData);
       setFormeData(newData);
 
-      // Essayer de sauvegarder sur le serveur
-      try {
-        // Implementation future pour le serveur VPS
-      } catch (serverError) {
-        console.warn('Impossible de sauvegarder sur le serveur:', serverError);
-      }
     } catch (error) {
       console.error('Erreur sauvegarde données forme:', error);
+      Alert.alert('Erreur', 'Impossible de sauvegarder les données. Vérifiez votre connexion.');
     }
   };
 
