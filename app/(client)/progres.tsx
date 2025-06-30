@@ -1328,25 +1328,29 @@ export default function ProgresScreen() {
                 {/* Axe Y pour les calories */}
                 <View style={styles.yAxis}>
                   {(() => {
-                    // Générer l'axe Y adapté aux données du client
+                    // Générer l'axe Y adapté aux données du client avec minimum 1000 kcal et paliers de 500
                     const currentData = selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories;
                     const maxDataCalories = Math.max(...currentData.map(d => d.calories), nutritionStats.averageCalories);
                     
                     // Utiliser l'objectif calorique du client comme référence principale
-                    const clientGoal = calorieGoals?.calories || 2200; // Valeur par défaut si pas d'objectif
+                    const clientGoal = calorieGoals?.calories || 2200;
                     
                     // Déterminer la valeur max de l'axe Y
-                    // Prendre le maximum entre les données réelles et 120% de l'objectif
-                    const maxAxisValue = Math.max(maxDataCalories, clientGoal * 1.2);
+                    const maxAxisValue = Math.max(maxDataCalories, clientGoal * 1.2, 1000);
                     
-                    // Arrondir au multiple de 250 supérieur
-                    const roundedMax = Math.ceil(maxAxisValue / 250) * 250;
+                    // Arrondir au multiple de 500 supérieur, avec minimum 1000
+                    const roundedMax = Math.max(1000, Math.ceil(maxAxisValue / 500) * 500);
                     
-                    // Générer 6 labels uniformément répartis
+                    // Générer 6 labels par paliers de 500, en partant du maximum vers 1000
                     const labels = [];
+                    const step = 500;
+                    const numberOfSteps = Math.max(5, Math.floor((roundedMax - 1000) / step));
+                    
                     for (let i = 0; i < 6; i++) {
-                      const value = Math.round(roundedMax - (i * roundedMax / 5));
-                      labels.push(value.toString());
+                      const value = roundedMax - (i * (roundedMax - 1000) / 5);
+                      // Arrondir au multiple de 500 le plus proche, avec minimum 1000
+                      const roundedValue = Math.max(1000, Math.round(value / 500) * 500);
+                      labels.push(roundedValue.toString());
                     }
                     
                     return labels.map((label, index) => (
@@ -1369,12 +1373,22 @@ export default function ProgresScreen() {
                       const currentData = selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories;
                       const maxDataCalories = Math.max(...currentData.map(d => d.calories), nutritionStats.averageCalories);
                       
-                      // Utiliser la même logique que pour l'axe Y
+                      // Utiliser la même logique que pour l'axe Y avec minimum 1000 et paliers de 500
                       const clientGoal = calorieGoals?.calories || 2200;
-                      const maxAxisValue = Math.max(maxDataCalories, clientGoal * 1.2);
-                      const roundedMax = Math.ceil(maxAxisValue / 250) * 250;
+                      const maxAxisValue = Math.max(maxDataCalories, clientGoal * 1.2, 1000);
+                      const roundedMax = Math.max(1000, Math.ceil(maxAxisValue / 500) * 500);
+                      const minAxisValue = 1000;
                       
-                      const height = dayData.calories > 0 ? (dayData.calories / roundedMax) * 80 + 10 : 5;
+                      // Calculer la hauteur relative entre min et max
+                      let height = 5; // Hauteur minimale si pas de données
+                      if (dayData.calories > 0) {
+                        // Calculer le pourcentage entre la valeur min (1000) et max de l'axe
+                        const adjustedCalories = Math.max(minAxisValue, dayData.calories);
+                        const percentage = (adjustedCalories - minAxisValue) / (roundedMax - minAxisValue);
+                        height = percentage * 80 + 10; // 10% minimum, 90% maximum
+                      }
+                      
+                      const height = dayData.calories > 0 ? height : 5;
                       return (
                         <View key={`${dayData.day}-${index}`} style={[
                           styles.barContainer,
