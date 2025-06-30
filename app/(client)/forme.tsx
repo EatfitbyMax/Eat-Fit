@@ -237,7 +237,25 @@ export default function FormeScreen() {
     let totalScore = 0;
     let totalWeight = 0;
 
-    // Sommeil (35% du score)
+    // Adaptation des poids selon le genre
+    const isWoman = userData?.gender === 'Femme';
+    
+    // Pour les femmes, redistribution des poids pour donner plus d'importance au cycle
+    const weights = isWoman ? {
+      sleep: 0.30,      // 30% (au lieu de 35%)
+      stress: 0.25,     // 25% (au lieu de 30%)
+      heartRate: 0.15,  // 15% (au lieu de 20%) - Premium
+      rpe: 0.15,        // 15% (inchangé) - Premium
+      cycle: 0.15       // 15% (au lieu de 5%) - Femmes uniquement
+    } : {
+      sleep: 0.35,      // 35%
+      stress: 0.30,     // 30%
+      heartRate: 0.20,  // 20% - Premium
+      rpe: 0.15,        // 15% - Premium
+      cycle: 0         // 0% pour les hommes
+    };
+
+    // Sommeil
     if (formeData.sleep.hours > 0) {
       // Score basé sur les heures de sommeil (optimal: 7-9h)
       let sleepHoursScore;
@@ -259,17 +277,41 @@ export default function FormeScreen() {
         'Mauvais': 0.4
       };
 
-      const sleepScore = sleepHoursScore * qualityMultiplier[formeData.sleep.quality];
-      totalScore += sleepScore * 0.35;
-      totalWeight += 0.35;
+      let sleepScore = sleepHoursScore * qualityMultiplier[formeData.sleep.quality];
+      
+      // Ajustement cycle pour les femmes: le sommeil est plus impacté selon la phase
+      if (isWoman && formeData.cycle) {
+        const cycleMultiplier = {
+          'Menstruel': 0.9,      // Sommeil plus difficile pendant les règles
+          'Folliculaire': 1.0,   // Sommeil normal
+          'Ovulation': 1.05,     // Légère amélioration
+          'Lutéal': 0.85         // Sommeil souvent perturbé en pré-menstruel
+        };
+        sleepScore *= cycleMultiplier[formeData.cycle.phase];
+      }
+
+      totalScore += sleepScore * weights.sleep;
+      totalWeight += weights.sleep;
     }
 
-    // Stress (30% du score) - inversé (1 = excellent, 10 = très mauvais)
-    const stressScore = Math.max(0, ((10 - formeData.stress.level) / 9) * 100);
-    totalScore += stressScore * 0.30;
-    totalWeight += 0.30;
+    // Stress - inversé (1 = excellent, 10 = très mauvais)
+    let stressScore = Math.max(0, ((10 - formeData.stress.level) / 9) * 100);
+    
+    // Ajustement cycle pour les femmes: le stress est plus sensible selon la phase
+    if (isWoman && formeData.cycle) {
+      const stressCycleMultiplier = {
+        'Menstruel': 0.8,       // Plus de stress/irritabilité
+        'Folliculaire': 1.1,    // Généralement moins de stress
+        'Ovulation': 1.15,      // Pic de bien-être
+        'Lutéal': 0.7           // Stress pré-menstruel important
+      };
+      stressScore *= stressCycleMultiplier[formeData.cycle.phase];
+    }
+    
+    totalScore += stressScore * weights.stress;
+    totalWeight += weights.stress;
 
-    // FC repos (20% du score) - Premium
+    // FC repos - Premium
     if (isPremium && formeData.heartRate.resting > 0) {
       const optimalResting = userData?.gender === 'Homme' ? 65 : 70;
       const diff = Math.abs(formeData.heartRate.resting - optimalResting);
@@ -282,11 +324,30 @@ export default function FormeScreen() {
       else if (diff <= 20) hrScore = 55;
       else hrScore = 30;
 
-      totalScore += hrScore * 0.20;
-      totalWeight += 0.20;
+      // Ajustement cycle pour les femmes: FC varie selon la phase
+      if (isWoman && formeData.cycle) {
+        const hrCycleAdjustment = {
+          'Menstruel': -3,       // FC légèrement plus élevée
+          'Folliculaire': 0,     // FC normale
+          'Ovulation': -2,       // FC peut être légèrement élevée
+          'Lutéal': -5           // FC souvent plus élevée en pré-menstruel
+        };
+        
+        const adjustedOptimal = optimalResting + hrCycleAdjustment[formeData.cycle.phase];
+        const adjustedDiff = Math.abs(formeData.heartRate.resting - adjustedOptimal);
+        
+        if (adjustedDiff <= 5) hrScore = 100;
+        else if (adjustedDiff <= 10) hrScore = 85;
+        else if (adjustedDiff <= 15) hrScore = 70;
+        else if (adjustedDiff <= 20) hrScore = 55;
+        else hrScore = 30;
+      }
+
+      totalScore += hrScore * weights.heartRate;
+      totalWeight += weights.heartRate;
     }
 
-    // RPE (15% du score) - Premium (1-3 = excellent, 8-10 = épuisé)
+    // RPE - Premium (1-3 = excellent, 8-10 = épuisé)
     if (isPremium && formeData.rpe.value > 0) {
       let rpeScore;
       if (formeData.rpe.value <= 3) rpeScore = 100;      // Très facile
@@ -294,36 +355,75 @@ export default function FormeScreen() {
       else if (formeData.rpe.value <= 7) rpeScore = 60;  // Difficile
       else rpeScore = 30;                                // Très difficile
 
-      totalScore += rpeScore * 0.15;
-      totalWeight += 0.15;
+      // Ajustement cycle pour les femmes: performance varie selon la phase
+      if (isWoman && formeData.cycle) {
+        const rpeCycleMultiplier = {
+          'Menstruel': 0.8,      // Performance réduite, récupération plus difficile
+          'Folliculaire': 1.15,  // Phase d'amélioration des performances
+          'Ovulation': 1.2,      // Pic de performance
+          'Lutéal': 0.85         // Fatigue pré-menstruelle
+        };
+        rpeScore *= rpeCycleMultiplier[formeData.cycle.phase];
+      }
+
+      totalScore += rpeScore * weights.rpe;
+      totalWeight += weights.rpe;
     }
 
-    // Ajustement cycle hormonal pour les femmes (5% du score)
-    if (userData?.gender === 'Femme' && formeData.cycle) {
+    // Cycle hormonal pour les femmes (poids beaucoup plus important)
+    if (isWoman && formeData.cycle) {
       let cycleScore = 75; // Score de base
       
-      // Ajustements selon la phase
+      // Ajustements détaillés selon la phase et le jour du cycle
+      const dayInCycle = formeData.cycle.dayOfCycle;
+      
       switch (formeData.cycle.phase) {
         case 'Menstruel':
-          cycleScore = 60; // Phase généralement plus difficile
+          // Jours 1-5: Score bas mais progressif
+          if (dayInCycle <= 2) {
+            cycleScore = 45; // Jours les plus difficiles
+          } else if (dayInCycle <= 4) {
+            cycleScore = 55; // Amélioration progressive
+          } else {
+            cycleScore = 65; // Fin des règles
+          }
           break;
+          
         case 'Folliculaire':
-          cycleScore = 85; // Phase d'énergie croissante
+          // Jours 6-13: Amélioration progressive
+          cycleScore = 70 + Math.min((dayInCycle - 5) * 3, 20); // 70 à 90
           break;
+          
         case 'Ovulation':
-          cycleScore = 90; // Pic d'énergie
+          // Jours 14-16: Pic d'énergie
+          cycleScore = 95;
           break;
+          
         case 'Lutéal':
-          cycleScore = 70; // Fatigue pré-menstruelle possible
+          // Jours 17-28: Déclin progressif
+          const lutealDay = dayInCycle - 16;
+          if (lutealDay <= 4) {
+            cycleScore = 80; // Début de phase lutéale
+          } else if (lutealDay <= 8) {
+            cycleScore = 70; // Milieu de phase
+          } else {
+            cycleScore = 50; // SPM (syndrome pré-menstruel)
+          }
           break;
       }
 
-      // Réduction selon les symptômes
-      const symptomPenalty = Math.min(formeData.cycle.symptoms.length * 5, 25);
-      cycleScore = Math.max(40, cycleScore - symptomPenalty);
+      // Réduction importante selon les symptômes
+      const symptomPenalty = Math.min(formeData.cycle.symptoms.length * 8, 40);
+      cycleScore = Math.max(25, cycleScore - symptomPenalty);
 
-      totalScore += cycleScore * 0.05;
-      totalWeight += 0.05;
+      // Bonus pour absence de symptômes en phase favorable
+      if (formeData.cycle.symptoms.length === 0 && 
+          (formeData.cycle.phase === 'Folliculaire' || formeData.cycle.phase === 'Ovulation')) {
+        cycleScore = Math.min(100, cycleScore + 5);
+      }
+
+      totalScore += cycleScore * weights.cycle;
+      totalWeight += weights.cycle;
     }
 
     // Calculer le score final
@@ -738,7 +838,24 @@ export default function FormeScreen() {
     let totalScore = 0;
     let totalWeight = 0;
 
-    // Sommeil (35% du score)
+    // Adaptation des poids selon le genre (même logique que calculateFormeScore)
+    const isWoman = userData?.gender === 'Femme';
+    
+    const weights = isWoman ? {
+      sleep: 0.30,      // 30% (au lieu de 35%)
+      stress: 0.25,     // 25% (au lieu de 30%)
+      heartRate: 0.15,  // 15% (au lieu de 20%) - Premium
+      rpe: 0.15,        // 15% (inchangé) - Premium
+      cycle: 0.15       // 15% (au lieu de 5%) - Femmes uniquement
+    } : {
+      sleep: 0.35,      // 35%
+      stress: 0.30,     // 30%
+      heartRate: 0.20,  // 20% - Premium
+      rpe: 0.15,        // 15% - Premium
+      cycle: 0         // 0% pour les hommes
+    };
+
+    // Sommeil
     if (dayData.sleep.hours > 0) {
       let sleepHoursScore;
       if (dayData.sleep.hours >= 7 && dayData.sleep.hours <= 9) {
@@ -758,20 +875,56 @@ export default function FormeScreen() {
         'Mauvais': 0.4
       };
 
-      const sleepScore = sleepHoursScore * qualityMultiplier[dayData.sleep.quality];
-      totalScore += sleepScore * 0.35;
-      totalWeight += 0.35;
+      let sleepScore = sleepHoursScore * qualityMultiplier[dayData.sleep.quality];
+      
+      // Ajustement cycle pour les femmes
+      if (isWoman && dayData.cycle) {
+        const cycleMultiplier = {
+          'Menstruel': 0.9,
+          'Folliculaire': 1.0,
+          'Ovulation': 1.05,
+          'Lutéal': 0.85
+        };
+        sleepScore *= cycleMultiplier[dayData.cycle.phase];
+      }
+
+      totalScore += sleepScore * weights.sleep;
+      totalWeight += weights.sleep;
     }
 
-    // Stress (30% du score)
-    const stressScore = Math.max(0, ((10 - dayData.stress.level) / 9) * 100);
-    totalScore += stressScore * 0.30;
-    totalWeight += 0.30;
+    // Stress
+    let stressScore = Math.max(0, ((10 - dayData.stress.level) / 9) * 100);
+    
+    if (isWoman && dayData.cycle) {
+      const stressCycleMultiplier = {
+        'Menstruel': 0.8,
+        'Folliculaire': 1.1,
+        'Ovulation': 1.15,
+        'Lutéal': 0.7
+      };
+      stressScore *= stressCycleMultiplier[dayData.cycle.phase];
+    }
+    
+    totalScore += stressScore * weights.stress;
+    totalWeight += weights.stress;
 
-    // FC repos (20% du score) - Premium
+    // FC repos - Premium
     if (isPremium && dayData.heartRate.resting > 0) {
       const optimalResting = userData?.gender === 'Homme' ? 65 : 70;
-      const diff = Math.abs(dayData.heartRate.resting - optimalResting);
+      let diff = Math.abs(dayData.heartRate.resting - optimalResting);
+      
+      // Ajustement cycle pour les femmes
+      if (isWoman && dayData.cycle) {
+        const hrCycleAdjustment = {
+          'Menstruel': -3,
+          'Folliculaire': 0,
+          'Ovulation': -2,
+          'Lutéal': -5
+        };
+        
+        const adjustedOptimal = optimalResting + hrCycleAdjustment[dayData.cycle.phase];
+        diff = Math.abs(dayData.heartRate.resting - adjustedOptimal);
+      }
       
       let hrScore;
       if (diff <= 5) hrScore = 100;
@@ -780,11 +933,11 @@ export default function FormeScreen() {
       else if (diff <= 20) hrScore = 55;
       else hrScore = 30;
 
-      totalScore += hrScore * 0.20;
-      totalWeight += 0.20;
+      totalScore += hrScore * weights.heartRate;
+      totalWeight += weights.heartRate;
     }
 
-    // RPE (15% du score) - Premium
+    // RPE - Premium
     if (isPremium && dayData.rpe.value > 0) {
       let rpeScore;
       if (dayData.rpe.value <= 3) rpeScore = 100;
@@ -792,36 +945,67 @@ export default function FormeScreen() {
       else if (dayData.rpe.value <= 7) rpeScore = 60;
       else rpeScore = 30;
 
-      totalScore += rpeScore * 0.15;
-      totalWeight += 0.15;
+      // Ajustement cycle pour les femmes
+      if (isWoman && dayData.cycle) {
+        const rpeCycleMultiplier = {
+          'Menstruel': 0.8,
+          'Folliculaire': 1.15,
+          'Ovulation': 1.2,
+          'Lutéal': 0.85
+        };
+        rpeScore *= rpeCycleMultiplier[dayData.cycle.phase];
+      }
+
+      totalScore += rpeScore * weights.rpe;
+      totalWeight += weights.rpe;
     }
 
-    // Ajustement cycle hormonal pour les femmes (5% du score)
-    if (userData?.gender === 'Femme' && dayData.cycle) {
-      let cycleScore = 75; // Score de base
+    // Cycle hormonal pour les femmes
+    if (isWoman && dayData.cycle) {
+      let cycleScore = 75;
+      const dayInCycle = dayData.cycle.dayOfCycle;
       
-      // Ajustements selon la phase
       switch (dayData.cycle.phase) {
         case 'Menstruel':
-          cycleScore = 60;
+          if (dayInCycle <= 2) {
+            cycleScore = 45;
+          } else if (dayInCycle <= 4) {
+            cycleScore = 55;
+          } else {
+            cycleScore = 65;
+          }
           break;
+          
         case 'Folliculaire':
-          cycleScore = 85;
+          cycleScore = 70 + Math.min((dayInCycle - 5) * 3, 20);
           break;
+          
         case 'Ovulation':
-          cycleScore = 90;
+          cycleScore = 95;
           break;
+          
         case 'Lutéal':
-          cycleScore = 70;
+          const lutealDay = dayInCycle - 16;
+          if (lutealDay <= 4) {
+            cycleScore = 80;
+          } else if (lutealDay <= 8) {
+            cycleScore = 70;
+          } else {
+            cycleScore = 50;
+          }
           break;
       }
 
-      // Réduction selon les symptômes
-      const symptomPenalty = Math.min(dayData.cycle.symptoms.length * 5, 25);
-      cycleScore = Math.max(40, cycleScore - symptomPenalty);
+      const symptomPenalty = Math.min(dayData.cycle.symptoms.length * 8, 40);
+      cycleScore = Math.max(25, cycleScore - symptomPenalty);
 
-      totalScore += cycleScore * 0.05;
-      totalWeight += 0.05;
+      if (dayData.cycle.symptoms.length === 0 && 
+          (dayData.cycle.phase === 'Folliculaire' || dayData.cycle.phase === 'Ovulation')) {
+        cycleScore = Math.min(100, cycleScore + 5);
+      }
+
+      totalScore += cycleScore * weights.cycle;
+      totalWeight += weights.cycle;
     }
 
     // Calculer le score final
@@ -859,7 +1043,10 @@ export default function FormeScreen() {
             {getScoreStatus(formeScore)}
           </Text>
           <Text style={styles.scoreDescription}>
-            Basé sur votre sommeil, stress{isPremium ? ', FC et RPE' : ''}{userData?.gender === 'Femme' ? ', cycle hormonal' : ''}
+            {userData?.gender === 'Femme' ? 
+              `Basé sur votre cycle hormonal, sommeil, stress${isPremium ? ', FC et RPE' : ''}` :
+              `Basé sur votre sommeil, stress${isPremium ? ', FC et RPE' : ''}`
+            }
           </Text>
         </View>
 
