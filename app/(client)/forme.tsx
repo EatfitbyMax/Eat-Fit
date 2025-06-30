@@ -109,32 +109,9 @@ export default function FormeScreen() {
       if (!userData) return;
 
       const today = new Date().toISOString().split('T')[0];
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
       
-      // Essayer d'abord le stockage local
-      let todayData = null;
-      const localDataString = await AsyncStorage.getItem(`forme_data_${userData.id}_${today}`);
-      
-      if (localDataString) {
-        todayData = JSON.parse(localDataString);
-        console.log('Données de forme chargées depuis le stockage local');
-      } else {
-        // Fallback vers le serveur si pas de données locales
-        try {
-          todayData = await PersistentStorage.getFormeData(userData.id, today);
-          console.log('Données de forme chargées depuis le serveur VPS');
-        } catch (serverError) {
-          // Créer des données par défaut si rien n'est trouvé
-          todayData = {
-            sleep: { hours: 0, quality: 'Moyen', bedTime: '', wakeTime: '' },
-            stress: { level: 5, factors: [], notes: '' },
-            heartRate: { resting: 0, variability: 0 },
-            rpe: { value: 5, notes: '' },
-            date: today
-          };
-          console.log('Création de nouvelles données de forme par défaut');
-        }
-      }
+      // Charger les données du jour depuis le serveur
+      let todayData = await PersistentStorage.getFormeData(userData.id, today);
 
       // Si RPE n'est pas renseigné et que l'utilisateur est premium, chercher automatiquement
       if (isPremium && todayData.rpe.value === 5 && !todayData.rpe.notes) {
@@ -149,7 +126,7 @@ export default function FormeScreen() {
             }
           };
           // Sauvegarder automatiquement les données mises à jour
-          await saveFormeData(todayData);
+          await PersistentStorage.saveFormeData(userData.id, today, todayData);
         }
       }
 
@@ -162,27 +139,7 @@ export default function FormeScreen() {
         date.setDate(date.getDate() - i);
         const dateString = date.toISOString().split('T')[0];
 
-        // Essayer d'abord le stockage local pour chaque jour
-        const dayLocalDataString = await AsyncStorage.getItem(`forme_data_${userData.id}_${dateString}`);
-        let dayData;
-        
-        if (dayLocalDataString) {
-          dayData = JSON.parse(dayLocalDataString);
-        } else {
-          try {
-            dayData = await PersistentStorage.getFormeData(userData.id, dateString);
-          } catch (error) {
-            // Données par défaut si aucune donnée trouvée
-            dayData = {
-              sleep: { hours: 0, quality: 'Moyen', bedTime: '', wakeTime: '' },
-              stress: { level: 5, factors: [], notes: '' },
-              heartRate: { resting: 0, variability: 0 },
-              rpe: { value: 5, notes: '' },
-              date: dateString
-            };
-          }
-        }
-        
+        const dayData = await PersistentStorage.getFormeData(userData.id, dateString);
         weekData.push(dayData);
       }
       setWeeklyData(weekData);
@@ -196,24 +153,13 @@ export default function FormeScreen() {
     try {
       if (!userData) return;
 
-      // Sauvegarder d'abord en local pour garantir la persistance
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-      await AsyncStorage.setItem(`forme_data_${userData.id}_${newData.date}`, JSON.stringify(newData));
-      
-      // Puis essayer de sauvegarder sur le serveur VPS
-      try {
-        await PersistentStorage.saveFormeData(userData.id, newData.date, newData);
-        console.log('Données de forme sauvegardées sur le serveur VPS');
-      } catch (serverError) {
-        console.log('Serveur indisponible, sauvegarde locale effectuée');
-      }
-      
-      // Mettre à jour l'état local
+      // Sauvegarder sur le serveur VPS et en local
+      await PersistentStorage.saveFormeData(userData.id, newData.date, newData);
       setFormeData(newData);
 
     } catch (error) {
       console.error('Erreur sauvegarde données forme:', error);
-      Alert.alert('Erreur', 'Impossible de sauvegarder les données.');
+      Alert.alert('Erreur', 'Impossible de sauvegarder les données. Vérifiez votre connexion.');
     }
   };
 
