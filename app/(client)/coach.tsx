@@ -12,6 +12,7 @@ import Animated, {
   withSpring,
   runOnJS,
 } from 'react-native-reanimated';
+import { SUBSCRIPTION_PLANS, checkAppointmentLimit, getAppointmentLimits } from '../../utils/payments';
 
 interface Message {
   id: string;
@@ -205,16 +206,16 @@ const AppointmentModal = ({ visible, onClose, coachInfo, currentUser, onAppointm
       // Charger les rendez-vous existants du client
       const existingAppointments = await AsyncStorage.getItem(`appointments-${currentUser.id}`);
       const appointments = existingAppointments ? JSON.parse(existingAppointments) : [];
-      
+
       // Ajouter le nouveau rendez-vous
       appointments.push(appointment);
-      
+
       // Sauvegarder dans AsyncStorage
       await AsyncStorage.setItem(`appointments-${currentUser.id}`, JSON.stringify(appointments));
-      
+
       // Mettre à jour l'état local via le callback
       onAppointmentBooked(appointment);
-      
+
       Alert.alert(
         'Rendez-vous demandé',
         `Votre demande de rendez-vous pour le ${formatDate(selectedDate)} à ${selectedTime} a été envoyée au coach. Vous recevrez une confirmation prochainement.`,
@@ -475,7 +476,7 @@ export default function CoachScreen() {
   useEffect(() => {
     if (currentUser && isPremium) {
       loadAppointments();
-      
+
       // Recharger les rendez-vous toutes les 10 secondes quand l'onglet RDV est actif
       const interval = setInterval(() => {
         if (activeTab === 'appointments') {
@@ -794,11 +795,41 @@ export default function CoachScreen() {
                 </View>
 
                 <View style={styles.coachActions}>
-                  <TouchableOpacity 
-                    style={styles.appointmentButton}
-                    onPress={() => setShowAppointmentModal(true)}
+                  {/* Bouton de prise de rendez-vous */}
+                  <TouchableOpacity
+                    style={[
+                      styles.appointmentButton,
+                      appointmentLimitCheck && !appointmentLimitCheck.canBook && styles.appointmentButtonDisabled
+                    ]}
+                    onPress={() => {
+                      if (!appointmentLimitCheck?.canBook) {
+                        Alert.alert(
+                          'Limite atteinte',
+                          appointmentLimitCheck?.reason || 'Vous ne pouvez pas prendre de rendez-vous.',
+                          [
+                            { text: 'OK', style: 'default' },
+                            { text: 'Voir les abonnements', onPress: () => setShowSubscriptionModal(true) }
+                          ]
+                        );
+                        return;
+                      }
+
+                      if (isPremium) {
+                        setShowAppointmentModal(true);
+                      } else {
+                        setShowSubscriptionModal(true);
+                      }
+                    }}
                   >
-                    <Text style={styles.appointmentButtonText}>📅 Prendre rendez-vous avec le coach</Text>
+                    <Text style={[
+                      styles.appointmentButtonText,
+                      appointmentLimitCheck && !appointmentLimitCheck.canBook && styles.appointmentButtonTextDisabled
+                    ]}>
+                      📅 Prendre rendez-vous avec le coach
+                      {appointmentLimitCheck?.remaining !== undefined && (
+                        ` (${appointmentLimitCheck.remaining} restant${appointmentLimitCheck.remaining > 1 ? 's' : ''})`
+                      )}
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -882,11 +913,26 @@ export default function CoachScreen() {
               ) : (
                 /* Section Rendez-vous */
                 <View style={styles.messagesSection}>
-                  <View style={styles.messagesSectionHeader}>
-                    <View style={styles.messagesSectionIcon}>
-                      <Text style={styles.messagesSectionIconText}>📅</Text>
-                    </View>
-                    <Text style={styles.messagesSectionTitle}>Vos rendez-vous</Text>
+                  <View style={styles.appointmentHeaderContainer}>
+                    <Text style={styles.sectionTitle}>📅 Mes RDV ({appointments.length})</Text>
+                    {appointmentLimitCheck && (
+                      <View style={styles.limitInfoContainer}>
+                        {userPlan !== 'free' && (
+                          <Text style={styles.limitInfoText}>
+                            {userPlan === 'silver' && `Limite: 1/mois`}
+                            {userPlan === 'gold' && `Limite: 1/semaine`}
+                            {userPlan === 'diamond' && `Limite: 2/semaine`}
+                            {appointmentLimitCheck.remaining !== undefined && 
+                              ` • ${appointmentLimitCheck.remaining} restant${appointmentLimitCheck.remaining > 1 ? 's' : ''}`}
+                          </Text>
+                        )}
+                        {userPlan === 'free' || userPlan === 'bronze' ? (
+                          <Text style={styles.limitInfoTextError}>
+                            Aucun RDV autorisé avec votre plan
+                          </Text>
+                        ) : null}
+                      </View>
+                    )}
                   </View>
                   <FlatList
                     data={appointments}
@@ -1853,5 +1899,31 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#000000',
     fontWeight: '600',
+  },
+  appointmentButtonDisabled: {
+    backgroundColor: '#37414b',
+  },
+  appointmentButtonTextDisabled: {
+    color: '#6b7280',
+  },
+  appointmentHeaderContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 12,
+  },
+  limitInfoContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  limitInfoText: {
+    fontSize: 12,
+    color: '#8B949E',
+    fontWeight: '500',
+  },
+  limitInfoTextError: {
+    fontSize: 12,
+    color: '#DA3633',
+    fontWeight: '500',
   },
 });

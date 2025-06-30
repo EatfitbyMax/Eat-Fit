@@ -1,12 +1,18 @@
 import { Platform } from 'react-native';
 import { initPaymentSheet, presentPaymentSheet, confirmPaymentSheetPayment } from '@stripe/stripe-react-native';
 
+export interface AppointmentLimits {
+  monthly: number;
+  weekly: number;
+}
+
 export interface SubscriptionPlan {
   id: string;
   name: string;
   price: number;
   currency: string;
   duration: string;
+  appointmentLimits: AppointmentLimits;
   features: string[];
 }
 
@@ -17,6 +23,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     price: 0,
     currency: 'EUR',
     duration: 'gratuit',
+    appointmentLimits: { monthly: 0, weekly: 0 },
     features: ['Fonctionnalités de base disponibles']
   },
   {
@@ -25,10 +32,12 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     price: 9.99,
     currency: 'EUR',
     duration: 'mois',
+    appointmentLimits: { monthly: 0, weekly: 0 },
     features: [
       'Messagerie avec le coach',
       '1 programme nutrition de base',
-      'Suivi hebdomadaire'
+      'Suivi hebdomadaire',
+      'Aucun rendez-vous inclus'
     ]
   },
   {
@@ -37,11 +46,12 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     price: 19.99,
     currency: 'EUR',
     duration: 'mois',
+    appointmentLimits: { monthly: 1, weekly: 0 },
     features: [
       'Tout du Bronze',
       'Programmes nutrition personnalisés',
       'Programmes d\'entraînement',
-      'Rendez-vous vidéo (2/mois)'
+      '1 rendez-vous par mois'
     ]
   },
   {
@@ -50,11 +60,12 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     price: 49.99,
     currency: 'EUR',
     duration: 'mois',
+    appointmentLimits: { monthly: 0, weekly: 1 },
     features: [
       'Tout de l\'Argent',
       'Coaching 24h/24 7j/7',
       'Programmes ultra-personnalisés',
-      'Rendez-vous vidéo illimités',
+      '1 rendez-vous par semaine',
       'Suivi en temps réel'
     ]
   },
@@ -64,16 +75,99 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     price: 99.99,
     currency: 'EUR',
     duration: 'mois',
+    appointmentLimits: { monthly: 0, weekly: 2 },
     features: [
       'Tout de l\'Or',
       'Coach personnel dédié VIP',
       'Accès aux événements exclusifs',
       'Consultations nutrition expert',
       'Support premium 24h/24',
+      '2 rendez-vous par semaine',
       'Programmes sur mesure illimités'
     ]
   }
 ];
+
+// Fonctions utilitaires pour les limites de rendez-vous
+export const getAppointmentLimits = (planId: string): AppointmentLimits => {
+  const plan = SUBSCRIPTION_PLANS.find(p => p.id === planId);
+  return plan?.appointmentLimits || { monthly: 0, weekly: 0 };
+};
+
+export const checkAppointmentLimit = async (
+  userId: string, 
+  userPlanId: string, 
+  appointments: any[]
+): Promise<{ canBook: boolean; reason?: string; remaining?: number }> => {
+  const limits = getAppointmentLimits(userPlanId);
+  
+  // Si aucune limite (plan gratuit ou bronze)
+  if (limits.monthly === 0 && limits.weekly === 0) {
+    return { 
+      canBook: false, 
+      reason: 'Votre abonnement ne permet pas de prendre de rendez-vous. Passez à un plan supérieur.' 
+    };
+  }
+
+  const now = new Date();
+  const userAppointments = appointments.filter(apt => 
+    apt.clientId === userId && 
+    apt.status !== 'cancelled'
+  );
+
+  // Vérification limite mensuelle (Argent)
+  if (limits.monthly > 0) {
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    
+    const monthlyAppointments = userAppointments.filter(apt => {
+      const aptDate = new Date(apt.date);
+      return aptDate >= startOfMonth && aptDate <= endOfMonth;
+    });
+
+    if (monthlyAppointments.length >= limits.monthly) {
+      return { 
+        canBook: false, 
+        reason: `Vous avez atteint votre limite mensuelle de ${limits.monthly} rendez-vous.` 
+      };
+    }
+
+    return { 
+      canBook: true, 
+      remaining: limits.monthly - monthlyAppointments.length 
+    };
+  }
+
+  // Vérification limite hebdomadaire (Or et Diamant)
+  if (limits.weekly > 0) {
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay() + 1); // Lundi
+    startOfWeek.setHours(0, 0, 0, 0);
+    
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6); // Dimanche
+    endOfWeek.setHours(23, 59, 59, 999);
+
+    const weeklyAppointments = userAppointments.filter(apt => {
+      const aptDate = new Date(apt.date);
+      return aptDate >= startOfWeek && aptDate <= endOfWeek;
+    });
+
+    if (weeklyAppointments.length >= limits.weekly) {
+      return { 
+        canBook: false, 
+        reason: `Vous avez atteint votre limite hebdomadaire de ${limits.weekly} rendez-vous.` 
+      };
+    }
+
+    return { 
+      canBook: true, 
+      remaining: limits.weekly - weeklyAppointments.length 
+    };
+  }
+
+  return { canBook: false, reason: 'Plan non reconnu.' };
+};
 
 export class PaymentService {
   private static stripePublishableKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_your_key_here';
