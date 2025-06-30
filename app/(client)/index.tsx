@@ -92,14 +92,14 @@ export default function HomeScreen() {
       const loadDataOnFocus = async () => {
         // Recharger les données utilisateur d'abord
         await loadUserData();
-        
+
         // Ensuite charger les autres données
         await loadTodayStats();
         calculateFormeScore();
         loadWeightData();
         calculateWeeklyWorkouts();
       };
-      
+
       loadDataOnFocus();
     }, []) // Pas de dépendance pour éviter les boucles infinies
   );
@@ -176,25 +176,8 @@ export default function HomeScreen() {
     };
   };
 
-  const calculateFormeScore = async () => {
-    try {
-      // Simulation du calcul du score de forme basé sur le sommeil et la variabilité cardiaque
-      // En réalité, ces données viendraient des intégrations Apple Health/Strava
-      const currentUser = await getCurrentUser();
-      if (!currentUser) return;
-
-      // Valeurs simulées pour la démonstration
-      const sleepQuality = Math.floor(Math.random() * 40) + 60; // 60-100
-      const heartRateVariability = Math.floor(Math.random() * 30) + 70; // 70-100
-
-      // Calcul du score de forme (moyenne pondérée)
-      const score = Math.round((sleepQuality * 0.6) + (heartRateVariability * 0.4));
-      setFormeScore(score);
-    } catch (error) {
-      console.error('Erreur calcul score de forme:', error);
-      setFormeScore(75); // Valeur par défaut
-    }
-  };
+  const [isPremium, setIsPremium] = useState(false);
+  const [formeData, setFormeData] = useState(null);
 
   const loadUserData = async () => {
     try {
@@ -214,6 +197,50 @@ export default function HomeScreen() {
       console.error('Erreur chargement utilisateur:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadFormeData = async () => {
+    try {
+      const currentUser = await getCurrentUser();
+      if (!currentUser) return;
+
+      const today = new Date().toISOString().split('T')[0];
+
+      // Simulation du calcul du score de forme basé sur le sommeil et la variabilité cardiaque
+      // En réalité, ces données viendraient des intégrations Apple Health/Strava
+      // Valeurs simulées pour la démonstration
+      setFormeData({
+        sleep: { hours: 7, quality: 'Bien', bedTime: '', wakeTime: '' },
+        stress: { level: 3, factors: [], notes: '' },
+        heartRate: { resting: 60, variability: 80 },
+        rpe: { value: 4, notes: '' },
+        cycle: currentUser?.gender === 'Femme' ? { phase: 'Menstruel', dayOfCycle: 1, symptoms: [], notes: '' } : undefined,
+        date: today
+      });
+    } catch (error) {
+      console.error('Erreur chargement données forme:', error);
+      setFormeData(null);
+    }
+  };
+
+  const calculateFormeScore = async () => {
+    try {
+      // Simulation du calcul du score de forme basé sur le sommeil et la variabilité cardiaque
+      // En réalité, ces données viendraient des intégrations Apple Health/Strava
+      const currentUser = await getCurrentUser();
+      if (!currentUser) return;
+
+      // Valeurs simulées pour la démonstration
+      const sleepQuality = Math.floor(Math.random() * 40) + 60; // 60-100
+      const heartRateVariability = Math.floor(Math.random() * 30) + 70; // 70-100
+
+      // Calcul du score de forme (moyenne pondérée)
+      const score = Math.round((sleepQuality * 0.6) + (heartRateVariability * 0.4));
+      setFormeScore(score);
+    } catch (error) {
+      console.error('Erreur calcul score de forme:', error);
+      setFormeScore(75); // Valeur par défaut
     }
   };
 
