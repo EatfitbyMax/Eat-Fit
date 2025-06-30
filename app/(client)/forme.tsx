@@ -100,7 +100,25 @@ export default function FormeScreen() {
       const today = new Date().toISOString().split('T')[0];
       
       // Charger les données du jour depuis le serveur
-      const todayData = await PersistentStorage.getFormeData(userData.id, today);
+      let todayData = await PersistentStorage.getFormeData(userData.id, today);
+
+      // Si RPE n'est pas renseigné et que l'utilisateur est premium, chercher automatiquement
+      if (isPremium && todayData.rpe.value === 5 && !todayData.rpe.notes) {
+        const latestRPE = await getLatestActivityRPE();
+        if (latestRPE) {
+          todayData = {
+            ...todayData,
+            rpe: {
+              value: latestRPE.rpe,
+              notes: latestRPE.notes || '',
+              workoutId: 'auto_from_activity'
+            }
+          };
+          // Sauvegarder automatiquement les données mises à jour
+          await PersistentStorage.saveFormeData(userData.id, today, todayData);
+        }
+      }
+
       setFormeData(todayData);
 
       // Charger les données de la semaine
@@ -285,6 +303,42 @@ export default function FormeScreen() {
     setShowRPEModal(false);
     setTempRPE({ value: 5, notes: '' });
     Alert.alert('Succès', 'RPE post-entraînement enregistré !');
+  };
+
+  const getLatestActivityRPE = async () => {
+    try {
+      if (!userData) return null;
+
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+      const storedRatings = await AsyncStorage.getItem(`activity_ratings_${userData.id}`);
+      
+      if (!storedRatings) return null;
+
+      const ratings = JSON.parse(storedRatings);
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Chercher les activités notées aujourd'hui
+      const todayRatings = Object.values(ratings).filter((rating: any) => 
+        rating.date.startsWith(today)
+      ).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      if (todayRatings.length > 0) {
+        return todayRatings[0]; // La plus récente
+      }
+
+      // Si pas d'activité aujourd'hui, chercher la plus récente des 3 derniers jours
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+      
+      const recentRatings = Object.values(ratings).filter((rating: any) => 
+        new Date(rating.date) >= threeDaysAgo
+      ).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      return recentRatings.length > 0 ? recentRatings[0] : null;
+    } catch (error) {
+      console.error('Erreur récupération RPE activités:', error);
+      return null;
+    }
   };
 
   const handleSyncHeartRate = async () => {
@@ -660,15 +714,25 @@ export default function FormeScreen() {
                 </Text>
                 <Text style={styles.metricDetail}>
                   {isPremium ? 
-                    (formeData.rpe.value <= 3 ? 'Très facile' :
-                     formeData.rpe.value <= 5 ? 'Modéré' :
-                     formeData.rpe.value <= 7 ? 'Difficile' : 'Très difficile') :
+                    (formeData.rpe.workoutId === 'auto_from_activity' ? 
+                      `${formeData.rpe.value <= 3 ? 'Très facile' :
+                        formeData.rpe.value <= 5 ? 'Modéré' :
+                        formeData.rpe.value <= 7 ? 'Difficile' : 'Très difficile'} (Auto)` :
+                      (formeData.rpe.value <= 3 ? 'Très facile' :
+                       formeData.rpe.value <= 5 ? 'Modéré' :
+                       formeData.rpe.value <= 7 ? 'Difficile' : 'Très difficile')
+                    ) :
                     'Évaluation fatigue'
                   }
                 </Text>
               </View>
               <Text style={styles.updateHint}>
-                {isPremium ? 'Appuyez pour modifier' : 'Mise à niveau requise'}
+                {isPremium ? 
+                  (formeData.rpe.workoutId === 'auto_from_activity' ? 
+                    'Récupéré automatiquement' : 'Appuyez pour modifier'
+                  ) : 
+                  'Mise à niveau requise'
+                }
               </Text>
             </TouchableOpacity>
           </View>
