@@ -1176,7 +1176,7 @@ const styles = StyleSheet.create({
     borderColor: '#F5A623',
   },
   qualityButtonText: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#8B949E',
     fontWeight: '500',
   },
