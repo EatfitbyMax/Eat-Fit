@@ -12,7 +12,7 @@ import Animated, {
   withSpring,
   runOnJS,
 } from 'react-native-reanimated';
-import { SUBSCRIPTION_PLANS, checkAppointmentLimit, getAppointmentLimits } from '../../utils/payments';
+import { SUBSCRIPTION_PLANS, checkAppointmentLimit, getAppointmentLimits, PaymentService } from '../../utils/payments';
 
 interface Message {
   id: string;
@@ -458,12 +458,37 @@ export default function CoachScreen() {
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'messages' | 'appointments'>('messages');
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [appointmentLimitCheck, setAppointmentLimitCheck] = useState<{ canBook: boolean; reason?: string; remaining?: number } | null>(null);
+  const [userPlan, setUserPlan] = useState<string>('free');
 
   useEffect(() => {
     initUser();
     loadCoachInfo();
 	  loadAppointments();
   }, []);
+
+  useEffect(() => {
+    if (currentUser) {
+      checkAppointmentLimits();
+    }
+  }, [currentUser, appointments]);
+
+  const checkAppointmentLimits = async () => {
+    if (!currentUser) return;
+
+    try {
+      // Récupérer l'abonnement actuel
+      const subscription = await PaymentService.getCurrentSubscription(currentUser.id);
+      setUserPlan(subscription.planId);
+
+      // Vérifier les limites de rendez-vous
+      const limitCheck = await checkAppointmentLimit(currentUser.id, subscription.planId, appointments);
+      setAppointmentLimitCheck(limitCheck);
+    } catch (error) {
+      console.error('Erreur vérification limites:', error);
+      setAppointmentLimitCheck({ canBook: false, reason: 'Erreur lors de la vérification des limites' });
+    }
+  };
 
   useEffect(() => {
     if (currentUser) {
