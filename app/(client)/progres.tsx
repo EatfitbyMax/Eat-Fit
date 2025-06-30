@@ -940,16 +940,16 @@ export default function ProgresScreen() {
          const date = new Date();
          date.setDate(date.getDate() - i);
          const dateString = date.toISOString().split('T')[0];
- 
+
          // Données nutritionnelles
          const dayEntries = nutritionEntries.filter((entry: any) => 
            entry.date === dateString
          );
- 
+
          const dayCalories = dayEntries.reduce((sum: number, entry: any) => 
            sum + (entry.calories || 0), 0
          );
- 
+
          last30DaysNutrition.push({
            date: dateString,
            day: date.toLocaleDateString('fr-FR', { weekday: 'short' }),
@@ -1011,7 +1011,7 @@ export default function ProgresScreen() {
 
       // Ajustements selon les objectifs
       const goals = user.goals || [];
-      
+
       if (goals.includes('Perdre du poids')) {
         totalCalories -= 300; // Déficit de 300 kcal
       } else if (goals.includes('Prendre du muscle')) {
@@ -1303,10 +1303,15 @@ export default function ProgresScreen() {
         {/* Statistiques selon l'onglet sélectionné */}
         {selectedTab === 'Nutrition' && (
           <View style={styles.nutritionContainer}>
-            {/* Graphique des calories */}
+            {/* Graphique des calories amélioré */}
             <View style={styles.nutritionChartContainer}>
-              <View style={styles.chartHeader}>
-                <Text style={styles.chartTitle}>Apport calorique journalier</Text>
+              <View style={styles.enhancedChartHeader}>
+                <View style={styles.chartTitleRow}>
+                  <Text style={styles.chartTitle}>🔥 Apport calorique journalier</Text>
+                  <View style={styles.goalIndicator}>
+                    <Text style={styles.goalText}>Objectif: {calorieGoals.calories} kcal</Text>
+                  </View>
+                </View>
               </View>
 
               {/* Onglets de période */}
@@ -1325,34 +1330,28 @@ export default function ProgresScreen() {
               </View>
 
               <View style={styles.nutritionChartArea}>
+                {/* Background avec gradient subtil */}
+                <LinearGradient
+                  colors={['rgba(245, 166, 35, 0.05)', 'rgba(245, 166, 35, 0.02)', 'transparent']}
+                  style={styles.chartBackground}
+                />
+
                 {/* Axe Y pour les calories */}
                 <View style={styles.nutritionYAxis}>
                   {(() => {
-                    // Générer l'axe Y adapté aux données du client avec minimum 1000 kcal et paliers de 500
                     const currentData = selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories;
                     const maxDataCalories = Math.max(...currentData.map(d => d.calories), nutritionStats.averageCalories);
-                    
-                    // Utiliser l'objectif calorique du client comme référence principale
                     const clientGoal = calorieGoals?.calories || 2200;
-                    
-                    // Déterminer la valeur max de l'axe Y
                     const maxAxisValue = Math.max(maxDataCalories, clientGoal * 1.2, 1000);
-                    
-                    // Arrondir au multiple de 500 supérieur, avec minimum 1000
                     const roundedMax = Math.max(1000, Math.ceil(maxAxisValue / 500) * 500);
-                    
-                    // Générer 5 labels par paliers de 500, en partant du maximum vers 1500
+
                     const labels = [];
-                    const step = 500;
-                    const numberOfSteps = Math.max(4, Math.floor((roundedMax - 1500) / step));
-                    
                     for (let i = 0; i < 5; i++) {
                       const value = roundedMax - (i * (roundedMax - 1500) / 4);
-                      // Arrondir au multiple de 500 le plus proche, avec minimum 1500
                       const roundedValue = Math.max(1500, Math.round(value / 500) * 500);
                       labels.push(roundedValue.toString());
                     }
-                    
+
                     return labels.map((label, index) => (
                       <Text key={index} style={styles.nutritionYAxisLabel}>{label}</Text>
                     ));
@@ -1367,48 +1366,85 @@ export default function ProgresScreen() {
                     ))}
                   </View>
 
-                  {/* Barres de calories avec wrapper pour positionnement correct */}
+                  {/* Ligne d'objectif calorique */}
+                  <View style={styles.goalLine} />
+
+                  {/* Barres de calories avec couleurs intelligentes */}
                   <View style={styles.caloriesBarsWrapper}>
                     <View style={styles.caloriesBars}>
                       {(selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories).map((dayData, index) => {
                         const currentData = selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories;
                         const maxDataCalories = Math.max(...currentData.map(d => d.calories), nutritionStats.averageCalories);
-                        
-                        // Utiliser la même logique que pour l'axe Y avec minimum 1500 et paliers de 500
                         const clientGoal = calorieGoals?.calories || 2200;
                         const maxAxisValue = Math.max(maxDataCalories, clientGoal * 1.2, 1500);
                         const roundedMax = Math.max(1500, Math.ceil(maxAxisValue / 500) * 500);
                         const minAxisValue = 1500;
-                        
-                        // Calculer la hauteur relative entre min et max
-                        let barHeight = 3; // Hauteur minimale si pas de données (très petite)
+
+                        let barHeight = 3;
                         if (dayData.calories > 0) {
-                          // Si les calories sont inférieures à 1500, ne pas afficher la barre
                           if (dayData.calories < minAxisValue) {
                             barHeight = 0;
                           } else {
-                            // Calculer le pourcentage entre la valeur min (1500) et max de l'axe
                             const percentage = (dayData.calories - minAxisValue) / (roundedMax - minAxisValue);
-                            barHeight = percentage * 75; // Maximum 75% de la hauteur disponible
+                            barHeight = percentage * 75;
                           }
                         }
+
+                        // Couleur intelligente basée sur la performance vs objectif
+                        let barColor = '#8B949E'; // Par défaut (gris)
+                        const performance = dayData.calories / clientGoal;
+
+                        if (dayData.calories === 0) {
+                          barColor = '#21262D'; // Très sombre pour aucune donnée
+                        } else if (performance >= 0.9 && performance <= 1.1) {
+                          barColor = '#28A745'; // Vert - proche de l'objectif
+                        } else if (performance < 0.7) {
+                          barColor = '#DC3545'; // Rouge - trop faible
+                        } else if (performance > 1.3) {
+                          barColor = '#FF6B47'; // Orange-rouge - trop élevé
+                        } else {
+                          barColor = '#F5A623'; // Orange - acceptable
+                        }
+
+                        // Déterminer si c'est aujourd'hui
+                        const today = new Date().toLocaleDateString('fr-FR', { weekday: 'short' });
+                        const isToday = dayData.day.toLowerCase() === today.toLowerCase();
+
                         return (
                           <View key={`${dayData.day}-${index}`} style={[
-                            styles.barContainer,
-                            selectedNutritionPeriod === 'Mois' && styles.monthlyBarContainer
+                            styles.enhancedBarContainer,
+                            selectedNutritionPeriod === 'Mois' && styles.monthlyBarContainer,
+                            isToday && styles.todayBarContainer
                           ]}>
-                            <View style={[
-                              styles.calorieBar, 
-                              { height: `${Math.max(barHeight, 0)}%` },
-                              selectedNutritionPeriod === 'Mois' && styles.monthlyBar
-                            ]}
+                            {/* Valeur au-dessus de la barre */}
+                            {dayData.calories > 0 && (
+                              <Text style={[styles.barValue, isToday && styles.todayBarValue]}>
+                                {dayData.calories}
+                              </Text>
+                            )}
+
+                            {/* Barre avec gradient */}
+                            <LinearGradient
+                              colors={dayData.calories > 0 ? [barColor, `${barColor}99`] : ['#21262D', '#21262D']}
+                              style={[
+                                styles.enhancedCalorieBar, 
+                                { height: `${Math.max(barHeight, 0)}%` },
+                                selectedNutritionPeriod === 'Mois' && styles.monthlyBar,
+                                isToday && styles.todayBar
+                              ]}
                             />
+
+                            {/* Label du jour */}
                             <Text style={[
                               styles.dayLabel,
-                              selectedNutritionPeriod === 'Mois' && styles.monthlyDayLabel
+                              selectedNutritionPeriod === 'Mois' && styles.monthlyDayLabel,
+                              isToday && styles.todayLabel
                             ]}>
                               {dayData.day}
                             </Text>
+
+                            {/* Indicateur "aujourd'hui" */}
+                            {isToday && <View style={styles.todayIndicator} />}
                           </View>
                         );
                       })}
@@ -1416,7 +1452,7 @@ export default function ProgresScreen() {
                   </View>
                 </View>
               </View>
-            </View>
+            }
 
             {/* Statistiques nutritionnelles */}
             <View style={styles.nutritionStatsContainer}>
@@ -2377,8 +2413,7 @@ const styles = StyleSheet.create({
   progressHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+    alignItems: 'center',    marginBottom: 16,
   },
   progressTitle: {
     fontSize: 16,
@@ -2465,7 +2500,7 @@ const styles = StyleSheet.create({
   activePeriodButtonText: {
     color: '#FFFFFF',
   },
-  
+
   chartArea: {
     flexDirection: 'row',
     height: 200,
@@ -3113,5 +3148,89 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     lineHeight: 12,
     height: 12,
+  },
+
+  enhancedChartHeader: {
+    marginBottom: 15,
+  },
+  chartTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  goalIndicator: {
+    backgroundColor: '#28A745',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+  },
+  goalText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  chartBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
+  },
+  goalLine: {
+    position: 'absolute',
+    top: '20%',
+    left: 50,
+    right: 0,
+    height: 1,
+    backgroundColor: '#F5A623',
+    opacity: 0.6,
+  },
+  enhancedBarContainer: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'flex-end',
+    position: 'relative',
+  },
+  enhancedCalorieBar: {
+    width: 22,
+    borderRadius: 11,
+    marginBottom: 5,
+    minHeight: 4,
+  },
+  barValue: {
+    fontSize: 10,
+    color: '#8B949E',
+    fontWeight: '600',
+    position: 'absolute',
+    top: -18,
+    left: 0,
+    right: 0,
+    textAlign: 'center',
+  },
+  todayBarContainer: {
+    transform: [{ scale: 1.1 }],
+  },
+  todayBar: {
+    shadowColor: '#F5A623',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 3,
+  },
+  todayBarValue: {
+    color: '#F5A623',
+    fontWeight: 'bold',
+  },
+  todayLabel: {
+    color: '#F5A623',
+    fontWeight: 'bold',
+  },
+  todayIndicator: {
+    position: 'absolute',
+    bottom: -15,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#F5A623',
   },
 });
