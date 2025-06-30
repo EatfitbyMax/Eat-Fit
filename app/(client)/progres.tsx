@@ -2900,8 +2900,8 @@ const styles = StyleSheet.create({
   },
   nutritionChartArea: {
     flexDirection: 'row',
-    height: 180,
-    paddingBottom: 55,
+    height: 150,
+    paddingBottom: 10,
   },
   caloriesBars: {
     flex: 1,
