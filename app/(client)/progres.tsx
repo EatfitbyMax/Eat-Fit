@@ -2466,15 +2466,16 @@ const styles = StyleSheet.create({
   },
   yAxis: {
     justifyContent: 'space-between',
-    width: 35,
-    paddingRight: 15,
+    width: 50,
+    paddingRight: 8,
+    paddingLeft: 4,
     paddingTop: -10,
     paddingBottom: 20,
   },
   yAxisLabel: {
     fontSize: 12,
     color: '#8B949E',
-    textAlign: 'right',
+    textAlign: 'left',
     lineHeight: 12,
   },
   chartContent: {
@@ -3086,8 +3087,9 @@ const styles = StyleSheet.create({
   // Styles spécifiques pour l'axe Y du graphique nutrition
   nutritionYAxis: {
     justifyContent: 'space-between',
-    width: 35,
-    paddingRight: 15,
+    width: 50,
+    paddingRight: 8,
+    paddingLeft: 4,
     paddingTop: 5,
     paddingBottom: 25,
     height: '100%',
@@ -3095,7 +3097,7 @@ const styles = StyleSheet.create({
   nutritionYAxisLabel: {
     fontSize: 12,
     color: '#8B949E',
-    textAlign: 'right',
+    textAlign: 'left',
     lineHeight: 14,
     height: 14,
   },
