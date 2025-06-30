@@ -1300,97 +1300,54 @@ export default function ProgresScreen() {
           </View>
         )}
 
-        {/* Section Nutrition */}
+        {/* Statistiques selon l'onglet sélectionné */}
         {selectedTab === 'Nutrition' && (
-          <View style={styles.nutritionSection}>
-            {/* Header avec gradient et icône */}
-            <View style={styles.nutritionHeaderContainer}>
-              <View style={styles.nutritionHeaderGradient}>
-                <View style={styles.nutritionHeaderContent}>
-                  <View style={styles.nutritionTitleContainer}>
-                    <View style={styles.nutritionIconContainer}>
-                      <Text style={styles.nutritionIcon}>🔥</Text>
-                    </View>
-                    <Text style={styles.sectionTitleEnhanced}>Apport calorique journalier</Text>
-                  </View>
-                  <View style={styles.nutritionSubtitle}>
-                    <Text style={styles.nutritionSubtitleText}>
-                      Suivez votre consommation énergétique
-                    </Text>
+          <View style={styles.nutritionContainer}>
+            {/* Graphique des calories amélioré */}
+            <View style={styles.nutritionChartContainer}>
+              <View style={styles.enhancedChartHeader}>
+                <View style={styles.chartTitleRow}>
+                  <Text style={styles.chartTitle}>🔥 Apport calorique journalier</Text>
+                  <View style={styles.goalIndicator}>
+                    <Text style={styles.goalText}>Objectif: {calorieGoals.calories} kcal</Text>
                   </View>
                 </View>
               </View>
-            </View>
 
-            {/* Période Selector amélioré */}
-            <View style={styles.periodSelectorEnhanced}>
-              <TouchableOpacity 
-                style={[styles.periodButtonEnhanced, selectedNutritionPeriod === 'Semaine' && styles.activePeriodButtonEnhanced]}
-                onPress={() => setSelectedNutritionPeriod('Semaine')}
-              >
-                <Text style={[styles.periodButtonTextEnhanced, selectedNutritionPeriod === 'Semaine' && styles.activePeriodButtonTextEnhanced]}>
-                  Semaine
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.periodButtonEnhanced, selectedNutritionPeriod === 'Mois' && styles.activePeriodButtonEnhanced]}
-                onPress={() => setSelectedNutritionPeriod('Mois')}
-              >
-                <Text style={[styles.periodButtonTextEnhanced, selectedNutritionPeriod === 'Mois' && styles.activePeriodButtonTextEnhanced]}>
-                  Mois
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Graphique des calories amélioré */}
-            <View style={styles.chartContainerEnhanced}>
-              <View style={styles.chartHeaderEnhanced}>
-                <View style={styles.chartTitleContainer}>
-                  <Text style={styles.chartTitleEnhanced}>
-                    {selectedNutritionPeriod === 'Semaine' ? 'Cette semaine' : 'Ce mois-ci'}
-                  </Text>
-                  <View style={styles.chartBadge}>
-                    <Text style={styles.chartBadgeText}>
-                      {selectedNutritionPeriod === 'Semaine' ? '7j' : '30j'}
+              {/* Onglets de période */}
+              <View style={styles.periodTabsContainer}>
+                {['Semaine', 'Mois'].map((period) => (
+                  <TouchableOpacity 
+                    key={period}
+                    style={[styles.periodTab, selectedNutritionPeriod === period && styles.activePeriodTab]}
+                    onPress={() => setSelectedNutritionPeriod(period)}
+                  >
+                    <Text style={[styles.periodTabText, selectedNutritionPeriod === period && styles.activePeriodTabText]}>
+                      {period}
                     </Text>
-                  </View>
-                </View>
-                <View style={styles.chartStatsContainer}>
-                  <Text style={styles.chartSubtitleEnhanced}>
-                    Moyenne: {selectedNutritionPeriod === 'Semaine' 
-                      ? `${nutritionStats.averageCalories}` 
-                      : `${Math.round(nutritionStats.monthlyCalories.reduce((sum, day) => sum + day.calories, 0) / Math.max(nutritionStats.monthlyCalories.filter(day => day.calories > 0).length, 1))}`
-                    }
-                  </Text>
-                  <Text style={styles.chartUnits}>kcal/jour</Text>
-                </View>
+                  </TouchableOpacity>
+                ))}
               </View>
 
               <View style={styles.nutritionChartArea}>
+                {/* Background avec gradient subtil */}
+                <LinearGradient
+                  colors={['rgba(245, 166, 35, 0.05)', 'rgba(245, 166, 35, 0.02)', 'transparent']}
+                  style={styles.chartBackground}
+                />
+
                 {/* Axe Y pour les calories */}
                 <View style={styles.nutritionYAxis}>
                   {(() => {
-                    // Générer l'axe Y adapté aux données du client avec minimum 1000 kcal et paliers de 500
                     const currentData = selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories;
                     const maxDataCalories = Math.max(...currentData.map(d => d.calories), nutritionStats.averageCalories);
-
-                    // Utiliser l'objectif calorique du client comme référence principale
                     const clientGoal = calorieGoals?.calories || 2200;
-
-                    // Déterminer la valeur max de l'axe Y
                     const maxAxisValue = Math.max(maxDataCalories, clientGoal * 1.2, 1000);
-
-                    // Arrondir au multiple de 500 supérieur, avec minimum 1000
                     const roundedMax = Math.max(1000, Math.ceil(maxAxisValue / 500) * 500);
 
-                    // Générer 5 labels par paliers de 500, en partant du maximum vers 1500
                     const labels = [];
-                    const step = 500;
-                    const numberOfSteps = Math.max(4, Math.floor((roundedMax - 1500) / step));
-
                     for (let i = 0; i < 5; i++) {
                       const value = roundedMax - (i * (roundedMax - 1500) / 4);
-                      // Arrondir au multiple de 500 le plus proche, avec minimum 1500
                       const roundedValue = Math.max(1500, Math.round(value / 500) * 500);
                       labels.push(roundedValue.toString());
                     }
@@ -1409,48 +1366,85 @@ export default function ProgresScreen() {
                     ))}
                   </View>
 
-                  {/* Barres de calories avec wrapper pour positionnement correct */}
+                  {/* Ligne d'objectif calorique */}
+                  <View style={styles.goalLine} />
+
+                  {/* Barres de calories avec couleurs intelligentes */}
                   <View style={styles.caloriesBarsWrapper}>
                     <View style={styles.caloriesBars}>
                       {(selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories).map((dayData, index) => {
                         const currentData = selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories;
                         const maxDataCalories = Math.max(...currentData.map(d => d.calories), nutritionStats.averageCalories);
-
-                        // Utiliser la même logique que pour l'axe Y avec minimum 1500 et paliers de 500
                         const clientGoal = calorieGoals?.calories || 2200;
                         const maxAxisValue = Math.max(maxDataCalories, clientGoal * 1.2, 1500);
                         const roundedMax = Math.max(1500, Math.ceil(maxAxisValue / 500) * 500);
                         const minAxisValue = 1500;
 
-                        // Calculer la hauteur relative entre min et max
-                        let barHeight = 3; // Hauteur minimale si pas de données (très petite)
+                        let barHeight = 3;
                         if (dayData.calories > 0) {
-                          // Si les calories sont inférieures à 1500, ne pas afficher la barre
                           if (dayData.calories < minAxisValue) {
                             barHeight = 0;
                           } else {
-                            // Calculer le pourcentage entre la valeur min (1500) et max de l'axe
                             const percentage = (dayData.calories - minAxisValue) / (roundedMax - minAxisValue);
-                            barHeight = percentage * 75; // Maximum 75% de la hauteur disponible
+                            barHeight = percentage * 75;
                           }
                         }
+
+                        // Couleur intelligente basée sur la performance vs objectif
+                        let barColor = '#8B949E'; // Par défaut (gris)
+                        const performance = dayData.calories / clientGoal;
+
+                        if (dayData.calories === 0) {
+                          barColor = '#21262D'; // Très sombre pour aucune donnée
+                        } else if (performance >= 0.9 && performance <= 1.1) {
+                          barColor = '#28A745'; // Vert - proche de l'objectif
+                        } else if (performance < 0.7) {
+                          barColor = '#DC3545'; // Rouge - trop faible
+                        } else if (performance > 1.3) {
+                          barColor = '#FF6B47'; // Orange-rouge - trop élevé
+                        } else {
+                          barColor = '#F5A623'; // Orange - acceptable
+                        }
+
+                        // Déterminer si c'est aujourd'hui
+                        const today = new Date().toLocaleDateString('fr-FR', { weekday: 'short' });
+                        const isToday = dayData.day.toLowerCase() === today.toLowerCase();
+
                         return (
                           <View key={`${dayData.day}-${index}`} style={[
-                            styles.barContainer,
-                            selectedNutritionPeriod === 'Mois' && styles.monthlyBarContainer
+                            styles.enhancedBarContainer,
+                            selectedNutritionPeriod === 'Mois' && styles.monthlyBarContainer,
+                            isToday && styles.todayBarContainer
                           ]}>
-                            <View style={[
-                              styles.calorieBar, 
-                              { height: `${Math.max(barHeight, 0)}%` },
-                              selectedNutritionPeriod === 'Mois' && styles.monthlyBar
-                            ]}
+                            {/* Valeur au-dessus de la barre */}
+                            {dayData.calories > 0 && (
+                              <Text style={[styles.barValue, isToday && styles.todayBarValue]}>
+                                {dayData.calories}
+                              </Text>
+                            )}
+
+                            {/* Barre avec gradient */}
+                            <LinearGradient
+                              colors={dayData.calories > 0 ? [barColor, `${barColor}99`] : ['#21262D', '#21262D']}
+                              style={[
+                                styles.enhancedCalorieBar, 
+                                { height: `${Math.max(barHeight, 0)}%` },
+                                selectedNutritionPeriod === 'Mois' && styles.monthlyBar,
+                                isToday && styles.todayBar
+                              ]}
                             />
+
+                            {/* Label du jour */}
                             <Text style={[
                               styles.dayLabel,
-                              selectedNutritionPeriod === 'Mois' && styles.monthlyDayLabel
+                              selectedNutritionPeriod === 'Mois' && styles.monthlyDayLabel,
+                              isToday && styles.todayLabel
                             ]}>
                               {dayData.day}
                             </Text>
+
+                            {/* Indicateur "aujourd'hui" */}
+                            {isToday && <View style={styles.todayIndicator} />}
                           </View>
                         );
                       })}
@@ -1458,61 +1452,87 @@ export default function ProgresScreen() {
                   </View>
                 </View>
               </View>
-            </View>
+            }
 
-            {/* Stats Nutrition améliorées */}
-            <View style={styles.nutritionStatsContainerEnhanced}>
-              <View style={styles.nutritionStatCardEnhanced}>
-                <View style={styles.nutritionStatCardHeader}>
-                  <View style={styles.nutritionStatIconContainerCalories}>
-                    <Text style={styles.nutritionStatIconEnhanced}>🔥</Text>
-                  </View>
-                  <View style={styles.nutritionStatValueContainer}>
-                    <Text style={styles.nutritionStatValueEnhanced}>
-                      {nutritionStats.averageCalories || 0}
-                    </Text>
-                    <Text style={styles.nutritionStatUnitEnhanced}>kcal</Text>
-                  </View>
+            {/* Statistiques nutritionnelles */}
+            <View style={styles.nutritionStatsContainer}>
+              <View style={styles.nutritionStatCard}>
+                <View style={styles.statIcon}>
+                  <Text style={styles.iconText}>🔥</Text>
                 </View>
-                <Text style={styles.nutritionStatLabelEnhanced}>Calories moyennes</Text>
-                <View style={styles.nutritionStatProgress}>
-                  <View style={[
-                    styles.nutritionStatProgressBar,
-                    { 
-                      width: `${Math.min((nutritionStats.averageCalories / (calorieGoals?.calories || 2200)) * 100, 100)}%`,
-                      backgroundColor: nutritionStats.averageCalories >= (calorieGoals?.calories || 2200) * 0.8 ? '#FF6B35' : '#FFA500'
-                    }
-                  ]} />
-                </View>
-                <Text style={styles.nutritionStatSubtextEnhanced}>
-                  {nutritionStats.daysWithData > 0 ? `${nutritionStats.daysWithData} jour${nutritionStats.daysWithData > 1 ? 's' : ''} d'activité` : 'Aucune donnée disponible'}
+                <Text style={styles.statLabel}>Calories moyennes</Text>
+                <Text style={styles.statValue}>{nutritionStats.averageCalories} kcal</Text>
+                <Text style={[styles.statTrend, { 
+                  color: nutritionStats.averageCalories > 0 ? 
+                    (nutritionStats.averageCalories >= 1800 ? '#28A745' : '#F5A623') : 
+                    '#8B949E' 
+                }]}>
+                  {nutritionStats.averageCalories > 0 ? 
+                    (nutritionStats.averageCalories >= 1800 ? 
+                      `✓ Objectif atteint (${Math.round((nutritionStats.averageCalories / 2200) * 100)}%)` : 
+                      `${Math.round((nutritionStats.averageCalories / 2200) * 100)}% de l'objectif`) :
+                    'Aucune donnée disponible'
+                  }
                 </Text>
               </View>
 
-              <View style={styles.nutritionStatCardEnhanced}>
-                <View style={styles.nutritionStatCardHeader}>
-                  <View style={styles.nutritionStatIconContainerProteins}>
-                    <Text style={styles.nutritionStatIconEnhanced}>💪</Text>
-                  </View>
-                  <View style={styles.nutritionStatValueContainer}>
-                    <Text style={styles.nutritionStatValueEnhanced}>
-                      {nutritionStats.averageProteins || 0}
-                    </Text>
-                    <Text style={styles.nutritionStatUnitEnhanced}>g</Text>
-                  </View>
+              <View style={styles.nutritionStatCard}>
+                <View style={styles.statIcon}>
+                  <Text style={styles.iconText}>💪</Text>
                 </View>
-                <Text style={styles.nutritionStatLabelEnhanced}>Protéines moyennes</Text>
-                <View style={styles.nutritionStatProgress}>
-                  <View style={[
-                    styles.nutritionStatProgressBar,
-                    { 
-                      width: `${Math.min((nutritionStats.averageProteins / (calorieGoals?.proteins || 125)) * 100, 100)}%`,
-                      backgroundColor: '#FF6B6B'
-                    }
-                  ]} />
+                <Text style={styles.statLabel}>Protéines moyennes</Text>
+                <Text style={styles.statValue}>{nutritionStats.averageProteins}g</Text>
+                <Text style={[styles.statTrend, { 
+                  color: nutritionStats.averageProteins > 0 ? 
+                    (nutritionStats.averageProteins >= 100 ? '#28A745' : '#F5A623') : 
+                    '#8B949E' 
+                }]}>
+                  {nutritionStats.averageProteins > 0 ? 
+                    (nutritionStats.averageProteins >= 100 ? 
+                      `✓ Excellent apport (${Math.round((nutritionStats.averageProteins / 120) * 100)}%)` : 
+                      `${Math.round((nutritionStats.averageProteins / 120) * 100)}% de l'objectif`) :
+                    'Aucune donnée disponible'
+                  }
+                </Text>
+              </View>
+
+              <View style={styles.nutritionStatCard}>
+                <View style={styles.statIcon}>
+                  <Text style={styles.iconText}>🌾</Text>
                 </View>
-                <Text style={styles.nutritionStatSubtextEnhanced}>
-                  {nutritionStats.daysWithData > 0 ? `Objectif: ${calorieGoals?.proteins || 125}g` : 'Aucune donnée disponible'}
+                <Text style={styles.statLabel}>Glucides moyens</Text>
+                <Text style={styles.statValue}>{nutritionStats.averageCarbs}g</Text>
+                <Text style={[styles.statTrend, { 
+                  color: nutritionStats.averageCarbs > 0 ? 
+                    (nutritionStats.averageCarbs >= 200 && nutritionStats.averageCarbs <= 350 ? '#28A745' : '#F5A623') : 
+                    '#8B949E' 
+                }]}>
+                  {nutritionStats.averageCarbs > 0 ? 
+                    (nutritionStats.averageCarbs >= 200 && nutritionStats.averageCarbs <= 350 ? 
+                      '✓ Équilibre optimal' : 
+                      nutritionStats.averageCarbs < 200 ? 'Apport faible' : 'Apport élevé') :
+                    'Aucune donnée disponible'
+                  }
+                </Text>
+              </View>
+
+              <View style={styles.nutritionStatCard}>
+                <View style={styles.statIcon}>
+                  <Text style={styles.iconText}>🥑</Text>
+                </View>
+                <Text style={styles.statLabel}>Lipides moyens</Text>
+                <Text style={styles.statValue}>{nutritionStats.averageFat}g</Text>
+                <Text style={[styles.statTrend, { 
+                  color: nutritionStats.averageFat > 0 ? 
+                    (nutritionStats.averageFat >= 50 && nutritionStats.averageFat <= 100 ? '#28A745' : '#F5A623') : 
+                    '#8B949E' 
+                }]}>
+                  {nutritionStats.averageFat > 0 ? 
+                    (nutritionStats.averageFat >= 50 && nutritionStats.averageFat <= 100 ? 
+                      '✓ Équilibre optimal' : 
+                      nutritionStats.averageFat < 50 ? 'Apport insuffisant' : 'Apport élevé') :
+                    'Aucune donnée disponible'
+                  }
                 </Text>
               </View>
             </View>
@@ -1543,7 +1563,7 @@ export default function ProgresScreen() {
                     Glucides {nutritionStats.averageCalories > 0 ? 
                       Math.round((nutritionStats.averageCarbs * 4 / nutritionStats.averageCalories) * 100) : 0}%
                   </Text>
-                </View><previous_generation>```python
+                </View>
                 <View style={styles.macroLegendItem}>
                   <View style={[styles.macroLegendColor, { backgroundColor: '#FFE66D' }]} />
                   <Text style={styles.macroLegendText}>
@@ -2393,8 +2413,7 @@ const styles = StyleSheet.create({
   progressHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+    alignItems: 'center',    marginBottom: 16,
   },
   progressTitle: {
     fontSize: 16,
@@ -2907,294 +2926,198 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
 
-  nutritionSection: {
+  // Styles pour l'onglet Nutrition
+  nutritionContainer: {
     paddingHorizontal: 20,
     paddingBottom: 100,
   },
-
-  // Nouveaux styles pour l'header nutrition
-  nutritionHeaderContainer: {
-    marginBottom: 24,
-    borderRadius: 20,
-    overflow: 'hidden',
-    shadowColor: '#FFA500',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  nutritionHeaderGradient: {
-    backgroundColor: 'rgba(22, 27, 34, 0.95)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 165, 0, 0.4)',
-    borderRadius: 20,
-  },
-  nutritionHeaderContent: {
-    padding: 24,
-  },
-  nutritionTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  nutritionIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255, 165, 0, 0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 165, 0, 0.3)',
-  },
-  nutritionIcon: {
-    fontSize: 24,
-  },
-  sectionTitleEnhanced: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: 0.5,
-    flex: 1,
-  },
-  nutritionSubtitle: {
-    marginTop: 4,
-  },
-  nutritionSubtitleText: {
-    fontSize: 14,
-    color: '#8B949E',
-    fontWeight: '500',
-    fontStyle: 'italic',
-  },
-
-  // Nouveaux styles pour le sélecteur de période
-  periodSelectorEnhanced: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(13, 17, 23, 0.8)',
+  nutritionChartContainer: {
+    marginBottom: 25,
+    backgroundColor: '#161B22',
     borderRadius: 16,
-    padding: 4,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(139, 148, 158, 0.2)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  periodButtonEnhanced: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'transparent',
-    transition: 'all 0.3s ease',
-  },
-  activePeriodButtonEnhanced: {
-    backgroundColor: '#FFA500',
-    shadowColor: '#FFA500',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  periodButtonTextEnhanced: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#8B949E',
-  },
-  activePeriodButtonTextEnhanced: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-
-  // Nouveaux styles pour le container du graphique
-  chartContainerEnhanced: {
-    backgroundColor: 'rgba(22, 27, 34, 0.95)',
-    borderRadius: 20,
     padding: 20,
-    marginBottom: 24,
-    borderWidth: 1.5,
-    borderColor: 'rgba(139, 148, 158, 0.2)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  chartHeaderEnhanced: {
-    marginBottom: 20,
-  },
-  chartTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  chartTitleEnhanced: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    letterSpacing: 0.3,
-  },
-  chartBadge: {
-    backgroundColor: 'rgba(255, 165, 0, 0.15)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 165, 0, 0.3)',
+    borderColor: '#21262D',
   },
-  chartBadgeText: {
-    fontSize: 12,
-    color: '#FFA500',
-    fontWeight: '600',
-  },
-  chartStatsContainer: {
+  nutritionChartArea: {
     flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 6,
+    height: 180,
   },
-  chartSubtitleEnhanced: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#FFA500',
-    letterSpacing: 0.5,
-  },
-  chartUnits: {
-    fontSize: 14,
-    color: '#8B949E',
-    fontWeight: '500',
-  },
-
-  // Nouveaux styles pour les barres du graphique
-  calorieBarEnhanced: {
-    backgroundColor: 'rgba(255, 165, 0, 0.3)',
-    borderRadius: 6,
-    minHeight: 3,
-    position: 'relative',
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 165, 0, 0.4)',
-  },
-  calorieBarWithData: {
-    backgroundColor: '#FFA500',
-    shadowColor: '#FFA500',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.4,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  calorieBarGradient: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '30%',
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 6,
-  },
-  calorieBarSparkle: {
-    position: 'absolute',
-    top: -8,
-    right: -2,
-  },
-  sparkleIcon: {
-    fontSize: 12,
-  },
-  monthlyBarEnhanced: {
-    borderRadius: 4,
-    minHeight: 2,
-  },
-
-  // Nouveaux styles pour les cartes de statistiques
-  nutritionStatsContainerEnhanced: {
-    flexDirection: 'row',
-    gap: 16,
-    marginTop: 8,
-  },
-  nutritionStatCardEnhanced: {
+  caloriesBarsWrapper: {
     flex: 1,
-    backgroundColor: 'rgba(22, 27, 34, 0.95)',
-    borderRadius: 18,
-    padding: 20,
-    borderWidth: 1.5,
-    borderColor: 'rgba(139, 148, 158, 0.2)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 6,
+    paddingTop: 15, // Décalage vers le bas pour commencer sous la ligne 1500
   },
-  nutritionStatCardHeader: {
+  caloriesBars: {
+    flex: 1,
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  nutritionStatIconContainerCalories: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 107, 53, 0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 107, 53, 0.3)',
-  },
-  nutritionStatIconContainerProteins: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 107, 107, 0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 107, 107, 0.3)',
-  },
-  nutritionStatIconEnhanced: {
-    fontSize: 20,
-  },
-  nutritionStatValueContainer: {
     alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    paddingBottom: 25, // Espace pour les labels des jours
+    paddingHorizontal: 5,
+    height: '85%', // Réduire la hauteur pour laisser de l'espace
   },
-  nutritionStatValueEnhanced: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    lineHeight: 26,
-  },
-  nutritionStatUnitEnhanced: {
-    fontSize: 12,
-    color: '#8B949E',
-    fontWeight: '600',
-    marginTop: -2,
-  },
-  nutritionStatLabelEnhanced: {
-    fontSize: 13,
-    color: '#FFFFFF',
-    fontWeight: '600',
-    marginBottom: 10,
-    letterSpacing: 0.2,
-  },
-  nutritionStatProgress: {
-    height: 6,
-    backgroundColor: 'rgba(33, 38, 45, 0.8)',
-    borderRadius: 3,
-    overflow: 'hidden',
-    marginBottom: 8,
-  },
-  nutritionStatProgressBar: {
+  barContainer: {
+    alignItems: 'center',
+    flex: 1,
     height: '100%',
-    borderRadius: 3,
+    justifyContent: 'flex-end',
   },
-  nutritionStatSubtextEnhanced: {
+  calorieBar: {
+    width: 18,
+    backgroundColor: '#F5A623',
+    borderRadius: 9,
+    marginBottom: 8,
+    minHeight: 4,
+  },
+  dayLabel: {
     fontSize: 11,
     color: '#8B949E',
     fontWeight: '500',
+  },
+  nutritionStatsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 25,
+  },
+  nutritionStatCard: {
+    width: (width - 52) / 2,
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    alignItems: 'center',
+  },
+  macroDistributionCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    marginBottom: 25,
+    alignItems: 'center',
+  },
+  chartSubtitle: {
+    fontSize: 12,
+    color: '#8B949E',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  macroCircularChart: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  macroCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#21262D',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 8,
+    borderColor: '#F5A623',
+  },
+  macroMainText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  macroSubText: {
+    fontSize: 12,
+    color: '#8B949E',
+  },
+  macroLegend: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+  },
+  macroLegendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  macroLegendColor: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  macroLegendText: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: '500',
+  },
+  hydrationProgressCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    marginBottom: 25,
+  },
+  hydrationBars: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    height: 100,
+    paddingHorizontal: 10,
+  },
+  hydrationBarContainer: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  hydrationBarBackground: {
+    width: 16,
+    height: 60,
+    backgroundColor: '#21262D',
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginBottom: 6,
+    justifyContent: 'flex-end',
+  },
+  hydrationBarFill: {
+    width: '100%',
+    borderRadius: 8,
+  },
+  hydrationBarText: {
+    fontSize: 10,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  nutritionSummaryCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  regularityIndicator: {
+    marginTop: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#21262D',
+  },
+  regularityTitle: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  regularityBar: {
+    height: 8,
+    backgroundColor: '#21262D',
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  regularityBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  regularityText: {
+    fontSize: 12,
+    color: '#8B949E',
     textAlign: 'center',
     fontStyle: 'italic',
   },
@@ -3225,5 +3148,89 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     lineHeight: 12,
     height: 12,
+  },
+
+  enhancedChartHeader: {
+    marginBottom: 15,
+  },
+  chartTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  goalIndicator: {
+    backgroundColor: '#28A745',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+  },
+  goalText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  chartBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
+  },
+  goalLine: {
+    position: 'absolute',
+    top: '20%',
+    left: 50,
+    right: 0,
+    height: 1,
+    backgroundColor: '#F5A623',
+    opacity: 0.6,
+  },
+  enhancedBarContainer: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'flex-end',
+    position: 'relative',
+  },
+  enhancedCalorieBar: {
+    width: 22,
+    borderRadius: 11,
+    marginBottom: 5,
+    minHeight: 4,
+  },
+  barValue: {
+    fontSize: 10,
+    color: '#8B949E',
+    fontWeight: '600',
+    position: 'absolute',
+    top: -18,
+    left: 0,
+    right: 0,
+    textAlign: 'center',
+  },
+  todayBarContainer: {
+    transform: [{ scale: 1.1 }],
+  },
+  todayBar: {
+    shadowColor: '#F5A623',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 3,
+  },
+  todayBarValue: {
+    color: '#F5A623',
+    fontWeight: 'bold',
+  },
+  todayLabel: {
+    color: '#F5A623',
+    fontWeight: 'bold',
+  },
+  todayIndicator: {
+    position: 'absolute',
+    bottom: -15,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#F5A623',
   },
 });
