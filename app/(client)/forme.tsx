@@ -193,23 +193,24 @@ export default function FormeScreen() {
   const handleSaveSleep = async () => {
     const inputValue = tempSleep.hours.replace(',', '.');
     
-    // Validation pour format décimal (ex: 7.5 = 7h30min)
+    // Validation pour format décimal (ex: 7.59 = 7h59min maximum)
     const hours = parseFloat(inputValue);
     if (isNaN(hours) || hours < 0 || hours > 24) {
-      Alert.alert('Erreur', 'Veuillez entrer un nombre d\'heures valide (0-24)\nExemple: 7.5 pour 7h30min');
+      Alert.alert('Erreur', 'Veuillez entrer un nombre d\'heures valide (0-24)\nExemple: 7.59 pour 7h59min');
       return;
     }
 
-    // Vérifier que les minutes ne dépassent pas 59
+    // Vérifier que les décimales ne dépassent pas 59 (pour les minutes)
     const wholeHours = Math.floor(hours);
-    const minutes = Math.round((hours - wholeHours) * 60);
+    const decimalPart = hours - wholeHours;
     
-    if (minutes >= 60) {
-      Alert.alert('Erreur', 'Format invalide. Utilisez le format décimal.\nExemple: 7.5 pour 7h30min (pas 7.60)');
+    if (decimalPart > 0.59) {
+      Alert.alert('Erreur', 'Les minutes ne peuvent pas dépasser 59.\nExemple: 7.59 pour 7h59min (maximum)');
       return;
     }
 
-    // Reconvertir en décimal pour stockage cohérent
+    // Convertir les décimales en minutes réelles
+    const minutes = Math.round(decimalPart * 100);
     const correctedHours = wholeHours + (minutes / 60);
 
     const newData = {
@@ -641,11 +642,11 @@ export default function FormeScreen() {
                 style={styles.modalInput}
                 value={tempSleep.hours}
                 onChangeText={(text) => setTempSleep({...tempSleep, hours: text})}
-                placeholder="7.5 (pour 7h30min)"
+                placeholder="7.30 (pour 7h30min)"
                 keyboardType="numeric"
               />
               <Text style={styles.inputHint}>
-                Format: 7.5 = 7h30min, 8.25 = 8h15min
+                Format: 7.30 = 7h30min, 8.15 = 8h15min, 7.59 = 7h59min
               </Text>
             </View>
 
