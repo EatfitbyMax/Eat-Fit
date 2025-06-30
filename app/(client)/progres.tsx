@@ -1543,7 +1543,7 @@ export default function ProgresScreen() {
                     Glucides {nutritionStats.averageCalories > 0 ? 
                       Math.round((nutritionStats.averageCarbs * 4 / nutritionStats.averageCalories) * 100) : 0}%
                   </Text>
-                </View><previous_generation>```python
+                </View>
                 <View style={styles.macroLegendItem}>
                   <View style={[styles.macroLegendColor, { backgroundColor: '#FFE66D' }]} />
                   <Text style={styles.macroLegendText}>
