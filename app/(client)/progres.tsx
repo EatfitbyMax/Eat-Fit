@@ -494,7 +494,7 @@ export default function ProgresScreen() {
     const dataPoints = [];
 
     // Générer les points de données basés sur les données traitées
-    processedData.forEach আওয়ামীলentry, index) => {
+    processedData.forEach((entry, index) => {
       const position = getDataPointPosition(entry.weight, index, processedData.length, allLabels);
       dataPoints.push(
         <View 
