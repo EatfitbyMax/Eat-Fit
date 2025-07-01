@@ -134,6 +134,20 @@ export default function ForgotPasswordScreen() {
               Vérifiez votre boîte de réception (et vos spams) puis changez ce mot de passe lors de votre prochaine connexion.
             </Text>
           </View>
+
+          {/* Bouton de test temporaire - à supprimer après test */}
+          <TouchableOpacity 
+            style={[styles.button, { backgroundColor: '#28a745', marginTop: 20 }]} 
+            onPress={async () => {
+              const testResult = await EmailService.testEmailConfiguration();
+              Alert.alert(
+                'Test EmailJS', 
+                testResult ? 'Configuration OK ! ✅' : 'Erreur de configuration ❌'
+              );
+            }}
+          >
+            <Text style={styles.buttonText}>🧪 Tester la configuration EmailJS</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </SafeAreaView>
