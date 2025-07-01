@@ -547,12 +547,11 @@ export default function CreerEntrainementScreen() {
 
     return (
       <Modal visible={showExerciseModal} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <KeyboardAvoidingView
-            style={{ flex: 1 }}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20} // Adjust as needed
-          >
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+        >
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
@@ -564,11 +563,11 @@ export default function CreerEntrainementScreen() {
             </View>
 
             <ScrollView 
-            style={styles.modalContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 20 }}
-          >
+              style={styles.modalContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 20 }}
+            >
               {/* Nom de l'exercice avec suggestions */}
               <View style={styles.inputGroup}>
                 <View style={styles.labelWithSuggestion}>
@@ -772,8 +771,7 @@ export default function CreerEntrainementScreen() {
               </TouchableOpacity>
             </ScrollView>
           </View>
-          </KeyboardAvoidingView>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     );
   };
@@ -1237,9 +1235,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#0D1117',
     borderRadius: 12,
     width: '100%',
-    maxHeight: '80%',
+    maxHeight: '85%',
     borderWidth: 1,
     borderColor: '#21262D',
+    alignSelf: 'center',
   },
   modalHeader: {
     flexDirection: 'row',
