@@ -2542,7 +2542,8 @@ const styles = StyleSheet.create({
   
   chartArea: {
     flexDirection: 'row',
-    height: 200,
+    height: 220,
+    paddingBottom: 20,
   },
   yAxis: {
     justifyContent: 'space-between',
@@ -2568,6 +2569,7 @@ const styles = StyleSheet.create({
   chartContent: {
     width: Math.max(width - 120, 400), // Largeur minimum pour garantir le scroll
     position: 'relative',
+    height: '100%',
   },
   gridContainer: {
     position: 'absolute',
@@ -2618,16 +2620,20 @@ const styles = StyleSheet.create({
   },
   xAxis: {
     position: 'absolute',
-    bottom: -30,
+    bottom: -25,
     left: 0,
     right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    paddingHorizontal: 5,
+    height: 20,
   },
   xAxisLabel: {
     fontSize: 11,
     color: '#8B949E',
     fontWeight: '500',
+    textAlign: 'center',
+    flex: 1,
   },
   summaryContainer: {
     marginHorizontal: 20,
