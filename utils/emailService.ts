@@ -8,6 +8,12 @@ const EMAILJS_CONFIG = {
   PUBLIC_KEY: process.env.EXPO_PUBLIC_EMAILJS_PUBLIC_KEY || 'your_public_key',
 };
 
+console.log('🔧 Configuration EmailJS:', {
+  SERVICE_ID: EMAILJS_CONFIG.SERVICE_ID,
+  TEMPLATE_ID: EMAILJS_CONFIG.TEMPLATE_ID,
+  PUBLIC_KEY: EMAILJS_CONFIG.PUBLIC_KEY ? `${EMAILJS_CONFIG.PUBLIC_KEY.substring(0, 10)}...` : 'NON DÉFINIE',
+});
+
 export interface EmailParams {
   to_email: string;
   to_name: string;
@@ -20,7 +26,14 @@ export class EmailService {
     try {
       console.log('📧 Envoi du mail de réinitialisation à:', params.to_email);
       
+      // Vérifier que la clé publique est valide
+      if (!EMAILJS_CONFIG.PUBLIC_KEY || EMAILJS_CONFIG.PUBLIC_KEY === 'your_public_key') {
+        console.error('❌ Clé publique EmailJS non configurée');
+        return false;
+      }
+      
       // Initialiser EmailJS avec votre clé publique
+      console.log('🔑 Initialisation EmailJS avec la clé:', EMAILJS_CONFIG.PUBLIC_KEY.substring(0, 10) + '...');
       emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
       
       // Paramètres du template email
