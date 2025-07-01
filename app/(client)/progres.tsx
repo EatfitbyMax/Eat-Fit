@@ -1274,7 +1274,7 @@ export default function ProgresScreen() {
         }
       }
 
-      // Calculer les statistiques des 7 derniers jours
+      // Calculer les statistiques de la semaine courante (lundi à dimanche)
       const last7DaysNutrition = [];
       const last7DaysHydration = [];
       let totalCaloriesWeek = 0;
@@ -1285,9 +1285,16 @@ export default function ProgresScreen() {
       let daysWithData = 0;
       let daysWithHydration = 0;
 
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
+      // Calculer le début de la semaine courante (lundi)
+      const today = new Date();
+      const currentDay = today.getDay(); // 0 = dimanche, 1 = lundi, etc.
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - (currentDay === 0 ? 6 : currentDay - 1)); // Ajuster pour commencer le lundi
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(startOfWeek);
+        date.setDate(startOfWeek.getDate() + i);
         const dateString = date.toISOString().split('T')[0];
 
         // Données nutritionnelles
