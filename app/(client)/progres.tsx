@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Alert, TextInput, Modal } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring } from 'react-native-reanimated';
+import { useFocusEffect } from 'expo-router';
 import { checkSubscriptionStatus } from '@/utils/subscription';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PersistentStorage } from '@/utils/storage';
@@ -97,6 +98,13 @@ export default function ProgresScreen() {
     loadProgressData();
     loadNutritionData();
   }, []);
+
+  // Recharger les données utilisateur quand l'écran est focalisé pour prendre en compte les changements d'objectifs
+  useFocusEffect(
+    React.useCallback(() => {
+      loadUserData();
+    }, [])
+  );
 
   // Charger les données de mensurations
   useEffect(() => {
@@ -584,9 +592,10 @@ export default function ProgresScreen() {
     const minDataWeight = Math.min(...weights.filter(w => w > 0));
     const maxDataWeight = Math.max(...weights.filter(w => w > 0));
 
-    // Déterminer l'objectif de l'utilisateur
-    const isWeightLoss = userData?.goals?.includes('Perdre du poids');
-    const isMuscleGain = userData?.goals?.includes('Prendre du muscle');
+    // Déterminer l'objectif de l'utilisateur en temps réel
+    const currentUserGoals = userData?.goals || [];
+    const isWeightLoss = currentUserGoals.includes('Perdre du poids');
+    const isMuscleGain = currentUserGoals.includes('Me muscler') || currentUserGoals.includes('Prendre du muscle');
 
     let minWeight, maxWeight;
 
