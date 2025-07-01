@@ -493,14 +493,19 @@ export default function ProgresScreen() {
     const allLabels = generatePeriodLabels();
     const dataPoints = [];
 
-    // Générer les points de données basés sur les données traitées
+    // Générer les points de données basés sur les données traitées avec leurs labels
     processedData.forEach((entry, index) => {
       const position = getDataPointPosition(entry.weight, index, processedData.length, allLabels);
+      const label = allLabels[index] || '';
+      
       dataPoints.push(
         <View 
           key={`weight-${entry.date.toISOString()}-${index}`} 
-          style={[styles.dataPoint, position]} 
-        />
+          style={[styles.dataPointContainer, position]}
+        >
+          <View style={styles.dataPoint} />
+          <Text style={styles.dataPointLabel}>{label}</Text>
+        </View>
       );
     });
 
@@ -576,11 +581,11 @@ export default function ProgresScreen() {
     const minWeight = Math.floor((minDataWeight - 10) / 5) * 5;
     const maxWeight = Math.ceil((maxDataWeight + 10) / 5) * 5;
 
-    // Générer 6 labels avec des intervalles de 5 kg
+    // Générer 5 labels avec des intervalles de 5 kg (supprimer un label)
     const labels = [];
-    const step = (maxWeight - minWeight) / 5;
+    const step = (maxWeight - minWeight) / 4;
 
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 5; i++) {
       const weight = maxWeight - (i * step);
       // Arrondir au multiple de 5 le plus proche
       const roundedWeight = Math.round(weight / 5) * 5;
@@ -1896,7 +1901,7 @@ export default function ProgresScreen() {
               <View style={styles.chartContent}>
                 {/* Grid */}
                 <View style={styles.gridContainer}>
-                  {[...Array(6)].map((_, i) => (
+                  {[...Array(5)].map((_, i) => (
                     <View key={i} style={styles.gridLine} />
                   ))}
                 </View>
@@ -1904,53 +1909,12 @@ export default function ProgresScreen() {
                 {/* Enhanced Weight Line with Gradient */}
                 {renderWeightChart()}
 
-                {/* X-axis labels */}
-                <View style={styles.xAxis}>
-                  {generatePeriodLabels().map((label, index) => {
-                    const totalLabels = generatePeriodLabels().length;
-                    let leftPosition = 0;
-
-                    if (totalLabels > 1) {
-                      // Utiliser la même logique que pour les points de données
-                      const marginPercentage = 5;
-                      const usableWidth = 100 - (2 * marginPercentage);
-                      leftPosition = marginPercentage + (index / (totalLabels - 1)) * usableWidth;
-                    } else {
-                      leftPosition = 50; // Label unique au centre
-                    }
-
-                    return (
-                      <Text 
-                        key={index} 
-                        style={[
-                          styles.xAxisLabel, 
-                          { 
-                            position: 'absolute',
-                            left: `${leftPosition}%`,
-                            bottom: -25, // Descendre davantage pour être sûr d'être visible
-                            transform: [{ translateX: -12 }], // Centrer le texte
-                            zIndex: 10, // S'assurer qu'ils sont au-dessus
-                            elevation: 10, // Pour Android
-                          }
-                        ]}
-                      >
-                        {label}
-                      </Text>
-                    );
-                  })}
-                </View>
+                
               </View>
             </ScrollView>
           </View>
 
-          {/* Labels en dessous du graphique - version de secours */}
-          <View style={styles.xAxisLabelsContainer}>
-            {generatePeriodLabels().map((label, index) => (
-              <Text key={`bottom-${index}`} style={styles.xAxisLabelBottom}>
-                {label}
-              </Text>
-            ))}
-          </View>
+          
         </View>
         )}
 
@@ -2649,14 +2613,24 @@ flexDirection: 'row',
     right: 15,
     bottom: 25,
   },
-  dataPoint: {
+  dataPointContainer: {
     position: 'absolute',
+    alignItems: 'center',
+  },
+  dataPoint: {
     width: 8,
     height: 8,
     backgroundColor: '#F5A623',
     borderRadius: 4,
     borderWidth: 2,
     borderColor: '#FFFFFF',
+    marginBottom: 6,
+  },
+  dataPointLabel: {
+    fontSize: 10,
+    color: '#8B949E',
+    fontWeight: '500',
+    textAlign: 'center',
   },
   xAxis: {
     position: 'absolute',
