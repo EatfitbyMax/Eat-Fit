@@ -45,11 +45,32 @@ export default function GererEntrainementsScreen() {
     initializeData();
   }, []);
 
+  // Surveiller les changements de paramètres pour mettre à jour les données
+  useEffect(() => {
+    const selectedDayParam = params.selectedDay as string;
+    const selectedDateParam = params.selectedDate as string;
+    
+    console.log('=== CHANGEMENT DE PARAMÈTRES ===');
+    console.log('Nouveau jour:', selectedDayParam);
+    console.log('Nouvelle date:', selectedDateParam);
+    
+    if (selectedDayParam && selectedDateParam) {
+      // Mettre à jour les états locaux
+      setSelectedDay(selectedDayParam);
+      setSelectedDate(selectedDateParam);
+      
+      // Recharger les données pour la nouvelle date
+      loadWorkoutsData(selectedDateParam);
+    }
+  }, [params.selectedDay, params.selectedDate]);
+
   // Recharger quand l'écran reprend le focus
   useFocusEffect(
     useCallback(() => {
       console.log('=== FOCUS EFFECT GERER-ENTRAINEMENTS ===');
-      loadWorkoutsData();
+      if (selectedDate) {
+        loadWorkoutsData(selectedDate);
+      }
     }, [selectedDate])
   );
 
@@ -61,13 +82,9 @@ export default function GererEntrainementsScreen() {
     console.log('Jour sélectionné:', selectedDayParam);
     console.log('Date sélectionnée:', selectedDateParam);
 
+    // Juste définir les états initiaux, les données seront chargées par l'effet de surveillance des paramètres
     setSelectedDay(selectedDayParam || '');
     setSelectedDate(selectedDateParam || '');
-    
-    // Charger les entraînements après avoir défini la date
-    if (selectedDateParam) {
-      loadWorkoutsData(selectedDateParam);
-    }
   };
 
   const loadWorkoutsData = async (targetDate?: string) => {
