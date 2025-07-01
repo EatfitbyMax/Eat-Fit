@@ -21,8 +21,9 @@ export default function EntrainementScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [hasSubscription, setHasSubscription] = useState(false);
   const [currentWeek, setCurrentWeek] = useState(() => {
-    // Utiliser la date actuelle réelle
+    // Utiliser la date actuelle en UTC pour éviter les problèmes de fuseau horaire
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     return today;
   });
   const [workouts, setWorkouts] = useState<any[]>([]);
@@ -191,15 +192,18 @@ export default function EntrainementScreen() {
     const dayIndex = daysOfWeek.indexOf(day);
     
     // Créer une nouvelle date pour éviter les mutations
-    const targetDate = new Date(start);
+    const targetDate = new Date(start.getTime());
     targetDate.setDate(start.getDate() + dayIndex);
-    targetDate.setHours(0, 0, 0, 0); // Reset à minuit
+    targetDate.setHours(0, 0, 0, 0);
     
-    const dateString = targetDate.toISOString().split('T')[0];
+    // Utiliser le format YYYY-MM-DD de manière cohérente
+    const year = targetDate.getFullYear();
+    const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+    const dayNum = String(targetDate.getDate()).padStart(2, '0');
+    const dateString = `${year}-${month}-${dayNum}`;
 
     const count = workouts.filter(workout => workout.date === dateString).length;
     
-    // Debug simplifié
     console.log(`${day}: ${dateString} -> ${count} séance(s)`);
     
     return count;
@@ -270,18 +274,21 @@ export default function EntrainementScreen() {
   };
 
   const getWeekRange = () => {
-    const startOfWeek = new Date(currentWeek);
-    startOfWeek.setHours(0, 0, 0, 0); // Reset à minuit
+    // Créer une nouvelle date basée sur currentWeek pour éviter les mutations
+    const referenceDate = new Date(currentWeek.getTime());
+    referenceDate.setHours(0, 0, 0, 0);
     
     // Calculer le lundi de la semaine courante
-    const dayOfWeek = startOfWeek.getDay(); // 0 = dimanche, 1 = lundi, ..., 6 = samedi
+    const dayOfWeek = referenceDate.getDay(); // 0 = dimanche, 1 = lundi, ..., 6 = samedi
     const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Distance depuis lundi
     
-    startOfWeek.setDate(startOfWeek.getDate() - daysFromMonday);
+    const startOfWeek = new Date(referenceDate);
+    startOfWeek.setDate(referenceDate.getDate() - daysFromMonday);
+    startOfWeek.setHours(0, 0, 0, 0);
 
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6);
-    endOfWeek.setHours(23, 59, 59, 999); // Fin de journée
+    endOfWeek.setHours(23, 59, 59, 999);
 
     return {
       start: startOfWeek,
@@ -296,19 +303,33 @@ export default function EntrainementScreen() {
 
   const getStravaActivitiesForCurrentWeek = () => {
     const { start, end } = getWeekRange();
+    
     return stravaActivities.filter(activity => {
+      // Normaliser la date d'activité pour éviter les problèmes de fuseau horaire
       const activityDate = new Date(activity.date);
-      return activityDate >= start && activityDate <= end;
+      activityDate.setHours(0, 0, 0, 0);
+      
+      // Créer des copies des dates de début et fin pour la comparaison
+      const startDate = new Date(start.getTime());
+      const endDate = new Date(end.getTime());
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(23, 59, 59, 999);
+      
+      return activityDate >= startDate && activityDate <= endDate;
     });
   };
 
   const navigateWeek = (direction: 'prev' | 'next') => {
-    const newWeek = new Date(currentWeek);
+    const newWeek = new Date(currentWeek.getTime());
+    newWeek.setHours(0, 0, 0, 0);
+    
     if (direction === 'prev') {
       newWeek.setDate(newWeek.getDate() - 7);
     } else {
       newWeek.setDate(newWeek.getDate() + 7);
     }
+    
+    console.log(`Navigation semaine ${direction}: ${newWeek.toISOString().split('T')[0]}`);
     setCurrentWeek(newWeek);
   };
 
@@ -317,11 +338,15 @@ export default function EntrainementScreen() {
     const dayIndex = daysOfWeek.indexOf(jour);
     
     // Créer une nouvelle date pour éviter les mutations
-    const targetDate = new Date(start);
+    const targetDate = new Date(start.getTime());
     targetDate.setDate(start.getDate() + dayIndex);
-    targetDate.setHours(0, 0, 0, 0); // Reset à minuit
+    targetDate.setHours(0, 0, 0, 0);
     
-    const dateString = targetDate.toISOString().split('T')[0];
+    // Utiliser le même format que getWorkoutsCountForDay
+    const year = targetDate.getFullYear();
+    const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+    const dayNum = String(targetDate.getDate()).padStart(2, '0');
+    const dateString = `${year}-${month}-${dayNum}`;
     
     console.log(`=== CLIC SUR ${jour.toUpperCase()} ===`);
     console.log(`Date calculée: ${dateString}`);
@@ -331,6 +356,7 @@ export default function EntrainementScreen() {
     const dayWorkouts = workouts.filter(workout => workout.date === dateString);
     
     console.log(`Entraînements trouvés pour ${jour}: ${dayWorkouts.length}`);
+    console.log('Workouts disponibles:', workouts.map(w => `${w.date}: ${w.name}`));
     console.log('=== FIN DEBUG CLIC ===');
 
     if (dayWorkouts.length > 0) {
@@ -574,7 +600,12 @@ export default function EntrainementScreen() {
   // Fonction pour vérifier si une date est aujourd'hui
   const isToday = (targetDate: Date) => {
     const today = getTodayDate();
-    return targetDate.getTime() === today.getTime();
+    const target = new Date(targetDate.getTime());
+    target.setHours(0, 0, 0, 0);
+    
+    return target.getFullYear() === today.getFullYear() &&
+           target.getMonth() === today.getMonth() &&
+           target.getDate() === today.getDate();
   };
 
   return (
@@ -655,7 +686,7 @@ export default function EntrainementScreen() {
                 const sessionCount = getWorkoutsCountForDay(jour);
                 const { start } = getWeekRange();
                 const dayIndex = daysOfWeek.indexOf(jour);
-                const targetDate = new Date(start);
+                const targetDate = new Date(start.getTime());
                 targetDate.setDate(start.getDate() + dayIndex);
                 targetDate.setHours(0, 0, 0, 0);
                 
