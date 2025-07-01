@@ -20,8 +20,8 @@ export default function EntrainementScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [hasSubscription, setHasSubscription] = useState(false);
   const [currentWeek, setCurrentWeek] = useState(() => {
-    // Mardi 1er juillet 2025
-    const today = new Date('2025-07-01');
+    // Lundi 30 juin 2025 (pour que le 1er juillet soit mardi et le 2 juillet mercredi)
+    const today = new Date('2025-06-30');
     return today;
   });
   const [workouts, setWorkouts] = useState<any[]>([]);
