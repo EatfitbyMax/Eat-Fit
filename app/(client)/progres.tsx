@@ -1911,7 +1911,7 @@ export default function ProgresScreen() {
                     let leftPosition = 0;
 
                     if (totalLabels > 1) {
-                      // Espacement uniforme avec marge de 5% de chaque côté
+                      // Utiliser la même logique que pour les points de données
                       const marginPercentage = 5;
                       const usableWidth = 100 - (2 * marginPercentage);
                       leftPosition = marginPercentage + (index / (totalLabels - 1)) * usableWidth;
@@ -1927,8 +1927,8 @@ export default function ProgresScreen() {
                           { 
                             position: 'absolute',
                             left: `${leftPosition}%`,
-                            top: '85%',
-                            transform: [{ translateX: -15 }] // Centrer le texte
+                            bottom: -10, // Positionner en dessous du graphique
+                            transform: [{ translateX: -12 }] // Centrer le texte
                           }
                         ]}
                       >
@@ -2649,17 +2649,17 @@ flexDirection: 'row',
   },
   xAxis: {
     position: 'absolute',
-    top: '85%', // Position à 85% de la hauteur du conteneur pour être en dessous de la ligne 60
+    bottom: 0, // Position en bas du conteneur
     left: 0,
     right: 0,
-    height: 20,
+    height: 25,
   },
   xAxisLabel: {
     fontSize: 11,
     color: '#8B949E',
     fontWeight: '500',
     textAlign: 'center',
-    width: 30,
+    width: 24,
   },
   summaryContainer: {
     marginHorizontal: 20,
