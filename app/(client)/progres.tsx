@@ -1927,8 +1927,10 @@ export default function ProgresScreen() {
                           { 
                             position: 'absolute',
                             left: `${leftPosition}%`,
-                            bottom: -10, // Positionner en dessous du graphique
-                            transform: [{ translateX: -12 }] // Centrer le texte
+                            bottom: -25, // Descendre davantage pour être sûr d'être visible
+                            transform: [{ translateX: -12 }], // Centrer le texte
+                            zIndex: 10, // S'assurer qu'ils sont au-dessus
+                            elevation: 10, // Pour Android
                           }
                         ]}
                       >
@@ -1939,6 +1941,15 @@ export default function ProgresScreen() {
                 </View>
               </View>
             </ScrollView>
+          </View>
+
+          {/* Labels en dessous du graphique - version de secours */}
+          <View style={styles.xAxisLabelsContainer}>
+            {generatePeriodLabels().map((label, index) => (
+              <Text key={`bottom-${index}`} style={styles.xAxisLabelBottom}>
+                {label}
+              </Text>
+            ))}
           </View>
         </View>
         )}
@@ -2660,6 +2671,20 @@ flexDirection: 'row',
     fontWeight: '500',
     textAlign: 'center',
     width: 24,
+  },
+  xAxisLabelsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 60, // Aligner avec le graphique
+    paddingTop: 10,
+    paddingBottom: 5,
+  },
+  xAxisLabelBottom: {
+    fontSize: 11,
+    color: '#8B949E',
+    fontWeight: '500',
+    textAlign: 'center',
+    flex: 1,
   },
   summaryContainer: {
     marginHorizontal: 20,
