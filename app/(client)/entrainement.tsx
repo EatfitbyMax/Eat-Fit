@@ -188,19 +188,16 @@ export default function EntrainementScreen() {
     const dayIndex = daysOfWeek.indexOf(day);
     
     // Créer une nouvelle date pour éviter les mutations
-    const targetDate = new Date(start.getTime());
+    const targetDate = new Date(start);
     targetDate.setDate(start.getDate() + dayIndex);
-    targetDate.setHours(0, 0, 0, 0); // Reset à minuit pour éviter les problèmes de timezone
+    targetDate.setHours(0, 0, 0, 0); // Reset à minuit
     
     const dateString = targetDate.toISOString().split('T')[0];
 
     const count = workouts.filter(workout => workout.date === dateString).length;
     
-    // Debug pour tous les jours pour identifier le problème
-    if (count > 0 || day === 'Lundi') {
-      console.log(`DEBUG ${day}: targetDate=${targetDate.toDateString()}, dateString=${dateString}, count=${count}`);
-      console.log('Workouts trouvés:', workouts.filter(workout => workout.date === dateString).map(w => w.name));
-    }
+    // Debug simplifié
+    console.log(`${day}: ${dateString} -> ${count} séance(s)`);
     
     return count;
   };
@@ -316,34 +313,19 @@ export default function EntrainementScreen() {
     const dayIndex = daysOfWeek.indexOf(jour);
     
     // Créer une nouvelle date pour éviter les mutations
-    const targetDate = new Date(start.getTime());
+    const targetDate = new Date(start);
     targetDate.setDate(start.getDate() + dayIndex);
-    targetDate.setHours(0, 0, 0, 0); // Reset à minuit pour éviter les problèmes de timezone
+    targetDate.setHours(0, 0, 0, 0); // Reset à minuit
     
     const dateString = targetDate.toISOString().split('T')[0];
     
     console.log(`=== CLIC SUR ${jour.toUpperCase()} ===`);
-    console.log(`Index du jour: ${dayIndex}`);
-    console.log(`Date de début de semaine: ${start.toISOString().split('T')[0]}`);
     console.log(`Date calculée: ${dateString}`);
-    console.log(`Date target complète: ${targetDate.toISOString()}`);
 
-    // Récupérer les entraînements du jour avec debug amélioré
-    const dayWorkouts = workouts.filter(workout => {
-      const match = workout.date === dateString;
-      if (jour === 'Lundi' || match) {
-        console.log(`Workout "${workout.name}" (${workout.date}) - Match: ${match} - Recherché: ${dateString}`);
-      }
-      return match;
-    });
+    // Récupérer les entraînements du jour
+    const dayWorkouts = workouts.filter(workout => workout.date === dateString);
     
-    console.log(`Entraînements trouvés pour ${jour} (${dateString}): ${dayWorkouts.length}`);
-    
-    // Afficher tous les workouts pour debug
-    if (jour === 'Lundi') {
-      console.log('Tous les workouts disponibles:', workouts.map(w => ({ name: w.name, date: w.date })));
-    }
-    
+    console.log(`Entraînements trouvés pour ${jour}: ${dayWorkouts.length}`);
     console.log('=== FIN DEBUG CLIC ===');
 
     if (dayWorkouts.length > 0) {
@@ -659,7 +641,11 @@ export default function EntrainementScreen() {
                 const dayIndex = daysOfWeek.indexOf(jour);
                 const targetDate = new Date(start);
                 targetDate.setDate(start.getDate() + dayIndex);
-                const isToday = targetDate.toDateString() === new Date().toDateString();
+                targetDate.setHours(0, 0, 0, 0);
+                
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const isToday = targetDate.getTime() === today.getTime();
 
                 return (
                   <TouchableOpacity 
