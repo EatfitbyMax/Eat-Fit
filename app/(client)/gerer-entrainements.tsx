@@ -131,11 +131,13 @@ export default function GererEntrainementsScreen() {
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString + 'T00:00:00');
+    // Forcer le parsing en UTC pour éviter les décalages de fuseau horaire
+    const date = new Date(dateString + 'T00:00:00.000Z');
     return date.toLocaleDateString('fr-FR', {
       weekday: 'long',
       day: 'numeric',
-      month: 'long'
+      month: 'long',
+      timeZone: 'Europe/Paris'
     });
   };
 
