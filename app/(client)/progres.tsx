@@ -85,7 +85,7 @@ export default function ProgresScreen() {
     daysWithData: 0,
     weeklyHydration: []
   });
-  const [selectedNutritionPeriod, setSelectedNutritionPeriod] = useState('Semaine');
+  const [selectedNutritionPeriod, setSelectedNutritionPeriod] = useState('Jours');
   const [calorieGoals, setCalorieGoals] = useState({
     calories: 2200,
     proteins: 110,
@@ -627,9 +627,10 @@ export default function ProgresScreen() {
   };
 
   const generateNutritionYAxisLabels = () => {
-    const currentData = selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : 
+    const currentData = selectedNutritionPeriod === 'Jours' ? nutritionStats.weeklyCalories : 
+                       selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : 
                        selectedNutritionPeriod === 'Mois' ? nutritionStats.monthlyCalories : 
-                       nutritionStats.weeklyCalories; // fallback pour 'Années'
+                       nutritionStats.weeklyCalories; // fallback
 
     if (currentData.length === 0) {
       return ['3000', '2500', '2000', '1500', '1000'];
@@ -746,7 +747,32 @@ export default function ProgresScreen() {
     const labels = [];
     const monthNames = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
 
-    if (selectedNutritionPeriod === 'Semaine') {
+    if (selectedNutritionPeriod === 'Jours') {
+      const processedData = getProcessedNutritionData();
+      
+      processedData.forEach(entry => {
+        const dayName = entry.date.toLocaleDateString('fr-FR', { weekday: 'short' });
+        labels.push(dayName);
+      });
+
+      if (labels.length < 7) {
+        const currentDate = new Date();
+        const existingDays = new Set(labels);
+        
+        for (let i = 6; i >= 0; i--) {
+          const targetDate = new Date(currentDate);
+          targetDate.setDate(currentDate.getDate() - i);
+          const dayName = targetDate.toLocaleDateString('fr-FR', { weekday: 'short' });
+          
+          if (!existingDays.has(dayName)) {
+            labels.push(dayName);
+          }
+        }
+      }
+
+      return labels.slice(-7);
+      
+    } else if (selectedNutritionPeriod === 'Semaine') {
       const processedData = getProcessedNutritionData();
       
       processedData.forEach(entry => {
@@ -806,31 +832,9 @@ export default function ProgresScreen() {
       }
 
       return labels.slice(-6);
-      
-    } else { // Années
-      const processedData = getProcessedNutritionData();
-      
-      processedData.forEach(entry => {
-        const year = entry.date.getFullYear().toString();
-        if (!labels.includes(year)) {
-          labels.push(year);
-        }
-      });
-
-      if (labels.length < 6) {
-        const currentYear = new Date().getFullYear();
-        const existingYears = new Set(labels);
-        
-        for (let i = 5; i >= 0; i--) {
-          const year = (currentYear - i).toString();
-          if (!existingYears.has(year)) {
-            labels.push(year);
-          }
-        }
-      }
-
-      return labels.slice(-6);
     }
+
+    return labels;
   };
 
   const getProcessedNutritionData = () => {
@@ -844,7 +848,10 @@ export default function ProgresScreen() {
     }));
 
     // Filtrer selon la période
-    if (selectedNutritionPeriod === 'Semaine') {
+    if (selectedNutritionPeriod === 'Jours') {
+      const sevenDaysAgo = new Date(currentDate.getTime() - (7 * 24 * 60 * 60 * 1000));
+      return processedData.filter(entry => entry.date >= sevenDaysAgo).slice(-7);
+    } else if (selectedNutritionPeriod === 'Semaine') {
       const sixWeeksAgo = new Date(currentDate.getTime() - (6 * 7 * 24 * 60 * 60 * 1000));
       return processedData.filter(entry => entry.date >= sixWeeksAgo).slice(-6);
     } else if (selectedNutritionPeriod === 'Mois') {
@@ -875,34 +882,9 @@ export default function ProgresScreen() {
         }))
         .sort((a, b) => a.date.getTime() - b.date.getTime())
         .slice(-6);
-    } else { // Années
-      const sixYearsAgo = new Date(currentDate.getTime() - (6 * 365 * 24 * 60 * 60 * 1000));
-      const yearlyData = processedData.filter(entry => entry.date >= sixYearsAgo);
-      
-      // Regrouper par année
-      const yearlyAverages = new Map();
-      yearlyData.forEach(entry => {
-        const yearKey = entry.date.getFullYear().toString();
-        if (!yearlyAverages.has(yearKey)) {
-          yearlyAverages.set(yearKey, { 
-            total: 0, 
-            count: 0, 
-            date: new Date(entry.date.getFullYear(), 0, 1) 
-          });
-        }
-        const yearData = yearlyAverages.get(yearKey);
-        yearData.total += entry.calories;
-        yearData.count += 1;
-      });
-
-      return Array.from(yearlyAverages.values())
-        .map(year => ({
-          calories: year.total / year.count,
-          date: year.date
-        }))
-        .sort((a, b) => a.date.getTime() - b.date.getTime())
-        .slice(-6);
     }
+
+    return processedData;
   };
 
   // Fonction pour calculer le numéro de semaine ISO 8601
@@ -1744,7 +1726,7 @@ export default function ProgresScreen() {
 
               {/* Onglets de période */}
               <View style={styles.periodTabsContainer}>
-                {['Semaine', 'Mois', 'Années'].map((period) => (
+                {['Jours', 'Semaine', 'Mois'].map((period) => (
                   <TouchableOpacity 
                     key={period}
                     style={[styles.periodTab, selectedNutritionPeriod === period && styles.activePeriodTab]}
