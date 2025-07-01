@@ -273,9 +273,10 @@ export default function EntrainementScreen() {
     const startOfWeek = new Date(currentWeek);
     startOfWeek.setHours(0, 0, 0, 0); // Reset à minuit
     
+    // Calculer le lundi de la semaine courante
     const day = startOfWeek.getDay();
-    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
-    startOfWeek.setDate(diff);
+    const diff = day === 0 ? -6 : 1 - day; // Si c'est dimanche (0), reculer de 6 jours, sinon calculer la différence avec lundi (1)
+    startOfWeek.setDate(startOfWeek.getDate() + diff);
 
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6);
