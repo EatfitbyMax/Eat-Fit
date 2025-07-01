@@ -8,7 +8,9 @@ import {
   SafeAreaView, 
   TextInput, 
   Alert,
-  Modal
+  Modal,
+  KeyboardAvoidingView,
+  Platform
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { getCurrentUser } from '../../utils/auth';
@@ -546,6 +548,11 @@ export default function CreerEntrainementScreen() {
     return (
       <Modal visible={showExerciseModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20} // Adjust as needed
+          >
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
@@ -765,7 +772,7 @@ export default function CreerEntrainementScreen() {
               </TouchableOpacity>
             </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     );
   };
