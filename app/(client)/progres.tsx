@@ -588,54 +588,49 @@ export default function ProgresScreen() {
     return labels;
   };
 
-  const generatePeriodLabels = () => {
-    if (!weightData.startWeight || !userData?.createdAt) {
-      if (selectedPeriod === 'Semaines') return ['S1', 'S2', 'S3', 'S4', 'S5', 'S6'];
-      if (selectedPeriod === 'Mois') return ['Janv', 'Mars', 'Mai', 'Juil', 'Sept', 'Déc'];
-      return ['2023', '2024', '2025'];
-    }
+  // Fonction pour calculer le numéro de semaine ISO 8601
+  const getISOWeekNumber = (date: Date) => {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  };
 
-    const processedData = getProcessedWeightData();
+  const generatePeriodLabels = () => {
     const labels = [];
     const monthNames = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
 
     if (selectedPeriod === 'Semaines') {
-      // Calculer les numéros de semaines en fonction de la date de création du compte
-      const accountCreationDate = new Date(userData.createdAt);
       const currentDate = new Date();
-
-      // Calculer le nombre de jours depuis la création du compte
-      const daysSinceCreation = Math.floor((currentDate.getTime() - accountCreationDate.getTime()) / (1000 * 60 * 60 * 24));
       
-      // Calculer la semaine actuelle depuis la création (en commençant par S1)
-      const currentWeekSinceCreation = Math.floor(daysSinceCreation / 7) + 1;
-
-      // Générer les 6 dernières semaines
+      // Générer les 6 dernières semaines avec leurs vrais numéros ISO
       for (let i = 5; i >= 0; i--) {
-        const weekNum = Math.max(1, currentWeekSinceCreation - i);
+        const targetDate = new Date(currentDate);
+        targetDate.setDate(currentDate.getDate() - (i * 7));
         
-        // Calculer l'année et la semaine relative dans l'année
-        const yearsSinceCreation = Math.floor((weekNum - 1) / 52);
-        const weekInYear = ((weekNum - 1) % 52) + 1;
-        
-        labels.push(`S${weekInYear}`);
+        const weekNumber = getISOWeekNumber(targetDate);
+        labels.push(`S${weekNumber}`);
       }
-    } else {
-      processedData.forEach((entry, index) => {
-        if (selectedPeriod === 'Mois') {
-          labels.push(monthNames[entry.date.getMonth()]);
-        } else { // Années
-          labels.push(entry.date.getFullYear().toString());
-        }
-      });
-
-      // Compléter avec des labels vides si nécessaire
-      while (labels.length < 6) {
-        labels.push('');
+    } else if (selectedPeriod === 'Mois') {
+      const currentDate = new Date();
+      
+      // Générer les 6 derniers mois
+      for (let i = 5; i >= 0; i--) {
+        const targetDate = new Date(currentDate);
+        targetDate.setMonth(currentDate.getMonth() - i);
+        labels.push(monthNames[targetDate.getMonth()]);
+      }
+    } else { // Années
+      const currentYear = new Date().getFullYear();
+      
+      // Générer les 6 dernières années
+      for (let i = 5; i >= 0; i--) {
+        labels.push((currentYear - i).toString());
       }
     }
 
-    return labels.slice(0, 6);
+    return labels;
   };
 
   // Nouvelle fonction pour traiter les données selon la période
