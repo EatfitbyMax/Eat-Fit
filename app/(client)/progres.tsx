@@ -526,16 +526,15 @@ export default function ProgresScreen() {
     const maxDataWeight = Math.max(...weights.filter(w => w > 0));
 
     // Utiliser exactement la même logique que generateYAxisLabels
-    const minWeight = Math.floor((minDataWeight - 10) / 5) * 5;
-    const maxWeight = Math.ceil((maxDataWeight + 10) / 5) * 5;
+    const centerWeight = (minDataWeight + maxDataWeight) / 2;
+    const minWeight = Math.floor((centerWeight - 10) / 5) * 5;
+    const maxWeight = minWeight + 20;
 
     // Générer les mêmes 5 labels que dans generateYAxisLabels
-    const step = (maxWeight - minWeight) / 4;
     const yAxisValues = [];
     for (let i = 0; i < 5; i++) {
-      const axisWeight = maxWeight - (i * step);
-      const roundedWeight = Math.round(axisWeight / 5) * 5;
-      yAxisValues.push(roundedWeight);
+      const weight = maxWeight - (i * 5);
+      yAxisValues.push(weight);
     }
 
     // Le premier label est le maximum, le dernier est le minimum
@@ -585,25 +584,18 @@ export default function ProgresScreen() {
     const minDataWeight = Math.min(...weights.filter(w => w > 0));
     const maxDataWeight = Math.max(...weights.filter(w => w > 0));
 
-    // Créer une plage plus serrée : +/- 10kg autour des données réelles
+    // Calculer le centre des données
     const centerWeight = (minDataWeight + maxDataWeight) / 2;
-    const dataRange = maxDataWeight - minDataWeight;
     
-    // Utiliser au minimum 20kg de plage (10kg de chaque côté)
-    const desiredRange = Math.max(20, dataRange + 10);
-    
-    const minWeight = Math.floor((centerWeight - desiredRange / 2) / 5) * 5;
-    const maxWeight = Math.ceil((centerWeight + desiredRange / 2) / 5) * 5;
+    // Créer une plage fixe de 20kg (5 labels avec 5kg d'écart) centrée sur les données
+    const minWeight = Math.floor((centerWeight - 10) / 5) * 5;
+    const maxWeight = minWeight + 20;
 
-    // Générer 5 labels avec des intervalles réguliers
+    // Générer exactement 5 labels avec 5kg d'écart
     const labels = [];
-    const step = (maxWeight - minWeight) / 4;
-
     for (let i = 0; i < 5; i++) {
-      const weight = maxWeight - (i * step);
-      // Arrondir au multiple de 5 le plus proche
-      const roundedWeight = Math.round(weight / 5) * 5;
-      labels.push(roundedWeight.toString());
+      const weight = maxWeight - (i * 5);
+      labels.push(weight.toString());
     }
 
     return labels;
