@@ -106,7 +106,10 @@ export default function GererEntrainementsScreen() {
         
         // Si plus d'entraînements, retourner à la page principale
         if (updatedLocalWorkouts.length === 0) {
-          router.back();
+          // Forcer le rechargement de la page précédente
+          setTimeout(() => {
+            router.back();
+          }, 100);
         }
         
         Alert.alert('Succès', 'Entraînement supprimé !');
