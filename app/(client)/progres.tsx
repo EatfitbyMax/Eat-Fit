@@ -512,33 +512,52 @@ export default function ProgresScreen() {
   };
 
   const getDataPointPosition = (weight: number, dataIndex: number, totalDataPoints: number, allLabels: string[]) => {
-    // Déterminer la plage de poids pour correspondre aux labels
+    // Utiliser la même logique que generateYAxisLabels pour obtenir la plage exacte
+    const processedData = getProcessedWeightData();
     const weights = [weightData.startWeight, weightData.currentWeight];
     if (weightData.targetWeight) weights.push(weightData.targetWeight);
+
+    // Ajouter les poids des données traitées
+    processedData.forEach(entry => {
+      if (entry.weight > 0) weights.push(entry.weight);
+    });
 
     const minDataWeight = Math.min(...weights.filter(w => w > 0));
     const maxDataWeight = Math.max(...weights.filter(w => w > 0));
 
-    // Utiliser la même logique que generateYAxisLabels
+    // Utiliser exactement la même logique que generateYAxisLabels
     const minWeight = Math.floor((minDataWeight - 10) / 5) * 5;
     const maxWeight = Math.ceil((maxDataWeight + 10) / 5) * 5;
-    const weightRange = maxWeight - minWeight;
 
-    const weightPercentage = Math.max(0, Math.min(1, (maxWeight - weight) / weightRange));
+    // Générer les mêmes 5 labels que dans generateYAxisLabels
+    const step = (maxWeight - minWeight) / 4;
+    const yAxisValues = [];
+    for (let i = 0; i < 5; i++) {
+      const axisWeight = maxWeight - (i * step);
+      const roundedWeight = Math.round(axisWeight / 5) * 5;
+      yAxisValues.push(roundedWeight);
+    }
 
-    // Calculer la position horizontale en fonction des labels disponibles
-    // Distribuer les points uniformément sur la largeur du graphique
+    // Le premier label est le maximum, le dernier est le minimum
+    const actualMaxWeight = yAxisValues[0];
+    const actualMinWeight = yAxisValues[4];
+    const actualRange = actualMaxWeight - actualMinWeight;
+
+    // Calculer la position Y en fonction de la plage réelle de l'axe Y
+    const weightPercentage = actualRange > 0 ? 
+      Math.max(0, Math.min(1, (actualMaxWeight - weight) / actualRange)) : 0.5;
+
+    // Calculer la position horizontale
     const totalLabels = allLabels.length;
     let leftPercentage = 0;
 
     if (totalLabels > 1) {
-      // Espacement uniforme entre les points, avec marge de 5% de chaque côté
       const marginPercentage = 5;
       const usableWidth = 100 - (2 * marginPercentage);
       const labelIndex = Math.min(dataIndex, totalLabels - 1);
       leftPercentage = marginPercentage + (labelIndex / (totalLabels - 1)) * usableWidth;
     } else {
-      leftPercentage = 50; // Point unique au centre
+      leftPercentage = 50;
     }
 
     return {
@@ -566,11 +585,17 @@ export default function ProgresScreen() {
     const minDataWeight = Math.min(...weights.filter(w => w > 0));
     const maxDataWeight = Math.max(...weights.filter(w => w > 0));
 
-    // Arrondir vers le bas pour min et vers le haut pour max, par tranches de 5
-    const minWeight = Math.floor((minDataWeight - 10) / 5) * 5;
-    const maxWeight = Math.ceil((maxDataWeight + 10) / 5) * 5;
+    // Créer une plage plus serrée : +/- 10kg autour des données réelles
+    const centerWeight = (minDataWeight + maxDataWeight) / 2;
+    const dataRange = maxDataWeight - minDataWeight;
+    
+    // Utiliser au minimum 20kg de plage (10kg de chaque côté)
+    const desiredRange = Math.max(20, dataRange + 10);
+    
+    const minWeight = Math.floor((centerWeight - desiredRange / 2) / 5) * 5;
+    const maxWeight = Math.ceil((centerWeight + desiredRange / 2) / 5) * 5;
 
-    // Générer 5 labels avec des intervalles de 5 kg (supprimer un label)
+    // Générer 5 labels avec des intervalles réguliers
     const labels = [];
     const step = (maxWeight - minWeight) / 4;
 
