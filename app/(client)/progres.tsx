@@ -117,7 +117,7 @@ export default function ProgresScreen() {
         const weightDataString = await AsyncStorage.getItem(`weight_data_${user.id}`);
         if (weightDataString) {
           const saved = JSON.parse(weightDataString);
-          
+
           // Synchroniser avec l'objectif du profil utilisateur si disponible
           const userTargetWeight = user.targetWeight || 0;
           if (userTargetWeight > 0 && userTargetWeight !== saved.targetWeight) {
@@ -126,7 +126,7 @@ export default function ProgresScreen() {
             await saveWeightData(saved);
             console.log('Objectif synchronisé depuis le profil utilisateur:', userTargetWeight);
           }
-          
+
           setWeightData(saved);
           // Calculer le pourcentage de progression
           if (saved.targetWeight && saved.startWeight) {
@@ -140,7 +140,7 @@ export default function ProgresScreen() {
           const startWeight = user.weight || 0;
           // Vérifier si l'utilisateur a déjà un objectif dans son profil
           const existingTargetWeight = user.targetWeight || 0;
-          
+
           const initialData = {
             startWeight: startWeight,
             currentWeight: startWeight,
@@ -153,7 +153,7 @@ export default function ProgresScreen() {
           };
           setWeightData(initialData);
           await saveWeightData(initialData);
-          
+
           // Calculer le pourcentage de progression si objectif déjà défini
           if (existingTargetWeight > 0 && startWeight > 0) {
             const totalLoss = startWeight - existingTargetWeight;
@@ -161,7 +161,7 @@ export default function ProgresScreen() {
             const progress = Math.max(0, Math.min(1, currentLoss / totalLoss));
             progressAnimation.value = withSpring(progress);
           }
-          
+
           // Demander de définir l'objectif seulement si jamais défini
           if (existingTargetWeight === 0) {
             setTimeout(() => setShowTargetModal(true), 1000);
@@ -494,7 +494,7 @@ export default function ProgresScreen() {
     const dataPoints = [];
 
     // Générer les points de données basés sur les données traitées
-    processedData.forEach((entry, index) => {
+    processedData.forEach আওয়ামীলentry, index) => {
       const position = getDataPointPosition(entry.weight, index, processedData.length, allLabels);
       dataPoints.push(
         <View 
@@ -605,18 +605,18 @@ export default function ProgresScreen() {
 
     if (selectedPeriod === 'Semaines') {
       const currentDate = new Date();
-      
+
       // Générer les 6 dernières semaines avec leurs vrais numéros ISO
       for (let i = 5; i >= 0; i--) {
         const targetDate = new Date(currentDate);
         targetDate.setDate(currentDate.getDate() - (i * 7));
-        
+
         const weekNumber = getISOWeekNumber(targetDate);
         labels.push(`S${weekNumber}`);
       }
     } else if (selectedPeriod === 'Mois') {
       const currentDate = new Date();
-      
+
       // Générer les 6 derniers mois
       for (let i = 5; i >= 0; i--) {
         const targetDate = new Date(currentDate);
@@ -625,7 +625,7 @@ export default function ProgresScreen() {
       }
     } else { // Années
       const currentYear = new Date().getFullYear();
-      
+
       // Générer les 6 dernières années
       for (let i = 5; i >= 0; i--) {
         labels.push((currentYear - i).toString());
@@ -992,16 +992,16 @@ export default function ProgresScreen() {
          const date = new Date();
          date.setDate(date.getDate() - i);
          const dateString = date.toISOString().split('T')[0];
- 
+
          // Données nutritionnelles
          const dayEntries = nutritionEntries.filter((entry: any) => 
            entry.date === dateString
          );
- 
+
          const dayCalories = dayEntries.reduce((sum: number, entry: any) => 
            sum + (entry.calories || 0), 0
          );
- 
+
          last30DaysNutrition.push({
            date: dateString,
            day: date.toLocaleDateString('fr-FR', { weekday: 'short' }),
@@ -1063,7 +1063,7 @@ export default function ProgresScreen() {
 
       // Ajustements selon les objectifs
       const goals = user.goals || [];
-      
+
       if (goals.includes('Perdre du poids')) {
         totalCalories -= 300; // Déficit de 300 kcal
       } else if (goals.includes('Prendre du muscle')) {
@@ -1383,28 +1383,28 @@ export default function ProgresScreen() {
                     // Générer l'axe Y adapté aux données du client avec minimum 1000 kcal et paliers de 500
                     const currentData = selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories;
                     const maxDataCalories = Math.max(...currentData.map(d => d.calories), nutritionStats.averageCalories);
-                    
+
                     // Utiliser l'objectif calorique du client comme référence principale
                     const clientGoal = calorieGoals?.calories || 2200;
-                    
+
                     // Déterminer la valeur max de l'axe Y
                     const maxAxisValue = Math.max(maxDataCalories, clientGoal * 1.2, 1000);
-                    
+
                     // Arrondir au multiple de 500 supérieur, avec minimum 1000
                     const roundedMax = Math.max(1000, Math.ceil(maxAxisValue / 500) * 500);
-                    
+
                     // Générer 5 labels par paliers de 500, en partant du maximum vers 1500
                     const labels = [];
                     const step = 500;
                     const numberOfSteps = Math.max(4, Math.floor((roundedMax - 1500) / step));
-                    
+
                     for (let i = 0; i < 5; i++) {
                       const value = roundedMax - (i * (roundedMax - 1500) / 4);
                       // Arrondir au multiple de 500 le plus proche, avec minimum 1500
                       const roundedValue = Math.max(1500, Math.round(value / 500) * 500);
                       labels.push(roundedValue.toString());
                     }
-                    
+
                     return labels.map((label, index) => (
                       <Text key={index} style={styles.nutritionYAxisLabel}>{label}</Text>
                     ));
@@ -1424,13 +1424,13 @@ export default function ProgresScreen() {
                     {(selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories).map((dayData, index) => {
                       const currentData = selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories;
                       const maxDataCalories = Math.max(...currentData.map(d => d.calories), nutritionStats.averageCalories);
-                      
+
                       // Utiliser la même logique que pour l'axe Y avec minimum 1500 et paliers de 500
                       const clientGoal = calorieGoals?.calories || 2200;
                       const maxAxisValue = Math.max(maxDataCalories, clientGoal * 1.2, 1500);
                       const roundedMax = Math.max(1500, Math.ceil(maxAxisValue / 500) * 500);
                       const minAxisValue = 1500;
-                      
+
                       // Calculer la hauteur relative entre min et max
                       let barHeight = 5; // Hauteur minimale si pas de données
                       if (dayData.calories > 0) {
@@ -1909,7 +1909,7 @@ export default function ProgresScreen() {
                   {generatePeriodLabels().map((label, index) => {
                     const totalLabels = generatePeriodLabels().length;
                     let leftPosition = 0;
-                    
+
                     if (totalLabels > 1) {
                       // Espacement uniforme avec marge de 5% de chaque côté
                       const marginPercentage = 5;
@@ -1918,7 +1918,7 @@ export default function ProgresScreen() {
                     } else {
                       leftPosition = 50; // Label unique au centre
                     }
-                    
+
                     return (
                       <Text 
                         key={index} 
@@ -1927,7 +1927,7 @@ export default function ProgresScreen() {
                           { 
                             position: 'absolute',
                             left: `${leftPosition}%`,
-                            top: 0,
+                            top: '85%',
                             transform: [{ translateX: -15 }] // Centrer le texte
                           }
                         ]}
@@ -2080,7 +2080,7 @@ export default function ProgresScreen() {
                     targetAsked: true,
                   };
                   await saveWeightData(newData);
-                  
+
                   // Sauvegarder dans le profil utilisateur pour éviter de redemander
                   try {
                     if (userData) {
@@ -2102,7 +2102,7 @@ export default function ProgresScreen() {
                   } catch (error) {
                     console.error('Erreur sauvegarde flag utilisateur:', error);
                   }
-                  
+
                   setTempTarget('');
                   setShowTargetModal(false);
                 }}
@@ -2417,7 +2417,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statsContainer: {
-    flexDirection: 'row',
+flexDirection: 'row',
     paddingHorizontal: 20,
     gap: 12,
     marginBottom: 25,
@@ -2568,7 +2568,7 @@ const styles = StyleSheet.create({
   activePeriodButtonText: {
     color: '#FFFFFF',
   },
-  
+
   chartArea: {
     flexDirection: 'row',
     height: 220,
@@ -2649,7 +2649,7 @@ const styles = StyleSheet.create({
   },
   xAxis: {
     position: 'absolute',
-    bottom: 1,
+    top: '85%', // Position à 85% de la hauteur du conteneur pour être en dessous de la ligne 60
     left: 0,
     right: 0,
     height: 20,
