@@ -84,7 +84,10 @@ export default function SecuriteConfidentialiteScreen() {
             />
           </View>
 
-          <TouchableOpacity style={styles.settingItem}>
+          <TouchableOpacity 
+            style={styles.settingItem}
+            onPress={() => router.push('/auth/change-password')}
+          >
             <View style={styles.settingInfo}>
               <Text style={styles.settingTitle}>Changer le mot de passe</Text>
               <Text style={styles.settingDescription}>Modifier votre mot de passe</Text>
