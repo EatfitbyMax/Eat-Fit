@@ -99,10 +99,11 @@ export default function ProgresScreen() {
     loadNutritionData();
   }, []);
 
-  // Recharger les données utilisateur quand l'écran est focalisé pour prendre en compte les changements d'objectifs
+  // Recharger les données utilisateur et nutritionnelles quand l'écran est focalisé
   useFocusEffect(
     React.useCallback(() => {
       loadUserData();
+      loadNutritionData(); // Forcer le rechargement des données nutrition
     }, [])
   );
 
@@ -1253,24 +1254,41 @@ export default function ProgresScreen() {
       const user = await PersistentStorage.getCurrentUser();
       if (!user) return;
 
-      // Charger les données nutritionnelles réelles
+      // Charger les données nutritionnelles réelles avec priorité sur le serveur VPS
       let nutritionEntries = [];
+      
+      // Essayer le serveur VPS d'abord avec timeout plus court
       try {
-        // Essayer de charger depuis le serveur VPS d'abord
         const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.replit.app';
-        const response = await fetch(`${VPS_URL}/api/nutrition/${user.id}`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 secondes timeout
+
+        const response = await fetch(`${VPS_URL}/api/nutrition/${user.id}`, {
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
 
         if (response.ok) {
           nutritionEntries = await response.json();
-          console.log('Données nutrition chargées depuis le serveur VPS pour les progrès');
+          console.log('Données nutrition chargées depuis le serveur VPS pour les progrès:', nutritionEntries.length, 'entrées');
+          
+          // Sauvegarder en local comme backup
+          await AsyncStorage.setItem(`food_entries_${user.id}`, JSON.stringify(nutritionEntries));
         } else {
-          throw new Error('Serveur indisponible');
+          throw new Error('Réponse serveur non-OK');
         }
       } catch (serverError) {
+        console.log('Erreur serveur VPS nutrition (progrès):', serverError.message);
+        
+        // Fallback vers le stockage local
         console.log('Fallback vers le stockage local pour nutrition (progrès)');
         const stored = await AsyncStorage.getItem(`food_entries_${user.id}`);
         if (stored) {
           nutritionEntries = JSON.parse(stored);
+          console.log('Données nutrition chargées depuis le stockage local:', nutritionEntries.length, 'entrées');
+        } else {
+          console.log('Aucune donnée nutritionnelle trouvée en local');
         }
       }
 
@@ -1292,6 +1310,13 @@ export default function ProgresScreen() {
       startOfWeek.setDate(today.getDate() - (currentDay === 0 ? 6 : currentDay - 1)); // Ajuster pour commencer le lundi
       startOfWeek.setHours(0, 0, 0, 0);
 
+      console.log(`=== ANALYSE DONNÉES NUTRITION (${nutritionEntries.length} entrées) ===`);
+      console.log('Début de semaine:', startOfWeek.toISOString().split('T')[0]);
+      
+      // Afficher toutes les dates disponibles
+      const availableDates = [...new Set(nutritionEntries.map((entry: any) => entry.date))].sort();
+      console.log('Dates disponibles dans les données:', availableDates);
+
       for (let i = 0; i < 7; i++) {
         const date = new Date(startOfWeek);
         date.setDate(startOfWeek.getDate() + i);
@@ -1301,6 +1326,11 @@ export default function ProgresScreen() {
         const dayEntries = nutritionEntries.filter((entry: any) => 
           entry.date === dateString
         );
+
+        console.log(`Jour ${i + 1} (${dateString}): ${dayEntries.length} entrées trouvées`);
+        if (dayEntries.length > 0) {
+          console.log('  - Entrées:', dayEntries.map(e => `${e.product?.name || 'Inconnu'} (${e.calories}kcal)`));
+        }
 
         const dayCalories = dayEntries.reduce((sum: number, entry: any) => 
           sum + (entry.calories || 0), 0
@@ -1391,6 +1421,13 @@ export default function ProgresScreen() {
       const avgCarbs = daysWithData > 0 ? Math.round(totalCarbsWeek / daysWithData) : 0;
       const avgFat = daysWithData > 0 ? Math.round(totalFatWeek / daysWithData) : 0;
       const avgHydration = daysWithHydration > 0 ? Math.round(totalHydrationWeek / daysWithHydration) : 0;
+
+      console.log('=== RÉSUMÉ NUTRITION SEMAINE ===');
+      console.log(`Jours avec données: ${daysWithData}/7`);
+      console.log(`Total calories semaine: ${totalCaloriesWeek}`);
+      console.log(`Moyenne calories: ${avgCalories}`);
+      console.log(`Moyenne protéines: ${avgProteins}g`);
+      console.log('=== FIN RÉSUMÉ ===');
 
       setNutritionStats({
         weeklyCalories: last7DaysNutrition,
