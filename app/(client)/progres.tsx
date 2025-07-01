@@ -685,21 +685,31 @@ export default function ProgresScreen() {
     const allLabels = generateNutritionPeriodLabels();
     const dataPoints = [];
 
-    // Générer les points de données
+    console.log('=== RENDER NUTRITION CHART ===');
+    console.log('Données traitées:', processedData.map(d => ({ date: d.date.toISOString().split('T')[0], calories: d.calories })));
+    console.log('Labels générés:', allLabels);
+
+    // Générer les points de données seulement pour les entrées avec des calories > 0
     processedData.forEach((entry, index) => {
-      const position = getNutritionDataPointPosition(entry.calories, index, processedData.length, allLabels);
-      const label = allLabels[index] || '';
-      
-      dataPoints.push(
-        <View 
-          key={`nutrition-${entry.date.toISOString()}-${index}`} 
-          style={[styles.dataPointContainer, position]}
-        >
-          <View style={[styles.dataPoint, { backgroundColor: '#4ECDC4' }]} />
-          <Text style={styles.dataPointLabel}>{label}</Text>
-        </View>
-      );
+      if (entry.calories > 0) {
+        const position = getNutritionDataPointPosition(entry.calories, index, processedData.length, allLabels);
+        const label = allLabels[index] || '';
+        
+        console.log(`Point ${index}: ${entry.calories} kcal à la position`, position);
+        
+        dataPoints.push(
+          <View 
+            key={`nutrition-${entry.date.toISOString()}-${index}`} 
+            style={[styles.dataPointContainer, position]}
+          >
+            <View style={[styles.dataPoint, { backgroundColor: '#4ECDC4' }]} />
+            <Text style={styles.dataPointLabel}>{label}</Text>
+          </View>
+        );
+      }
     });
+
+    console.log(`Total points à afficher: ${dataPoints.length}`);
 
     return (
       <>
@@ -749,35 +759,21 @@ export default function ProgresScreen() {
     const monthNames = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
 
     if (selectedNutritionPeriod === 'Jours') {
-      const processedData = getProcessedNutritionData();
+      // Toujours générer les labels pour les 7 derniers jours
+      const currentDate = new Date();
       
-      processedData.forEach(entry => {
-        const dayMonth = entry.date.toLocaleDateString('fr-FR', { 
+      for (let i = 6; i >= 0; i--) {
+        const targetDate = new Date(currentDate);
+        targetDate.setDate(currentDate.getDate() - i);
+        const dayMonth = targetDate.toLocaleDateString('fr-FR', { 
           day: 'numeric', 
           month: 'numeric' 
         });
         labels.push(dayMonth);
-      });
-
-      // Si pas assez de données, compléter avec les 7 derniers jours
-      if (labels.length < 7) {
-        const labelsToAdd = [];
-        const currentDate = new Date();
-        
-        for (let i = 6; i >= 0; i--) {
-          const targetDate = new Date(currentDate);
-          targetDate.setDate(currentDate.getDate() - i);
-          const dayMonth = targetDate.toLocaleDateString('fr-FR', { 
-            day: 'numeric', 
-            month: 'numeric' 
-          });
-          labelsToAdd.push(dayMonth);
-        }
-        
-        return labelsToAdd;
       }
-
-      return labels.slice(-7);
+      
+      console.log('Labels générés pour les jours:', labels);
+      return labels;
       
     } else if (selectedNutritionPeriod === 'Semaine') {
       const processedData = getProcessedNutritionData();
@@ -848,6 +844,10 @@ export default function ProgresScreen() {
     const currentDate = new Date();
     let filteredData = [...(nutritionStats.weeklyCalories || [])];
 
+    console.log('=== GET PROCESSED NUTRITION DATA ===');
+    console.log('Période sélectionnée:', selectedNutritionPeriod);
+    console.log('Données brutes nutrition:', filteredData);
+
     // Convertir les données en format compatible
     const processedData = filteredData.map(entry => ({
       calories: entry.calories,
@@ -856,8 +856,29 @@ export default function ProgresScreen() {
 
     // Filtrer selon la période
     if (selectedNutritionPeriod === 'Jours') {
-      const sevenDaysAgo = new Date(currentDate.getTime() - (7 * 24 * 60 * 60 * 1000));
-      return processedData.filter(entry => entry.date >= sevenDaysAgo).slice(-7);
+      // Pour les 7 derniers jours, garantir qu'on a tous les jours même avec 0 calories
+      const last7Days = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(currentDate);
+        date.setDate(currentDate.getDate() - i);
+        date.setHours(0, 0, 0, 0);
+        
+        // Chercher les données existantes pour ce jour
+        const existingData = processedData.find(entry => {
+          const entryDate = new Date(entry.date);
+          entryDate.setHours(0, 0, 0, 0);
+          return entryDate.getTime() === date.getTime();
+        });
+        
+        last7Days.push({
+          calories: existingData ? existingData.calories : 0,
+          date: new Date(date)
+        });
+      }
+      
+      console.log('Données des 7 derniers jours:', last7Days.map(d => ({ date: d.date.toISOString().split('T')[0], calories: d.calories })));
+      return last7Days;
+      
     } else if (selectedNutritionPeriod === 'Semaine') {
       const sixWeeksAgo = new Date(currentDate.getTime() - (6 * 7 * 24 * 60 * 60 * 1000));
       return processedData.filter(entry => entry.date >= sixWeeksAgo).slice(-6);
