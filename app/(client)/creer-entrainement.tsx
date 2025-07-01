@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
@@ -51,14 +50,14 @@ const WORKOUT_TYPES = [
 const getOrderedWorkoutTypes = (favoriteSport: string) => {
   const sportName = getSportNameFromId(favoriteSport);
   const types = [...WORKOUT_TYPES];
-  
+
   // Mettre le sport favori en premier
   if (sportName && types.includes(sportName)) {
     const index = types.indexOf(sportName);
     types.splice(index, 1);
     types.unshift(sportName);
   }
-  
+
   return types;
 };
 
@@ -207,11 +206,11 @@ export default function CreerEntrainementScreen() {
       const currentUser = await getCurrentUser();
       if (currentUser && currentUser.favoriteSport) {
         setUserFavoriteSport(currentUser.favoriteSport);
-        
+
         // Pré-remplir le type d'entraînement avec le sport favori
         const sportName = getSportNameFromId(currentUser.favoriteSport);
         setWorkout(prev => ({ ...prev, type: sportName }));
-        
+
         console.log('Sport favori de l\'utilisateur:', currentUser.favoriteSport, '-> Type:', sportName);
       }
     } catch (error) {
@@ -241,7 +240,7 @@ export default function CreerEntrainementScreen() {
     if (!workout.duration || !workout.type) return;
 
     let caloriesPerMinute = 5; // Base
-    
+
     // Ajustement selon le type d'exercice
     switch (workout.type.toLowerCase()) {
       case 'course à pied':
@@ -306,7 +305,7 @@ export default function CreerEntrainementScreen() {
       }
 
       const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-      
+
       const workoutToSave: Workout = {
         ...workout,
         id: Date.now().toString()
@@ -315,13 +314,13 @@ export default function CreerEntrainementScreen() {
       // Récupérer les entraînements existants
       const existingWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
       const workouts = existingWorkouts ? JSON.parse(existingWorkouts) : [];
-      
+
       // Ajouter le nouvel entraînement
       workouts.push(workoutToSave);
-      
+
       // Sauvegarder
       await AsyncStorage.setItem(`workouts_${currentUser.id}`, JSON.stringify(workouts));
-      
+
       Alert.alert(
         'Succès', 
         'Entraînement créé avec succès !',
@@ -410,38 +409,38 @@ export default function CreerEntrainementScreen() {
 
   const getFieldsForSport = (sportType: string) => {
     const commonFields = ['name', 'notes'];
-    
+
     switch (sportType.toLowerCase()) {
       case 'musculation':
       case 'crossfit':
         return [...commonFields, 'sets', 'reps', 'weight', 'rest'];
-      
+
       case 'course à pied':
       case 'cyclisme':
         return [...commonFields, 'distance', 'duration', 'intensity'];
-      
+
       case 'natation':
         return [...commonFields, 'distance', 'duration', 'sets'];
-      
+
       case 'cardio':
       case 'hiit':
         return [...commonFields, 'duration', 'intensity', 'rest'];
-      
+
       case 'yoga':
       case 'pilates':
       case 'étirement':
         return [...commonFields, 'duration', 'sets'];
-      
+
       case 'boxe':
       case 'danse':
         return [...commonFields, 'duration', 'sets', 'intensity'];
-      
+
       case 'football':
       case 'basketball':
       case 'tennis':
       case 'escalade':
         return [...commonFields, 'duration', 'sets', 'intensity'];
-      
+
       default:
         return [...commonFields, 'sets', 'reps', 'duration', 'rest'];
     }
@@ -491,7 +490,7 @@ export default function CreerEntrainementScreen() {
     onSelect: (value: string) => void
   ) => {
     const favoriteSportName = getSportNameFromId(userFavoriteSport);
-    
+
     return (
       <Modal visible={visible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
@@ -556,8 +555,13 @@ export default function CreerEntrainementScreen() {
                 <Text style={styles.closeButtonText}>×</Text>
               </TouchableOpacity>
             </View>
-            
-            <ScrollView style={styles.modalContent}>
+
+            <ScrollView 
+            style={styles.modalContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 20 }}
+          >
               {/* Nom de l'exercice avec suggestions */}
               <View style={styles.inputGroup}>
                 <View style={styles.labelWithSuggestion}>
@@ -580,7 +584,7 @@ export default function CreerEntrainementScreen() {
                   placeholder={`Ex: ${suggestions.slice(0, 2).join(', ')}...`}
                   placeholderTextColor="#8B949E"
                 />
-                
+
                 {showSuggestions && suggestions.length > 0 && (
                   <View style={styles.suggestionsContainer}>
                     {suggestions.map((suggestion) => (
@@ -615,7 +619,7 @@ export default function CreerEntrainementScreen() {
                       keyboardType="numeric"
                     />
                   </View>
-                  
+
                   <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
                     <Text style={styles.label}>Répétitions</Text>
                     <TextInput
@@ -645,7 +649,7 @@ export default function CreerEntrainementScreen() {
                       keyboardType="numeric"
                     />
                   </View>
-                  
+
                   <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
                     <Text style={styles.label}>
                       Durée ({getUnitForField('duration', workout.type)})
@@ -677,7 +681,7 @@ export default function CreerEntrainementScreen() {
                       keyboardType="numeric"
                     />
                   </View>
-                  
+
                   <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
                     <Text style={styles.label}>
                       Repos ({getUnitForField('rest', workout.type)})
@@ -782,7 +786,7 @@ export default function CreerEntrainementScreen() {
           {/* Informations de base */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Informations générales</Text>
-            
+
             <Text style={styles.dateInfo}>
               {params.selectedDay} • {new Date(params.selectedDate as string).toLocaleDateString('fr-FR')}
             </Text>
@@ -849,7 +853,7 @@ export default function CreerEntrainementScreen() {
                   keyboardType="numeric"
                 />
               </View>
-              
+
               <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
                 <Text style={styles.label}>Heure</Text>
                 <TextInput
@@ -899,13 +903,12 @@ export default function CreerEntrainementScreen() {
                         </TouchableOpacity>
                       </View>
                     </View>
-                    
+
                     <View style={styles.exerciseDetails}>
                       {exercise.sets && (
                         <Text style={styles.exerciseDetail}>
                           {exercise.sets} {workout.type === 'Natation' ? 'longueurs' : 'séries'}
-                        </Text>
-                      )}
+                        </Text>                      )}
                       {exercise.reps && (
                         <Text style={styles.exerciseDetail}>{exercise.reps} reps</Text>
                       )}
@@ -927,7 +930,7 @@ export default function CreerEntrainementScreen() {
                         <Text style={styles.exerciseDetail}>{exercise.rest}s repos</Text>
                       )}
                     </View>
-                    
+
                     {exercise.notes && (
                       <Text style={styles.exerciseNotes}>{exercise.notes}</Text>
                     )}
