@@ -86,6 +86,14 @@ export async function login(email: string, password: string): Promise<User | nul
     );
 
     console.log('Recherche utilisateur avec email:', normalizedEmail);
+    console.log('Mot de passe saisi:', password);
+    
+    // Debug: afficher les mots de passe stockés (temporaire)
+    users.forEach((u: any) => {
+      if (u.email.toLowerCase().trim() === normalizedEmail) {
+        console.log('Utilisateur trouvé - mot de passe stocké:', u.password);
+      }
+    });
 
     if (user) {
       // Enlever le mot de passe avant de sauvegarder dans la session locale
