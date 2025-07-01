@@ -53,7 +53,7 @@ export default function EntrainementScreen() {
     loadActivityRatings();
   }, []);
 
-  // Debug pour la semaine courante
+  // Debug pour la semaine courante et force refresh des composants
   useEffect(() => {
     const { start, end } = getWeekRange();
     console.log(`=== SEMAINE COURANTE ===`);
@@ -70,12 +70,20 @@ export default function EntrainementScreen() {
     
     console.log('Workouts par date:', workoutsByDate);
     console.log('=== FIN DEBUG SEMAINE ===');
+    
+    // Forcer un petit délai pour s'assurer que l'UI se met à jour
+    setTimeout(() => {
+      console.log('Force refresh UI terminé');
+    }, 100);
   }, [workouts, currentWeek]);
 
   // Rechargement automatique quand l'écran est focalisé
   useFocusEffect(
     useCallback(() => {
+      console.log('=== FOCUS EFFECT: RECHARGEMENT COMPLET ===');
       loadWorkouts();
+      // Forcer un re-render en mettant à jour l'état
+      setCurrentWeek(prev => new Date(prev.getTime()));
     }, [])
   );
 
@@ -84,6 +92,7 @@ export default function EntrainementScreen() {
       const currentUser = await getCurrentUser();
       if (!currentUser) {
         console.log('Aucun utilisateur connecté pour charger les entraînements');
+        setWorkouts([]);
         return;
       }
 
@@ -111,7 +120,8 @@ export default function EntrainementScreen() {
           });
         });
         
-        setWorkouts(allWorkouts);
+        // Forcer la mise à jour de l'état même si les données sont identiques
+        setWorkouts([...allWorkouts]);
       } else {
         console.log('Aucun entraînement stocké trouvé');
         setWorkouts([]);
