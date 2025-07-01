@@ -1927,6 +1927,7 @@ export default function ProgresScreen() {
                           { 
                             position: 'absolute',
                             left: `${leftPosition}%`,
+                            top: 0,
                             transform: [{ translateX: -15 }] // Centrer le texte
                           }
                         ]}
@@ -2648,7 +2649,7 @@ const styles = StyleSheet.create({
   },
   xAxis: {
     position: 'absolute',
-    bottom: -25,
+    bottom: 5,
     left: 0,
     right: 0,
     height: 20,
