@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
@@ -218,24 +219,6 @@ export default function CreerEntrainementScreen() {
     } catch (error) {
       console.error('Erreur chargement données utilisateur:', error);
     }
-  };
-
-  const getSportNameFromId = (sportId: string): string => {
-    const sportMap: Record<string, string> = {
-      'musculation': 'Musculation',
-      'course': 'Course à pied',
-      'cyclisme': 'Cyclisme',
-      'natation': 'Natation',
-      'yoga': 'Yoga',
-      'boxe': 'Boxe',
-      'tennis': 'Tennis',
-      'football': 'Football',
-      'basketball': 'Basketball',
-      'escalade': 'Escalade',
-      'crossfit': 'CrossFit',
-      'danse': 'Danse'
-    };
-    return sportMap[sportId] || 'Musculation';
   };
 
   const calculateCalories = () => {
@@ -791,6 +774,17 @@ export default function CreerEntrainementScreen() {
     );
   };
 
+  // Fonction pour formater la date correctement
+  const formatSelectedDate = () => {
+    const date = new Date(params.selectedDate as string);
+    return date.toLocaleDateString('fr-FR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Header */}
@@ -809,7 +803,7 @@ export default function CreerEntrainementScreen() {
             <Text style={styles.sectionTitle}>Informations générales</Text>
 
             <Text style={styles.dateInfo}>
-              {params.selectedDay} • {new Date(params.selectedDate as string).toLocaleDateString('fr-FR')}
+              {formatSelectedDate()}
             </Text>
 
             <View style={styles.inputGroup}>
@@ -1057,6 +1051,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#21262D',
+    textTransform: 'capitalize',
   },
   inputGroup: {
     marginBottom: 16,

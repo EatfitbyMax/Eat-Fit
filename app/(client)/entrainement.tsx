@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert, TextInput } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -20,8 +21,8 @@ export default function EntrainementScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [hasSubscription, setHasSubscription] = useState(false);
   const [currentWeek, setCurrentWeek] = useState(() => {
-    // Lundi 29 juin 2025 (pour que le 1er juillet soit mardi, 2 juillet mercredi, 3 juillet jeudi)
-    const today = new Date('2025-06-29');
+    // Utiliser la date actuelle réelle
+    const today = new Date();
     return today;
   });
   const [workouts, setWorkouts] = useState<any[]>([]);
@@ -33,8 +34,6 @@ export default function EntrainementScreen() {
   const [rpeRating, setRpeRating] = useState(5);
   const [rpeNotes, setRpeNotes] = useState('');
   const [activityRatings, setActivityRatings] = useState<{[key: string]: {rpe: number, notes: string, date: string}}>({});
-
-
 
   const daysOfWeek = [
     'Lundi', 
@@ -326,6 +325,7 @@ export default function EntrainementScreen() {
     
     console.log(`=== CLIC SUR ${jour.toUpperCase()} ===`);
     console.log(`Date calculée: ${dateString}`);
+    console.log(`Date complète: ${targetDate.toDateString()}`);
 
     // Récupérer les entraînements du jour
     const dayWorkouts = workouts.filter(workout => workout.date === dateString);
@@ -373,8 +373,6 @@ export default function EntrainementScreen() {
         return '🏋️‍♂️';
     }
   };
-
-
 
   const renderStravaActivity = (activity: StravaActivity) => {
     const hasRating = activityRatings[activity.id];
@@ -566,6 +564,19 @@ export default function EntrainementScreen() {
     }
   };
 
+  // Fonction pour obtenir la date d'aujourd'hui
+  const getTodayDate = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  };
+
+  // Fonction pour vérifier si une date est aujourd'hui
+  const isToday = (targetDate: Date) => {
+    const today = getTodayDate();
+    return targetDate.getTime() === today.getTime();
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView style={styles.scrollView}>
@@ -648,19 +659,17 @@ export default function EntrainementScreen() {
                 targetDate.setDate(start.getDate() + dayIndex);
                 targetDate.setHours(0, 0, 0, 0);
                 
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                const isToday = targetDate.getTime() === today.getTime();
+                const isTodayCheck = isToday(targetDate);
 
                 return (
                   <TouchableOpacity 
                     key={jour}
-                    style={[styles.dayCard, isToday && styles.todayCard]}
+                    style={[styles.dayCard, isTodayCheck && styles.todayCard]}
                     onPress={() => handleDayPress(jour)}
                   >
                     <View style={styles.dayHeader}>
                       <View style={styles.dayTitleContainer}>
-                        <Text style={[styles.dayName, isToday && styles.todayDayName]}>{jour}</Text>
+                        <Text style={[styles.dayName, isTodayCheck && styles.todayDayName]}>{jour}</Text>
                         <Text style={styles.dayDate}>{targetDate.getDate()}</Text>
                       </View>
 
@@ -685,7 +694,7 @@ export default function EntrainementScreen() {
                           : 'Aucune séance planifiée'
                         }
                       </Text>
-                      {isToday && (
+                      {isTodayCheck && (
                         <View style={styles.todayIndicator}>
                           <Text style={styles.todayText}>Aujourd'hui</Text>
                         </View>
@@ -763,9 +772,6 @@ export default function EntrainementScreen() {
           )}
         </View>
       </ScrollView>
-
-
-
 
     {/* Modal pour les détails de l'activité Strava */}
       {selectedStravaActivity && renderStravaActivityDetail()}
