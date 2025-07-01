@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -7,9 +7,10 @@ import {
   ScrollView, 
   TouchableOpacity, 
   SafeAreaView, 
-  Alert 
+  Alert,
+  RefreshControl
 } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { getCurrentUser } from '../../utils/auth';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -36,31 +37,97 @@ export default function GererEntrainementsScreen() {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [selectedDay, setSelectedDay] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
+  // Charger les données initiales
   useEffect(() => {
-    loadWorkouts();
+    initializeData();
   }, []);
 
-  const loadWorkouts = () => {
+  // Recharger quand l'écran reprend le focus
+  useFocusEffect(
+    useCallback(() => {
+      console.log('=== FOCUS EFFECT GERER-ENTRAINEMENTS ===');
+      loadWorkoutsData();
+    }, [selectedDate])
+  );
+
+  const initializeData = () => {
     const selectedDayParam = params.selectedDay as string;
     const selectedDateParam = params.selectedDate as string;
-    const workoutsParam = params.workouts as string;
+    
+    console.log('=== INITIALISATION GERER-ENTRAINEMENTS ===');
+    console.log('Jour sélectionné:', selectedDayParam);
+    console.log('Date sélectionnée:', selectedDateParam);
 
     setSelectedDay(selectedDayParam || '');
     setSelectedDate(selectedDateParam || '');
-
-    if (workoutsParam) {
-      try {
-        const parsedWorkouts = JSON.parse(workoutsParam);
-        setWorkouts(parsedWorkouts);
-      } catch (error) {
-        console.error('Erreur parsing workouts:', error);
-        setWorkouts([]);
-      }
+    
+    // Charger les entraînements après avoir défini la date
+    if (selectedDateParam) {
+      loadWorkoutsData(selectedDateParam);
     }
   };
 
+  const loadWorkoutsData = async (targetDate?: string) => {
+    try {
+      setIsLoading(true);
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        console.error('Utilisateur non connecté');
+        setWorkouts([]);
+        return;
+      }
+
+      const dateToUse = targetDate || selectedDate;
+      if (!dateToUse) {
+        console.error('Aucune date spécifiée');
+        setWorkouts([]);
+        return;
+      }
+
+      console.log('=== CHARGEMENT ENTRAINEMENTS POUR DATE ===');
+      console.log('Date cible:', dateToUse);
+
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+      const storedWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
+      
+      if (storedWorkouts) {
+        const allWorkouts = JSON.parse(storedWorkouts);
+        console.log('Total entraînements stockés:', allWorkouts.length);
+        
+        // Filtrer par date exacte
+        const dayWorkouts = allWorkouts.filter((workout: Workout) => {
+          const match = workout.date === dateToUse;
+          if (match) {
+            console.log(`✅ Entraînement trouvé: ${workout.name} le ${workout.date}`);
+          }
+          return match;
+        });
+        
+        console.log(`Entraînements filtrés pour ${dateToUse}:`, dayWorkouts.length);
+        setWorkouts(dayWorkouts);
+      } else {
+        console.log('Aucun entraînement stocké');
+        setWorkouts([]);
+      }
+    } catch (error) {
+      console.error('Erreur chargement entraînements:', error);
+      setWorkouts([]);
+    } finally {
+      setIsLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    loadWorkoutsData();
+  };
+
   const handleEditWorkout = (workout: Workout) => {
+    console.log('Édition entraînement:', workout.name);
     router.push({
       pathname: '/(client)/creer-entrainement',
       params: {
@@ -71,10 +138,13 @@ export default function GererEntrainementsScreen() {
     });
   };
 
-  const handleDeleteWorkout = async (workoutId: string) => {
+  const handleDeleteWorkout = (workoutId: string) => {
+    const workoutToDelete = workouts.find(w => w.id === workoutId);
+    if (!workoutToDelete) return;
+
     Alert.alert(
       'Supprimer l\'entraînement',
-      'Êtes-vous sûr de vouloir supprimer cet entraînement ?',
+      `Êtes-vous sûr de vouloir supprimer "${workoutToDelete.name}" ?`,
       [
         { text: 'Annuler', style: 'cancel' },
         { 
@@ -89,7 +159,13 @@ export default function GererEntrainementsScreen() {
   const deleteWorkout = async (workoutId: string) => {
     try {
       const currentUser = await getCurrentUser();
-      if (!currentUser) return;
+      if (!currentUser) {
+        Alert.alert('Erreur', 'Utilisateur non connecté');
+        return;
+      }
+
+      console.log('=== SUPPRESSION ENTRAINEMENT ===');
+      console.log('ID à supprimer:', workoutId);
 
       const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
       const storedWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
@@ -104,15 +180,16 @@ export default function GererEntrainementsScreen() {
         const updatedLocalWorkouts = workouts.filter(w => w.id !== workoutId);
         setWorkouts(updatedLocalWorkouts);
         
-        // Si plus d'entraînements, retourner à la page principale
+        console.log(`Entraînement supprimé. Restants: ${updatedLocalWorkouts.length}`);
+        
+        Alert.alert('Succès', 'Entraînement supprimé avec succès !');
+        
+        // Si plus d'entraînements pour ce jour, retourner à la page principale
         if (updatedLocalWorkouts.length === 0) {
-          // Forcer le rechargement de la page précédente
           setTimeout(() => {
             router.back();
-          }, 100);
+          }, 1000);
         }
-        
-        Alert.alert('Succès', 'Entraînement supprimé !');
       }
     } catch (error) {
       console.error('Erreur suppression:', error);
@@ -121,6 +198,7 @@ export default function GererEntrainementsScreen() {
   };
 
   const handleAddWorkout = () => {
+    console.log('Ajout nouvel entraînement pour:', selectedDate);
     router.push({
       pathname: '/(client)/creer-entrainement',
       params: {
@@ -130,35 +208,49 @@ export default function GererEntrainementsScreen() {
     });
   };
 
+  const handleGoBack = () => {
+    console.log('Retour à la page entraînement');
+    router.back();
+  };
+
   const formatDate = (dateString: string) => {
-    // Forcer le parsing en UTC pour éviter les décalages de fuseau horaire
-    const date = new Date(dateString + 'T00:00:00.000Z');
-    return date.toLocaleDateString('fr-FR', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      timeZone: 'Europe/Paris'
-    });
+    try {
+      // Parser la date en UTC pour éviter les décalages
+      const date = new Date(dateString + 'T00:00:00.000Z');
+      return date.toLocaleDateString('fr-FR', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        timeZone: 'Europe/Paris'
+      });
+    } catch (error) {
+      console.error('Erreur formatage date:', error);
+      return dateString;
+    }
   };
 
   const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty.toLowerCase()) {
+    switch (difficulty?.toLowerCase()) {
       case 'facile':
         return '#28A745';
       case 'modéré':
         return '#FFA500';
       case 'difficile':
         return '#FF6B6B';
+      case 'effort maximal':
+        return '#DC3545';
       default:
         return '#8B949E';
     }
   };
 
   const getTypeEmoji = (type: string) => {
-    switch (type.toLowerCase()) {
+    switch (type?.toLowerCase()) {
       case 'musculation':
         return '💪';
       case 'cardio':
+        return '❤️';
+      case 'course à pied':
         return '🏃‍♂️';
       case 'yoga':
         return '🧘‍♀️';
@@ -166,102 +258,173 @@ export default function GererEntrainementsScreen() {
         return '🏊‍♂️';
       case 'cyclisme':
         return '🚴‍♂️';
-      case 'course':
-        return '🏃‍♂️';
+      case 'hiit':
+        return '🔥';
+      case 'boxe':
+        return '🥊';
+      case 'crossfit':
+        return '⚡';
+      case 'étirement':
+        return '🤸‍♀️';
       default:
         return '🏋️‍♂️';
     }
   };
 
+  const renderWorkoutCard = (workout: Workout, index: number) => (
+    <View key={workout.id} style={styles.workoutCard}>
+      <View style={styles.workoutHeader}>
+        <View style={styles.workoutTitleSection}>
+          <Text style={styles.workoutEmoji}>{getTypeEmoji(workout.type)}</Text>
+          <View style={styles.workoutInfo}>
+            <Text style={styles.workoutName}>{workout.name}</Text>
+            <Text style={styles.workoutType}>{workout.type}</Text>
+          </View>
+        </View>
+        
+        <View style={styles.workoutActions}>
+          <TouchableOpacity 
+            style={styles.editButton}
+            onPress={() => handleEditWorkout(workout)}
+          >
+            <Text style={styles.editButtonText}>✏️</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.deleteButton}
+            onPress={() => handleDeleteWorkout(workout.id)}
+          >
+            <Text style={styles.deleteButtonText}>🗑️</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <View style={styles.workoutDetails}>
+        {workout.specificity && (
+          <View style={styles.detailItem}>
+            <Text style={styles.detailLabel}>Spécialité</Text>
+            <Text style={styles.detailValue}>{workout.specificity}</Text>
+          </View>
+        )}
+
+        {workout.difficulty && (
+          <View style={styles.detailItem}>
+            <Text style={styles.detailLabel}>Difficulté</Text>
+            <View style={[styles.difficultyBadge, { backgroundColor: getDifficultyColor(workout.difficulty) }]}>
+              <Text style={styles.difficultyText}>{workout.difficulty}</Text>
+            </View>
+          </View>
+        )}
+
+        {workout.duration > 0 && (
+          <View style={styles.detailItem}>
+            <Text style={styles.detailLabel}>Durée</Text>
+            <Text style={styles.detailValue}>{workout.duration} min</Text>
+          </View>
+        )}
+
+        {workout.time && (
+          <View style={styles.detailItem}>
+            <Text style={styles.detailLabel}>Heure</Text>
+            <Text style={styles.detailValue}>{workout.time}</Text>
+          </View>
+        )}
+
+        {workout.calories > 0 && (
+          <View style={styles.detailItem}>
+            <Text style={styles.detailLabel}>Calories</Text>
+            <Text style={styles.detailValue}>{workout.calories} kcal</Text>
+          </View>
+        )}
+
+        {workout.exercises && workout.exercises.length > 0 && (
+          <View style={styles.detailItem}>
+            <Text style={styles.detailLabel}>Exercices</Text>
+            <Text style={styles.detailValue}>{workout.exercises.length} exercice(s)</Text>
+          </View>
+        )}
+      </View>
+    </View>
+  );
+
+  const renderEmptyState = () => (
+    <View style={styles.emptyState}>
+      <View style={styles.emptyIcon}>
+        <Text style={styles.emptyIconText}>📅</Text>
+      </View>
+      <Text style={styles.emptyTitle}>Aucune séance planifiée</Text>
+      <Text style={styles.emptyMessage}>
+        Vous n'avez pas encore d'entraînement prévu pour ce jour
+      </Text>
+      <TouchableOpacity 
+        style={styles.addFirstButton}
+        onPress={handleAddWorkout}
+      >
+        <Text style={styles.addFirstButtonText}>Créer ma première séance</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderLoadingState = () => (
+    <View style={styles.loadingContainer}>
+      <Text style={styles.loadingText}>Chargement...</Text>
+    </View>
+  );
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPress={handleGoBack}
         >
           <Text style={styles.backButtonText}>← Retour</Text>
         </TouchableOpacity>
         
         <View style={styles.headerInfo}>
           <Text style={styles.title}>Séances planifiées</Text>
-          <Text style={styles.subtitle}>
-            {formatDate(selectedDate)}
-          </Text>
+          {selectedDate && (
+            <Text style={styles.subtitle}>
+              {formatDate(selectedDate)}
+            </Text>
+          )}
         </View>
       </View>
 
-      <ScrollView style={styles.scrollView}>
+      {/* Content */}
+      <ScrollView 
+        style={styles.scrollView}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor="#F5A623"
+            colors={['#F5A623']}
+          />
+        }
+      >
         <View style={styles.content}>
-          {workouts.map((workout, index) => (
-            <View key={workout.id} style={styles.workoutCard}>
-              <View style={styles.workoutHeader}>
-                <View style={styles.workoutTitleSection}>
-                  <Text style={styles.workoutEmoji}>{getTypeEmoji(workout.type)}</Text>
-                  <View style={styles.workoutInfo}>
-                    <Text style={styles.workoutName}>{workout.name}</Text>
-                    <Text style={styles.workoutType}>{workout.type}</Text>
-                  </View>
-                </View>
-                
-                <View style={styles.workoutActions}>
-                  <TouchableOpacity 
-                    style={styles.editButton}
-                    onPress={() => handleEditWorkout(workout)}
-                  >
-                    <Text style={styles.editButtonText}>✏️</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={styles.deleteButton}
-                    onPress={() => handleDeleteWorkout(workout.id)}
-                  >
-                    <Text style={styles.deleteButtonText}>🗑️</Text>
-                  </TouchableOpacity>
-                </View>
+          {isLoading ? (
+            renderLoadingState()
+          ) : workouts.length > 0 ? (
+            <>
+              {/* Liste des entraînements */}
+              <View style={styles.workoutsList}>
+                {workouts.map((workout, index) => renderWorkoutCard(workout, index))}
               </View>
 
-              <View style={styles.workoutDetails}>
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailLabel}>Spécialité</Text>
-                  <Text style={styles.detailValue}>{workout.specificity || 'Non spécifié'}</Text>
-                </View>
-
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailLabel}>Difficulté</Text>
-                  <View style={[styles.difficultyBadge, { backgroundColor: getDifficultyColor(workout.difficulty) }]}>
-                    <Text style={styles.difficultyText}>{workout.difficulty}</Text>
-                  </View>
-                </View>
-
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailLabel}>Durée</Text>
-                  <Text style={styles.detailValue}>{workout.duration} min</Text>
-                </View>
-
-                {workout.time && (
-                  <View style={styles.detailItem}>
-                    <Text style={styles.detailLabel}>Heure</Text>
-                    <Text style={styles.detailValue}>{workout.time}</Text>
-                  </View>
-                )}
-
-                {workout.exercises && workout.exercises.length > 0 && (
-                  <View style={styles.detailItem}>
-                    <Text style={styles.detailLabel}>Exercices</Text>
-                    <Text style={styles.detailValue}>{workout.exercises.length} exercice(s)</Text>
-                  </View>
-                )}
-              </View>
-            </View>
-          ))}
-
-          <TouchableOpacity 
-            style={styles.addButton}
-            onPress={handleAddWorkout}
-          >
-            <Text style={styles.addButtonIcon}>+</Text>
-            <Text style={styles.addButtonText}>Ajouter une séance</Text>
-          </TouchableOpacity>
+              {/* Bouton d'ajout */}
+              <TouchableOpacity 
+                style={styles.addButton}
+                onPress={handleAddWorkout}
+              >
+                <Text style={styles.addButtonIcon}>+</Text>
+                <Text style={styles.addButtonText}>Ajouter une séance</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            renderEmptyState()
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -317,6 +480,19 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#8B949E',
+  },
+  workoutsList: {
+    marginBottom: 20,
   },
   workoutCard: {
     backgroundColor: '#161B22',
@@ -437,5 +613,52 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#8B949E',
     fontWeight: '500',
+  },
+  emptyState: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 32,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#21262D',
+    marginTop: 40,
+  },
+  emptyIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#21262D',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  emptyIconText: {
+    fontSize: 36,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  emptyMessage: {
+    fontSize: 16,
+    color: '#8B949E',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  addFirstButton: {
+    backgroundColor: '#F5A623',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+  },
+  addFirstButtonText: {
+    color: '#000000',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
