@@ -41,6 +41,13 @@ export default function GererEntrainementsScreen() {
     loadWorkouts();
   }, []);
 
+  // Recharger les entraînements si la date sélectionnée change
+  useEffect(() => {
+    if (selectedDate) {
+      loadWorkouts();
+    }
+  }, [selectedDate]);
+
   const loadWorkouts = async () => {
     try {
       const currentUser = await getCurrentUser();
@@ -51,7 +58,7 @@ export default function GererEntrainementsScreen() {
 
       console.log(`=== CHARGEMENT ENTRAINEMENTS POUR ${selectedDate} ===`);
       
-      // D'abord essayer le stockage local direct
+      // Charger tous les entraînements
       const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
       const storedWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
       
@@ -59,20 +66,20 @@ export default function GererEntrainementsScreen() {
         const allWorkouts = JSON.parse(storedWorkouts);
         console.log(`Total entraînements stockés: ${allWorkouts.length}`);
         
-        // Debug: afficher tous les entraînements avec leurs dates
-        allWorkouts.forEach((workout: any, index: number) => {
-          console.log(`Entraînement ${index + 1}: ${workout.name} - Date: ${workout.date} - Type: ${workout.type}`);
-        });
-        
+        // Filtrer STRICTEMENT par la date sélectionnée
         const dayWorkouts = allWorkouts.filter((workout: Workout) => {
-          const match = workout.date === selectedDate;
-          console.log(`Workout "${workout.name}" (${workout.date}) - Match avec ${selectedDate}: ${match}`);
+          // Comparaison exacte des dates en format YYYY-MM-DD
+          const workoutDate = workout.date;
+          const targetDate = selectedDate;
+          
+          const match = workoutDate === targetDate;
+          console.log(`Workout "${workout.name}" (${workoutDate}) - Match avec ${targetDate}: ${match}`);
           return match;
         });
         
-        console.log(`Entraînements trouvés pour ${selectedDate}: ${dayWorkouts.length}`);
+        console.log(`Entraînements filtrés pour ${selectedDate}: ${dayWorkouts.length}`);
         dayWorkouts.forEach((workout: any, index: number) => {
-          console.log(`  ${index + 1}. ${workout.name} (${workout.type})`);
+          console.log(`  ${index + 1}. ${workout.name} (${workout.type}) - Date: ${workout.date}`);
         });
         
         setWorkouts(dayWorkouts);
