@@ -771,9 +771,9 @@ export default function ProgresScreen() {
           date: month.date
         }))
         .sort((a, b) => a.date.getTime() - b.date.getTime())
-        .slice(-6); // Garder les 6 derniers mois
+        .slice(-6); // Garder les derniers mois
 
-      return monthlyData;
+      return monthlyData
 
     } else { // Années
       // Pour les années, faire la moyenne par mois puis regrouper par année
@@ -2277,7 +2277,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-  },
+    },
   header: {
     paddingHorizontal: 20,
     paddingVertical: 20,
