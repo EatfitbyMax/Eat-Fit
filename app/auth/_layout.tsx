@@ -7,6 +7,8 @@ export default function AuthLayout() {
     <RegistrationProvider>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="login" />
+        <Stack.Screen name="forgot-password" />
+        <Stack.Screen name="change-password" />
         <Stack.Screen name="register" />
         <Stack.Screen name="register-goals" />
         <Stack.Screen name="register-profile" />

@@ -15,6 +15,7 @@ export interface User {
   activityLevel?: string;
   userType: 'client' | 'coach';
   hasNutritionProgram?: boolean;
+  needsPasswordReset?: boolean;
   createdAt: string;
 }
 
@@ -116,7 +117,12 @@ export async function login(email: string, password: string): Promise<User | nul
       const { password: _, ...userWithoutPassword } = user;
       await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userWithoutPassword));
       console.log('Connexion réussie pour:', user.email, 'Type:', user.userType);
-      return userWithoutPassword;
+      
+      // Ajouter l'information si un changement de mot de passe est requis
+      return {
+        ...userWithoutPassword,
+        needsPasswordReset: user.needsPasswordReset || false
+      };
     } else {
       console.log('Identifiants incorrects pour:', normalizedEmail);
       return null;
