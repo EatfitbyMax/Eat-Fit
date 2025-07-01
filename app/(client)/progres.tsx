@@ -533,14 +533,16 @@ export default function ProgresScreen() {
     const weightPercentage = Math.max(0, Math.min(1, (maxWeight - weight) / weightRange));
 
     // Calculer la position horizontale en fonction des labels disponibles
-    // Les labels sont espacés uniformément, donc chaque point doit s'aligner avec son label correspondant
+    // Distribuer les points uniformément sur la largeur du graphique
     const totalLabels = allLabels.length;
     let leftPercentage = 0;
 
     if (totalLabels > 1) {
-      // Calculer la position basée sur l'index du point parmi les labels disponibles
+      // Espacement uniforme entre les points, avec marge de 5% de chaque côté
+      const marginPercentage = 5;
+      const usableWidth = 100 - (2 * marginPercentage);
       const labelIndex = Math.min(dataIndex, totalLabels - 1);
-      leftPercentage = (labelIndex / (totalLabels - 1)) * 100;
+      leftPercentage = marginPercentage + (labelIndex / (totalLabels - 1)) * usableWidth;
     } else {
       leftPercentage = 50; // Point unique au centre
     }
@@ -1904,9 +1906,35 @@ export default function ProgresScreen() {
 
                 {/* X-axis labels */}
                 <View style={styles.xAxis}>
-                {generatePeriodLabels().map((label, index) => (
-                    <Text key={index} style={styles.xAxisLabel}>{label}</Text>
-                  ))}
+                  {generatePeriodLabels().map((label, index) => {
+                    const totalLabels = generatePeriodLabels().length;
+                    let leftPosition = 0;
+                    
+                    if (totalLabels > 1) {
+                      // Espacement uniforme avec marge de 5% de chaque côté
+                      const marginPercentage = 5;
+                      const usableWidth = 100 - (2 * marginPercentage);
+                      leftPosition = marginPercentage + (index / (totalLabels - 1)) * usableWidth;
+                    } else {
+                      leftPosition = 50; // Label unique au centre
+                    }
+                    
+                    return (
+                      <Text 
+                        key={index} 
+                        style={[
+                          styles.xAxisLabel, 
+                          { 
+                            position: 'absolute',
+                            left: `${leftPosition}%`,
+                            transform: [{ translateX: -15 }] // Centrer le texte
+                          }
+                        ]}
+                      >
+                        {label}
+                      </Text>
+                    );
+                  })}
                 </View>
               </View>
             </ScrollView>
@@ -2623,9 +2651,6 @@ const styles = StyleSheet.create({
     bottom: -25,
     left: 0,
     right: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 5,
     height: 20,
   },
   xAxisLabel: {
@@ -2633,7 +2658,7 @@ const styles = StyleSheet.create({
     color: '#8B949E',
     fontWeight: '500',
     textAlign: 'center',
-    flex: 1,
+    width: 30,
   },
   summaryContainer: {
     marginHorizontal: 20,
