@@ -74,26 +74,42 @@ export async function getCurrentUser(): Promise<User | null> {
 
 export async function login(email: string, password: string): Promise<User | null> {
   try {
+    console.log('🔄 Tentative de connexion pour:', email);
+    
     // Récupérer les utilisateurs depuis le serveur VPS uniquement
     const users = await PersistentStorage.getUsers();
 
-    console.log('Utilisateurs disponibles:', users.map((u: any) => ({ email: u.email, userType: u.userType })));
+    console.log('📊 Nombre d\'utilisateurs récupérés:', users.length);
+    console.log('👥 Utilisateurs disponibles:', users.map((u: any) => ({ 
+      email: u.email, 
+      userType: u.userType,
+      hasPassword: !!u.password 
+    })));
 
     // Normaliser l'email (minuscules et trim)
     const normalizedEmail = email.toLowerCase().trim();
+    
+    console.log('🔍 Recherche utilisateur avec email normalisé:', normalizedEmail);
+    
+    // Chercher l'utilisateur par email d'abord
+    const userByEmail = users.find((u: any) => 
+      u.email.toLowerCase().trim() === normalizedEmail
+    );
+    
+    if (userByEmail) {
+      console.log('✅ Utilisateur trouvé par email');
+      console.log('🔑 Comparaison des mots de passe:', {
+        saisi: password,
+        stocke: userByEmail.password,
+        match: userByEmail.password === password
+      });
+    } else {
+      console.log('❌ Aucun utilisateur trouvé avec cet email');
+    }
+    
     const user = users.find((u: any) => 
       u.email.toLowerCase().trim() === normalizedEmail && u.password === password
     );
-
-    console.log('Recherche utilisateur avec email:', normalizedEmail);
-    console.log('Mot de passe saisi:', password);
-    
-    // Debug: afficher les mots de passe stockés (temporaire)
-    users.forEach((u: any) => {
-      if (u.email.toLowerCase().trim() === normalizedEmail) {
-        console.log('Utilisateur trouvé - mot de passe stocké:', u.password);
-      }
-    });
 
     if (user) {
       // Enlever le mot de passe avant de sauvegarder dans la session locale
