@@ -751,23 +751,29 @@ export default function ProgresScreen() {
       const processedData = getProcessedNutritionData();
       
       processedData.forEach(entry => {
-        const dayName = entry.date.toLocaleDateString('fr-FR', { weekday: 'short' });
-        labels.push(dayName);
+        const dayMonth = entry.date.toLocaleDateString('fr-FR', { 
+          day: 'numeric', 
+          month: 'numeric' 
+        });
+        labels.push(dayMonth);
       });
 
+      // Si pas assez de données, compléter avec les 7 derniers jours
       if (labels.length < 7) {
+        const labelsToAdd = [];
         const currentDate = new Date();
-        const existingDays = new Set(labels);
         
         for (let i = 6; i >= 0; i--) {
           const targetDate = new Date(currentDate);
           targetDate.setDate(currentDate.getDate() - i);
-          const dayName = targetDate.toLocaleDateString('fr-FR', { weekday: 'short' });
-          
-          if (!existingDays.has(dayName)) {
-            labels.push(dayName);
-          }
+          const dayMonth = targetDate.toLocaleDateString('fr-FR', { 
+            day: 'numeric', 
+            month: 'numeric' 
+          });
+          labelsToAdd.push(dayMonth);
         }
+        
+        return labelsToAdd;
       }
 
       return labels.slice(-7);
