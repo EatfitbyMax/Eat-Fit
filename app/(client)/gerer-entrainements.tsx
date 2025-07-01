@@ -210,7 +210,7 @@ export default function GererEntrainementsScreen() {
 
   const handleGoBack = () => {
     console.log('Retour à la page entraînement');
-    router.back();
+    router.replace('/(client)/entrainement');
   };
 
   const formatDate = (dateString: string) => {
