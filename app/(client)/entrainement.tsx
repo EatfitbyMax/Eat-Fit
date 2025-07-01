@@ -204,8 +204,8 @@ export default function EntrainementScreen() {
     const { start } = getWeekRange();
     const dayIndex = daysOfWeek.indexOf(day);
     
-    // Calculer la date correcte pour le jour
-    const targetDate = new Date(start);
+    // Créer une nouvelle date pour éviter les mutations
+    const targetDate = new Date(start.getTime());
     targetDate.setDate(start.getDate() + dayIndex);
     targetDate.setHours(0, 0, 0, 0);
     
@@ -217,7 +217,7 @@ export default function EntrainementScreen() {
 
     const count = workouts.filter(workout => workout.date === dateString).length;
     
-    console.log(`${day}: ${dateString} -> ${count} séance(s)`);
+    console.log(`${day} (index ${dayIndex}): ${dateString} (${targetDate.toLocaleDateString('fr-FR', { weekday: 'long' })}) -> ${count} séance(s)`);
     
     return count;
   };
@@ -350,12 +350,12 @@ export default function EntrainementScreen() {
     const { start } = getWeekRange();
     const dayIndex = daysOfWeek.indexOf(jour);
     
-    // Calculer la date correcte pour le jour sélectionné
-    const targetDate = new Date(start);
+    // Créer une nouvelle date pour éviter les mutations
+    const targetDate = new Date(start.getTime());
     targetDate.setDate(start.getDate() + dayIndex);
     targetDate.setHours(0, 0, 0, 0);
     
-    // Formater la date au format YYYY-MM-DD
+    // Formater la date au format YYYY-MM-DD en UTC pour éviter les décalages de fuseau horaire
     const year = targetDate.getFullYear();
     const month = String(targetDate.getMonth() + 1).padStart(2, '0');
     const dayNum = String(targetDate.getDate()).padStart(2, '0');
@@ -366,9 +366,13 @@ export default function EntrainementScreen() {
     console.log(`Date de début de semaine: ${start.toISOString().split('T')[0]}`);
     console.log(`Date calculée: ${dateString}`);
     console.log(`Date complète: ${targetDate.toDateString()}`);
+    console.log(`Jour de la semaine calculé: ${targetDate.toLocaleDateString('fr-FR', { weekday: 'long' })}`);
 
     // Récupérer les entraînements du jour
-    const dayWorkouts = workouts.filter(workout => workout.date === dateString);
+    const dayWorkouts = workouts.filter(workout => {
+      console.log(`Comparaison: workout.date="${workout.date}" vs dateString="${dateString}"`);
+      return workout.date === dateString;
+    });
     
     console.log(`Entraînements trouvés pour ${jour}: ${dayWorkouts.length}`);
     console.log('Workouts disponibles:', workouts.map(w => `${w.date}: ${w.name}`));
