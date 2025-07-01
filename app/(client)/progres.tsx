@@ -20,8 +20,6 @@ export default function ProgresScreen() {
     currentWeight: 0,
     targetWeight: 0,
     lastWeightUpdate: null as string | null,
-    weeklyUpdates: 0,
-    lastWeekReset: null as string | null,
     targetAsked: false,
     weightHistory: [] as Array<{ weight: number; date: string }>,
   });
@@ -146,8 +144,6 @@ export default function ProgresScreen() {
             currentWeight: startWeight,
             targetWeight: existingTargetWeight,
             lastWeightUpdate: null,
-            weeklyUpdates: 0,
-            lastWeekReset: null,
             targetAsked: existingTargetWeight > 0, // Marquer comme demandé si déjà défini
             weightHistory: startWeight > 0 ? [{ weight: startWeight, date: user.createdAt || new Date().toISOString() }] : [],
           };
@@ -194,23 +190,7 @@ export default function ProgresScreen() {
     }
 
     const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const nowISO = now.toISOString();
-
-    // Vérifier si on doit réinitialiser le compteur hebdomadaire
-    const lastWeekReset = weightData.lastWeekReset ? new Date(weightData.lastWeekReset) : null;
-    const daysSinceReset = lastWeekReset ? Math.floor((today.getTime() - lastWeekReset.getTime()) / (1000 * 60 * 60 * 24)) : 7;
-
-    let newWeeklyUpdates = weightData.weeklyUpdates;
-    let newLastWeekReset = weightData.lastWeekReset;
-
-    // Si plus de 7 jours, réinitialiser le compteur
-    if (daysSinceReset >= 7) {
-      newWeeklyUpdates = 1;
-      newLastWeekReset = today.toISOString();
-    } else {
-      newWeeklyUpdates = weightData.weeklyUpdates + 1;
-    }
 
     // Ajouter la nouvelle pesée à l'historique
     const newWeightHistory = [...(weightData.weightHistory || [])];
@@ -220,8 +200,6 @@ export default function ProgresScreen() {
       ...weightData,
       currentWeight: weight,
       lastWeightUpdate: nowISO,
-      weeklyUpdates: newWeeklyUpdates,
-      lastWeekReset: newLastWeekReset,
       weightHistory: newWeightHistory,
     };
 
@@ -436,23 +414,34 @@ export default function ProgresScreen() {
     // Si pas de dernière mise à jour, on peut toujours mettre à jour
     if (!weightData.lastWeightUpdate) return { canUpdate: true, reason: '' };
 
-    // Vérifier si on doit réinitialiser le compteur hebdomadaire
-    const lastWeekReset = weightData.lastWeekReset ? new Date(weightData.lastWeekReset) : null;
-    const daysSinceReset = lastWeekReset ? Math.floor((today.getTime() - lastWeekReset.getTime()) / (1000 * 60 * 60 * 24)) : 7;
+    // Calculer le début de la semaine courante (lundi)
+    const startOfCurrentWeek = new Date(today);
+    const dayOfWeek = today.getDay();
+    const daysToMonday = (dayOfWeek === 0 ? 6 : dayOfWeek - 1); // Dimanche = 6 jours avant lundi
+    startOfCurrentWeek.setDate(today.getDate() - daysToMonday);
+    startOfCurrentWeek.setHours(0, 0, 0, 0);
 
-    // Si plus de 7 jours depuis le dernier reset, on peut remettre à jour
-    if (daysSinceReset >= 7) {
+    // Calculer le début de la semaine de la dernière mise à jour
+    const lastUpdate = new Date(weightData.lastWeightUpdate);
+    const startOfLastUpdateWeek = new Date(lastUpdate);
+    const lastUpdateDayOfWeek = lastUpdate.getDay();
+    const daysToMondayLastUpdate = (lastUpdateDayOfWeek === 0 ? 6 : lastUpdateDayOfWeek - 1);
+    startOfLastUpdateWeek.setDate(lastUpdate.getDate() - daysToMondayLastUpdate);
+    startOfLastUpdateWeek.setHours(0, 0, 0, 0);
+
+    // Si on est dans une nouvelle semaine, on peut mettre à jour
+    if (startOfCurrentWeek.getTime() > startOfLastUpdateWeek.getTime()) {
       return { canUpdate: true, reason: '' };
     }
 
-    // Sinon, vérifier si on a encore des mises à jour disponibles cette semaine
-    if (weightData.weeklyUpdates < 7) {
-      return { canUpdate: true, reason: '' };
-    }
+    // Sinon, on a déjà mis à jour cette semaine
+    const nextMonday = new Date(startOfCurrentWeek);
+    nextMonday.setDate(startOfCurrentWeek.getDate() + 7);
+    const daysUntilNextWeek = Math.ceil((nextMonday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
     return { 
       canUpdate: false, 
-      reason: 'Vous avez atteint la limite de 7 mises à jour par semaine.' 
+      reason: `Vous avez déjà mis à jour votre poids cette semaine. Prochaine mise à jour possible dans ${daysUntilNextWeek} jour${daysUntilNextWeek > 1 ? 's' : ''}.` 
     };
   };
 
@@ -2047,7 +2036,7 @@ export default function ProgresScreen() {
               }
             </Text>
             <Text style={styles.modalUpdateInfo}>
-              {7 - (weightData.weeklyUpdates || 0)} mises à jour restantes cette semaine
+              Une mise à jour par semaine (du lundi au dimanche)
             </Text>
 
             <View style={styles.inputContainer}>
