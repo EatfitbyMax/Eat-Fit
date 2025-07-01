@@ -271,11 +271,10 @@ export default function EntrainementScreen() {
   };
 
   const getWeekRange = () => {
-    const today = new Date();
-    const startOfWeek = new Date(today);
+    const startOfWeek = new Date(currentWeek);
     startOfWeek.setHours(0, 0, 0, 0); // Reset à minuit
     
-    // Calculer le lundi de la semaine courante (1er juillet 2025 est un mardi)
+    // Calculer le lundi de la semaine courante
     const dayOfWeek = startOfWeek.getDay(); // 0 = dimanche, 1 = lundi, ..., 6 = samedi
     const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Distance depuis lundi
     
