@@ -2649,7 +2649,7 @@ const styles = StyleSheet.create({
   },
   xAxis: {
     position: 'absolute',
-    bottom: 5,
+    bottom: 1,
     left: 0,
     right: 0,
     height: 20,
