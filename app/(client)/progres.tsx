@@ -609,35 +609,101 @@ export default function ProgresScreen() {
     const monthNames = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
 
     if (selectedPeriod === 'Semaines') {
-      const currentDate = new Date();
-
-      // Générer les 6 dernières semaines avec leurs vrais numéros ISO
-      for (let i = 5; i >= 0; i--) {
-        const targetDate = new Date(currentDate);
-        targetDate.setDate(currentDate.getDate() - (i * 7));
-
-        const weekNumber = getISOWeekNumber(targetDate);
+      // Utiliser les vraies semaines des données de poids
+      const processedData = getProcessedWeightData();
+      
+      // Générer les labels basés sur les vraies dates des données
+      processedData.forEach(entry => {
+        const weekNumber = getISOWeekNumber(entry.date);
         labels.push(`S${weekNumber}`);
+      });
+
+      // Si pas assez de données, compléter avec les semaines récentes
+      if (labels.length < 6) {
+        const currentDate = new Date();
+        const existingWeeks = new Set(labels.map(l => l.substring(1))); // Enlever le 'S'
+        
+        // Ajouter les semaines manquantes en remontant dans le temps
+        let weeksToAdd = 6 - labels.length;
+        let dateOffset = 0;
+        
+        while (weeksToAdd > 0) {
+          const targetDate = new Date(currentDate);
+          targetDate.setDate(currentDate.getDate() - (dateOffset * 7));
+          
+          const weekNumber = getISOWeekNumber(targetDate);
+          const weekLabel = `S${weekNumber}`;
+          
+          if (!existingWeeks.has(weekNumber.toString())) {
+            labels.unshift(weekLabel);
+            weeksToAdd--;
+          }
+          
+          dateOffset++;
+          
+          // Sécurité pour éviter une boucle infinie
+          if (dateOffset > 52) break;
+        }
       }
+
+      // Garder seulement les 6 derniers
+      return labels.slice(-6);
+      
     } else if (selectedPeriod === 'Mois') {
-      const currentDate = new Date();
+      const processedData = getProcessedWeightData();
+      
+      // Générer les labels basés sur les vraies dates des données
+      processedData.forEach(entry => {
+        const monthName = monthNames[entry.date.getMonth()];
+        if (!labels.includes(monthName)) {
+          labels.push(monthName);
+        }
+      });
 
-      // Générer les 6 derniers mois
-      for (let i = 5; i >= 0; i--) {
-        const targetDate = new Date(currentDate);
-        targetDate.setMonth(currentDate.getMonth() - i);
-        labels.push(monthNames[targetDate.getMonth()]);
+      // Si pas assez de données, compléter avec les mois récents
+      if (labels.length < 6) {
+        const currentDate = new Date();
+        const existingMonths = new Set(labels);
+        
+        for (let i = 5; i >= 0; i--) {
+          const targetDate = new Date(currentDate);
+          targetDate.setMonth(currentDate.getMonth() - i);
+          const monthName = monthNames[targetDate.getMonth()];
+          
+          if (!existingMonths.has(monthName)) {
+            labels.push(monthName);
+          }
+        }
       }
+
+      return labels.slice(-6);
+      
     } else { // Années
-      const currentYear = new Date().getFullYear();
+      const processedData = getProcessedWeightData();
+      
+      // Générer les labels basés sur les vraies dates des données
+      processedData.forEach(entry => {
+        const year = entry.date.getFullYear().toString();
+        if (!labels.includes(year)) {
+          labels.push(year);
+        }
+      });
 
-      // Générer les 6 dernières années
-      for (let i = 5; i >= 0; i--) {
-        labels.push((currentYear - i).toString());
+      // Si pas assez de données, compléter avec les années récentes
+      if (labels.length < 6) {
+        const currentYear = new Date().getFullYear();
+        const existingYears = new Set(labels);
+        
+        for (let i = 5; i >= 0; i--) {
+          const year = (currentYear - i).toString();
+          if (!existingYears.has(year)) {
+            labels.push(year);
+          }
+        }
       }
-    }
 
-    return labels;
+      return labels.slice(-6);
+    }
   };
 
   // Nouvelle fonction pour traiter les données selon la période
