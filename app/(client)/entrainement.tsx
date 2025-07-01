@@ -90,6 +90,18 @@ export default function EntrainementScreen() {
     }, [])
   );
 
+  // Rafraîchissement automatique constant toutes les 3 secondes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      console.log('=== RAFRAÎCHISSEMENT AUTOMATIQUE ===');
+      loadWorkouts();
+      // Forcer un re-render subtil
+      setCurrentWeek(prev => new Date(prev.getTime()));
+    }, 3000); // Rafraîchit toutes les 3 secondes
+
+    return () => clearInterval(interval);
+  }, []);
+
   const loadWorkouts = async () => {
     try {
       const currentUser = await getCurrentUser();
