@@ -1873,7 +1873,7 @@ export default function ProgresScreen() {
             ))}
           </View>
 
-          {/* Improved Chart */}
+          {/* Improved Chart with Horizontal Scroll */}
           <View style={styles.chartArea}>
             <View style={styles.yAxis}>
             {generateYAxisLabels().map((label, index) => (
@@ -1881,24 +1881,31 @@ export default function ProgresScreen() {
               ))}
             </View>
 
-            <View style={styles.chartContent}>
-              {/* Grid */}
-              <View style={styles.gridContainer}>
-                {[...Array(6)].map((_, i) => (
-                  <View key={i} style={styles.gridLine} />
-                ))}
-              </View>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={true}
+              style={styles.chartScrollView}
+              contentContainerStyle={styles.chartScrollContent}
+            >
+              <View style={styles.chartContent}>
+                {/* Grid */}
+                <View style={styles.gridContainer}>
+                  {[...Array(6)].map((_, i) => (
+                    <View key={i} style={styles.gridLine} />
+                  ))}
+                </View>
 
-              {/* Enhanced Weight Line with Gradient */}
-              {renderWeightChart()}
+                {/* Enhanced Weight Line with Gradient */}
+                {renderWeightChart()}
 
-              {/* X-axis labels */}
-              <View style={styles.xAxis}>
-              {generatePeriodLabels().map((label, index) => (
-                  <Text key={index} style={styles.xAxisLabel}>{label}</Text>
-                ))}
+                {/* X-axis labels */}
+                <View style={styles.xAxis}>
+                {generatePeriodLabels().map((label, index) => (
+                    <Text key={index} style={styles.xAxisLabel}>{label}</Text>
+                  ))}
+                </View>
               </View>
-            </View>
+            </ScrollView>
           </View>
         </View>
         )}
@@ -2548,8 +2555,14 @@ const styles = StyleSheet.create({
     lineHeight: 12,
     height: 12,
   },
-  chartContent: {
+  chartScrollView: {
     flex: 1,
+  },
+  chartScrollContent: {
+    minWidth: width - 120, // Largeur minimale pour permettre le scroll
+  },
+  chartContent: {
+    width: Math.max(width - 120, 400), // Largeur minimum pour garantir le scroll
     position: 'relative',
   },
   gridContainer: {
