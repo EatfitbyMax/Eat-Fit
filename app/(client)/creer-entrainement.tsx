@@ -312,8 +312,10 @@ export default function CreerEntrainementScreen() {
         [{ 
           text: 'OK', 
           onPress: () => {
-            // Redirection avec paramètre pour forcer le rechargement
-            router.replace('/(client)/entrainement?refresh=true');
+            // Forcer le rechargement immédiat des données puis naviguer
+            setTimeout(() => {
+              router.back();
+            }, 100);
           }
         }]
       );

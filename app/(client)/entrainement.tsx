@@ -81,9 +81,12 @@ export default function EntrainementScreen() {
   useFocusEffect(
     useCallback(() => {
       console.log('=== FOCUS EFFECT: RECHARGEMENT COMPLET ===');
-      loadWorkouts();
-      // Forcer un re-render en mettant à jour l'état
-      setCurrentWeek(prev => new Date(prev.getTime()));
+      // Délai pour s'assurer que les données sont bien sauvegardées
+      setTimeout(() => {
+        loadWorkouts();
+        // Forcer un re-render en mettant à jour l'état
+        setCurrentWeek(prev => new Date(prev.getTime()));
+      }, 200);
     }, [])
   );
 
