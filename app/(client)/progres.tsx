@@ -626,6 +626,285 @@ export default function ProgresScreen() {
     return labels;
   };
 
+  const generateNutritionYAxisLabels = () => {
+    const currentData = selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : 
+                       selectedNutritionPeriod === 'Mois' ? nutritionStats.monthlyCalories : 
+                       nutritionStats.weeklyCalories; // fallback pour 'Années'
+
+    if (currentData.length === 0) {
+      return ['3000', '2500', '2000', '1500', '1000'];
+    }
+
+    // Trouver les valeurs min et max des calories
+    const calorieValues = currentData.map(d => d.calories).filter(c => c > 0);
+    const minCalories = Math.min(...calorieValues, calorieGoals.calories * 0.5);
+    const maxCalories = Math.max(...calorieValues, calorieGoals.calories * 1.2);
+
+    // Déterminer l'objectif de l'utilisateur
+    const currentUserGoals = userData?.goals || [];
+    const isWeightLoss = currentUserGoals.includes('Perdre du poids');
+    const isMuscleGain = currentUserGoals.includes('Me muscler') || currentUserGoals.includes('Prendre du muscle');
+
+    let minAxis, maxAxis;
+
+    if (isWeightLoss) {
+      // Pour la perte de poids : axe centré sur un déficit
+      const targetCalories = calorieGoals.calories;
+      maxAxis = Math.ceil((targetCalories + 500) / 250) * 250;
+      minAxis = maxAxis - 2000; // Plage de 2000 kcal
+    } else if (isMuscleGain) {
+      // Pour la prise de masse : axe centré sur un surplus
+      const targetCalories = calorieGoals.calories;
+      minAxis = Math.floor((targetCalories - 500) / 250) * 250;
+      maxAxis = minAxis + 2000; // Plage de 2000 kcal
+    } else {
+      // Comportement par défaut
+      const center = (minCalories + maxCalories) / 2;
+      minAxis = Math.floor((center - 1000) / 250) * 250;
+      maxAxis = minAxis + 2000;
+    }
+
+    // S'assurer que les valeurs sont positives et réalistes
+    minAxis = Math.max(500, minAxis);
+    maxAxis = Math.max(minAxis + 2000, maxAxis);
+
+    // Générer 5 labels avec écart de 500 kcal
+    const labels = [];
+    for (let i = 0; i < 5; i++) {
+      const value = maxAxis - (i * 500);
+      labels.push(value.toString());
+    }
+
+    return labels;
+  };
+
+  const renderNutritionChart = () => {
+    const processedData = getProcessedNutritionData();
+    const allLabels = generateNutritionPeriodLabels();
+    const dataPoints = [];
+
+    // Générer les points de données
+    processedData.forEach((entry, index) => {
+      const position = getNutritionDataPointPosition(entry.calories, index, processedData.length, allLabels);
+      const label = allLabels[index] || '';
+      
+      dataPoints.push(
+        <View 
+          key={`nutrition-${entry.date.toISOString()}-${index}`} 
+          style={[styles.dataPointContainer, position]}
+        >
+          <View style={[styles.dataPoint, { backgroundColor: '#4ECDC4' }]} />
+          <Text style={styles.dataPointLabel}>{label}</Text>
+        </View>
+      );
+    });
+
+    return (
+      <>
+        <LinearGradient
+          colors={['rgba(78, 205, 196, 0.3)', 'rgba(78, 205, 196, 0.1)']}
+          style={styles.weightLineGradient}
+        />
+        <View style={styles.dataPoints}>
+          {dataPoints}
+        </View>
+      </>
+    );
+  };
+
+  const getNutritionDataPointPosition = (calories: number, dataIndex: number, totalDataPoints: number, allLabels: string[]) => {
+    // Utiliser la même logique que generateNutritionYAxisLabels
+    const yAxisValues = generateNutritionYAxisLabels().map(label => parseInt(label));
+    const actualMaxCalories = yAxisValues[0];
+    const actualMinCalories = yAxisValues[4];
+    const actualRange = actualMaxCalories - actualMinCalories;
+
+    // Calculer la position Y
+    const caloriePercentage = actualRange > 0 ? 
+      Math.max(0, Math.min(1, (actualMaxCalories - calories) / actualRange)) : 0.5;
+
+    // Calculer la position horizontale
+    const totalLabels = allLabels.length;
+    let leftPercentage = 0;
+
+    if (totalLabels > 1) {
+      const marginPercentage = 5;
+      const usableWidth = 100 - (2 * marginPercentage);
+      const labelIndex = Math.min(dataIndex, totalLabels - 1);
+      leftPercentage = marginPercentage + (labelIndex / (totalLabels - 1)) * usableWidth;
+    } else {
+      leftPercentage = 50;
+    }
+
+    return {
+      left: `${leftPercentage}%`,
+      top: `${caloriePercentage * 80 + 10}%`
+    };
+  };
+
+  const generateNutritionPeriodLabels = () => {
+    const labels = [];
+    const monthNames = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
+
+    if (selectedNutritionPeriod === 'Semaine') {
+      const processedData = getProcessedNutritionData();
+      
+      processedData.forEach(entry => {
+        const weekNumber = getISOWeekNumber(entry.date);
+        labels.push(`S${weekNumber}`);
+      });
+
+      if (labels.length < 6) {
+        const currentDate = new Date();
+        const existingWeeks = new Set(labels.map(l => l.substring(1)));
+        
+        let weeksToAdd = 6 - labels.length;
+        let dateOffset = 0;
+        
+        while (weeksToAdd > 0) {
+          const targetDate = new Date(currentDate);
+          targetDate.setDate(currentDate.getDate() - (dateOffset * 7));
+          
+          const weekNumber = getISOWeekNumber(targetDate);
+          const weekLabel = `S${weekNumber}`;
+          
+          if (!existingWeeks.has(weekNumber.toString())) {
+            labels.unshift(weekLabel);
+            weeksToAdd--;
+          }
+          
+          dateOffset++;
+          if (dateOffset > 52) break;
+        }
+      }
+
+      return labels.slice(-6);
+      
+    } else if (selectedNutritionPeriod === 'Mois') {
+      const processedData = getProcessedNutritionData();
+      
+      processedData.forEach(entry => {
+        const monthName = monthNames[entry.date.getMonth()];
+        if (!labels.includes(monthName)) {
+          labels.push(monthName);
+        }
+      });
+
+      if (labels.length < 6) {
+        const currentDate = new Date();
+        const existingMonths = new Set(labels);
+        
+        for (let i = 5; i >= 0; i--) {
+          const targetDate = new Date(currentDate);
+          targetDate.setMonth(currentDate.getMonth() - i);
+          const monthName = monthNames[targetDate.getMonth()];
+          
+          if (!existingMonths.has(monthName)) {
+            labels.push(monthName);
+          }
+        }
+      }
+
+      return labels.slice(-6);
+      
+    } else { // Années
+      const processedData = getProcessedNutritionData();
+      
+      processedData.forEach(entry => {
+        const year = entry.date.getFullYear().toString();
+        if (!labels.includes(year)) {
+          labels.push(year);
+        }
+      });
+
+      if (labels.length < 6) {
+        const currentYear = new Date().getFullYear();
+        const existingYears = new Set(labels);
+        
+        for (let i = 5; i >= 0; i--) {
+          const year = (currentYear - i).toString();
+          if (!existingYears.has(year)) {
+            labels.push(year);
+          }
+        }
+      }
+
+      return labels.slice(-6);
+    }
+  };
+
+  const getProcessedNutritionData = () => {
+    const currentDate = new Date();
+    let filteredData = [...(nutritionStats.weeklyCalories || [])];
+
+    // Convertir les données en format compatible
+    const processedData = filteredData.map(entry => ({
+      calories: entry.calories,
+      date: new Date(entry.date)
+    }));
+
+    // Filtrer selon la période
+    if (selectedNutritionPeriod === 'Semaine') {
+      const sixWeeksAgo = new Date(currentDate.getTime() - (6 * 7 * 24 * 60 * 60 * 1000));
+      return processedData.filter(entry => entry.date >= sixWeeksAgo).slice(-6);
+    } else if (selectedNutritionPeriod === 'Mois') {
+      // Traiter par semaine puis regrouper par mois
+      const sixMonthsAgo = new Date(currentDate.getTime() - (6 * 30 * 24 * 60 * 60 * 1000));
+      const monthlyData = processedData.filter(entry => entry.date >= sixMonthsAgo);
+      
+      // Regrouper par mois
+      const monthlyAverages = new Map();
+      monthlyData.forEach(entry => {
+        const monthKey = `${entry.date.getFullYear()}-${entry.date.getMonth()}`;
+        if (!monthlyAverages.has(monthKey)) {
+          monthlyAverages.set(monthKey, { 
+            total: 0, 
+            count: 0, 
+            date: new Date(entry.date.getFullYear(), entry.date.getMonth(), 1) 
+          });
+        }
+        const monthData = monthlyAverages.get(monthKey);
+        monthData.total += entry.calories;
+        monthData.count += 1;
+      });
+
+      return Array.from(monthlyAverages.values())
+        .map(month => ({
+          calories: month.total / month.count,
+          date: month.date
+        }))
+        .sort((a, b) => a.date.getTime() - b.date.getTime())
+        .slice(-6);
+    } else { // Années
+      const sixYearsAgo = new Date(currentDate.getTime() - (6 * 365 * 24 * 60 * 60 * 1000));
+      const yearlyData = processedData.filter(entry => entry.date >= sixYearsAgo);
+      
+      // Regrouper par année
+      const yearlyAverages = new Map();
+      yearlyData.forEach(entry => {
+        const yearKey = entry.date.getFullYear().toString();
+        if (!yearlyAverages.has(yearKey)) {
+          yearlyAverages.set(yearKey, { 
+            total: 0, 
+            count: 0, 
+            date: new Date(entry.date.getFullYear(), 0, 1) 
+          });
+        }
+        const yearData = yearlyAverages.get(yearKey);
+        yearData.total += entry.calories;
+        yearData.count += 1;
+      });
+
+      return Array.from(yearlyAverages.values())
+        .map(year => ({
+          calories: year.total / year.count,
+          date: year.date
+        }))
+        .sort((a, b) => a.date.getTime() - b.date.getTime())
+        .slice(-6);
+    }
+  };
+
   // Fonction pour calculer le numéro de semaine ISO 8601
   const getISOWeekNumber = (date: Date) => {
     const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -1457,15 +1736,15 @@ export default function ProgresScreen() {
         {/* Statistiques selon l'onglet sélectionné */}
         {selectedTab === 'Nutrition' && (
           <View style={styles.nutritionContainer}>
-            {/* Graphique des calories */}
+            {/* Graphique d'évolution calorique */}
             <View style={styles.nutritionChartContainer}>
               <View style={styles.chartHeader}>
-                <Text style={styles.chartTitle}>Apport calorique journalier</Text>
+                <Text style={styles.chartTitle}>Évolution de l'apport calorique</Text>
               </View>
 
               {/* Onglets de période */}
               <View style={styles.periodTabsContainer}>
-                {['Semaine', 'Mois'].map((period) => (
+                {['Semaine', 'Mois', 'Années'].map((period) => (
                   <TouchableOpacity 
                     key={period}
                     style={[styles.periodTab, selectedNutritionPeriod === period && styles.activePeriodTab]}
@@ -1478,91 +1757,32 @@ export default function ProgresScreen() {
                 ))}
               </View>
 
-              <View style={styles.nutritionChartArea}>
-                {/* Axe Y pour les calories */}
+              {/* Graphique avec scroll horizontal */}
+              <View style={styles.chartArea}>
                 <View style={styles.nutritionYAxis}>
-                  {(() => {
-                    // Générer l'axe Y adapté aux données du client avec minimum 1000 kcal et paliers de 500
-                    const currentData = selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories;
-                    const maxDataCalories = Math.max(...currentData.map(d => d.calories), nutritionStats.averageCalories);
-
-                    // Utiliser l'objectif calorique du client comme référence principale
-                    const clientGoal = calorieGoals?.calories || 2200;
-
-                    // Déterminer la valeur max de l'axe Y
-                    const maxAxisValue = Math.max(maxDataCalories, clientGoal * 1.2, 1000);
-
-                    // Arrondir au multiple de 500 supérieur, avec minimum 1000
-                    const roundedMax = Math.max(1000, Math.ceil(maxAxisValue / 500) * 500);
-
-                    // Générer 5 labels par paliers de 500, en partant du maximum vers 1500
-                    const labels = [];
-                    const step = 500;
-                    const numberOfSteps = Math.max(4, Math.floor((roundedMax - 1500) / step));
-
-                    for (let i = 0; i < 5; i++) {
-                      const value = roundedMax - (i * (roundedMax - 1500) / 4);
-                      // Arrondir au multiple de 500 le plus proche, avec minimum 1500
-                      const roundedValue = Math.max(1500, Math.round(value / 500) * 500);
-                      labels.push(roundedValue.toString());
-                    }
-
-                    return labels.map((label, index) => (
-                      <Text key={index} style={styles.nutritionYAxisLabel}>{label}</Text>
-                    ));
-                  })()}
+                  {generateNutritionYAxisLabels().map((label, index) => (
+                    <Text key={index} style={styles.nutritionYAxisLabel}>{label}</Text>
+                  ))}
                 </View>
 
-                <View style={styles.chartContent}>
-                  {/* Grille */}
-                  <View style={styles.gridContainer}>
-                    {[...Array(5)].map((_, i) => (
-                      <View key={i} style={styles.gridLine} />
-                    ))}
+                <ScrollView 
+                  horizontal 
+                  showsHorizontalScrollIndicator={true}
+                  style={styles.chartScrollView}
+                  contentContainerStyle={styles.chartScrollContent}
+                >
+                  <View style={styles.chartContent}>
+                    {/* Grille */}
+                    <View style={styles.gridContainer}>
+                      {[...Array(5)].map((_, i) => (
+                        <View key={i} style={styles.gridLine} />
+                      ))}
+                    </View>
+
+                    {/* Ligne et points de calories */}
+                    {renderNutritionChart()}
                   </View>
-
-                  {/* Barres de calories */}
-                  <View style={styles.caloriesBars}>
-                    {(selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories).map((dayData, index) => {
-                      const currentData = selectedNutritionPeriod === 'Semaine' ? nutritionStats.weeklyCalories : nutritionStats.monthlyCalories;
-                      const maxDataCalories = Math.max(...currentData.map(d => d.calories), nutritionStats.averageCalories);
-
-                      // Utiliser la même logique que pour l'axe Y avec minimum 1500 et paliers de 500
-                      const clientGoal = calorieGoals?.calories || 2200;
-                      const maxAxisValue = Math.max(maxDataCalories, clientGoal * 1.2, 1500);
-                      const roundedMax = Math.max(1500, Math.ceil(maxAxisValue / 500) * 500);
-                      const minAxisValue = 1500;
-
-                      // Calculer la hauteur relative entre min et max
-                      let barHeight = 5; // Hauteur minimale si pas de données
-                      if (dayData.calories > 0) {
-                        // Calculer le pourcentage entre la valeur min (1500) et max de l'axe
-                        const adjustedCalories = Math.max(minAxisValue, dayData.calories);
-                        const percentage = (adjustedCalories - minAxisValue) / (roundedMax - minAxisValue);
-                        barHeight = percentage * 80 + 10; // 10% minimum, 90% maximum
-                      }
-                      return (
-                        <View key={`${dayData.day}-${index}`} style={[
-                          styles.barContainer,
-                          selectedNutritionPeriod === 'Mois' && styles.monthlyBarContainer
-                        ]}>
-                          <View style={[
-                            styles.calorieBar, 
-                            { height: `${Math.min(barHeight, 85)}%` },
-                            selectedNutritionPeriod === 'Mois' && styles.monthlyBar
-                          ]}
-                          />
-                          <Text style={[
-                            styles.dayLabel,
-                            selectedNutritionPeriod === 'Mois' && styles.monthlyDayLabel
-                          ]}>
-                            {dayData.day}
-                          </Text>
-                        </View>
-                      );
-                    })}
-                  </View>
-                </View>
+                </ScrollView>
               </View>
             </View>
 
