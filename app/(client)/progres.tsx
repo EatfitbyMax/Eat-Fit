@@ -584,12 +584,28 @@ export default function ProgresScreen() {
     const minDataWeight = Math.min(...weights.filter(w => w > 0));
     const maxDataWeight = Math.max(...weights.filter(w => w > 0));
 
-    // Calculer le centre des données
-    const centerWeight = (minDataWeight + maxDataWeight) / 2;
-    
-    // Créer une plage fixe de 20kg (5 labels avec 5kg d'écart) centrée sur les données
-    const minWeight = Math.floor((centerWeight - 10) / 5) * 5;
-    const maxWeight = minWeight + 20;
+    // Déterminer l'objectif de l'utilisateur
+    const isWeightLoss = userData?.goals?.includes('Perdre du poids');
+    const isMuscleGain = userData?.goals?.includes('Prendre du muscle');
+
+    let minWeight, maxWeight;
+
+    if (isWeightLoss) {
+      // Pour la perte de poids : commencer à +5kg au-dessus du poids de départ
+      const startReference = weightData.startWeight;
+      maxWeight = Math.ceil((startReference + 5) / 5) * 5; // Arrondir au multiple de 5 supérieur
+      minWeight = maxWeight - 20; // Plage de 20kg vers le bas
+    } else if (isMuscleGain) {
+      // Pour la prise de masse : commencer à -5kg en-dessous du poids de départ
+      const startReference = weightData.startWeight;
+      minWeight = Math.floor((startReference - 5) / 5) * 5; // Arrondir au multiple de 5 inférieur
+      maxWeight = minWeight + 20; // Plage de 20kg vers le haut
+    } else {
+      // Comportement par défaut (maintien ou autre objectif)
+      const centerWeight = (minDataWeight + maxDataWeight) / 2;
+      minWeight = Math.floor((centerWeight - 10) / 5) * 5;
+      maxWeight = minWeight + 20;
+    }
 
     // Générer exactement 5 labels avec 5kg d'écart
     const labels = [];
