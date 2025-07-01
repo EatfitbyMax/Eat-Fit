@@ -388,6 +388,21 @@ export default function CreerEntrainementScreen() {
       }));
     }
 
+    // Réinitialiser le formulaire
+    setCurrentExercise({
+      id: '',
+      name: '',
+      sets: '',
+      reps: '',
+      duration: '',
+      rest: '',
+      notes: '',
+      distance: '',
+      weight: '',
+      intensity: ''
+    });
+    setEditingExerciseIndex(null);
+    setShowSuggestions(false);
     setShowExerciseModal(false);
   };
 
