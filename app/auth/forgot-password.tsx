@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { PersistentStorage } from '@/utils/storage';
+import { EmailService } from '@/utils/emailService';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -40,16 +41,37 @@ export default function ForgotPasswordScreen() {
         // Sauvegarder sur le serveur VPS
         await PersistentStorage.saveUsers(updatedUsers);
         
-        Alert.alert(
-          'Réinitialisation réussie',
-          `Un nouveau mot de passe temporaire a été généré :\n\n${tempPassword}\n\nVeuillez le noter et le changer lors de votre prochaine connexion.`,
-          [
-            {
-              text: 'OK',
-              onPress: () => router.push('/auth/login')
-            }
-          ]
-        );
+        // Envoyer le nouveau mot de passe par email
+        const emailSent = await EmailService.sendPasswordResetEmail({
+          to_email: user.email,
+          to_name: user.name || user.firstName || 'Utilisateur',
+          new_password: tempPassword,
+          app_name: 'EatFitByMax'
+        });
+        
+        if (emailSent) {
+          Alert.alert(
+            'Email envoyé',
+            `Un nouveau mot de passe temporaire a été envoyé à votre adresse email : ${user.email}\n\nVérifiez votre boîte de réception (et vos spams) puis connectez-vous avec ce nouveau mot de passe.`,
+            [
+              {
+                text: 'OK',
+                onPress: () => router.push('/auth/login')
+              }
+            ]
+          );
+        } else {
+          Alert.alert(
+            'Erreur d\'envoi',
+            'Impossible d\'envoyer l\'email. Veuillez réessayer plus tard ou contacter le support.',
+            [
+              {
+                text: 'OK',
+                onPress: () => router.push('/auth/login')
+              }
+            ]
+          );
+        }
       } else {
         Alert.alert('Erreur', 'Aucun compte trouvé avec cette adresse email');
       }
@@ -82,7 +104,7 @@ export default function ForgotPasswordScreen() {
 
         <Text style={styles.title}>Mot de passe oublié</Text>
         <Text style={styles.subtitle}>
-          Saisissez votre adresse email pour recevoir un nouveau mot de passe temporaire
+          Saisissez votre adresse email pour recevoir un nouveau mot de passe temporaire par email
         </Text>
         
         <View style={styles.form}>
@@ -108,8 +130,8 @@ export default function ForgotPasswordScreen() {
 
           <View style={styles.infoContainer}>
             <Text style={styles.infoText}>
-              💡 Un nouveau mot de passe temporaire sera généré et affiché à l'écran.
-              Notez-le bien car vous devrez le changer lors de votre prochaine connexion.
+              📧 Un nouveau mot de passe temporaire sera envoyé à votre adresse email.
+              Vérifiez votre boîte de réception (et vos spams) puis changez ce mot de passe lors de votre prochaine connexion.
             </Text>
           </View>
         </View>
