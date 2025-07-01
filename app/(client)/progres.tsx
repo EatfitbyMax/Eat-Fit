@@ -117,6 +117,16 @@ export default function ProgresScreen() {
         const weightDataString = await AsyncStorage.getItem(`weight_data_${user.id}`);
         if (weightDataString) {
           const saved = JSON.parse(weightDataString);
+          
+          // Synchroniser avec l'objectif du profil utilisateur si disponible
+          const userTargetWeight = user.targetWeight || 0;
+          if (userTargetWeight > 0 && userTargetWeight !== saved.targetWeight) {
+            saved.targetWeight = userTargetWeight;
+            saved.targetAsked = true;
+            await saveWeightData(saved);
+            console.log('Objectif synchronisé depuis le profil utilisateur:', userTargetWeight);
+          }
+          
           setWeightData(saved);
           // Calculer le pourcentage de progression
           if (saved.targetWeight && saved.startWeight) {
@@ -128,22 +138,32 @@ export default function ProgresScreen() {
         } else {
           // Première utilisation - définir le poids de départ depuis l'inscription
           const startWeight = user.weight || 0;
+          // Vérifier si l'utilisateur a déjà un objectif dans son profil
+          const existingTargetWeight = user.targetWeight || 0;
+          
           const initialData = {
             startWeight: startWeight,
             currentWeight: startWeight,
-            targetWeight: 0,
+            targetWeight: existingTargetWeight,
             lastWeightUpdate: null,
             weeklyUpdates: 0,
             lastWeekReset: null,
-            targetAsked: false, // Nouveau flag pour savoir si l'objectif a déjà été demandé
+            targetAsked: existingTargetWeight > 0, // Marquer comme demandé si déjà défini
             weightHistory: startWeight > 0 ? [{ weight: startWeight, date: user.createdAt || new Date().toISOString() }] : [],
           };
           setWeightData(initialData);
           await saveWeightData(initialData);
-          // Demander de définir l'objectif seulement si jamais demandé ET si pas d'objectif défini
-          // Également vérifier si l'utilisateur n'a pas déjà un objectif dans ses données de profil
-          const hasExistingGoal = user.targetWeight && user.targetWeight > 0;
-          if (!initialData.targetAsked && initialData.targetWeight === 0 && !hasExistingGoal) {
+          
+          // Calculer le pourcentage de progression si objectif déjà défini
+          if (existingTargetWeight > 0 && startWeight > 0) {
+            const totalLoss = startWeight - existingTargetWeight;
+            const currentLoss = startWeight - startWeight; // Pas encore de perte au début
+            const progress = Math.max(0, Math.min(1, currentLoss / totalLoss));
+            progressAnimation.value = withSpring(progress);
+          }
+          
+          // Demander de définir l'objectif seulement si jamais défini
+          if (existingTargetWeight === 0) {
             setTimeout(() => setShowTargetModal(true), 1000);
           }
         }
@@ -236,6 +256,32 @@ export default function ProgresScreen() {
     };
 
     await saveWeightData(newData);
+
+    // Sauvegarder l'objectif dans le profil utilisateur sur le serveur
+    try {
+      if (userData) {
+        const updatedUser = {
+          ...userData,
+          targetWeight: target
+        };
+
+        // Sauvegarder sur le serveur
+        const users = await PersistentStorage.getUsers();
+        const userIndex = users.findIndex(u => u.id === userData.id);
+        if (userIndex !== -1) {
+          users[userIndex] = updatedUser;
+          await PersistentStorage.saveUsers(users);
+        }
+
+        // Mettre à jour l'utilisateur local
+        await AsyncStorage.setItem('currentUser', JSON.stringify(updatedUser));
+        setUserData(updatedUser);
+
+        console.log('Objectif de poids sauvegardé dans le profil utilisateur');
+      }
+    } catch (error) {
+      console.error('Erreur sauvegarde objectif utilisateur:', error);
+    }
 
     // Mettre à jour l'animation de progression
     if (newData.currentWeight && newData.startWeight) {
@@ -1994,6 +2040,29 @@ export default function ProgresScreen() {
                     targetAsked: true,
                   };
                   await saveWeightData(newData);
+                  
+                  // Sauvegarder dans le profil utilisateur pour éviter de redemander
+                  try {
+                    if (userData) {
+                      const updatedUser = {
+                        ...userData,
+                        targetWeightAsked: true // Flag pour indiquer que la question a été posée
+                      };
+
+                      const users = await PersistentStorage.getUsers();
+                      const userIndex = users.findIndex(u => u.id === userData.id);
+                      if (userIndex !== -1) {
+                        users[userIndex] = updatedUser;
+                        await PersistentStorage.saveUsers(users);
+                      }
+
+                      await AsyncStorage.setItem('currentUser', JSON.stringify(updatedUser));
+                      setUserData(updatedUser);
+                    }
+                  } catch (error) {
+                    console.error('Erreur sauvegarde flag utilisateur:', error);
+                  }
+                  
                   setTempTarget('');
                   setShowTargetModal(false);
                 }}
