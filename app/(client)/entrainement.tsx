@@ -191,10 +191,8 @@ export default function EntrainementScreen() {
     const { start } = getWeekRange();
     const dayIndex = daysOfWeek.indexOf(day);
     
-    // Créer une nouvelle date pour éviter les mutations
-    const targetDate = new Date(start.getTime());
-    targetDate.setDate(start.getDate() + dayIndex);
-    targetDate.setHours(0, 0, 0, 0);
+    // Créer une nouvelle date en utilisant la date locale directement
+    const targetDate = new Date(start.getFullYear(), start.getMonth(), start.getDate() + dayIndex);
     
     // Utiliser le format YYYY-MM-DD de manière cohérente
     const year = targetDate.getFullYear();
@@ -337,10 +335,8 @@ export default function EntrainementScreen() {
     const { start } = getWeekRange();
     const dayIndex = daysOfWeek.indexOf(jour);
     
-    // Créer une nouvelle date pour éviter les mutations
-    const targetDate = new Date(start.getTime());
-    targetDate.setDate(start.getDate() + dayIndex);
-    targetDate.setHours(0, 0, 0, 0);
+    // Créer une nouvelle date en utilisant la date locale directement
+    const targetDate = new Date(start.getFullYear(), start.getMonth(), start.getDate() + dayIndex);
     
     // Utiliser le même format que getWorkoutsCountForDay
     const year = targetDate.getFullYear();
@@ -349,6 +345,8 @@ export default function EntrainementScreen() {
     const dateString = `${year}-${month}-${dayNum}`;
     
     console.log(`=== CLIC SUR ${jour.toUpperCase()} ===`);
+    console.log(`Index du jour: ${dayIndex}`);
+    console.log(`Date de début de semaine: ${start.toISOString().split('T')[0]}`);
     console.log(`Date calculée: ${dateString}`);
     console.log(`Date complète: ${targetDate.toDateString()}`);
 
@@ -686,9 +684,7 @@ export default function EntrainementScreen() {
                 const sessionCount = getWorkoutsCountForDay(jour);
                 const { start } = getWeekRange();
                 const dayIndex = daysOfWeek.indexOf(jour);
-                const targetDate = new Date(start.getTime());
-                targetDate.setDate(start.getDate() + dayIndex);
-                targetDate.setHours(0, 0, 0, 0);
+                const targetDate = new Date(start.getFullYear(), start.getMonth(), start.getDate() + dayIndex);
                 
                 const isTodayCheck = isToday(targetDate);
 
