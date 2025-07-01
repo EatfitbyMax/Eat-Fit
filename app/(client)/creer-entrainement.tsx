@@ -809,7 +809,7 @@ export default function CreerEntrainementScreen() {
             <Text style={styles.sectionTitle}>Informations générales</Text>
 
             <Text style={styles.dateInfo}>
-              {params.selectedDay} • {new Date(params.selectedDate as string).toLocaleDateString('fr-FR')}
+              {new Date(params.selectedDate as string).toLocaleDateString('fr-FR', { weekday: 'long' })} • {new Date(params.selectedDate as string).toLocaleDateString('fr-FR')}
             </Text>
 
             <View style={styles.inputGroup}>
