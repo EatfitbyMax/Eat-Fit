@@ -589,7 +589,7 @@ export default function ProgresScreen() {
   };
 
   const generatePeriodLabels = () => {
-    if (!weightData.startWeight) {
+    if (!weightData.startWeight || !userData?.createdAt) {
       if (selectedPeriod === 'Semaines') return ['S1', 'S2', 'S3', 'S4', 'S5', 'S6'];
       if (selectedPeriod === 'Mois') return ['Janv', 'Mars', 'Mai', 'Juil', 'Sept', 'Déc'];
       return ['2023', '2024', '2025'];
@@ -600,16 +600,25 @@ export default function ProgresScreen() {
     const monthNames = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
 
     if (selectedPeriod === 'Semaines') {
-      // Pour les semaines, générer 6 labels en incluant la semaine actuelle
+      // Calculer les numéros de semaines en fonction de la date de création du compte
+      const accountCreationDate = new Date(userData.createdAt);
       const currentDate = new Date();
-      const currentYear = currentDate.getFullYear();
-      const startOfYear = new Date(currentYear, 0, 1);
-      const currentWeekNum = Math.ceil(((currentDate.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7);
 
-      // Générer les 6 dernières semaines en terminant par la semaine actuelle
+      // Calculer le nombre de jours depuis la création du compte
+      const daysSinceCreation = Math.floor((currentDate.getTime() - accountCreationDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      // Calculer la semaine actuelle depuis la création (en commençant par S1)
+      const currentWeekSinceCreation = Math.floor(daysSinceCreation / 7) + 1;
+
+      // Générer les 6 dernières semaines
       for (let i = 5; i >= 0; i--) {
-        const weekNum = Math.max(1, currentWeekNum - i);
-        labels.push(`S${weekNum}`);
+        const weekNum = Math.max(1, currentWeekSinceCreation - i);
+        
+        // Calculer l'année et la semaine relative dans l'année
+        const yearsSinceCreation = Math.floor((weekNum - 1) / 52);
+        const weekInYear = ((weekNum - 1) % 52) + 1;
+        
+        labels.push(`S${weekInYear}`);
       }
     } else {
       processedData.forEach((entry, index) => {
