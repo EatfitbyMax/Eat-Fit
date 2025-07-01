@@ -19,7 +19,11 @@ export default function EntrainementScreen() {
   const [stravaActivities, setStravaActivities] = useState<StravaActivity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSubscription, setHasSubscription] = useState(false);
-  const [currentWeek, setCurrentWeek] = useState(new Date());
+  const [currentWeek, setCurrentWeek] = useState(() => {
+    // Mardi 1er juillet 2025
+    const today = new Date('2025-07-01');
+    return today;
+  });
   const [workouts, setWorkouts] = useState<any[]>([]);
   const [selectedStravaActivity, setSelectedStravaActivity] = useState<StravaActivity | null>(null);
   const [userSport, setUserSport] = useState<string>('');
@@ -267,13 +271,15 @@ export default function EntrainementScreen() {
   };
 
   const getWeekRange = () => {
-    const startOfWeek = new Date(currentWeek);
+    const today = new Date();
+    const startOfWeek = new Date(today);
     startOfWeek.setHours(0, 0, 0, 0); // Reset à minuit
     
-    // Calculer le lundi de la semaine courante
-    const day = startOfWeek.getDay();
-    const diff = day === 0 ? -6 : 1 - day; // Si c'est dimanche (0), reculer de 6 jours, sinon calculer la différence avec lundi (1)
-    startOfWeek.setDate(startOfWeek.getDate() + diff);
+    // Calculer le lundi de la semaine courante (1er juillet 2025 est un mardi)
+    const dayOfWeek = startOfWeek.getDay(); // 0 = dimanche, 1 = lundi, ..., 6 = samedi
+    const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Distance depuis lundi
+    
+    startOfWeek.setDate(startOfWeek.getDate() - daysFromMonday);
 
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6);
@@ -301,9 +307,9 @@ export default function EntrainementScreen() {
   const navigateWeek = (direction: 'prev' | 'next') => {
     const newWeek = new Date(currentWeek);
     if (direction === 'prev') {
-      newWeek.setDate(currentWeek.getDate() - 7);
+      newWeek.setDate(newWeek.getDate() - 7);
     } else {
-      newWeek.setDate(currentWeek.getDate() + 7);
+      newWeek.setDate(newWeek.getDate() + 7);
     }
     setCurrentWeek(newWeek);
   };
