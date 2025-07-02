@@ -1959,8 +1959,8 @@ export default function ProgresScreen() {
 
               <View style={styles.hydrationBars}>
                 {nutritionStats.weeklyHydration.map((dayData, index) => {
-                  // Calculer l'objectif personnalisé pour chaque jour (même logique que dans nutrition.tsx)
-                  const personalizedGoal = React.useMemo(async () => {
+                  // Calculer l'objectif personnalisé pour chaque jour (logique simplifiée et synchrone)
+                  const calculateDailyGoal = () => {
                     if (!userData) return 2000;
                     
                     let baseGoal = 2000;
@@ -1974,35 +1974,10 @@ export default function ProgresScreen() {
                       baseGoal = Math.ceil(baseGoal / 250) * 250;
                     }
                     
-                    // Vérifier les entraînements pour ce jour
-                    try {
-                      const workoutsStored = await AsyncStorage.getItem(`workouts_${userData.id}`);
-                      if (workoutsStored) {
-                        const workouts = JSON.parse(workoutsStored);
-                        const dayWorkouts = workouts.filter((workout: any) => {
-                          const workoutDate = new Date(workout.date).toISOString().split('T')[0];
-                          return workoutDate === dayData.date;
-                        });
-
-                        dayWorkouts.forEach(() => {
-                          baseGoal += 500;
-                          const currentMonth = new Date().getMonth();
-                          const isSummerPeriod = currentMonth >= 5 && currentMonth <= 8;
-                          if (isSummerPeriod) {
-                            baseGoal += 250;
-                          }
-                        });
-                      }
-                    } catch (error) {
-                      console.error('Erreur calcul objectif hydratation jour:', error);
-                    }
-                    
                     return Math.ceil(baseGoal / 250) * 250;
-                  }, [userData, dayData.date]);
+                  };
 
-                  // Utiliser un objectif par défaut calculé si l'async n'est pas résolu
-                  const dailyGoal = userData?.weight ? 
-                    Math.ceil((userData.weight * 35) / 250) * 250 : 2000;
+                  const dailyGoal = calculateDailyGoal();
                   
                   const percentage = dailyGoal > 0 ? (dayData.water / dailyGoal) * 100 : 0;
                   const achieved = percentage >= 100;
@@ -2024,6 +1999,8 @@ export default function ProgresScreen() {
                     </View>
                   );
                 })}
+              </View>
+
               </View>
 
               {/* Objectif personnalisé centré sous les jours */}
