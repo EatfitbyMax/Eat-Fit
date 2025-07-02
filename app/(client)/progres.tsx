@@ -1617,12 +1617,6 @@ export default function ProgresScreen() {
                 </View>
                 <Text style={styles.statLabel}>Séances terminées</Text>
                 <Text style={styles.statValue}>{weeklyData.filter(d => d.workouts > 0).length}</Text>
-                <Text style={styles.statTrend}>
-                  {weeklyData.filter(d => d.workouts > 0).length >= 3 ? 
-                    '✓ Excellent rythme' : 
-                    `${7 - weeklyData.filter(d => d.workouts > 0).length} jour${7 - weeklyData.filter(d => d.workouts > 0).length > 1 ? 's' : ''} restant${7 - weeklyData.filter(d => d.workouts > 0).length > 1 ? 's' : ''}`
-                  }
-                </Text>
               </View>
 
               <View style={styles.sportStatCard}>
@@ -1634,12 +1628,6 @@ export default function ProgresScreen() {
                   {Math.floor(weeklyData.reduce((sum, day) => sum + day.minutes, 0) / 60)}h{' '}
                   {weeklyData.reduce((sum, day) => sum + day.minutes, 0) % 60}min
                 </Text>
-                <Text style={styles.statTrend}>
-                  {weeklyData.reduce((sum, day) => sum + day.minutes, 0) >= 150 ? 
-                    '✓ Objectif hebdo atteint' : 
-                    `${150 - weeklyData.reduce((sum, day) => sum + day.minutes, 0)} min restantes`
-                  }
-                </Text>
               </View>
 
               <View style={styles.sportStatCard}>
@@ -1649,12 +1637,6 @@ export default function ProgresScreen() {
                 <Text style={styles.statLabel}>Calories brûlées</Text>
                 <Text style={styles.statValue}>
                   {Math.round(weeklyData.reduce((sum, day) => sum + day.minutes, 0) * 6.5)}
-                </Text>
-                <Text style={styles.statTrend}>
-                  {weeklyData.reduce((sum, day) => sum + day.minutes, 0) > 0 ? 
-                    `~${Math.round(weeklyData.reduce((sum, day) => sum + day.minutes, 0) * 6.5 / 7)} kcal/jour` : 
-                    'Aucune activité'
-                  }
                 </Text>
               </View>
             </View>
