@@ -125,7 +125,7 @@ export default function PersonalInformationScreen() {
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPress={() => router.push('/(client)/profil')}
         >
           <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
