@@ -1564,7 +1564,7 @@ export default function ProgresScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      checkSubscriptionStatus();
+      checkSubscriptionStatus().then(setIsPremium);
       loadSportData();
     }, [])
   );
@@ -1578,14 +1578,14 @@ export default function ProgresScreen() {
       if (userData) {
         setCurrentUser(userData);
 
-        // Charger les sessions d'entraînement
-        const sessions = await WorkoutTrackingService.getWorkoutSessions(userData.email);
+        // Charger les sessions d'entraînement avec l'ID utilisateur
+        const sessions = await WorkoutTrackingService.getWorkoutSessions(userData.id);
         setWorkoutSessions(sessions);
 
         // Si pas de sessions, créer des données d'exemple
         if (sessions.length === 0 && userData.favoriteSport) {
-          await WorkoutTrackingService.createSampleSessions(userData.email, userData.favoriteSport);
-          const newSessions = await WorkoutTrackingService.getWorkoutSessions(userData.email);
+          await WorkoutTrackingService.createSampleSessions(userData.id, userData.favoriteSport);
+          const newSessions = await WorkoutTrackingService.getWorkoutSessions(userData.id);
           setWorkoutSessions(newSessions);
         }
 

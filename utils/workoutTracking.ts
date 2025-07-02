@@ -3,15 +3,15 @@ export interface WorkoutSession {
   id: string;
   userId: string;
   sport: string;
-  sportName: string;
-  type: 'scheduled' | 'completed' | 'custom';
+  sportName?: string;
+  type: 'planned' | 'completed' | 'scheduled' | 'custom';
   date: string; // ISO string
   duration: number; // en minutes
   calories?: number;
   intensity: 'low' | 'medium' | 'high';
   exercises?: Exercise[];
   notes?: string;
-  createdAt: string;
+  createdAt?: string;
   completedAt?: string;
 }
 
@@ -19,10 +19,11 @@ export interface Exercise {
   id: string;
   name: string;
   sets?: number;
-  reps?: string;
+  reps?: string | number;
   weight?: number;
   duration?: number; // pour cardio
   distance?: number; // pour course/vélo
+  time?: number;
   completed: boolean;
 }
 
@@ -37,38 +38,7 @@ export interface SportStats {
   progressTrend: 'up' | 'down' | 'stable';
 }
 
-export interface WorkoutSession {
-  id: string;
-  userId: string;
-  sport: string;
-  type: 'planned' | 'completed';
-  date: string;
-  duration: number;
-  intensity: 'low' | 'medium' | 'high';
-  calories?: number;
-  notes?: string;
-  exercises?: Array<{
-    name: string;
-    sets?: number;
-    reps?: number;
-    weight?: number;
-    distance?: number;
-    time?: number;
-  }>;
-}
-
-interface SportStats {
-  totalSessions: number;
-  totalDuration: number;
-  totalCalories: number;
-  averageIntensity: number;
-  weeklyGoal: number;
-  weeklyProgress: number;
-  favoriteTimeSlot: string;
-  progressTrend: 'up' | 'down' | 'stable';
-}
-
-class WorkoutTrackingService {
+export class WorkoutTrackingService {
   private static VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.replit.app';
 
   static async getWorkoutSessions(userId: string): Promise<WorkoutSession[]> {
@@ -334,3 +304,6 @@ class WorkoutTrackingService {
     }
   }
 }
+
+// Export par défaut pour une compatibilité maximale
+export default WorkoutTrackingService;
