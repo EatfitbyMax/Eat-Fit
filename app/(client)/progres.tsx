@@ -1636,43 +1636,58 @@ export default function ProgresScreen() {
                 </View>
                 <Text style={styles.statLabel}>Calories brûlées</Text>
                 <Text style={styles.statValue}>
-                  {Math.round(weeklyData.reduce((sum, day) => sum + day.minutes, 0) * 8.5)}
+                  {Math.round(weeklyData.reduce((sum, day) => sum + day.minutes, 0) * 6.5)}
                 </Text>
               </View>
             </View>
 
-            {/* Graphique d'évolution sportive */}
-            <View style={styles.sportChartContainer}>
+            {/* Graphique d'évolution calorique */}
+            <View style={styles.nutritionChartContainer}>
               <View style={styles.chartHeader}>
-                <Text style={styles.chartTitle}>Évolution de l'activité physique</Text>
+                <Text style={styles.chartTitle}>Évolution de l'apport calorique</Text>
               </View>
 
-              {/* Graphique en barres des séances par jour de la semaine */}
-              <View style={styles.sportWeeklyChart}>
-                <View style={styles.sportBars}>
-                  {weeklyData.map((day, index) => {
-                    const maxMinutes = Math.max(...weeklyData.map(d => d.minutes), 60);
-                    const barHeight = day.minutes > 0 ? Math.max((day.minutes / maxMinutes) * 100, 8) : 0;
-                    
-                    return (
-                      <View key={day.day} style={styles.sportBarContainer}>
-                        <Text style={styles.sportBarText}>
-                          {day.minutes > 0 ? `${day.minutes}min` : ''}
-                        </Text>
-                        <View 
-                          style={[
-                            styles.sportBar, 
-                            { 
-                              height: `${barHeight}%`,
-                              backgroundColor: day.workouts > 0 ? '#F5A623' : '#21262D'
-                            }
-                          ]} 
-                        />
-                        <Text style={styles.dayLabel}>{day.day}</Text>
-                      </View>
-                    );
-                  })}
+              {/* Onglets de période */}
+              <View style={styles.periodTabsContainer}>
+                {['Jours', 'Semaine', 'Mois'].map((period) => (
+                  <TouchableOpacity 
+                    key={period}
+                    style={[styles.periodTab, selectedNutritionPeriod === period && styles.activePeriodTab]}
+                    onPress={() => setSelectedNutritionPeriod(period)}
+                  >
+                    <Text style={[styles.periodTabText, selectedNutritionPeriod === period && styles.activePeriodTabText]}>
+                      {period}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Graphique avec scroll horizontal */}
+              <View style={styles.chartArea}>
+                <View style={styles.nutritionYAxis}>
+                  {generateNutritionYAxisLabels().map((label, index) => (
+                    <Text key={index} style={styles.nutritionYAxisLabel}>{label}</Text>
+                  ))}
                 </View>
+
+                <ScrollView 
+                  horizontal 
+                  showsHorizontalScrollIndicator={true}
+                  style={styles.chartScrollView}
+                  contentContainerStyle={styles.chartScrollContent}
+                >
+                  <View style={styles.chartContent}>
+                    {/* Grille */}
+                    <View style={styles.gridContainer}>
+                      {[...Array(5)].map((_, i) => (
+                        <View key={i} style={styles.gridLine} />
+                      ))}
+                    </View>
+
+                    {/* Ligne et points de calories */}
+                    {renderNutritionChart()}
+                  </View>
+                </ScrollView>
               </View>
             </View>
 
@@ -1684,13 +1699,13 @@ export default function ProgresScreen() {
                 <View style={styles.objectiveHeader}>
                   <Text style={styles.objectiveLabel}>Séances par semaine</Text>
                   <Text style={styles.objectiveProgress}>
-                    {weeklyData.filter(d => d.workouts > 0).length}/4
+                    {weeklyData.filter(d => d.workouts > 0).length}/3
                   </Text>
                 </View>
                 <View style={styles.objectiveBar}>
                   <View style={[
                     styles.objectiveBarFill, 
-                    { width: `${Math.min((weeklyData.filter(d => d.workouts > 0).length / 4) * 100, 100)}%` }
+                    { width: `${Math.min((weeklyData.filter(d => d.workouts > 0).length / 3) * 100, 100)}%` }
                   ]} />
                 </View>
               </View>
@@ -1699,13 +1714,13 @@ export default function ProgresScreen() {
                 <View style={styles.objectiveHeader}>
                   <Text style={styles.objectiveLabel}>Temps d'entraînement</Text>
                   <Text style={styles.objectiveProgress}>
-                    {Math.floor(weeklyData.reduce((sum, day) => sum + day.minutes, 0) / 60)}h{weeklyData.reduce((sum, day) => sum + day.minutes, 0) % 60}min/4h00
+                    {Math.floor(weeklyData.reduce((sum, day) => sum + day.minutes, 0) / 60)}h{weeklyData.reduce((sum, day) => sum + day.minutes, 0) % 60}min/2h30
                   </Text>
                 </View>
                 <View style={styles.objectiveBar}>
                   <View style={[
                     styles.objectiveBarFill, 
-                    { width: `${Math.min((weeklyData.reduce((sum, day) => sum + day.minutes, 0) / 240) * 100, 100)}%` }
+                    { width: `${Math.min((weeklyData.reduce((sum, day) => sum + day.minutes, 0) / 150) * 100, 100)}%` }
                   ]} />
                 </View>
               </View>
@@ -1813,16 +1828,14 @@ export default function ProgresScreen() {
                     const activeDays = weeklyData.filter(d => d.workouts > 0).length;
                     const totalMinutes = weeklyData.reduce((sum, day) => sum + day.minutes, 0);
                     
-                    if (activeDays >= 4) {
+                    if (activeDays >= 5) {
                       return "Excellente semaine ! Vous maintenez un rythme exceptionnel. Continuez sur cette lancée !";
                     } else if (activeDays >= 3) {
-                      return "Très bonne semaine d'entraînement ! Vous êtes sur la bonne voie pour atteindre vos objectifs.";
-                    } else if (activeDays >= 2) {
-                      return "Bon début ! Essayez d'ajouter une séance supplémentaire la semaine prochaine.";
+                      return "Bonne semaine d'entraînement ! Vous êtes sur la bonne voie pour atteindre vos objectifs.";
                     } else if (activeDays >= 1) {
-                      return "C'est un bon début ! Visez 3-4 séances par semaine pour de meilleurs résultats.";
+                      return "C'est un début ! Essayez d'ajouter une séance supplémentaire la semaine prochaine.";
                     } else {
-                      return "Il n'est jamais trop tard pour commencer ! Planifiez vos premières séances dès maintenant.";
+                      return "Il n'est jamais trop tard pour commencer ! Planifiez votre première séance dès maintenant.";
                     }
                   })()}
                 </Text>
@@ -3334,17 +3347,6 @@ flexDirection: 'row',
     borderWidth: 1,
     borderColor: '#21262D',
     alignItems: 'center',
-  },
-  sportChartContainer: {
-    backgroundColor: '#161B22',
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#21262D',
-    marginBottom: 25,
-  },
-  sportWeeklyChart: {
-    marginTop: 20,
   },
   
   sportBars: {
