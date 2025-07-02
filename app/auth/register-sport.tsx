@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -45,28 +46,35 @@ export default function RegisterSportScreen() {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity 
-        style={styles.backButton}
-        onPress={() => router.back()}
-      >
-        <Text style={styles.backText}>←</Text>
-      </TouchableOpacity>
+      {/* Header avec bouton retour */}
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Text style={styles.backText}>←</Text>
+        </TouchableOpacity>
 
-      <View style={styles.progressContainer}>
-        <View style={styles.progressBar}>
-          <View style={[styles.progressStep, styles.activeStep]} />
-          <View style={[styles.progressStep, styles.activeStep]} />
-          <View style={[styles.progressStep, styles.activeStep]} />
-          <View style={styles.progressStep} />
-          <View style={styles.progressStep} />
+        {/* Progress bar */}
+        <View style={styles.progressContainer}>
+          <View style={styles.progressBar}>
+            <View style={[styles.progressStep, styles.activeStep]} />
+            <View style={[styles.progressStep, styles.activeStep]} />
+            <View style={[styles.progressStep, styles.activeStep]} />
+            <View style={styles.progressStep} />
+            <View style={styles.progressStep} />
+          </View>
         </View>
       </View>
 
-      <Text style={styles.title}>Sport favori</Text>
-      <Text style={styles.subtitle}>Choisissez votre sport principal parmi plus de 100 disciplines</Text>
+      {/* Titre et sous-titre */}
+      <View style={styles.titleSection}>
+        <Text style={styles.title}>Sport favori</Text>
+        <Text style={styles.subtitle}>Choisissez votre sport principal parmi plus de 100 disciplines</Text>
+      </View>
 
       {/* Barre de recherche */}
-      <View style={styles.searchContainer}>
+      <View style={styles.searchSection}>
         <TextInput
           style={styles.searchInput}
           placeholder="Rechercher un sport..."
@@ -77,34 +85,35 @@ export default function RegisterSportScreen() {
       </View>
 
       {/* Filtres par catégorie */}
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false}
-        style={styles.categoriesContainer}
-        contentContainerStyle={styles.categoriesContent}
-      >
-        <TouchableOpacity
-          style={[styles.categoryButton, !selectedCategory && styles.selectedCategoryButton]}
-          onPress={() => setSelectedCategory(null)}
+      <View style={styles.filtersSection}>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoriesContent}
         >
-          <Text style={[styles.categoryText, !selectedCategory && styles.selectedCategoryText]}>
-            Tous
-          </Text>
-        </TouchableOpacity>
-        {categories.map((category) => (
           <TouchableOpacity
-            key={category}
-            style={[styles.categoryButton, selectedCategory === category && styles.selectedCategoryButton]}
-            onPress={() => setSelectedCategory(selectedCategory === category ? null : category)}
+            style={[styles.categoryButton, !selectedCategory && styles.selectedCategoryButton]}
+            onPress={() => setSelectedCategory(null)}
           >
-            <Text style={[styles.categoryText, selectedCategory === category && styles.selectedCategoryText]}>
-              {category}
+            <Text style={[styles.categoryText, !selectedCategory && styles.selectedCategoryText]}>
+              Tous
             </Text>
           </TouchableOpacity>
-        ))}
-      </ScrollView>
+          {categories.map((category) => (
+            <TouchableOpacity
+              key={category}
+              style={[styles.categoryButton, selectedCategory === category && styles.selectedCategoryButton]}
+              onPress={() => setSelectedCategory(selectedCategory === category ? null : category)}
+            >
+              <Text style={[styles.categoryText, selectedCategory === category && styles.selectedCategoryText]}>
+                {category}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
 
-      {/* Résultats */}
+      {/* Résultats header */}
       <View style={styles.resultsHeader}>
         <Text style={styles.resultsCount}>
           {filteredSports.length} sport{filteredSports.length > 1 ? 's' : ''} trouvé{filteredSports.length > 1 ? 's' : ''}
@@ -116,7 +125,12 @@ export default function RegisterSportScreen() {
         )}
       </View>
 
-      <ScrollView style={styles.sportsContainer} showsVerticalScrollIndicator={false} contentContainerStyle={styles.sportsContent}>
+      {/* Liste des sports */}
+      <ScrollView 
+        style={styles.sportsContainer} 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.sportsContent}
+      >
         {filteredSports.map((sport) => (
           <TouchableOpacity
             key={sport.id}
@@ -159,7 +173,8 @@ export default function RegisterSportScreen() {
         )}
       </ScrollView>
 
-      <View style={styles.navigationContainer}>
+      {/* Navigation en bas */}
+      <View style={styles.bottomNavigation}>
         <TouchableOpacity 
           style={styles.backNavButton}
           onPress={() => router.back()}
@@ -183,14 +198,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000000',
+  },
+  header: {
     paddingHorizontal: 20,
     paddingTop: 60,
+    paddingBottom: 20,
   },
   backButton: {
-    position: 'absolute',
-    top: 60,
-    left: 20,
-    zIndex: 1,
+    marginBottom: 20,
   },
   backText: {
     color: '#FFFFFF',
@@ -198,8 +213,6 @@ const styles = StyleSheet.create({
   },
   progressContainer: {
     alignItems: 'center',
-    marginTop: 40,
-    marginBottom: 30,
   },
   progressBar: {
     flexDirection: 'row',
@@ -214,6 +227,10 @@ const styles = StyleSheet.create({
   activeStep: {
     backgroundColor: '#F5A623',
   },
+  titleSection: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -225,11 +242,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#888888',
     textAlign: 'center',
-    marginBottom: 20,
     paddingHorizontal: 20,
   },
-  searchContainer: {
-    marginBottom: 15,
+  searchSection: {
+    paddingHorizontal: 20,
+    paddingBottom: 15,
   },
   searchInput: {
     backgroundColor: '#1A1A1A',
@@ -241,21 +258,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#333333',
   },
-  categoriesContainer: {
-    marginBottom: 15,
+  filtersSection: {
+    paddingBottom: 15,
   },
   categoriesContent: {
-    paddingRight: 20,
+    paddingHorizontal: 20,
   },
-    categoryButton: {
-      backgroundColor: '#1A1A1A',
-      borderRadius: 8,
-      paddingHorizontal: 8,
-      paddingVertical: 2,
-      marginRight: 6,
-      borderWidth: 1,
-      borderColor: '#333333',
-      alignSelf: 'flex-start',
+  categoryButton: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginRight: 6,
+    borderWidth: 1,
+    borderColor: '#333333',
+    alignSelf: 'flex-start',
   },
   selectedCategoryButton: {
     backgroundColor: '#F5A623',
@@ -273,7 +290,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 15,
+    paddingHorizontal: 20,
+    paddingBottom: 15,
   },
   resultsCount: {
     fontSize: 14,
@@ -286,9 +304,10 @@ const styles = StyleSheet.create({
   },
   sportsContainer: {
     flex: 1,
+    paddingHorizontal: 20,
   },
   sportsContent: {
-    paddingBottom: 20,
+    paddingBottom: 10,
   },
   sportButton: {
     backgroundColor: '#1A1A1A',
@@ -354,12 +373,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666666',
   },
-  navigationContainer: {
+  bottomNavigation: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingBottom: 40,
-    paddingTop: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    backgroundColor: '#000000',
   },
   backNavButton: {
     padding: 16,
