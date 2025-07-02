@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Alert, TextInput, Modal } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring } from 'react-native-reanimated';
@@ -6,7 +6,6 @@ import { useFocusEffect } from 'expo-router';
 import { checkSubscriptionStatus } from '@/utils/subscription';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PersistentStorage } from '@/utils/storage';
-import { WorkoutTrackingService } from '@/utils/workoutTracking';
 
 const { width } = Dimensions.get('window');
 
@@ -75,8 +74,6 @@ export default function ProgresScreen() {
     bestTime5k: { value: '', date: '' },
     totalWorkouts: 0
   });
-  const [sportStats, setSportStats] = useState(null);
-  const [weeklyPlannedSessions, setWeeklyPlannedSessions] = useState(0);
 
   const [nutritionStats, setNutritionStats] = useState({
     weeklyCalories: [],
@@ -96,9 +93,6 @@ export default function ProgresScreen() {
     carbohydrates: 275,
     fat: 73,
   });
-  const [isLoadingSport, setIsLoadingSport] = useState(false);
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [workoutSessions, setWorkoutSessions] = useState<any[]>([]);
 
   useEffect(() => {
     loadUserData();
@@ -502,7 +496,7 @@ export default function ProgresScreen() {
     processedData.forEach((entry, index) => {
       const position = getDataPointPosition(entry.weight, index, processedData.length, allLabels);
       const label = allLabels[index] || '';
-
+      
       dataPoints.push(
         <View 
           key={`weight-${entry.date.toISOString()}-${index}`} 
@@ -701,9 +695,9 @@ export default function ProgresScreen() {
       if (entry.calories > 0) {
         const position = getNutritionDataPointPosition(entry.calories, index, processedData.length, allLabels);
         const label = allLabels[index] || '';
-
+        
         console.log(`Point ${index}: ${entry.calories} kcal à la position`, position);
-
+        
         dataPoints.push(
           <View 
             key={`nutrition-${entry.date.toISOString()}-${index}`} 
@@ -768,7 +762,7 @@ export default function ProgresScreen() {
     if (selectedNutritionPeriod === 'Jours') {
       // Toujours générer les labels pour les 7 derniers jours
       const currentDate = new Date();
-
+      
       for (let i = 6; i >= 0; i--) {
         const targetDate = new Date(currentDate);
         targetDate.setDate(currentDate.getDate() - i);
@@ -778,13 +772,13 @@ export default function ProgresScreen() {
         });
         labels.push(dayMonth);
       }
-
+      
       console.log('Labels générés pour les jours:', labels);
       return labels;
-
+      
     } else if (selectedNutritionPeriod === 'Semaine') {
       const processedData = getProcessedNutritionData();
-
+      
       processedData.forEach(entry => {
         const weekNumber = getISOWeekNumber(entry.date);
         labels.push(`S${weekNumber}`);
@@ -793,32 +787,32 @@ export default function ProgresScreen() {
       if (labels.length < 6) {
         const currentDate = new Date();
         const existingWeeks = new Set(labels.map(l => l.substring(1)));
-
+        
         let weeksToAdd = 6 - labels.length;
         let dateOffset = 0;
-
+        
         while (weeksToAdd > 0) {
           const targetDate = new Date(currentDate);
           targetDate.setDate(currentDate.getDate() - (dateOffset * 7));
-
+          
           const weekNumber = getISOWeekNumber(targetDate);
           const weekLabel = `S${weekNumber}`;
-
+          
           if (!existingWeeks.has(weekNumber.toString())) {
             labels.unshift(weekLabel);
             weeksToAdd--;
           }
-
+          
           dateOffset++;
           if (dateOffset > 52) break;
         }
       }
 
       return labels.slice(-6);
-
+      
     } else if (selectedNutritionPeriod === 'Mois') {
       const processedData = getProcessedNutritionData();
-
+      
       processedData.forEach(entry => {
         const monthName = monthNames[entry.date.getMonth()];
         if (!labels.includes(monthName)) {
@@ -829,12 +823,12 @@ export default function ProgresScreen() {
       if (labels.length < 6) {
         const currentDate = new Date();
         const existingMonths = new Set(labels);
-
+        
         for (let i = 5; i >= 0; i--) {
           const targetDate = new Date(currentDate);
           targetDate.setMonth(currentDate.getMonth() - i);
           const monthName = monthNames[targetDate.getMonth()];
-
+          
           if (!existingMonths.has(monthName)) {
             labels.push(monthName);
           }
@@ -869,23 +863,23 @@ export default function ProgresScreen() {
         const date = new Date(currentDate);
         date.setDate(currentDate.getDate() - i);
         date.setHours(0, 0, 0, 0);
-
+        
         // Chercher les données existantes pour ce jour
         const existingData = processedData.find(entry => {
           const entryDate = new Date(entry.date);
           entryDate.setHours(0, 0, 0, 0);
           return entryDate.getTime() === date.getTime();
         });
-
+        
         last7Days.push({
           calories: existingData ? existingData.calories : 0,
           date: new Date(date)
         });
       }
-
+      
       console.log('Données des 7 derniers jours:', last7Days.map(d => ({ date: d.date.toISOString().split('T')[0], calories: d.calories })));
       return last7Days;
-
+      
     } else if (selectedNutritionPeriod === 'Semaine') {
       const sixWeeksAgo = new Date(currentDate.getTime() - (6 * 7 * 24 * 60 * 60 * 1000));
       return processedData.filter(entry => entry.date >= sixWeeksAgo).slice(-6);
@@ -893,7 +887,7 @@ export default function ProgresScreen() {
       // Traiter par semaine puis regrouper par mois
       const sixMonthsAgo = new Date(currentDate.getTime() - (6 * 30 * 24 * 60 * 60 * 1000));
       const monthlyData = processedData.filter(entry => entry.date >= sixMonthsAgo);
-
+      
       // Regrouper par mois
       const monthlyAverages = new Map();
       monthlyData.forEach(entry => {
@@ -938,7 +932,7 @@ export default function ProgresScreen() {
     if (selectedPeriod === 'Semaines') {
       // Utiliser les vraies semaines des données de poids
       const processedData = getProcessedWeightData();
-
+      
       // Générer les labels basés sur les vraies dates des données
       processedData.forEach(entry => {
         const weekNumber = getISOWeekNumber(entry.date);
@@ -949,25 +943,25 @@ export default function ProgresScreen() {
       if (labels.length < 6) {
         const currentDate = new Date();
         const existingWeeks = new Set(labels.map(l => l.substring(1))); // Enlever le 'S'
-
+        
         // Ajouter les semaines manquantes en remontant dans le temps
         let weeksToAdd = 6 - labels.length;
         let dateOffset = 0;
-
+        
         while (weeksToAdd > 0) {
           const targetDate = new Date(currentDate);
           targetDate.setDate(currentDate.getDate() - (dateOffset * 7));
-
+          
           const weekNumber = getISOWeekNumber(targetDate);
           const weekLabel = `S${weekNumber}`;
-
+          
           if (!existingWeeks.has(weekNumber.toString())) {
             labels.unshift(weekLabel);
             weeksToAdd--;
           }
-
+          
           dateOffset++;
-
+          
           // Sécurité pour éviter une boucle infinie
           if (dateOffset > 52) break;
         }
@@ -975,10 +969,10 @@ export default function ProgresScreen() {
 
       // Garder seulement les 6 derniers
       return labels.slice(-6);
-
+      
     } else if (selectedPeriod === 'Mois') {
       const processedData = getProcessedWeightData();
-
+      
       // Générer les labels basés sur les vraies dates des données
       processedData.forEach(entry => {
         const monthName = monthNames[entry.date.getMonth()];
@@ -991,12 +985,12 @@ export default function ProgresScreen() {
       if (labels.length < 6) {
         const currentDate = new Date();
         const existingMonths = new Set(labels);
-
+        
         for (let i = 5; i >= 0; i--) {
           const targetDate = new Date(currentDate);
           targetDate.setMonth(currentDate.getMonth() - i);
           const monthName = monthNames[targetDate.getMonth()];
-
+          
           if (!existingMonths.has(monthName)) {
             labels.push(monthName);
           }
@@ -1004,10 +998,10 @@ export default function ProgresScreen() {
       }
 
       return labels.slice(-6);
-
+      
     } else { // Années
       const processedData = getProcessedWeightData();
-
+      
       // Générer les labels basés sur les vraies dates des données
       processedData.forEach(entry => {
         const year = entry.date.getFullYear().toString();
@@ -1020,7 +1014,7 @@ export default function ProgresScreen() {
       if (labels.length < 6) {
         const currentYear = new Date().getFullYear();
         const existingYears = new Set(labels);
-
+        
         for (let i = 5; i >= 0; i--) {
           const year = (currentYear - i).toString();
           if (!existingYears.has(year)) {
@@ -1236,30 +1230,22 @@ export default function ProgresScreen() {
       const user = await PersistentStorage.getCurrentUser();
       if (!user) return;
 
-      // Charger les sessions d'entraînement via le service
-      const sessions = await WorkoutTrackingService.getWorkoutSessions(user.id);
+      // Charger les données d'entraînement
+      const workouts = await PersistentStorage.getWorkouts(user.id);
 
       // Calculer les statistiques des 7 derniers jours
       const last7Days = [];
-      let totalPlannedThisWeek = 0;
-
       for (let i = 6; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
         const dateString = date.toISOString().split('T')[0];
 
-        const dayWorkouts = sessions.filter((session: any) => 
-          session.date === dateString && session.type === 'completed'
+        const dayWorkouts = workouts.filter((workout: any) => 
+          workout.date === dateString
         );
 
-        const plannedWorkouts = sessions.filter((session: any) => 
-          session.date === dateString && session.type === 'planned'
-        );
-
-        totalPlannedThisWeek += plannedWorkouts.length;
-
-        const totalMinutes = dayWorkouts.reduce((sum: number, session: any) => 
-          sum + (session.duration || 0), 0
+        const totalMinutes = dayWorkouts.reduce((sum: number, workout: any) => 
+          sum + (workout.duration || 0), 0
         );
 
         last7Days.push({
@@ -1271,21 +1257,13 @@ export default function ProgresScreen() {
       }
 
       setWeeklyData(last7Days);
-      setWeeklyPlannedSessions(totalPlannedThisWeek);
 
-      // Calculer les statistiques du sport favori
-      if (user.favoriteSport) {
-        const stats = WorkoutTrackingService.calculateSportStats(sessions, user.favoriteSport);
-        setSportStats(stats);
-      }
-
-      // Calculer les records personnels basés sur les vraies données
-      const completedSessions = sessions.filter((s: any) => s.type === 'completed');
+      // Calculer les records personnels (données simulées pour l'exemple)
       setPersonalRecords({
         maxWeight: { value: 85, date: '2024-01-15', exercise: 'Développé couché' },
         longestRun: { value: 12.5, date: '2024-01-20', unit: 'km' },
         bestTime5k: { value: '22:45', date: '2024-01-18' },
-        totalWorkouts: completedSessions.length
+        totalWorkouts: workouts.length
       });
 
     } catch (error) {
@@ -1300,7 +1278,7 @@ export default function ProgresScreen() {
 
       // Charger les données nutritionnelles réelles avec priorité sur le serveur VPS
       let nutritionEntries = [];
-
+      
       // Essayer le serveur VPS d'abord avec timeout plus court
       try {
         const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.replit.app';
@@ -1316,7 +1294,7 @@ export default function ProgresScreen() {
         if (response.ok) {
           nutritionEntries = await response.json();
           console.log('Données nutrition chargées depuis le serveur VPS pour les progrès:', nutritionEntries.length, 'entrées');
-
+          
           // Sauvegarder en local comme backup
           await AsyncStorage.setItem(`food_entries_${user.id}`, JSON.stringify(nutritionEntries));
         } else {
@@ -1324,7 +1302,7 @@ export default function ProgresScreen() {
         }
       } catch (serverError) {
         console.log('Erreur serveur VPS nutrition (progrès):', serverError.message);
-
+        
         // Fallback vers le stockage local
         console.log('Fallback vers le stockage local pour nutrition (progrès)');
         const stored = await AsyncStorage.getItem(`food_entries_${user.id}`);
@@ -1356,7 +1334,7 @@ export default function ProgresScreen() {
 
       console.log(`=== ANALYSE DONNÉES NUTRITION (${nutritionEntries.length} entrées) ===`);
       console.log('Début de semaine:', startOfWeek.toISOString().split('T')[0]);
-
+      
       // Afficher toutes les dates disponibles
       const availableDates = [...new Set(nutritionEntries.map((entry: any) => entry.date))].sort();
       console.log('Dates disponibles dans les données:', availableDates);
@@ -1562,46 +1540,6 @@ export default function ProgresScreen() {
     }
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      checkSubscriptionStatus().then(setIsPremium);
-      loadSportData();
-    }, [])
-  );
-
-  const loadSportData = async () => {
-    try {
-      setIsLoadingSport(true);
-
-      // Charger les données utilisateur
-      const userData = await PersistentStorage.getCurrentUser();
-      if (userData) {
-        setCurrentUser(userData);
-
-        // Charger les sessions d'entraînement avec l'ID utilisateur
-        const sessions = await WorkoutTrackingService.getWorkoutSessions(userData.id);
-        setWorkoutSessions(sessions);
-
-        // Si pas de sessions, créer des données d'exemple
-        if (sessions.length === 0 && userData.favoriteSport) {
-          await WorkoutTrackingService.createSampleSessions(userData.id, userData.favoriteSport);
-          const newSessions = await WorkoutTrackingService.getWorkoutSessions(userData.id);
-          setWorkoutSessions(newSessions);
-        }
-
-        // Calculer les statistiques du sport favori
-        if (userData.favoriteSport && sessions.length > 0) {
-          const stats = WorkoutTrackingService.calculateSportStats(sessions, userData.favoriteSport);
-          setSportStats(stats);
-        }
-      }
-    } catch (error) {
-      console.error('Erreur chargement données de progrès:', error);
-    } finally {
-      setIsLoadingSport(false);
-    }
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -1670,112 +1608,184 @@ export default function ProgresScreen() {
 
         {/* Onglet Sport */}
         {selectedTab === 'Sport' && (
-          <View style={styles.tabContent}>
-            {isLoadingSport ? (
-              <View style={styles.loadingContainer}>
-                <Text style={styles.loadingText}>Chargement des données sportives...</Text>
+          <View style={styles.sportContainer}>
+            {/* Résumé de la semaine */}
+            <View style={styles.sportSummaryCard}>
+              <Text style={styles.chartTitle}>📈 Résumé de la semaine</Text>
+              <View style={styles.sportSummaryStats}>
+                <View style={styles.sportSummaryItem}>
+                  <Text style={styles.sportSummaryValue}>4</Text>
+                  <Text style={styles.sportSummaryLabel}>Séances</Text>
+                </View>
+                <View style={styles.sportSummaryItem}>
+                  <Text style={styles.sportSummaryValue}>5h 30min</Text>
+                  <Text style={styles.sportSummaryLabel}>Temps total</Text>
+                </View>
+                <View style={styles.sportSummaryItem}>
+                  <Text style={styles.sportSummaryValue}>1,247</Text>
+                  <Text style={styles.sportSummaryLabel}>Calories brûlées</Text>
+                </View>
               </View>
-            ) : currentUser?.favoriteSport ? (
-              <View style={styles.sportContainer}>
-                {/* En-tête du sport favori */}
-                <View style={styles.favoriteSportHeader}>
-                  <Text style={styles.favoriteSportEmoji}>
-                    {WorkoutTrackingService.getSportEmoji(currentUser.favoriteSport)}
-                  </Text>
-                  <View style={styles.favoriteSportInfo}>
-                    <Text style={styles.favoriteSportTitle}>
-                      {WorkoutTrackingService.getSportName(currentUser.favoriteSport)}
-                    </Text>
-                    <Text style={styles.favoriteSportSubtitle}>Votre sport favori</Text>
-                  </View>
+            </View>
+
+            {/* Graphique d'activité hebdomadaire */}
+            <View style={styles.chartContainer}>
+              <View style={styles.chartHeader}>
+                <Text style={styles.chartTitle}>Activité sportive</Text>
+                <View style={styles.chartPeriod}>
+                  <Text style={styles.chartPeriodText}>7 jours</Text>
+                </View>
+              </View>
+
+              <View style={styles.sportChartArea}>
+                {/* Axe Y pour les séances */}
+                <View style={styles.yAxis}>
+                  {['3', '2.5', '2', '1.5', '1', '0.5', '0'].map((label, index) => (
+                    <Text key={index} style={styles.yAxisLabel}>{label}</Text>
+                  ))}
                 </View>
 
-                {/* Statistiques du sport */}
-                {sportStats && (
-                  <>
-                    <View style={styles.sportStatsContainer}>
-                      <View style={styles.sportStatCard}>
-                        <Text style={styles.sportStatValue}>{sportStats.totalSessions}</Text>
-                        <Text style={styles.sportStatLabel}>Séances totales</Text>
-                      </View>
-                      <View style={styles.sportStatCard}>
-                        <Text style={styles.sportStatValue}>{Math.round(sportStats.totalDuration / 60)}h</Text>
-                        <Text style={styles.sportStatLabel}>Temps total</Text>
-                      </View>
-                      <View style={styles.sportStatCard}>
-                        <Text style={styles.sportStatValue}>{sportStats.totalCalories}</Text>
-                        <Text style={styles.sportStatLabel}>Calories brûlées</Text>
-                      </View>
-                    </View>
+                <View style={styles.chartContent}>
+                  {/* Grille */}
+                  <View style={styles.gridContainer}>
+                    {[...Array(7)].map((_, i) => (
+                      <View key={i} style={styles.gridLine} />
+                    ))}
+                  </View>
 
-                    {/* Progrès hebdomadaire */}
-                    <View style={styles.weeklyProgressCard}>
-                      <Text style={styles.weeklyProgressTitle}>Progrès cette semaine</Text>
-                      <View style={styles.weeklyProgressContent}>
-                        <Text style={styles.weeklyProgressValue}>
-                          {sportStats.weeklyProgress}/{sportStats.weeklyGoal}
-                        </Text>
-                        <Text style={styles.weeklyProgressLabel}>séances</Text>
-                      </View>
-                      <View style={styles.progressBarContainer}>
-                        <View style={styles.progressBar}>
-                          <View 
-                            style={[
-                              styles.progressBarFill, 
-                              { width: `${Math.min((sportStats.weeklyProgress / sportStats.weeklyGoal) * 100, 100)}%` }
-                            ]} 
-                          />
+                  {/* Barres d'activité */}
+                  <View style={styles.sportBars}>
+                    {[
+                      { day: 'Lun', sessions: 1, calories: 320 },
+                      { day: 'Mar', sessions: 0, calories: 0 },
+                      { day: 'Mer', sessions: 2, calories: 480 },
+                      { day: 'Jeu', sessions: 1, calories: 275 },
+                      { day: 'Ven', sessions: 0, calories: 0 },
+                      { day: 'Sam', sessions: 1, calories: 380 },
+                      { day: 'Dim', sessions: 2, calories: 520 }
+                    ].map((data, index) => {
+                      const height = (data.sessions / 3) * 80;
+                      return (
+                        <View key={data.day} style={styles.sportBarContainer}>
+                          <View style={[styles.sportBar, { height: `${height}%` }]} />
+                          <Text style={styles.caloriesText}>{data.calories}</Text>
+                          <Text style={styles.dayLabel}>{data.day}</Text>
                         </View>
-                      </View>
-                      <Text style={[
-                        styles.progressTrend,
-                        { color: sportStats.progressTrend === 'up' ? '#4CAF50' : sportStats.progressTrend === 'down' ? '#FF6B6B' : '#F5A623' }
-                      ]}>
-                        {sportStats.progressTrend === 'up' ? '📈 En progression' : 
-                         sportStats.progressTrend === 'down' ? '📉 En baisse' : 
-                         '📊 Stable'}
-                      </Text>
-                    </View>
+                      );
+                    })}
+                  </View>
+                </View>
+              </View>
+            </View>
 
-                    {/* Séances récentes */}
-                    <View style={styles.recentSessionsCard}>
-                      <Text style={styles.recentSessionsTitle}>Séances récentes</Text>
-                      {workoutSessions
-                        .filter(session => session.sport === currentUser.favoriteSport)
-                        .slice(0, 3)
-                        .map((session, index) => (
-                          <View key={session.id} style={styles.sessionItem}>
-                            <View style={styles.sessionInfo}>
-                              <Text style={styles.sessionDate}>
-                                {new Date(session.date).toLocaleDateString('fr-FR', {
-                                  day: 'numeric',
-                                  month: 'short'
-                                })}
-                              </Text>
-                              <Text style={styles.sessionDuration}>{session.duration}min</Text>
-                            </View>
-                            <View style={[
-                              styles.intensityBadge,
-                              { backgroundColor: session.intensity === 'high' ? '#FF6B6B' : 
-                                                session.intensity === 'medium' ? '#F5A623' : '#4CAF50' }
-                            ]}>
-                              <Text style={styles.intensityText}>
-                                {session.intensity === 'high' ? 'Intense' : 
-                                 session.intensity === 'medium' ? 'Modéré' : 'Léger'}
-                              </Text>
-                            </View>
-                          </View>
-                        ))}
-                    </View>
-                  </>
-                )}
+            {/* Statistiques par type de sport */}
+            <View style={styles.sportTypeContainer}>
+              <Text style={styles.chartTitle}>Répartition par activité</Text>
+
+              <View style={styles.sportTypeGrid}>
+                <View style={styles.sportTypeCard}>
+                  <View style={styles.sportTypeIcon}>
+                    <Text style={styles.sportTypeEmoji}>💪</Text>
+                  </View>
+                  <Text style={styles.sportTypeLabel}>Musculation</Text>
+                  <Text style={styles.sportTypeValue}>2 séances</Text>
+                  <Text style={styles.sportTypeTime}>2h 30min</Text>
+                </View>
+
+                <View style={styles.sportTypeCard}>
+                  <View style={styles.sportTypeIcon}>
+                    <Text style={styles.sportTypeEmoji}>🏃‍♂️</Text>
+                  </View>
+                  <Text style={styles.sportTypeLabel}>Course</Text>
+                  <Text style={styles.sportTypeValue}>1 séance</Text>
+                  <Text style={styles.sportTypeTime}>45min</Text>
+                </View>
+
+                <View style={styles.sportTypeCard}>
+                  <View style={styles.sportTypeIcon}>
+                    <Text style={styles.sportTypeEmoji}>🧘‍♀️</Text>
+                  </View>
+                  <Text style={styles.sportTypeLabel}>Yoga</Text>
+                  <Text style={styles.sportTypeValue}>1 séance</Text>
+                  <Text style={styles.sportTypeTime}>1h 15min</Text>
+                </View>
+
+                <View style={styles.sportTypeCard}>
+                  <View style={styles.sportTypeIcon}>
+                    <Text style={styles.sportTypeEmoji}>🚴‍♂️</Text>
+                  </View>
+                  <Text style={styles.sportTypeLabel}>Cyclisme</Text>
+                  <Text style={styles.sportTypeValue}>0 séance</Text>
+                  <Text style={styles.sportTypeTime}>0min</Text>
+                </View>
               </View>
-            ) : (
-              <View style={styles.noSportContainer}>
-                <Text style={styles.noSportText}>Aucun sport favori défini</Text>
-                <Text style={styles.noSportSubtext}>Configurez votre sport favori dans votre profil</Text>
+            </View>
+
+            {/* Progression des objectifs sportifs */}
+            <View style={styles.sportObjectivesCard}>
+              <Text style={styles.chartTitle}>🎯 Objectifs de la semaine</Text>
+
+              <View style={styles.objectiveItem}>
+                <View style={styles.objectiveHeader}>
+                  <Text style={styles.objectiveLabel}>Séances par semaine</Text>
+                  <Text style={styles.objectiveProgress}>4/5</Text>
+                </View>
+                <View style={styles.objectiveBar}>
+                  <View style={[styles.objectiveBarFill, { width: '80%' }]} />
+                </View>
               </View>
-            )}
+
+              <View style={styles.objectiveItem}>
+                <View style={styles.objectiveHeader}>
+                  <Text style={styles.objectiveLabel}>Temps d'entraînement</Text>
+                  <Text style={styles.objectiveProgress}>5h30/6h</Text>
+                </View>
+                <View style={styles.objectiveBar}>
+                  <View style={[styles.objectiveBarFill, { width: '92%' }]} />
+                </View>
+              </View>
+
+              <View style={styles.objectiveItem}>
+                <View style={styles.objectiveHeader}>
+                  <Text style={styles.objectiveLabel}>Calories brûlées</Text>
+                  <Text style={styles.objectiveProgress}>1,247/1,500</Text>
+                </View>
+                <View style={styles.objectiveBar}>
+                  <View style={[styles.objectiveBarFill, { width: '83%' }]} />
+                </View>
+              </View>
+            </View>
+
+            {/* Records personnels */}
+            <View style={styles.personalRecordsCard}>
+              <Text style={styles.chartTitle}>🏆 Records personnels</Text>
+
+              <View style={styles.recordsGrid}>
+                <View style={styles.recordItem}>
+                  <Text style={styles.recordLabel}>Développé couché</Text>
+                  <Text style={styles.recordValue}>85 kg</Text>
+                  <Text style={styles.recordDate}>Il y a 3 jours</Text>
+                </View>
+
+                <View style={styles.recordItem}>
+                  <Text style={styles.recordLabel}>Course 5km</Text>
+                  <Text style={styles.recordValue}>24:32</Text>
+                  <Text style={styles.recordDate}>Il y a 1 semaine</Text>
+                </View>
+
+                <View style={styles.recordItem}>
+                  <Text style={styles.recordLabel}>Squat</Text>
+                  <Text style={styles.recordValue}>95 kg</Text>
+                  <Text style={styles.recordDate}>Il y a 5 jours</Text>
+                </View>
+
+                <View style={styles.recordItem}>
+                  <Text style={styles.recordLabel}>Planche</Text>
+                  <Text style={styles.recordValue}>2:45</Text>
+                  <Text style={styles.recordDate}>Hier</Text>
+                </View>
+              </View>
+            </View>
           </View>
         )}
 
@@ -1955,21 +1965,21 @@ export default function ProgresScreen() {
                   // Calculer l'objectif personnalisé pour chaque jour (même logique que nutrition)
                   const calculateDailyGoal = () => {
                     if (!userData?.weight || !userData?.age) return 2000;
-
+                    
                     let baseGoal = userData.weight * 35;
-
+                    
                     if (userData.age > 65) {
                       baseGoal += 300;
                     } else if (userData.age > 50) {
                       baseGoal += 200;
                     }
-
+                    
                     // Arrondir au multiple de 250ml supérieur comme dans nutrition
                     return Math.ceil(baseGoal / 250) * 250;
                   };
 
                   const dailyGoal = calculateDailyGoal();
-
+                  
                   const percentage = dailyGoal > 0 ? (dayData.water / dailyGoal) * 100 : 0;
                   const achieved = percentage >= 100;
                   return (
@@ -1998,18 +2008,18 @@ export default function ProgresScreen() {
                   Objectif: {(() => {
                     // Utiliser la même logique que dans nutrition pour calculer l'objectif
                     if (!userData?.weight || !userData?.age) return '2000ml/jour';
-
+                    
                     let baseGoal = userData.weight * 35;
-
+                    
                     if (userData.age > 65) {
                       baseGoal += 300;
                     } else if (userData.age > 50) {
                       baseGoal += 200;
                     }
-
+                    
                     // Arrondir au multiple de 250ml supérieur comme dans nutrition
                     const finalGoal = Math.ceil(baseGoal / 250) * 250;
-
+                    
                     return `${finalGoal}ml/jour`;
                   })()}
                 </Text>
@@ -2044,17 +2054,17 @@ export default function ProgresScreen() {
                     {(() => {
                       // Calculer l'objectif personnalisé pour la moyenne (même logique que nutrition)
                       if (!userData?.weight || !userData?.age) return nutritionStats.averageHydration > 0 ? Math.round((nutritionStats.averageHydration / 2000) * 100) : 0;
-
+                      
                       let personalGoal = userData.weight * 35;
-
+                      
                       if (userData.age > 65) {
                         personalGoal += 300;
                       } else if (userData.age > 50) {
                         personalGoal += 200;
                       }
-
+                      
                       const finalGoal = Math.ceil(personalGoal / 250) * 250;
-
+                      
                       return nutritionStats.averageHydration > 0 ? Math.round((nutritionStats.averageHydration / finalGoal) * 100) : 0;
                     })()}%
                   </Text>
@@ -2324,12 +2334,12 @@ export default function ProgresScreen() {
                 {/* Enhanced Weight Line with Gradient */}
                 {renderWeightChart()}
 
-
+                
               </View>
             </ScrollView>
           </View>
 
-
+          
         </View>
         )}
 
@@ -2358,7 +2368,7 @@ export default function ProgresScreen() {
                   const monthsDiff = Math.max(1, Math.ceil((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30)));
                   const weightChange = Math.abs(weightData.startWeight - weightData.currentWeight);
                   const avgPerMonth = weightChange / monthsDiff;
-                  return `${formatWeight(avgPerMonth)} kg`
+                  return `${formatWeight(avgPerMonth)} kg`;
                 })()}
               </Text>
               <Text style={styles.summaryLabel}>Évolution moyenne/mois</Text>
@@ -3234,7 +3244,7 @@ flexDirection: 'row',
     paddingHorizontal: 20,
     paddingBottom: 100,
   },
-  favoriteSportCard: {
+  sportSummaryCard: {
     backgroundColor: '#161B22',
     borderRadius: 16,
     padding: 20,
@@ -3242,148 +3252,406 @@ flexDirection: 'row',
     borderColor: '#21262D',
     marginBottom: 25,
   },
-  favoriteSportHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  favoriteSportEmoji: {
-    fontSize: 32,
-    marginRight: 16,
-  },
-  favoriteSportInfo: {
-    flex: 1,
-  },
-  favoriteSportTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  favoriteSportSubtitle: {
-    fontSize: 14,
-    color: '#8B949E',
-  },
-  sportStatsContainer: {
+  sportSummaryStats: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginBottom: 16,
+    marginTop: 16,
   },
-  sportStatCard: {
+  sportSummaryItem: {
     alignItems: 'center',
   },
-  sportStatValue: {
+  sportSummaryValue: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#F5A623',
     marginBottom: 4,
   },
-  sportStatLabel: {
+  sportSummaryLabel: {
     fontSize: 12,
     color: '#8B949E',
     textAlign: 'center',
   },
-  weeklyProgressCard: {
-    marginBottom: 16,
+  sportChartArea: {
+    flexDirection: 'row',
+    height: 200,
   },
-  weeklyProgressTitle: {
-    fontSize: 16,
+  sportBars: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    paddingBottom: 25,
+    paddingHorizontal: 10,
+  },
+  sportBarContainer: {
+    alignItems: 'center',
+    flex: 1,
+    height: '100%',
+    justifyContent: 'flex-end',
+  },
+  sportBar: {
+    width: 20,
+    backgroundColor: '#F5A623',
+    borderRadius: 10,
+    marginBottom: 8,
+    minHeight: 4,
+  },
+  caloriesText: {
+    fontSize: 10,
     color: '#FFFFFF',
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: 4,
   },
-  weeklyProgressContent: {
+  sportTypeContainer: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    marginBottom: 25,
+  },
+  sportTypeGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 16,
+  },
+  sportTypeCard: {
+    width: (width - 64) / 2,
+    backgroundColor: '#0D1117',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#21262D',
     alignItems: 'center',
-    marginBottom: 8,
   },
-  weeklyProgressValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#F5A623',
-    marginRight: 4,
+  sportTypeIcon: {
+    width: 40,
+    height: 40,
+    backgroundColor: '#21262D',
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
   },
-  weeklyProgressLabel: {
+  sportTypeEmoji: {
+    fontSize: 20,
+  },
+  sportTypeLabel: {
     fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  sportTypeValue: {
+    fontSize: 16,
+    color: '#F5A623',
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  sportTypeTime: {
+    fontSize: 12,
     color: '#8B949E',
   },
-  recentSessionsCard: {
-    marginBottom: 16,
+  sportObjectivesCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    marginBottom: 25,
   },
-  recentSessionsTitle: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    fontWeight: '600',
-    marginBottom: 8,
+  objectiveItem: {
+    marginBottom: 20,
   },
-  sessionItem: {
+  objectiveHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: '#0D1117',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#21262D',
   },
-  sessionInfo: {
-    flex: 1,
-  },
-  sessionDate: {
+  objectiveLabel: {
     fontSize: 14,
     color: '#FFFFFF',
     fontWeight: '500',
-    marginBottom: 4,
   },
-  sessionDuration: {
-    fontSize: 12,
-    color: '#8B949E',
-  },
-  intensityBadge: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-  },
-  intensityText: {
-    fontSize: 12,
-    color: '#0D1117',
+  objectiveProgress: {
+    fontSize: 14,
+    color: '#F5A623',
     fontWeight: '600',
   },
-  noSportContainer: {
+  objectiveBar: {
+    height: 8,
+    backgroundColor: '#21262D',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  objectiveBarFill: {
+    height: '100%',
+    backgroundColor: '#F5A623',
+    borderRadius: 4,
+  },
+  personalRecordsCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    marginBottom: 25,
+  },
+  recordsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 16,
+  },
+  recordItem: {
+    width: (width - 64) / 2,
+    backgroundColor: '#0D1117',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#21262D',
     alignItems: 'center',
   },
-  noSportText: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  noSportSubtext: {
-    fontSize: 14,
+  recordLabel: {
+    fontSize: 12,
     color: '#8B949E',
+    marginBottom: 6,
     textAlign: 'center',
   },
-  tabContent: {
+  recordValue: {
+    fontSize: 18,
+    color: '#28A745',
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  recordDate: {
+    fontSize: 10,
+    color: '#8B949E',
+    fontStyle: 'italic',
+  },
+
+  // Styles pour l'onglet Nutrition
+  nutritionContainer: {
     paddingHorizontal: 20,
     paddingBottom: 100,
   },
-  comingSoonText: {
-    fontSize: 18,
+  nutritionChartContainer: {
+    marginBottom: 25,
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  nutritionChartArea: {
+    flexDirection: 'row',
+    height: 180,
+    paddingBottom: 35,
+  },
+  caloriesBars: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    paddingBottom: 0,
+    paddingHorizontal: 5,
+  },
+  barContainer: {
+    alignItems: 'center',
+    flex: 1,
+    height: '100%',
+    justifyContent: 'flex-end',
+  },
+  calorieBar: {
+    width: 18,
+    backgroundColor: '#F5A623',
+    borderRadius: 9,
+    marginBottom: 8,
+    minHeight: 4,
+  },
+  dayLabel: {
+    fontSize: 11,
+    color: '#8B949E',
+    fontWeight: '500',
+  },
+  nutritionStatsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 25,
+  },
+  nutritionStatCard: {
+    width: (width - 52) / 2,
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    alignItems: 'center',
+  },
+  macroDistributionCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    marginBottom: 25,
+    alignItems: 'center',
+  },
+  chartSubtitle: {
+    fontSize: 12,
     color: '#8B949E',
     textAlign: 'center',
-    marginTop: 50,
+    marginBottom: 20,
   },
-    loadingContainer: {
+  macroCircularChart: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  macroCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#21262D',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 20,
+    borderWidth: 8,
+    borderColor: '#F5A623',
   },
-  loadingText: {
-    fontSize: 16,
+  macroMainText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  macroSubText: {
+    fontSize: 12,
     color: '#8B949E',
   },
+  macroLegend: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+  },
+  macroLegendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  macroLegendColor: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  macroLegendText: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: '500',
+  },
+  hydrationProgressCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    marginBottom: 25,
+  },
+  hydrationBars: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    height: 100,
+    paddingHorizontal: 10,
+  },
+  hydrationBarContainer: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  hydrationBarBackground: {
+    width: 16,
+    height: 60,
+    backgroundColor: '#21262D',
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginBottom: 6,
+    justifyContent: 'flex-end',
+  },
+  hydrationBarFill: {
+    width: '100%',
+    borderRadius: 8,
+  },
+  hydrationBarText: {
+    fontSize: 10,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  hydrationObjectiveContainer: {
+    alignItems: 'center',
+    marginTop: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#21262D',
+  },
+  hydrationObjectiveText: {
+    fontSize: 14,
+    color: '#4ECDC4',
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  hydrationObjectiveSubtext: {
+    fontSize: 12,
+    color: '#8B949E',
+    fontStyle: 'italic',
+  },
+  nutritionSummaryCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  regularityIndicator: {
+    marginTop: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#21262D',
+  },
+  regularityTitle: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  regularityBar: {
+    height: 8,
+    backgroundColor: '#21262D',
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  regularityBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  regularityText: {
+    fontSize: 12,
+    color: '#8B949E',
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+
+  monthlyBarContainer: {
+    width: '3%', // Ajustez selon le nombre de jours affichés
+  },
+  monthlyBar: {
+    borderRadius: 4,
+  },
+  monthlyDayLabel: {
+    fontSize: 8,
+  },
+
   // Styles spécifiques pour l'axe Y du graphique nutrition
   nutritionYAxis: {
     justifyContent: 'space-between',
