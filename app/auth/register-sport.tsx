@@ -116,7 +116,7 @@ export default function RegisterSportScreen() {
         )}
       </View>
 
-      <ScrollView style={styles.sportsContainer} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.sportsContainer} showsVerticalScrollIndicator={false} contentContainerStyle={styles.sportsContent}>
         {filteredSports.map((sport) => (
           <TouchableOpacity
             key={sport.id}
@@ -286,7 +286,9 @@ const styles = StyleSheet.create({
   },
   sportsContainer: {
     flex: 1,
-    marginBottom: 20,
+  },
+  sportsContent: {
+    paddingBottom: 20,
   },
   sportButton: {
     backgroundColor: '#1A1A1A',
