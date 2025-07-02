@@ -1647,44 +1647,66 @@ export default function ProgresScreen() {
                 <Text style={styles.chartTitle}>Activité de la semaine</Text>
               </View>
 
-              <View style={styles.sportChartArea}>
-                {/* Axe Y pour les minutes */}
+              {/* Onglets de période */}
+              <View style={styles.periodTabsContainer}>
+                {['Jours', 'Semaine', 'Mois'].map((period) => (
+                  <TouchableOpacity 
+                    key={period}
+                    style={[styles.periodTab, selectedPeriod === period && styles.activePeriodTab]}
+                    onPress={() => setSelectedPeriod(period)}
+                  >
+                    <Text style={[styles.periodTabText, selectedPeriod === period && styles.activePeriodTabText]}>
+                      {period}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Graphique avec scroll horizontal */}
+              <View style={styles.chartArea}>
                 <View style={styles.yAxis}>
                   {['120', '100', '80', '60', '40', '20', '0'].map((label, index) => (
                     <Text key={index} style={styles.yAxisLabel}>{label}</Text>
                   ))}
                 </View>
 
-                <View style={styles.chartContent}>
-                  {/* Grille */}
-                  <View style={styles.gridContainer}>
-                    {[...Array(7)].map((_, i) => (
-                      <View key={i} style={styles.gridLine} />
-                    ))}
-                  </View>
+                <ScrollView 
+                  horizontal 
+                  showsHorizontalScrollIndicator={true}
+                  style={styles.chartScrollView}
+                  contentContainerStyle={styles.chartScrollContent}
+                >
+                  <View style={styles.chartContent}>
+                    {/* Grille */}
+                    <View style={styles.gridContainer}>
+                      {[...Array(7)].map((_, i) => (
+                        <View key={i} style={styles.gridLine} />
+                      ))}
+                    </View>
 
-                  {/* Barres d'activité avec données réelles */}
-                  <View style={styles.sportBars}>
-                    {weeklyData.map((dayData, index) => {
-                      const height = Math.min((dayData.minutes / 120) * 80, 80); // Max 120 min = 80% height
-                      return (
-                        <View key={dayData.day} style={styles.sportBarContainer}>
-                          <View style={[
-                            styles.sportBar, 
-                            { 
-                              height: `${height}%`,
-                              backgroundColor: dayData.minutes > 0 ? '#F5A623' : '#21262D'
-                            }
-                          ]} />
-                          <Text style={styles.sportBarText}>
-                            {dayData.minutes > 0 ? `${dayData.minutes}min` : '0'}
-                          </Text>
-                          <Text style={styles.dayLabel}>{dayData.day}</Text>
-                        </View>
-                      );
-                    })}
+                    {/* Barres d'activité avec données réelles */}
+                    <View style={styles.sportBars}>
+                      {weeklyData.map((dayData, index) => {
+                        const height = Math.min((dayData.minutes / 120) * 80, 80); // Max 120 min = 80% height
+                        return (
+                          <View key={dayData.day} style={styles.sportBarContainer}>
+                            <View style={[
+                              styles.sportBar, 
+                              { 
+                                height: `${height}%`,
+                                backgroundColor: dayData.minutes > 0 ? '#F5A623' : '#21262D'
+                              }
+                            ]} />
+                            <Text style={styles.sportBarText}>
+                              {dayData.minutes > 0 ? `${dayData.minutes}min` : '0'}
+                            </Text>
+                            <Text style={styles.dayLabel}>{dayData.day}</Text>
+                          </View>
+                        );
+                      })}
+                    </View>
                   </View>
-                </View>
+                </ScrollView>
               </View>
             </View>
 
@@ -3345,11 +3367,7 @@ flexDirection: 'row',
     borderColor: '#21262D',
     alignItems: 'center',
   },
-  sportChartArea: {
-    flexDirection: 'row',
-    height: 200,
-    paddingBottom: 20,
-  },
+  
   sportBars: {
     flex: 1,
     flexDirection: 'row',
