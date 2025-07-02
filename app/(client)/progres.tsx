@@ -1609,38 +1609,115 @@ export default function ProgresScreen() {
         {/* Onglet Sport */}
         {selectedTab === 'Sport' && (
           <View style={styles.sportContainer}>
-            {/* Résumé de la semaine */}
-            <View style={styles.sportSummaryCard}>
-              <Text style={styles.chartTitle}>📈 Résumé de la semaine</Text>
-              <View style={styles.sportSummaryStats}>
-                <View style={styles.sportSummaryItem}>
-                  <Text style={styles.sportSummaryValue}>4</Text>
-                  <Text style={styles.sportSummaryLabel}>Séances</Text>
+            {/* Sport favori header */}
+            {userData?.favoriteSport && (
+              <View style={styles.favoriteSportCard}>
+                <View style={styles.favoriteSportHeader}>
+                  <Text style={styles.favoriteSportEmoji}>
+                    {(() => {
+                      const sportEmojis = {
+                        'musculation': '💪',
+                        'course': '🏃',
+                        'cyclisme': '🚴',
+                        'natation': '🏊',
+                        'yoga': '🧘',
+                        'boxe': '🥊',
+                        'tennis': '🎾',
+                        'football': '⚽',
+                        'basketball': '🏀',
+                        'escalade': '🧗',
+                        'crossfit': '🏋️',
+                        'danse': '💃'
+                      };
+                      return sportEmojis[userData.favoriteSport] || '🏃';
+                    })()}
+                  </Text>
+                  <View style={styles.favoriteSportInfo}>
+                    <Text style={styles.favoriteSportTitle}>
+                      {(() => {
+                        const sportNames = {
+                          'musculation': 'Musculation',
+                          'course': 'Course à pied',
+                          'cyclisme': 'Cyclisme',
+                          'natation': 'Natation',
+                          'yoga': 'Yoga',
+                          'boxe': 'Boxe/Arts martiaux',
+                          'tennis': 'Tennis',
+                          'football': 'Football',
+                          'basketball': 'Basketball',
+                          'escalade': 'Escalade',
+                          'crossfit': 'CrossFit',
+                          'danse': 'Danse'
+                        };
+                        return sportNames[userData.favoriteSport] || 'Sport favori';
+                      })()}
+                    </Text>
+                    <Text style={styles.favoriteSportSubtitle}>Votre sport principal</Text>
+                  </View>
                 </View>
-                <View style={styles.sportSummaryItem}>
-                  <Text style={styles.sportSummaryValue}>5h 30min</Text>
-                  <Text style={styles.sportSummaryLabel}>Temps total</Text>
+              </View>
+            )}
+
+            {/* Stats de la semaine */}
+            <View style={styles.sportStatsContainer}>
+              <View style={styles.sportStatCard}>
+                <View style={styles.statIcon}>
+                  <Text style={styles.iconText}>🏃</Text>
                 </View>
-                <View style={styles.sportSummaryItem}>
-                  <Text style={styles.sportSummaryValue}>1,247</Text>
-                  <Text style={styles.sportSummaryLabel}>Calories brûlées</Text>
+                <Text style={styles.statLabel}>Séances terminées</Text>
+                <Text style={styles.statValue}>{weeklyData.filter(d => d.workouts > 0).length}</Text>
+                <Text style={styles.statTrend}>
+                  {weeklyData.filter(d => d.workouts > 0).length >= 3 ? 
+                    '✓ Excellent rythme' : 
+                    `${7 - weeklyData.filter(d => d.workouts > 0).length} jour${7 - weeklyData.filter(d => d.workouts > 0).length > 1 ? 's' : ''} restant${7 - weeklyData.filter(d => d.workouts > 0).length > 1 ? 's' : ''}`
+                  }
+                </Text>
+              </View>
+
+              <View style={styles.sportStatCard}>
+                <View style={styles.statIcon}>
+                  <Text style={styles.iconText}>⏱️</Text>
                 </View>
+                <Text style={styles.statLabel}>Temps total</Text>
+                <Text style={styles.statValue}>
+                  {Math.floor(weeklyData.reduce((sum, day) => sum + day.minutes, 0) / 60)}h{' '}
+                  {weeklyData.reduce((sum, day) => sum + day.minutes, 0) % 60}min
+                </Text>
+                <Text style={styles.statTrend}>
+                  {weeklyData.reduce((sum, day) => sum + day.minutes, 0) >= 150 ? 
+                    '✓ Objectif hebdo atteint' : 
+                    `${150 - weeklyData.reduce((sum, day) => sum + day.minutes, 0)} min restantes`
+                  }
+                </Text>
+              </View>
+
+              <View style={styles.sportStatCard}>
+                <View style={styles.statIcon}>
+                  <Text style={styles.iconText}>🔥</Text>
+                </View>
+                <Text style={styles.statLabel}>Calories brûlées</Text>
+                <Text style={styles.statValue}>
+                  {Math.round(weeklyData.reduce((sum, day) => sum + day.minutes, 0) * 6.5)}
+                </Text>
+                <Text style={styles.statTrend}>
+                  {weeklyData.reduce((sum, day) => sum + day.minutes, 0) > 0 ? 
+                    `~${Math.round(weeklyData.reduce((sum, day) => sum + day.minutes, 0) * 6.5 / 7)} kcal/jour` : 
+                    'Aucune activité'
+                  }
+                </Text>
               </View>
             </View>
 
             {/* Graphique d'activité hebdomadaire */}
             <View style={styles.chartContainer}>
               <View style={styles.chartHeader}>
-                <Text style={styles.chartTitle}>Activité sportive</Text>
-                <View style={styles.chartPeriod}>
-                  <Text style={styles.chartPeriodText}>7 jours</Text>
-                </View>
+                <Text style={styles.chartTitle}>Activité de la semaine</Text>
               </View>
 
               <View style={styles.sportChartArea}>
-                {/* Axe Y pour les séances */}
+                {/* Axe Y pour les minutes */}
                 <View style={styles.yAxis}>
-                  {['3', '2.5', '2', '1.5', '1', '0.5', '0'].map((label, index) => (
+                  {['120', '100', '80', '60', '40', '20', '0'].map((label, index) => (
                     <Text key={index} style={styles.yAxisLabel}>{label}</Text>
                   ))}
                 </View>
@@ -1653,70 +1730,27 @@ export default function ProgresScreen() {
                     ))}
                   </View>
 
-                  {/* Barres d'activité */}
+                  {/* Barres d'activité avec données réelles */}
                   <View style={styles.sportBars}>
-                    {[
-                      { day: 'Lun', sessions: 1, calories: 320 },
-                      { day: 'Mar', sessions: 0, calories: 0 },
-                      { day: 'Mer', sessions: 2, calories: 480 },
-                      { day: 'Jeu', sessions: 1, calories: 275 },
-                      { day: 'Ven', sessions: 0, calories: 0 },
-                      { day: 'Sam', sessions: 1, calories: 380 },
-                      { day: 'Dim', sessions: 2, calories: 520 }
-                    ].map((data, index) => {
-                      const height = (data.sessions / 3) * 80;
+                    {weeklyData.map((dayData, index) => {
+                      const height = Math.min((dayData.minutes / 120) * 80, 80); // Max 120 min = 80% height
                       return (
-                        <View key={data.day} style={styles.sportBarContainer}>
-                          <View style={[styles.sportBar, { height: `${height}%` }]} />
-                          <Text style={styles.caloriesText}>{data.calories}</Text>
-                          <Text style={styles.dayLabel}>{data.day}</Text>
+                        <View key={dayData.day} style={styles.sportBarContainer}>
+                          <View style={[
+                            styles.sportBar, 
+                            { 
+                              height: `${height}%`,
+                              backgroundColor: dayData.minutes > 0 ? '#F5A623' : '#21262D'
+                            }
+                          ]} />
+                          <Text style={styles.sportBarText}>
+                            {dayData.minutes > 0 ? `${dayData.minutes}min` : '0'}
+                          </Text>
+                          <Text style={styles.dayLabel}>{dayData.day}</Text>
                         </View>
                       );
                     })}
                   </View>
-                </View>
-              </View>
-            </View>
-
-            {/* Statistiques par type de sport */}
-            <View style={styles.sportTypeContainer}>
-              <Text style={styles.chartTitle}>Répartition par activité</Text>
-
-              <View style={styles.sportTypeGrid}>
-                <View style={styles.sportTypeCard}>
-                  <View style={styles.sportTypeIcon}>
-                    <Text style={styles.sportTypeEmoji}>💪</Text>
-                  </View>
-                  <Text style={styles.sportTypeLabel}>Musculation</Text>
-                  <Text style={styles.sportTypeValue}>2 séances</Text>
-                  <Text style={styles.sportTypeTime}>2h 30min</Text>
-                </View>
-
-                <View style={styles.sportTypeCard}>
-                  <View style={styles.sportTypeIcon}>
-                    <Text style={styles.sportTypeEmoji}>🏃‍♂️</Text>
-                  </View>
-                  <Text style={styles.sportTypeLabel}>Course</Text>
-                  <Text style={styles.sportTypeValue}>1 séance</Text>
-                  <Text style={styles.sportTypeTime}>45min</Text>
-                </View>
-
-                <View style={styles.sportTypeCard}>
-                  <View style={styles.sportTypeIcon}>
-                    <Text style={styles.sportTypeEmoji}>🧘‍♀️</Text>
-                  </View>
-                  <Text style={styles.sportTypeLabel}>Yoga</Text>
-                  <Text style={styles.sportTypeValue}>1 séance</Text>
-                  <Text style={styles.sportTypeTime}>1h 15min</Text>
-                </View>
-
-                <View style={styles.sportTypeCard}>
-                  <View style={styles.sportTypeIcon}>
-                    <Text style={styles.sportTypeEmoji}>🚴‍♂️</Text>
-                  </View>
-                  <Text style={styles.sportTypeLabel}>Cyclisme</Text>
-                  <Text style={styles.sportTypeValue}>0 séance</Text>
-                  <Text style={styles.sportTypeTime}>0min</Text>
                 </View>
               </View>
             </View>
@@ -1728,62 +1762,147 @@ export default function ProgresScreen() {
               <View style={styles.objectiveItem}>
                 <View style={styles.objectiveHeader}>
                   <Text style={styles.objectiveLabel}>Séances par semaine</Text>
-                  <Text style={styles.objectiveProgress}>4/5</Text>
+                  <Text style={styles.objectiveProgress}>
+                    {weeklyData.filter(d => d.workouts > 0).length}/3
+                  </Text>
                 </View>
                 <View style={styles.objectiveBar}>
-                  <View style={[styles.objectiveBarFill, { width: '80%' }]} />
+                  <View style={[
+                    styles.objectiveBarFill, 
+                    { width: `${Math.min((weeklyData.filter(d => d.workouts > 0).length / 3) * 100, 100)}%` }
+                  ]} />
                 </View>
               </View>
 
               <View style={styles.objectiveItem}>
                 <View style={styles.objectiveHeader}>
                   <Text style={styles.objectiveLabel}>Temps d'entraînement</Text>
-                  <Text style={styles.objectiveProgress}>5h30/6h</Text>
+                  <Text style={styles.objectiveProgress}>
+                    {Math.floor(weeklyData.reduce((sum, day) => sum + day.minutes, 0) / 60)}h{weeklyData.reduce((sum, day) => sum + day.minutes, 0) % 60}min/2h30
+                  </Text>
                 </View>
                 <View style={styles.objectiveBar}>
-                  <View style={[styles.objectiveBarFill, { width: '92%' }]} />
+                  <View style={[
+                    styles.objectiveBarFill, 
+                    { width: `${Math.min((weeklyData.reduce((sum, day) => sum + day.minutes, 0) / 150) * 100, 100)}%` }
+                  ]} />
                 </View>
               </View>
 
               <View style={styles.objectiveItem}>
                 <View style={styles.objectiveHeader}>
-                  <Text style={styles.objectiveLabel}>Calories brûlées</Text>
-                  <Text style={styles.objectiveProgress}>1,247/1,500</Text>
+                  <Text style={styles.objectiveLabel}>Régularité</Text>
+                  <Text style={styles.objectiveProgress}>
+                    {Math.round((weeklyData.filter(d => d.workouts > 0).length / 7) * 100)}%
+                  </Text>
                 </View>
                 <View style={styles.objectiveBar}>
-                  <View style={[styles.objectiveBarFill, { width: '83%' }]} />
+                  <View style={[
+                    styles.objectiveBarFill, 
+                    { width: `${(weeklyData.filter(d => d.workouts > 0).length / 7) * 100}%` }
+                  ]} />
                 </View>
               </View>
             </View>
 
             {/* Records personnels */}
             <View style={styles.personalRecordsCard}>
-              <Text style={styles.chartTitle}>🏆 Records personnels</Text>
+              <Text style={styles.chartTitle}>🏆 Performances personnelles</Text>
 
               <View style={styles.recordsGrid}>
                 <View style={styles.recordItem}>
-                  <Text style={styles.recordLabel}>Développé couché</Text>
-                  <Text style={styles.recordValue}>85 kg</Text>
-                  <Text style={styles.recordDate}>Il y a 3 jours</Text>
+                  <Text style={styles.recordLabel}>Séance la plus longue</Text>
+                  <Text style={styles.recordValue}>
+                    {Math.max(...weeklyData.map(d => d.minutes)) > 0 ? 
+                      `${Math.max(...weeklyData.map(d => d.minutes))} min` : 
+                      'Aucune'
+                    }
+                  </Text>
+                  <Text style={styles.recordDate}>Cette semaine</Text>
                 </View>
 
                 <View style={styles.recordItem}>
-                  <Text style={styles.recordLabel}>Course 5km</Text>
-                  <Text style={styles.recordValue}>24:32</Text>
-                  <Text style={styles.recordDate}>Il y a 1 semaine</Text>
+                  <Text style={styles.recordLabel}>Total entraînements</Text>
+                  <Text style={styles.recordValue}>{personalRecords.totalWorkouts}</Text>
+                  <Text style={styles.recordDate}>Depuis le début</Text>
                 </View>
 
                 <View style={styles.recordItem}>
-                  <Text style={styles.recordLabel}>Squat</Text>
-                  <Text style={styles.recordValue}>95 kg</Text>
-                  <Text style={styles.recordDate}>Il y a 5 jours</Text>
+                  <Text style={styles.recordLabel}>Jours consécutifs</Text>
+                  <Text style={styles.recordValue}>
+                    {(() => {
+                      let streak = 0;
+                      for (let i = weeklyData.length - 1; i >= 0; i--) {
+                        if (weeklyData[i].workouts > 0) {
+                          streak++;
+                        } else {
+                          break;
+                        }
+                      }
+                      return streak;
+                    })()}
+                  </Text>
+                  <Text style={styles.recordDate}>Record actuel</Text>
                 </View>
 
                 <View style={styles.recordItem}>
-                  <Text style={styles.recordLabel}>Planche</Text>
-                  <Text style={styles.recordValue}>2:45</Text>
-                  <Text style={styles.recordDate}>Hier</Text>
+                  <Text style={styles.recordLabel}>Moyenne hebdo</Text>
+                  <Text style={styles.recordValue}>
+                    {Math.round(weeklyData.reduce((sum, day) => sum + day.minutes, 0) / 7)} min/j
+                  </Text>
+                  <Text style={styles.recordDate}>Cette semaine</Text>
                 </View>
+              </View>
+            </View>
+
+            {/* Résumé motivationnel */}
+            <View style={styles.motivationalSummaryCard}>
+              <Text style={styles.summaryTitle}>Résumé de la semaine</Text>
+              <View style={styles.summaryStats}>
+                <View style={styles.summaryItem}>
+                  <Text style={[styles.summaryValue, { 
+                    color: weeklyData.filter(d => d.workouts > 0).length >= 3 ? '#28A745' : 
+                           weeklyData.filter(d => d.workouts > 0).length >= 1 ? '#F5A623' : '#DC3545' 
+                  }]}>
+                    {weeklyData.filter(d => d.workouts > 0).length}/7
+                  </Text>
+                  <Text style={styles.summaryLabel}>Jours actifs</Text>
+                </View>
+                <View style={styles.summaryItem}>
+                  <Text style={[styles.summaryValue, { 
+                    color: weeklyData.reduce((sum, day) => sum + day.minutes, 0) >= 150 ? '#28A745' : '#F5A623'
+                  }]}>
+                    {weeklyData.reduce((sum, day) => sum + day.minutes, 0)}
+                  </Text>
+                  <Text style={styles.summaryLabel}>Minutes totales</Text>
+                </View>
+                <View style={styles.summaryItem}>
+                  <Text style={[styles.summaryValue, { color: '#F5A623' }]}>
+                    {Math.round((weeklyData.filter(d => d.workouts > 0).length / 7) * 100)}%
+                  </Text>
+                  <Text style={styles.summaryLabel}>Régularité</Text>
+                </View>
+              </View>
+
+              {/* Message motivationnel */}
+              <View style={styles.motivationalMessage}>
+                <Text style={styles.motivationalTitle}>💪 Votre bilan</Text>
+                <Text style={styles.motivationalText}>
+                  {(() => {
+                    const activeDays = weeklyData.filter(d => d.workouts > 0).length;
+                    const totalMinutes = weeklyData.reduce((sum, day) => sum + day.minutes, 0);
+                    
+                    if (activeDays >= 5) {
+                      return "Excellente semaine ! Vous maintenez un rythme exceptionnel. Continuez sur cette lancée !";
+                    } else if (activeDays >= 3) {
+                      return "Bonne semaine d'entraînement ! Vous êtes sur la bonne voie pour atteindre vos objectifs.";
+                    } else if (activeDays >= 1) {
+                      return "C'est un début ! Essayez d'ajouter une séance supplémentaire la semaine prochaine.";
+                    } else {
+                      return "Il n'est jamais trop tard pour commencer ! Planifiez votre première séance dès maintenant.";
+                    }
+                  })()}
+                </Text>
               </View>
             </View>
           </View>
@@ -3244,36 +3363,59 @@ flexDirection: 'row',
     paddingHorizontal: 20,
     paddingBottom: 100,
   },
-  sportSummaryCard: {
+  favoriteSportCard: {
     backgroundColor: '#161B22',
     borderRadius: 16,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#21262D',
+    borderColor: '#F5A623',
     marginBottom: 25,
+    shadowColor: '#F5A623',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 8,
   },
-  sportSummaryStats: {
+  favoriteSportHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 16,
-  },
-  sportSummaryItem: {
     alignItems: 'center',
   },
-  sportSummaryValue: {
+  favoriteSportEmoji: {
+    fontSize: 40,
+    marginRight: 16,
+  },
+  favoriteSportInfo: {
+    flex: 1,
+  },
+  favoriteSportTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#F5A623',
+    fontWeight: '700',
+    color: '#FFFFFF',
     marginBottom: 4,
   },
-  sportSummaryLabel: {
-    fontSize: 12,
-    color: '#8B949E',
-    textAlign: 'center',
+  favoriteSportSubtitle: {
+    fontSize: 14,
+    color: '#F5A623',
+    fontWeight: '500',
+  },
+  sportStatsContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 25,
+  },
+  sportStatCard: {
+    flex: 1,
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    alignItems: 'center',
   },
   sportChartArea: {
     flexDirection: 'row',
     height: 200,
+    paddingBottom: 20,
   },
   sportBars: {
     flex: 1,
@@ -3296,62 +3438,12 @@ flexDirection: 'row',
     marginBottom: 8,
     minHeight: 4,
   },
-  caloriesText: {
+  sportBarText: {
     fontSize: 10,
     color: '#FFFFFF',
     fontWeight: '600',
     marginBottom: 4,
-  },
-  sportTypeContainer: {
-    backgroundColor: '#161B22',
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#21262D',
-    marginBottom: 25,
-  },
-  sportTypeGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginTop: 16,
-  },
-  sportTypeCard: {
-    width: (width - 64) / 2,
-    backgroundColor: '#0D1117',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#21262D',
-    alignItems: 'center',
-  },
-  sportTypeIcon: {
-    width: 40,
-    height: 40,
-    backgroundColor: '#21262D',
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  sportTypeEmoji: {
-    fontSize: 20,
-  },
-  sportTypeLabel: {
-    fontSize: 14,
-    color: '#FFFFFF',
-    fontWeight: '600',
-    marginBottom: 6,
-  },
-  sportTypeValue: {
-    fontSize: 16,
-    color: '#F5A623',
-    fontWeight: 'bold',
-    marginBottom: 2,
-  },
-  sportTypeTime: {
-    fontSize: 12,
-    color: '#8B949E',
+    textAlign: 'center',
   },
   sportObjectivesCard: {
     backgroundColor: '#161B22',
@@ -3429,6 +3521,33 @@ flexDirection: 'row',
   recordDate: {
     fontSize: 10,
     color: '#8B949E',
+    fontStyle: 'italic',
+  },
+  motivationalSummaryCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    marginBottom: 25,
+  },
+  motivationalMessage: {
+    marginTop: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#21262D',
+  },
+  motivationalTitle: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  motivationalText: {
+    fontSize: 14,
+    color: '#8B949E',
+    lineHeight: 20,
+    textAlign: 'center',
     fontStyle: 'italic',
   },
 
