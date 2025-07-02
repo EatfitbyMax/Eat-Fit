@@ -1636,7 +1636,7 @@ export default function ProgresScreen() {
                 </View>
                 <Text style={styles.statLabel}>Calories brûlées</Text>
                 <Text style={styles.statValue}>
-                  {Math.round(weeklyData.reduce((sum, day) => sum + day.minutes, 0) * 6.5)}
+                  {Math.round(weeklyData.reduce((sum, day) => sum + day.minutes, 0) * 8.5)}
                 </Text>
               </View>
             </View>
@@ -1684,13 +1684,13 @@ export default function ProgresScreen() {
                 <View style={styles.objectiveHeader}>
                   <Text style={styles.objectiveLabel}>Séances par semaine</Text>
                   <Text style={styles.objectiveProgress}>
-                    {weeklyData.filter(d => d.workouts > 0).length}/3
+                    {weeklyData.filter(d => d.workouts > 0).length}/4
                   </Text>
                 </View>
                 <View style={styles.objectiveBar}>
                   <View style={[
                     styles.objectiveBarFill, 
-                    { width: `${Math.min((weeklyData.filter(d => d.workouts > 0).length / 3) * 100, 100)}%` }
+                    { width: `${Math.min((weeklyData.filter(d => d.workouts > 0).length / 4) * 100, 100)}%` }
                   ]} />
                 </View>
               </View>
@@ -1699,13 +1699,13 @@ export default function ProgresScreen() {
                 <View style={styles.objectiveHeader}>
                   <Text style={styles.objectiveLabel}>Temps d'entraînement</Text>
                   <Text style={styles.objectiveProgress}>
-                    {Math.floor(weeklyData.reduce((sum, day) => sum + day.minutes, 0) / 60)}h{weeklyData.reduce((sum, day) => sum + day.minutes, 0) % 60}min/2h30
+                    {Math.floor(weeklyData.reduce((sum, day) => sum + day.minutes, 0) / 60)}h{weeklyData.reduce((sum, day) => sum + day.minutes, 0) % 60}min/4h00
                   </Text>
                 </View>
                 <View style={styles.objectiveBar}>
                   <View style={[
                     styles.objectiveBarFill, 
-                    { width: `${Math.min((weeklyData.reduce((sum, day) => sum + day.minutes, 0) / 150) * 100, 100)}%` }
+                    { width: `${Math.min((weeklyData.reduce((sum, day) => sum + day.minutes, 0) / 240) * 100, 100)}%` }
                   ]} />
                 </View>
               </View>
@@ -1813,14 +1813,16 @@ export default function ProgresScreen() {
                     const activeDays = weeklyData.filter(d => d.workouts > 0).length;
                     const totalMinutes = weeklyData.reduce((sum, day) => sum + day.minutes, 0);
                     
-                    if (activeDays >= 5) {
+                    if (activeDays >= 4) {
                       return "Excellente semaine ! Vous maintenez un rythme exceptionnel. Continuez sur cette lancée !";
                     } else if (activeDays >= 3) {
-                      return "Bonne semaine d'entraînement ! Vous êtes sur la bonne voie pour atteindre vos objectifs.";
+                      return "Très bonne semaine d'entraînement ! Vous êtes sur la bonne voie pour atteindre vos objectifs.";
+                    } else if (activeDays >= 2) {
+                      return "Bon début ! Essayez d'ajouter une séance supplémentaire la semaine prochaine.";
                     } else if (activeDays >= 1) {
-                      return "C'est un début ! Essayez d'ajouter une séance supplémentaire la semaine prochaine.";
+                      return "C'est un bon début ! Visez 3-4 séances par semaine pour de meilleurs résultats.";
                     } else {
-                      return "Il n'est jamais trop tard pour commencer ! Planifiez votre première séance dès maintenant.";
+                      return "Il n'est jamais trop tard pour commencer ! Planifiez vos premières séances dès maintenant.";
                     }
                   })()}
                 </Text>
