@@ -13,6 +13,8 @@ export interface User {
   height?: number;
   weight?: number;
   activityLevel?: string;
+  favoriteSport?: string;
+  targetWeight?: number;
   userType: 'client' | 'coach';
   hasNutritionProgram?: boolean;
   needsPasswordReset?: boolean;
@@ -139,6 +141,53 @@ export async function logout(): Promise<void> {
     console.log('Déconnexion réussie');
   } catch (error) {
     console.error('Erreur déconnexion:', error);
+  }
+}
+
+export async function updateUserData(email: string, updateData: {
+  firstName?: string;
+  lastName?: string;
+  gender?: 'Homme' | 'Femme';
+  age?: number;
+  height?: number;
+  weight?: number;
+  favoriteSport?: string;
+  targetWeight?: number;
+}): Promise<boolean> {
+  try {
+    // Récupérer les utilisateurs depuis le serveur VPS
+    const users = await PersistentStorage.getUsers();
+    
+    // Trouver l'utilisateur à mettre à jour
+    const userIndex = users.findIndex((u: any) => u.email === email);
+    if (userIndex === -1) {
+      console.log('Utilisateur non trouvé pour la mise à jour');
+      return false;
+    }
+
+    // Mettre à jour les données de l'utilisateur
+    const updatedUser = {
+      ...users[userIndex],
+      ...updateData,
+      name: updateData.firstName && updateData.lastName 
+        ? `${updateData.firstName} ${updateData.lastName}`
+        : users[userIndex].name
+    };
+
+    users[userIndex] = updatedUser;
+
+    // Sauvegarder sur le serveur VPS
+    await PersistentStorage.saveUsers(users);
+
+    // Mettre à jour la session locale
+    const { password: _, ...userWithoutPassword } = updatedUser;
+    await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userWithoutPassword));
+
+    console.log('Données utilisateur mises à jour avec succès');
+    return true;
+  } catch (error) {
+    console.error('Erreur mise à jour utilisateur:', error);
+    return false;
   }
 }
 
