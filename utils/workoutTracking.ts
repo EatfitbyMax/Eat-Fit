@@ -37,7 +37,38 @@ export interface SportStats {
   progressTrend: 'up' | 'down' | 'stable';
 }
 
-export class WorkoutTrackingService {
+export interface WorkoutSession {
+  id: string;
+  userId: string;
+  sport: string;
+  type: 'planned' | 'completed';
+  date: string;
+  duration: number;
+  intensity: 'low' | 'medium' | 'high';
+  calories?: number;
+  notes?: string;
+  exercises?: Array<{
+    name: string;
+    sets?: number;
+    reps?: number;
+    weight?: number;
+    distance?: number;
+    time?: number;
+  }>;
+}
+
+interface SportStats {
+  totalSessions: number;
+  totalDuration: number;
+  totalCalories: number;
+  averageIntensity: number;
+  weeklyGoal: number;
+  weeklyProgress: number;
+  favoriteTimeSlot: string;
+  progressTrend: 'up' | 'down' | 'stable';
+}
+
+class WorkoutTrackingService {
   private static VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.replit.app';
 
   static async getWorkoutSessions(userId: string): Promise<WorkoutSession[]> {
