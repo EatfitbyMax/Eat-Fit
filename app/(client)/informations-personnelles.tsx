@@ -328,7 +328,9 @@ export default function PersonalInformationScreen() {
               {filteredSports.length > 0 ? (
                 <ScrollView 
                   style={styles.sportContainer}
-                  showsVerticalScrollIndicator={false}
+                  showsVerticalScrollIndicator={true}
+                  nestedScrollEnabled={true}
+                  bounces={true}
                 >
                   {filteredSports.map((sport) => (
                     <TouchableOpacity
@@ -558,7 +560,8 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   sportContainer: {
-    maxHeight: 300,
+    maxHeight: 400,
+    minHeight: 200,
   },
   sportButton: {
     backgroundColor: '#0D1117',
