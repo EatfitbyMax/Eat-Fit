@@ -1955,12 +1955,56 @@ export default function ProgresScreen() {
             <View style={styles.hydrationProgressCard}>
               <View style={styles.chartHeader}>
                 <Text style={styles.chartTitle}>💧 Hydratation hebdomadaire</Text>
-                <Text style={styles.chartSubtitle}>Objectif: 2L/jour</Text>
               </View>
 
               <View style={styles.hydrationBars}>
                 {nutritionStats.weeklyHydration.map((dayData, index) => {
-                  const percentage = dayData.goal > 0 ? (dayData.water / dayData.goal) * 100 : 0;
+                  // Calculer l'objectif personnalisé pour chaque jour (même logique que dans nutrition.tsx)
+                  const personalizedGoal = React.useMemo(async () => {
+                    if (!userData) return 2000;
+                    
+                    let baseGoal = 2000;
+                    if (userData.weight && userData.age) {
+                      baseGoal = userData.weight * 35;
+                      if (userData.age > 65) {
+                        baseGoal += 300;
+                      } else if (userData.age > 50) {
+                        baseGoal += 200;
+                      }
+                      baseGoal = Math.ceil(baseGoal / 250) * 250;
+                    }
+                    
+                    // Vérifier les entraînements pour ce jour
+                    try {
+                      const workoutsStored = await AsyncStorage.getItem(`workouts_${userData.id}`);
+                      if (workoutsStored) {
+                        const workouts = JSON.parse(workoutsStored);
+                        const dayWorkouts = workouts.filter((workout: any) => {
+                          const workoutDate = new Date(workout.date).toISOString().split('T')[0];
+                          return workoutDate === dayData.date;
+                        });
+
+                        dayWorkouts.forEach(() => {
+                          baseGoal += 500;
+                          const currentMonth = new Date().getMonth();
+                          const isSummerPeriod = currentMonth >= 5 && currentMonth <= 8;
+                          if (isSummerPeriod) {
+                            baseGoal += 250;
+                          }
+                        });
+                      }
+                    } catch (error) {
+                      console.error('Erreur calcul objectif hydratation jour:', error);
+                    }
+                    
+                    return Math.ceil(baseGoal / 250) * 250;
+                  }, [userData, dayData.date]);
+
+                  // Utiliser un objectif par défaut calculé si l'async n'est pas résolu
+                  const dailyGoal = userData?.weight ? 
+                    Math.ceil((userData.weight * 35) / 250) * 250 : 2000;
+                  
+                  const percentage = dailyGoal > 0 ? (dayData.water / dailyGoal) * 100 : 0;
                   const achieved = percentage >= 100;
                   return (
                     <View key={dayData.day} style={styles.hydrationBarContainer}>
@@ -1980,6 +2024,22 @@ export default function ProgresScreen() {
                     </View>
                   );
                 })}
+              </View>
+
+              {/* Objectif personnalisé centré sous les jours */}
+              <View style={styles.hydrationObjectiveContainer}>
+                <Text style={styles.hydrationObjectiveText}>
+                  Objectif: {userData?.weight ? 
+                    `${Math.round((userData.weight * 35) / 1000 * 10) / 10}L/jour` : 
+                    '2L/jour'
+                  }
+                </Text>
+                <Text style={styles.hydrationObjectiveSubtext}>
+                  {userData?.weight ? 
+                    'Adapté à votre profil' : 
+                    'Objectif standard'
+                  }
+                </Text>
               </View>
             </View>
 
@@ -3518,6 +3578,24 @@ flexDirection: 'row',
     color: '#FFFFFF',
     fontWeight: '600',
     marginBottom: 4,
+  },
+  hydrationObjectiveContainer: {
+    alignItems: 'center',
+    marginTop: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#21262D',
+  },
+  hydrationObjectiveText: {
+    fontSize: 14,
+    color: '#4ECDC4',
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  hydrationObjectiveSubtext: {
+    fontSize: 12,
+    color: '#8B949E',
+    fontStyle: 'italic',
   },
   nutritionSummaryCard: {
     backgroundColor: '#161B22',
