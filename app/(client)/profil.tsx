@@ -19,6 +19,7 @@ import { IntegrationsManager, IntegrationStatus } from '@/utils/integrations';
 import { checkSubscriptionStatus } from '@/utils/subscription';
 import { PaymentService } from '@/utils/payments';
 import SubscriptionModal from '@/components/SubscriptionModal';
+import { allSports } from '@/utils/sportPrograms';
 
 export default function ProfilScreen() {
   const router = useRouter();
@@ -63,6 +64,7 @@ export default function ProfilScreen() {
   useFocusEffect(
     React.useCallback(() => {
       loadUserData();
+      loadIntegrationStatus();
     }, [])
   );
 
@@ -107,6 +109,15 @@ export default function ProfilScreen() {
     } catch (error) {
       console.error('Erreur chargement abonnement:', error);
     }
+  };
+
+  const getSportDisplay = () => {
+    if (!user?.favoriteSport) {
+      return { emoji: '🏃', name: 'Non renseigné' };
+    }
+    
+    const sport = allSports.find(s => s.id === user.favoriteSport);
+    return sport ? { emoji: sport.emoji, name: sport.name } : { emoji: '🏃', name: 'Non renseigné' };
   };
 
   const handleAppleHealthToggle = async () => {
@@ -353,40 +364,10 @@ export default function ProfilScreen() {
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>
-                {user?.favoriteSport ? (
-                  [
-                    { id: 'musculation', emoji: '💪' },
-                    { id: 'course', emoji: '🏃' },
-                    { id: 'cyclisme', emoji: '🚴' },
-                    { id: 'natation', emoji: '🏊' },
-                    { id: 'yoga', emoji: '🧘' },
-                    { id: 'boxe', emoji: '🥊' },
-                    { id: 'tennis', emoji: '🎾' },
-                    { id: 'football', emoji: '⚽' },
-                    { id: 'basketball', emoji: '🏀' },
-                    { id: 'escalade', emoji: '🧗' },
-                    { id: 'crossfit', emoji: '🏋️' },
-                    { id: 'danse', emoji: '💃' }
-                  ].find(sport => sport.id === user.favoriteSport)?.emoji || '🏃'
-                ) : '🏃'} Sport favori:
+                {getSportDisplay().emoji} Sport favori:
               </Text>
               <Text style={styles.infoValue}>
-                {user?.favoriteSport ? (
-                  [
-                    { id: 'musculation', name: 'Musculation' },
-                    { id: 'course', name: 'Course à pied' },
-                    { id: 'cyclisme', name: 'Cyclisme' },
-                    { id: 'natation', name: 'Natation' },
-                    { id: 'yoga', name: 'Yoga' },
-                    { id: 'boxe', name: 'Boxe/Arts martiaux' },
-                    { id: 'tennis', name: 'Tennis' },
-                    { id: 'football', name: 'Football' },
-                    { id: 'basketball', name: 'Basketball' },
-                    { id: 'escalade', name: 'Escalade' },
-                    { id: 'crossfit', name: 'CrossFit' },
-                    { id: 'danse', name: 'Danse' }
-                  ].find(sport => sport.id === user.favoriteSport)?.name || 'Non renseigné'
-                ) : 'Non renseigné'}
+                {getSportDisplay().name}
               </Text>
             </View>
             <View style={styles.infoRow}>
