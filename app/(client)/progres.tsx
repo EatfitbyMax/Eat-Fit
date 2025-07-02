@@ -1962,21 +1962,19 @@ export default function ProgresScreen() {
 
               <View style={styles.hydrationBars}>
                 {nutritionStats.weeklyHydration.map((dayData, index) => {
-                  // Calculer l'objectif personnalisé pour chaque jour (logique simplifiée et synchrone)
+                  // Calculer l'objectif personnalisé pour chaque jour (même logique que nutrition)
                   const calculateDailyGoal = () => {
-                    if (!userData) return 2000;
+                    if (!userData?.weight || !userData?.age) return 2000;
                     
-                    let baseGoal = 2000;
-                    if (userData.weight && userData.age) {
-                      baseGoal = userData.weight * 35;
-                      if (userData.age > 65) {
-                        baseGoal += 300;
-                      } else if (userData.age > 50) {
-                        baseGoal += 200;
-                      }
-                      baseGoal = Math.ceil(baseGoal / 250) * 250;
+                    let baseGoal = userData.weight * 35;
+                    
+                    if (userData.age > 65) {
+                      baseGoal += 300;
+                    } else if (userData.age > 50) {
+                      baseGoal += 200;
                     }
                     
+                    // Arrondir au multiple de 250ml supérieur comme dans nutrition
                     return Math.ceil(baseGoal / 250) * 250;
                   };
 
@@ -2007,12 +2005,25 @@ export default function ProgresScreen() {
               {/* Objectif personnalisé centré sous les jours */}
               <View style={styles.hydrationObjectiveContainer}>
                 <Text style={styles.hydrationObjectiveText}>
-                  Objectif: {userData?.weight ? 
-                    `${Math.round((userData.weight * 35) / 1000 * 10) / 10}L/jour` : 
-                    '2L/jour'
-                  }
+                  Objectif: {(() => {
+                    // Utiliser la même logique que dans nutrition pour calculer l'objectif
+                    if (!userData?.weight || !userData?.age) return '2000ml/jour';
+                    
+                    let baseGoal = userData.weight * 35;
+                    
+                    if (userData.age > 65) {
+                      baseGoal += 300;
+                    } else if (userData.age > 50) {
+                      baseGoal += 200;
+                    }
+                    
+                    // Arrondir au multiple de 250ml supérieur comme dans nutrition
+                    const finalGoal = Math.ceil(baseGoal / 250) * 250;
+                    
+                    return `${finalGoal}ml/jour`;
+                  })()}
                 </Text>
-                {!userData?.weight && (
+                {(!userData?.weight || !userData?.age) && (
                   <Text style={styles.hydrationObjectiveSubtext}>
                     Objectif standard
                   </Text>
@@ -2041,10 +2052,17 @@ export default function ProgresScreen() {
                 <View style={styles.summaryItem}>
                   <Text style={[styles.summaryValue, { color: '#4ECDC4' }]}>
                     {(() => {
-                      // Calculer l'objectif personnalisé pour la moyenne
-                      if (!userData?.weight) return nutritionStats.averageHydration > 0 ? Math.round((nutritionStats.averageHydration / 2000) * 100) : 0;
+                      // Calculer l'objectif personnalisé pour la moyenne (même logique que nutrition)
+                      if (!userData?.weight || !userData?.age) return nutritionStats.averageHydration > 0 ? Math.round((nutritionStats.averageHydration / 2000) * 100) : 0;
                       
-                      const personalGoal = userData.weight * 35;
+                      let personalGoal = userData.weight * 35;
+                      
+                      if (userData.age > 65) {
+                        personalGoal += 300;
+                      } else if (userData.age > 50) {
+                        personalGoal += 200;
+                      }
+                      
                       const finalGoal = Math.ceil(personalGoal / 250) * 250;
                       
                       return nutritionStats.averageHydration > 0 ? Math.round((nutritionStats.averageHydration / finalGoal) * 100) : 0;
