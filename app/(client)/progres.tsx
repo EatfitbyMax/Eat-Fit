@@ -82,6 +82,7 @@ export default function ProgresScreen() {
     averageProteins: 0,
     averageCarbs: 0,
     averageFat: 0,
+    averageHydration: 0,
     daysWithData: 0,
     weeklyHydration: []
   });
@@ -1448,6 +1449,7 @@ export default function ProgresScreen() {
       console.log(`Total calories semaine: ${totalCaloriesWeek}`);
       console.log(`Moyenne calories: ${avgCalories}`);
       console.log(`Moyenne protéines: ${avgProteins}g`);
+      console.log(`Hydratation moyenne: ${avgHydration}ml`);
       console.log('=== FIN RÉSUMÉ ===');
 
       setNutritionStats({
@@ -1457,6 +1459,7 @@ export default function ProgresScreen() {
         averageProteins: avgProteins,
         averageCarbs: avgCarbs,
         averageFat: avgFat,
+        averageHydration: avgHydration,
         daysWithData,
         weeklyHydration: last7DaysHydration
       });
@@ -2037,7 +2040,15 @@ export default function ProgresScreen() {
                 </View>
                 <View style={styles.summaryItem}>
                   <Text style={[styles.summaryValue, { color: '#4ECDC4' }]}>
-                    {nutritionStats.averageHydration > 0 ? Math.round((nutritionStats.averageHydration / 2000) * 100) : 0}%
+                    {(() => {
+                      // Calculer l'objectif personnalisé pour la moyenne
+                      if (!userData?.weight) return nutritionStats.averageHydration > 0 ? Math.round((nutritionStats.averageHydration / 2000) * 100) : 0;
+                      
+                      const personalGoal = userData.weight * 35;
+                      const finalGoal = Math.ceil(personalGoal / 250) * 250;
+                      
+                      return nutritionStats.averageHydration > 0 ? Math.round((nutritionStats.averageHydration / finalGoal) * 100) : 0;
+                    })()}%
                   </Text>
                   <Text style={styles.summaryLabel}>Hydratation moyenne</Text>
                 </View>
