@@ -1641,53 +1641,38 @@ export default function ProgresScreen() {
               </View>
             </View>
 
-            {/* Graphique d'évolution calorique */}
-            <View style={styles.nutritionChartContainer}>
+            {/* Graphique d'évolution sportive */}
+            <View style={styles.sportChartContainer}>
               <View style={styles.chartHeader}>
-                <Text style={styles.chartTitle}>Évolution de l'apport calorique</Text>
+                <Text style={styles.chartTitle}>Évolution de l'activité physique</Text>
               </View>
 
-              {/* Onglets de période */}
-              <View style={styles.periodTabsContainer}>
-                {['Jours', 'Semaine', 'Mois'].map((period) => (
-                  <TouchableOpacity 
-                    key={period}
-                    style={[styles.periodTab, selectedNutritionPeriod === period && styles.activePeriodTab]}
-                    onPress={() => setSelectedNutritionPeriod(period)}
-                  >
-                    <Text style={[styles.periodTabText, selectedNutritionPeriod === period && styles.activePeriodTabText]}>
-                      {period}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              {/* Graphique avec scroll horizontal */}
-              <View style={styles.chartArea}>
-                <View style={styles.nutritionYAxis}>
-                  {generateNutritionYAxisLabels().map((label, index) => (
-                    <Text key={index} style={styles.nutritionYAxisLabel}>{label}</Text>
-                  ))}
+              {/* Graphique en barres des séances par jour de la semaine */}
+              <View style={styles.sportWeeklyChart}>
+                <View style={styles.sportBars}>
+                  {weeklyData.map((day, index) => {
+                    const maxMinutes = Math.max(...weeklyData.map(d => d.minutes), 60);
+                    const barHeight = day.minutes > 0 ? Math.max((day.minutes / maxMinutes) * 100, 8) : 0;
+                    
+                    return (
+                      <View key={day.day} style={styles.sportBarContainer}>
+                        <Text style={styles.sportBarText}>
+                          {day.minutes > 0 ? `${day.minutes}min` : ''}
+                        </Text>
+                        <View 
+                          style={[
+                            styles.sportBar, 
+                            { 
+                              height: `${barHeight}%`,
+                              backgroundColor: day.workouts > 0 ? '#F5A623' : '#21262D'
+                            }
+                          ]} 
+                        />
+                        <Text style={styles.dayLabel}>{day.day}</Text>
+                      </View>
+                    );
+                  })}
                 </View>
-
-                <ScrollView 
-                  horizontal 
-                  showsHorizontalScrollIndicator={true}
-                  style={styles.chartScrollView}
-                  contentContainerStyle={styles.chartScrollContent}
-                >
-                  <View style={styles.chartContent}>
-                    {/* Grille */}
-                    <View style={styles.gridContainer}>
-                      {[...Array(5)].map((_, i) => (
-                        <View key={i} style={styles.gridLine} />
-                      ))}
-                    </View>
-
-                    {/* Ligne et points de calories */}
-                    {renderNutritionChart()}
-                  </View>
-                </ScrollView>
               </View>
             </View>
 
@@ -3347,6 +3332,17 @@ flexDirection: 'row',
     borderWidth: 1,
     borderColor: '#21262D',
     alignItems: 'center',
+  },
+  sportChartContainer: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    marginBottom: 25,
+  },
+  sportWeeklyChart: {
+    marginTop: 20,
   },
   
   sportBars: {
