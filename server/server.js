@@ -149,6 +149,63 @@ app.post('/api/workouts/:userId', async (req, res) => {
   }
 });
 
+// Routes pour les sessions d'entraînement individuelles  
+app.get('/api/workouts/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    // Essayer d'abord les nouvelles sessions d'entraînement
+    try {
+      const data = await fs.readFile(path.join(DATA_DIR, `workout_sessions_${userId}.json`), 'utf8');
+      res.json(JSON.parse(data));
+    } catch (sessionError) {
+      // Fallback vers l'ancien format si nécessaire
+      const data = await fs.readFile(path.join(DATA_DIR, `workouts_${userId}.json`), 'utf8');
+      res.json(JSON.parse(data));
+    }
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      res.json([]);
+    } else {
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
+});
+
+app.post('/api/workouts/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const sessions = req.body;
+    await fs.writeFile(path.join(DATA_DIR, `workout_sessions_${userId}.json`), JSON.stringify(sessions, null, 2));
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur sauvegarde sessions' });
+  }
+});
+
+// Route pour ajouter une session
+app.post('/api/workout-sessions/:userId/add', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const newSession = req.body;
+    
+    let sessions = [];
+    try {
+      const data = await fs.readFile(path.join(DATA_DIR, `workout_sessions_${userId}.json`), 'utf8');
+      sessions = JSON.parse(data);
+    } catch (error) {
+      if (error.code !== 'ENOENT') {
+        throw error;
+      }
+    }
+    
+    sessions.push(newSession);
+    await fs.writeFile(path.join(DATA_DIR, `workout_sessions_${userId}.json`), JSON.stringify(sessions, null, 2));
+    res.json({ success: true, session: newSession });
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur ajout session' });
+  }
+});
+
 // Routes pour Strava
 app.get('/api/strava/:userId', async (req, res) => {
   try {
