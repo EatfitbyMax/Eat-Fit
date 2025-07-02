@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
@@ -411,41 +410,85 @@ export default function CreerEntrainementScreen() {
 
   const getFieldsForSport = (sportType: string) => {
     const commonFields = ['name', 'notes'];
+    const sportLower = sportType.toLowerCase();
 
-    switch (sportType.toLowerCase()) {
-      case 'musculation':
-      case 'crossfit':
-        return [...commonFields, 'sets', 'reps', 'weight', 'rest'];
-
-      case 'course à pied':
-      case 'cyclisme':
-        return [...commonFields, 'distance', 'duration', 'intensity'];
-
-      case 'natation':
-        return [...commonFields, 'distance', 'duration', 'sets'];
-
-      case 'cardio':
-      case 'hiit':
-        return [...commonFields, 'duration', 'intensity', 'rest'];
-
-      case 'yoga':
-      case 'pilates':
-      case 'étirement':
-        return [...commonFields, 'duration', 'sets'];
-
-      case 'boxe':
-      case 'danse':
-        return [...commonFields, 'duration', 'sets', 'intensity'];
-
-      case 'football':
-      case 'basketball':
-      case 'tennis':
-      case 'escalade':
-        return [...commonFields, 'duration', 'sets', 'intensity'];
-
-      default:
-        return [...commonFields, 'sets', 'reps', 'duration', 'rest'];
+    // Sports de force et musculation
+    if (['musculation', 'fitness', 'crossfit', 'body-pump', 'body-combat', 'gymnastique', 'powerlifting', 'haltérophilie'].includes(sportLower)) {
+      return [...commonFields, 'sets', 'reps', 'weight', 'rest'];
     }
+
+    // Sports d'endurance avec distance
+    if (['course', 'marathon', 'trail', 'cyclisme', 'vtt', 'bmx', 'triathlon', 'biathlon'].includes(sportLower)) {
+      return [...commonFields, 'distance', 'duration', 'intensity'];
+    }
+
+    // Sports aquatiques
+    if (['natation', 'aquagym', 'water-polo', 'plongee', 'surf', 'kitesurf', 'windsurf', 'voile', 'aviron', 'canoë'].includes(sportLower)) {
+      return [...commonFields, 'distance', 'duration', 'sets'];
+    }
+
+    // Sports de combat
+    if (['boxe', 'judo', 'karate', 'taekwondo', 'mma', 'krav-maga', 'aikido', 'capoeira', 'lutte', 'escrime'].includes(sportLower)) {
+      return [...commonFields, 'duration', 'sets', 'intensity'];
+    }
+
+    // Sports collectifs
+    if (['football', 'basketball', 'rugby', 'volleyball', 'handball', 'hockey-glace', 'hockey-gazon', 'futsal', 'beach-volley', 'beach-soccer', 'ultimate', 'baseball', 'softball', 'cricket', 'tchoukball', 'kinball', 'floorball', 'netball', 'lacrosse', 'rugby-americain'].includes(sportLower)) {
+      return [...commonFields, 'duration', 'sets', 'intensity'];
+    }
+
+    // Sports de raquette
+    if (['tennis', 'badminton', 'ping-pong', 'squash', 'padel'].includes(sportLower)) {
+      return [...commonFields, 'duration', 'sets', 'intensity'];
+    }
+
+    // Sports d'hiver
+    if (['ski', 'snowboard', 'patin-glace', 'curling', 'ski-fond', 'luge', 'bobsleigh', 'patinage-artistique', 'danse-glace'].includes(sportLower)) {
+      return [...commonFields, 'duration', 'sets', 'intensity'];
+    }
+
+    // Sports de bien-être et flexibilité
+    if (['yoga', 'pilates', 'tai-chi', 'qi-gong', 'stretching', 'meditation'].includes(sportLower)) {
+      return [...commonFields, 'duration', 'sets'];
+    }
+
+    // Sports de danse et fitness
+    if (['danse', 'zumba', 'step', 'rpm', 'aerobic'].includes(sportLower)) {
+      return [...commonFields, 'duration', 'sets', 'intensity'];
+    }
+
+    // Sports d'aventure et nature
+    if (['escalade', 'alpinisme', 'via-ferrata', 'speleologie', 'randonnee', 'course-orientation', 'parkour'].includes(sportLower)) {
+      return [...commonFields, 'duration', 'sets', 'intensity'];
+    }
+
+    // Sports aériens
+    if (['parapente', 'saut-parachute', 'deltaplane', 'ulm'].includes(sportLower)) {
+      return [...commonFields, 'duration', 'sets', 'intensity'];
+    }
+
+    // Sports mécaniques
+    if (['motocross', 'karting', 'rallye', 'quad', 'drone-racing'].includes(sportLower)) {
+      return [...commonFields, 'duration', 'sets', 'intensity'];
+    }
+
+    // Sports de précision
+    if (['golf', 'tir-arc', 'petanque', 'bowling', 'billard', 'flechettes'].includes(sportLower)) {
+      return [...commonFields, 'sets', 'reps', 'duration'];
+    }
+
+    // Sports mentaux et électroniques
+    if (['echecs', 'poker', 'bridge', 'esport'].includes(sportLower)) {
+      return [...commonFields, 'duration', 'sets'];
+    }
+
+    // Sports équestres
+    if (['equitation'].includes(sportLower)) {
+      return [...commonFields, 'duration', 'sets', 'intensity'];
+    }
+
+    // Par défaut
+    return [...commonFields, 'sets', 'reps', 'duration', 'rest'];
   };
 
   const getPlaceholderForField = (field: string, sportType: string) => {
