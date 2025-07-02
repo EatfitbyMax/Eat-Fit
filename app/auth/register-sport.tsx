@@ -67,10 +67,9 @@ export default function RegisterSportScreen() {
         </View>
       </View>
 
-      {/* Titre et sous-titre */}
+      {/* Titre */}
       <View style={styles.titleSection}>
         <Text style={styles.title}>Sport favori</Text>
-        <Text style={styles.subtitle}>Choisissez votre sport principal parmi plus de 100 disciplines</Text>
       </View>
 
       {/* Barre de recherche */}
@@ -114,16 +113,13 @@ export default function RegisterSportScreen() {
       </View>
 
       {/* Résultats header */}
-      <View style={styles.resultsHeader}>
-        <Text style={styles.resultsCount}>
-          {filteredSports.length} sport{filteredSports.length > 1 ? 's' : ''} trouvé{filteredSports.length > 1 ? 's' : ''}
-        </Text>
-        {(searchQuery || selectedCategory) && (
+      {(searchQuery || selectedCategory) && (
+        <View style={styles.resultsHeader}>
           <TouchableOpacity onPress={clearFilters}>
             <Text style={styles.clearFilters}>Effacer les filtres</Text>
           </TouchableOpacity>
-        )}
-      </View>
+        </View>
+      )}
 
       {/* Liste des sports */}
       <ScrollView 
@@ -288,7 +284,7 @@ const styles = StyleSheet.create({
   },
   resultsHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingBottom: 15,
