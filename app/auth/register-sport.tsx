@@ -249,9 +249,9 @@ const styles = StyleSheet.create({
   },
   categoryButton: {
     backgroundColor: '#1A1A1A',
-    borderRadius: 12,
+    borderRadius: 8,
     paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 2,
     marginRight: 6,
     borderWidth: 1,
     borderColor: '#333333',
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
     borderColor: '#F5A623',
   },
   categoryText: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#FFFFFF',
     fontWeight: '500',
   },
