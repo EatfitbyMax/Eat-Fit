@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -38,17 +37,17 @@ export default function PersonalInformationScreen() {
 
   const filteredSports = useMemo(() => {
     if (!isEditing) return [];
-    
+
     let sports = allSports;
-    
+
     if (searchQuery) {
       sports = searchSports(searchQuery);
     }
-    
+
     if (selectedCategory) {
       sports = sports.filter(sport => sport.category === selectedCategory);
     }
-    
+
     return sports;
   }, [searchQuery, selectedCategory, isEditing]);
 
@@ -91,7 +90,7 @@ export default function PersonalInformationScreen() {
       };
 
       const success = await updateUserData(formData.email, updateData);
-      
+
       if (success) {
         setIsEditing(false);
         Alert.alert('Succès', 'Vos informations ont été mises à jour.');
@@ -326,37 +325,44 @@ export default function PersonalInformationScreen() {
               </View>
 
               {/* Liste des sports */}
-              <View style={styles.sportContainer}>
-                {filteredSports.map((sport) => (
-                  <TouchableOpacity
-                    key={sport.id}
-                    style={[
-                      styles.sportButton,
-                      formData.favoriteSport === sport.id && styles.selectedSport
-                    ]}
-                    onPress={() => setFormData(prev => ({ ...prev, favoriteSport: sport.id }))}
-                  >
-                    <Text style={styles.sportEmoji}>{sport.emoji}</Text>
-                    <View style={styles.sportInfo}>
-                      <Text style={[
-                        styles.sportText,
-                        formData.favoriteSport === sport.id && styles.selectedSportText
-                      ]}>
-                        {sport.name}
-                      </Text>
-                      <Text style={[
-                        styles.sportCategoryText,
-                        formData.favoriteSport === sport.id && styles.selectedSportCategoryText
-                      ]}>
-                        {sport.category}
-                      </Text>
-                    </View>
-                    {formData.favoriteSport === sport.id && (
-                      <Text style={styles.checkMark}>✓</Text>
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </View>
+              {filteredSports.length > 0 ? (
+                <ScrollView 
+                  style={styles.sportContainer}
+                  showsVerticalScrollIndicator={false}
+                >
+                  {filteredSports.map((sport) => (
+                    <TouchableOpacity
+                      key={sport.id}
+                      style={[
+                        styles.sportButton,
+                        formData.favoriteSport === sport.id && styles.selectedSport
+                      ]}
+                      onPress={() => setFormData(prev => ({ ...prev, favoriteSport: sport.id }))}
+                    >
+                      <Text style={styles.sportEmoji}>{sport.emoji}</Text>
+                      <View style={styles.sportInfo}>
+                        <Text style={[
+                          styles.sportText,
+                          formData.favoriteSport === sport.id && styles.selectedSportText
+                        ]}>
+                          {sport.name}
+                        </Text>
+                        <Text style={[
+                          styles.sportCategoryText,
+                          formData.favoriteSport === sport.id && styles.selectedSportCategoryText
+                        ]}>
+                          {sport.category}
+                        </Text>
+                      </View>
+                      {formData.favoriteSport === sport.id && (
+                        <Text style={styles.checkMark}>✓</Text>
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              ) : (
+                <Text style={styles.noSportText}>Aucun sport trouvé</Text>
+              )}
             </View>
           ) : (
             <Text style={styles.noSportText}>Aucun sport favori défini</Text>
