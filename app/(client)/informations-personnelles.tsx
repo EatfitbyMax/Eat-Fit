@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { getCurrentUser, updateUserData } from '@/utils/auth';
 import { allSports, getSportsByCategory, searchSports } from '@/utils/sportPrograms';
@@ -22,7 +21,6 @@ export default function PersonalInformationScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [isSportSearchActive, setIsSportSearchActive] = useState(false);
   const [formData, setFormData] = useState<UserData>({
     email: '',
     firstName: '',
@@ -56,11 +54,6 @@ export default function PersonalInformationScreen() {
   useEffect(() => {
     loadUserData();
   }, []);
-
-  useEffect(() => {
-    // Activer la recherche sport si on a une requête de recherche ou une catégorie sélectionnée
-    setIsSportSearchActive(searchQuery.length > 0 || selectedCategory !== null);
-  }, [searchQuery, selectedCategory]);
 
   const loadUserData = async () => {
     try {
@@ -100,9 +93,6 @@ export default function PersonalInformationScreen() {
 
       if (success) {
         setIsEditing(false);
-        setSearchQuery('');
-        setSelectedCategory(null);
-        setIsSportSearchActive(false);
         Alert.alert('Succès', 'Vos informations ont été mises à jour.');
       } else {
         Alert.alert('Erreur', 'Impossible de mettre à jour vos informations.');
@@ -116,19 +106,10 @@ export default function PersonalInformationScreen() {
   const clearSportFilters = () => {
     setSearchQuery('');
     setSelectedCategory(null);
-    setIsSportSearchActive(false);
   };
 
   const getSelectedSportData = () => {
     return allSports.find(sport => sport.id === formData.favoriteSport);
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-    setSearchQuery('');
-    setSelectedCategory(null);
-    setIsSportSearchActive(false);
-    loadUserData(); // Recharger les données originales
   };
 
   if (isLoading) {
@@ -140,11 +121,7 @@ export default function PersonalInformationScreen() {
   }
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-    >
+    <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
@@ -153,38 +130,23 @@ export default function PersonalInformationScreen() {
           <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Informations personnelles</Text>
-        <View style={styles.headerActions}>
-          {isEditing && (
-            <TouchableOpacity 
-              style={styles.cancelButton}
-              onPress={handleCancelEdit}
-            >
-              <Text style={styles.cancelButtonText}>Annuler</Text>
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity 
-            style={styles.editButton}
-            onPress={() => {
-              if (isEditing) {
-                handleSave();
-              } else {
-                setIsEditing(true);
-              }
-            }}
-          >
-            <Text style={styles.editButtonText}>
-              {isEditing ? 'Sauvegarder' : 'Modifier'}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity 
+          style={styles.editButton}
+          onPress={() => {
+            if (isEditing) {
+              handleSave();
+            } else {
+              setIsEditing(true);
+            }
+          }}
+        >
+          <Text style={styles.editButtonText}>
+            {isEditing ? 'Sauvegarder' : 'Modifier'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
-      <ScrollView 
-        style={styles.form} 
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingBottom: isSportSearchActive ? 50 : 20 }}
-      >
+      <ScrollView style={styles.form} showsVerticalScrollIndicator={false}>
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Email</Text>
           <TextInput
@@ -295,10 +257,8 @@ export default function PersonalInformationScreen() {
           />
         </View>
 
-        {/* Section Sport Favori */}
-        <View style={[styles.inputGroup, isSportSearchActive && styles.expandedInputGroup]}>
+        <View style={styles.inputGroup}>
           <Text style={styles.label}>Sport favori</Text>
-          
           {!isEditing && formData.favoriteSport ? (
             <View style={styles.selectedSportDisplay}>
               <Text style={styles.selectedSportEmoji}>
@@ -314,7 +274,7 @@ export default function PersonalInformationScreen() {
               </View>
             </View>
           ) : isEditing ? (
-            <View style={[styles.sportSelectionContainer, isSportSearchActive && styles.expandedSportContainer]}>
+            <View style={styles.sportSelectionContainer}>
               {/* Barre de recherche */}
               <TextInput
                 style={styles.searchInput}
@@ -322,101 +282,88 @@ export default function PersonalInformationScreen() {
                 placeholderTextColor="#666666"
                 value={searchQuery}
                 onChangeText={setSearchQuery}
-                onFocus={() => setIsSportSearchActive(true)}
               />
 
-              {/* Filtres par catégorie - seulement si recherche active */}
-              {isSportSearchActive && (
-                <>
-                  <ScrollView 
-                    horizontal 
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.categoriesContainer}
-                    contentContainerStyle={styles.categoriesContent}
+              {/* Filtres par catégorie */}
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                style={styles.categoriesContainer}
+                contentContainerStyle={styles.categoriesContent}
+              >
+                <TouchableOpacity
+                  style={[styles.categoryButton, !selectedCategory && styles.selectedCategoryButton]}
+                  onPress={() => setSelectedCategory(null)}
+                >
+                  <Text style={[styles.categoryText, !selectedCategory && styles.selectedCategoryText]}>
+                    Tous
+                  </Text>
+                </TouchableOpacity>
+                {categories.map((category) => (
+                  <TouchableOpacity
+                    key={category}
+                    style={[styles.categoryButton, selectedCategory === category && styles.selectedCategoryButton]}
+                    onPress={() => setSelectedCategory(selectedCategory === category ? null : category)}
                   >
-                    <TouchableOpacity
-                      style={[styles.categoryButton, !selectedCategory && styles.selectedCategoryButton]}
-                      onPress={() => setSelectedCategory(null)}
-                    >
-                      <Text style={[styles.categoryText, !selectedCategory && styles.selectedCategoryText]}>
-                        Tous
-                      </Text>
-                    </TouchableOpacity>
-                    {categories.map((category) => (
-                      <TouchableOpacity
-                        key={category}
-                        style={[styles.categoryButton, selectedCategory === category && styles.selectedCategoryButton]}
-                        onPress={() => setSelectedCategory(selectedCategory === category ? null : category)}
-                      >
-                        <Text style={[styles.categoryText, selectedCategory === category && styles.selectedCategoryText]}>
-                          {category}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-
-                  {/* En-tête des résultats */}
-                  <View style={styles.resultsHeader}>
-                    <Text style={styles.resultsCount}>
-                      {filteredSports.length} sport{filteredSports.length > 1 ? 's' : ''} trouvé{filteredSports.length > 1 ? 's' : ''}
+                    <Text style={[styles.categoryText, selectedCategory === category && styles.selectedCategoryText]}>
+                      {category}
                     </Text>
-                    {(searchQuery || selectedCategory) && (
-                      <TouchableOpacity onPress={clearSportFilters}>
-                        <Text style={styles.clearFilters}>Effacer</Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
 
-                  {/* Liste des sports */}
-                  <View style={styles.sportsListContainer}>
-                    {filteredSports.length > 0 ? (
-                      filteredSports.map((sport) => (
-                        <TouchableOpacity
-                          key={sport.id}
-                          style={[
-                            styles.sportButton,
-                            formData.favoriteSport === sport.id && styles.selectedSport
-                          ]}
-                          onPress={() => {
-                            setFormData(prev => ({ ...prev, favoriteSport: sport.id }));
-                            // Optionnel : fermer la recherche après sélection
-                            // setIsSportSearchActive(false);
-                            // setSearchQuery('');
-                            // setSelectedCategory(null);
-                          }}
-                        >
-                          <Text style={styles.sportEmoji}>{sport.emoji}</Text>
-                          <View style={styles.sportInfo}>
-                            <Text style={[
-                              styles.sportText,
-                              formData.favoriteSport === sport.id && styles.selectedSportText
-                            ]}>
-                              {sport.name}
-                            </Text>
-                            <Text style={[
-                              styles.sportCategoryText,
-                              formData.favoriteSport === sport.id && styles.selectedSportCategoryText
-                            ]}>
-                              {sport.category}
-                            </Text>
-                          </View>
-                          {formData.favoriteSport === sport.id && (
-                            <Text style={styles.checkMark}>✓</Text>
-                          )}
-                        </TouchableOpacity>
-                      ))
-                    ) : (
-                      <Text style={styles.noSportText}>Aucun sport trouvé</Text>
-                    )}
-                  </View>
-                </>
-              )}
-
-              {/* Message d'aide si recherche pas active */}
-              {!isSportSearchActive && (
-                <Text style={styles.helpText}>
-                  Commencez à taper pour rechercher un sport
+              {/* Résultats */}
+              <View style={styles.resultsHeader}>
+                <Text style={styles.resultsCount}>
+                  {filteredSports.length} sport{filteredSports.length > 1 ? 's' : ''} trouvé{filteredSports.length > 1 ? 's' : ''}
                 </Text>
+                {(searchQuery || selectedCategory) && (
+                  <TouchableOpacity onPress={clearSportFilters}>
+                    <Text style={styles.clearFilters}>Effacer</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* Liste des sports */}
+              {filteredSports.length > 0 ? (
+                <ScrollView 
+                  style={styles.sportContainer}
+                  showsVerticalScrollIndicator={true}
+                  nestedScrollEnabled={true}
+                  bounces={true}
+                >
+                  {filteredSports.map((sport) => (
+                    <TouchableOpacity
+                      key={sport.id}
+                      style={[
+                        styles.sportButton,
+                        formData.favoriteSport === sport.id && styles.selectedSport
+                      ]}
+                      onPress={() => setFormData(prev => ({ ...prev, favoriteSport: sport.id }))}
+                    >
+                      <Text style={styles.sportEmoji}>{sport.emoji}</Text>
+                      <View style={styles.sportInfo}>
+                        <Text style={[
+                          styles.sportText,
+                          formData.favoriteSport === sport.id && styles.selectedSportText
+                        ]}>
+                          {sport.name}
+                        </Text>
+                        <Text style={[
+                          styles.sportCategoryText,
+                          formData.favoriteSport === sport.id && styles.selectedSportCategoryText
+                        ]}>
+                          {sport.category}
+                        </Text>
+                      </View>
+                      {formData.favoriteSport === sport.id && (
+                        <Text style={styles.checkMark}>✓</Text>
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              ) : (
+                <Text style={styles.noSportText}>Aucun sport trouvé</Text>
               )}
             </View>
           ) : (
@@ -424,7 +371,7 @@ export default function PersonalInformationScreen() {
           )}
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -461,24 +408,6 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
   },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  cancelButton: {
-    backgroundColor: '#21262D',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#30363D',
-  },
-  cancelButtonText: {
-    color: '#8B949E',
-    fontSize: 14,
-    fontWeight: '600',
-  },
   editButton: {
     backgroundColor: '#1F6FEB',
     paddingHorizontal: 16,
@@ -496,9 +425,6 @@ const styles = StyleSheet.create({
   },
   inputGroup: {
     marginBottom: 20,
-  },
-  expandedInputGroup: {
-    marginBottom: 30,
   },
   label: {
     color: '#F0F6FC',
@@ -580,9 +506,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 16,
   },
-  expandedSportContainer: {
-    minHeight: 200,
-  },
   searchInput: {
     backgroundColor: '#0D1117',
     borderWidth: 1,
@@ -636,15 +559,9 @@ const styles = StyleSheet.create({
     color: '#1F6FEB',
     fontWeight: '500',
   },
-  sportsListContainer: {
-    maxHeight: 300,
-  },
-  helpText: {
-    fontSize: 14,
-    color: '#8B949E',
-    fontStyle: 'italic',
-    textAlign: 'center',
-    paddingVertical: 20,
+  sportContainer: {
+    maxHeight: 400,
+    minHeight: 200,
   },
   sportButton: {
     backgroundColor: '#0D1117',
