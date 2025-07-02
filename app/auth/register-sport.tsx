@@ -1,34 +1,47 @@
 
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useRegistration } from '@/context/RegistrationContext';
+import { allSports, getSportsByCategory } from '@/utils/sportPrograms';
 
 export default function RegisterSportScreen() {
   const router = useRouter();
   const { registrationData, updateRegistrationData } = useRegistration();
   const [selectedSport, setSelectedSport] = useState(registrationData.favoriteSport || '');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const sports = [
-    { id: 'musculation', name: 'Musculation', emoji: '💪', description: 'Force et développement musculaire' },
-    { id: 'course', name: 'Course à pied', emoji: '🏃', description: 'Endurance cardiovasculaire' },
-    { id: 'cyclisme', name: 'Cyclisme', emoji: '🚴', description: 'Endurance et jambes' },
-    { id: 'natation', name: 'Natation', emoji: '🏊', description: 'Sport complet' },
-    { id: 'yoga', name: 'Yoga', emoji: '🧘', description: 'Flexibilité et bien-être' },
-    { id: 'boxe', name: 'Boxe/Arts martiaux', emoji: '🥊', description: 'Combat et cardio' },
-    { id: 'tennis', name: 'Tennis', emoji: '🎾', description: 'Sport de raquette' },
-    { id: 'football', name: 'Football', emoji: '⚽', description: 'Sport collectif' },
-    { id: 'basketball', name: 'Basketball', emoji: '🏀', description: 'Sport collectif' },
-    { id: 'escalade', name: 'Escalade', emoji: '🧗', description: 'Force et technique' },
-    { id: 'crossfit', name: 'CrossFit', emoji: '🏋️', description: 'Entraînement fonctionnel' },
-    { id: 'danse', name: 'Danse', emoji: '💃', description: 'Rythme et coordination' },
-  ];
+  const sportsByCategory = useMemo(() => getSportsByCategory(), []);
+  const categories = Object.keys(sportsByCategory);
+
+  const filteredSports = useMemo(() => {
+    let sports = allSports;
+    
+    if (searchQuery) {
+      sports = sports.filter(sport => 
+        sport.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        sport.category.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    
+    if (selectedCategory) {
+      sports = sports.filter(sport => sport.category === selectedCategory);
+    }
+    
+    return sports;
+  }, [searchQuery, selectedCategory]);
 
   const handleNext = () => {
     if (selectedSport) {
       updateRegistrationData({ favoriteSport: selectedSport });
       router.push('/auth/register-activity');
     }
+  };
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setSelectedCategory(null);
   };
 
   return (
@@ -51,10 +64,61 @@ export default function RegisterSportScreen() {
       </View>
 
       <Text style={styles.title}>Sport favori</Text>
-      <Text style={styles.subtitle}>Choisissez votre sport principal pour personnaliser vos entraînements</Text>
+      <Text style={styles.subtitle}>Choisissez votre sport principal parmi plus de 100 disciplines</Text>
+
+      {/* Barre de recherche */}
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Rechercher un sport..."
+          placeholderTextColor="#666666"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+      </View>
+
+      {/* Filtres par catégorie */}
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        style={styles.categoriesContainer}
+        contentContainerStyle={styles.categoriesContent}
+      >
+        <TouchableOpacity
+          style={[styles.categoryButton, !selectedCategory && styles.selectedCategoryButton]}
+          onPress={() => setSelectedCategory(null)}
+        >
+          <Text style={[styles.categoryText, !selectedCategory && styles.selectedCategoryText]}>
+            Tous
+          </Text>
+        </TouchableOpacity>
+        {categories.map((category) => (
+          <TouchableOpacity
+            key={category}
+            style={[styles.categoryButton, selectedCategory === category && styles.selectedCategoryButton]}
+            onPress={() => setSelectedCategory(selectedCategory === category ? null : category)}
+          >
+            <Text style={[styles.categoryText, selectedCategory === category && styles.selectedCategoryText]}>
+              {category}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      {/* Résultats */}
+      <View style={styles.resultsHeader}>
+        <Text style={styles.resultsCount}>
+          {filteredSports.length} sport{filteredSports.length > 1 ? 's' : ''} trouvé{filteredSports.length > 1 ? 's' : ''}
+        </Text>
+        {(searchQuery || selectedCategory) && (
+          <TouchableOpacity onPress={clearFilters}>
+            <Text style={styles.clearFilters}>Effacer les filtres</Text>
+          </TouchableOpacity>
+        )}
+      </View>
 
       <ScrollView style={styles.form} showsVerticalScrollIndicator={false}>
-        {sports.map((sport) => (
+        {filteredSports.map((sport) => (
           <TouchableOpacity
             key={sport.id}
             style={[
@@ -74,10 +138,10 @@ export default function RegisterSportScreen() {
                     {sport.name}
                   </Text>
                   <Text style={[
-                    styles.sportDescription,
-                    selectedSport === sport.id && styles.selectedSportDescription
+                    styles.sportCategory,
+                    selectedSport === sport.id && styles.selectedSportCategory
                   ]}>
-                    {sport.description}
+                    {sport.category}
                   </Text>
                 </View>
               </View>
@@ -87,6 +151,13 @@ export default function RegisterSportScreen() {
             </View>
           </TouchableOpacity>
         ))}
+        
+        {filteredSports.length === 0 && (
+          <View style={styles.noResults}>
+            <Text style={styles.noResultsText}>Aucun sport trouvé</Text>
+            <Text style={styles.noResultsSubtext}>Essayez de modifier votre recherche</Text>
+          </View>
+        )}
       </ScrollView>
 
       <View style={styles.navigationContainer}>
@@ -113,7 +184,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000000',
-    paddingHorizontal: 40,
+    paddingHorizontal: 20,
     paddingTop: 60,
   },
   backButton: {
@@ -129,7 +200,7 @@ const styles = StyleSheet.create({
   progressContainer: {
     alignItems: 'center',
     marginTop: 40,
-    marginBottom: 40,
+    marginBottom: 30,
   },
   progressBar: {
     flexDirection: 'row',
@@ -155,8 +226,63 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#888888',
     textAlign: 'center',
-    marginBottom: 30,
+    marginBottom: 20,
     paddingHorizontal: 20,
+  },
+  searchContainer: {
+    marginBottom: 15,
+  },
+  searchInput: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#333333',
+  },
+  categoriesContainer: {
+    marginBottom: 15,
+  },
+  categoriesContent: {
+    paddingRight: 20,
+  },
+  categoryButton: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: '#333333',
+  },
+  selectedCategoryButton: {
+    backgroundColor: '#F5A623',
+    borderColor: '#F5A623',
+  },
+  categoryText: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: '500',
+  },
+  selectedCategoryText: {
+    color: '#000000',
+  },
+  resultsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  resultsCount: {
+    fontSize: 14,
+    color: '#888888',
+  },
+  clearFilters: {
+    fontSize: 14,
+    color: '#F5A623',
+    fontWeight: '500',
   },
   form: {
     flex: 1,
@@ -165,7 +291,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1A1A1A',
     borderRadius: 12,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 8,
     borderWidth: 1,
     borderColor: '#333333',
   },
@@ -184,32 +310,46 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sportEmoji: {
-    fontSize: 24,
-    marginRight: 16,
+    fontSize: 20,
+    marginRight: 12,
   },
   sportInfo: {
     flex: 1,
   },
   sportName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: '#FFFFFF',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   selectedSportText: {
     color: '#000000',
   },
-  sportDescription: {
+  sportCategory: {
     fontSize: 12,
     color: '#888888',
   },
-  selectedSportDescription: {
+  selectedSportCategory: {
     color: '#333333',
   },
   checkMark: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#000000',
     fontWeight: 'bold',
+  },
+  noResults: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  noResultsText: {
+    fontSize: 16,
+    color: '#888888',
+    fontWeight: '500',
+    marginBottom: 8,
+  },
+  noResultsSubtext: {
+    fontSize: 14,
+    color: '#666666',
   },
   navigationContainer: {
     flexDirection: 'row',
