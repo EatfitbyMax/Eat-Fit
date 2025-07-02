@@ -2009,12 +2009,11 @@ export default function ProgresScreen() {
                     '2L/jour'
                   }
                 </Text>
-                <Text style={styles.hydrationObjectiveSubtext}>
-                  {userData?.weight ? 
-                    'Adapté à votre profil' : 
-                    'Objectif standard'
-                  }
-                </Text>
+                {!userData?.weight && (
+                  <Text style={styles.hydrationObjectiveSubtext}>
+                    Objectif standard
+                  </Text>
+                )}
               </View>
             </View>
 
