@@ -129,7 +129,161 @@ export const allSports = [
   { id: 'body-combat', name: 'Body Combat', emoji: '🥊', category: 'Fitness' },
   { id: 'rpm', name: 'RPM (cycling)', emoji: '🚴‍♀️', category: 'Fitness' },
   { id: 'tai-chi', name: 'Taï Chi', emoji: '🧘‍♂️', category: 'Art martial doux' },
-  { id: 'qi-gong', name: 'Qi Gong', emoji: '🧘', category: 'Art martial doux' }
+  { id: 'qi-gong', name: 'Qi Gong', emoji: '🧘', category: 'Art martial doux' },
+  
+  // Sports d'endurance et multisports
+  { id: 'triathlon-sprint', name: 'Triathlon Sprint', emoji: '🏊‍♂️', category: 'Multisport' },
+  { id: 'triathlon-olympique', name: 'Triathlon Olympique', emoji: '🏊‍♂️', category: 'Multisport' },
+  { id: 'triathlon-longue-distance', name: 'Triathlon Longue Distance', emoji: '🏊‍♂️', category: 'Multisport' },
+  { id: 'ironman', name: 'Ironman', emoji: '🏊‍♂️', category: 'Multisport' },
+  { id: 'duathlon', name: 'Duathlon', emoji: '🏃‍♂️', category: 'Multisport' },
+  { id: 'aquathlon', name: 'Aquathlon', emoji: '🏊‍♂️', category: 'Multisport' },
+  { id: 'biathlon-ete', name: 'Biathlon d\'été', emoji: '🏃‍♂️', category: 'Sport d\'endurance' },
+  { id: 'pentathlon-moderne', name: 'Pentathlon moderne', emoji: '🤺', category: 'Multisport' },
+  { id: 'decathlon', name: 'Décathlon', emoji: '🏃‍♂️', category: 'Athlétisme' },
+  { id: 'heptathlon', name: 'Heptathlon', emoji: '🏃‍♀️', category: 'Athlétisme' },
+  
+  // Sports nautiques et sauvetage
+  { id: 'sauvetage-sportif', name: 'Sauvetage sportif', emoji: '🏊‍♂️', category: 'Sport aquatique' },
+  { id: 'sauvetage-cotier', name: 'Sauvetage côtier', emoji: '🏖️', category: 'Sport aquatique' },
+  { id: 'kayak-mer', name: 'Kayak de mer', emoji: '🛶', category: 'Sport nautique' },
+  { id: 'kayak-riviere', name: 'Kayak de rivière', emoji: '🛶', category: 'Sport nautique' },
+  { id: 'kayak-polo', name: 'Kayak-polo', emoji: '🛶', category: 'Sport nautique' },
+  { id: 'dragon-boat', name: 'Dragon boat', emoji: '🐉', category: 'Sport nautique' },
+  { id: 'raft', name: 'Rafting', emoji: '🚣‍♂️', category: 'Sport d\'aventure' },
+  { id: 'stand-up-paddle', name: 'Stand Up Paddle', emoji: '🏄‍♂️', category: 'Sport nautique' },
+  { id: 'wakeboard', name: 'Wakeboard', emoji: '🏄‍♂️', category: 'Sport nautique' },
+  { id: 'ski-nautique', name: 'Ski nautique', emoji: '🎿', category: 'Sport nautique' },
+  { id: 'jetski', name: 'Jet-ski', emoji: '🛥️', category: 'Sport nautique' },
+  { id: 'voile-habitable', name: 'Voile habitable', emoji: '⛵', category: 'Sport nautique' },
+  { id: 'voile-derive', name: 'Voile dériveur', emoji: '⛵', category: 'Sport nautique' },
+  { id: 'voile-planche', name: 'Planche à voile', emoji: '🏄‍♂️', category: 'Sport nautique' },
+  
+  // Sports de montagne et d'aventure
+  { id: 'alpinisme-rocheux', name: 'Alpinisme rocheux', emoji: '🧗‍♂️', category: 'Sport d\'aventure' },
+  { id: 'alpinisme-glaciaire', name: 'Alpinisme glaciaire', emoji: '🏔️', category: 'Sport d\'aventure' },
+  { id: 'escalade-sportive', name: 'Escalade sportive', emoji: '🧗‍♀️', category: 'Sport d\'aventure' },
+  { id: 'escalade-bloc', name: 'Escalade de bloc', emoji: '🧗‍♂️', category: 'Sport d\'aventure' },
+  { id: 'escalade-glace', name: 'Escalade sur glace', emoji: '🧊', category: 'Sport d\'hiver' },
+  { id: 'canyon', name: 'Canyoning', emoji: '🏞️', category: 'Sport d\'aventure' },
+  { id: 'raquettes', name: 'Raquettes à neige', emoji: '🥾', category: 'Sport d\'hiver' },
+  { id: 'ski-randonnee', name: 'Ski de randonnée', emoji: '🎿', category: 'Sport d\'hiver' },
+  { id: 'ski-alpinisme', name: 'Ski-alpinisme', emoji: '🎿', category: 'Sport d\'hiver' },
+  { id: 'splitboard', name: 'Splitboard', emoji: '🏂', category: 'Sport d\'hiver' },
+  { id: 'telemark', name: 'Télémark', emoji: '🎿', category: 'Sport d\'hiver' },
+  
+  // Sports de vitesse et mécaniques
+  { id: 'formule-1', name: 'Formule 1', emoji: '🏎️', category: 'Sport automobile' },
+  { id: 'rallye-raid', name: 'Rallye-raid', emoji: '🚗', category: 'Sport automobile' },
+  { id: 'endurance-auto', name: 'Endurance automobile', emoji: '🏁', category: 'Sport automobile' },
+  { id: 'drift', name: 'Drift', emoji: '🚗', category: 'Sport automobile' },
+  { id: 'superbike', name: 'Superbike', emoji: '🏍️', category: 'Sport mécanique' },
+  { id: 'enduro-moto', name: 'Enduro moto', emoji: '🏍️', category: 'Sport mécanique' },
+  { id: 'trial-moto', name: 'Trial moto', emoji: '🏍️', category: 'Sport mécanique' },
+  { id: 'speedway', name: 'Speedway', emoji: '🏍️', category: 'Sport mécanique' },
+  { id: 'velo-route', name: 'Vélo de route', emoji: '🚴‍♂️', category: 'Cyclisme' },
+  { id: 'velo-piste', name: 'Vélo sur piste', emoji: '🚴‍♀️', category: 'Cyclisme' },
+  { id: 'cyclo-cross', name: 'Cyclo-cross', emoji: '🚴‍♂️', category: 'Cyclisme' },
+  { id: 'trial-velo', name: 'Trial vélo', emoji: '🚴‍♂️', category: 'Cyclisme' },
+  
+  // Sports de précision et tir
+  { id: 'tir-sportif', name: 'Tir sportif', emoji: '🎯', category: 'Sport de précision' },
+  { id: 'tir-pistolet', name: 'Tir au pistolet', emoji: '🔫', category: 'Sport de précision' },
+  { id: 'tir-carabine', name: 'Tir à la carabine', emoji: '🔫', category: 'Sport de précision' },
+  { id: 'ball-trap', name: 'Ball-trap', emoji: '🎯', category: 'Sport de précision' },
+  { id: 'tir-3d', name: 'Tir à l\'arc 3D', emoji: '🏹', category: 'Sport de précision' },
+  { id: 'sarbacane', name: 'Sarbacane', emoji: '🎯', category: 'Sport de précision' },
+  
+  // Sports collectifs spécialisés
+  { id: 'water-basket', name: 'Water-basket', emoji: '🏀', category: 'Sport aquatique' },
+  { id: 'underwater-hockey', name: 'Hockey subaquatique', emoji: '🏒', category: 'Sport aquatique' },
+  { id: 'underwater-rugby', name: 'Rugby subaquatique', emoji: '🏈', category: 'Sport aquatique' },
+  { id: 'quidditch', name: 'Quidditch', emoji: '🧙‍♂️', category: 'Sport fantastique' },
+  { id: 'roller-derby', name: 'Roller derby', emoji: '🛼', category: 'Sport de contact' },
+  { id: 'roller-hockey', name: 'Roller hockey', emoji: '🏒', category: 'Sport collectif' },
+  { id: 'unihockey', name: 'Unihockey', emoji: '🏑', category: 'Sport collectif' },
+  { id: 'rink-hockey', name: 'Rink hockey', emoji: '🏒', category: 'Sport collectif' },
+  
+  // Sports de force et haltérophilie
+  { id: 'halterophilie', name: 'Haltérophilie', emoji: '🏋️‍♂️', category: 'Sport de force' },
+  { id: 'powerlifting', name: 'Powerlifting', emoji: '🏋️‍♀️', category: 'Sport de force' },
+  { id: 'strongman', name: 'Strongman', emoji: '💪', category: 'Sport de force' },
+  { id: 'kettlebell', name: 'Kettlebell', emoji: '🏋️‍♂️', category: 'Fitness' },
+  { id: 'calisthenics', name: 'Callisthénie', emoji: '🤸‍♂️', category: 'Fitness' },
+  { id: 'street-workout', name: 'Street Workout', emoji: '💪', category: 'Fitness' },
+  
+  // Sports artistiques et acrobatiques
+  { id: 'gymnastique-artistique', name: 'Gymnastique artistique', emoji: '🤸‍♀️', category: 'Sport artistique' },
+  { id: 'gymnastique-rythmique', name: 'Gymnastique rythmique', emoji: '🤸‍♀️', category: 'Sport artistique' },
+  { id: 'trampoline', name: 'Trampoline', emoji: '🤸‍♂️', category: 'Sport acrobatique' },
+  { id: 'tumbling', name: 'Tumbling', emoji: '🤸‍♀️', category: 'Sport acrobatique' },
+  { id: 'acrosport', name: 'Acrosport', emoji: '🤸‍♂️', category: 'Sport acrobatique' },
+  { id: 'cheerleading', name: 'Cheerleading', emoji: '📣', category: 'Sport artistique' },
+  { id: 'twirling', name: 'Twirling bâton', emoji: '🎭', category: 'Sport artistique' },
+  
+  // Sports équestres spécialisés
+  { id: 'dressage', name: 'Dressage', emoji: '🐎', category: 'Sport équestre' },
+  { id: 'saut-obstacles', name: 'Saut d\'obstacles', emoji: '🐎', category: 'Sport équestre' },
+  { id: 'concours-complet', name: 'Concours complet', emoji: '🐎', category: 'Sport équestre' },
+  { id: 'endurance-equestre', name: 'Endurance équestre', emoji: '🐎', category: 'Sport équestre' },
+  { id: 'polo', name: 'Polo', emoji: '🐎', category: 'Sport équestre' },
+  { id: 'horse-ball', name: 'Horse-ball', emoji: '🐎', category: 'Sport équestre' },
+  { id: 'voltige-equestre', name: 'Voltige équestre', emoji: '🐎', category: 'Sport équestre' },
+  
+  // Sports de raquette spécialisés
+  { id: 'frontenis', name: 'Frontenis', emoji: '🎾', category: 'Sport de raquette' },
+  { id: 'pelote-basque', name: 'Pelote basque', emoji: '🎾', category: 'Sport de raquette' },
+  { id: 'jai-alai', name: 'Jai alai', emoji: '🎾', category: 'Sport de raquette' },
+  { id: 'speedminton', name: 'Speedminton', emoji: '🏸', category: 'Sport de raquette' },
+  
+  // Sports de glisse urbaine
+  { id: 'skateboard-street', name: 'Skateboard street', emoji: '🛹', category: 'Sport urbain' },
+  { id: 'skateboard-vert', name: 'Skateboard vert', emoji: '🛹', category: 'Sport urbain' },
+  { id: 'longboard', name: 'Longboard', emoji: '🛹', category: 'Sport urbain' },
+  { id: 'trottinette-freestyle', name: 'Trottinette freestyle', emoji: '🛴', category: 'Sport urbain' },
+  { id: 'roller-agressif', name: 'Roller agressif', emoji: '🛼', category: 'Sport urbain' },
+  { id: 'roller-course', name: 'Roller course', emoji: '🛼', category: 'Sport de vitesse' },
+  
+  // Sports de santé et récupération
+  { id: 'aqua-fitness', name: 'Aqua fitness', emoji: '🏊‍♀️', category: 'Fitness aquatique' },
+  { id: 'aqua-bike', name: 'Aqua bike', emoji: '🚴‍♀️', category: 'Fitness aquatique' },
+  { id: 'stretching', name: 'Stretching', emoji: '🧘‍♀️', category: 'Bien-être' },
+  { id: 'meditation', name: 'Méditation', emoji: '🧘', category: 'Bien-être' },
+  { id: 'sophrologie', name: 'Sophrologie', emoji: '🧘‍♀️', category: 'Bien-être' },
+  { id: 'reflexologie', name: 'Réflexologie', emoji: '🦶', category: 'Bien-être' },
+  
+  // Sports émergents et modernes
+  { id: 'parkour-freerun', name: 'Parkour/Freerun', emoji: '🏃‍♂️', category: 'Sport urbain' },
+  { id: 'obstacle-race', name: 'Course d\'obstacles', emoji: '🏃‍♀️', category: 'Sport d\'endurance' },
+  { id: 'mud-run', name: 'Mud run', emoji: '🏃‍♂️', category: 'Sport d\'endurance' },
+  { id: 'spartan-race', name: 'Spartan Race', emoji: '🏃‍♀️', category: 'Sport d\'endurance' },
+  { id: 'ninja-warrior', name: 'Ninja Warrior', emoji: '🥷', category: 'Sport d\'obstacles' },
+  { id: 'slackline', name: 'Slackline', emoji: '🎪', category: 'Sport d\'équilibre' },
+  { id: 'highlining', name: 'Highlining', emoji: '🎪', category: 'Sport extrême' },
+  
+  // Sports de lancer
+  { id: 'lancer-poids', name: 'Lancer du poids', emoji: '🥎', category: 'Athlétisme' },
+  { id: 'lancer-disque', name: 'Lancer du disque', emoji: '🥏', category: 'Athlétisme' },
+  { id: 'lancer-marteau', name: 'Lancer du marteau', emoji: '🔨', category: 'Athlétisme' },
+  { id: 'lancer-javelot', name: 'Lancer du javelot', emoji: '🗡️', category: 'Athlétisme' },
+  
+  // Sports de saut
+  { id: 'saut-longueur', name: 'Saut en longueur', emoji: '🏃‍♂️', category: 'Athlétisme' },
+  { id: 'triple-saut', name: 'Triple saut', emoji: '🏃‍♀️', category: 'Athlétisme' },
+  { id: 'saut-hauteur', name: 'Saut en hauteur', emoji: '🏃‍♂️', category: 'Athlétisme' },
+  { id: 'saut-perche', name: 'Saut à la perche', emoji: '🏃‍♀️', category: 'Athlétisme' },
+  { id: 'base-jump', name: 'Base jump', emoji: '🪂', category: 'Sport extrême' },
+  { id: 'bungee', name: 'Saut à l\'élastique', emoji: '🪂', category: 'Sport extrême' },
+  
+  // Sports de course spécialisés
+  { id: 'sprint', name: 'Sprint', emoji: '🏃‍♂️', category: 'Athlétisme' },
+  { id: 'demi-fond', name: 'Demi-fond', emoji: '🏃‍♀️', category: 'Athlétisme' },
+  { id: 'fond', name: 'Course de fond', emoji: '🏃‍♂️', category: 'Athlétisme' },
+  { id: 'haies', name: 'Course de haies', emoji: '🏃‍♀️', category: 'Athlétisme' },
+  { id: 'steeplechase', name: 'Steeple-chase', emoji: '🏃‍♂️', category: 'Athlétisme' },
+  { id: 'marche-sportive', name: 'Marche sportive', emoji: '🚶‍♀️', category: 'Athlétisme' },
+  { id: 'ultra-trail', name: 'Ultra-trail', emoji: '🏃‍♂️', category: 'Course nature' },
+  { id: 'skyrunning', name: 'Skyrunning', emoji: '🏔️', category: 'Course nature' }
 ];
 
 export const sportPrograms: Record<string, WorkoutProgram[]> = {
