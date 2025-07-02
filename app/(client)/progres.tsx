@@ -1609,55 +1609,6 @@ export default function ProgresScreen() {
         {/* Onglet Sport */}
         {selectedTab === 'Sport' && (
           <View style={styles.sportContainer}>
-            {/* Sport favori header */}
-            {userData?.favoriteSport && (
-              <View style={styles.favoriteSportCard}>
-                <View style={styles.favoriteSportHeader}>
-                  <Text style={styles.favoriteSportEmoji}>
-                    {(() => {
-                      const sportEmojis = {
-                        'musculation': '💪',
-                        'course': '🏃',
-                        'cyclisme': '🚴',
-                        'natation': '🏊',
-                        'yoga': '🧘',
-                        'boxe': '🥊',
-                        'tennis': '🎾',
-                        'football': '⚽',
-                        'basketball': '🏀',
-                        'escalade': '🧗',
-                        'crossfit': '🏋️',
-                        'danse': '💃'
-                      };
-                      return sportEmojis[userData.favoriteSport] || '🏃';
-                    })()}
-                  </Text>
-                  <View style={styles.favoriteSportInfo}>
-                    <Text style={styles.favoriteSportTitle}>
-                      {(() => {
-                        const sportNames = {
-                          'musculation': 'Musculation',
-                          'course': 'Course à pied',
-                          'cyclisme': 'Cyclisme',
-                          'natation': 'Natation',
-                          'yoga': 'Yoga',
-                          'boxe': 'Boxe/Arts martiaux',
-                          'tennis': 'Tennis',
-                          'football': 'Football',
-                          'basketball': 'Basketball',
-                          'escalade': 'Escalade',
-                          'crossfit': 'CrossFit',
-                          'danse': 'Danse'
-                        };
-                        return sportNames[userData.favoriteSport] || 'Sport favori';
-                      })()}
-                    </Text>
-                    <Text style={styles.favoriteSportSubtitle}>Votre sport principal</Text>
-                  </View>
-                </View>
-              </View>
-            )}
-
             {/* Stats de la semaine */}
             <View style={styles.sportStatsContainer}>
               <View style={styles.sportStatCard}>
