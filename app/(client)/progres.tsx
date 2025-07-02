@@ -2001,8 +2001,6 @@ export default function ProgresScreen() {
                 })}
               </View>
 
-              </View>
-
               {/* Objectif personnalisé centré sous les jours */}
               <View style={styles.hydrationObjectiveContainer}>
                 <Text style={styles.hydrationObjectiveText}>
