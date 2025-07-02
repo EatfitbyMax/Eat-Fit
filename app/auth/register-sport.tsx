@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -17,18 +16,18 @@ export default function RegisterSportScreen() {
 
   const filteredSports = useMemo(() => {
     let sports = allSports;
-    
+
     if (searchQuery) {
       sports = sports.filter(sport => 
         sport.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         sport.category.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
-    
+
     if (selectedCategory) {
       sports = sports.filter(sport => sport.category === selectedCategory);
     }
-    
+
     return sports;
   }, [searchQuery, selectedCategory]);
 
@@ -151,7 +150,7 @@ export default function RegisterSportScreen() {
             </View>
           </TouchableOpacity>
         ))}
-        
+
         {filteredSports.length === 0 && (
           <View style={styles.noResults}>
             <Text style={styles.noResultsText}>Aucun sport trouvé</Text>
@@ -250,10 +249,10 @@ const styles = StyleSheet.create({
   },
   categoryButton: {
     backgroundColor: '#1A1A1A',
-    borderRadius: 20,
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-    marginRight: 8,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 6,
     borderWidth: 1,
     borderColor: '#333333',
   },
