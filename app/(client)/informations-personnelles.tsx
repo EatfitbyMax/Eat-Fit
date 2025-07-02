@@ -147,133 +147,10 @@ export default function PersonalInformationScreen() {
       </View>
 
       <ScrollView style={styles.form} showsVerticalScrollIndicator={false}>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={[styles.input, styles.disabledInput]}
-            value={formData.email}
-            editable={false}
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Prénom</Text>
-          <TextInput
-            style={[styles.input, !isEditing && styles.disabledInput]}
-            value={formData.firstName}
-            onChangeText={(text) => setFormData(prev => ({ ...prev, firstName: text }))}
-            editable={isEditing}
-            placeholder="Prénom"
-            placeholderTextColor="#666666"
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Nom</Text>
-          <TextInput
-            style={[styles.input, !isEditing && styles.disabledInput]}
-            value={formData.lastName}
-            onChangeText={(text) => setFormData(prev => ({ ...prev, lastName: text }))}
-            editable={isEditing}
-            placeholder="Nom"
-            placeholderTextColor="#666666"
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Genre</Text>
-          <View style={styles.genderContainer}>
-            <TouchableOpacity
-              style={[
-                styles.genderButton,
-                formData.gender === 'Homme' && styles.selectedGender,
-                !isEditing && styles.disabledButton
-              ]}
-              onPress={() => isEditing && setFormData(prev => ({ ...prev, gender: 'Homme' }))}
-              disabled={!isEditing}
-            >
-              <Text style={[
-                styles.genderText,
-                formData.gender === 'Homme' && styles.selectedGenderText
-              ]}>
-                Homme
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.genderButton,
-                formData.gender === 'Femme' && styles.selectedGender,
-                !isEditing && styles.disabledButton
-              ]}
-              onPress={() => isEditing && setFormData(prev => ({ ...prev, gender: 'Femme' }))}
-              disabled={!isEditing}
-            >
-              <Text style={[
-                styles.genderText,
-                formData.gender === 'Femme' && styles.selectedGenderText
-              ]}>
-                Femme
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Âge</Text>
-          <TextInput
-            style={[styles.input, !isEditing && styles.disabledInput]}
-            value={formData.age}
-            onChangeText={(text) => setFormData(prev => ({ ...prev, age: text }))}
-            editable={isEditing}
-            placeholder="Âge"
-            placeholderTextColor="#666666"
-            keyboardType="numeric"
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Taille (cm)</Text>
-          <TextInput
-            style={[styles.input, !isEditing && styles.disabledInput]}
-            value={formData.height}
-            onChangeText={(text) => setFormData(prev => ({ ...prev, height: text }))}
-            editable={isEditing}
-            placeholder="Taille"
-            placeholderTextColor="#666666"
-            keyboardType="numeric"
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Poids (kg)</Text>
-          <TextInput
-            style={[styles.input, !isEditing && styles.disabledInput]}
-            value={formData.weight}
-            onChangeText={(text) => setFormData(prev => ({ ...prev, weight: text }))}
-            editable={isEditing}
-            placeholder="Poids"
-            placeholderTextColor="#666666"
-            keyboardType="numeric"
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Sport favori</Text>
-          {!isEditing && formData.favoriteSport ? (
-            <View style={styles.selectedSportDisplay}>
-              <Text style={styles.selectedSportEmoji}>
-                {getSelectedSportData()?.emoji || '🏃'}
-              </Text>
-              <View style={styles.selectedSportInfo}>
-                <Text style={styles.selectedSportName}>
-                  {getSelectedSportData()?.name || 'Sport non défini'}
-                </Text>
-                <Text style={styles.selectedSportCategory}>
-                  {getSelectedSportData()?.category || ''}
-                </Text>
-              </View>
-            </View>
-          ) : isEditing ? (
+        {/* Afficher seulement la section sport favori en mode édition */}
+        {isEditing && (searchQuery || selectedCategory || filteredSports.length > 0) ? (
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Sport favori</Text>
             <View style={styles.sportSelectionContainer}>
               {/* Barre de recherche */}
               <TextInput
@@ -327,7 +204,7 @@ export default function PersonalInformationScreen() {
               {/* Liste des sports */}
               {filteredSports.length > 0 ? (
                 <ScrollView 
-                  style={styles.sportContainer}
+                  style={styles.sportContainerExpanded}
                   showsVerticalScrollIndicator={true}
                   nestedScrollEnabled={true}
                   bounces={true}
@@ -366,10 +243,185 @@ export default function PersonalInformationScreen() {
                 <Text style={styles.noSportText}>Aucun sport trouvé</Text>
               )}
             </View>
-          ) : (
-            <Text style={styles.noSportText}>Aucun sport favori défini</Text>
-          )}
-        </View>
+          </View>
+        ) : (
+          <>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Email</Text>
+              <TextInput
+                style={[styles.input, styles.disabledInput]}
+                value={formData.email}
+                editable={false}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Prénom</Text>
+              <TextInput
+                style={[styles.input, !isEditing && styles.disabledInput]}
+                value={formData.firstName}
+                onChangeText={(text) => setFormData(prev => ({ ...prev, firstName: text }))}
+                editable={isEditing}
+                placeholder="Prénom"
+                placeholderTextColor="#666666"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Nom</Text>
+              <TextInput
+                style={[styles.input, !isEditing && styles.disabledInput]}
+                value={formData.lastName}
+                onChangeText={(text) => setFormData(prev => ({ ...prev, lastName: text }))}
+                editable={isEditing}
+                placeholder="Nom"
+                placeholderTextColor="#666666"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Genre</Text>
+              <View style={styles.genderContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.genderButton,
+                    formData.gender === 'Homme' && styles.selectedGender,
+                    !isEditing && styles.disabledButton
+                  ]}
+                  onPress={() => isEditing && setFormData(prev => ({ ...prev, gender: 'Homme' }))}
+                  disabled={!isEditing}
+                >
+                  <Text style={[
+                    styles.genderText,
+                    formData.gender === 'Homme' && styles.selectedGenderText
+                  ]}>
+                    Homme
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.genderButton,
+                    formData.gender === 'Femme' && styles.selectedGender,
+                    !isEditing && styles.disabledButton
+                  ]}
+                  onPress={() => isEditing && setFormData(prev => ({ ...prev, gender: 'Femme' }))}
+                  disabled={!isEditing}
+                >
+                  <Text style={[
+                    styles.genderText,
+                    formData.gender === 'Femme' && styles.selectedGenderText
+                  ]}>
+                    Femme
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Âge</Text>
+              <TextInput
+                style={[styles.input, !isEditing && styles.disabledInput]}
+                value={formData.age}
+                onChangeText={(text) => setFormData(prev => ({ ...prev, age: text }))}
+                editable={isEditing}
+                placeholder="Âge"
+                placeholderTextColor="#666666"
+                keyboardType="numeric"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Taille (cm)</Text>
+              <TextInput
+                style={[styles.input, !isEditing && styles.disabledInput]}
+                value={formData.height}
+                onChangeText={(text) => setFormData(prev => ({ ...prev, height: text }))}
+                editable={isEditing}
+                placeholder="Taille"
+                placeholderTextColor="#666666"
+                keyboardType="numeric"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Poids (kg)</Text>
+              <TextInput
+                style={[styles.input, !isEditing && styles.disabledInput]}
+                value={formData.weight}
+                onChangeText={(text) => setFormData(prev => ({ ...prev, weight: text }))}
+                editable={isEditing}
+                placeholder="Poids"
+                placeholderTextColor="#666666"
+                keyboardType="numeric"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Sport favori</Text>
+          {!isEditing && formData.favoriteSport ? (
+                <View style={styles.selectedSportDisplay}>
+                  <Text style={styles.selectedSportEmoji}>
+                    {getSelectedSportData()?.emoji || '🏃'}
+                  </Text>
+                  <View style={styles.selectedSportInfo}>
+                    <Text style={styles.selectedSportName}>
+                      {getSelectedSportData()?.name || 'Sport non défini'}
+                    </Text>
+                    <Text style={styles.selectedSportCategory}>
+                      {getSelectedSportData()?.category || ''}
+                    </Text>
+                  </View>
+                </View>
+              ) : isEditing ? (
+                <View style={styles.sportSelectionContainer}>
+                  {/* Barre de recherche */}
+                  <TextInput
+                    style={styles.searchInput}
+                    placeholder="Rechercher un sport..."
+                    placeholderTextColor="#666666"
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                  />
+
+                  {/* Filtres par catégorie */}
+                  <ScrollView 
+                    horizontal 
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.categoriesContainer}
+                    contentContainerStyle={styles.categoriesContent}
+                  >
+                    <TouchableOpacity
+                      style={[styles.categoryButton, !selectedCategory && styles.selectedCategoryButton]}
+                      onPress={() => setSelectedCategory(null)}
+                    >
+                      <Text style={[styles.categoryText, !selectedCategory && styles.selectedCategoryText]}>
+                        Tous
+                      </Text>
+                    </TouchableOpacity>
+                    {categories.map((category) => (
+                      <TouchableOpacity
+                        key={category}
+                        style={[styles.categoryButton, selectedCategory === category && styles.selectedCategoryButton]}
+                        onPress={() => setSelectedCategory(selectedCategory === category ? null : category)}
+                      >
+                        <Text style={[styles.categoryText, selectedCategory === category && styles.selectedCategoryText]}>
+                          {category}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+
+                  {/* Message d'aide */}
+                  <Text style={styles.helpText}>
+                    Commencez à taper pour rechercher ou sélectionnez une catégorie
+                  </Text>
+                </View>
+              ) : (
+                <Text style={styles.noSportText}>Aucun sport favori défini</Text>
+              )}
+            </View>
+          </>
+        )}
       </ScrollView>
     </View>
   );
@@ -562,6 +614,17 @@ const styles = StyleSheet.create({
   sportContainer: {
     maxHeight: 400,
     minHeight: 200,
+  },
+  sportContainerExpanded: {
+    maxHeight: 600,
+    minHeight: 300,
+  },
+  helpText: {
+    fontSize: 14,
+    color: '#8B949E',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    paddingVertical: 20,
   },
   sportButton: {
     backgroundColor: '#0D1117',
