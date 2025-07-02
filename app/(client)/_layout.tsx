@@ -125,7 +125,7 @@ export default function ClientLayout() {
             );
           },
           tabBarLabelStyle: (() => {
-            const isActive = pathname.includes('informations-personnelles');
+            const isActive = pathname.includes('informations-personnelles') || pathname.includes('profil');
             return {
               color: isActive ? '#F5A623' : '#8B949E',
             };
