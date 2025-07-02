@@ -6,6 +6,7 @@ import { useFocusEffect } from 'expo-router';
 import { checkSubscriptionStatus } from '@/utils/subscription';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PersistentStorage } from '@/utils/storage';
+import { WorkoutTrackingService } from '@/utils/workoutTracking';
 
 const { width } = Dimensions.get('window');
 
@@ -74,6 +75,8 @@ export default function ProgresScreen() {
     bestTime5k: { value: '', date: '' },
     totalWorkouts: 0
   });
+  const [sportStats, setSportStats] = useState(null);
+  const [weeklyPlannedSessions, setWeeklyPlannedSessions] = useState(0);
 
   const [nutritionStats, setNutritionStats] = useState({
     weeklyCalories: [],
@@ -1230,22 +1233,30 @@ export default function ProgresScreen() {
       const user = await PersistentStorage.getCurrentUser();
       if (!user) return;
 
-      // Charger les données d'entraînement
-      const workouts = await PersistentStorage.getWorkouts(user.id);
+      // Charger les sessions d'entraînement via le service
+      const sessions = await WorkoutTrackingService.getWorkoutSessions(user.id);
 
       // Calculer les statistiques des 7 derniers jours
       const last7Days = [];
+      let totalPlannedThisWeek = 0;
+      
       for (let i = 6; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
         const dateString = date.toISOString().split('T')[0];
 
-        const dayWorkouts = workouts.filter((workout: any) => 
-          workout.date === dateString
+        const dayWorkouts = sessions.filter((session: any) => 
+          session.date === dateString && session.type === 'completed'
         );
 
-        const totalMinutes = dayWorkouts.reduce((sum: number, workout: any) => 
-          sum + (workout.duration || 0), 0
+        const plannedWorkouts = sessions.filter((session: any) => 
+          session.date === dateString && session.type === 'planned'
+        );
+
+        totalPlannedThisWeek += plannedWorkouts.length;
+
+        const totalMinutes = dayWorkouts.reduce((sum: number, session: any) => 
+          sum + (session.duration || 0), 0
         );
 
         last7Days.push({
@@ -1257,13 +1268,21 @@ export default function ProgresScreen() {
       }
 
       setWeeklyData(last7Days);
+      setWeeklyPlannedSessions(totalPlannedThisWeek);
 
-      // Calculer les records personnels (données simulées pour l'exemple)
+      // Calculer les statistiques du sport favori
+      if (user.favoriteSport) {
+        const stats = WorkoutTrackingService.calculateSportStats(sessions, user.favoriteSport);
+        setSportStats(stats);
+      }
+
+      // Calculer les records personnels basés sur les vraies données
+      const completedSessions = sessions.filter((s: any) => s.type === 'completed');
       setPersonalRecords({
         maxWeight: { value: 85, date: '2024-01-15', exercise: 'Développé couché' },
         longestRun: { value: 12.5, date: '2024-01-20', unit: 'km' },
         bestTime5k: { value: '22:45', date: '2024-01-18' },
-        totalWorkouts: workouts.length
+        totalWorkouts: completedSessions.length
       });
 
     } catch (error) {
@@ -1609,26 +1628,99 @@ export default function ProgresScreen() {
         {/* Onglet Sport */}
         {selectedTab === 'Sport' && (
           <View style={styles.sportContainer}>
+            {/* Sport favori du client */}
+            {userData?.favoriteSport && (
+              <View style={styles.favoriteSportCard}>
+                <View style={styles.favoriteSportHeader}>
+                  <Text style={styles.favoriteSportEmoji}>
+                    {WorkoutTrackingService.getSportEmoji(userData.favoriteSport)}
+                  </Text>
+                  <View style={styles.favoriteSportInfo}>
+                    <Text style={styles.favoriteSportTitle}>
+                      {WorkoutTrackingService.getSportName(userData.favoriteSport)}
+                    </Text>
+                    <Text style={styles.favoriteSportSubtitle}>Votre sport favori</Text>
+                  </View>
+                </View>
+                
+                <View style={styles.favoriteSportStats}>
+                  <View style={styles.favoriteSportStat}>
+                    <Text style={styles.favoriteSportStatValue}>
+                      {sportStats?.totalSessions || 0}
+                    </Text>
+                    <Text style={styles.favoriteSportStatLabel}>Séances total</Text>
+                  </View>
+                  <View style={styles.favoriteSportStat}>
+                    <Text style={styles.favoriteSportStatValue}>
+                      {Math.round((sportStats?.totalDuration || 0) / 60)}h
+                    </Text>
+                    <Text style={styles.favoriteSportStatLabel}>Temps total</Text>
+                  </View>
+                  <View style={styles.favoriteSportStat}>
+                    <Text style={styles.favoriteSportStatValue}>
+                      {sportStats?.totalCalories || 0}
+                    </Text>
+                    <Text style={styles.favoriteSportStatLabel}>Calories</Text>
+                  </View>
+                </View>
+
+                <View style={styles.favoriteSportProgress}>
+                  <Text style={styles.favoriteSportProgressLabel}>
+                    Objectif hebdomadaire: {sportStats?.weeklyProgress || 0}/{sportStats?.weeklyGoal || 3} séances
+                  </Text>
+                  <View style={styles.favoriteSportProgressBar}>
+                    <View style={[
+                      styles.favoriteSportProgressFill,
+                      { 
+                        width: `${Math.min(((sportStats?.weeklyProgress || 0) / (sportStats?.weeklyGoal || 3)) * 100, 100)}%`
+                      }
+                    ]} />
+                  </View>
+                  <Text style={[
+                    styles.favoriteSportProgressTrend,
+                    { 
+                      color: sportStats?.progressTrend === 'up' ? '#28A745' : 
+                             sportStats?.progressTrend === 'down' ? '#DC3545' : '#8B949E'
+                    }
+                  ]}>
+                    {sportStats?.progressTrend === 'up' ? '📈 En progression' :
+                     sportStats?.progressTrend === 'down' ? '📉 En baisse' : '➡️ Stable'}
+                  </Text>
+                </View>
+              </View>
+            )}
+
             {/* Résumé de la semaine */}
             <View style={styles.sportSummaryCard}>
               <Text style={styles.chartTitle}>📈 Résumé de la semaine</Text>
               <View style={styles.sportSummaryStats}>
                 <View style={styles.sportSummaryItem}>
-                  <Text style={styles.sportSummaryValue}>4</Text>
+                  <Text style={styles.sportSummaryValue}>
+                    {weeklyData.reduce((sum, day) => sum + day.workouts, 0)}
+                  </Text>
                   <Text style={styles.sportSummaryLabel}>Séances</Text>
                 </View>
                 <View style={styles.sportSummaryItem}>
-                  <Text style={styles.sportSummaryValue}>5h 30min</Text>
+                  <Text style={styles.sportSummaryValue}>
+                    {(() => {
+                      const totalMinutes = weeklyData.reduce((sum, day) => sum + day.minutes, 0);
+                      const hours = Math.floor(totalMinutes / 60);
+                      const minutes = totalMinutes % 60;
+                      return hours > 0 ? `${hours}h ${minutes}min` : `${minutes}min`;
+                    })()}
+                  </Text>
                   <Text style={styles.sportSummaryLabel}>Temps total</Text>
                 </View>
                 <View style={styles.sportSummaryItem}>
-                  <Text style={styles.sportSummaryValue}>1,247</Text>
+                  <Text style={styles.sportSummaryValue}>
+                    {Math.round(weeklyData.reduce((sum, day) => sum + day.minutes, 0) * 8.5)}
+                  </Text>
                   <Text style={styles.sportSummaryLabel}>Calories brûlées</Text>
                 </View>
               </View>
             </View>
 
-            {/* Graphique d'activité hebdomadaire */}
+            {/* Graphique d'activité hebdomadaire avec vraies données */}
             <View style={styles.chartContainer}>
               <View style={styles.chartHeader}>
                 <Text style={styles.chartTitle}>Activité sportive</Text>
@@ -1653,23 +1745,16 @@ export default function ProgresScreen() {
                     ))}
                   </View>
 
-                  {/* Barres d'activité */}
+                  {/* Barres d'activité avec vraies données */}
                   <View style={styles.sportBars}>
-                    {[
-                      { day: 'Lun', sessions: 1, calories: 320 },
-                      { day: 'Mar', sessions: 0, calories: 0 },
-                      { day: 'Mer', sessions: 2, calories: 480 },
-                      { day: 'Jeu', sessions: 1, calories: 275 },
-                      { day: 'Ven', sessions: 0, calories: 0 },
-                      { day: 'Sam', sessions: 1, calories: 380 },
-                      { day: 'Dim', sessions: 2, calories: 520 }
-                    ].map((data, index) => {
-                      const height = (data.sessions / 3) * 80;
+                    {weeklyData.map((dayData, index) => {
+                      const height = Math.min((dayData.workouts / 3) * 80, 80);
+                      const calories = Math.round(dayData.minutes * 8.5);
                       return (
-                        <View key={data.day} style={styles.sportBarContainer}>
+                        <View key={dayData.day} style={styles.sportBarContainer}>
                           <View style={[styles.sportBar, { height: `${height}%` }]} />
-                          <Text style={styles.caloriesText}>{data.calories}</Text>
-                          <Text style={styles.dayLabel}>{data.day}</Text>
+                          <Text style={styles.caloriesText}>{calories}</Text>
+                          <Text style={styles.dayLabel}>{dayData.day}</Text>
                         </View>
                       );
                     })}
@@ -1678,111 +1763,167 @@ export default function ProgresScreen() {
               </View>
             </View>
 
-            {/* Statistiques par type de sport */}
+            {/* Activités planifiées vs terminées */}
             <View style={styles.sportTypeContainer}>
-              <Text style={styles.chartTitle}>Répartition par activité</Text>
+              <Text style={styles.chartTitle}>Séances cette semaine</Text>
 
-              <View style={styles.sportTypeGrid}>
-                <View style={styles.sportTypeCard}>
-                  <View style={styles.sportTypeIcon}>
-                    <Text style={styles.sportTypeEmoji}>💪</Text>
+              <View style={styles.workoutStatusGrid}>
+                <View style={styles.workoutStatusCard}>
+                  <View style={[styles.workoutStatusIcon, { backgroundColor: '#F5A623' }]}>
+                    <Text style={styles.workoutStatusEmoji}>📅</Text>
                   </View>
-                  <Text style={styles.sportTypeLabel}>Musculation</Text>
-                  <Text style={styles.sportTypeValue}>2 séances</Text>
-                  <Text style={styles.sportTypeTime}>2h 30min</Text>
+                  <Text style={styles.workoutStatusLabel}>Planifiées</Text>
+                  <Text style={styles.workoutStatusValue}>{weeklyPlannedSessions}</Text>
+                  <Text style={styles.workoutStatusSubtext}>
+                    {weeklyPlannedSessions > 0 ? 'À venir' : 'Aucune planifiée'}
+                  </Text>
                 </View>
 
-                <View style={styles.sportTypeCard}>
-                  <View style={styles.sportTypeIcon}>
-                    <Text style={styles.sportTypeEmoji}>🏃‍♂️</Text>
+                <View style={styles.workoutStatusCard}>
+                  <View style={[styles.workoutStatusIcon, { backgroundColor: '#28A745' }]}>
+                    <Text style={styles.workoutStatusEmoji}>✅</Text>
                   </View>
-                  <Text style={styles.sportTypeLabel}>Course</Text>
-                  <Text style={styles.sportTypeValue}>1 séance</Text>
-                  <Text style={styles.sportTypeTime}>45min</Text>
+                  <Text style={styles.workoutStatusLabel}>Terminées</Text>
+                  <Text style={styles.workoutStatusValue}>
+                    {weeklyData.reduce((sum, day) => sum + day.workouts, 0)}
+                  </Text>
+                  <Text style={styles.workoutStatusSubtext}>
+                    {weeklyData.reduce((sum, day) => sum + day.workouts, 0) > 0 ? 'Félicitations !' : 'Commencez maintenant !'}
+                  </Text>
                 </View>
 
-                <View style={styles.sportTypeCard}>
-                  <View style={styles.sportTypeIcon}>
-                    <Text style={styles.sportTypeEmoji}>🧘‍♀️</Text>
+                <View style={styles.workoutStatusCard}>
+                  <View style={[styles.workoutStatusIcon, { backgroundColor: '#8B949E' }]}>
+                    <Text style={styles.workoutStatusEmoji}>⏱️</Text>
                   </View>
-                  <Text style={styles.sportTypeLabel}>Yoga</Text>
-                  <Text style={styles.sportTypeValue}>1 séance</Text>
-                  <Text style={styles.sportTypeTime}>1h 15min</Text>
+                  <Text style={styles.workoutStatusLabel}>Temps moyen</Text>
+                  <Text style={styles.workoutStatusValue}>
+                    {(() => {
+                      const totalWorkouts = weeklyData.reduce((sum, day) => sum + day.workouts, 0);
+                      const totalMinutes = weeklyData.reduce((sum, day) => sum + day.minutes, 0);
+                      const avgMinutes = totalWorkouts > 0 ? Math.round(totalMinutes / totalWorkouts) : 0;
+                      return `${avgMinutes}min`;
+                    })()}
+                  </Text>
+                  <Text style={styles.workoutStatusSubtext}>Par séance</Text>
                 </View>
 
-                <View style={styles.sportTypeCard}>
-                  <View style={styles.sportTypeIcon}>
-                    <Text style={styles.sportTypeEmoji}>🚴‍♂️</Text>
+                <View style={styles.workoutStatusCard}>
+                  <View style={[styles.workoutStatusIcon, { backgroundColor: '#4ECDC4' }]}>
+                    <Text style={styles.workoutStatusEmoji}>🔥</Text>
                   </View>
-                  <Text style={styles.sportTypeLabel}>Cyclisme</Text>
-                  <Text style={styles.sportTypeValue}>0 séance</Text>
-                  <Text style={styles.sportTypeTime}>0min</Text>
+                  <Text style={styles.workoutStatusLabel}>Régularité</Text>
+                  <Text style={styles.workoutStatusValue}>
+                    {Math.round((weeklyData.filter(day => day.workouts > 0).length / 7) * 100)}%
+                  </Text>
+                  <Text style={styles.workoutStatusSubtext}>
+                    {weeklyData.filter(day => day.workouts > 0).length}/7 jours
+                  </Text>
                 </View>
               </View>
             </View>
 
-            {/* Progression des objectifs sportifs */}
+            {/* Progression des objectifs sportifs personnalisés */}
             <View style={styles.sportObjectivesCard}>
-              <Text style={styles.chartTitle}>🎯 Objectifs de la semaine</Text>
+              <Text style={styles.chartTitle}>🎯 Objectifs personnalisés</Text>
 
               <View style={styles.objectiveItem}>
                 <View style={styles.objectiveHeader}>
-                  <Text style={styles.objectiveLabel}>Séances par semaine</Text>
-                  <Text style={styles.objectiveProgress}>4/5</Text>
+                  <Text style={styles.objectiveLabel}>
+                    {WorkoutTrackingService.getSportName(userData?.favoriteSport || '')} par semaine
+                  </Text>
+                  <Text style={styles.objectiveProgress}>
+                    {sportStats?.weeklyProgress || 0}/{sportStats?.weeklyGoal || 3}
+                  </Text>
                 </View>
                 <View style={styles.objectiveBar}>
-                  <View style={[styles.objectiveBarFill, { width: '80%' }]} />
+                  <View style={[
+                    styles.objectiveBarFill, 
+                    { 
+                      width: `${Math.min(((sportStats?.weeklyProgress || 0) / (sportStats?.weeklyGoal || 3)) * 100, 100)}%`,
+                      backgroundColor: (sportStats?.weeklyProgress || 0) >= (sportStats?.weeklyGoal || 3) ? '#28A745' : '#F5A623'
+                    }
+                  ]} />
                 </View>
               </View>
 
               <View style={styles.objectiveItem}>
                 <View style={styles.objectiveHeader}>
                   <Text style={styles.objectiveLabel}>Temps d'entraînement</Text>
-                  <Text style={styles.objectiveProgress}>5h30/6h</Text>
+                  <Text style={styles.objectiveProgress}>
+                    {Math.round(weeklyData.reduce((sum, day) => sum + day.minutes, 0) / 60)}h/
+                    {Math.round((sportStats?.weeklyGoal || 3) * 60 / 60)}h
+                  </Text>
                 </View>
                 <View style={styles.objectiveBar}>
-                  <View style={[styles.objectiveBarFill, { width: '92%' }]} />
+                  <View style={[
+                    styles.objectiveBarFill, 
+                    { 
+                      width: `${Math.min((weeklyData.reduce((sum, day) => sum + day.minutes, 0) / ((sportStats?.weeklyGoal || 3) * 60)) * 100, 100)}%`,
+                      backgroundColor: weeklyData.reduce((sum, day) => sum + day.minutes, 0) >= ((sportStats?.weeklyGoal || 3) * 60) ? '#28A745' : '#F5A623'
+                    }
+                  ]} />
                 </View>
               </View>
 
               <View style={styles.objectiveItem}>
                 <View style={styles.objectiveHeader}>
                   <Text style={styles.objectiveLabel}>Calories brûlées</Text>
-                  <Text style={styles.objectiveProgress}>1,247/1,500</Text>
+                  <Text style={styles.objectiveProgress}>
+                    {Math.round(weeklyData.reduce((sum, day) => sum + day.minutes, 0) * 8.5)}/
+                    {Math.round((sportStats?.weeklyGoal || 3) * 60 * 8.5)}
+                  </Text>
                 </View>
                 <View style={styles.objectiveBar}>
-                  <View style={[styles.objectiveBarFill, { width: '83%' }]} />
+                  <View style={[
+                    styles.objectiveBarFill, 
+                    { 
+                      width: `${Math.min((weeklyData.reduce((sum, day) => sum + day.minutes, 0) * 8.5) / ((sportStats?.weeklyGoal || 3) * 60 * 8.5) * 100, 100)}%`,
+                      backgroundColor: (weeklyData.reduce((sum, day) => sum + day.minutes, 0) * 8.5) >= ((sportStats?.weeklyGoal || 3) * 60 * 8.5) ? '#28A745' : '#F5A623'
+                    }
+                  ]} />
                 </View>
               </View>
             </View>
 
-            {/* Records personnels */}
+            {/* Records personnels basés sur les vraies données */}
             <View style={styles.personalRecordsCard}>
-              <Text style={styles.chartTitle}>🏆 Records personnels</Text>
+              <Text style={styles.chartTitle}>🏆 Vos exploits</Text>
 
               <View style={styles.recordsGrid}>
                 <View style={styles.recordItem}>
-                  <Text style={styles.recordLabel}>Développé couché</Text>
-                  <Text style={styles.recordValue}>85 kg</Text>
-                  <Text style={styles.recordDate}>Il y a 3 jours</Text>
+                  <Text style={styles.recordLabel}>Séances totales</Text>
+                  <Text style={styles.recordValue}>{personalRecords.totalWorkouts}</Text>
+                  <Text style={styles.recordDate}>Depuis le début</Text>
                 </View>
 
                 <View style={styles.recordItem}>
-                  <Text style={styles.recordLabel}>Course 5km</Text>
-                  <Text style={styles.recordValue}>24:32</Text>
-                  <Text style={styles.recordDate}>Il y a 1 semaine</Text>
+                  <Text style={styles.recordLabel}>Plus longue séance</Text>
+                  <Text style={styles.recordValue}>
+                    {(() => {
+                      const maxMinutes = Math.max(...weeklyData.map(day => day.minutes), 0);
+                      return maxMinutes > 0 ? `${maxMinutes}min` : '0min';
+                    })()}
+                  </Text>
+                  <Text style={styles.recordDate}>Cette semaine</Text>
                 </View>
 
                 <View style={styles.recordItem}>
-                  <Text style={styles.recordLabel}>Squat</Text>
-                  <Text style={styles.recordValue}>95 kg</Text>
-                  <Text style={styles.recordDate}>Il y a 5 jours</Text>
+                  <Text style={styles.recordLabel}>Meilleure semaine</Text>
+                  <Text style={styles.recordValue}>
+                    {weeklyData.reduce((sum, day) => sum + day.workouts, 0)} séances
+                  </Text>
+                  <Text style={styles.recordDate}>Semaine actuelle</Text>
                 </View>
 
                 <View style={styles.recordItem}>
-                  <Text style={styles.recordLabel}>Planche</Text>
-                  <Text style={styles.recordValue}>2:45</Text>
-                  <Text style={styles.recordDate}>Hier</Text>
+                  <Text style={styles.recordLabel}>Sport favori</Text>
+                  <Text style={styles.recordValue}>
+                    {WorkoutTrackingService.getSportEmoji(userData?.favoriteSport || '')}
+                  </Text>
+                  <Text style={styles.recordDate}>
+                    {WorkoutTrackingService.getSportName(userData?.favoriteSport || 'Non défini')}
+                  </Text>
                 </View>
               </View>
             </View>
@@ -3243,6 +3384,124 @@ flexDirection: 'row',
   sportContainer: {
     paddingHorizontal: 20,
     paddingBottom: 100,
+  },
+  favoriteSportCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    marginBottom: 25,
+  },
+  favoriteSportHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  favoriteSportEmoji: {
+    fontSize: 32,
+    marginRight: 16,
+  },
+  favoriteSportInfo: {
+    flex: 1,
+  },
+  favoriteSportTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  favoriteSportSubtitle: {
+    fontSize: 14,
+    color: '#8B949E',
+  },
+  favoriteSportStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 16,
+  },
+  favoriteSportStat: {
+    alignItems: 'center',
+  },
+  favoriteSportStatValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#F5A623',
+    marginBottom: 4,
+  },
+  favoriteSportStatLabel: {
+    fontSize: 12,
+    color: '#8B949E',
+    textAlign: 'center',
+  },
+  favoriteSportProgress: {
+    marginTop: 8,
+  },
+  favoriteSportProgressLabel: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    marginBottom: 8,
+    fontWeight: '500',
+  },
+  favoriteSportProgressBar: {
+    height: 8,
+    backgroundColor: '#21262D',
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  favoriteSportProgressFill: {
+    height: '100%',
+    backgroundColor: '#F5A623',
+    borderRadius: 4,
+  },
+  favoriteSportProgressTrend: {
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  workoutStatusGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 16,
+  },
+  workoutStatusCard: {
+    width: (width - 64) / 2,
+    backgroundColor: '#0D1117',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    alignItems: 'center',
+  },
+  workoutStatusIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  workoutStatusEmoji: {
+    fontSize: 20,
+  },
+  workoutStatusLabel: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  workoutStatusValue: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  workoutStatusSubtext: {
+    fontSize: 12,
+    color: '#8B949E',
+    textAlign: 'center',
   },
   sportSummaryCard: {
     backgroundColor: '#161B22',
