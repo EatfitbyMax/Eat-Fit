@@ -1847,18 +1847,16 @@ export default function ProgresScreen() {
                 </View>
                 <Text style={styles.statLabel}>Calories moyennes</Text>
                 <Text style={styles.statValue}>{nutritionStats.averageCalories} kcal</Text>
-                <Text style={[styles.statTrend, { 
-                  color: nutritionStats.averageCalories > 0 ? 
-                    (nutritionStats.averageCalories >= 1800 ? '#28A745' : '#F5A623') : 
-                    '#8B949E' 
-                }]}>
-                  {nutritionStats.averageCalories > 0 ? 
-                    (nutritionStats.averageCalories >= 1800 ? 
+                {nutritionStats.averageCalories > 0 && (
+                  <Text style={[styles.statTrend, { 
+                    color: nutritionStats.averageCalories >= 1800 ? '#28A745' : '#F5A623'
+                  }]}>
+                    {nutritionStats.averageCalories >= 1800 ? 
                       `✓ Objectif atteint (${Math.round((nutritionStats.averageCalories / 2200) * 100)}%)` : 
-                      `${Math.round((nutritionStats.averageCalories / 2200) * 100)}% de l'objectif`) :
-                    'Aucune donnée disponible'
-                  }
-                </Text>
+                      `${Math.round((nutritionStats.averageCalories / 2200) * 100)}% de l'objectif`
+                    }
+                  </Text>
+                )}
               </View>
 
               <View style={styles.nutritionStatCard}>
@@ -1867,18 +1865,16 @@ export default function ProgresScreen() {
                 </View>
                 <Text style={styles.statLabel}>Protéines moyennes</Text>
                 <Text style={styles.statValue}>{nutritionStats.averageProteins}g</Text>
-                <Text style={[styles.statTrend, { 
-                  color: nutritionStats.averageProteins > 0 ? 
-                    (nutritionStats.averageProteins >= 100 ? '#28A745' : '#F5A623') : 
-                    '#8B949E' 
-                }]}>
-                  {nutritionStats.averageProteins > 0 ? 
-                    (nutritionStats.averageProteins >= 100 ? 
+                {nutritionStats.averageProteins > 0 && (
+                  <Text style={[styles.statTrend, { 
+                    color: nutritionStats.averageProteins >= 100 ? '#28A745' : '#F5A623'
+                  }]}>
+                    {nutritionStats.averageProteins >= 100 ? 
                       `✓ Excellent apport (${Math.round((nutritionStats.averageProteins / 120) * 100)}%)` : 
-                      `${Math.round((nutritionStats.averageProteins / 120) * 100)}% de l'objectif`) :
-                    'Aucune donnée disponible'
-                  }
-                </Text>
+                      `${Math.round((nutritionStats.averageProteins / 120) * 100)}% de l'objectif`
+                    }
+                  </Text>
+                )}
               </View>
 
               <View style={styles.nutritionStatCard}>
@@ -1887,18 +1883,16 @@ export default function ProgresScreen() {
                 </View>
                 <Text style={styles.statLabel}>Glucides moyens</Text>
                 <Text style={styles.statValue}>{nutritionStats.averageCarbs}g</Text>
-                <Text style={[styles.statTrend, { 
-                  color: nutritionStats.averageCarbs > 0 ? 
-                    (nutritionStats.averageCarbs >= 200 && nutritionStats.averageCarbs <= 350 ? '#28A745' : '#F5A623') : 
-                    '#8B949E' 
-                }]}>
-                  {nutritionStats.averageCarbs > 0 ? 
-                    (nutritionStats.averageCarbs >= 200 && nutritionStats.averageCarbs <= 350 ? 
+                {nutritionStats.averageCarbs > 0 && (
+                  <Text style={[styles.statTrend, { 
+                    color: nutritionStats.averageCarbs >= 200 && nutritionStats.averageCarbs <= 350 ? '#28A745' : '#F5A623'
+                  }]}>
+                    {nutritionStats.averageCarbs >= 200 && nutritionStats.averageCarbs <= 350 ? 
                       '✓ Équilibre optimal' : 
-                      nutritionStats.averageCarbs < 200 ? 'Apport faible' : 'Apport élevé') :
-                    'Aucune donnée disponible'
-                  }
-                </Text>
+                      nutritionStats.averageCarbs < 200 ? 'Apport faible' : 'Apport élevé'
+                    }
+                  </Text>
+                )}
               </View>
 
               <View style={styles.nutritionStatCard}>
@@ -1907,18 +1901,16 @@ export default function ProgresScreen() {
                 </View>
                 <Text style={styles.statLabel}>Lipides moyens</Text>
                 <Text style={styles.statValue}>{nutritionStats.averageFat}g</Text>
-                <Text style={[styles.statTrend, { 
-                  color: nutritionStats.averageFat > 0 ? 
-                    (nutritionStats.averageFat >= 50 && nutritionStats.averageFat <= 100 ? '#28A745' : '#F5A623') : 
-                    '#8B949E' 
-                }]}>
-                  {nutritionStats.averageFat > 0 ? 
-                    (nutritionStats.averageFat >= 50 && nutritionStats.averageFat <= 100 ? 
+                {nutritionStats.averageFat > 0 && (
+                  <Text style={[styles.statTrend, { 
+                    color: nutritionStats.averageFat >= 50 && nutritionStats.averageFat <= 100 ? '#28A745' : '#F5A623'
+                  }]}>
+                    {nutritionStats.averageFat >= 50 && nutritionStats.averageFat <= 100 ? 
                       '✓ Équilibre optimal' : 
-                      nutritionStats.averageFat < 50 ? 'Apport insuffisant' : 'Apport élevé') :
-                    'Aucune donnée disponible'
-                  }
-                </Text>
+                      nutritionStats.averageFat < 50 ? 'Apport insuffisant' : 'Apport élevé'
+                    }
+                  </Text>
+                )}
               </View>
             </View>
 
