@@ -247,14 +247,15 @@ const styles = StyleSheet.create({
   categoriesContent: {
     paddingRight: 20,
   },
-  categoryButton: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    marginRight: 6,
-    borderWidth: 1,
-    borderColor: '#333333',
+    categoryButton: {
+      backgroundColor: '#1A1A1A',
+      borderRadius: 8,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      marginRight: 6,
+      borderWidth: 1,
+      borderColor: '#333333',
+      alignSelf: 'flex-start',
   },
   selectedCategoryButton: {
     backgroundColor: '#F5A623',
