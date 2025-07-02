@@ -77,50 +77,33 @@ export default function RegisterSportScreen() {
         />
       </View>
 
-      {/* Filtres par catégorie - Design moderne */}
-      <View style={styles.categoriesGrid}>
+      {/* Filtres par catégorie */}
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        style={styles.categoriesContainer}
+        contentContainerStyle={styles.categoriesContent}
+      >
         <TouchableOpacity
-          style={[styles.categoryCard, !selectedCategory && styles.selectedCategoryCard]}
+          style={[styles.categoryButton, !selectedCategory && styles.selectedCategoryButton]}
           onPress={() => setSelectedCategory(null)}
         >
-          <Text style={[styles.categoryCardText, !selectedCategory && styles.selectedCategoryCardText]}>
+          <Text style={[styles.categoryText, !selectedCategory && styles.selectedCategoryText]}>
             Tous
           </Text>
         </TouchableOpacity>
-        {categories.slice(0, 4).map((category) => (
+        {categories.map((category) => (
           <TouchableOpacity
             key={category}
-            style={[styles.categoryCard, selectedCategory === category && styles.selectedCategoryCard]}
+            style={[styles.categoryButton, selectedCategory === category && styles.selectedCategoryButton]}
             onPress={() => setSelectedCategory(selectedCategory === category ? null : category)}
           >
-            <Text style={[styles.categoryCardText, selectedCategory === category && styles.selectedCategoryCardText]}>
+            <Text style={[styles.categoryText, selectedCategory === category && styles.selectedCategoryText]}>
               {category}
             </Text>
           </TouchableOpacity>
         ))}
-      </View>
-      
-      {/* Autres catégories si nécessaire */}
-      {categories.length > 4 && (
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          style={styles.additionalCategoriesContainer}
-          contentContainerStyle={styles.additionalCategoriesContent}
-        >
-          {categories.slice(4).map((category) => (
-            <TouchableOpacity
-              key={category}
-              style={[styles.additionalCategoryButton, selectedCategory === category && styles.selectedAdditionalCategoryButton]}
-              onPress={() => setSelectedCategory(selectedCategory === category ? null : category)}
-            >
-              <Text style={[styles.additionalCategoryText, selectedCategory === category && styles.selectedAdditionalCategoryText]}>
-                {category}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      )}
+      </ScrollView>
 
       {/* Résultats */}
       <View style={styles.resultsHeader}>
@@ -259,45 +242,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#333333',
   },
-  categoriesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-    gap: 10,
-  },
-  categoryCard: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 25,
-    paddingVertical: 20,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: '#333333',
-    width: '48%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 80,
-  },
-  selectedCategoryCard: {
-    backgroundColor: '#F5A623',
-    borderColor: '#F5A623',
-  },
-  categoryCardText: {
-    fontSize: 14,
-    color: '#FFFFFF',
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  selectedCategoryCardText: {
-    color: '#000000',
-  },
-  additionalCategoriesContainer: {
+  categoriesContainer: {
     marginBottom: 15,
   },
-  additionalCategoriesContent: {
+  categoriesContent: {
     paddingRight: 20,
   },
-  additionalCategoryButton: {
+  categoryButton: {
     backgroundColor: '#1A1A1A',
     borderRadius: 20,
     paddingHorizontal: 16,
@@ -306,16 +257,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#333333',
   },
-  selectedAdditionalCategoryButton: {
+  selectedCategoryButton: {
     backgroundColor: '#F5A623',
     borderColor: '#F5A623',
   },
-  additionalCategoryText: {
+  categoryText: {
     fontSize: 12,
     color: '#FFFFFF',
     fontWeight: '500',
   },
-  selectedAdditionalCategoryText: {
+  selectedCategoryText: {
     color: '#000000',
   },
   resultsHeader: {
