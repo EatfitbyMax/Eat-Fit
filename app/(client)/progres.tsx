@@ -1662,7 +1662,7 @@ export default function ProgresScreen() {
                 ))}
               </View>
 
-              {/* Graphique avec scroll horizontal */}
+              {/* Graphique avec scroll horizontal - même structure que nutrition */}
               <View style={styles.chartArea}>
                 <View style={styles.yAxis}>
                   {['120', '100', '80', '60', '40', '20', '0'].map((label, index) => (
