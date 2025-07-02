@@ -2036,7 +2036,7 @@ export default function ProgresScreen() {
                   <Text style={styles.summaryLabel}>Calories totales</Text>
                 </View>
                 <View style={styles.summaryItem}>
-                  <Text style={[styles.summaryValue, { color: nutritionStats.averageHydration >= 1600 ? '#4ECDC4' : '#F5A623' }]}>
+                  <Text style={[styles.summaryValue, { color: '#4ECDC4' }]}>
                     {nutritionStats.averageHydration > 0 ? Math.round((nutritionStats.averageHydration / 2000) * 100) : 0}%
                   </Text>
                   <Text style={styles.summaryLabel}>Hydratation moyenne</Text>
@@ -3074,20 +3074,25 @@ flexDirection: 'row',
   summaryStats: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    paddingHorizontal: 8,
   },
   summaryItem: {
     alignItems: 'center',
+    flex: 1,
+    paddingHorizontal: 8,
   },
   summaryValue: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#F5A623',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   summaryLabel: {
     fontSize: 12,
     color: '#8B949E',
     textAlign: 'center',
+    lineHeight: 16,
+    paddingHorizontal: 4,
   },
 
   updateHint: {
