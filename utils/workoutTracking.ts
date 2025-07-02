@@ -254,8 +254,8 @@ class WorkoutTrackingService {
     };
     return nameMap[sport] || sport;
   }
-}
-static async createSampleSessions(userId: string, favoriteSport: string): Promise<void> {
+
+  static async createSampleSessions(userId: string, favoriteSport: string): Promise<void> {
     const sampleSessions: WorkoutSession[] = [];
     const currentDate = new Date();
     
@@ -333,3 +333,4 @@ static async createSampleSessions(userId: string, favoriteSport: string): Promis
       await AsyncStorage.setItem(`workout_sessions_${userId}`, JSON.stringify(sampleSessions));
     }
   }
+}
