@@ -114,9 +114,22 @@ export default function ClientLayout() {
         name="profil"
         options={{
           title: 'Profil',
-          tabBarIcon: ({ color, focused }) => (
-            <IconSymbol size={28} name={focused ? 'person.fill' : 'person'} color={color} />
-          ),
+          tabBarIcon: ({ color, focused }) => {
+            const isActive = focused || pathname.includes('informations-personnelles');
+            return (
+              <IconSymbol 
+                size={28} 
+                name={isActive ? 'person.fill' : 'person'} 
+                color={isActive ? '#F5A623' : color} 
+              />
+            );
+          },
+          tabBarLabelStyle: (() => {
+            const isActive = pathname.includes('informations-personnelles');
+            return {
+              color: isActive ? '#F5A623' : '#8B949E',
+            };
+          })(),
         }}
       />
       <Tabs.Screen
