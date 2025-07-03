@@ -979,7 +979,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   weekArrow: {
-    padding: 8,
     borderRadius: 12,
     backgroundColor: 'rgba(245, 166, 35, 0.15)',
     borderWidth: 2,
@@ -1001,6 +1000,8 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(245, 166, 35, 0.3)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
+    textAlign: 'center',
+    lineHeight: 20,
   },
   weekContainer: {
     flex: 1,
