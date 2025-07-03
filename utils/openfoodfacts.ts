@@ -470,49 +470,77 @@ export class OpenFoodFactsService {
     const allFoods = this.getAllLocalFoods();
     return allFoods.slice(0, 8); // Retourner les 8 premiers aliments
   }
-    // Recherche CIQUAL via le serveur local
-    static async searchCiqual(query: string): Promise<FoodProduct[]> {
-      try {
-        console.log('Recherche CIQUAL pour:', query);
-        
-        // Utiliser l'URL du serveur local déployé sur Replit
-        const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://workspace-5000.kirk.replit.dev';
-        const response = await fetch(`${serverUrl}/api/ciqual/search?q=${encodeURIComponent(query)}`);
-  
-        if (!response.ok) {
-          console.log('Erreur serveur CIQUAL, utilisation locale...');
-          return this.getSearchableLocalFoods(query);
-        }
-  
-        const data = await response.json();
-        
-        if (!Array.isArray(data) || data.length === 0) {
-          console.log('Aucun résultat CIQUAL, utilisation locale...');
-          return this.getSearchableLocalFoods(query);
-        }
-  
-        // Formater les données CIQUAL pour correspondre à FoodProduct
-        const formattedProducts: FoodProduct[] = data.map((item: any) => ({
-          id: item.id || `ciqual_${item.code}`,
-          name: item.name,
-          brand: 'CIQUAL',
-          categories: item.category || 'Aliments',
-          nutriments: {
-            energy_kcal: item.nutriments?.energy_kcal || 0,
-            proteins: item.nutriments?.proteins || 0,
-            carbohydrates: item.nutriments?.carbohydrates || 0,
-            fat: item.nutriments?.fat || 0,
-            fiber: item.nutriments?.fiber,
-            sugars: item.nutriments?.sugars,
-            salt: item.nutriments?.salt,
-          },
-        }));
-  
-        console.log(`${formattedProducts.length} produits CIQUAL trouvés`);
-        return formattedProducts;
-      } catch (error) {
-        console.error('Erreur recherche CIQUAL:', error);
-        return this.getSearchableLocalFoods(query); // Fallback final
+    // Recherche OpenFoodFacts local via le serveur
+  static async searchOpenFoodFactsLocal(query: string): Promise<FoodProduct[]> {
+    try {
+      console.log('Recherche OpenFoodFacts local pour:', query);
+
+      const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://workspace-5000.kirk.replit.dev';
+      const response = await fetch(`${serverUrl}/api/openfoodfacts/search?q=${encodeURIComponent(query)}&limit=20`);
+
+      if (!response.ok) {
+        console.log('Erreur serveur OpenFoodFacts local, essai CIQUAL...');
+        return this.searchCiqual(query);
       }
+
+      const data = await response.json();
+
+      if (!Array.isArray(data) || data.length === 0) {
+        console.log('Aucun résultat OpenFoodFacts local, essai CIQUAL...');
+        return this.searchCiqual(query);
+      }
+
+      console.log(`${data.length} produits OpenFoodFacts local trouvés`);
+      return data;
+    } catch (error) {
+      console.error('Erreur recherche OpenFoodFacts local:', error);
+      return this.searchCiqual(query);
     }
+  }
+
+  // Recherche CIQUAL via le serveur local
+  static async searchCiqual(query: string): Promise<FoodProduct[]> {
+    try {
+      console.log('Recherche CIQUAL pour:', query);
+
+      // Utiliser l'URL du serveur local déployé sur Replit
+      const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://workspace-5000.kirk.replit.dev';
+      const response = await fetch(`${serverUrl}/api/ciqual/search?q=${encodeURIComponent(query)}`);
+
+      if (!response.ok) {
+        console.log('Erreur serveur CIQUAL, utilisation locale...');
+        return this.getSearchableLocalFoods(query);
+      }
+
+      const data = await response.json();
+
+      if (!Array.isArray(data) || data.length === 0) {
+        console.log('Aucun résultat CIQUAL, utilisation locale...');
+        return this.getSearchableLocalFoods(query);
+      }
+
+      // Formater les données CIQUAL pour correspondre à FoodProduct
+      const formattedProducts: FoodProduct[] = data.map((item: any) => ({
+        id: item.id || `ciqual_${item.code}`,
+        name: item.name,
+        brand: 'CIQUAL',
+        categories: item.category || 'Aliments',
+        nutriments: {
+          energy_kcal: item.nutriments?.energy_kcal || 0,
+          proteins: item.nutriments?.proteins || 0,
+          carbohydrates: item.nutriments?.carbohydrates || 0,
+          fat: item.nutriments?.fat || 0,
+          fiber: item.nutriments?.fiber,
+          sugars: item.nutriments?.sugars,
+          salt: item.nutriments?.salt,
+        },
+      }));
+
+      console.log(`${formattedProducts.length} produits CIQUAL trouvés`);
+      return formattedProducts;
+    } catch (error) {
+      console.error('Erreur recherche CIQUAL:', error);
+      return this.getSearchableLocalFoods(query); // Fallback final
+    }
+  }
 }

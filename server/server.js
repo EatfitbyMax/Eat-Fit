@@ -484,6 +484,113 @@ app.get('/api/ciqual/search', async (req, res) => {
   }
 });
 
+// Routes pour OpenFoodFacts local
+app.get('/api/openfoodfacts/search', async (req, res) => {
+  try {
+    const { q: query, limit = 20 } = req.query;
+    
+    if (!query) {
+      return res.status(400).json({ error: 'Paramètre de recherche manquant' });
+    }
+
+    const offPath = path.join(__dirname, 'data', 'openfoodfacts-products.json');
+    
+    try {
+      const data = await fs.readFile(offPath, 'utf8');
+      const products = JSON.parse(data);
+      
+      const searchTerm = query.toLowerCase();
+      const results = products
+        .filter(product => 
+          product.name.toLowerCase().includes(searchTerm) ||
+          (product.brand && product.brand.toLowerCase().includes(searchTerm)) ||
+          (product.categories && product.categories.toLowerCase().includes(searchTerm))
+        )
+        .slice(0, parseInt(limit));
+      
+      console.log(`Recherche OpenFoodFacts local: ${results.length} résultats pour "${query}"`);
+      res.json(results);
+    } catch (fileError) {
+      console.log('Base OpenFoodFacts locale non trouvée, utilisation CIQUAL...');
+      // Fallback vers CIQUAL
+      const ciqualPath = path.join(__dirname, 'data', 'ciqual-foods.json');
+      const ciqualData = await fs.readFile(ciqualPath, 'utf8');
+      const foods = JSON.parse(ciqualData);
+      
+      const searchTerm = query.toLowerCase();
+      const results = foods.filter(food => 
+        food.name.toLowerCase().includes(searchTerm) ||
+        food.category.toLowerCase().includes(searchTerm)
+      ).slice(0, parseInt(limit));
+      
+      res.json(results);
+    }
+  } catch (error) {
+    console.error('Erreur recherche OpenFoodFacts local:', error);
+    res.status(500).json({ error: 'Erreur recherche OpenFoodFacts local' });
+  }
+});
+
+app.get('/api/openfoodfacts/barcode/:barcode', async (req, res) => {
+  try {
+    const { barcode } = req.params;
+    
+    const offPath = path.join(__dirname, 'data', 'openfoodfacts-products.json');
+    const data = await fs.readFile(offPath, 'utf8');
+    const products = JSON.parse(data);
+    
+    const product = products.find(p => p.barcode === barcode);
+    
+    if (product) {
+      res.json(product);
+    } else {
+      res.status(404).json({ error: 'Produit non trouvé' });
+    }
+  } catch (error) {
+    console.error('Erreur recherche code-barres:', error);
+    res.status(404).json({ error: 'Produit non trouvé' });
+  }
+});
+
+app.get('/api/openfoodfacts/stats', async (req, res) => {
+  try {
+    const offPath = path.join(__dirname, 'data', 'openfoodfacts-products.json');
+    const stats = await fs.stat(offPath);
+    const data = await fs.readFile(offPath, 'utf8');
+    const products = JSON.parse(data);
+    
+    res.json({
+      totalProducts: products.length,
+      lastUpdate: stats.mtime,
+      fileSize: stats.size,
+      fileSizeMB: Math.round(stats.size / 1024 / 1024)
+    });
+  } catch (error) {
+    res.status(404).json({ error: 'Base de données non trouvée' });
+  }
+});
+
+app.post('/api/openfoodfacts/download', async (req, res) => {
+  try {
+    const OpenFoodFactsDownloader = require('./scripts/download-openfoodfacts');
+    const downloader = new OpenFoodFactsDownloader();
+    
+    // Télécharger en arrière-plan
+    downloader.downloadDatabase()
+      .then(productCount => {
+        console.log(`✅ Base OpenFoodFacts mise à jour: ${productCount} produits`);
+      })
+      .catch(error => {
+        console.error('❌ Erreur mise à jour OpenFoodFacts:', error);
+      });
+    
+    res.json({ message: 'Téléchargement démarré en arrière-plan' });
+  } catch (error) {
+    console.error('Erreur démarrage téléchargement:', error);
+    res.status(500).json({ error: 'Erreur démarrage téléchargement' });
+  }
+});
+
 // Route de test
 app.get('/api/health-check', (req, res) => {
   res.json({ status: 'OK', message: 'Serveur VPS fonctionnel' });
