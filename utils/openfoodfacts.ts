@@ -470,34 +470,45 @@ export class OpenFoodFactsService {
     const allFoods = this.getAllLocalFoods();
     return allFoods.slice(0, 8); // Retourner les 8 premiers aliments
   }
-    // Implémentation de la recherche CIQUAL (à adapter avec votre serveur)
+    // Recherche CIQUAL via le serveur local
     static async searchCiqual(query: string): Promise<FoodProduct[]> {
       try {
         console.log('Recherche CIQUAL pour:', query);
-        const response = await fetch(`YOUR_CIQUAL_SERVER_URL?query=${encodeURIComponent(query)}`);
+        
+        // Utiliser l'URL du serveur local déployé sur Replit
+        const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://workspace-5000.kirk.replit.dev';
+        const response = await fetch(`${serverUrl}/api/ciqual/search?q=${encodeURIComponent(query)}`);
   
         if (!response.ok) {
-          throw new Error('Erreur lors de la récupération des données CIQUAL');
+          console.log('Erreur serveur CIQUAL, utilisation locale...');
+          return this.getSearchableLocalFoods(query);
         }
   
         const data = await response.json();
+        
+        if (!Array.isArray(data) || data.length === 0) {
+          console.log('Aucun résultat CIQUAL, utilisation locale...');
+          return this.getSearchableLocalFoods(query);
+        }
   
-        // Formattez les données CIQUAL pour correspondre à FoodProduct
+        // Formater les données CIQUAL pour correspondre à FoodProduct
         const formattedProducts: FoodProduct[] = data.map((item: any) => ({
-          id: `ciqual_${item.code}`, // Assurez-vous d'avoir un identifiant unique
+          id: item.id || `ciqual_${item.code}`,
           name: item.name,
+          brand: 'CIQUAL',
+          categories: item.category || 'Aliments',
           nutriments: {
-            energy_kcal: item.energy_kcal,
-            proteins: item.proteins,
-            carbohydrates: item.carbohydrates,
-            fat: item.fat,
-            fiber: item.fiber,
-            sugars: item.sugars,
-            salt: item.salt,
+            energy_kcal: item.nutriments?.energy_kcal || 0,
+            proteins: item.nutriments?.proteins || 0,
+            carbohydrates: item.nutriments?.carbohydrates || 0,
+            fat: item.nutriments?.fat || 0,
+            fiber: item.nutriments?.fiber,
+            sugars: item.nutriments?.sugars,
+            salt: item.nutriments?.salt,
           },
-          // Ajoutez d'autres champs CIQUAL si nécessaire
         }));
   
+        console.log(`${formattedProducts.length} produits CIQUAL trouvés`);
         return formattedProducts;
       } catch (error) {
         console.error('Erreur recherche CIQUAL:', error);
