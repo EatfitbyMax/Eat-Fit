@@ -53,8 +53,7 @@ export default function LoginScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Connexion</Text>
-        <Text style={styles.subtitle}>Connectez-vous à votre compte</Text>
+        <Text style={styles.title}>Connectez-vous à votre compte</Text>
         
         <View style={styles.form}>
           <TextInput
@@ -124,15 +123,9 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#8B949E',
     textAlign: 'center',
     marginBottom: 40,
   },
