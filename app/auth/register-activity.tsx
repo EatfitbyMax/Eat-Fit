@@ -118,10 +118,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   progressStep: {
-    width: 40,
-    height: 6,
+    width: 30,
+    height: 4,
     backgroundColor: '#2A2A2A',
-    borderRadius: 3,
+    borderRadius: 2,
     borderWidth: 1,
     borderColor: '#404040',
   },
