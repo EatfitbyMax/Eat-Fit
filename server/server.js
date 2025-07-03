@@ -332,6 +332,35 @@ app.post('/api/forme/:userId/:date', async (req, res) => {
   }
 });
 
+// Routes pour les statuts d'intégrations
+app.get('/api/integrations/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const data = await fs.readFile(path.join(DATA_DIR, `integrations_${userId}.json`), 'utf8');
+    res.json(JSON.parse(data));
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      res.json({
+        appleHealth: { connected: false, permissions: [] },
+        strava: { connected: false }
+      });
+    } else {
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
+});
+
+app.post('/api/integrations/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const integrationData = req.body;
+    await fs.writeFile(path.join(DATA_DIR, `integrations_${userId}.json`), JSON.stringify(integrationData, null, 2));
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur sauvegarde statuts intégrations' });
+  }
+});
+
 // Routes Stripe pour les paiements
 app.post('/api/stripe/create-payment-intent', async (req, res) => {
   try {

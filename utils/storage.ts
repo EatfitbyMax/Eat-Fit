@@ -668,6 +668,76 @@ export class PersistentStorage {
     }
   }
 
+  // Méthodes pour les statuts d'intégrations
+  static async getIntegrationStatus(userId: string): Promise<any> {
+    try {
+      const isConnected = await this.testConnection();
+      if (isConnected) {
+        const response = await fetch(`${SERVER_URL}/api/integrations/${userId}`);
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Statuts intégrations récupérés depuis le serveur VPS');
+          // Sauvegarder en local comme backup
+          await AsyncStorage.setItem(`user_integrations_${userId}`, JSON.stringify(data));
+          return data;
+        }
+      }
+
+      // Fallback vers le stockage local
+      console.log('Fallback vers le stockage local pour les statuts intégrations');
+      const localData = await AsyncStorage.getItem(`user_integrations_${userId}`);
+      return localData ? JSON.parse(localData) : {
+        appleHealth: { connected: false, permissions: [] },
+        strava: { connected: false }
+      };
+    } catch (error) {
+      console.error('Erreur récupération statuts intégrations:', error);
+      try {
+        const localData = await AsyncStorage.getItem(`user_integrations_${userId}`);
+        return localData ? JSON.parse(localData) : {
+          appleHealth: { connected: false, permissions: [] },
+          strava: { connected: false }
+        };
+      } catch (localError) {
+        console.error('Erreur stockage local intégrations:', localError);
+        return {
+          appleHealth: { connected: false, permissions: [] },
+          strava: { connected: false }
+        };
+      }
+    }
+  }
+
+  static async saveIntegrationStatus(userId: string, status: any): Promise<void> {
+    try {
+      // Toujours sauvegarder en local d'abord
+      await AsyncStorage.setItem(`user_integrations_${userId}`, JSON.stringify(status));
+
+      const isConnected = await this.testConnection();
+      if (isConnected) {
+        const response = await fetch(`${SERVER_URL}/api/integrations/${userId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(status),
+        });
+
+        if (response.ok) {
+          console.log('Statuts intégrations sauvegardés sur le serveur VPS');
+        } else {
+          console.log('Statuts intégrations sauvegardés localement (serveur indisponible)');
+        }
+      } else {
+        console.log('Statuts intégrations sauvegardés localement (serveur indisponible)');
+      }
+    } catch (error) {
+      console.error('Erreur sauvegarde statuts intégrations:', error);
+      // Au moins garder la sauvegarde locale
+      await AsyncStorage.setItem(`user_integrations_${userId}`, JSON.stringify(status));
+    }
+  }
+
   // Vérification de l'état du serveur
   static async syncData(): Promise<void> {
     try {
