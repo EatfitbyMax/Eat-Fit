@@ -946,17 +946,6 @@ export default function EntrainementScreen() {
     </SafeAreaView>
   );
 }
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert, TextInput } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
-import { IntegrationsManager, StravaActivity } from '../../utils/integrations';
-import { getCurrentUser } from '../../utils/auth';
-import { checkSubscriptionStatus } from '../../utils/subscription';
-import { getUserData, PersistentStorage } from '@/utils/storage';
-import { useTheme } from '@/context/ThemeContext';
-import { useLanguage } from '@/context/LanguageContext';
-import { getRecommendedPrograms, getSportEmoji, getSportName, WorkoutProgram } from '@/utils/sportPrograms';
 
 export default function EntrainementScreen() {
   const router = useRouter();
