@@ -618,8 +618,31 @@ app.post('/api/openfoodfacts/download', async (req, res) => {
   }
 });
 
-app.get('/api/openfoodfacts/download-progress', (req, res) => {
-  res.json(downloadProgress);
+app.get('/api/openfoodfacts/download-progress', async (req, res) => {
+  try {
+    // Essayer de lire le fichier de progrès détaillé
+    const progressFile = path.join(__dirname, 'data', 'download-progress.json');
+    try {
+      const progressData = await fs.readFile(progressFile, 'utf8');
+      const detailedProgress = JSON.parse(progressData);
+      
+      // Combiner avec les données globales
+      res.json({
+        ...downloadProgress,
+        detailed: detailedProgress,
+        source: 'pm2_file'
+      });
+    } catch (fileError) {
+      // Fallback vers les données en mémoire
+      res.json({
+        ...downloadProgress,
+        source: 'memory'
+      });
+    }
+  } catch (error) {
+    console.error('Erreur récupération progrès:', error);
+    res.status(500).json({ error: 'Erreur récupération progrès' });
+  }
 });
 
 // Route de test
@@ -627,8 +650,21 @@ app.get('/api/health-check', (req, res) => {
   res.json({ status: 'OK', message: 'Serveur VPS fonctionnel' });
 });
 
+// Configuration pour PM2
+process.on('SIGINT', () => {
+  console.log('🔄 Arrêt gracieux du serveur...');
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  console.log('🔄 Arrêt gracieux du serveur (SIGTERM)...');
+  process.exit(0);
+});
+
 app.listen(PORT, '0.0.0.0', async () => {
   await initDataDir();
-  console.log(`Serveur démarré sur le port ${PORT}`);
-  console.log(`Serveur accessible sur : https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.replit.dev:${PORT}`);
+  console.log(`[${new Date().toISOString()}] 🚀 Serveur EatFitByMax démarré sur le port ${PORT}`);
+  console.log(`[${new Date().toISOString()}] 🌐 Serveur accessible sur : https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.replit.dev:${PORT}`);
+  console.log(`[${new Date().toISOString()}] 📱 API prête pour les applications mobiles Expo`);
+  console.log(`[${new Date().toISOString()}] 🔧 Mode: ${process.env.NODE_ENV || 'development'}`);
 });
