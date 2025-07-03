@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert, TextInput } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -27,6 +26,8 @@ export default function EntrainementScreen() {
     return today;
   });
   const [workouts, setWorkouts] = useState<any[]>([]);
+  const [showAddWorkout, setShowAddWorkout] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [selectedStravaActivity, setSelectedStravaActivity] = useState<StravaActivity | null>(null);
   const [userSport, setUserSport] = useState<string>('');
   const [recommendedPrograms, setRecommendedPrograms] = useState<WorkoutProgram[]>([]);
@@ -60,17 +61,17 @@ export default function EntrainementScreen() {
     console.log(`Début: ${start.toISOString().split('T')[0]} (${start.toDateString()})`);
     console.log(`Fin: ${end.toISOString().split('T')[0]} (${end.toDateString()})`);
     console.log(`Workouts chargés: ${workouts.length}`);
-    
+
     // Grouper les workouts par date pour debug
     const workoutsByDate = workouts.reduce((acc: any, workout: any) => {
       if (!acc[workout.date]) acc[workout.date] = [];
       acc[workout.date].push(workout.name);
       return acc;
     }, {});
-    
+
     console.log('Workouts par date:', workoutsByDate);
     console.log('=== FIN DEBUG SEMAINE ===');
-    
+
     // Forcer un petit délai pour s'assurer que l'UI se met à jour
     setTimeout(() => {
       console.log('Force refresh UI terminé');
@@ -112,26 +113,26 @@ export default function EntrainementScreen() {
       }
 
       console.log('=== CHARGEMENT TOUS LES ENTRAINEMENTS ===');
-      
+
       // Charger depuis le serveur VPS d'abord
       try {
         const workouts = await PersistentStorage.getWorkouts(currentUser.id);
         console.log(`Total entraînements chargés depuis le serveur: ${workouts.length}`);
-        
+
         // Debug: grouper par date
         const workoutsByDate = workouts.reduce((acc: any, workout: any) => {
           if (!acc[workout.date]) acc[workout.date] = [];
           acc[workout.date].push(workout);
           return acc;
         }, {});
-        
+
         Object.keys(workoutsByDate).forEach(date => {
           console.log(`${date}: ${workoutsByDate[date].length} entraînement(s)`);
           workoutsByDate[date].forEach((w: any, i: number) => {
             console.log(`  ${i + 1}. ${w.name} (${w.type})`);
           });
         });
-        
+
         // Forcer la mise à jour de l'état même si les données sont identiques
         setWorkouts([...workouts]);
       } catch (error) {
@@ -139,7 +140,7 @@ export default function EntrainementScreen() {
         // Fallback vers le stockage local
         const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
         const storedWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
-        
+
         if (storedWorkouts) {
           const allWorkouts = JSON.parse(storedWorkouts);
           console.log(`Total entraînements chargés en local: ${allWorkouts.length}`);
@@ -149,7 +150,7 @@ export default function EntrainementScreen() {
           setWorkouts([]);
         }
       }
-      
+
       console.log('=== FIN CHARGEMENT TOUS LES ENTRAINEMENTS ===');
     } catch (error) {
       console.error('Erreur chargement entraînements:', error);
@@ -164,7 +165,7 @@ export default function EntrainementScreen() {
 
       const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
       const storedRatings = await AsyncStorage.getItem(`activity_ratings_${currentUser.id}`);
-      
+
       if (storedRatings) {
         setActivityRatings(JSON.parse(storedRatings));
       }
@@ -223,12 +224,12 @@ export default function EntrainementScreen() {
   const getWorkoutsCountForDay = (day: string) => {
     const { start } = getWeekRange();
     const dayIndex = daysOfWeek.indexOf(day);
-    
+
     // Créer une nouvelle date pour éviter les mutations
     const targetDate = new Date(start.getTime());
     targetDate.setDate(start.getDate() + dayIndex);
     targetDate.setHours(0, 0, 0, 0);
-    
+
     // Formater la date au format YYYY-MM-DD
     const year = targetDate.getFullYear();
     const month = String(targetDate.getMonth() + 1).padStart(2, '0');
@@ -236,9 +237,9 @@ export default function EntrainementScreen() {
     const dateString = `${year}-${month}-${dayNum}`;
 
     const count = workouts.filter(workout => workout.date === dateString).length;
-    
+
     console.log(`${day} (index ${dayIndex}): ${dateString} (${targetDate.toLocaleDateString('fr-FR', { weekday: 'long' })}) -> ${count} séance(s)`);
-    
+
     return count;
   };
 
@@ -310,11 +311,11 @@ export default function EntrainementScreen() {
     // Créer une nouvelle date basée sur currentWeek pour éviter les mutations
     const referenceDate = new Date(currentWeek.getTime());
     referenceDate.setHours(0, 0, 0, 0);
-    
+
     // Calculer le lundi de la semaine courante
     const dayOfWeek = referenceDate.getDay(); // 0 = dimanche, 1 = lundi, ..., 6 = samedi
     const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Distance depuis lundi
-    
+
     const startOfWeek = new Date(referenceDate);
     startOfWeek.setDate(referenceDate.getDate() - daysFromMonday);
     startOfWeek.setHours(0, 0, 0, 0);
@@ -336,18 +337,18 @@ export default function EntrainementScreen() {
 
   const getStravaActivitiesForCurrentWeek = () => {
     const { start, end } = getWeekRange();
-    
+
     return stravaActivities.filter(activity => {
       // Normaliser la date d'activité pour éviter les problèmes de fuseau horaire
       const activityDate = new Date(activity.date);
       activityDate.setHours(0, 0, 0, 0);
-      
+
       // Créer des copies des dates de début et fin pour la comparaison
       const startDate = new Date(start.getTime());
       const endDate = new Date(end.getTime());
       startDate.setHours(0, 0, 0, 0);
       endDate.setHours(23, 59, 59, 999);
-      
+
       return activityDate >= startDate && activityDate <= endDate;
     });
   };
@@ -355,13 +356,13 @@ export default function EntrainementScreen() {
   const navigateWeek = (direction: 'prev' | 'next') => {
     const newWeek = new Date(currentWeek.getTime());
     newWeek.setHours(0, 0, 0, 0);
-    
+
     if (direction === 'prev') {
       newWeek.setDate(newWeek.getDate() - 7);
     } else {
       newWeek.setDate(newWeek.getDate() + 7);
     }
-    
+
     console.log(`Navigation semaine ${direction}: ${newWeek.toISOString().split('T')[0]}`);
     setCurrentWeek(newWeek);
   };
@@ -369,18 +370,18 @@ export default function EntrainementScreen() {
   const handleDayPress = (jour: string) => {
     const { start } = getWeekRange();
     const dayIndex = daysOfWeek.indexOf(jour);
-    
+
     // Créer une nouvelle date pour éviter les mutations
     const targetDate = new Date(start.getTime());
     targetDate.setDate(start.getDate() + dayIndex);
     targetDate.setHours(0, 0, 0, 0);
-    
+
     // Formater la date au format YYYY-MM-DD en UTC pour éviter les décalages de fuseau horaire
     const year = targetDate.getFullYear();
     const month = String(targetDate.getMonth() + 1).padStart(2, '0');
     const dayNum = String(targetDate.getDate()).padStart(2, '0');
     const dateString = `${year}-${month}-${dayNum}`;
-    
+
     console.log(`=== CLIC SUR ${jour.toUpperCase()} ===`);
     console.log(`Index du jour: ${dayIndex}`);
     console.log(`Date de début de semaine: ${start.toISOString().split('T')[0]}`);
@@ -393,7 +394,7 @@ export default function EntrainementScreen() {
       console.log(`Comparaison: workout.date="${workout.date}" vs dateString="${dateString}"`);
       return workout.date === dateString;
     });
-    
+
     console.log(`Entraînements trouvés pour ${jour}: ${dayWorkouts.length}`);
     console.log('Workouts disponibles:', workouts.map(w => `${w.date}: ${w.name}`));
     console.log('=== FIN DEBUG CLIC ===');
@@ -441,7 +442,7 @@ export default function EntrainementScreen() {
 
   const renderStravaActivity = (activity: StravaActivity) => {
     const hasRating = activityRatings[activity.id];
-    
+
     return (
       <View key={activity.id} style={styles.activityCard}>
         <TouchableOpacity 
@@ -501,7 +502,7 @@ export default function EntrainementScreen() {
               </View>
             )}
           </View>
-          
+
           <TouchableOpacity 
             style={[styles.rpeButton, hasRating && styles.rpeButtonRated]}
             onPress={() => handleRateActivity(activity)}
@@ -641,10 +642,39 @@ export default function EntrainementScreen() {
     const today = getTodayDate();
     const target = new Date(targetDate.getTime());
     target.setHours(0, 0, 0, 0);
-    
+
     return target.getFullYear() === today.getFullYear() &&
            target.getMonth() === today.getMonth() &&
            target.getDate() === today.getDate();
+  };
+
+  useEffect(() => {
+    loadUserAndWorkouts();
+  }, []);
+
+  const loadUserAndWorkouts = async () => {
+    try {
+      const userData = await PersistentStorage.getUserData();
+      if (userData) {
+        setCurrentUser(userData);
+        const userWorkouts = await PersistentStorage.getUserWorkouts(userData.id);
+        setWorkouts(userWorkouts);
+      }
+    } catch (error) {
+      console.error('Erreur chargement entraînements:', error);
+    }
+  };
+
+  const saveWorkouts = async (newWorkouts: any[]) => {
+    try {
+      if (!currentUser?.id) return;
+
+      await PersistentStorage.saveUserWorkouts(currentUser.id, newWorkouts);
+      setWorkouts(newWorkouts);
+      console.log('Entraînements sauvegardés pour utilisateur:', currentUser.id);
+    } catch (error) {
+      console.error('Erreur sauvegarde:', error);
+    }
   };
 
   return (
@@ -725,12 +755,12 @@ export default function EntrainementScreen() {
                 const sessionCount = getWorkoutsCountForDay(jour);
                 const { start } = getWeekRange();
                 const dayIndex = daysOfWeek.indexOf(jour);
-                
+
                 // Calculer la date correcte pour le jour
                 const targetDate = new Date(start);
                 targetDate.setDate(start.getDate() + dayIndex);
                 targetDate.setHours(0, 0, 0, 0);
-                
+
                 const isTodayCheck = isToday(targetDate);
 
                 return (
@@ -810,7 +840,7 @@ export default function EntrainementScreen() {
                 </View>
               ) : (
                 <View style={styles.emptyState}>
-                  <View style={styles.emptyIcon}>
+<View style={styles.emptyIcon}>
                     <Text style={styles.emptyIconText}>📊</Text>
                   </View>
                   <Text style={styles.emptyTitle}>Aucune activité</Text>
