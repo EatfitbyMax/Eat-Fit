@@ -445,6 +445,45 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
   res.json({received: true});
 });
 
+// Route pour les données CIQUAL
+app.get('/api/ciqual/foods', async (req, res) => {
+  try {
+    const ciqualPath = path.join(__dirname, 'data', 'ciqual-foods.json');
+    const data = await fs.readFile(ciqualPath, 'utf8');
+    res.json(JSON.parse(data));
+  } catch (error) {
+    console.error('Erreur chargement CIQUAL:', error);
+    res.status(500).json({ error: 'Erreur chargement base CIQUAL' });
+  }
+});
+
+// Route de recherche CIQUAL
+app.get('/api/ciqual/search', async (req, res) => {
+  try {
+    const { q: query } = req.query;
+    
+    if (!query) {
+      return res.status(400).json({ error: 'Paramètre de recherche manquant' });
+    }
+
+    const ciqualPath = path.join(__dirname, 'data', 'ciqual-foods.json');
+    const data = await fs.readFile(ciqualPath, 'utf8');
+    const foods = JSON.parse(data);
+    
+    const searchTerm = query.toLowerCase();
+    const results = foods.filter(food => 
+      food.name.toLowerCase().includes(searchTerm) ||
+      food.category.toLowerCase().includes(searchTerm)
+    );
+    
+    console.log(`Recherche CIQUAL: ${results.length} résultats pour "${query}"`);
+    res.json(results);
+  } catch (error) {
+    console.error('Erreur recherche CIQUAL:', error);
+    res.status(500).json({ error: 'Erreur recherche CIQUAL' });
+  }
+});
+
 // Route de test
 app.get('/api/health-check', (req, res) => {
   res.json({ status: 'OK', message: 'Serveur VPS fonctionnel' });

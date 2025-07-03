@@ -65,11 +65,11 @@ export class OpenFoodFactsService {
 
         if (!response.ok) {
           console.log('API v2 échouée, tentative avec API v0...');
-          
+
           // Fallback vers l'API v0
           const controller2 = new AbortController();
           const timeoutId2 = setTimeout(() => controller2.abort(), 10000);
-          
+
           response = await fetch(
             `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=20`,
             { 
@@ -79,13 +79,13 @@ export class OpenFoodFactsService {
               }
             }
           );
-          
+
           clearTimeout(timeoutId2);
         }
 
         if (!response.ok) {
-          console.log('Toutes les APIs OpenFoodFacts échouées, utilisation des aliments locaux');
-          return this.getSearchableLocalFoods(query);
+          console.log('Toutes les APIs OpenFoodFacts échouées, tentative CIQUAL...');
+        return await this.searchCiqual(query);
         }
 
         const data = await response.json();
@@ -285,7 +285,7 @@ export class OpenFoodFactsService {
   // Recherche locale dans les aliments pré-définis
   static getSearchableLocalFoods(query: string): FoodProduct[] {
     const allLocalFoods = this.getAllLocalFoods();
-    
+
     if (!query || query.trim() === '') {
       return this.getPopularFoods();
     }
@@ -298,7 +298,7 @@ export class OpenFoodFactsService {
     );
 
     console.log(`Recherche locale: ${matchedFoods.length} aliments trouvés pour "${query}"`);
-    
+
     return matchedFoods.length > 0 ? matchedFoods : this.getPopularFoods();
   }
 
@@ -336,7 +336,7 @@ export class OpenFoodFactsService {
         categories: 'fruits',
         nutriments: { energy_kcal: 61, proteins: 1.1, carbohydrates: 15, fat: 0.5, fiber: 3 }
       },
-      
+
       // Légumes
       {
         id: 'carrot',
@@ -362,7 +362,7 @@ export class OpenFoodFactsService {
         categories: 'légumes',
         nutriments: { energy_kcal: 23, proteins: 2.9, carbohydrates: 3.6, fat: 0.4, fiber: 2.2 }
       },
-      
+
       // Protéines
       {
         id: 'chicken',
@@ -388,7 +388,7 @@ export class OpenFoodFactsService {
         categories: 'poissons',
         nutriments: { energy_kcal: 144, proteins: 30, carbohydrates: 0, fat: 1, fiber: 0 }
       },
-      
+
       // Céréales et féculents
       {
         id: 'bread',
@@ -414,7 +414,7 @@ export class OpenFoodFactsService {
         categories: 'céréales',
         nutriments: { energy_kcal: 389, proteins: 17, carbohydrates: 66, fat: 7, fiber: 11 }
       },
-      
+
       // Produits laitiers
       {
         id: 'milk',
@@ -434,7 +434,7 @@ export class OpenFoodFactsService {
         categories: 'laitages',
         nutriments: { energy_kcal: 113, proteins: 7, carbohydrates: 1, fat: 9, fiber: 0 }
       },
-      
+
       // Légumineuses
       {
         id: 'lentils',
@@ -448,7 +448,7 @@ export class OpenFoodFactsService {
         categories: 'légumineuses',
         nutriments: { energy_kcal: 164, proteins: 8.9, carbohydrates: 27, fat: 2.6, fiber: 8 }
       },
-      
+
       // Noix et graines
       {
         id: 'almonds',
@@ -470,4 +470,38 @@ export class OpenFoodFactsService {
     const allFoods = this.getAllLocalFoods();
     return allFoods.slice(0, 8); // Retourner les 8 premiers aliments
   }
+    // Implémentation de la recherche CIQUAL (à adapter avec votre serveur)
+    static async searchCiqual(query: string): Promise<FoodProduct[]> {
+      try {
+        console.log('Recherche CIQUAL pour:', query);
+        const response = await fetch(`YOUR_CIQUAL_SERVER_URL?query=${encodeURIComponent(query)}`);
+  
+        if (!response.ok) {
+          throw new Error('Erreur lors de la récupération des données CIQUAL');
+        }
+  
+        const data = await response.json();
+  
+        // Formattez les données CIQUAL pour correspondre à FoodProduct
+        const formattedProducts: FoodProduct[] = data.map((item: any) => ({
+          id: `ciqual_${item.code}`, // Assurez-vous d'avoir un identifiant unique
+          name: item.name,
+          nutriments: {
+            energy_kcal: item.energy_kcal,
+            proteins: item.proteins,
+            carbohydrates: item.carbohydrates,
+            fat: item.fat,
+            fiber: item.fiber,
+            sugars: item.sugars,
+            salt: item.salt,
+          },
+          // Ajoutez d'autres champs CIQUAL si nécessaire
+        }));
+  
+        return formattedProducts;
+      } catch (error) {
+        console.error('Erreur recherche CIQUAL:', error);
+        return this.getSearchableLocalFoods(query); // Fallback final
+      }
+    }
 }
