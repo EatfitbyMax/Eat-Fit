@@ -359,10 +359,8 @@ export default function CreerEntrainementScreen() {
         [{ 
           text: 'OK', 
           onPress: () => {
-            // Forcer le rechargement immédiat des données puis naviguer
-            setTimeout(() => {
-              router.back();
-            }, 100);
+            // Rediriger vers la page entrainement
+            router.push('/(client)/entrainement');
           }
         }]
       );
