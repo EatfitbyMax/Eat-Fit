@@ -836,6 +836,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 12,
     elevation: 8,
+    display: 'flex',
   },
   arrowText: {
     fontSize: 20,
@@ -846,6 +847,8 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
     textAlign: 'center',
     lineHeight: 20,
+    textAlignVertical: 'center',
+    includeFontPadding: false,
   },
   dateContainer: {
     flex: 1,
