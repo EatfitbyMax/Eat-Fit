@@ -67,15 +67,32 @@ export class PersistentStorage {
   // Fonctions pour les données utilisateur spécifiques
   static async getUserWorkouts(userId: string): Promise<any[]> {
     try {
-      await this.testConnection();
-      const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`);
-      if (response.ok) {
-        return await response.json();
+      const isConnected = await this.testConnection();
+      if (isConnected) {
+        const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`);
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Entraînements récupérés depuis le serveur VPS');
+          return data;
+        }
       }
-      throw new Error('Erreur récupération entraînements');
+
+      // Fallback vers le stockage local
+      console.log('Fallback vers le stockage local pour les entraînements');
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+      const localData = await AsyncStorage.getItem(`workouts_${userId}`);
+      return localData ? JSON.parse(localData) : [];
     } catch (error) {
       console.error('Erreur récupération entraînements:', error);
-      return [];
+      // Essayer le stockage local en cas d'erreur
+      try {
+        const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+        const localData = await AsyncStorage.getItem(`workouts_${userId}`);
+        return localData ? JSON.parse(localData) : [];
+      } catch (localError) {
+        console.error('Erreur stockage local:', localError);
+        return [];
+      }
     }
   }
 
