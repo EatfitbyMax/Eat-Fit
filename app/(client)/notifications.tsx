@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Switch, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -29,9 +28,7 @@ export default function NotificationsScreen() {
       if (currentUser) {
         setUser(currentUser);
         // Charger les paramètres de notification existants
-        if (currentUser.notificationSettings) {
-          setSettings(currentUser.notificationSettings);
-        }
+        loadNotificationSettings();
       }
     } catch (error) {
       console.error('Erreur chargement utilisateur:', error);
@@ -45,7 +42,7 @@ export default function NotificationsScreen() {
     try {
       const users = await PersistentStorage.getUsers();
       const userIndex = users.findIndex(u => u.email === user.email);
-      
+
       if (userIndex !== -1) {
         users[userIndex] = { ...users[userIndex], notificationSettings: newSettings };
         await PersistentStorage.saveUsers(users);
@@ -111,6 +108,35 @@ export default function NotificationsScreen() {
     }
   ];
 
+  const loadNotificationSettings = async () => {
+    try {
+      const currentUser = await PersistentStorage.getCurrentUser();
+      if (currentUser?.id) {
+        const savedSettings = await PersistentStorage.getNotificationSettings(currentUser.id);
+        setSettings(savedSettings);
+      }
+    } catch (error) {
+      console.error('Erreur chargement paramètres notifications:', error);
+    }
+  };
+
+  const saveNotificationSettings = async (settings: NotificationSettings) => {
+    try {
+      const currentUser = await PersistentStorage.getCurrentUser();
+      if (currentUser) {
+        // Sauvegarder les paramètres sur le serveur VPS
+        await PersistentStorage.saveNotificationSettings(currentUser.id, settings);
+
+        // Mettre à jour l'utilisateur local
+        const updatedUser = { ...currentUser, notificationSettings: settings };
+        await PersistentStorage.setCurrentUser(updatedUser);
+        console.log('Paramètres de notifications sauvegardés');
+      }
+    } catch (error) {
+      console.error('Erreur sauvegarde paramètres notifications:', error);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
@@ -129,7 +155,7 @@ export default function NotificationsScreen() {
         {/* Notification Types */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>🔔 Types de notifications</Text>
-          
+
           {notificationTypes.map((item) => (
             <View key={item.key} style={styles.settingItem}>
               <View style={styles.settingInfo}>
@@ -152,7 +178,7 @@ export default function NotificationsScreen() {
         {/* Sound & Vibration */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>🔊 Son et vibration</Text>
-          
+
           {soundSettings.map((item) => (
             <View key={item.key} style={styles.settingItem}>
               <View style={styles.settingInfo}>
@@ -175,7 +201,7 @@ export default function NotificationsScreen() {
         {/* Schedule */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>⏰ Horaires des notifications</Text>
-          
+
           <TouchableOpacity style={styles.scheduleItem}>
             <View style={styles.scheduleInfo}>
               <Text style={styles.scheduleIcon}>🌅</Text>
