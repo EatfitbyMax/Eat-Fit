@@ -16,6 +16,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { getCurrentUser } from '../../utils/auth';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { allSports } from '@/utils/sportPrograms';
 
 interface Exercise {
   id: string;
@@ -64,6 +65,78 @@ const getOrderedWorkoutTypes = (favoriteSport: string) => {
 };
 
 const getSportNameFromId = (sportId: string): string => {
+  // Trouver le sport correspondant dans la liste complète
+  const sport = allSports.find((s: any) => s.id === sportId);
+  if (sport) {
+    // Mapper le nom du sport vers un type d'entraînement disponible
+    const sportName = sport.name;
+    
+    // Vérifier si le nom existe directement dans WORKOUT_TYPES
+    if (WORKOUT_TYPES.includes(sportName)) {
+      return sportName;
+    }
+    
+    // Sinon, mapper vers le type le plus proche selon la catégorie et le nom
+    const sportLower = sportName.toLowerCase();
+    const categoryLower = sport.category.toLowerCase();
+    
+    // Mapping basé sur la catégorie et le nom
+    if (categoryLower.includes('musculation') || categoryLower.includes('fitness') || sportLower.includes('musculation') || sportLower.includes('fitness') || sportLower.includes('force')) {
+      return 'Musculation';
+    }
+    if (categoryLower.includes('course') || categoryLower.includes('athlétisme') || sportLower.includes('course') || sportLower.includes('running') || sportLower.includes('marathon') || sportLower.includes('trail')) {
+      return 'Course à pied';
+    }
+    if (categoryLower.includes('cyclisme') || sportLower.includes('cyclisme') || sportLower.includes('vélo') || sportLower.includes('vtt')) {
+      return 'Cyclisme';
+    }
+    if (categoryLower.includes('aquatique') || sportLower.includes('natation') || sportLower.includes('aqua')) {
+      return 'Natation';
+    }
+    if (sportLower.includes('yoga') || sportLower.includes('pilates')) {
+      return 'Yoga';
+    }
+    if (categoryLower.includes('combat') || sportLower.includes('boxe') || sportLower.includes('combat') || sportLower.includes('arts martiaux')) {
+      return 'Boxe';
+    }
+    if (categoryLower.includes('raquette') || sportLower.includes('tennis') || sportLower.includes('raquette')) {
+      return 'Tennis';
+    }
+    if (categoryLower.includes('collectif') && (sportLower.includes('football') || sportLower.includes('foot'))) {
+      return 'Football';
+    }
+    if (categoryLower.includes('collectif') && sportLower.includes('basket')) {
+      return 'Basketball';
+    }
+    if (categoryLower.includes('aventure') || sportLower.includes('escalade') || sportLower.includes('grimpe')) {
+      return 'Escalade';
+    }
+    if (sportLower.includes('crossfit') || sportLower.includes('cross')) {
+      return 'CrossFit';
+    }
+    if (categoryLower.includes('artistique') || sportLower.includes('danse') || sportLower.includes('dance')) {
+      return 'Danse';
+    }
+    if (sportLower.includes('triathlon') || sportLower.includes('endurance') || categoryLower.includes('endurance')) {
+      return 'Cardio';
+    }
+    if (sportLower.includes('étirement') || sportLower.includes('stretching') || sportLower.includes('souplesse')) {
+      return 'Étirement';
+    }
+    if (sportLower.includes('hiit') || sportLower.includes('interval')) {
+      return 'HIIT';
+    }
+    
+    // Pour les sports collectifs non spécifiques, retourner un type générique
+    if (categoryLower.includes('collectif')) {
+      return 'Cardio';
+    }
+    
+    // Pour tous les autres sports, utiliser Cardio comme type par défaut
+    return 'Cardio';
+  }
+  
+  // Fallback vers l'ancien système pour la compatibilité
   const sportMap: Record<string, string> = {
     'musculation': 'Musculation',
     'course': 'Course à pied',
@@ -76,9 +149,10 @@ const getSportNameFromId = (sportId: string): string => {
     'basketball': 'Basketball',
     'escalade': 'Escalade',
     'crossfit': 'CrossFit',
-    'danse': 'Danse'
+    'danse': 'Danse',
+    'triathlon': 'Cardio'
   };
-  return sportMap[sportId] || 'Musculation';
+  return sportMap[sportId] || 'Cardio';
 };
 
 const SPECIFICITIES = [
