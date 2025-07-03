@@ -11,6 +11,8 @@ export default function RegisterAccountScreen() {
   const [email, setEmail] = useState(registrationData.email);
   const [password, setPassword] = useState(registrationData.password);
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleFinish = async () => {
     if (email.trim() && password.trim() && password === confirmPassword) {
@@ -110,9 +112,14 @@ export default function RegisterAccountScreen() {
             placeholderTextColor="#666666"
             value={password}
             onChangeText={setPassword}
-            secureTextEntry
+            secureTextEntry={!showPassword}
           />
-          <Text style={styles.inputIcon}>👁</Text>
+          <TouchableOpacity 
+            style={styles.eyeButton}
+            onPress={() => setShowPassword(!showPassword)}
+          >
+            <Text style={styles.inputIcon}>{showPassword ? '🙈' : '👁'}</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.inputContainer}>
@@ -122,9 +129,14 @@ export default function RegisterAccountScreen() {
             placeholderTextColor="#666666"
             value={confirmPassword}
             onChangeText={setConfirmPassword}
-            secureTextEntry
+            secureTextEntry={!showConfirmPassword}
           />
-          <Text style={styles.inputIcon}>👁</Text>
+          <TouchableOpacity 
+            style={styles.eyeButton}
+            onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+          >
+            <Text style={styles.inputIcon}>{showConfirmPassword ? '🙈' : '👁'}</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -218,10 +230,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#333333',
   },
-  inputIcon: {
+  eyeButton: {
     position: 'absolute',
     right: 16,
     top: 16,
+    padding: 4,
+  },
+  inputIcon: {
     fontSize: 16,
   },
   navigationContainer: {
