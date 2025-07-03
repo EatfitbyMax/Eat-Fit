@@ -43,63 +43,114 @@ export class OpenFoodFactsService {
         return this.getPopularFoods();
       }
 
-      // Utiliser l'API v0 qui est plus stable
-      const response = await fetch(
-        `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=20`
-      );
+      console.log('Recherche OpenFoodFacts pour:', query);
 
-      if (!response.ok) {
-        console.log('Réponse API non-OK:', response.status);
-        return this.getPopularFoods();
+      // Créer un contrôleur d'abort pour le timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 secondes timeout
+
+      try {
+        // Essayer d'abord l'API v2 plus moderne
+        let response = await fetch(
+          `https://world.openfoodfacts.org/api/v2/search?q=${encodeURIComponent(query)}&fields=code,product_name,product_name_fr,brands,nutriments,image_url,image_front_url,quantity,categories,ingredients_text,ingredients_text_fr&page_size=20`,
+          { 
+            signal: controller.signal,
+            headers: {
+              'User-Agent': 'EatFitbyMax/1.0'
+            }
+          }
+        );
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          console.log('API v2 échouée, tentative avec API v0...');
+          
+          // Fallback vers l'API v0
+          const controller2 = new AbortController();
+          const timeoutId2 = setTimeout(() => controller2.abort(), 10000);
+          
+          response = await fetch(
+            `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=20`,
+            { 
+              signal: controller2.signal,
+              headers: {
+                'User-Agent': 'EatFitbyMax/1.0'
+              }
+            }
+          );
+          
+          clearTimeout(timeoutId2);
+        }
+
+        if (!response.ok) {
+          console.log('Toutes les APIs OpenFoodFacts échouées, utilisation des aliments locaux');
+          return this.getSearchableLocalFoods(query);
+        }
+
+        const data = await response.json();
+        console.log('Réponse OpenFoodFacts reçue');
+
+        // Vérifier que la réponse contient des produits
+        const products = data.products || data.items || [];
+        if (!Array.isArray(products) || products.length === 0) {
+          console.log('Aucun produit trouvé dans la réponse, recherche locale...');
+          return this.getSearchableLocalFoods(query);
+        }
+
+        // Filtrer les produits avec des données nutritionnelles valides
+        const validProducts = products.filter((product: any) => 
+          product && 
+          (product.product_name || product.product_name_fr) && 
+          product.nutriments
+        );
+
+        if (validProducts.length === 0) {
+          console.log('Aucun produit valide trouvé, recherche locale...');
+          return this.getSearchableLocalFoods(query);
+        }
+
+        console.log(`${validProducts.length} produits valides trouvés`);
+
+        const formattedProducts = validProducts.map((product: any) => {
+          return {
+            id: product.code || `search_${Date.now()}_${Math.random()}`,
+            name: product.product_name_fr || product.product_name || 'Produit inconnu',
+            brand: product.brands || undefined,
+            barcode: product.code,
+            nutriments: {
+              energy_kcal: this.parseNutriment(product.nutriments?.['energy-kcal_100g']) || 
+                          Math.round((this.parseNutriment(product.nutriments?.['energy_100g']) || 0) / 4.184) || 0,
+              proteins: this.parseNutriment(product.nutriments?.proteins_100g) || 0,
+              carbohydrates: this.parseNutriment(product.nutriments?.carbohydrates_100g) || 0,
+              fat: this.parseNutriment(product.nutriments?.fat_100g) || 0,
+              fiber: this.parseNutriment(product.nutriments?.fiber_100g),
+              sugars: this.parseNutriment(product.nutriments?.sugars_100g),
+              salt: this.parseNutriment(product.nutriments?.salt_100g),
+            },
+            image_url: product.image_url || product.image_front_url,
+            quantity: product.quantity,
+            categories: product.categories,
+            ingredients_text: product.ingredients_text_fr || product.ingredients_text,
+          };
+        });
+
+        return formattedProducts;
+
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+          console.log('Timeout de recherche OpenFoodFacts, recherche locale...');
+        } else {
+          console.log('Erreur réseau OpenFoodFacts:', fetchError);
+        }
+        return this.getSearchableLocalFoods(query);
       }
 
-      const data = await response.json();
-
-      // Vérifier que la réponse contient des produits
-      if (!data || !data.products || !Array.isArray(data.products)) {
-        console.log('Structure de réponse invalide');
-        return this.getPopularFoods();
-      }
-
-      // Filtrer les produits avec des données nutritionnelles valides
-      const validProducts = data.products.filter((product: any) => 
-        product && 
-        product.product_name && 
-        product.nutriments && 
-        (product.nutriments['energy-kcal_100g'] || product.nutriments['energy_100g'])
-      );
-
-      if (validProducts.length === 0) {
-        console.log('Aucun produit valide trouvé');
-        return this.getPopularFoods();
-      }
-
-      return validProducts.map((product: any) => {
-        return {
-          id: product.code || `search_${Date.now()}_${Math.random()}`,
-          name: product.product_name_fr || product.product_name || 'Produit inconnu',
-          brand: product.brands || undefined,
-          barcode: product.code,
-          nutriments: {
-            energy_kcal: this.parseNutriment(product.nutriments?.['energy-kcal_100g']) || 
-                        Math.round((this.parseNutriment(product.nutriments?.['energy_100g']) || 0) / 4.184) || 0,
-            proteins: this.parseNutriment(product.nutriments?.proteins_100g) || 0,
-            carbohydrates: this.parseNutriment(product.nutriments?.carbohydrates_100g) || 0,
-            fat: this.parseNutriment(product.nutriments?.fat_100g) || 0,
-            fiber: this.parseNutriment(product.nutriments?.fiber_100g),
-            sugars: this.parseNutriment(product.nutriments?.sugars_100g),
-            salt: this.parseNutriment(product.nutriments?.salt_100g),
-          },
-          image_url: product.image_url || product.image_front_url,
-          quantity: product.quantity,
-          categories: product.categories,
-          ingredients_text: product.ingredients_text_fr || product.ingredients_text,
-        };
-      });
     } catch (error) {
       console.error('Erreur recherche OpenFoodFacts:', error);
-      // En cas d'erreur, retourner les aliments populaires
-      return this.getPopularFoods();
+      // En cas d'erreur, faire une recherche locale
+      return this.getSearchableLocalFoods(query);
     }
   }
 
@@ -231,64 +282,192 @@ export class OpenFoodFactsService {
     }
   }
 
-  // Suggestions d'aliments populaires
-  static getPopularFoods(): FoodProduct[] {
+  // Recherche locale dans les aliments pré-définis
+  static getSearchableLocalFoods(query: string): FoodProduct[] {
+    const allLocalFoods = this.getAllLocalFoods();
+    
+    if (!query || query.trim() === '') {
+      return this.getPopularFoods();
+    }
+
+    const searchTerm = query.toLowerCase().trim();
+    const matchedFoods = allLocalFoods.filter(food => 
+      food.name.toLowerCase().includes(searchTerm) ||
+      (food.brand && food.brand.toLowerCase().includes(searchTerm)) ||
+      (food.categories && food.categories.toLowerCase().includes(searchTerm))
+    );
+
+    console.log(`Recherche locale: ${matchedFoods.length} aliments trouvés pour "${query}"`);
+    
+    return matchedFoods.length > 0 ? matchedFoods : this.getPopularFoods();
+  }
+
+  // Base de données locale étendue d'aliments
+  static getAllLocalFoods(): FoodProduct[] {
     return [
+      // Fruits
       {
         id: 'banana',
         name: 'Banane',
-        nutriments: {
-          energy_kcal: 89,
-          proteins: 1.1,
-          carbohydrates: 23,
-          fat: 0.3,
-          fiber: 2.6,
-        }
+        categories: 'fruits',
+        nutriments: { energy_kcal: 89, proteins: 1.1, carbohydrates: 23, fat: 0.3, fiber: 2.6 }
       },
       {
         id: 'apple',
         name: 'Pomme',
-        nutriments: {
-          energy_kcal: 52,
-          proteins: 0.3,
-          carbohydrates: 14,
-          fat: 0.2,
-          fiber: 2.4,
-        }
+        categories: 'fruits',
+        nutriments: { energy_kcal: 52, proteins: 0.3, carbohydrates: 14, fat: 0.2, fiber: 2.4 }
       },
       {
-        id: 'bread',
-        name: 'Pain complet',
-        nutriments: {
-          energy_kcal: 247,
-          proteins: 13,
-          carbohydrates: 41,
-          fat: 4.2,
-          fiber: 7,
-        }
+        id: 'orange',
+        name: 'Orange',
+        categories: 'fruits',
+        nutriments: { energy_kcal: 47, proteins: 0.9, carbohydrates: 12, fat: 0.1, fiber: 2.4 }
       },
+      {
+        id: 'strawberry',
+        name: 'Fraise',
+        categories: 'fruits',
+        nutriments: { energy_kcal: 32, proteins: 0.7, carbohydrates: 8, fat: 0.3, fiber: 2 }
+      },
+      {
+        id: 'kiwi',
+        name: 'Kiwi',
+        categories: 'fruits',
+        nutriments: { energy_kcal: 61, proteins: 1.1, carbohydrates: 15, fat: 0.5, fiber: 3 }
+      },
+      
+      // Légumes
+      {
+        id: 'carrot',
+        name: 'Carotte',
+        categories: 'légumes',
+        nutriments: { energy_kcal: 41, proteins: 0.9, carbohydrates: 10, fat: 0.2, fiber: 2.8 }
+      },
+      {
+        id: 'tomato',
+        name: 'Tomate',
+        categories: 'légumes',
+        nutriments: { energy_kcal: 18, proteins: 0.9, carbohydrates: 3.9, fat: 0.2, fiber: 1.2 }
+      },
+      {
+        id: 'broccoli',
+        name: 'Brocoli',
+        categories: 'légumes',
+        nutriments: { energy_kcal: 34, proteins: 2.8, carbohydrates: 7, fat: 0.4, fiber: 2.6 }
+      },
+      {
+        id: 'spinach',
+        name: 'Épinards',
+        categories: 'légumes',
+        nutriments: { energy_kcal: 23, proteins: 2.9, carbohydrates: 3.6, fat: 0.4, fiber: 2.2 }
+      },
+      
+      // Protéines
       {
         id: 'chicken',
         name: 'Blanc de poulet',
-        nutriments: {
-          energy_kcal: 165,
-          proteins: 31,
-          carbohydrates: 0,
-          fat: 3.6,
-          fiber: 0,
-        }
+        categories: 'viandes',
+        nutriments: { energy_kcal: 165, proteins: 31, carbohydrates: 0, fat: 3.6, fiber: 0 }
+      },
+      {
+        id: 'salmon',
+        name: 'Saumon',
+        categories: 'poissons',
+        nutriments: { energy_kcal: 208, proteins: 25, carbohydrates: 0, fat: 12, fiber: 0 }
+      },
+      {
+        id: 'eggs',
+        name: 'Œufs',
+        categories: 'protéines',
+        nutriments: { energy_kcal: 155, proteins: 13, carbohydrates: 1.1, fat: 11, fiber: 0 }
+      },
+      {
+        id: 'tuna',
+        name: 'Thon',
+        categories: 'poissons',
+        nutriments: { energy_kcal: 144, proteins: 30, carbohydrates: 0, fat: 1, fiber: 0 }
+      },
+      
+      // Céréales et féculents
+      {
+        id: 'bread',
+        name: 'Pain complet',
+        categories: 'céréales',
+        nutriments: { energy_kcal: 247, proteins: 13, carbohydrates: 41, fat: 4.2, fiber: 7 }
       },
       {
         id: 'rice',
         name: 'Riz blanc cuit',
-        nutriments: {
-          energy_kcal: 130,
-          proteins: 2.7,
-          carbohydrates: 28,
-          fat: 0.3,
-          fiber: 0.4,
-        }
+        categories: 'céréales',
+        nutriments: { energy_kcal: 130, proteins: 2.7, carbohydrates: 28, fat: 0.3, fiber: 0.4 }
+      },
+      {
+        id: 'pasta',
+        name: 'Pâtes',
+        categories: 'céréales',
+        nutriments: { energy_kcal: 131, proteins: 5, carbohydrates: 25, fat: 1.1, fiber: 1.8 }
+      },
+      {
+        id: 'oats',
+        name: 'Avoine',
+        categories: 'céréales',
+        nutriments: { energy_kcal: 389, proteins: 17, carbohydrates: 66, fat: 7, fiber: 11 }
+      },
+      
+      // Produits laitiers
+      {
+        id: 'milk',
+        name: 'Lait entier',
+        categories: 'laitages',
+        nutriments: { energy_kcal: 61, proteins: 3.2, carbohydrates: 4.8, fat: 3.3, fiber: 0 }
+      },
+      {
+        id: 'yogurt',
+        name: 'Yaourt nature',
+        categories: 'laitages',
+        nutriments: { energy_kcal: 59, proteins: 10, carbohydrates: 3.6, fat: 0.4, fiber: 0 }
+      },
+      {
+        id: 'cheese',
+        name: 'Fromage',
+        categories: 'laitages',
+        nutriments: { energy_kcal: 113, proteins: 7, carbohydrates: 1, fat: 9, fiber: 0 }
+      },
+      
+      // Légumineuses
+      {
+        id: 'lentils',
+        name: 'Lentilles',
+        categories: 'légumineuses',
+        nutriments: { energy_kcal: 116, proteins: 9, carbohydrates: 20, fat: 0.4, fiber: 8 }
+      },
+      {
+        id: 'chickpeas',
+        name: 'Pois chiches',
+        categories: 'légumineuses',
+        nutriments: { energy_kcal: 164, proteins: 8.9, carbohydrates: 27, fat: 2.6, fiber: 8 }
+      },
+      
+      // Noix et graines
+      {
+        id: 'almonds',
+        name: 'Amandes',
+        categories: 'oléagineux',
+        nutriments: { energy_kcal: 579, proteins: 21, carbohydrates: 22, fat: 50, fiber: 12 }
+      },
+      {
+        id: 'walnuts',
+        name: 'Noix',
+        categories: 'oléagineux',
+        nutriments: { energy_kcal: 654, proteins: 15, carbohydrates: 14, fat: 65, fiber: 7 }
       }
     ];
+  }
+
+  // Suggestions d'aliments populaires
+  static getPopularFoods(): FoodProduct[] {
+    const allFoods = this.getAllLocalFoods();
+    return allFoods.slice(0, 8); // Retourner les 8 premiers aliments
   }
 }

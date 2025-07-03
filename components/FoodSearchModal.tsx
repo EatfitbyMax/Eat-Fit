@@ -104,12 +104,34 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
 
     setLoading(true);
     try {
+      console.log('Démarrage recherche pour:', searchQuery);
       const results = await OpenFoodFactsService.searchFood(searchQuery);
+      console.log('Résultats reçus:', results.length);
       setSearchResults(results);
+      
+      if (results.length === 0) {
+        console.log('Aucun résultat trouvé');
+        Alert.alert(
+          'Aucun résultat', 
+          `Aucun aliment trouvé pour "${searchQuery}". Essayez un terme plus général.`,
+          [{ text: 'OK' }]
+        );
+      }
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible de rechercher les aliments. Vérifiez votre connexion internet.');
-      // En cas d'erreur, afficher les favoris
-      loadFavoriteFoods();
+      console.error('Erreur recherche aliments:', error);
+      Alert.alert(
+        'Recherche locale', 
+        'Connexion internet limitée. Recherche dans la base locale uniquement.',
+        [{ text: 'OK' }]
+      );
+      // En cas d'erreur, essayer une recherche locale
+      try {
+        const localResults = await OpenFoodFactsService.searchFood(searchQuery);
+        setSearchResults(localResults);
+      } catch (localError) {
+        console.error('Erreur recherche locale:', localError);
+        loadFavoriteFoods();
+      }
     } finally {
       setLoading(false);
     }
