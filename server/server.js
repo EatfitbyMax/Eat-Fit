@@ -1,4 +1,3 @@
-
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs').promises;
@@ -227,7 +226,81 @@ app.post('/api/forme/:userId', async (req, res) => {
   }
 });
 
-// Routes pour récupérer les données de forme par date
+// Routes pour les données de poids
+app.get('/api/weight/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const data = await fs.readFile(path.join(DATA_DIR, `weight_${userId}.json`), 'utf8');
+    res.json(JSON.parse(data));
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      res.json({
+        startWeight: 0,
+        currentWeight: 0,
+        targetWeight: 0,
+        lastWeightUpdate: null,
+        targetAsked: false,
+        weightHistory: [],
+      });
+    } else {
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
+});
+
+app.post('/api/weight/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const weightData = req.body;
+    await fs.writeFile(path.join(DATA_DIR, `weight_${userId}.json`), JSON.stringify(weightData, null, 2));
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur sauvegarde données poids' });
+  }
+});
+
+// Routes pour les mensurations
+app.get('/api/mensurations/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const data = await fs.readFile(path.join(DATA_DIR, `mensurations_${userId}.json`), 'utf8');
+    res.json(JSON.parse(data));
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      res.json({
+        biceps: { start: 0, current: 0 },
+        bicepsGauche: { start: 0, current: 0 },
+        bicepsDroit: { start: 0, current: 0 },
+        cuisses: { start: 0, current: 0 },
+        cuissesGauche: { start: 0, current: 0 },
+        cuissesDroit: { start: 0, current: 0 },
+        pectoraux: { start: 0, current: 0 },
+        taille: { start: 0, current: 0 },
+        avantBras: { start: 0, current: 0 },
+        avantBrasGauche: { start: 0, current: 0 },
+        avantBrasDroit: { start: 0, current: 0 },
+        mollets: { start: 0, current: 0 },
+        molletsGauche: { start: 0, current: 0 },
+        molletsDroit: { start: 0, current: 0 },
+      });
+    } else {
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
+});
+
+app.post('/api/mensurations/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const mensurationData = req.body;
+    await fs.writeFile(path.join(DATA_DIR, `mensurations_${userId}.json`), JSON.stringify(mensurationData, null, 2));
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur sauvegarde données mensurations' });
+  }
+});
+
+// Routes pour les données de forme par date
 app.get('/api/forme/:userId/:date', async (req, res) => {
   try {
     const { userId, date } = req.params;
@@ -275,7 +348,7 @@ app.post('/api/stripe/create-payment-intent', async (req, res) => {
         email: `user-${userId}@eatfitbymax.com`,
         limit: 1
       });
-      
+
       if (customers.data.length > 0) {
         customer = customers.data[0];
       } else {
@@ -374,14 +447,14 @@ app.post('/api/stripe/confirm-payment', async (req, res) => {
 app.get('/api/stripe/subscription/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    
+
     const subscriptionData = await fs.readFile(
       path.join(DATA_DIR, `subscription_${userId}.json`), 
       'utf8'
     );
-    
+
     const subscription = JSON.parse(subscriptionData);
-    
+
     // Vérifier si l'abonnement est encore valide
     if (subscription.endDate && new Date(subscription.endDate) < new Date()) {
       subscription.status = 'expired';
@@ -390,9 +463,9 @@ app.get('/api/stripe/subscription/:userId', async (req, res) => {
         JSON.stringify(subscription, null, 2)
       );
     }
-    
+
     res.json(subscription);
-    
+
   } catch (error) {
     if (error.code === 'ENOENT') {
       // Aucun abonnement trouvé, retourner gratuit
@@ -428,16 +501,16 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
     case 'payment_intent.succeeded':
       const paymentIntent = event.data.object;
       console.log('✅ Paiement réussi:', paymentIntent.id);
-      
+
       // Ici vous pouvez ajouter une logique supplémentaire
       // comme l'envoi d'emails de confirmation, etc.
       break;
-      
+
     case 'payment_intent.payment_failed':
       const failedPayment = event.data.object;
       console.log('❌ Paiement échoué:', failedPayment.id);
       break;
-      
+
     default:
       console.log(`Événement non géré: ${event.type}`);
   }

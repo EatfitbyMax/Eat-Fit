@@ -373,17 +373,26 @@ export default function HomeScreen() {
       const currentUser = await getCurrentUser();
       if (!currentUser) return;
 
+      // Charger depuis le serveur d'abord
+      try {
+        const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.replit.app';
+        const response = await fetch(`${VPS_URL}/api/weight/${user.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setWeightData(data);
+          // Sauvegarder en local comme backup
+          await AsyncStorage.setItem(`weight_data_${user.id}`, JSON.stringify(data));
+          return;
+        }
+      } catch (serverError) {
+        console.log('Fallback vers le stockage local pour les données de poids (index)');
+      }
+
+      // Fallback vers le stockage local
       const weightDataString = await AsyncStorage.getItem(`weight_data_${currentUser.id}`);
       if (weightDataString) {
-        const saved = JSON.parse(weightDataString);
-        setWeightData(saved);
-      } else {
-        // Utiliser le poids d'inscription comme poids de départ
-        setWeightData({
-          startWeight: currentUser.weight || 0,
-          currentWeight: currentUser.weight || 0,
-          targetWeight: 0,
-        });
+        const data = JSON.parse(weightDataString);
+        setWeightData(data);
       }
     } catch (error) {
       console.error('Erreur chargement données poids:', error);

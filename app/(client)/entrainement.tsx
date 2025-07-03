@@ -113,16 +113,13 @@ export default function EntrainementScreen() {
 
       console.log('=== CHARGEMENT TOUS LES ENTRAINEMENTS ===');
       
-      // Utiliser directement le stockage local pour plus de fiabilité
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-      const storedWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
-      
-      if (storedWorkouts) {
-        const allWorkouts = JSON.parse(storedWorkouts);
-        console.log(`Total entraînements chargés: ${allWorkouts.length}`);
+      // Charger depuis le serveur VPS d'abord
+      try {
+        const workouts = await PersistentStorage.getWorkouts(currentUser.id);
+        console.log(`Total entraînements chargés depuis le serveur: ${workouts.length}`);
         
         // Debug: grouper par date
-        const workoutsByDate = allWorkouts.reduce((acc: any, workout: any) => {
+        const workoutsByDate = workouts.reduce((acc: any, workout: any) => {
           if (!acc[workout.date]) acc[workout.date] = [];
           acc[workout.date].push(workout);
           return acc;
@@ -136,10 +133,21 @@ export default function EntrainementScreen() {
         });
         
         // Forcer la mise à jour de l'état même si les données sont identiques
-        setWorkouts([...allWorkouts]);
-      } else {
-        console.log('Aucun entraînement stocké trouvé');
-        setWorkouts([]);
+        setWorkouts([...workouts]);
+      } catch (error) {
+        console.error('Erreur chargement entraînements depuis serveur:', error);
+        // Fallback vers le stockage local
+        const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+        const storedWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
+        
+        if (storedWorkouts) {
+          const allWorkouts = JSON.parse(storedWorkouts);
+          console.log(`Total entraînements chargés en local: ${allWorkouts.length}`);
+          setWorkouts([...allWorkouts]);
+        } else {
+          console.log('Aucun entraînement trouvé');
+          setWorkouts([]);
+        }
       }
       
       console.log('=== FIN CHARGEMENT TOUS LES ENTRAINEMENTS ===');
