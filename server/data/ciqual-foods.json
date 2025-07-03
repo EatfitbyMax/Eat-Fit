@@ -142,6 +142,104 @@
   },
   {
     "id": "ciqual_11",
+    "code": "01100",
+    "name": "Raisin, cru",
+    "category": "Fruits",
+    "nutriments": {
+      "energy_kcal": 62,
+      "proteins": 0.6,
+      "carbohydrates": 16,
+      "fat": 0.2,
+      "fiber": 0.9,
+      "sugars": 16
+    }
+  },
+  {
+    "id": "ciqual_12",
+    "code": "01110",
+    "name": "Mangue, crue",
+    "category": "Fruits",
+    "nutriments": {
+      "energy_kcal": 60,
+      "proteins": 0.8,
+      "carbohydrates": 14,
+      "fat": 0.4,
+      "fiber": 1.6,
+      "sugars": 14
+    }
+  },
+  {
+    "id": "ciqual_13",
+    "code": "01120",
+    "name": "Melon, cru",
+    "category": "Fruits",
+    "nutriments": {
+      "energy_kcal": 34,
+      "proteins": 0.8,
+      "carbohydrates": 8.2,
+      "fat": 0.2,
+      "fiber": 0.9,
+      "sugars": 7.9
+    }
+  },
+  {
+    "id": "ciqual_14",
+    "code": "01130",
+    "name": "Pastèque, crue",
+    "category": "Fruits",
+    "nutriments": {
+      "energy_kcal": 30,
+      "proteins": 0.6,
+      "carbohydrates": 7.6,
+      "fat": 0.2,
+      "fiber": 0.4,
+      "sugars": 6.2
+    }
+  },
+  {
+    "id": "ciqual_15",
+    "code": "01140",
+    "name": "Prune, crue",
+    "category": "Fruits",
+    "nutriments": {
+      "energy_kcal": 46,
+      "proteins": 0.7,
+      "carbohydrates": 11,
+      "fat": 0.3,
+      "fiber": 1.4,
+      "sugars": 10
+    }
+  },
+  {
+    "id": "ciqual_16",
+    "code": "01150",
+    "name": "Citron, pulpe, cru",
+    "category": "Fruits",
+    "nutriments": {
+      "energy_kcal": 29,
+      "proteins": 1.1,
+      "carbohydrates": 9,
+      "fat": 0.3,
+      "fiber": 2.8,
+      "sugars": 1.5
+    }
+  },
+  {
+    "id": "ciqual_17",
+    "code": "01160",
+    "name": "Pamplemousse, pulpe, cru",
+    "category": "Fruits",
+    "nutriments": {
+      "energy_kcal": 42,
+      "proteins": 0.8,
+      "carbohydrates": 11,
+      "fat": 0.1,
+      "fiber": 1.6,
+      "sugars": 7
+    }
+  },
+  {
+    "id": "ciqual_18",
     "code": "02000",
     "name": "Artichaut, cuit",
     "category": "Légumes",
@@ -155,7 +253,7 @@
     }
   },
   {
-    "id": "ciqual_12",
+    "id": "ciqual_19",
     "code": "02010",
     "name": "Asperge, cuite",
     "category": "Légumes",
@@ -169,7 +267,7 @@
     }
   },
   {
-    "id": "ciqual_13",
+    "id": "ciqual_20",
     "code": "02020",
     "name": "Aubergine, cuite",
     "category": "Légumes",
@@ -183,7 +281,7 @@
     }
   },
   {
-    "id": "ciqual_14",
+    "id": "ciqual_21",
     "code": "02030",
     "name": "Betterave rouge, cuite",
     "category": "Légumes",
@@ -197,7 +295,7 @@
     }
   },
   {
-    "id": "ciqual_15",
+    "id": "ciqual_22",
     "code": "02040",
     "name": "Brocoli, cuit",
     "category": "Légumes",
@@ -211,7 +309,7 @@
     }
   },
   {
-    "id": "ciqual_16",
+    "id": "ciqual_23",
     "code": "02050",
     "name": "Carotte, cuite",
     "category": "Légumes",
@@ -225,7 +323,7 @@
     }
   },
   {
-    "id": "ciqual_17",
+    "id": "ciqual_24",
     "code": "02060",
     "name": "Chou-fleur, cuit",
     "category": "Légumes",
@@ -239,7 +337,7 @@
     }
   },
   {
-    "id": "ciqual_18",
+    "id": "ciqual_25",
     "code": "02070",
     "name": "Courgette, cuite",
     "category": "Légumes",
@@ -253,7 +351,7 @@
     }
   },
   {
-    "id": "ciqual_19",
+    "id": "ciqual_26",
     "code": "02080",
     "name": "Épinard, cuit",
     "category": "Légumes",
@@ -267,7 +365,7 @@
     }
   },
   {
-    "id": "ciqual_20",
+    "id": "ciqual_27",
     "code": "02090",
     "name": "Haricot vert, cuit",
     "category": "Légumes",
@@ -281,7 +379,7 @@
     }
   },
   {
-    "id": "ciqual_21",
+    "id": "ciqual_28",
     "code": "02100",
     "name": "Laitue, crue",
     "category": "Légumes",
@@ -295,7 +393,7 @@
     }
   },
   {
-    "id": "ciqual_22",
+    "id": "ciqual_29",
     "code": "02110",
     "name": "Tomate, crue",
     "category": "Légumes",
@@ -309,7 +407,91 @@
     }
   },
   {
-    "id": "ciqual_23",
+    "id": "ciqual_30",
+    "code": "02120",
+    "name": "Concombre, cru",
+    "category": "Légumes",
+    "nutriments": {
+      "energy_kcal": 10,
+      "proteins": 0.7,
+      "carbohydrates": 2.2,
+      "fat": 0.1,
+      "fiber": 1.0,
+      "sugars": 1.7
+    }
+  },
+  {
+    "id": "ciqual_31",
+    "code": "02130",
+    "name": "Poivron rouge, cru",
+    "category": "Légumes",
+    "nutriments": {
+      "energy_kcal": 31,
+      "proteins": 1.0,
+      "carbohydrates": 6.0,
+      "fat": 0.3,
+      "fiber": 2.5,
+      "sugars": 4.2
+    }
+  },
+  {
+    "id": "ciqual_32",
+    "code": "02140",
+    "name": "Champignon de Paris, cru",
+    "category": "Légumes",
+    "nutriments": {
+      "energy_kcal": 22,
+      "proteins": 3.1,
+      "carbohydrates": 3.3,
+      "fat": 0.3,
+      "fiber": 1.0,
+      "sugars": 1.9
+    }
+  },
+  {
+    "id": "ciqual_33",
+    "code": "02150",
+    "name": "Oignon, cru",
+    "category": "Légumes",
+    "nutriments": {
+      "energy_kcal": 40,
+      "proteins": 1.1,
+      "carbohydrates": 9.3,
+      "fat": 0.1,
+      "fiber": 1.7,
+      "sugars": 4.2
+    }
+  },
+  {
+    "id": "ciqual_34",
+    "code": "02160",
+    "name": "Ail, cru",
+    "category": "Légumes",
+    "nutriments": {
+      "energy_kcal": 149,
+      "proteins": 6.4,
+      "carbohydrates": 33,
+      "fat": 0.5,
+      "fiber": 2.1,
+      "sugars": 1.0
+    }
+  },
+  {
+    "id": "ciqual_35",
+    "code": "02170",
+    "name": "Poireau, cuit",
+    "category": "Légumes",
+    "nutriments": {
+      "energy_kcal": 25,
+      "proteins": 1.5,
+      "carbohydrates": 5.9,
+      "fat": 0.3,
+      "fiber": 1.8,
+      "sugars": 3.9
+    }
+  },
+  {
+    "id": "ciqual_36",
     "code": "03000",
     "name": "Pomme de terre, cuite à l'eau",
     "category": "Féculents",
@@ -323,7 +505,7 @@
     }
   },
   {
-    "id": "ciqual_24",
+    "id": "ciqual_37",
     "code": "03010",
     "name": "Riz blanc, cuit",
     "category": "Céréales",
@@ -337,7 +519,7 @@
     }
   },
   {
-    "id": "ciqual_25",
+    "id": "ciqual_38",
     "code": "03020",
     "name": "Pâtes, cuites",
     "category": "Céréales",
@@ -351,7 +533,7 @@
     }
   },
   {
-    "id": "ciqual_26",
+    "id": "ciqual_39",
     "code": "03030",
     "name": "Pain blanc",
     "category": "Céréales",
@@ -365,7 +547,7 @@
     }
   },
   {
-    "id": "ciqual_27",
+    "id": "ciqual_40",
     "code": "03040",
     "name": "Pain complet",
     "category": "Céréales",
@@ -379,7 +561,35 @@
     }
   },
   {
-    "id": "ciqual_28",
+    "id": "ciqual_41",
+    "code": "03050",
+    "name": "Quinoa, cuit",
+    "category": "Céréales",
+    "nutriments": {
+      "energy_kcal": 120,
+      "proteins": 4.4,
+      "carbohydrates": 22,
+      "fat": 1.9,
+      "fiber": 2.8,
+      "sugars": 0.9
+    }
+  },
+  {
+    "id": "ciqual_42",
+    "code": "03060",
+    "name": "Avoine, flocons",
+    "category": "Céréales",
+    "nutriments": {
+      "energy_kcal": 389,
+      "proteins": 16.9,
+      "carbohydrates": 66,
+      "fat": 6.9,
+      "fiber": 10.6,
+      "sugars": 0.99
+    }
+  },
+  {
+    "id": "ciqual_43",
     "code": "04000",
     "name": "Lait demi-écrémé",
     "category": "Produits laitiers",
@@ -393,7 +603,7 @@
     }
   },
   {
-    "id": "ciqual_29",
+    "id": "ciqual_44",
     "code": "04010",
     "name": "Yaourt nature",
     "category": "Produits laitiers",
@@ -407,7 +617,7 @@
     }
   },
   {
-    "id": "ciqual_30",
+    "id": "ciqual_45",
     "code": "04020",
     "name": "Fromage blanc 0% MG",
     "category": "Produits laitiers",
@@ -421,7 +631,7 @@
     }
   },
   {
-    "id": "ciqual_31",
+    "id": "ciqual_46",
     "code": "04030",
     "name": "Emmental",
     "category": "Fromages",
@@ -435,7 +645,7 @@
     }
   },
   {
-    "id": "ciqual_32",
+    "id": "ciqual_47",
     "code": "04040",
     "name": "Camembert",
     "category": "Fromages",
@@ -449,7 +659,49 @@
     }
   },
   {
-    "id": "ciqual_33",
+    "id": "ciqual_48",
+    "code": "04050",
+    "name": "Roquefort",
+    "category": "Fromages",
+    "nutriments": {
+      "energy_kcal": 369,
+      "proteins": 19,
+      "carbohydrates": 2,
+      "fat": 32,
+      "fiber": 0,
+      "sugars": 2
+    }
+  },
+  {
+    "id": "ciqual_49",
+    "code": "04060",
+    "name": "Chèvre, crottin",
+    "category": "Fromages",
+    "nutriments": {
+      "energy_kcal": 364,
+      "proteins": 25,
+      "carbohydrates": 2.5,
+      "fat": 29,
+      "fiber": 0,
+      "sugars": 2.5
+    }
+  },
+  {
+    "id": "ciqual_50",
+    "code": "04070",
+    "name": "Brie",
+    "category": "Fromages",
+    "nutriments": {
+      "energy_kcal": 334,
+      "proteins": 21,
+      "carbohydrates": 0.5,
+      "fat": 27,
+      "fiber": 0,
+      "sugars": 0.5
+    }
+  },
+  {
+    "id": "ciqual_51",
     "code": "05000",
     "name": "Œuf de poule, cuit",
     "category": "Œufs",
@@ -463,7 +715,7 @@
     }
   },
   {
-    "id": "ciqual_34",
+    "id": "ciqual_52",
     "code": "06000",
     "name": "Escalope de dinde, cuite",
     "category": "Viandes",
@@ -477,7 +729,7 @@
     }
   },
   {
-    "id": "ciqual_35",
+    "id": "ciqual_53",
     "code": "06010",
     "name": "Blanc de poulet, cuit",
     "category": "Viandes",
@@ -491,7 +743,7 @@
     }
   },
   {
-    "id": "ciqual_36",
+    "id": "ciqual_54",
     "code": "06020",
     "name": "Bœuf, bavette, cuite",
     "category": "Viandes",
@@ -505,7 +757,7 @@
     }
   },
   {
-    "id": "ciqual_37",
+    "id": "ciqual_55",
     "code": "06030",
     "name": "Porc, côte, cuite",
     "category": "Viandes",
@@ -519,7 +771,35 @@
     }
   },
   {
-    "id": "ciqual_38",
+    "id": "ciqual_56",
+    "code": "06040",
+    "name": "Agneau, gigot, cuit",
+    "category": "Viandes",
+    "nutriments": {
+      "energy_kcal": 225,
+      "proteins": 25,
+      "carbohydrates": 0,
+      "fat": 13,
+      "fiber": 0,
+      "sugars": 0
+    }
+  },
+  {
+    "id": "ciqual_57",
+    "code": "06050",
+    "name": "Jambon blanc",
+    "category": "Charcuterie",
+    "nutriments": {
+      "energy_kcal": 123,
+      "proteins": 20,
+      "carbohydrates": 1.2,
+      "fat": 4.1,
+      "fiber": 0,
+      "sugars": 1.2
+    }
+  },
+  {
+    "id": "ciqual_58",
     "code": "07000",
     "name": "Saumon, cuit",
     "category": "Poissons",
@@ -533,7 +813,7 @@
     }
   },
   {
-    "id": "ciqual_39",
+    "id": "ciqual_59",
     "code": "07010",
     "name": "Thon, cuit",
     "category": "Poissons",
@@ -547,7 +827,7 @@
     }
   },
   {
-    "id": "ciqual_40",
+    "id": "ciqual_60",
     "code": "07020",
     "name": "Cabillaud, cuit",
     "category": "Poissons",
@@ -561,7 +841,7 @@
     }
   },
   {
-    "id": "ciqual_41",
+    "id": "ciqual_61",
     "code": "07030",
     "name": "Sardine, cuite",
     "category": "Poissons",
@@ -575,7 +855,63 @@
     }
   },
   {
-    "id": "ciqual_42",
+    "id": "ciqual_62",
+    "code": "07040",
+    "name": "Maquereau, cuit",
+    "category": "Poissons",
+    "nutriments": {
+      "energy_kcal": 205,
+      "proteins": 19,
+      "carbohydrates": 0,
+      "fat": 14,
+      "fiber": 0,
+      "sugars": 0
+    }
+  },
+  {
+    "id": "ciqual_63",
+    "code": "07050",
+    "name": "Sole, cuite",
+    "category": "Poissons",
+    "nutriments": {
+      "energy_kcal": 91,
+      "proteins": 19,
+      "carbohydrates": 0,
+      "fat": 1.7,
+      "fiber": 0,
+      "sugars": 0
+    }
+  },
+  {
+    "id": "ciqual_64",
+    "code": "07060",
+    "name": "Crevettes, cuites",
+    "category": "Fruits de mer",
+    "nutriments": {
+      "energy_kcal": 99,
+      "proteins": 21,
+      "carbohydrates": 0.9,
+      "fat": 1.4,
+      "fiber": 0,
+      "sugars": 0
+    }
+  },
+  {
+    "id": "ciqual_65",
+    "code": "07070",
+    "name": "Moules, cuites",
+    "category": "Fruits de mer",
+    "nutriments": {
+      "energy_kcal": 86,
+      "proteins": 12,
+      "carbohydrates": 7.4,
+      "fat": 2.2,
+      "fiber": 0,
+      "sugars": 0
+    }
+  },
+  {
+    "id": "ciqual_66",
     "code": "08000",
     "name": "Lentilles, cuites",
     "category": "Légumineuses",
@@ -589,7 +925,7 @@
     }
   },
   {
-    "id": "ciqual_43",
+    "id": "ciqual_67",
     "code": "08010",
     "name": "Haricots blancs, cuits",
     "category": "Légumineuses",
@@ -603,7 +939,7 @@
     }
   },
   {
-    "id": "ciqual_44",
+    "id": "ciqual_68",
     "code": "08020",
     "name": "Pois chiches, cuits",
     "category": "Légumineuses",
@@ -617,7 +953,35 @@
     }
   },
   {
-    "id": "ciqual_45",
+    "id": "ciqual_69",
+    "code": "08030",
+    "name": "Pois cassés, cuits",
+    "category": "Légumineuses",
+    "nutriments": {
+      "energy_kcal": 99,
+      "proteins": 7.0,
+      "carbohydrates": 17,
+      "fat": 0.4,
+      "fiber": 5.1,
+      "sugars": 2.9
+    }
+  },
+  {
+    "id": "ciqual_70",
+    "code": "08040",
+    "name": "Haricots rouges, cuits",
+    "category": "Légumineuses",
+    "nutriments": {
+      "energy_kcal": 124,
+      "proteins": 8.7,
+      "carbohydrates": 23,
+      "fat": 0.5,
+      "fiber": 6.4,
+      "sugars": 0.3
+    }
+  },
+  {
+    "id": "ciqual_71",
     "code": "09000",
     "name": "Amandes",
     "category": "Fruits à coque",
@@ -631,7 +995,7 @@
     }
   },
   {
-    "id": "ciqual_46",
+    "id": "ciqual_72",
     "code": "09010",
     "name": "Noix",
     "category": "Fruits à coque",
@@ -645,7 +1009,7 @@
     }
   },
   {
-    "id": "ciqual_47",
+    "id": "ciqual_73",
     "code": "09020",
     "name": "Noisettes",
     "category": "Fruits à coque",
@@ -659,7 +1023,35 @@
     }
   },
   {
-    "id": "ciqual_48",
+    "id": "ciqual_74",
+    "code": "09030",
+    "name": "Pistaches",
+    "category": "Fruits à coque",
+    "nutriments": {
+      "energy_kcal": 594,
+      "proteins": 21,
+      "carbohydrates": 8.2,
+      "fat": 51,
+      "fiber": 10,
+      "sugars": 7.7
+    }
+  },
+  {
+    "id": "ciqual_75",
+    "code": "09040",
+    "name": "Cacahuètes",
+    "category": "Fruits à coque",
+    "nutriments": {
+      "energy_kcal": 567,
+      "proteins": 26,
+      "carbohydrates": 16,
+      "fat": 49,
+      "fiber": 8.5,
+      "sugars": 4.7
+    }
+  },
+  {
+    "id": "ciqual_76",
     "code": "10000",
     "name": "Huile d'olive",
     "category": "Matières grasses",
@@ -673,7 +1065,7 @@
     }
   },
   {
-    "id": "ciqual_49",
+    "id": "ciqual_77",
     "code": "10010",
     "name": "Beurre doux",
     "category": "Matières grasses",
@@ -687,7 +1079,35 @@
     }
   },
   {
-    "id": "ciqual_50",
+    "id": "ciqual_78",
+    "code": "10020",
+    "name": "Huile de tournesol",
+    "category": "Matières grasses",
+    "nutriments": {
+      "energy_kcal": 899,
+      "proteins": 0,
+      "carbohydrates": 0,
+      "fat": 100,
+      "fiber": 0,
+      "sugars": 0
+    }
+  },
+  {
+    "id": "ciqual_79",
+    "code": "10030",
+    "name": "Margarine",
+    "category": "Matières grasses",
+    "nutriments": {
+      "energy_kcal": 717,
+      "proteins": 0.2,
+      "carbohydrates": 0.9,
+      "fat": 80,
+      "fiber": 0,
+      "sugars": 0.9
+    }
+  },
+  {
+    "id": "ciqual_80",
     "code": "11000",
     "name": "Chocolat noir 70%",
     "category": "Confiseries",
@@ -698,6 +1118,146 @@
       "fat": 42,
       "fiber": 15,
       "sugars": 24
+    }
+  },
+  {
+    "id": "ciqual_81",
+    "code": "11010",
+    "name": "Chocolat au lait",
+    "category": "Confiseries",
+    "nutriments": {
+      "energy_kcal": 534,
+      "proteins": 7.6,
+      "carbohydrates": 56,
+      "fat": 30,
+      "fiber": 3.4,
+      "sugars": 52
+    }
+  },
+  {
+    "id": "ciqual_82",
+    "code": "11020",
+    "name": "Miel",
+    "category": "Confiseries",
+    "nutriments": {
+      "energy_kcal": 304,
+      "proteins": 0.3,
+      "carbohydrates": 82,
+      "fat": 0,
+      "fiber": 0.2,
+      "sugars": 82
+    }
+  },
+  {
+    "id": "ciqual_83",
+    "code": "11030",
+    "name": "Confiture",
+    "category": "Confiseries",
+    "nutriments": {
+      "energy_kcal": 278,
+      "proteins": 0.4,
+      "carbohydrates": 69,
+      "fat": 0.1,
+      "fiber": 1.1,
+      "sugars": 68
+    }
+  },
+  {
+    "id": "ciqual_84",
+    "code": "12000",
+    "name": "Café, boisson",
+    "category": "Boissons",
+    "nutriments": {
+      "energy_kcal": 2,
+      "proteins": 0.3,
+      "carbohydrates": 0,
+      "fat": 0,
+      "fiber": 0,
+      "sugars": 0
+    }
+  },
+  {
+    "id": "ciqual_85",
+    "code": "12010",
+    "name": "Thé, infusion",
+    "category": "Boissons",
+    "nutriments": {
+      "energy_kcal": 1,
+      "proteins": 0,
+      "carbohydrates": 0.3,
+      "fat": 0,
+      "fiber": 0,
+      "sugars": 0
+    }
+  },
+  {
+    "id": "ciqual_86",
+    "code": "12020",
+    "name": "Jus d'orange",
+    "category": "Boissons",
+    "nutriments": {
+      "energy_kcal": 45,
+      "proteins": 0.7,
+      "carbohydrates": 10,
+      "fat": 0.2,
+      "fiber": 0.2,
+      "sugars": 8.4
+    }
+  },
+  {
+    "id": "ciqual_87",
+    "code": "12030",
+    "name": "Jus de pomme",
+    "category": "Boissons",
+    "nutriments": {
+      "energy_kcal": 46,
+      "proteins": 0.1,
+      "carbohydrates": 11,
+      "fat": 0.1,
+      "fiber": 0.2,
+      "sugars": 10
+    }
+  },
+  {
+    "id": "ciqual_88",
+    "code": "13000",
+    "name": "Pâtisserie, tarte aux pommes",
+    "category": "Pâtisseries",
+    "nutriments": {
+      "energy_kcal": 267,
+      "proteins": 3.2,
+      "carbohydrates": 38,
+      "fat": 12,
+      "fiber": 2.1,
+      "sugars": 16
+    }
+  },
+  {
+    "id": "ciqual_89",
+    "code": "13010",
+    "name": "Croissant",
+    "category": "Viennoiseries",
+    "nutriments": {
+      "energy_kcal": 406,
+      "proteins": 8.2,
+      "carbohydrates": 46,
+      "fat": 21,
+      "fiber": 2.6,
+      "sugars": 8.8
+    }
+  },
+  {
+    "id": "ciqual_90",
+    "code": "13020",
+    "name": "Pain au chocolat",
+    "category": "Viennoiseries",
+    "nutriments": {
+      "energy_kcal": 414,
+      "proteins": 7.8,
+      "carbohydrates": 45,
+      "fat": 23,
+      "fiber": 2.5,
+      "sugars": 12
     }
   }
 ]
