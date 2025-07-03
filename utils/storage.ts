@@ -611,10 +611,214 @@ export class PersistentStorage {
 
   static async setCurrentUser(user: any): Promise<void> {
     try {
+      // Sauvegarder en local
       await AsyncStorage.setItem('currentUser', JSON.stringify(user));
+      
+      // Synchroniser avec le serveur VPS
+      if (user?.id) {
+        try {
+          const isConnected = await this.testConnection();
+          if (isConnected) {
+            await this.saveUserProfile(user.id, user);
+          }
+        } catch (error) {
+          console.warn('Impossible de synchroniser le profil utilisateur avec le serveur:', error);
+        }
+      }
     } catch (error) {
       console.error('Erreur sauvegarde utilisateur actuel:', error);
       throw error;
+    }
+  }
+
+  // Méthodes pour les profils utilisateur
+  static async getUserProfile(userId: string): Promise<any> {
+    try {
+      const isConnected = await this.testConnection();
+      if (isConnected) {
+        const response = await fetch(`${SERVER_URL}/api/user-profile/${userId}`);
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Profil utilisateur récupéré depuis le serveur VPS');
+          // Sauvegarder en local comme backup
+          await AsyncStorage.setItem(`user_profile_${userId}`, JSON.stringify(data));
+          return data;
+        }
+      }
+
+      // Fallback vers le stockage local
+      console.log('Fallback vers le stockage local pour le profil utilisateur');
+      const localData = await AsyncStorage.getItem(`user_profile_${userId}`);
+      return localData ? JSON.parse(localData) : null;
+    } catch (error) {
+      console.error('Erreur récupération profil utilisateur:', error);
+      try {
+        const localData = await AsyncStorage.getItem(`user_profile_${userId}`);
+        return localData ? JSON.parse(localData) : null;
+      } catch (localError) {
+        console.error('Erreur stockage local profil:', localError);
+        return null;
+      }
+    }
+  }
+
+  static async saveUserProfile(userId: string, profileData: any): Promise<void> {
+    try {
+      // Toujours sauvegarder en local d'abord
+      await AsyncStorage.setItem(`user_profile_${userId}`, JSON.stringify(profileData));
+
+      const isConnected = await this.testConnection();
+      if (isConnected) {
+        const response = await fetch(`${SERVER_URL}/api/user-profile/${userId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(profileData),
+        });
+
+        if (response.ok) {
+          console.log('Profil utilisateur sauvegardé sur le serveur VPS');
+        } else {
+          console.log('Profil utilisateur sauvegardé localement (serveur indisponible)');
+        }
+      } else {
+        console.log('Profil utilisateur sauvegardé localement (serveur indisponible)');
+      }
+    } catch (error) {
+      console.error('Erreur sauvegarde profil utilisateur:', error);
+      // Au moins garder la sauvegarde locale
+      await AsyncStorage.setItem(`user_profile_${userId}`, JSON.stringify(profileData));
+    }
+  }
+
+  // Méthodes pour les paramètres de notifications
+  static async getNotificationSettings(userId: string): Promise<any> {
+    try {
+      const isConnected = await this.testConnection();
+      if (isConnected) {
+        const response = await fetch(`${SERVER_URL}/api/notifications/${userId}`);
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Paramètres notifications récupérés depuis le serveur VPS');
+          await AsyncStorage.setItem(`notification_settings_${userId}`, JSON.stringify(data));
+          return data;
+        }
+      }
+
+      // Fallback vers le stockage local
+      console.log('Fallback vers le stockage local pour les paramètres notifications');
+      const localData = await AsyncStorage.getItem(`notification_settings_${userId}`);
+      return localData ? JSON.parse(localData) : {
+        workoutReminder: true,
+        nutritionReminder: true,
+        progressUpdate: true,
+        reminderTime: '09:00',
+        weeklyReport: true,
+        coachMessages: true
+      };
+    } catch (error) {
+      console.error('Erreur récupération paramètres notifications:', error);
+      return {
+        workoutReminder: true,
+        nutritionReminder: true,
+        progressUpdate: true,
+        reminderTime: '09:00',
+        weeklyReport: true,
+        coachMessages: true
+      };
+    }
+  }
+
+  static async saveNotificationSettings(userId: string, settings: any): Promise<void> {
+    try {
+      // Toujours sauvegarder en local d'abord
+      await AsyncStorage.setItem(`notification_settings_${userId}`, JSON.stringify(settings));
+
+      const isConnected = await this.testConnection();
+      if (isConnected) {
+        const response = await fetch(`${SERVER_URL}/api/notifications/${userId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(settings),
+        });
+
+        if (response.ok) {
+          console.log('Paramètres notifications sauvegardés sur le serveur VPS');
+        } else {
+          console.log('Paramètres notifications sauvegardés localement (serveur indisponible)');
+        }
+      } else {
+        console.log('Paramètres notifications sauvegardés localement (serveur indisponible)');
+      }
+    } catch (error) {
+      console.error('Erreur sauvegarde paramètres notifications:', error);
+      await AsyncStorage.setItem(`notification_settings_${userId}`, JSON.stringify(settings));
+    }
+  }
+
+  // Méthodes pour les préférences d'application
+  static async getAppPreferences(userId: string): Promise<any> {
+    try {
+      const isConnected = await this.testConnection();
+      if (isConnected) {
+        const response = await fetch(`${SERVER_URL}/api/app-preferences/${userId}`);
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Préférences app récupérées depuis le serveur VPS');
+          await AsyncStorage.setItem(`app_preferences_${userId}`, JSON.stringify(data));
+          return data;
+        }
+      }
+
+      // Fallback vers le stockage local
+      console.log('Fallback vers le stockage local pour les préférences app');
+      const localData = await AsyncStorage.getItem(`app_preferences_${userId}`);
+      return localData ? JSON.parse(localData) : {
+        theme: 'dark',
+        language: 'fr',
+        units: 'metric',
+        notifications: true
+      };
+    } catch (error) {
+      console.error('Erreur récupération préférences app:', error);
+      return {
+        theme: 'dark',
+        language: 'fr',
+        units: 'metric',
+        notifications: true
+      };
+    }
+  }
+
+  static async saveAppPreferences(userId: string, preferences: any): Promise<void> {
+    try {
+      // Toujours sauvegarder en local d'abord
+      await AsyncStorage.setItem(`app_preferences_${userId}`, JSON.stringify(preferences));
+
+      const isConnected = await this.testConnection();
+      if (isConnected) {
+        const response = await fetch(`${SERVER_URL}/api/app-preferences/${userId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(preferences),
+        });
+
+        if (response.ok) {
+          console.log('Préférences app sauvegardées sur le serveur VPS');
+        } else {
+          console.log('Préférences app sauvegardées localement (serveur indisponible)');
+        }
+      } else {
+        console.log('Préférences app sauvegardées localement (serveur indisponible)');
+      }
+    } catch (error) {
+      console.error('Erreur sauvegarde préférences app:', error);
+      await AsyncStorage.setItem(`app_preferences_${userId}`, JSON.stringify(preferences));
     }
   }
 

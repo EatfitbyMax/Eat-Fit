@@ -94,6 +94,19 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const saveThemePreference = async (isDark: boolean) => {
     try {
       await AsyncStorage.setItem('theme_preference', isDark ? 'dark' : 'light');
+      
+      // Synchroniser avec le serveur VPS
+      try {
+        const { PersistentStorage } = await import('../utils/storage');
+        const currentUser = await PersistentStorage.getCurrentUser();
+        if (currentUser?.id) {
+          const preferences = await PersistentStorage.getAppPreferences(currentUser.id);
+          preferences.theme = isDark ? 'dark' : 'light';
+          await PersistentStorage.saveAppPreferences(currentUser.id, preferences);
+        }
+      } catch (error) {
+        console.warn('Impossible de synchroniser le thème avec le serveur:', error);
+      }
     } catch (error) {
       console.error('Erreur lors de la sauvegarde des préférences de thème:', error);
     }

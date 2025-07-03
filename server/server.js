@@ -547,6 +547,96 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
   res.json({received: true});
 });
 
+// Routes pour les profils utilisateur
+app.get('/api/user-profile/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const data = await fs.readFile(path.join(DATA_DIR, `user_profile_${userId}.json`), 'utf8');
+    res.json(JSON.parse(data));
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      res.json(null);
+    } else {
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
+});
+
+app.post('/api/user-profile/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const profileData = req.body;
+    await fs.writeFile(path.join(DATA_DIR, `user_profile_${userId}.json`), JSON.stringify(profileData, null, 2));
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur sauvegarde profil utilisateur' });
+  }
+});
+
+// Routes pour les paramètres de notifications
+app.get('/api/notifications/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const data = await fs.readFile(path.join(DATA_DIR, `notifications_${userId}.json`), 'utf8');
+    res.json(JSON.parse(data));
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      res.json({
+        workoutReminder: true,
+        nutritionReminder: true,
+        progressUpdate: true,
+        reminderTime: '09:00',
+        weeklyReport: true,
+        coachMessages: true
+      });
+    } else {
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
+});
+
+app.post('/api/notifications/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const notificationSettings = req.body;
+    await fs.writeFile(path.join(DATA_DIR, `notifications_${userId}.json`), JSON.stringify(notificationSettings, null, 2));
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur sauvegarde paramètres notifications' });
+  }
+});
+
+// Routes pour les préférences d'application
+app.get('/api/app-preferences/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const data = await fs.readFile(path.join(DATA_DIR, `app_preferences_${userId}.json`), 'utf8');
+    res.json(JSON.parse(data));
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      res.json({
+        theme: 'dark',
+        language: 'fr',
+        units: 'metric',
+        notifications: true
+      });
+    } else {
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
+});
+
+app.post('/api/app-preferences/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const preferences = req.body;
+    await fs.writeFile(path.join(DATA_DIR, `app_preferences_${userId}.json`), JSON.stringify(preferences, null, 2));
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur sauvegarde préférences app' });
+  }
+});
+
 // Route de test
 app.get('/api/health-check', (req, res) => {
   res.json({ status: 'OK', message: 'Serveur VPS fonctionnel' });

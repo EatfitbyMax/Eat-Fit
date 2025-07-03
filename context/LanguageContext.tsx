@@ -338,6 +338,19 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
     try {
       await AsyncStorage.setItem('app_language', lang);
       setLanguageState(lang);
+      
+      // Synchroniser avec le serveur VPS
+      try {
+        const { PersistentStorage } = await import('../utils/storage');
+        const currentUser = await PersistentStorage.getCurrentUser();
+        if (currentUser?.id) {
+          const preferences = await PersistentStorage.getAppPreferences(currentUser.id);
+          preferences.language = lang;
+          await PersistentStorage.saveAppPreferences(currentUser.id, preferences);
+        }
+      } catch (error) {
+        console.warn('Impossible de synchroniser la langue avec le serveur:', error);
+      }
     } catch (error) {
       console.error('Erreur sauvegarde langue:', error);
     }
