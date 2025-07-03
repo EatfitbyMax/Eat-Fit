@@ -35,6 +35,9 @@ export default function RegisterScreen() {
           <View style={styles.progressStep} />
           <View style={styles.progressStep} />
           <View style={styles.progressStep} />
+          <View style={styles.progressStep} />
+          <View style={styles.progressStep} />
+          <View style={styles.progressStep} />
         </View>
       </View>
 

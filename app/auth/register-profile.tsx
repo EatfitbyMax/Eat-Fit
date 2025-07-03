@@ -48,6 +48,9 @@ export default function RegisterProfileScreen() {
           <View style={[styles.progressStep, styles.activeStep]} />
           <View style={[styles.progressStep, styles.activeStep]} />
           <View style={styles.progressStep} />
+          <View style={styles.progressStep} />
+          <View style={styles.progressStep} />
+          <View style={styles.progressStep} />
         </View>
       </View>
 
