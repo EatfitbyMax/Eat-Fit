@@ -336,6 +336,24 @@ export class OpenFoodFactsService {
         categories: 'fruits',
         nutriments: { energy_kcal: 61, proteins: 1.1, carbohydrates: 15, fat: 0.5, fiber: 3 }
       },
+      {
+        id: 'grapes',
+        name: 'Raisin',
+        categories: 'fruits',
+        nutriments: { energy_kcal: 62, proteins: 0.6, carbohydrates: 16, fat: 0.2, fiber: 0.9 }
+      },
+      {
+        id: 'pineapple',
+        name: 'Ananas',
+        categories: 'fruits',
+        nutriments: { energy_kcal: 50, proteins: 0.5, carbohydrates: 13, fat: 0.1, fiber: 1.4 }
+      },
+      {
+        id: 'mango',
+        name: 'Mangue',
+        categories: 'fruits',
+        nutriments: { energy_kcal: 60, proteins: 0.8, carbohydrates: 15, fat: 0.4, fiber: 1.6 }
+      },
 
       // Légumes
       {
@@ -361,6 +379,18 @@ export class OpenFoodFactsService {
         name: 'Épinards',
         categories: 'légumes',
         nutriments: { energy_kcal: 23, proteins: 2.9, carbohydrates: 3.6, fat: 0.4, fiber: 2.2 }
+      },
+      {
+        id: 'cucumber',
+        name: 'Concombre',
+        categories: 'légumes',
+        nutriments: { energy_kcal: 16, proteins: 0.7, carbohydrates: 4, fat: 0.1, fiber: 0.5 }
+      },
+      {
+        id: 'bell_pepper',
+        name: 'Poivron',
+        categories: 'légumes',
+        nutriments: { energy_kcal: 31, proteins: 1, carbohydrates: 7, fat: 0.3, fiber: 2.5 }
       },
 
       // Protéines
@@ -388,6 +418,18 @@ export class OpenFoodFactsService {
         categories: 'poissons',
         nutriments: { energy_kcal: 144, proteins: 30, carbohydrates: 0, fat: 1, fiber: 0 }
       },
+      {
+        id: 'beef',
+        name: 'Bœuf',
+        categories: 'viandes',
+        nutriments: { energy_kcal: 250, proteins: 26, carbohydrates: 0, fat: 15, fiber: 0 }
+      },
+      {
+        id: 'turkey',
+        name: 'Dinde',
+        categories: 'viandes',
+        nutriments: { energy_kcal: 189, proteins: 29, carbohydrates: 0, fat: 7, fiber: 0 }
+      },
 
       // Céréales et féculents
       {
@@ -397,10 +439,22 @@ export class OpenFoodFactsService {
         nutriments: { energy_kcal: 247, proteins: 13, carbohydrates: 41, fat: 4.2, fiber: 7 }
       },
       {
+        id: 'white_bread',
+        name: 'Pain blanc',
+        categories: 'céréales',
+        nutriments: { energy_kcal: 265, proteins: 9, carbohydrates: 49, fat: 3.2, fiber: 2.7 }
+      },
+      {
         id: 'rice',
         name: 'Riz blanc cuit',
         categories: 'céréales',
         nutriments: { energy_kcal: 130, proteins: 2.7, carbohydrates: 28, fat: 0.3, fiber: 0.4 }
+      },
+      {
+        id: 'brown_rice',
+        name: 'Riz complet cuit',
+        categories: 'céréales',
+        nutriments: { energy_kcal: 111, proteins: 2.6, carbohydrates: 23, fat: 0.9, fiber: 1.8 }
       },
       {
         id: 'pasta',
@@ -414,6 +468,50 @@ export class OpenFoodFactsService {
         categories: 'céréales',
         nutriments: { energy_kcal: 389, proteins: 17, carbohydrates: 66, fat: 7, fiber: 11 }
       },
+      {
+        id: 'quinoa',
+        name: 'Quinoa cuit',
+        categories: 'céréales',
+        nutriments: { energy_kcal: 120, proteins: 4.4, carbohydrates: 22, fat: 1.9, fiber: 2.8 }
+      },
+
+      // Petit-déjeuner et snacks
+      {
+        id: 'pancake',
+        name: 'Pancake',
+        categories: 'petit-déjeuner',
+        nutriments: { energy_kcal: 227, proteins: 6, carbohydrates: 28, fat: 10, fiber: 1.5 }
+      },
+      {
+        id: 'pancakes',
+        name: 'Pancakes',
+        categories: 'petit-déjeuner',
+        nutriments: { energy_kcal: 227, proteins: 6, carbohydrates: 28, fat: 10, fiber: 1.5 }
+      },
+      {
+        id: 'croissant',
+        name: 'Croissant',
+        categories: 'viennoiseries',
+        nutriments: { energy_kcal: 406, proteins: 8.2, carbohydrates: 46, fat: 21, fiber: 2.6 }
+      },
+      {
+        id: 'muesli',
+        name: 'Muesli',
+        categories: 'céréales',
+        nutriments: { energy_kcal: 367, proteins: 10, carbohydrates: 66, fat: 6, fiber: 8 }
+      },
+      {
+        id: 'granola',
+        name: 'Granola',
+        categories: 'céréales',
+        nutriments: { energy_kcal: 471, proteins: 11, carbohydrates: 65, fat: 19, fiber: 7 }
+      },
+      {
+        id: 'toast',
+        name: 'Toast',
+        categories: 'céréales',
+        nutriments: { energy_kcal: 313, proteins: 10, carbohydrates: 56, fat: 4.2, fiber: 4.5 }
+      },
 
       // Produits laitiers
       {
@@ -423,16 +521,34 @@ export class OpenFoodFactsService {
         nutriments: { energy_kcal: 61, proteins: 3.2, carbohydrates: 4.8, fat: 3.3, fiber: 0 }
       },
       {
+        id: 'skim_milk',
+        name: 'Lait écrémé',
+        categories: 'laitages',
+        nutriments: { energy_kcal: 34, proteins: 3.4, carbohydrates: 5, fat: 0.1, fiber: 0 }
+      },
+      {
         id: 'yogurt',
         name: 'Yaourt nature',
         categories: 'laitages',
         nutriments: { energy_kcal: 59, proteins: 10, carbohydrates: 3.6, fat: 0.4, fiber: 0 }
       },
       {
+        id: 'greek_yogurt',
+        name: 'Yaourt grec',
+        categories: 'laitages',
+        nutriments: { energy_kcal: 97, proteins: 9, carbohydrates: 4, fat: 5, fiber: 0 }
+      },
+      {
         id: 'cheese',
         name: 'Fromage',
         categories: 'laitages',
         nutriments: { energy_kcal: 113, proteins: 7, carbohydrates: 1, fat: 9, fiber: 0 }
+      },
+      {
+        id: 'cottage_cheese',
+        name: 'Fromage blanc',
+        categories: 'laitages',
+        nutriments: { energy_kcal: 98, proteins: 11, carbohydrates: 3.4, fat: 4.3, fiber: 0 }
       },
 
       // Légumineuses
@@ -448,6 +564,18 @@ export class OpenFoodFactsService {
         categories: 'légumineuses',
         nutriments: { energy_kcal: 164, proteins: 8.9, carbohydrates: 27, fat: 2.6, fiber: 8 }
       },
+      {
+        id: 'black_beans',
+        name: 'Haricots noirs',
+        categories: 'légumineuses',
+        nutriments: { energy_kcal: 132, proteins: 8.9, carbohydrates: 24, fat: 0.5, fiber: 8.7 }
+      },
+      {
+        id: 'kidney_beans',
+        name: 'Haricots rouges',
+        categories: 'légumineuses',
+        nutriments: { energy_kcal: 127, proteins: 8.7, carbohydrates: 23, fat: 0.5, fiber: 6.4 }
+      },
 
       // Noix et graines
       {
@@ -461,6 +589,64 @@ export class OpenFoodFactsService {
         name: 'Noix',
         categories: 'oléagineux',
         nutriments: { energy_kcal: 654, proteins: 15, carbohydrates: 14, fat: 65, fiber: 7 }
+      },
+      {
+        id: 'peanuts',
+        name: 'Cacahuètes',
+        categories: 'oléagineux',
+        nutriments: { energy_kcal: 567, proteins: 26, carbohydrates: 16, fat: 49, fiber: 8.5 }
+      },
+      {
+        id: 'cashews',
+        name: 'Noix de cajou',
+        categories: 'oléagineux',
+        nutriments: { energy_kcal: 553, proteins: 18, carbohydrates: 30, fat: 44, fiber: 3.3 }
+      },
+      {
+        id: 'sunflower_seeds',
+        name: 'Graines de tournesol',
+        categories: 'graines',
+        nutriments: { energy_kcal: 584, proteins: 21, carbohydrates: 20, fat: 51, fiber: 8.6 }
+      },
+
+      // Boissons
+      {
+        id: 'orange_juice',
+        name: 'Jus d\'orange',
+        categories: 'boissons',
+        nutriments: { energy_kcal: 45, proteins: 0.7, carbohydrates: 10.4, fat: 0.2, fiber: 0.2 }
+      },
+      {
+        id: 'apple_juice',
+        name: 'Jus de pomme',
+        categories: 'boissons',
+        nutriments: { energy_kcal: 46, proteins: 0.1, carbohydrates: 11.3, fat: 0.1, fiber: 0.2 }
+      },
+      {
+        id: 'coffee',
+        name: 'Café',
+        categories: 'boissons',
+        nutriments: { energy_kcal: 2, proteins: 0.3, carbohydrates: 0, fat: 0, fiber: 0 }
+      },
+
+      // Desserts
+      {
+        id: 'dark_chocolate',
+        name: 'Chocolat noir',
+        categories: 'desserts',
+        nutriments: { energy_kcal: 546, proteins: 7.9, carbohydrates: 45, fat: 31, fiber: 11 }
+      },
+      {
+        id: 'milk_chocolate',
+        name: 'Chocolat au lait',
+        categories: 'desserts',
+        nutriments: { energy_kcal: 534, proteins: 8, carbohydrates: 59, fat: 30, fiber: 3.4 }
+      },
+      {
+        id: 'cookies',
+        name: 'Cookies',
+        categories: 'desserts',
+        nutriments: { energy_kcal: 502, proteins: 5.9, carbohydrates: 64, fat: 25, fiber: 2.4 }
       }
     ];
   }
@@ -468,7 +654,24 @@ export class OpenFoodFactsService {
   // Suggestions d'aliments populaires
   static getPopularFoods(): FoodProduct[] {
     const allFoods = this.getAllLocalFoods();
-    return allFoods.slice(0, 8); // Retourner les 8 premiers aliments
+    
+    // Sélectionner des aliments populaires et variés
+    const popularIds = [
+      'banana', 'apple', 'orange', 'chicken', 'eggs', 'bread', 'milk', 'yogurt',
+      'pancake', 'oats', 'salmon', 'cheese', 'almonds', 'pasta'
+    ];
+    
+    const popularFoods = popularIds
+      .map(id => allFoods.find(food => food.id === id))
+      .filter(food => food !== undefined);
+    
+    // Si on n'a pas assez d'aliments populaires, compléter avec les premiers
+    if (popularFoods.length < 8) {
+      const remaining = allFoods.filter(food => !popularIds.includes(food.id));
+      popularFoods.push(...remaining.slice(0, 8 - popularFoods.length));
+    }
+    
+    return popularFoods.slice(0, 8);
   }
     // Recherche OpenFoodFacts local via le serveur
   static async searchOpenFoodFactsLocal(query: string): Promise<FoodProduct[]> {
