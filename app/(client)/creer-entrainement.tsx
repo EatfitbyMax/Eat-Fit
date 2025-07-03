@@ -44,116 +44,22 @@ interface Workout {
   exercises: Exercise[];
 }
 
-const WORKOUT_TYPES = [
-  'Cardio', 'Musculation', 'Étirement', 'HIIT', 'Yoga', 'Pilates', 
-  'Course à pied', 'Natation', 'Cyclisme', 'Boxe', 'CrossFit', 
-  'Danse', 'Escalade', 'Football', 'Basketball', 'Tennis'
-];
-
-const getOrderedWorkoutTypes = (favoriteSport: string) => {
-  const sportName = getSportNameFromId(favoriteSport);
-  const types = [...WORKOUT_TYPES];
+const getOrderedSports = (favoriteSport: string) => {
+  const sports = [...allSports];
 
   // Mettre le sport favori en premier
-  if (sportName && types.includes(sportName)) {
-    const index = types.indexOf(sportName);
-    types.splice(index, 1);
-    types.unshift(sportName);
+  if (favoriteSport) {
+    const favoriteIndex = sports.findIndex(sport => sport.id === favoriteSport);
+    if (favoriteIndex !== -1) {
+      const favoriteSportData = sports.splice(favoriteIndex, 1)[0];
+      sports.unshift(favoriteSportData);
+    }
   }
 
-  return types;
+  return sports;
 };
 
-const getSportNameFromId = (sportId: string): string => {
-  // Trouver le sport correspondant dans la liste complète
-  const sport = allSports.find((s: any) => s.id === sportId);
-  if (sport) {
-    // Mapper le nom du sport vers un type d'entraînement disponible
-    const sportName = sport.name;
-    
-    // Vérifier si le nom existe directement dans WORKOUT_TYPES
-    if (WORKOUT_TYPES.includes(sportName)) {
-      return sportName;
-    }
-    
-    // Sinon, mapper vers le type le plus proche selon la catégorie et le nom
-    const sportLower = sportName.toLowerCase();
-    const categoryLower = sport.category.toLowerCase();
-    
-    // Mapping basé sur la catégorie et le nom
-    if (categoryLower.includes('musculation') || categoryLower.includes('fitness') || sportLower.includes('musculation') || sportLower.includes('fitness') || sportLower.includes('force')) {
-      return 'Musculation';
-    }
-    if (categoryLower.includes('course') || categoryLower.includes('athlétisme') || sportLower.includes('course') || sportLower.includes('running') || sportLower.includes('marathon') || sportLower.includes('trail')) {
-      return 'Course à pied';
-    }
-    if (categoryLower.includes('cyclisme') || sportLower.includes('cyclisme') || sportLower.includes('vélo') || sportLower.includes('vtt')) {
-      return 'Cyclisme';
-    }
-    if (categoryLower.includes('aquatique') || sportLower.includes('natation') || sportLower.includes('aqua')) {
-      return 'Natation';
-    }
-    if (sportLower.includes('yoga') || sportLower.includes('pilates')) {
-      return 'Yoga';
-    }
-    if (categoryLower.includes('combat') || sportLower.includes('boxe') || sportLower.includes('combat') || sportLower.includes('arts martiaux')) {
-      return 'Boxe';
-    }
-    if (categoryLower.includes('raquette') || sportLower.includes('tennis') || sportLower.includes('raquette')) {
-      return 'Tennis';
-    }
-    if (categoryLower.includes('collectif') && (sportLower.includes('football') || sportLower.includes('foot'))) {
-      return 'Football';
-    }
-    if (categoryLower.includes('collectif') && sportLower.includes('basket')) {
-      return 'Basketball';
-    }
-    if (categoryLower.includes('aventure') || sportLower.includes('escalade') || sportLower.includes('grimpe')) {
-      return 'Escalade';
-    }
-    if (sportLower.includes('crossfit') || sportLower.includes('cross')) {
-      return 'CrossFit';
-    }
-    if (categoryLower.includes('artistique') || sportLower.includes('danse') || sportLower.includes('dance')) {
-      return 'Danse';
-    }
-    if (sportLower.includes('triathlon') || sportLower.includes('endurance') || categoryLower.includes('endurance')) {
-      return 'Cardio';
-    }
-    if (sportLower.includes('étirement') || sportLower.includes('stretching') || sportLower.includes('souplesse')) {
-      return 'Étirement';
-    }
-    if (sportLower.includes('hiit') || sportLower.includes('interval')) {
-      return 'HIIT';
-    }
-    
-    // Pour les sports collectifs non spécifiques, retourner un type générique
-    if (categoryLower.includes('collectif')) {
-      return 'Cardio';
-    }
-    
-    // Pour tous les autres sports, utiliser Cardio comme type par défaut
-    return 'Cardio';
-  }
-  
-  // Fallback vers l'ancien système pour la compatibilité
-  const sportMap: Record<string, string> = {
-    'musculation': 'Musculation',
-    'course': 'Course à pied',
-    'cyclisme': 'Cyclisme',
-    'natation': 'Natation',
-    'yoga': 'Yoga',
-    'boxe': 'Boxe',
-    'tennis': 'Tennis',
-    'football': 'Football',
-    'basketball': 'Basketball',
-    'escalade': 'Escalade',
-    'crossfit': 'CrossFit',
-    'danse': 'Danse',
-    'triathlon': 'Cardio'
-  };
-  return sportMap[sportId] || 'Cardio';
-};
+
 
 const SPECIFICITIES = [
   'Force', 'Endurance', 'Vitesse', 'Souplesse', 'Équilibre', 
@@ -283,11 +189,12 @@ export default function CreerEntrainementScreen() {
       if (currentUser && currentUser.favoriteSport) {
         setUserFavoriteSport(currentUser.favoriteSport);
 
-        // Pré-remplir le type d'entraînement avec le sport favori
-        const sportName = getSportNameFromId(currentUser.favoriteSport);
-        setWorkout(prev => ({ ...prev, type: sportName }));
-
-        console.log('Sport favori de l\'utilisateur:', currentUser.favoriteSport, '-> Type:', sportName);
+        // Pré-remplir le sport avec le sport favori
+        const favoriteSport = allSports.find(sport => sport.id === currentUser.favoriteSport);
+        if (favoriteSport) {
+          setWorkout(prev => ({ ...prev, type: favoriteSport.name }));
+          console.log('Sport favori de l\'utilisateur:', currentUser.favoriteSport, '-> Sport:', favoriteSport.name);
+        }
       }
     } catch (error) {
       console.error('Erreur chargement données utilisateur:', error);
@@ -351,7 +258,7 @@ export default function CreerEntrainementScreen() {
     }
 
     if (!workout.type) {
-      Alert.alert('Erreur', 'Veuillez sélectionner un type d\'entraînement');
+      Alert.alert('Erreur', 'Veuillez sélectionner un sport');
       return;
     }
 
@@ -601,6 +508,68 @@ export default function CreerEntrainementScreen() {
     }
   };
 
+  const renderSportModal = () => {
+    const orderedSports = getOrderedSports(userFavoriteSport);
+
+    return (
+      <Modal visible={showTypeModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Sport</Text>
+              <TouchableOpacity onPress={() => setShowTypeModal(false)} style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>×</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalContent}>
+              {orderedSports.map((sport) => {
+                const isFavorite = sport.id === userFavoriteSport;
+                return (
+                  <TouchableOpacity
+                    key={sport.id}
+                    style={[
+                      styles.optionItem,
+                      isFavorite && styles.favoriteOptionItem
+                    ]}
+                    onPress={() => {
+                      setWorkout(prev => ({ ...prev, type: sport.name }));
+                      setShowTypeModal(false);
+                    }}
+                  >
+                    <View style={styles.optionContent}>
+                      <View style={styles.sportOptionLeft}>
+                        <Text style={styles.sportEmoji}>{sport.emoji}</Text>
+                        <View style={styles.sportOptionInfo}>
+                          <Text style={[
+                            styles.optionText,
+                            isFavorite && styles.favoriteOptionText
+                          ]}>
+                            {sport.name}
+                          </Text>
+                          <Text style={[
+                            styles.sportCategoryText,
+                            isFavorite && styles.favoriteCategoryText
+                          ]}>
+                            {sport.category}
+                          </Text>
+                        </View>
+                      </View>
+                      {isFavorite && (
+                        <View style={styles.favoriteIndicator}>
+                          <Text style={styles.favoriteIndicatorText}>⭐ Favori</Text>
+                        </View>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
   const renderDropdownModal = (
     visible: boolean,
     onClose: () => void,
@@ -608,8 +577,6 @@ export default function CreerEntrainementScreen() {
     options: string[],
     onSelect: (value: string) => void
   ) => {
-    const favoriteSportName = getSportNameFromId(userFavoriteSport);
-
     return (
       <Modal visible={visible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
@@ -621,36 +588,18 @@ export default function CreerEntrainementScreen() {
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalContent}>
-              {options.map((option) => {
-                const isFavorite = option === favoriteSportName;
-                return (
-                  <TouchableOpacity
-                    key={option}
-                    style={[
-                      styles.optionItem,
-                      isFavorite && styles.favoriteOptionItem
-                    ]}
-                    onPress={() => {
-                      onSelect(option);
-                      onClose();
-                    }}
-                  >
-                    <View style={styles.optionContent}>
-                      <Text style={[
-                        styles.optionText,
-                        isFavorite && styles.favoriteOptionText
-                      ]}>
-                        {option}
-                      </Text>
-                      {isFavorite && (
-                        <View style={styles.favoriteIndicator}>
-                          <Text style={styles.favoriteIndicatorText}>⭐ Favori</Text>
-                        </View>
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
+              {options.map((option) => (
+                <TouchableOpacity
+                  key={option}
+                  style={styles.optionItem}
+                  onPress={() => {
+                    onSelect(option);
+                    onClose();
+                  }}
+                >
+                  <Text style={styles.optionText}>{option}</Text>
+                </TouchableOpacity>
+              ))}
             </ScrollView>
           </View>
         </View>
@@ -937,13 +886,13 @@ export default function CreerEntrainementScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Type d'entraînement *</Text>
+              <Text style={styles.label}>Sport *</Text>
               <TouchableOpacity
                 style={styles.dropdown}
                 onPress={() => setShowTypeModal(true)}
               >
                 <Text style={[styles.dropdownText, !workout.type && styles.placeholder]}>
-                  {workout.type || 'Sélectionner un type'}
+                  {workout.type || 'Sélectionner un sport'}
                 </Text>
                 <Text style={styles.dropdownArrow}>▼</Text>
               </TouchableOpacity>
@@ -1084,13 +1033,7 @@ export default function CreerEntrainementScreen() {
       </View>
 
       {/* Modals */}
-      {renderDropdownModal(
-        showTypeModal,
-        () => setShowTypeModal(false),
-        'Type d\'entraînement',
-        getOrderedWorkoutTypes(userFavoriteSport),
-        (value) => setWorkout(prev => ({ ...prev, type: value }))
-      )}
+      {renderSportModal()}
 
       {renderDropdownModal(
         showSpecificityModal,
@@ -1478,5 +1421,25 @@ const styles = StyleSheet.create({
   suggestionText: {
     color: '#FFFFFF',
     fontSize: 14,
+  },
+  sportOptionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  sportEmoji: {
+    fontSize: 20,
+    marginRight: 12,
+  },
+  sportOptionInfo: {
+    flex: 1,
+  },
+  sportCategoryText: {
+    fontSize: 12,
+    color: '#8B949E',
+    marginTop: 2,
+  },
+  favoriteCategoryText: {
+    color: '#666666',
   },
 });
