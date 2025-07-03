@@ -114,56 +114,39 @@ export default function EntrainementScreen() {
 
       console.log('=== CHARGEMENT TOUS LES ENTRAINEMENTS ===');
 
-      // Essayer d'abord le serveur local, puis VPS, puis stockage local
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-      let workoutsLoaded = false;
-
-      // 1. Essayer le serveur local (port 5000)
+      // Charger depuis le serveur VPS d'abord
       try {
-        const localResponse = await fetch(`http://localhost:5000/api/workouts/${currentUser.id}`, {
-          timeout: 3000
-        });
-        if (localResponse.ok) {
-          const workouts = await localResponse.json();
-          console.log(`✅ Entraînements chargés depuis le serveur local: ${workouts.length}`);
-          setWorkouts([...workouts]);
-          workoutsLoaded = true;
-        }
-      } catch (localError) {
-        console.log('⚠️ Serveur local indisponible, essai du serveur VPS...');
-      }
+        const workouts = await PersistentStorage.getWorkouts(currentUser.id);
+        console.log(`Total entraînements chargés depuis le serveur: ${workouts.length}`);
 
-      // 2. Si le serveur local ne fonctionne pas, essayer le VPS
-      if (!workoutsLoaded && process.env.EXPO_PUBLIC_REPLIT_URL) {
-        try {
-          const vpsResponse = await fetch(`https://${process.env.EXPO_PUBLIC_REPLIT_URL}/api/workouts/${currentUser.id}`, {
-            timeout: 5000
+        // Debug: grouper par date
+        const workoutsByDate = workouts.reduce((acc: any, workout: any) => {
+          if (!acc[workout.date]) acc[workout.date] = [];
+          acc[workout.date].push(workout);
+          return acc;
+        }, {});
+
+        Object.keys(workoutsByDate).forEach(date => {
+          console.log(`${date}: ${workoutsByDate[date].length} entraînement(s)`);
+          workoutsByDate[date].forEach((w: any, i: number) => {
+            console.log(`  ${i + 1}. ${w.name} (${w.type})`);
           });
-          if (vpsResponse.ok) {
-            const workouts = await vpsResponse.json();
-            console.log(`✅ Entraînements chargés depuis le serveur VPS: ${workouts.length}`);
-            setWorkouts([...workouts]);
-            workoutsLoaded = true;
-          }
-        } catch (vpsError) {
-          console.log('⚠️ Serveur VPS indisponible, utilisation du stockage local...');
-        }
-      }
+        });
 
-      // 3. Fallback vers le stockage local
-      if (!workoutsLoaded) {
-        try {
-          const storedWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
-          if (storedWorkouts) {
-            const allWorkouts = JSON.parse(storedWorkouts);
-            console.log(`✅ Entraînements chargés en local: ${allWorkouts.length}`);
-            setWorkouts([...allWorkouts]);
-          } else {
-            console.log('ℹ️ Aucun entraînement trouvé');
-            setWorkouts([]);
-          }
-        } catch (localStorageError) {
-          console.error('❌ Erreur accès stockage local:', localStorageError);
+        // Forcer la mise à jour de l'état même si les données sont identiques
+        setWorkouts([...workouts]);
+      } catch (error) {
+        console.error('Erreur chargement entraînements depuis serveur:', error);
+        // Fallback vers le stockage local
+        const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+        const storedWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
+
+        if (storedWorkouts) {
+          const allWorkouts = JSON.parse(storedWorkouts);
+          console.log(`Total entraînements chargés en local: ${allWorkouts.length}`);
+          setWorkouts([...allWorkouts]);
+        } else {
+          console.log('Aucun entraînement trouvé');
           setWorkouts([]);
         }
       }
@@ -665,7 +648,34 @@ export default function EntrainementScreen() {
            target.getDate() === today.getDate();
   };
 
-  
+  useEffect(() => {
+    loadUserAndWorkouts();
+  }, []);
+
+  const loadUserAndWorkouts = async () => {
+    try {
+      const userData = await PersistentStorage.getUserData();
+      if (userData) {
+        setCurrentUser(userData);
+        const userWorkouts = await PersistentStorage.getUserWorkouts(userData.id);
+        setWorkouts(userWorkouts);
+      }
+    } catch (error) {
+      console.error('Erreur chargement entraînements:', error);
+    }
+  };
+
+  const saveWorkouts = async (newWorkouts: any[]) => {
+    try {
+      if (!currentUser?.id) return;
+
+      await PersistentStorage.saveUserWorkouts(currentUser.id, newWorkouts);
+      setWorkouts(newWorkouts);
+      console.log('Entraînements sauvegardés pour utilisateur:', currentUser.id);
+    } catch (error) {
+      console.error('Erreur sauvegarde:', error);
+    }
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
