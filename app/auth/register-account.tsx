@@ -85,6 +85,9 @@ export default function RegisterAccountScreen() {
           <View style={[styles.progressStep, styles.activeStep]} />
           <View style={[styles.progressStep, styles.activeStep]} />
           <View style={[styles.progressStep, styles.activeStep]} />
+          <View style={[styles.progressStep, styles.activeStep]} />
+          <View style={[styles.progressStep, styles.activeStep]} />
+          <View style={styles.progressStep} />
         </View>
       </View>
 

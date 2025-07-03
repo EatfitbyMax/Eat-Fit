@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -61,6 +60,8 @@ export default function RegisterSportScreen() {
             <View style={[styles.progressStep, styles.activeStep]} />
             <View style={[styles.progressStep, styles.activeStep]} />
             <View style={[styles.progressStep, styles.activeStep]} />
+            <View style={[styles.progressStep, styles.activeStep]} />
+            <View style={styles.progressStep} />
             <View style={styles.progressStep} />
             <View style={styles.progressStep} />
           </View>
