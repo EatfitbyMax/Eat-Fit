@@ -302,363 +302,398 @@ export class OpenFoodFactsService {
     return matchedFoods.length > 0 ? matchedFoods : this.getPopularFoods();
   }
 
-  // Base de données locale étendue d'aliments
+  // Base de données locale d'aliments français
   static getAllLocalFoods(): FoodProduct[] {
     return [
-      // Fruits
+      // Fruits français et de saison
       {
-        id: 'banana',
-        name: 'Banane',
-        categories: 'fruits',
-        nutriments: { energy_kcal: 89, proteins: 1.1, carbohydrates: 23, fat: 0.3, fiber: 2.6 }
-      },
-      {
-        id: 'apple',
-        name: 'Pomme',
-        categories: 'fruits',
+        id: 'pomme_golden',
+        name: 'Pomme Golden (France)',
+        brand: 'Origine France',
+        categories: 'fruits français',
         nutriments: { energy_kcal: 52, proteins: 0.3, carbohydrates: 14, fat: 0.2, fiber: 2.4 }
       },
       {
-        id: 'orange',
-        name: 'Orange',
-        categories: 'fruits',
-        nutriments: { energy_kcal: 47, proteins: 0.9, carbohydrates: 12, fat: 0.1, fiber: 2.4 }
+        id: 'poire_williams',
+        name: 'Poire Williams (France)',
+        brand: 'Origine France',
+        categories: 'fruits français',
+        nutriments: { energy_kcal: 53, proteins: 0.3, carbohydrates: 12, fat: 0.1, fiber: 3.3 }
       },
       {
-        id: 'strawberry',
-        name: 'Fraise',
-        categories: 'fruits',
+        id: 'fraise_france',
+        name: 'Fraises de France',
+        brand: 'Origine France',
+        categories: 'fruits français',
         nutriments: { energy_kcal: 32, proteins: 0.7, carbohydrates: 8, fat: 0.3, fiber: 2 }
       },
       {
-        id: 'kiwi',
-        name: 'Kiwi',
-        categories: 'fruits',
-        nutriments: { energy_kcal: 61, proteins: 1.1, carbohydrates: 15, fat: 0.5, fiber: 3 }
+        id: 'cerise_france',
+        name: 'Cerises de France',
+        brand: 'Origine France',
+        categories: 'fruits français',
+        nutriments: { energy_kcal: 68, proteins: 1.1, carbohydrates: 15, fat: 0.3, fiber: 2.1 }
       },
       {
-        id: 'grapes',
-        name: 'Raisin',
-        categories: 'fruits',
+        id: 'peche_france',
+        name: 'Pêches de France',
+        brand: 'Origine France',
+        categories: 'fruits français',
+        nutriments: { energy_kcal: 38, proteins: 0.8, carbohydrates: 8.1, fat: 0.1, fiber: 1.9 }
+      },
+      {
+        id: 'raisin_chasselas',
+        name: 'Raisin Chasselas (France)',
+        brand: 'Origine France',
+        categories: 'fruits français',
         nutriments: { energy_kcal: 62, proteins: 0.6, carbohydrates: 16, fat: 0.2, fiber: 0.9 }
       },
       {
-        id: 'pineapple',
-        name: 'Ananas',
-        categories: 'fruits',
-        nutriments: { energy_kcal: 50, proteins: 0.5, carbohydrates: 13, fat: 0.1, fiber: 1.4 }
-      },
-      {
-        id: 'mango',
-        name: 'Mangue',
-        categories: 'fruits',
-        nutriments: { energy_kcal: 60, proteins: 0.8, carbohydrates: 15, fat: 0.4, fiber: 1.6 }
+        id: 'melon_charentais',
+        name: 'Melon Charentais',
+        brand: 'Origine France',
+        categories: 'fruits français',
+        nutriments: { energy_kcal: 34, proteins: 0.8, carbohydrates: 8.2, fat: 0.2, fiber: 0.9 }
       },
 
-      // Légumes
+      // Légumes français
       {
-        id: 'carrot',
-        name: 'Carotte',
-        categories: 'légumes',
-        nutriments: { energy_kcal: 41, proteins: 0.9, carbohydrates: 10, fat: 0.2, fiber: 2.8 }
-      },
-      {
-        id: 'tomato',
-        name: 'Tomate',
-        categories: 'légumes',
+        id: 'tomate_francaise',
+        name: 'Tomates françaises',
+        brand: 'Origine France',
+        categories: 'légumes français',
         nutriments: { energy_kcal: 18, proteins: 0.9, carbohydrates: 3.9, fat: 0.2, fiber: 1.2 }
       },
       {
-        id: 'broccoli',
-        name: 'Brocoli',
-        categories: 'légumes',
-        nutriments: { energy_kcal: 34, proteins: 2.8, carbohydrates: 7, fat: 0.4, fiber: 2.6 }
+        id: 'carotte_francaise',
+        name: 'Carottes françaises',
+        brand: 'Origine France',
+        categories: 'légumes français',
+        nutriments: { energy_kcal: 41, proteins: 0.9, carbohydrates: 10, fat: 0.2, fiber: 2.8 }
       },
       {
-        id: 'spinach',
-        name: 'Épinards',
-        categories: 'légumes',
-        nutriments: { energy_kcal: 23, proteins: 2.9, carbohydrates: 3.6, fat: 0.4, fiber: 2.2 }
+        id: 'poireau_france',
+        name: 'Poireaux de France',
+        brand: 'Origine France',
+        categories: 'légumes français',
+        nutriments: { energy_kcal: 61, proteins: 1.5, carbohydrates: 14, fat: 0.3, fiber: 1.8 }
       },
       {
-        id: 'cucumber',
-        name: 'Concombre',
-        categories: 'légumes',
-        nutriments: { energy_kcal: 16, proteins: 0.7, carbohydrates: 4, fat: 0.1, fiber: 0.5 }
+        id: 'courgette_france',
+        name: 'Courgettes françaises',
+        brand: 'Origine France',
+        categories: 'légumes français',
+        nutriments: { energy_kcal: 17, proteins: 1.2, carbohydrates: 3.1, fat: 0.3, fiber: 1 }
       },
       {
-        id: 'bell_pepper',
-        name: 'Poivron',
-        categories: 'légumes',
-        nutriments: { energy_kcal: 31, proteins: 1, carbohydrates: 7, fat: 0.3, fiber: 2.5 }
-      },
-
-      // Protéines
-      {
-        id: 'chicken',
-        name: 'Blanc de poulet',
-        categories: 'viandes',
-        nutriments: { energy_kcal: 165, proteins: 31, carbohydrates: 0, fat: 3.6, fiber: 0 }
+        id: 'haricot_vert_france',
+        name: 'Haricots verts français',
+        brand: 'Origine France',
+        categories: 'légumes français',
+        nutriments: { energy_kcal: 35, proteins: 2.4, carbohydrates: 8, fat: 0.2, fiber: 4 }
       },
       {
-        id: 'salmon',
-        name: 'Saumon',
-        categories: 'poissons',
-        nutriments: { energy_kcal: 208, proteins: 25, carbohydrates: 0, fat: 12, fiber: 0 }
+        id: 'radis_france',
+        name: 'Radis français',
+        brand: 'Origine France',
+        categories: 'légumes français',
+        nutriments: { energy_kcal: 16, proteins: 0.7, carbohydrates: 3.4, fat: 0.1, fiber: 1.6 }
       },
       {
-        id: 'eggs',
-        name: 'Œufs',
-        categories: 'protéines',
-        nutriments: { energy_kcal: 155, proteins: 13, carbohydrates: 1.1, fat: 11, fiber: 0 }
-      },
-      {
-        id: 'tuna',
-        name: 'Thon',
-        categories: 'poissons',
-        nutriments: { energy_kcal: 144, proteins: 30, carbohydrates: 0, fat: 1, fiber: 0 }
-      },
-      {
-        id: 'beef',
-        name: 'Bœuf',
-        categories: 'viandes',
-        nutriments: { energy_kcal: 250, proteins: 26, carbohydrates: 0, fat: 15, fiber: 0 }
-      },
-      {
-        id: 'turkey',
-        name: 'Dinde',
-        categories: 'viandes',
-        nutriments: { energy_kcal: 189, proteins: 29, carbohydrates: 0, fat: 7, fiber: 0 }
+        id: 'salade_verte',
+        name: 'Salade verte française',
+        brand: 'Origine France',
+        categories: 'légumes français',
+        nutriments: { energy_kcal: 14, proteins: 1.2, carbohydrates: 1.4, fat: 0.2, fiber: 1.5 }
       },
 
-      // Céréales et féculents
+      // Fromages français AOP
       {
-        id: 'bread',
-        name: 'Pain complet',
-        categories: 'céréales',
-        nutriments: { energy_kcal: 247, proteins: 13, carbohydrates: 41, fat: 4.2, fiber: 7 }
+        id: 'camembert_normandie',
+        name: 'Camembert de Normandie AOP',
+        brand: 'Président',
+        categories: 'fromages français',
+        nutriments: { energy_kcal: 265, proteins: 21, carbohydrates: 0.5, fat: 20, fiber: 0 }
       },
       {
-        id: 'white_bread',
-        name: 'Pain blanc',
-        categories: 'céréales',
-        nutriments: { energy_kcal: 265, proteins: 9, carbohydrates: 49, fat: 3.2, fiber: 2.7 }
+        id: 'roquefort',
+        name: 'Roquefort AOP',
+        brand: 'Société',
+        categories: 'fromages français',
+        nutriments: { energy_kcal: 369, proteins: 19, carbohydrates: 2, fat: 32, fiber: 0 }
       },
       {
-        id: 'rice',
-        name: 'Riz blanc cuit',
-        categories: 'céréales',
-        nutriments: { energy_kcal: 130, proteins: 2.7, carbohydrates: 28, fat: 0.3, fiber: 0.4 }
+        id: 'comte',
+        name: 'Comté AOP',
+        brand: 'Juraflore',
+        categories: 'fromages français',
+        nutriments: { energy_kcal: 417, proteins: 27, carbohydrates: 1.5, fat: 34, fiber: 0 }
       },
       {
-        id: 'brown_rice',
-        name: 'Riz complet cuit',
-        categories: 'céréales',
-        nutriments: { energy_kcal: 111, proteins: 2.6, carbohydrates: 23, fat: 0.9, fiber: 1.8 }
+        id: 'chevre_crottin',
+        name: 'Crottin de Chavignol AOP',
+        brand: 'Soignon',
+        categories: 'fromages français',
+        nutriments: { energy_kcal: 364, proteins: 25, carbohydrates: 2.5, fat: 29, fiber: 0 }
       },
       {
-        id: 'pasta',
-        name: 'Pâtes',
-        categories: 'céréales',
-        nutriments: { energy_kcal: 131, proteins: 5, carbohydrates: 25, fat: 1.1, fiber: 1.8 }
-      },
-      {
-        id: 'oats',
-        name: 'Avoine',
-        categories: 'céréales',
-        nutriments: { energy_kcal: 389, proteins: 17, carbohydrates: 66, fat: 7, fiber: 11 }
-      },
-      {
-        id: 'quinoa',
-        name: 'Quinoa cuit',
-        categories: 'céréales',
-        nutriments: { energy_kcal: 120, proteins: 4.4, carbohydrates: 22, fat: 1.9, fiber: 2.8 }
+        id: 'brie_meaux',
+        name: 'Brie de Meaux AOP',
+        brand: 'Dong',
+        categories: 'fromages français',
+        nutriments: { energy_kcal: 334, proteins: 21, carbohydrates: 0.5, fat: 27, fiber: 0 }
       },
 
-      // Petit-déjeuner et snacks
+      // Produits laitiers français
       {
-        id: 'pancake',
-        name: 'Pancake',
-        categories: 'petit-déjeuner',
-        nutriments: { energy_kcal: 227, proteins: 6, carbohydrates: 28, fat: 10, fiber: 1.5 }
-      },
-      {
-        id: 'pancakes',
-        name: 'Pancakes',
-        categories: 'petit-déjeuner',
-        nutriments: { energy_kcal: 227, proteins: 6, carbohydrates: 28, fat: 10, fiber: 1.5 }
-      },
-      {
-        id: 'croissant',
-        name: 'Croissant',
-        categories: 'viennoiseries',
-        nutriments: { energy_kcal: 406, proteins: 8.2, carbohydrates: 46, fat: 21, fiber: 2.6 }
-      },
-      {
-        id: 'muesli',
-        name: 'Muesli',
-        categories: 'céréales',
-        nutriments: { energy_kcal: 367, proteins: 10, carbohydrates: 66, fat: 6, fiber: 8 }
-      },
-      {
-        id: 'granola',
-        name: 'Granola',
-        categories: 'céréales',
-        nutriments: { energy_kcal: 471, proteins: 11, carbohydrates: 65, fat: 19, fiber: 7 }
-      },
-      {
-        id: 'toast',
-        name: 'Toast',
-        categories: 'céréales',
-        nutriments: { energy_kcal: 313, proteins: 10, carbohydrates: 56, fat: 4.2, fiber: 4.5 }
-      },
-
-      // Produits laitiers
-      {
-        id: 'milk',
-        name: 'Lait entier',
-        categories: 'laitages',
-        nutriments: { energy_kcal: 61, proteins: 3.2, carbohydrates: 4.8, fat: 3.3, fiber: 0 }
-      },
-      {
-        id: 'skim_milk',
-        name: 'Lait écrémé',
-        categories: 'laitages',
-        nutriments: { energy_kcal: 34, proteins: 3.4, carbohydrates: 5, fat: 0.1, fiber: 0 }
-      },
-      {
-        id: 'yogurt',
-        name: 'Yaourt nature',
-        categories: 'laitages',
+        id: 'yaourt_bulgare',
+        name: 'Yaourt à la bulgare',
+        brand: 'Danone',
+        categories: 'produits laitiers français',
         nutriments: { energy_kcal: 59, proteins: 10, carbohydrates: 3.6, fat: 0.4, fiber: 0 }
       },
       {
-        id: 'greek_yogurt',
-        name: 'Yaourt grec',
-        categories: 'laitages',
-        nutriments: { energy_kcal: 97, proteins: 9, carbohydrates: 4, fat: 5, fiber: 0 }
-      },
-      {
-        id: 'cheese',
-        name: 'Fromage',
-        categories: 'laitages',
-        nutriments: { energy_kcal: 113, proteins: 7, carbohydrates: 1, fat: 9, fiber: 0 }
-      },
-      {
-        id: 'cottage_cheese',
-        name: 'Fromage blanc',
-        categories: 'laitages',
+        id: 'fromage_blanc_campagne',
+        name: 'Fromage blanc de campagne',
+        brand: 'Bridel',
+        categories: 'produits laitiers français',
         nutriments: { energy_kcal: 98, proteins: 11, carbohydrates: 3.4, fat: 4.3, fiber: 0 }
       },
-
-      // Légumineuses
       {
-        id: 'lentils',
-        name: 'Lentilles',
-        categories: 'légumineuses',
+        id: 'lait_demi_ecreme',
+        name: 'Lait demi-écrémé français',
+        brand: 'Lactel',
+        categories: 'produits laitiers français',
+        nutriments: { energy_kcal: 46, proteins: 3.2, carbohydrates: 4.8, fat: 1.6, fiber: 0 }
+      },
+      {
+        id: 'beurre_normandie',
+        name: 'Beurre de Normandie AOP',
+        brand: 'Isigny Sainte-Mère',
+        categories: 'produits laitiers français',
+        nutriments: { energy_kcal: 717, proteins: 0.7, carbohydrates: 0.6, fat: 81, fiber: 0 }
+      },
+
+      // Viennoiseries françaises
+      {
+        id: 'croissant_beurre',
+        name: 'Croissant au beurre',
+        brand: 'Boulangerie française',
+        categories: 'viennoiseries françaises',
+        nutriments: { energy_kcal: 406, proteins: 8.2, carbohydrates: 46, fat: 21, fiber: 2.6 }
+      },
+      {
+        id: 'pain_chocolat',
+        name: 'Pain au chocolat',
+        brand: 'Boulangerie française',
+        categories: 'viennoiseries françaises',
+        nutriments: { energy_kcal: 414, proteins: 7.8, carbohydrates: 45, fat: 23, fiber: 2.5 }
+      },
+      {
+        id: 'brioche_vendeen',
+        name: 'Brioche vendéenne',
+        brand: 'Pasquier',
+        categories: 'viennoiseries françaises',
+        nutriments: { energy_kcal: 367, proteins: 8.5, carbohydrates: 49, fat: 15, fiber: 2.8 }
+      },
+      {
+        id: 'chausson_pommes',
+        name: 'Chausson aux pommes',
+        brand: 'Boulangerie française',
+        categories: 'viennoiseries françaises',
+        nutriments: { energy_kcal: 302, proteins: 4.2, carbohydrates: 38, fat: 15, fiber: 2.1 }
+      },
+
+      // Pains français
+      {
+        id: 'baguette_tradition',
+        name: 'Baguette tradition française',
+        brand: 'Boulangerie artisanale',
+        categories: 'pains français',
+        nutriments: { energy_kcal: 280, proteins: 7.5, carbohydrates: 57, fat: 1.4, fiber: 3.5 }
+      },
+      {
+        id: 'pain_complet',
+        name: 'Pain complet français',
+        brand: 'Poilâne',
+        categories: 'pains français',
+        nutriments: { energy_kcal: 230, proteins: 8.5, carbohydrates: 45, fat: 3.5, fiber: 8.5 }
+      },
+      {
+        id: 'pain_seigle',
+        name: 'Pain de seigle français',
+        brand: 'Boulangerie artisanale',
+        categories: 'pains français',
+        nutriments: { energy_kcal: 219, proteins: 8.4, carbohydrates: 41, fat: 1.7, fiber: 5.8 }
+      },
+
+      // Pâtes et céréales françaises
+      {
+        id: 'pates_ble_dur',
+        name: 'Pâtes blé dur français',
+        brand: 'Panzani',
+        categories: 'pâtes françaises',
+        nutriments: { energy_kcal: 131, proteins: 5, carbohydrates: 25, fat: 1.1, fiber: 1.8 }
+      },
+      {
+        id: 'riz_camargue',
+        name: 'Riz de Camargue IGP',
+        brand: 'Taureau Ailé',
+        categories: 'céréales françaises',
+        nutriments: { energy_kcal: 130, proteins: 2.7, carbohydrates: 28, fat: 0.3, fiber: 0.4 }
+      },
+
+      // Viandes françaises
+      {
+        id: 'poulet_fermier',
+        name: 'Poulet fermier français',
+        brand: 'Label Rouge',
+        categories: 'viandes françaises',
+        nutriments: { energy_kcal: 165, proteins: 31, carbohydrates: 0, fat: 3.6, fiber: 0 }
+      },
+      {
+        id: 'boeuf_charolais',
+        name: 'Bœuf Charolais français',
+        brand: 'Label Rouge',
+        categories: 'viandes françaises',
+        nutriments: { energy_kcal: 250, proteins: 26, carbohydrates: 0, fat: 15, fiber: 0 }
+      },
+      {
+        id: 'porc_francais',
+        name: 'Porc français',
+        brand: 'Origine France',
+        categories: 'viandes françaises',
+        nutriments: { energy_kcal: 200, proteins: 25, carbohydrates: 0, fat: 11, fiber: 0 }
+      },
+
+      // Poissons français
+      {
+        id: 'sole_bretagne',
+        name: 'Sole de Bretagne',
+        brand: 'Pêche française',
+        categories: 'poissons français',
+        nutriments: { energy_kcal: 83, proteins: 18, carbohydrates: 0, fat: 0.9, fiber: 0 }
+      },
+      {
+        id: 'saumon_france',
+        name: 'Saumon français',
+        brand: 'Pêche française',
+        categories: 'poissons français',
+        nutriments: { energy_kcal: 184, proteins: 25, carbohydrates: 0, fat: 8.5, fiber: 0 }
+      },
+      {
+        id: 'sardine_bretagne',
+        name: 'Sardines de Bretagne',
+        brand: 'Pêche française',
+        categories: 'poissons français',
+        nutriments: { energy_kcal: 135, proteins: 19, carbohydrates: 0, fat: 6.2, fiber: 0 }
+      },
+
+      // Légumineuses françaises
+      {
+        id: 'lentilles_berry',
+        name: 'Lentilles vertes du Berry',
+        brand: 'France Lentilles',
+        categories: 'légumineuses françaises',
         nutriments: { energy_kcal: 116, proteins: 9, carbohydrates: 20, fat: 0.4, fiber: 8 }
       },
       {
-        id: 'chickpeas',
-        name: 'Pois chiches',
-        categories: 'légumineuses',
-        nutriments: { energy_kcal: 164, proteins: 8.9, carbohydrates: 27, fat: 2.6, fiber: 8 }
-      },
-      {
-        id: 'black_beans',
-        name: 'Haricots noirs',
-        categories: 'légumineuses',
-        nutriments: { energy_kcal: 132, proteins: 8.9, carbohydrates: 24, fat: 0.5, fiber: 8.7 }
-      },
-      {
-        id: 'kidney_beans',
-        name: 'Haricots rouges',
-        categories: 'légumineuses',
-        nutriments: { energy_kcal: 127, proteins: 8.7, carbohydrates: 23, fat: 0.5, fiber: 6.4 }
+        id: 'haricots_tarbais',
+        name: 'Haricots Tarbais IGP',
+        brand: 'Coopérative du Haricot Tarbais',
+        categories: 'légumineuses françaises',
+        nutriments: { energy_kcal: 129, proteins: 9.5, carbohydrates: 20, fat: 0.6, fiber: 8.7 }
       },
 
-      // Noix et graines
+      // Desserts français
       {
-        id: 'almonds',
-        name: 'Amandes',
-        categories: 'oléagineux',
-        nutriments: { energy_kcal: 579, proteins: 21, carbohydrates: 22, fat: 50, fiber: 12 }
+        id: 'chocolat_valrhona',
+        name: 'Chocolat noir Valrhona 70%',
+        brand: 'Valrhona',
+        categories: 'chocolats français',
+        nutriments: { energy_kcal: 579, proteins: 7.8, carbohydrates: 29, fat: 42, fiber: 15 }
       },
       {
-        id: 'walnuts',
-        name: 'Noix',
-        categories: 'oléagineux',
-        nutriments: { energy_kcal: 654, proteins: 15, carbohydrates: 14, fat: 65, fiber: 7 }
+        id: 'madeleines_commercy',
+        name: 'Madeleines de Commercy',
+        brand: 'St Michel',
+        categories: 'desserts français',
+        nutriments: { energy_kcal: 463, proteins: 6.8, carbohydrates: 54, fat: 24, fiber: 1.8 }
       },
       {
-        id: 'peanuts',
-        name: 'Cacahuètes',
-        categories: 'oléagineux',
-        nutriments: { energy_kcal: 567, proteins: 26, carbohydrates: 16, fat: 49, fiber: 8.5 }
-      },
-      {
-        id: 'cashews',
-        name: 'Noix de cajou',
-        categories: 'oléagineux',
-        nutriments: { energy_kcal: 553, proteins: 18, carbohydrates: 30, fat: 44, fiber: 3.3 }
-      },
-      {
-        id: 'sunflower_seeds',
-        name: 'Graines de tournesol',
-        categories: 'graines',
-        nutriments: { energy_kcal: 584, proteins: 21, carbohydrates: 20, fat: 51, fiber: 8.6 }
+        id: 'tarte_tatin',
+        name: 'Tarte Tatin',
+        brand: 'Pâtisserie française',
+        categories: 'desserts français',
+        nutriments: { energy_kcal: 267, proteins: 3.2, carbohydrates: 38, fat: 12, fiber: 2.1 }
       },
 
-      // Boissons
+      // Pancakes français (adaptation locale)
       {
-        id: 'orange_juice',
-        name: 'Jus d\'orange',
-        categories: 'boissons',
-        nutriments: { energy_kcal: 45, proteins: 0.7, carbohydrates: 10.4, fat: 0.2, fiber: 0.2 }
+        id: 'pancake_francais',
+        name: 'Pancakes français',
+        brand: 'Recette française',
+        categories: 'petit-déjeuner français',
+        nutriments: { energy_kcal: 227, proteins: 6, carbohydrates: 28, fat: 10, fiber: 1.5 }
       },
       {
-        id: 'apple_juice',
-        name: 'Jus de pomme',
-        categories: 'boissons',
+        id: 'crepe_bretonne',
+        name: 'Crêpe bretonne',
+        brand: 'Bretagne',
+        categories: 'petit-déjeuner français',
+        nutriments: { energy_kcal: 212, proteins: 6.1, carbohydrates: 26, fat: 9.8, fiber: 1.2 }
+      },
+
+      // Boissons françaises
+      {
+        id: 'jus_pomme_normandie',
+        name: 'Jus de pomme de Normandie',
+        brand: 'Val de Rance',
+        categories: 'boissons françaises',
         nutriments: { energy_kcal: 46, proteins: 0.1, carbohydrates: 11.3, fat: 0.1, fiber: 0.2 }
       },
       {
-        id: 'coffee',
-        name: 'Café',
-        categories: 'boissons',
+        id: 'cafe_francais',
+        name: 'Café français',
+        brand: 'Malongo',
+        categories: 'boissons françaises',
         nutriments: { energy_kcal: 2, proteins: 0.3, carbohydrates: 0, fat: 0, fiber: 0 }
       },
 
-      // Desserts
+      // Glaces françaises
       {
-        id: 'dark_chocolate',
-        name: 'Chocolat noir',
-        categories: 'desserts',
-        nutriments: { energy_kcal: 546, proteins: 7.9, carbohydrates: 45, fat: 31, fiber: 11 }
+        id: 'glace_vanille',
+        name: 'Glace vanille française',
+        brand: 'Häagen-Dazs France',
+        categories: 'glaces françaises',
+        nutriments: { energy_kcal: 207, proteins: 3.5, carbohydrates: 21, fat: 12, fiber: 0 }
       },
       {
-        id: 'milk_chocolate',
-        name: 'Chocolat au lait',
-        categories: 'desserts',
-        nutriments: { energy_kcal: 534, proteins: 8, carbohydrates: 59, fat: 30, fiber: 3.4 }
+        id: 'sorbet_citron',
+        name: 'Sorbet au citron',
+        brand: 'Picard',
+        categories: 'glaces françaises',
+        nutriments: { energy_kcal: 134, proteins: 0.4, carbohydrates: 34, fat: 0.1, fiber: 0.2 }
       },
       {
-        id: 'cookies',
-        name: 'Cookies',
-        categories: 'desserts',
-        nutriments: { energy_kcal: 502, proteins: 5.9, carbohydrates: 64, fat: 25, fiber: 2.4 }
+        id: 'glace_eau_fruit',
+        name: 'Glace à l\'eau aux fruits',
+        brand: 'La Gervais',
+        categories: 'glaces françaises',
+        nutriments: { energy_kcal: 70, proteins: 0.1, carbohydrates: 17, fat: 0.1, fiber: 0 }
       }
     ];
   }
 
-  // Suggestions d'aliments populaires
+  // Suggestions d'aliments populaires français
   static getPopularFoods(): FoodProduct[] {
     const allFoods = this.getAllLocalFoods();
     
-    // Sélectionner des aliments populaires et variés
+    // Sélectionner des aliments populaires français et variés
     const popularIds = [
-      'banana', 'apple', 'orange', 'chicken', 'eggs', 'bread', 'milk', 'yogurt',
-      'pancake', 'oats', 'salmon', 'cheese', 'almonds', 'pasta'
+      'pomme_golden', 'baguette_tradition', 'camembert_normandie', 'poulet_fermier', 
+      'yaourt_bulgare', 'croissant_beurre', 'tomate_francaise', 'fromage_blanc_campagne',
+      'pancake_francais', 'pates_ble_dur', 'lentilles_berry', 'chocolat_valrhona'
     ];
     
     const popularFoods = popularIds
