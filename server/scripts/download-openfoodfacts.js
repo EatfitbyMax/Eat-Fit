@@ -12,31 +12,53 @@ class OpenFoodFactsDownloader {
   }
 
   async downloadDatabase() {
-    console.log('🔄 Téléchargement de la base OpenFoodFacts...');
+    const logPrefix = `[${new Date().toISOString()}] [OpenFoodFacts]`;
+    console.log(`${logPrefix} 🔄 Téléchargement de la base OpenFoodFacts...`);
     
     try {
       // Créer le dossier data s'il n'existe pas
       await fs.mkdir(this.dataDir, { recursive: true });
 
       // Télécharger le fichier compressé
+      console.log(`${logPrefix} 📥 Début du téléchargement depuis OpenFoodFacts...`);
       const compressedData = await this.downloadFile(this.downloadUrl);
-      console.log('✅ Fichier téléchargé, décompression...');
+      console.log(`${logPrefix} ✅ Fichier téléchargé (${Math.round(compressedData.length / 1024 / 1024)}MB), décompression...`);
 
       // Décompresser les données
       const decompressedData = await this.decompress(compressedData);
-      console.log('✅ Données décompressées, traitement...');
+      console.log(`${logPrefix} ✅ Données décompressées (${Math.round(decompressedData.length / 1024 / 1024)}MB), traitement...`);
 
       // Traiter et filtrer les données
       const processedData = await this.processData(decompressedData);
-      console.log(`✅ ${processedData.length} produits traités`);
+      console.log(`${logPrefix} ✅ ${processedData.length} produits traités`);
 
       // Sauvegarder les données
       await fs.writeFile(this.openfoodfactsFile, JSON.stringify(processedData, null, 2));
-      console.log('✅ Base de données OpenFoodFacts sauvegardée');
+      console.log(`${logPrefix} ✅ Base de données OpenFoodFacts sauvegardée`);
+
+      // Écrire un fichier de log pour PM2
+      const logFile = path.join(this.dataDir, 'download-log.json');
+      const logData = {
+        lastUpdate: new Date().toISOString(),
+        productCount: processedData.length,
+        status: 'completed',
+        fileSize: (await fs.stat(this.openfoodfactsFile)).size
+      };
+      await fs.writeFile(logFile, JSON.stringify(logData, null, 2));
 
       return processedData.length;
     } catch (error) {
-      console.error('❌ Erreur téléchargement:', error);
+      console.error(`${logPrefix} ❌ Erreur téléchargement:`, error);
+      
+      // Écrire le log d'erreur pour PM2
+      const logFile = path.join(this.dataDir, 'download-log.json');
+      const logData = {
+        lastUpdate: new Date().toISOString(),
+        status: 'error',
+        error: error.message
+      };
+      await fs.writeFile(logFile, JSON.stringify(logData, null, 2)).catch(() => {});
+      
       throw error;
     }
   }
@@ -79,10 +101,11 @@ class OpenFoodFactsDownloader {
   async processData(jsonlData) {
     const lines = jsonlData.split('\n').filter(line => line.trim());
     const products = [];
+    const logPrefix = `[${new Date().toISOString()}] [OpenFoodFacts]`;
     
-    console.log(`📊 Traitement de ${lines.length} lignes (base complète OpenFoodFacts)...`);
-    console.log('⚠️ Téléchargement de la base complète - cela peut prendre 10-30 minutes...');
-    console.log('💡 Astuce: Vous pouvez suivre le progrès avec: curl http://localhost:5000/api/openfoodfacts/download-progress');
+    console.log(`${logPrefix} 📊 Traitement de ${lines.length} lignes (base complète OpenFoodFacts)...`);
+    console.log(`${logPrefix} ⚠️ Téléchargement de la base complète - cela peut prendre 10-30 minutes...`);
+    console.log(`${logPrefix} 💡 Astuce: Vous pouvez suivre le progrès avec PM2 logs ou curl http://0.0.0.0:5000/api/openfoodfacts/download-progress`);
 
     const startTime = Date.now();
     let validProducts = 0;
@@ -110,23 +133,42 @@ class OpenFoodFactsDownloader {
         continue;
       }
 
-      // Afficher le progrès détaillé
-      if (i % 25000 === 0) {
+      // Afficher le progrès détaillé et écrire dans un fichier pour PM2
+      if (i % 25000 === 0 || i === lines.length - 1) {
         const progress = Math.round((i/lines.length)*100);
         const elapsed = Math.round((Date.now() - startTime) / 1000);
-        const estimated = Math.round((elapsed / (i + 1)) * lines.length);
+        const estimated = i > 0 ? Math.round((elapsed / i) * lines.length) : 0;
         const remaining = Math.round(estimated - elapsed);
         
-        console.log(`📊 Progrès: ${i}/${lines.length} (${progress}%)`);
-        console.log(`✅ Produits valides: ${validProducts} | ❌ Invalides: ${invalidProducts}`);
-        console.log(`⏱️ Temps écoulé: ${elapsed}s | Restant: ${remaining}s`);
-        console.log('---');
+        console.log(`${logPrefix} 📊 Progrès: ${i}/${lines.length} (${progress}%)`);
+        console.log(`${logPrefix} ✅ Produits valides: ${validProducts} | ❌ Invalides: ${invalidProducts}`);
+        console.log(`${logPrefix} ⏱️ Temps écoulé: ${elapsed}s | Restant: ${remaining}s`);
+        
+        // Mettre à jour le fichier de progrès pour PM2
+        const progressFile = path.join(this.dataDir, 'download-progress.json');
+        const progressData = {
+          timestamp: new Date().toISOString(),
+          progress: progress,
+          processedLines: i,
+          totalLines: lines.length,
+          validProducts: validProducts,
+          invalidProducts: invalidProducts,
+          elapsedSeconds: elapsed,
+          remainingSeconds: remaining,
+          status: i === lines.length - 1 ? 'completed' : 'processing'
+        };
+        
+        try {
+          await fs.writeFile(progressFile, JSON.stringify(progressData, null, 2));
+        } catch (writeError) {
+          console.error(`${logPrefix} ⚠️ Erreur écriture fichier progrès:`, writeError.message);
+        }
       }
     }
 
     const totalTime = Math.round((Date.now() - startTime) / 1000);
-    console.log(`🎉 Traitement terminé en ${totalTime}s`);
-    console.log(`📈 Résultats: ${validProducts} produits valides, ${invalidProducts} ignorés`);
+    console.log(`${logPrefix} 🎉 Traitement terminé en ${totalTime}s`);
+    console.log(`${logPrefix} 📈 Résultats: ${validProducts} produits valides, ${invalidProducts} ignorés`);
 
     return products;
   }

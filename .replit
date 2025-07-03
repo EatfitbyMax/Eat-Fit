@@ -79,3 +79,30 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd server && npm install && node server.js"
+
+[[workflows.workflow]]
+name = "Start Server PM2"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd server && npm install && npx pm2 start ecosystem.config.js"
+
+[[workflows.workflow]]
+name = "Stop Server PM2"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd server && npx pm2 stop eatfitbymax-server"
+
+[[workflows.workflow]]
+name = "PM2 Logs"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd server && npx pm2 logs eatfitbymax-server"
