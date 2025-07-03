@@ -80,8 +80,13 @@ class OpenFoodFactsDownloader {
     const lines = jsonlData.split('\n').filter(line => line.trim());
     const products = [];
     
-    console.log(`📊 Traitement de ${lines.length} lignes (base complète)...`);
-    console.log('⚠️ Téléchargement de la base complète - cela peut prendre plusieurs minutes...');
+    console.log(`📊 Traitement de ${lines.length} lignes (base complète OpenFoodFacts)...`);
+    console.log('⚠️ Téléchargement de la base complète - cela peut prendre 10-30 minutes...');
+    console.log('💡 Astuce: Vous pouvez suivre le progrès avec: curl http://localhost:5000/api/openfoodfacts/download-progress');
+
+    const startTime = Date.now();
+    let validProducts = 0;
+    let invalidProducts = 0;
 
     for (let i = 0; i < lines.length; i++) {
       try {
@@ -92,18 +97,36 @@ class OpenFoodFactsDownloader {
           const formattedProduct = this.formatProduct(product);
           if (formattedProduct) {
             products.push(formattedProduct);
+            validProducts++;
+          } else {
+            invalidProducts++;
           }
+        } else {
+          invalidProducts++;
         }
       } catch (error) {
         // Ignorer les lignes JSON invalides
+        invalidProducts++;
         continue;
       }
 
-      // Afficher le progrès
-      if (i % 50000 === 0) {
-        console.log(`📊 Traité: ${i}/${lines.length} produits (${Math.round((i/lines.length)*100)}%)`);
+      // Afficher le progrès détaillé
+      if (i % 25000 === 0) {
+        const progress = Math.round((i/lines.length)*100);
+        const elapsed = Math.round((Date.now() - startTime) / 1000);
+        const estimated = Math.round((elapsed / (i + 1)) * lines.length);
+        const remaining = Math.round(estimated - elapsed);
+        
+        console.log(`📊 Progrès: ${i}/${lines.length} (${progress}%)`);
+        console.log(`✅ Produits valides: ${validProducts} | ❌ Invalides: ${invalidProducts}`);
+        console.log(`⏱️ Temps écoulé: ${elapsed}s | Restant: ${remaining}s`);
+        console.log('---');
       }
     }
+
+    const totalTime = Math.round((Date.now() - startTime) / 1000);
+    console.log(`🎉 Traitement terminé en ${totalTime}s`);
+    console.log(`📈 Résultats: ${validProducts} produits valides, ${invalidProducts} ignorés`);
 
     return products;
   }

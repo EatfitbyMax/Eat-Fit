@@ -43,11 +43,32 @@ export class OpenFoodFactsService {
         return this.getPopularFoods();
       }
 
-      console.log('Recherche OpenFoodFacts pour:', query);
+      console.log('Recherche pour:', query);
 
+      // D'abord essayer notre base OpenFoodFacts locale
+      console.log('🔍 Recherche dans la base OpenFoodFacts locale...');
+      const localResults = await this.searchOpenFoodFactsLocal(query);
+      
+      if (localResults && localResults.length > 0) {
+        console.log(`✅ ${localResults.length} résultats trouvés dans la base locale OpenFoodFacts`);
+        return localResults;
+      }
+
+      // Si pas de résultats locaux, essayer CIQUAL
+      console.log('🔍 Recherche dans la base CIQUAL...');
+      const ciqualResults = await this.searchCiqual(query);
+      
+      if (ciqualResults && ciqualResults.length > 0) {
+        console.log(`✅ ${ciqualResults.length} résultats trouvés dans CIQUAL`);
+        return ciqualResults;
+      }
+
+      // En dernier recours, essayer l'API OpenFoodFacts en ligne
+      console.log('🌐 Tentative API OpenFoodFacts en ligne...');
+      
       // Créer un contrôleur d'abort pour le timeout
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 secondes timeout
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 secondes timeout
 
       try {
         // Essayer d'abord l'API v2 plus moderne
@@ -68,7 +89,7 @@ export class OpenFoodFactsService {
 
           // Fallback vers l'API v0
           const controller2 = new AbortController();
-          const timeoutId2 = setTimeout(() => controller2.abort(), 10000);
+          const timeoutId2 = setTimeout(() => controller2.abort(), 5000);
 
           response = await fetch(
             `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=20`,
@@ -84,8 +105,8 @@ export class OpenFoodFactsService {
         }
 
         if (!response.ok) {
-          console.log('Toutes les APIs OpenFoodFacts échouées, tentative CIQUAL...');
-        return await this.searchCiqual(query);
+          console.log('Toutes les APIs OpenFoodFacts échouées, recherche locale...');
+          return this.getSearchableLocalFoods(query);
         }
 
         const data = await response.json();
