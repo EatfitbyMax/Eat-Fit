@@ -38,52 +38,70 @@ export class OpenFoodFactsService {
   // Rechercher des aliments par nom
   static async searchFood(query: string): Promise<FoodProduct[]> {
     try {
+      // Si pas de requête, retourner directement les aliments populaires
+      if (!query || query.trim() === '') {
+        return this.getPopularFoods();
+      }
+
       // Utiliser l'API v0 qui est plus stable
       const response = await fetch(
         `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=20`
       );
 
       if (!response.ok) {
-        throw new Error('Erreur lors de la recherche');
+        console.log('Réponse API non-OK:', response.status);
+        return this.getPopularFoods();
       }
 
       const data = await response.json();
 
+      // Vérifier que la réponse contient des produits
+      if (!data || !data.products || !Array.isArray(data.products)) {
+        console.log('Structure de réponse invalide');
+        return this.getPopularFoods();
+      }
+
       // Filtrer les produits avec des données nutritionnelles valides
-      const validProducts = data.products?.filter((product: any) => 
+      const validProducts = data.products.filter((product: any) => 
+        product && 
         product.product_name && 
         product.nutriments && 
         (product.nutriments['energy-kcal_100g'] || product.nutriments['energy_100g'])
-      ) || [];
+      );
+
+      if (validProducts.length === 0) {
+        console.log('Aucun produit valide trouvé');
+        return this.getPopularFoods();
+      }
 
       return validProducts.map((product: any) => {
-      return {
-        barcode: product.code || '',
-        name: product.product_name_fr || product.product_name || 'Produit inconnu',
-        brand: product.brands || '',
-        quantity: product.quantity || '',
-        calories: product.nutriments?.['energy-kcal_100g'] || 0,
-        proteins: product.nutriments?.proteins_100g || 0,
-        carbs: product.nutriments?.carbohydrates_100g || 0,
-        fats: product.nutriments?.fat_100g || 0,
-        fiber: product.nutriments?.fiber_100g || 0,
-        sugar: product.nutriments?.sugars_100g || 0,
-        salt: product.nutriments?.salt_100g || 0,
-        image: product.image_url || product.image_front_url || '',
-        ingredients: product.ingredients_text_fr || product.ingredients_text || '',
-        allergens: product.allergens || '',
-        additives: product.additives_tags || [],
-        nutriScore: product.nutrition_grades || '',
-        novaGroup: product.nova_groups || '',
-        ecoscore: product.ecoscore_grade || ''
-      };
-    });
-  } catch (error) {
-    console.error('Erreur recherche OpenFoodFacts:', error);
-    // En cas d'erreur, retourner les aliments populaires
-    return this.getPopularFoods();
+        return {
+          id: product.code || `search_${Date.now()}_${Math.random()}`,
+          name: product.product_name_fr || product.product_name || 'Produit inconnu',
+          brand: product.brands || undefined,
+          barcode: product.code,
+          nutriments: {
+            energy_kcal: this.parseNutriment(product.nutriments?.['energy-kcal_100g']) || 
+                        Math.round((this.parseNutriment(product.nutriments?.['energy_100g']) || 0) / 4.184) || 0,
+            proteins: this.parseNutriment(product.nutriments?.proteins_100g) || 0,
+            carbohydrates: this.parseNutriment(product.nutriments?.carbohydrates_100g) || 0,
+            fat: this.parseNutriment(product.nutriments?.fat_100g) || 0,
+            fiber: this.parseNutriment(product.nutriments?.fiber_100g),
+            sugars: this.parseNutriment(product.nutriments?.sugars_100g),
+            salt: this.parseNutriment(product.nutriments?.salt_100g),
+          },
+          image_url: product.image_url || product.image_front_url,
+          quantity: product.quantity,
+          categories: product.categories,
+          ingredients_text: product.ingredients_text_fr || product.ingredients_text,
+        };
+      });
+    } catch (error) {
+      console.error('Erreur recherche OpenFoodFacts:', error);
+      // En cas d'erreur, retourner les aliments populaires
+      return this.getPopularFoods();
+    }
   }
-}
 
   // Récupérer un produit par code-barres
   static async getProductByBarcode(barcode: string): Promise<FoodProduct | null> {
