@@ -992,7 +992,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 12,
     elevation: 8,
-    display: 'flex',
   },
   arrowText: {
     fontSize: 20,
@@ -1001,10 +1000,8 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(245, 166, 35, 0.3)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
-    textAlign: 'center',
     lineHeight: 20,
-    textAlignVertical: 'center',
-    includeFontPadding: false,
+    marginTop: -1,
   },
   weekContainer: {
     flex: 1,
