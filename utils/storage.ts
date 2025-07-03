@@ -53,13 +53,197 @@ export class PersistentStorage {
         body: JSON.stringify(programmes),
       });
 
-      if (response.ok) {
-        console.log('Programmes sauvegardés sur le serveur VPS');
-        return;
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP: ${response.status}`);
       }
-      throw new Error('Erreur sauvegarde programmes sur le serveur');
+
+      console.log('Programmes sauvegardés sur le serveur VPS');
     } catch (error) {
       console.error('Erreur sauvegarde programmes:', error);
+      throw error;
+    }
+  }
+
+  // Fonctions pour les données utilisateur spécifiques
+  static async getUserWorkouts(userId: string): Promise<any[]> {
+    try {
+      await this.testConnection();
+      const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`);
+      if (response.ok) {
+        return await response.json();
+      }
+      throw new Error('Erreur récupération entraînements');
+    } catch (error) {
+      console.error('Erreur récupération entraînements:', error);
+      return [];
+    }
+  }
+
+  static async saveUserWorkouts(userId: string, workouts: any[]): Promise<void> {
+    try {
+      await this.testConnection();
+      const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(workouts),
+      });
+      if (!response.ok) {
+        throw new Error('Erreur sauvegarde entraînements');
+      }
+    } catch (error) {
+      console.error('Erreur sauvegarde entraînements:', error);
+      throw error;
+    }
+  }
+
+  static async getUserNutrition(userId: string): Promise<any[]> {
+    try {
+      await this.testConnection();
+      const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`);
+      if (response.ok) {
+        return await response.json();
+      }
+      throw new Error('Erreur récupération nutrition');
+    } catch (error) {
+      console.error('Erreur récupération nutrition:', error);
+      return [];
+    }
+  }
+
+  static async saveUserNutrition(userId: string, nutrition: any[]): Promise<void> {
+    try {
+      await this.testConnection();
+      const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nutrition),
+      });
+      if (!response.ok) {
+        throw new Error('Erreur sauvegarde nutrition');
+      }
+    } catch (error) {
+      console.error('Erreur sauvegarde nutrition:', error);
+      throw error;
+    }
+  }
+
+  static async getUserWeight(userId: string): Promise<any> {
+    try {
+      await this.testConnection();
+      const response = await fetch(`${SERVER_URL}/api/weight/${userId}`);
+      if (response.ok) {
+        return await response.json();
+      }
+      throw new Error('Erreur récupération poids');
+    } catch (error) {
+      console.error('Erreur récupération poids:', error);
+      return {
+        startWeight: 0,
+        currentWeight: 0,
+        targetWeight: 0,
+        lastWeightUpdate: null,
+        targetAsked: false,
+        weightHistory: [],
+      };
+    }
+  }
+
+  static async saveUserWeight(userId: string, weightData: any): Promise<void> {
+    try {
+      await this.testConnection();
+      const response = await fetch(`${SERVER_URL}/api/weight/${userId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(weightData),
+      });
+      if (!response.ok) {
+        throw new Error('Erreur sauvegarde poids');
+      }
+    } catch (error) {
+      console.error('Erreur sauvegarde poids:', error);
+      throw error;
+    }
+  }
+
+  static async getUserMensurations(userId: string): Promise<any> {
+    try {
+      await this.testConnection();
+      const response = await fetch(`${SERVER_URL}/api/mensurations/${userId}`);
+      if (response.ok) {
+        return await response.json();
+      }
+      throw new Error('Erreur récupération mensurations');
+    } catch (error) {
+      console.error('Erreur récupération mensurations:', error);
+      return {
+        biceps: { start: 0, current: 0 },
+        bicepsGauche: { start: 0, current: 0 },
+        bicepsDroit: { start: 0, current: 0 },
+        cuisses: { start: 0, current: 0 },
+        cuissesGauche: { start: 0, current: 0 },
+        cuissesDroit: { start: 0, current: 0 },
+        pectoraux: { start: 0, current: 0 },
+        taille: { start: 0, current: 0 },
+        avantBras: { start: 0, current: 0 },
+        avantBrasGauche: { start: 0, current: 0 },
+        avantBrasDroit: { start: 0, current: 0 },
+        mollets: { start: 0, current: 0 },
+        molletsGauche: { start: 0, current: 0 },
+        molletsDroit: { start: 0, current: 0 },
+      };
+    }
+  }
+
+  static async saveUserMensurations(userId: string, mensurations: any): Promise<void> {
+    try {
+      await this.testConnection();
+      const response = await fetch(`${SERVER_URL}/api/mensurations/${userId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(mensurations),
+      });
+      if (!response.ok) {
+        throw new Error('Erreur sauvegarde mensurations');
+      }
+    } catch (error) {
+      console.error('Erreur sauvegarde mensurations:', error);
+      throw error;
+    }
+  }
+
+  static async getUserForme(userId: string, date: string): Promise<any> {
+    try {
+      await this.testConnection();
+      const response = await fetch(`${SERVER_URL}/api/forme/${userId}/${date}`);
+      if (response.ok) {
+        return await response.json();
+      }
+      throw new Error('Erreur récupération forme');
+    } catch (error) {
+      console.error('Erreur récupération forme:', error);
+      return {
+        sleep: { hours: 0, quality: 'Moyen', bedTime: '', wakeTime: '' },
+        stress: { level: 5, factors: [], notes: '' },
+        heartRate: { resting: 0, variability: 0 },
+        rpe: { value: 5, notes: '' },
+        date: date
+      };
+    }
+  }
+
+  static async saveUserForme(userId: string, date: string, formeData: any): Promise<void> {
+    try {
+      await this.testConnection();
+      const response = await fetch(`${SERVER_URL}/api/forme/${userId}/${date}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formeData),
+      });
+      if (!response.ok) {
+        throw new Error('Erreur sauvegarde forme');
+      }
+    } catch (error) {
+      console.error('Erreur sauvegarde forme:', error);
       throw error;
     }
   }
