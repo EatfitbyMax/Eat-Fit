@@ -47,26 +47,26 @@ function NutritionScreen() {
 
       // Calcul de base personnalisé selon le poids et l'âge
       let baseGoal = 2000; // Valeur par défaut
-      
+
       if (user.weight && user.age) {
         // Formule: 35ml par kg de poids corporel + ajustement selon l'âge
         baseGoal = user.weight * 35;
-        
+
         // Ajustement selon l'âge (les personnes âgées ont besoin de plus d'hydratation)
         if (user.age > 65) {
           baseGoal += 300; // +300ml pour les seniors
         } else if (user.age > 50) {
           baseGoal += 200; // +200ml pour les 50-65 ans
         }
-        
+
         // Arrondir au supérieur au multiple de 250ml le plus proche
         baseGoal = Math.ceil(baseGoal / 250) * 250;
       }
-      
+
       // Récupérer les entraînements du jour
       const dateString = selectedDate.toISOString().split('T')[0];
       const workoutsStored = await AsyncStorage.getItem(`workouts_${user.id}`);
-      
+
       if (workoutsStored) {
         const workouts = JSON.parse(workoutsStored);
         const dayWorkouts = workouts.filter((workout: any) => {
@@ -77,18 +77,18 @@ function NutritionScreen() {
         // Ajouter 500ml par séance d'entraînement
         dayWorkouts.forEach((workout: any) => {
           baseGoal += 500;
-          
+
           // Ajouter 250ml supplémentaires si période chaude (été ou température élevée)
           const currentMonth = new Date().getMonth(); // 0 = janvier, 11 = décembre
           const isSummerPeriod = currentMonth >= 5 && currentMonth <= 8; // Juin à septembre
-          
+
           if (isSummerPeriod) {
             baseGoal += 250;
           }
-          
+
           console.log(`Séance "${workout.name}" ajoutée: +${isSummerPeriod ? 750 : 500}ml`);
         });
-        
+
         if (dayWorkouts.length > 0) {
           console.log(`${dayWorkouts.length} séance(s) d'entraînement détectée(s) le ${dateString}`);
         }
@@ -98,7 +98,7 @@ function NutritionScreen() {
       // L'objectif doit être un multiple de 250ml pour être atteignable facilement
       const finalGoal = Math.ceil(baseGoal / 250) * 250;
       console.log(`Objectif hydratation calculé: ${finalGoal}ml (base: ${Math.ceil((user.weight * 35) / 250) * 250}ml)`);
-      
+
       return finalGoal;
     } catch (error) {
       console.error('Erreur calcul objectif hydratation:', error);
@@ -138,7 +138,7 @@ function NutritionScreen() {
 
     // Ajustements selon les objectifs
     const goals = user.goals || [];
-    
+
     if (goals.includes('Perdre du poids')) {
       totalCalories -= 200; // Déficit de 200 kcal
     }
@@ -147,7 +147,7 @@ function NutritionScreen() {
     try {
       const dateString = selectedDate.toISOString().split('T')[0];
       const workoutsStored = await AsyncStorage.getItem(`workouts_${user.id}`);
-      
+
       if (workoutsStored) {
         const workouts = JSON.parse(workoutsStored);
         const hasWorkoutToday = workouts.some((workout: any) => {
@@ -161,7 +161,7 @@ function NutritionScreen() {
             const workoutDate = new Date(workout.date).toISOString().split('T')[0];
             return workoutDate === dateString;
           }).length;
-          
+
           const bonusCalories = 150 + (workoutCount - 1) * 50;
           totalCalories += bonusCalories;
           console.log(`${workoutCount} entraînement(s) détecté(s) le ${dateString} - Ajout de ${bonusCalories} kcal`);
@@ -170,7 +170,7 @@ function NutritionScreen() {
     } catch (error) {
       console.error('Erreur vérification entraînements:', error);
     }
-    
+
     // Calcul des macronutriments selon les objectifs
     let proteinRatio = 0.20; // 20% par défaut
     let carbRatio = 0.50;    // 50% par défaut
@@ -316,7 +316,7 @@ function NutritionScreen() {
 
       // Fermer la modal en premier
       setShowFoodModal(false);
-      
+
       // Puis afficher le message de succès
       setTimeout(() => {
         Alert.alert('Succès', `${product.name || 'Aliment'} ajouté à ${selectedMealType}`);
@@ -366,7 +366,7 @@ function NutritionScreen() {
       try {
         const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.replit.app';
         const response = await fetch(`${VPS_URL}/api/nutrition/${user.id}`);
-        
+
         if (response.ok) {
           const serverEntries = await response.json();
           console.log('Données nutrition chargées depuis le serveur VPS');
@@ -844,8 +844,10 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(245, 166, 35, 0.3)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
-    lineHeight: 20,
-    marginTop: -1,
+    textAlign: 'center',
+    lineHeight: 22,
+    textAlignVertical: 'center',
+    includeFontPadding: false,
   },
   dateContainer: {
     flex: 1,

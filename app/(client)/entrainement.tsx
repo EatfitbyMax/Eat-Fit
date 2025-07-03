@@ -1000,8 +1000,10 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(245, 166, 35, 0.3)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
-    lineHeight: 20,
-    marginTop: -1,
+    textAlign: 'center',
+    lineHeight: 22,
+    textAlignVertical: 'center',
+    includeFontPadding: false,
   },
   weekContainer: {
     flex: 1,
