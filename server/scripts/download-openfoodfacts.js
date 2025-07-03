@@ -79,11 +79,11 @@ class OpenFoodFactsDownloader {
   async processData(jsonlData) {
     const lines = jsonlData.split('\n').filter(line => line.trim());
     const products = [];
-    const maxProducts = 50000; // Limiter pour éviter les fichiers trop volumineux
     
-    console.log(`📊 Traitement de ${lines.length} lignes...`);
+    console.log(`📊 Traitement de ${lines.length} lignes (base complète)...`);
+    console.log('⚠️ Téléchargement de la base complète - cela peut prendre plusieurs minutes...');
 
-    for (let i = 0; i < Math.min(lines.length, maxProducts); i++) {
+    for (let i = 0; i < lines.length; i++) {
       try {
         const product = JSON.parse(lines[i]);
         
@@ -100,8 +100,8 @@ class OpenFoodFactsDownloader {
       }
 
       // Afficher le progrès
-      if (i % 10000 === 0) {
-        console.log(`📊 Traité: ${i}/${Math.min(lines.length, maxProducts)} produits`);
+      if (i % 50000 === 0) {
+        console.log(`📊 Traité: ${i}/${lines.length} produits (${Math.round((i/lines.length)*100)}%)`);
       }
     }
 
@@ -113,11 +113,18 @@ class OpenFoodFactsDownloader {
       product &&
       (product.product_name || product.product_name_fr) &&
       product.nutriments &&
-      product.nutriments['energy-kcal_100g'] !== undefined &&
-      product.countries_tags &&
-      (product.countries_tags.includes('en:france') || 
-       product.countries_tags.includes('en:world') ||
-       product.lang === 'fr')
+      (product.nutriments['energy-kcal_100g'] !== undefined || 
+       product.nutriments['energy_100g'] !== undefined) &&
+      // Accepter tous les produits avec des données nutritionnelles valides
+      (
+        !product.countries_tags || // Pas de restriction de pays si pas d'info
+        product.countries_tags.includes('en:france') || 
+        product.countries_tags.includes('en:world') ||
+        product.lang === 'fr' ||
+        product.lang === 'en' ||
+        product.product_name_fr || // Si nom en français
+        (product.product_name && product.product_name.length > 0)
+      )
     );
   }
 
