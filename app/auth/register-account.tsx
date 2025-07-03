@@ -175,16 +175,23 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
   },
   progressStep: {
-    width: 60,
-    height: 4,
-    backgroundColor: '#333333',
-    borderRadius: 2,
+    width: 40,
+    height: 6,
+    backgroundColor: '#2A2A2A',
+    borderRadius: 3,
+    borderWidth: 1,
+    borderColor: '#404040',
   },
   activeStep: {
     backgroundColor: '#F5A623',
+    borderColor: '#F5A623',
+    shadowColor: '#F5A623',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
   title: {
     fontSize: 24,
