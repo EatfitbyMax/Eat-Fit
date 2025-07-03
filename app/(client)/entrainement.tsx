@@ -839,10 +839,113 @@ export default function EntrainementScreen() {
                   </Text>
                 </View>
               ) : (
-                <View
-Adding the missing import `PersistentStorage` from `@/utils/storage`.
-<replit_final_file>
-import React, { useState, useEffect, useCallback } from 'react';
+                <View style={styles.emptyState}>
+                  <View style={styles.emptyIcon}>
+                    <Text style={styles.emptyIconText}>📊</Text>
+                  </View>
+                  <Text style={styles.emptyTitle}>Aucune activité</Text>
+                  <Text style={styles.emptyMessage}>
+                    Connectez votre compte Strava pour voir vos séances
+                  </Text>
+                  <Text style={styles.emptySubmessage}>
+                    Rendez-vous dans votre profil pour connecter Strava
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
+
+          {selectedTab === 'Programmes' && hasSubscription && (
+            <View style={styles.emptyState}>
+              <View style={styles.emptyIcon}>
+                <Text style={styles.emptyIconText}>💪</Text>
+              </View>
+              <Text style={styles.emptyTitle}>Programmes Premium</Text>
+              <Text style={styles.emptyMessage}>
+                Accédez à vos programmes personnalisés
+              </Text>
+              <Text style={styles.emptySubmessage}>
+                Programmes créés spécialement pour vous par votre coach
+              </Text>
+              <TouchableOpacity style={styles.addWorkoutButton}>
+                <Text style={styles.addWorkoutText}>Voir mes programmes</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      </ScrollView>
+
+    {/* Modal pour les détails de l'activité Strava */}
+      {selectedStravaActivity && renderStravaActivityDetail()}
+
+      {/* Modal RPE */}
+      {showRPEModal && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Noter cette séance</Text>
+            <Text style={styles.modalSubtitle}>
+              Évaluez la difficulté ressentie lors de cette séance
+            </Text>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Difficulté ressentie (1-10)</Text>
+              <View style={styles.rpeSlider}>
+                {[...Array(10)].map((_, i) => (
+                  <TouchableOpacity
+                    key={i}
+                    style={[
+                      styles.rpeLevel,
+                      rpeRating === i + 1 && styles.selectedRPELevel
+                    ]}
+                    onPress={() => setRpeRating(i + 1)}
+                  >
+                    <Text style={[
+                      styles.rpeLevelText,
+                      rpeRating === i + 1 && styles.selectedRPELevelText
+                    ]}>
+                      {i + 1}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <View style={styles.rpeLabels}>
+                <Text style={styles.rpeLabel}>Très facile</Text>
+                <Text style={styles.rpeLabel}>Très difficile</Text>
+              </View>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Notes (optionnel)</Text>
+              <TextInput
+                style={[styles.modalInput, styles.notesInput]}
+                value={rpeNotes}
+                onChangeText={setRpeNotes}
+                placeholder="Ressenti général, zones difficiles..."
+                multiline={true}
+                numberOfLines={3}
+              />
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={styles.modalButtonSecondary}
+                onPress={() => setShowRPEModal(false)}
+              >
+                <Text style={styles.modalButtonSecondaryText}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.modalButtonPrimary}
+                onPress={handleSaveRPE}
+              >
+                <Text style={styles.modalButtonPrimaryText}>Sauvegarder</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+    </SafeAreaView>
+  );
+}
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert, TextInput } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
