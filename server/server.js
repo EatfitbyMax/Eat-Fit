@@ -570,25 +570,56 @@ app.get('/api/openfoodfacts/stats', async (req, res) => {
   }
 });
 
+// Variable globale pour suivre le progrès
+let downloadProgress = {
+  isDownloading: false,
+  progress: 0,
+  status: 'idle',
+  productsProcessed: 0,
+  totalProducts: 0,
+  message: ''
+};
+
 app.post('/api/openfoodfacts/download', async (req, res) => {
   try {
+    if (downloadProgress.isDownloading) {
+      return res.json({ message: 'Téléchargement déjà en cours' });
+    }
+
     const OpenFoodFactsDownloader = require('./scripts/download-openfoodfacts');
     const downloader = new OpenFoodFactsDownloader();
+    
+    downloadProgress.isDownloading = true;
+    downloadProgress.status = 'starting';
+    downloadProgress.message = 'Démarrage du téléchargement...';
     
     // Télécharger en arrière-plan
     downloader.downloadDatabase()
       .then(productCount => {
+        downloadProgress.isDownloading = false;
+        downloadProgress.status = 'completed';
+        downloadProgress.message = `✅ Base OpenFoodFacts mise à jour: ${productCount} produits`;
         console.log(`✅ Base OpenFoodFacts mise à jour: ${productCount} produits`);
       })
       .catch(error => {
+        downloadProgress.isDownloading = false;
+        downloadProgress.status = 'error';
+        downloadProgress.message = `❌ Erreur: ${error.message}`;
         console.error('❌ Erreur mise à jour OpenFoodFacts:', error);
       });
     
     res.json({ message: 'Téléchargement démarré en arrière-plan' });
   } catch (error) {
+    downloadProgress.isDownloading = false;
+    downloadProgress.status = 'error';
+    downloadProgress.message = `❌ Erreur: ${error.message}`;
     console.error('Erreur démarrage téléchargement:', error);
     res.status(500).json({ error: 'Erreur démarrage téléchargement' });
   }
+});
+
+app.get('/api/openfoodfacts/download-progress', (req, res) => {
+  res.json(downloadProgress);
 });
 
 // Route de test
