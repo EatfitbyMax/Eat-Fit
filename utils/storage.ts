@@ -96,6 +96,17 @@ export class PersistentStorage {
     }
   }
 
+  static async getUserData(): Promise<any> {
+    try {
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+      const userData = await AsyncStorage.getItem('currentUser');
+      return userData ? JSON.parse(userData) : null;
+    } catch (error) {
+      console.error('Erreur récupération données utilisateur:', error);
+      return null;
+    }
+  }
+
   static async getUserNutrition(userId: string): Promise<any[]> {
     try {
       await this.testConnection();
