@@ -40,7 +40,6 @@ export default function RegisterActivityScreen() {
           <View style={[styles.progressStep, styles.activeStep]} />
           <View style={[styles.progressStep, styles.activeStep]} />
           <View style={styles.progressStep} />
-          <View style={styles.progressStep} />
         </View>
       </View>
 
