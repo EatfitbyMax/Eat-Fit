@@ -116,25 +116,30 @@ export default function EntrainementScreen() {
 
       // Charger depuis le serveur VPS d'abord
       try {
-        const workouts = await PersistentStorage.getWorkouts(currentUser.id);
-        console.log(`Total entraînements chargés depuis le serveur: ${workouts.length}`);
+        const response = await fetch(`https://${process.env.EXPO_PUBLIC_REPLIT_URL}/api/workouts/${currentUser.id}`);
+        if (response.ok) {
+          const workouts = await response.json();
+          console.log(`Total entraînements chargés depuis le serveur: ${workouts.length}`);
 
-        // Debug: grouper par date
-        const workoutsByDate = workouts.reduce((acc: any, workout: any) => {
-          if (!acc[workout.date]) acc[workout.date] = [];
-          acc[workout.date].push(workout);
-          return acc;
-        }, {});
+          // Debug: grouper par date
+          const workoutsByDate = workouts.reduce((acc: any, workout: any) => {
+            if (!acc[workout.date]) acc[workout.date] = [];
+            acc[workout.date].push(workout);
+            return acc;
+          }, {});
 
-        Object.keys(workoutsByDate).forEach(date => {
-          console.log(`${date}: ${workoutsByDate[date].length} entraînement(s)`);
-          workoutsByDate[date].forEach((w: any, i: number) => {
-            console.log(`  ${i + 1}. ${w.name} (${w.type})`);
+          Object.keys(workoutsByDate).forEach(date => {
+            console.log(`${date}: ${workoutsByDate[date].length} entraînement(s)`);
+            workoutsByDate[date].forEach((w: any, i: number) => {
+              console.log(`  ${i + 1}. ${w.name} (${w.type})`);
+            });
           });
-        });
 
-        // Forcer la mise à jour de l'état même si les données sont identiques
-        setWorkouts([...workouts]);
+          // Forcer la mise à jour de l'état même si les données sont identiques
+          setWorkouts([...workouts]);
+        } else {
+          throw new Error('Erreur serveur');
+        }
       } catch (error) {
         console.error('Erreur chargement entraînements depuis serveur:', error);
         // Fallback vers le stockage local
@@ -648,34 +653,7 @@ export default function EntrainementScreen() {
            target.getDate() === today.getDate();
   };
 
-  useEffect(() => {
-    loadUserAndWorkouts();
-  }, []);
-
-  const loadUserAndWorkouts = async () => {
-    try {
-      const userData = await PersistentStorage.getUserData();
-      if (userData) {
-        setCurrentUser(userData);
-        const userWorkouts = await PersistentStorage.getUserWorkouts(userData.id);
-        setWorkouts(userWorkouts);
-      }
-    } catch (error) {
-      console.error('Erreur chargement entraînements:', error);
-    }
-  };
-
-  const saveWorkouts = async (newWorkouts: any[]) => {
-    try {
-      if (!currentUser?.id) return;
-
-      await PersistentStorage.saveUserWorkouts(currentUser.id, newWorkouts);
-      setWorkouts(newWorkouts);
-      console.log('Entraînements sauvegardés pour utilisateur:', currentUser.id);
-    } catch (error) {
-      console.error('Erreur sauvegarde:', error);
-    }
-  };
+  
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
