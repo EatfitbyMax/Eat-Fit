@@ -524,14 +524,7 @@ export class IntegrationsManager {
   // Méthodes utilitaires
   static async getIntegrationStatus(userId: string): Promise<IntegrationStatus> {
     try {
-      const data = await AsyncStorage.getItem(`${INTEGRATION_KEY}_${userId}`);
-      if (data) {
-        return JSON.parse(data);
-      }
-      return {
-        appleHealth: { connected: false, permissions: [] },
-        strava: { connected: false }
-      };
+      return await PersistentStorage.getIntegrationStatus(userId);
     } catch (error) {
       console.error('Erreur récupération statut intégrations:', error);
       return {
@@ -543,7 +536,7 @@ export class IntegrationsManager {
 
   static async saveIntegrationStatus(userId: string, status: IntegrationStatus): Promise<void> {
     try {
-      await AsyncStorage.setItem(`${INTEGRATION_KEY}_${userId}`, JSON.stringify(status));
+      await PersistentStorage.saveIntegrationStatus(userId, status);
     } catch (error) {
       console.error('Erreur sauvegarde statut intégrations:', error);
     }
