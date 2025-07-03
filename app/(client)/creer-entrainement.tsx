@@ -44,19 +44,41 @@ interface Workout {
   exercises: Exercise[];
 }
 
-const getOrderedSports = (favoriteSport: string) => {
+const getOrderedSports = (favoriteSport: string, recentSports: string[] = []) => {
   const sports = [...allSports];
+  const orderedSports = [];
 
-  // Mettre le sport favori en premier
+  // 1. Mettre le sport favori en premier
   if (favoriteSport) {
     const favoriteIndex = sports.findIndex(sport => sport.id === favoriteSport);
     if (favoriteIndex !== -1) {
       const favoriteSportData = sports.splice(favoriteIndex, 1)[0];
-      sports.unshift(favoriteSportData);
+      orderedSports.push(favoriteSportData);
     }
   }
 
-  return sports;
+  // 2. Ajouter les sports récents (max 3, en excluant le sport favori)
+  const recentSportsData = recentSports
+    .filter(sportId => sportId !== favoriteSport) // Exclure le sport favori
+    .slice(0, 3) // Max 3 sports récents
+    .map(sportId => sports.find(sport => sport.id === sportId))
+    .filter(sport => sport !== undefined);
+
+  // Retirer les sports récents de la liste principale
+  recentSportsData.forEach(recentSport => {
+    const index = sports.findIndex(sport => sport.id === recentSport.id);
+    if (index !== -1) {
+      sports.splice(index, 1);
+    }
+  });
+
+  // Ajouter les sports récents après le favori
+  orderedSports.push(...recentSportsData);
+
+  // 3. Ajouter le reste des sports
+  orderedSports.push(...sports);
+
+  return orderedSports;
 };
 
 
@@ -173,9 +195,11 @@ export default function CreerEntrainementScreen() {
   const [editingExerciseIndex, setEditingExerciseIndex] = useState<number | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [userFavoriteSport, setUserFavoriteSport] = useState<string>('');
+  const [recentSports, setRecentSports] = useState<string[]>([]);
 
   useEffect(() => {
     loadUserData();
+    loadRecentSports();
   }, []);
 
   useEffect(() => {
@@ -198,6 +222,49 @@ export default function CreerEntrainementScreen() {
       }
     } catch (error) {
       console.error('Erreur chargement données utilisateur:', error);
+    }
+  };
+
+  const loadRecentSports = async () => {
+    try {
+      const currentUser = await getCurrentUser();
+      if (!currentUser) return;
+
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+      const recentSportsData = await AsyncStorage.getItem(`recent_sports_${currentUser.id}`);
+      
+      if (recentSportsData) {
+        const recent = JSON.parse(recentSportsData);
+        setRecentSports(recent);
+      }
+    } catch (error) {
+      console.error('Erreur chargement sports récents:', error);
+    }
+  };
+
+  const saveRecentSport = async (sportName: string) => {
+    try {
+      const currentUser = await getCurrentUser();
+      if (!currentUser) return;
+
+      // Trouver l'ID du sport à partir du nom
+      const sport = allSports.find(s => s.name === sportName);
+      if (!sport) return;
+
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+      
+      // Récupérer les sports récents actuels
+      const currentRecentData = await AsyncStorage.getItem(`recent_sports_${currentUser.id}`);
+      const currentRecent = currentRecentData ? JSON.parse(currentRecentData) : [];
+
+      // Créer la nouvelle liste (enlever le sport s'il existe déjà, puis l'ajouter en premier)
+      const updatedRecent = [sport.id, ...currentRecent.filter((id: string) => id !== sport.id)].slice(0, 5); // Max 5 sports récents
+
+      // Sauvegarder
+      await AsyncStorage.setItem(`recent_sports_${currentUser.id}`, JSON.stringify(updatedRecent));
+      setRecentSports(updatedRecent);
+    } catch (error) {
+      console.error('Erreur sauvegarde sport récent:', error);
     }
   };
 
@@ -509,7 +576,7 @@ export default function CreerEntrainementScreen() {
   };
 
   const renderSportModal = () => {
-    const orderedSports = getOrderedSports(userFavoriteSport);
+    const orderedSports = getOrderedSports(userFavoriteSport, recentSports);
 
     return (
       <Modal visible={showTypeModal} transparent animationType="slide">
@@ -522,45 +589,74 @@ export default function CreerEntrainementScreen() {
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalContent}>
-              {orderedSports.map((sport) => {
+              {orderedSports.map((sport, index) => {
                 const isFavorite = sport.id === userFavoriteSport;
+                const isRecent = recentSports.includes(sport.id) && !isFavorite;
+                const isFirstRecent = isRecent && index === 1; // Premier sport récent après le favori
+                
                 return (
-                  <TouchableOpacity
-                    key={sport.id}
-                    style={[
-                      styles.optionItem,
-                      isFavorite && styles.favoriteOptionItem
-                    ]}
-                    onPress={() => {
-                      setWorkout(prev => ({ ...prev, type: sport.name }));
-                      setShowTypeModal(false);
-                    }}
-                  >
-                    <View style={styles.optionContent}>
-                      <View style={styles.sportOptionLeft}>
-                        <Text style={styles.sportEmoji}>{sport.emoji}</Text>
-                        <View style={styles.sportOptionInfo}>
-                          <Text style={[
-                            styles.optionText,
-                            isFavorite && styles.favoriteOptionText
-                          ]}>
-                            {sport.name}
-                          </Text>
-                          <Text style={[
-                            styles.sportCategoryText,
-                            isFavorite && styles.favoriteCategoryText
-                          ]}>
-                            {sport.category}
-                          </Text>
-                        </View>
+                  <View key={sport.id}>
+                    {/* Séparateur pour les sports récents */}
+                    {isFirstRecent && (
+                      <View style={styles.sectionSeparator}>
+                        <Text style={styles.sectionSeparatorText}>📋 Sports récents</Text>
                       </View>
-                      {isFavorite && (
-                        <View style={styles.favoriteIndicator}>
-                          <Text style={styles.favoriteIndicatorText}>⭐ Favori</Text>
+                    )}
+                    
+                    {/* Séparateur pour tous les sports */}
+                    {!isFavorite && !isRecent && index === (recentSports.filter(id => id !== userFavoriteSport).length + (userFavoriteSport ? 1 : 0)) && (
+                      <View style={styles.sectionSeparator}>
+                        <Text style={styles.sectionSeparatorText}>🏃 Tous les sports</Text>
+                      </View>
+                    )}
+
+                    <TouchableOpacity
+                      style={[
+                        styles.optionItem,
+                        isFavorite && styles.favoriteOptionItem,
+                        isRecent && styles.recentOptionItem
+                      ]}
+                      onPress={() => {
+                        setWorkout(prev => ({ ...prev, type: sport.name }));
+                        saveRecentSport(sport.name); // Sauvegarder comme sport récent
+                        setShowTypeModal(false);
+                      }}
+                    >
+                      <View style={styles.optionContent}>
+                        <View style={styles.sportOptionLeft}>
+                          <Text style={styles.sportEmoji}>{sport.emoji}</Text>
+                          <View style={styles.sportOptionInfo}>
+                            <Text style={[
+                              styles.optionText,
+                              isFavorite && styles.favoriteOptionText,
+                              isRecent && styles.recentOptionText
+                            ]}>
+                              {sport.name}
+                            </Text>
+                            <Text style={[
+                              styles.sportCategoryText,
+                              isFavorite && styles.favoriteCategoryText,
+                              isRecent && styles.recentCategoryText
+                            ]}>
+                              {sport.category}
+                            </Text>
+                          </View>
                         </View>
-                      )}
-                    </View>
-                  </TouchableOpacity>
+                        
+                        {isFavorite && (
+                          <View style={styles.favoriteIndicator}>
+                            <Text style={styles.favoriteIndicatorText}>⭐ Favori</Text>
+                          </View>
+                        )}
+                        
+                        {isRecent && (
+                          <View style={styles.recentIndicator}>
+                            <Text style={styles.recentIndicatorText}>🕒 Récent</Text>
+                          </View>
+                        )}
+                      </View>
+                    </TouchableOpacity>
+                  </View>
                 );
               })}
             </ScrollView>
@@ -1374,6 +1470,43 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontSize: 10,
     fontWeight: 'bold',
+  },
+  recentOptionItem: {
+    backgroundColor: '#1A1A2E',
+    borderLeftWidth: 3,
+    borderLeftColor: '#1F6FEB',
+  },
+  recentOptionText: {
+    color: '#1F6FEB',
+    fontWeight: '500',
+  },
+  recentCategoryText: {
+    color: '#5A85D6',
+  },
+  recentIndicator: {
+    backgroundColor: '#1F6FEB',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+  },
+  recentIndicatorText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  sectionSeparator: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: '#0D1117',
+    borderBottomWidth: 1,
+    borderBottomColor: '#21262D',
+  },
+  sectionSeparatorText: {
+    fontSize: 12,
+    color: '#8B949E',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   saveButton: {
     backgroundColor: '#F5A623',
