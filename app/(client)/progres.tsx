@@ -121,10 +121,28 @@ export default function ProgresScreen() {
         const user = JSON.parse(currentUserString);
         setUserData(user);
 
-        // Charger les données de poids
-        const weightDataString = await AsyncStorage.getItem(`weight_data_${user.id}`);
-        if (weightDataString) {
-          const saved = JSON.parse(weightDataString);
+        // Charger les données de poids depuis le serveur d'abord
+        let saved = null;
+        try {
+          const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.replit.app';
+          const response = await fetch(`${VPS_URL}/api/weight/${user.id}`);
+          if (response.ok) {
+            saved = await response.json();
+            console.log('Données de poids chargées depuis le serveur VPS');
+            // Sauvegarder en local comme backup
+            await AsyncStorage.setItem(`weight_data_${user.id}`, JSON.stringify(saved));
+          } else {
+            throw new Error('Serveur indisponible');
+          }
+        } catch (serverError) {
+          console.log('Fallback vers le stockage local pour les données de poids');
+          const weightDataString = await AsyncStorage.getItem(`weight_data_${user.id}`);
+          if (weightDataString) {
+            saved = JSON.parse(weightDataString);
+          }
+        }
+
+        if (saved) {
 
           // Synchroniser avec l'objectif du profil utilisateur si disponible
           const userTargetWeight = user.targetWeight || 0;
@@ -182,7 +200,29 @@ export default function ProgresScreen() {
   const saveWeightData = async (newData: any) => {
     try {
       if (userData) {
+        // Sauvegarder localement d'abord
         await AsyncStorage.setItem(`weight_data_${userData.id}`, JSON.stringify(newData));
+        
+        // Sauvegarder sur le serveur VPS
+        try {
+          const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.replit.app';
+          const response = await fetch(`${VPS_URL}/api/weight/${userData.id}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(newData),
+          });
+
+          if (response.ok) {
+            console.log('Données de poids sauvegardées sur le serveur VPS');
+          } else {
+            console.warn('Échec sauvegarde poids sur serveur VPS, données conservées localement');
+          }
+        } catch (serverError) {
+          console.warn('Erreur serveur poids:', serverError);
+        }
+        
         setWeightData(newData);
       }
     } catch (error) {
@@ -301,7 +341,29 @@ export default function ProgresScreen() {
   const saveMensurationData = async (newData: any) => {
     try {
       if (userData) {
+        // Sauvegarder localement d'abord
         await AsyncStorage.setItem(`mensuration_data_${userData.id}`, JSON.stringify(newData));
+        
+        // Sauvegarder sur le serveur VPS
+        try {
+          const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.replit.app';
+          const response = await fetch(`${VPS_URL}/api/mensurations/${userData.id}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(newData),
+          });
+
+          if (response.ok) {
+            console.log('Données de mensurations sauvegardées sur le serveur VPS');
+          } else {
+            console.warn('Échec sauvegarde mensurations sur serveur VPS, données conservées localement');
+          }
+        } catch (serverError) {
+          console.warn('Erreur serveur mensurations:', serverError);
+        }
+        
         setMensurationData(newData);
       }
     } catch (error) {
