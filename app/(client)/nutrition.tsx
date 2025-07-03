@@ -495,7 +495,7 @@ function NutritionScreen() {
               style={styles.dateArrow}
               onPress={() => navigateDate('prev')}
             >
-              <Text style={styles.arrowText}>‹</Text>
+              <Text style={styles.arrowText}>←</Text>
             </TouchableOpacity>
 
             <View style={styles.dateContainer}>
@@ -508,7 +508,7 @@ function NutritionScreen() {
               style={styles.dateArrow}
               onPress={() => navigateDate('next')}
             >
-              <Text style={styles.arrowText}>›</Text>
+              <Text style={styles.arrowText}>→</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -823,25 +823,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   dateArrow: {
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: 'rgba(22, 27, 34, 0.8)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 165, 0, 0.3)',
-    width: 44,
-    height: 44,
+    padding: 10,
+    borderRadius: 16,
+    backgroundColor: 'rgba(245, 166, 35, 0.15)',
+    borderWidth: 2,
+    borderColor: 'rgba(245, 166, 35, 0.4)',
+    width: 48,
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#FFA500',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
   },
   arrowText: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '800',
     color: '#FFA500',
+    textShadowColor: 'rgba(245, 166, 35, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   dateContainer: {
     flex: 1,
