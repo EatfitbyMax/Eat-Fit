@@ -1,3 +1,4 @@
+typescript
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -237,11 +238,11 @@ export default function HomeScreen() {
 
       const today = new Date().toISOString().split('T')[0];
       const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-      
+
       // Essayer d'abord le stockage local
       let todayData = null;
       const localDataString = await AsyncStorage.getItem(`forme_data_${currentUser.id}_${today}`);
-      
+
       if (localDataString) {
         todayData = JSON.parse(localDataString);
         console.log('Données de forme chargées depuis le stockage local pour l\'accueil');
@@ -291,22 +292,22 @@ export default function HomeScreen() {
     try {
       const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
       const storedRatings = await AsyncStorage.getItem(`activity_ratings_${userId}`);
-      
+
       if (!storedRatings) {
         console.log('Aucune note RPE trouvée dans le stockage (accueil)');
         return null;
       }
 
       const ratings = JSON.parse(storedRatings);
-      
+
       // Date du jour en format YYYY-MM-DD dans le timezone local
       const today = new Date();
       const todayString = today.getFullYear() + '-' + 
         String(today.getMonth() + 1).padStart(2, '0') + '-' + 
         String(today.getDate()).padStart(2, '0');
-      
+
       console.log('Recherche RPE pour le jour (accueil):', todayString);
-      
+
       // Récupérer toutes les activités du jour et fusionner leurs notes
       const todayRatings = Object.entries(ratings)
         .map(([activityId, rating]: [string, any]) => ({
@@ -320,14 +321,14 @@ export default function HomeScreen() {
 
       if (todayRatings.length > 0) {
         console.log(`${todayRatings.length} activité(s) RPE trouvée(s) pour aujourd'hui (accueil)`);
-        
+
         // Calculer la moyenne des RPE et fusionner les notes
         const avgRPE = Math.round(todayRatings.reduce((sum: number, r: any) => sum + r.rpe, 0) / todayRatings.length);
         const allNotes = todayRatings
           .map((r: any) => r.notes)
           .filter((note: string) => note && note.trim() !== '')
           .join(' • ');
-        
+
         return {
           rpe: avgRPE,
           notes: allNotes || `${todayRatings.length} séance${todayRatings.length > 1 ? 's' : ''} terminée${todayRatings.length > 1 ? 's' : ''} aujourd'hui`,
@@ -350,20 +351,73 @@ export default function HomeScreen() {
 
     // Adaptation des poids selon le genre
     const isWoman = userData?.gender === 'Femme';
-    
-    const weights = isWoman ? {
-      sleep: 0.30,      // 30% (au lieu de 35%)
-      stress: 0.25,     // 25% (au lieu de 30%)
-      heartRate: 0.15,  // 15% (au lieu de 20%) - Premium
-      rpe: 0.15,        // 15% (inchangé) - Premium
-      cycle: 0.15       // 15% (au lieu de 5%) - Femmes uniquement
-    } : {
-      sleep: 0.35,      // 35%
-      stress: 0.30,     // 30%
-      heartRate: 0.20,  // 20% - Premium
-      rpe: 0.15,        // 15% - Premium
-      cycle: 0         // 0% pour les hommes
+
+    // Définir les poids de base
+    let baseWeights = {
+      sleep: 0.35,
+      stress: 0.30,
+      heartRate: 0.0, // Initialisé à 0, sera ajusté par les plans
+      rpe: 0.0,       // Initialisé à 0, sera ajusté par les plans
+      cycle: isWoman ? 0.05 : 0,
+      macros: 0.0,    // Initialisé à 0, sera ajusté par les plans
+      micros: 0.0     // Initialisé à 0, sera ajusté par les plans
     };
+
+    // Ajuster les poids selon le plan
+    let weights = { ...baseWeights }; // Créer une copie pour ne pas modifier l'original
+
+    if (isPremium) {
+      // Récupérer l'ID du plan de l'utilisateur (simulé, à remplacer par la logique réelle)
+      const userPlanId = 'premium_gold'; // Remplacez par la valeur réelle de l'utilisateur
+
+      switch (userPlanId) {
+        case 'premium_bronze':
+          weights.heartRate = 0.20;
+          weights.rpe = 0.15;
+          weights.sleep = 0.25;
+          weights.stress = 0.25;
+          break;
+        case 'premium_silver':
+          weights.heartRate = 0.20;
+          weights.rpe = 0.15;
+          break;
+        case 'premium_gold':
+          weights.heartRate = 0.20;
+          weights.rpe = 0.15;
+          weights.macros = 0.05;
+          weights.micros = 0.05;
+          break;
+        case 'premium_diamond':
+          weights.heartRate = 0.20;
+          weights.rpe = 0.15;
+          weights.macros = 0.10;
+          weights.micros = 0.10;
+          break;
+        default:
+          // Plan gratuit (ou inconnu) : sommeil et stress uniquement
+          weights = {
+            sleep: 0.5,
+            stress: 0.5,
+            heartRate: 0,
+            rpe: 0,
+            cycle: 0,
+            macros: 0,
+            micros: 0
+          };
+          break;
+      }
+    } else {
+      // Plan gratuit
+      weights = {
+        sleep: 0.5,
+        stress: 0.5,
+        heartRate: 0,
+        rpe: 0,
+        cycle: 0,
+        macros: 0,
+        micros: 0
+      };
+    }
 
     // Sommeil
     if (formeData.sleep?.hours > 0) {
@@ -386,7 +440,7 @@ export default function HomeScreen() {
       };
 
       let sleepScore = sleepHoursScore * (qualityMultiplier[formeData.sleep.quality] || 0.65);
-      
+
       // Ajustement cycle pour les femmes
       if (isWoman && formeData.cycle) {
         const cycleMultiplier = {
@@ -404,7 +458,7 @@ export default function HomeScreen() {
 
     // Stress - inversé (1 = excellent, 10 = très mauvais)
     let stressScore = Math.max(0, ((10 - (formeData.stress?.level || 5)) / 9) * 100);
-    
+
     if (isWoman && formeData.cycle) {
       const stressCycleMultiplier = {
         'Menstruel': 0.8,
@@ -414,15 +468,15 @@ export default function HomeScreen() {
       };
       stressScore *= (stressCycleMultiplier[formeData.cycle.phase] || 1.0);
     }
-    
+
     totalScore += stressScore * weights.stress;
     totalWeight += weights.stress;
 
     // FC repos - Premium
-    if (isPremium && formeData.heartRate?.resting > 0) {
+    if (weights.heartRate > 0 && formeData.heartRate?.resting > 0) {
       const optimalResting = userData?.gender === 'Homme' ? 65 : 70;
       let diff = Math.abs(formeData.heartRate.resting - optimalResting);
-      
+
       if (isWoman && formeData.cycle) {
         const hrCycleAdjustment = {
           'Menstruel': -3,
@@ -430,11 +484,11 @@ export default function HomeScreen() {
           'Ovulation': -2,
           'Lutéal': -5
         };
-        
+
         const adjustedOptimal = optimalResting + (hrCycleAdjustment[formeData.cycle.phase] || 0);
         diff = Math.abs(formeData.heartRate.resting - adjustedOptimal);
       }
-      
+
       let hrScore;
       if (diff <= 5) hrScore = 100;
       else if (diff <= 10) hrScore = 85;
@@ -446,14 +500,15 @@ export default function HomeScreen() {
       totalWeight += weights.heartRate;
     }
 
-    // RPE - Premium
-    if (isPremium && formeData.rpe?.value > 0) {
+    // RPE - Plans Bronze et plus
+    if (weights.rpe > 0 && formeData.rpe?.value > 0) {
       let rpeScore;
       if (formeData.rpe.value <= 3) rpeScore = 100;
       else if (formeData.rpe.value <= 5) rpeScore = 80;
       else if (formeData.rpe.value <= 7) rpeScore = 60;
       else rpeScore = 30;
 
+      // Ajustement cycle pour les femmes
       if (isWoman && formeData.cycle) {
         const rpeCycleMultiplier = {
           'Menstruel': 0.8,
@@ -468,11 +523,49 @@ export default function HomeScreen() {
       totalWeight += weights.rpe;
     }
 
+    // Relation Macronutriments/Fatigue - Plans Or et Diamant
+    if (weights.macros > 0) {
+      let macrosScore = 75; // Score par défaut simulé
+
+      // Impact du cycle pour les femmes
+      if (isWoman && formeData.cycle) {
+        const macrosCycleMultiplier = {
+          'Menstruel': 0.85,
+          'Folliculaire': 1.1,
+          'Ovulation': 1.15,
+          'Lutéal': 0.9
+        };
+        macrosScore *= (macrosCycleMultiplier[formeData.cycle.phase] || 1.0);
+      }
+
+      totalScore += macrosScore * weights.macros;
+      totalWeight += weights.macros;
+    }
+
+    // Relation Micronutriments/Fatigue - Plans Or et Diamant
+    if (weights.micros > 0) {
+      let microsScore = 75; // Score par défaut simulé
+
+      // Impact du cycle pour les femmes
+      if (isWoman && formeData.cycle) {
+        const microsCycleMultiplier = {
+          'Menstruel': 0.8,
+          'Folliculaire': 1.05,
+          'Ovulation': 1.1,
+          'Lutéal': 0.85
+        };
+        microsScore *= (microsCycleMultiplier[formeData.cycle.phase] || 1.0);
+      }
+
+      totalScore += microsScore * weights.micros;
+      totalWeight += weights.micros;
+    }
+
     // Cycle hormonal pour les femmes
     if (isWoman && formeData.cycle) {
       let cycleScore = 75;
       const dayInCycle = formeData.cycle.dayOfCycle || 1;
-      
+
       switch (formeData.cycle.phase) {
         case 'Menstruel':
           if (dayInCycle <= 2) {
@@ -483,15 +576,15 @@ export default function HomeScreen() {
             cycleScore = 65;
           }
           break;
-          
+
         case 'Folliculaire':
           cycleScore = 70 + Math.min((dayInCycle - 5) * 3, 20);
           break;
-          
+
         case 'Ovulation':
           cycleScore = 95;
           break;
-          
+
         case 'Lutéal':
           const lutealDay = dayInCycle - 16;
           if (lutealDay <= 4) {
