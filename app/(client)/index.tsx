@@ -471,20 +471,21 @@ export default function HomeScreen() {
     totalScore += stressScore * weights.stress;
     totalWeight += weights.stress;
 
-    // FC repos - Premium
+    // FC repos - Plans Bronze et plus
     if (weights.heartRate > 0 && formeData.heartRate?.resting > 0) {
       const optimalResting = userData?.gender === 'Homme' ? 65 : 70;
       let diff = Math.abs(formeData.heartRate.resting - optimalResting);
 
+      // Ajustement cycle pour les femmes: FC varie selon la phase
       if (isWoman && formeData.cycle) {
         const hrCycleAdjustment = {
-          'Menstruel': -3,
-          'Folliculaire': 0,
-          'Ovulation': -2,
-          'Lutéal': -5
+          'Menstruel': -3,       // FC légèrement plus élevée
+          'Folliculaire': 0,     // FC normale
+          'Ovulation': -2,       // FC peut être légèrement élevée
+          'Lutéal': -5           // FC souvent plus élevée en pré-menstruel
         };
 
-        const adjustedOptimal = optimalResting + (hrCycleAdjustment[formeData.cycle.phase] || 0);
+        const adjustedOptimal = optimalResting + hrCycleAdjustment[formeData.cycle.phase];
         diff = Math.abs(formeData.heartRate.resting - adjustedOptimal);
       }
 
