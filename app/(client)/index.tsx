@@ -190,7 +190,8 @@ export default function HomeScreen() {
         // Vérifier le statut premium
         const { checkSubscriptionStatus } = await import('@/utils/subscription');
         const subscription = await checkSubscriptionStatus();
-        setIsPremium(subscription.planId !== 'free');
+        setIsPremium(subscription.isPremium);
+        console.log(`Statut Premium Accueil: ${subscription.isPremium ? 'OUI' : 'NON'} (Plan: ${subscription.planId})`);
 
         // Calculer les objectifs personnalisés
         const personalizedGoals = calculatePersonalizedGoals(currentUser);

@@ -2,25 +2,36 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getCurrentUser } from './auth';
 
-export const checkSubscriptionStatus = async (): Promise<boolean> => {
+export const checkSubscriptionStatus = async (): Promise<{ isPremium: boolean; planId: string }> => {
   try {
     const currentUser = await getCurrentUser();
-    if (!currentUser) return false;
+    if (!currentUser) return { isPremium: false, planId: 'free' };
 
-    // Utilisateurs premium par défaut
-    const premiumEmails = ['m.pacullmarquie@gmail.com'];
+    // Utilisateurs premium par défaut (pour les tests)
+    const premiumEmails = ['maxandre.coach@outlook.fr'];
     
     if (premiumEmails.includes(currentUser.email)) {
-      return true;
+      return { isPremium: true, planId: 'gold' };
     }
 
     // Vérifier le statut d'abonnement depuis le stockage local ou serveur
     const subscriptionStatus = await AsyncStorage.getItem(`subscription_${currentUser.id}`);
-    return subscriptionStatus === 'premium';
+    const isPremium = subscriptionStatus === 'premium';
+    
+    return { 
+      isPremium, 
+      planId: isPremium ? 'gold' : 'free' 
+    };
   } catch (error) {
     console.error('Erreur vérification abonnement:', error);
-    return false;
+    return { isPremium: false, planId: 'free' };
   }
+};
+
+// Fonction de compatibilité pour l'ancien code
+export const checkSubscriptionStatusBoolean = async (): Promise<boolean> => {
+  const result = await checkSubscriptionStatus();
+  return result.isPremium;
 };
 
 export const setSubscriptionStatus = async (isPremium: boolean): Promise<void> => {
