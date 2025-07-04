@@ -3,11 +3,11 @@ const { getDefaultConfig } = require('expo/metro-config');
 
 const config = getDefaultConfig(__dirname);
 
-// Configuration pour Replit
-config.server = {
-  port: 8085,
-  host: '0.0.0.0',
-};
+// Configuration pour Replit - le port est géré par --port dans la commande
+// config.server = {
+//   port: 8085,
+//   host: '0.0.0.0',
+// };
 
 // Résoudre les problèmes de chargement des modules
 config.resolver.platforms = ['ios', 'android', 'native', 'web'];
