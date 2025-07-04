@@ -881,32 +881,50 @@ export default function EntrainementScreen() {
       {/* Modal RPE */}
       {showRPEModal && (
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Noter cette séance</Text>
-            <Text style={styles.modalSubtitle}>
-              Évaluez la difficulté ressentie lors de cette séance
-            </Text>
+          <View style={styles.rpeModalContent}>
+            <View style={styles.rpeModalHeader}>
+              <View style={styles.rpeModalIconContainer}>
+                <Text style={styles.rpeModalIcon}>💪</Text>
+              </View>
+              <Text style={styles.rpeModalTitle}>Ressenti (RPE)</Text>
+              <Text style={styles.rpeModalSubtitle}>
+                Évaluez la difficulté ressentie lors de cette séance
+              </Text>
+            </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Difficulté ressentie (1-10)</Text>
-              <View style={styles.rpeSlider}>
-                {[...Array(10)].map((_, i) => (
-                  <TouchableOpacity
-                    key={i}
-                    style={[
-                      styles.rpeLevel,
-                      rpeRating === i + 1 && styles.selectedRPELevel
-                    ]}
-                    onPress={() => setRpeRating(i + 1)}
-                  >
-                    <Text style={[
-                      styles.rpeLevelText,
-                      rpeRating === i + 1 && styles.selectedRPELevelText
-                    ]}>
-                      {i + 1}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+            <View style={styles.rpeInputContainer}>
+              <Text style={styles.rpeInputLabel}>Difficulté ressentie (1-10)</Text>
+              <View style={styles.rpeSliderContainer}>
+                <View style={styles.rpeSlider}>
+                  {[...Array(10)].map((_, i) => (
+                    <TouchableOpacity
+                      key={i}
+                      style={[
+                        styles.rpeLevel,
+                        rpeRating === i + 1 && styles.selectedRPELevel,
+                        rpeRating > i && styles.activeRPELevel
+                      ]}
+                      onPress={() => setRpeRating(i + 1)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[
+                        styles.rpeLevelText,
+                        rpeRating === i + 1 && styles.selectedRPELevelText,
+                        rpeRating > i && styles.activeRPELevelText
+                      ]}>
+                        {i + 1}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <View style={styles.rpeDescription}>
+                  <Text style={styles.rpeDescriptionText}>
+                    {rpeRating <= 2 ? '😌 Très facile' :
+                     rpeRating <= 4 ? '🙂 Facile' :
+                     rpeRating <= 6 ? '😐 Modéré' :
+                     rpeRating <= 8 ? '😅 Difficile' : '🥵 Très difficile'}
+                  </Text>
+                </View>
               </View>
               <View style={styles.rpeLabels}>
                 <Text style={styles.rpeLabel}>Très facile</Text>
@@ -914,30 +932,34 @@ export default function EntrainementScreen() {
               </View>
             </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Notes (optionnel)</Text>
+            <View style={styles.rpeNotesContainer}>
+              <Text style={styles.rpeNotesLabel}>Notes (optionnel)</Text>
               <TextInput
-                style={[styles.modalInput, styles.notesInput]}
+                style={styles.rpeNotesInput}
                 value={rpeNotes}
                 onChangeText={setRpeNotes}
                 placeholder="Ressenti général, zones difficiles..."
+                placeholderTextColor="#6A7280"
                 multiline={true}
                 numberOfLines={3}
+                textAlignVertical="top"
               />
             </View>
 
-            <View style={styles.modalButtons}>
+            <View style={styles.rpeModalButtons}>
               <TouchableOpacity 
-                style={styles.modalButtonSecondary}
+                style={styles.rpeButtonSecondary}
                 onPress={() => setShowRPEModal(false)}
+                activeOpacity={0.7}
               >
-                <Text style={styles.modalButtonSecondaryText}>Annuler</Text>
+                <Text style={styles.rpeButtonSecondaryText}>Annuler</Text>
               </TouchableOpacity>
               <TouchableOpacity 
-                style={styles.modalButtonPrimary}
+                style={styles.rpeButtonPrimary}
                 onPress={handleSaveRPE}
+                activeOpacity={0.8}
               >
-                <Text style={styles.modalButtonPrimaryText}>Sauvegarder</Text>
+                <Text style={styles.rpeButtonPrimaryText}>Sauvegarder</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1600,6 +1622,197 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontSize: 16,
     fontWeight: '600',
+  },
+
+  // Styles améliorés pour le modal RPE
+  rpeModalContent: {
+    backgroundColor: '#1A1D23',
+    borderRadius: 20,
+    margin: 20,
+    maxHeight: '85%',
+    width: '90%',
+    borderWidth: 1.5,
+    borderColor: '#2D3748',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+  rpeModalHeader: {
+    padding: 24,
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#2D3748',
+  },
+  rpeModalIconContainer: {
+    width: 60,
+    height: 60,
+    backgroundColor: 'rgba(245, 166, 35, 0.15)',
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(245, 166, 35, 0.3)',
+  },
+  rpeModalIcon: {
+    fontSize: 28,
+  },
+  rpeModalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  rpeModalSubtitle: {
+    fontSize: 15,
+    color: '#9CA3AF',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  rpeInputContainer: {
+    padding: 24,
+    paddingBottom: 16,
+  },
+  rpeInputLabel: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    marginBottom: 20,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  rpeSliderContainer: {
+    alignItems: 'center',
+  },
+  rpeSlider: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    paddingHorizontal: 4,
+  },
+  rpeLevel: {
+    width: 32,
+    height: 32,
+    backgroundColor: '#2D3748',
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#374151',
+    marginHorizontal: 1,
+  },
+  selectedRPELevel: {
+    backgroundColor: '#F5A623',
+    borderColor: '#F5A623',
+    transform: [{ scale: 1.1 }],
+    shadowColor: '#F5A623',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  activeRPELevel: {
+    backgroundColor: 'rgba(245, 166, 35, 0.2)',
+    borderColor: 'rgba(245, 166, 35, 0.5)',
+  },
+  rpeLevelText: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    fontWeight: '700',
+  },
+  selectedRPELevelText: {
+    color: '#000000',
+    fontWeight: '800',
+  },
+  activeRPELevelText: {
+    color: '#F5A623',
+    fontWeight: '700',
+  },
+  rpeDescription: {
+    backgroundColor: 'rgba(245, 166, 35, 0.1)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(245, 166, 35, 0.2)',
+  },
+  rpeDescriptionText: {
+    fontSize: 14,
+    color: '#F5A623',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  rpeLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 8,
+  },
+  rpeLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+  rpeNotesContainer: {
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+  },
+  rpeNotesLabel: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    marginBottom: 12,
+    fontWeight: '600',
+  },
+  rpeNotesInput: {
+    backgroundColor: '#0F1419',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#2D3748',
+    height: 80,
+    textAlignVertical: 'top',
+  },
+  rpeModalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+  },
+  rpeButtonSecondary: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: '#374151',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  rpeButtonSecondaryText: {
+    color: '#9CA3AF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  rpeButtonPrimary: {
+    flex: 1,
+    backgroundColor: '#F5A623',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    shadowColor: '#F5A623',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  rpeButtonPrimaryText: {
+    color: '#000000',
+    fontSize: 16,
+    fontWeight: '700',
   },
   exerciseCard: {
     backgroundColor: '#161B22',
