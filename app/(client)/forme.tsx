@@ -42,6 +42,7 @@ interface FormeData {
 
 export default function FormeScreen() {
   const [isPremium, setIsPremium] = useState(false);
+  const [currentSubscription, setCurrentSubscription] = useState<any>(null);
   const [selectedTab, setSelectedTab] = useState('Aujourd\'hui');
   const [userData, setUserData] = useState<any>(null);
   const [formeData, setFormeData] = useState<FormeData>({
@@ -112,6 +113,7 @@ export default function FormeScreen() {
         // Vérifier le statut premium
         const subscription = await checkSubscriptionStatus();
         setIsPremium(subscription.isPremium);
+        setCurrentSubscription(subscription);
         console.log(`Statut Premium Forme: ${subscription.isPremium ? 'OUI' : 'NON'} (Plan: ${subscription.planId})`);
       }
     } catch (error) {
@@ -1124,10 +1126,27 @@ export default function FormeScreen() {
             {getScoreStatus(formeScore)}
           </Text>
           <Text style={styles.scoreDescription}>
-            {userData?.gender === 'Femme' ? 
-              'Basé sur votre cycle hormonal, sommeil, stress' + (isPremium ? ', FC et RPE' : '') :
-              'Basé sur votre sommeil, stress' + (isPremium ? ', FC et RPE' : '')
-            }
+            {(() => {
+              const isWoman = userData?.gender === 'Femme';
+              const planId = currentSubscription?.planId;
+              
+              let metrics = ['sommeil', 'stress', 'apport calorique'];
+              
+              if (!isPremium) {
+                metrics.push('entraînement programmé');
+              } else {
+                metrics.push('FC repos', 'RPE');
+                if (planId === 'gold' || planId === 'diamond') {
+                  metrics.push('macronutriments', 'micronutriments');
+                }
+              }
+              
+              if (isWoman) {
+                metrics.push('cycle hormonal');
+              }
+              
+              return `Basé sur votre ${metrics.join(', ')}`;
+            })()}
           </Text>
         </View>
 
@@ -1291,6 +1310,126 @@ export default function FormeScreen() {
                 {isPremium ? 'Appuyez pour synchroniser' : 'Mise à niveau requise'}
               </Text>
             </TouchableOpacity>
+
+            {/* Apport Calorique - Tous les plans */}
+            <TouchableOpacity 
+              style={styles.metricCard}
+              onPress={() => {
+                Alert.alert(
+                  'Apport Calorique',
+                  'Cette métrique est calculée automatiquement selon votre profil et niveau d\'activité.\n\nPour plus de précision, utilisez la section Nutrition pour suivre vos repas.',
+                  [{ text: 'OK' }]
+                );
+              }}
+            >
+              <View style={styles.metricIcon}>
+                <Text style={styles.iconText}>🔥</Text>
+              </View>
+              <View style={styles.metricInfo}>
+                <Text style={styles.metricLabel}>Apport Calorique</Text>
+                <Text style={styles.metricValue}>
+                  {Math.round(
+                    (userData?.gender === 'Homme' ? 2200 : 1800) * 
+                    (userData?.activityLevel === 'sedentaire' ? 1.2 : 
+                     userData?.activityLevel === 'leger' ? 1.375 :
+                     userData?.activityLevel === 'modere' ? 1.55 :
+                     userData?.activityLevel === 'intense' ? 1.725 : 1.9)
+                  )} kcal
+                </Text>
+                <Text style={styles.metricDetail}>
+                  Estimation basée sur votre profil
+                </Text>
+              </View>
+              <Text style={styles.updateHint}>Appuyez pour plus d'infos</Text>
+            </TouchableOpacity>
+
+            {/* Entraînement Programmé - Plan Gratuit uniquement */}
+            {!isPremium && (
+              <TouchableOpacity 
+                style={styles.metricCard}
+                onPress={() => {
+                  Alert.alert(
+                    'Entraînement Programmé',
+                    'Cette métrique indique si vous avez des entraînements programmés aujourd\'hui.\n\nUtilisez la section Entraînement pour programmer vos séances.',
+                    [{ text: 'OK' }]
+                  );
+                }}
+              >
+                <View style={styles.metricIcon}>
+                  <Text style={styles.iconText}>📅</Text>
+                </View>
+                <View style={styles.metricInfo}>
+                  <Text style={styles.metricLabel}>Entraînement Programmé</Text>
+                  <Text style={styles.metricValue}>
+                    {weeklyData.some(day => 
+                      day.date === new Date().toISOString().split('T')[0] && day.rpe?.value > 0
+                    ) ? 'Oui' : 'Non'}
+                  </Text>
+                  <Text style={styles.metricDetail}>
+                    {weeklyData.some(day => 
+                      day.date === new Date().toISOString().split('T')[0] && day.rpe?.value > 0
+                    ) ? 'Séance programmée' : 'Aucune séance'}
+                  </Text>
+                </View>
+                <Text style={styles.updateHint}>Appuyez pour plus d'infos</Text>
+              </TouchableOpacity>
+            )}
+
+            {/* Relation Macronutriment/Fatigue - Plans Or et Diamant uniquement */}
+            {isPremium && (currentSubscription?.planId === 'gold' || currentSubscription?.planId === 'diamond') && (
+              <TouchableOpacity 
+                style={styles.metricCard}
+                onPress={() => {
+                  Alert.alert(
+                    'Relation Macronutriment/Fatigue',
+                    'Cette métrique avancée analyse l\'impact de votre répartition en macronutriments (glucides, protéines, lipides) sur votre niveau de fatigue.\n\nUtilisez la section Nutrition pour un suivi détaillé.',
+                    [{ text: 'OK' }]
+                  );
+                }}
+              >
+                <View style={styles.metricIcon}>
+                  <Text style={styles.iconText}>🥗</Text>
+                </View>
+                <View style={styles.metricInfo}>
+                  <Text style={styles.metricLabel}>Macronutriments/Fatigue</Text>
+                  <Text style={styles.metricValue}>
+                    Équilibre optimal
+                  </Text>
+                  <Text style={styles.metricDetail}>
+                    Analyse avancée disponible
+                  </Text>
+                </View>
+                <Text style={styles.updateHint}>Appuyez pour plus d'infos</Text>
+              </TouchableOpacity>
+            )}
+
+            {/* Relation Micronutriment/Fatigue - Plans Or et Diamant uniquement */}
+            {isPremium && (currentSubscription?.planId === 'gold' || currentSubscription?.planId === 'diamond') && (
+              <TouchableOpacity 
+                style={styles.metricCard}
+                onPress={() => {
+                  Alert.alert(
+                    'Relation Micronutriment/Fatigue',
+                    'Cette métrique avancée analyse l\'impact de vos micronutriments (vitamines, minéraux) sur votre niveau de fatigue.\n\nUne analyse détaillée est disponible dans votre profil nutrition.',
+                    [{ text: 'OK' }]
+                  );
+                }}
+              >
+                <View style={styles.metricIcon}>
+                  <Text style={styles.iconText}>💊</Text>
+                </View>
+                <View style={styles.metricInfo}>
+                  <Text style={styles.metricLabel}>Micronutriments/Fatigue</Text>
+                  <Text style={styles.metricValue}>
+                    Bon équilibre
+                  </Text>
+                  <Text style={styles.metricDetail}>
+                    Analyse détaillée disponible
+                  </Text>
+                </View>
+                <Text style={styles.updateHint}>Appuyez pour plus d'infos</Text>
+              </TouchableOpacity>
+            )}
 
             {/* Cycle Hormonal - Femmes uniquement */}
             {userData?.gender === 'Femme' && (
