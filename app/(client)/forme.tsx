@@ -1313,7 +1313,7 @@ export default function FormeScreen() {
                 <View style={styles.metricInfo}>
                   <Text style={styles.metricLabel}>Cycle Hormonal</Text>
                   <Text style={styles.metricValue}>
-                    {formeData.cycle ? `Jour ${formeData.cycle.dayOfCycle}` : 'Non renseigné'}
+                    {formeData.cycle ? 'Jour ' + formeData.cycle.dayOfCycle : 'Non renseigné'}
                   </Text>
                   <Text style={styles.metricDetail}>
                     {formeData.cycle?.phase || 'Phase non définie'}
