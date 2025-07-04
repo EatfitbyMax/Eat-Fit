@@ -24,6 +24,7 @@ import { getCurrentUser } from '@/utils/auth';
 import { syncWithExternalApps, IntegrationsManager } from '@/utils/integrations';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PersistentStorage } from '@/utils/storage';
+import { useFormeScore } from '@/hooks/useFormeScore';
 
 const { width, height } = Dimensions.get('window');
 
@@ -44,7 +45,6 @@ export default function HomeScreen() {
     workouts: 0,
     steps: 0,
   });
-  const [formeScore, setFormeScore] = useState(0);
   const [currentTip, setCurrentTip] = useState('');
   const [calorieGoals, setCalorieGoals] = useState({
     calories: 2286,
@@ -52,6 +52,9 @@ export default function HomeScreen() {
     carbohydrates: 257,
     fat: 64,
   });
+
+  // Hook pour le score de forme
+  const { formeScore, refreshData: refreshFormeData } = useFormeScore(user);
 
   // Animation values
   const headerOpacity = useSharedValue(0);
@@ -76,7 +79,6 @@ export default function HomeScreen() {
     loadUserData();
     startAnimations();
     generateRandomTip();
-    calculateFormeScore();
     loadWeightData();
     calculateWeeklyWorkouts();
   }, []);
@@ -95,13 +97,13 @@ export default function HomeScreen() {
 
         // Ensuite charger les autres données
         await loadTodayStats();
-        calculateFormeScore();
+        refreshFormeData(); // Utiliser le hook pour rafraîchir les données de forme
         loadWeightData();
         calculateWeeklyWorkouts();
       };
 
       loadDataOnFocus();
-    }, []) // Pas de dépendance pour éviter les boucles infinies
+    }, [refreshFormeData]) 
   );
 
   const generateRandomTip = () => {
@@ -176,9 +178,6 @@ export default function HomeScreen() {
     };
   };
 
-  const [isPremium, setIsPremium] = useState(false);
-  const [formeData, setFormeData] = useState(null);
-
   const loadUserData = async () => {
     try {
       const currentUser = await getCurrentUser();
@@ -186,12 +185,6 @@ export default function HomeScreen() {
         // Toujours mettre à jour l'état utilisateur avec les dernières données
         setUser(currentUser);
         console.log('Données utilisateur rechargées:', currentUser.firstName, currentUser.lastName);
-
-        // Vérifier le statut premium
-        const { checkSubscriptionStatus } = await import('@/utils/subscription');
-        const subscription = await checkSubscriptionStatus();
-        setIsPremium(subscription.isPremium);
-        console.log(`Statut Premium Accueil: ${subscription.isPremium ? 'OUI' : 'NON'} (Plan: ${subscription.planId})`);
 
         // Calculer les objectifs personnalisés
         const personalizedGoals = calculatePersonalizedGoals(currentUser);
@@ -206,419 +199,7 @@ export default function HomeScreen() {
     }
   };
 
-  const loadFormeData = async () => {
-    try {
-      const currentUser = await getCurrentUser();
-      if (!currentUser) return;
-
-      const today = new Date().toISOString().split('T')[0];
-
-      // Simulation du calcul du score de forme basé sur le sommeil et la variabilité cardiaque
-      // En réalité, ces données viendraient des intégrations Apple Health/Strava
-      // Valeurs simulées pour la démonstration
-      setFormeData({
-        sleep: { hours: 7, quality: 'Bien', bedTime: '', wakeTime: '' },
-        stress: { level: 3, factors: [], notes: '' },
-        heartRate: { resting: 60, variability: 80 },
-        rpe: { value: 4, notes: '' },
-        cycle: currentUser?.gender === 'Femme' ? { phase: 'Menstruel', dayOfCycle: 1, symptoms: [], notes: '' } : undefined,
-        date: today
-      });
-    } catch (error) {
-      console.error('Erreur chargement données forme:', error);
-      setFormeData(null);
-    }
-  };
-
-  const calculateFormeScore = async () => {
-    try {
-      const currentUser = await getCurrentUser();
-      if (!currentUser) return;
-
-      const today = new Date().toISOString().split('T')[0];
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-
-      // Essayer d'abord le stockage local
-      let todayData = null;
-      const localDataString = await AsyncStorage.getItem(`forme_data_${currentUser.id}_${today}`);
-
-      if (localDataString) {
-        todayData = JSON.parse(localDataString);
-        console.log('Données de forme chargées depuis le stockage local pour l\'accueil');
-      } else {
-        // Fallback vers le serveur si pas de données locales
-        try {
-          todayData = await PersistentStorage.getFormeData(currentUser.id, today);
-          console.log('Données de forme chargées depuis le serveur VPS pour l\'accueil');
-        } catch (serverError) {
-          console.log('Aucune donnée de forme trouvée, utilisation du score par défaut');
-          setFormeScore(75); // Valeur par défaut si aucune donnée
-          return;
-        }
-      }
-
-      // Récupérer les notes RPE du jour si premium
-      if (isPremium && todayData) {
-        const todayRPEData = await getTodayActivityRPE(currentUser.id);
-        if (todayRPEData) {
-          todayData = {
-            ...todayData,
-            rpe: {
-              value: todayRPEData.rpe,
-              notes: todayRPEData.notes || '',
-              workoutId: 'auto_from_activity'
-            }
-          };
-        }
-      }
-
-      if (todayData) {
-        // Utiliser la même logique de calcul que dans forme.tsx
-        const realScore = calculateRealFormeScore(todayData, currentUser);
-        setFormeScore(realScore);
-        console.log(`Score de forme réel calculé pour l'accueil: ${realScore}/100`);
-      } else {
-        setFormeScore(75); // Valeur par défaut
-      }
-    } catch (error) {
-      console.error('Erreur calcul score de forme:', error);
-      setFormeScore(75); // Valeur par défaut
-    }
-  };
-
-  // Fonction pour récupérer les données RPE du jour
-  const getTodayActivityRPE = async (userId: string) => {
-    try {
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-      const storedRatings = await AsyncStorage.getItem(`activity_ratings_${userId}`);
-
-      if (!storedRatings) {
-        console.log('Aucune note RPE trouvée dans le stockage (accueil)');
-        return null;
-      }
-
-      const ratings = JSON.parse(storedRatings);
-
-      // Date du jour en format YYYY-MM-DD dans le timezone local
-      const today = new Date();
-      const todayString = today.getFullYear() + '-' + 
-        String(today.getMonth() + 1).padStart(2, '0') + '-' + 
-        String(today.getDate()).padStart(2, '0');
-
-      console.log('Recherche RPE pour le jour (accueil):', todayString);
-
-      // Récupérer toutes les activités du jour et fusionner leurs notes
-      const todayRatings = Object.entries(ratings)
-        .map(([activityId, rating]: [string, any]) => ({
-          activityId,
-          ...rating
-        }))
-        .filter((rating: any) => {
-          const ratingDate = rating.date.includes('T') ? rating.date.split('T')[0] : rating.date;
-          return ratingDate === todayString;
-        });
-
-      if (todayRatings.length > 0) {
-        console.log(`${todayRatings.length} activité(s) RPE trouvée(s) pour aujourd'hui (accueil)`);
-
-        // Calculer la moyenne des RPE et fusionner les notes
-        const avgRPE = Math.round(todayRatings.reduce((sum: number, r: any) => sum + r.rpe, 0) / todayRatings.length);
-        const allNotes = todayRatings
-          .map((r: any) => r.notes)
-          .filter((note: string) => note && note.trim() !== '')
-          .join(' • ');
-
-        return {
-          rpe: avgRPE,
-          notes: allNotes || `${todayRatings.length} séance${todayRatings.length > 1 ? 's' : ''} terminée${todayRatings.length > 1 ? 's' : ''} aujourd'hui`,
-          activityCount: todayRatings.length
-        };
-      }
-
-      console.log('Aucune activité RPE trouvée pour aujourd\'hui (accueil)');
-      return null;
-    } catch (error) {
-      console.error('Erreur récupération RPE du jour (accueil):', error);
-      return null;
-    }
-  };
-
-  // Fonction pour calculer le score de forme réel (même logique que forme.tsx)
-  const calculateRealFormeScore = (formeData: any, userData: any) => {
-    let totalScore = 0;
-    let totalWeight = 0;
-
-    // Adaptation des poids selon le genre
-    const isWoman = userData?.gender === 'Femme';
-
-    // Définir les poids de base
-    let baseWeights = {
-      sleep: 0.35,
-      stress: 0.30,
-      heartRate: 0.0, // Initialisé à 0, sera ajusté par les plans
-      rpe: 0.0,       // Initialisé à 0, sera ajusté par les plans
-      cycle: isWoman ? 0.05 : 0,
-      macros: 0.0,    // Initialisé à 0, sera ajusté par les plans
-      micros: 0.0     // Initialisé à 0, sera ajusté par les plans
-    };
-
-    // Ajuster les poids selon le plan
-    let weights = { ...baseWeights }; // Créer une copie pour ne pas modifier l'original
-
-    if (isPremium) {
-      // Récupérer l'ID du plan de l'utilisateur (simulé, à remplacer par la logique réelle)
-      const userPlanId = 'premium_gold'; // Remplacez par la valeur réelle de l'utilisateur
-
-      switch (userPlanId) {
-        case 'premium_bronze':
-          weights.heartRate = 0.20;
-          weights.rpe = 0.15;
-          weights.sleep = 0.25;
-          weights.stress = 0.25;
-          break;
-        case 'premium_silver':
-          weights.heartRate = 0.20;
-          weights.rpe = 0.15;
-          break;
-        case 'premium_gold':
-          weights.heartRate = 0.20;
-          weights.rpe = 0.15;
-          weights.macros = 0.05;
-          weights.micros = 0.05;
-          break;
-        case 'premium_diamond':
-          weights.heartRate = 0.20;
-          weights.rpe = 0.15;
-          weights.macros = 0.10;
-          weights.micros = 0.10;
-          break;
-        default:
-          // Plan gratuit (ou inconnu) : sommeil et stress uniquement
-          weights = {
-            sleep: 0.5,
-            stress: 0.5,
-            heartRate: 0,
-            rpe: 0,
-            cycle: 0,
-            macros: 0,
-            micros: 0
-          };
-          break;
-      }
-    } else {
-      // Plan gratuit
-      weights = {
-        sleep: 0.5,
-        stress: 0.5,
-        heartRate: 0,
-        rpe: 0,
-        cycle: 0,
-        macros: 0,
-        micros: 0
-      };
-    }
-
-    // Sommeil
-    if (formeData.sleep?.hours > 0) {
-      let sleepHoursScore;
-      if (formeData.sleep.hours >= 7 && formeData.sleep.hours <= 9) {
-        sleepHoursScore = 100;
-      } else if (formeData.sleep.hours >= 6 && formeData.sleep.hours <= 10) {
-        sleepHoursScore = 80;
-      } else if (formeData.sleep.hours >= 5 && formeData.sleep.hours <= 11) {
-        sleepHoursScore = 60;
-      } else {
-        sleepHoursScore = 30;
-      }
-
-      const qualityMultiplier = {
-        'Excellent': 1.0,
-        'Bien': 0.85,
-        'Moyen': 0.65,
-        'Mauvais': 0.4
-      };
-
-      let sleepScore = sleepHoursScore * (qualityMultiplier[formeData.sleep.quality] || 0.65);
-
-      // Ajustement cycle pour les femmes
-      if (isWoman && formeData.cycle) {
-        const cycleMultiplier = {
-          'Menstruel': 0.9,
-          'Folliculaire': 1.0,
-          'Ovulation': 1.05,
-          'Lutéal': 0.85
-        };
-        sleepScore *= (cycleMultiplier[formeData.cycle.phase] || 1.0);
-      }
-
-      totalScore += sleepScore * weights.sleep;
-      totalWeight += weights.sleep;
-    }
-
-    // Stress - inversé (1 = excellent, 10 = très mauvais)
-    let stressScore = Math.max(0, ((10 - (formeData.stress?.level || 5)) / 9) * 100);
-
-    if (isWoman && formeData.cycle) {
-      const stressCycleMultiplier = {
-        'Menstruel': 0.8,
-        'Folliculaire': 1.1,
-        'Ovulation': 1.15,
-        'Lutéal': 0.7
-      };
-      stressScore *= (stressCycleMultiplier[formeData.cycle.phase] || 1.0);
-    }
-
-    totalScore += stressScore * weights.stress;
-    totalWeight += weights.stress;
-
-    // FC repos - Plans Bronze et plus
-    if (weights.heartRate > 0 && formeData.heartRate?.resting > 0) {
-      const optimalResting = userData?.gender === 'Homme' ? 65 : 70;
-      let diff = Math.abs(formeData.heartRate.resting - optimalResting);
-
-      // Ajustement cycle pour les femmes: FC varie selon la phase
-      if (isWoman && formeData.cycle) {
-        const hrCycleAdjustment = {
-          'Menstruel': -3,       // FC légèrement plus élevée
-          'Folliculaire': 0,     // FC normale
-          'Ovulation': -2,       // FC peut être légèrement élevée
-          'Lutéal': -5           // FC souvent plus élevée en pré-menstruel
-        };
-
-        const adjustedOptimal = optimalResting + hrCycleAdjustment[formeData.cycle.phase];
-        diff = Math.abs(formeData.heartRate.resting - adjustedOptimal);
-      }
-
-      let hrScore;
-      if (diff <= 5) hrScore = 100;
-      else if (diff <= 10) hrScore = 85;
-      else if (diff <= 15) hrScore = 70;
-      else if (diff <= 20) hrScore = 55;
-      else hrScore = 30;
-
-      totalScore += hrScore * weights.heartRate;
-      totalWeight += weights.heartRate;
-    }
-
-    // RPE - Plans Bronze et plus
-    if (weights.rpe > 0 && formeData.rpe?.value > 0) {
-      let rpeScore;
-      if (formeData.rpe.value <= 3) rpeScore = 100;
-      else if (formeData.rpe.value <= 5) rpeScore = 80;
-      else if (formeData.rpe.value <= 7) rpeScore = 60;
-      else rpeScore = 30;
-
-      // Ajustement cycle pour les femmes
-      if (isWoman && formeData.cycle) {
-        const rpeCycleMultiplier = {
-          'Menstruel': 0.8,
-          'Folliculaire': 1.15,
-          'Ovulation': 1.2,
-          'Lutéal': 0.85
-        };
-        rpeScore *= (rpeCycleMultiplier[formeData.cycle.phase] || 1.0);
-      }
-
-      totalScore += rpeScore * weights.rpe;
-      totalWeight += weights.rpe;
-    }
-
-    // Relation Macronutriments/Fatigue - Plans Or et Diamant
-    if (weights.macros > 0) {
-      let macrosScore = 75; // Score par défaut simulé
-
-      // Impact du cycle pour les femmes
-      if (isWoman && formeData.cycle) {
-        const macrosCycleMultiplier = {
-          'Menstruel': 0.85,
-          'Folliculaire': 1.1,
-          'Ovulation': 1.15,
-          'Lutéal': 0.9
-        };
-        macrosScore *= (macrosCycleMultiplier[formeData.cycle.phase] || 1.0);
-      }
-
-      totalScore += macrosScore * weights.macros;
-      totalWeight += weights.macros;
-    }
-
-    // Relation Micronutriments/Fatigue - Plans Or et Diamant
-    if (weights.micros > 0) {
-      let microsScore = 75; // Score par défaut simulé
-
-      // Impact du cycle pour les femmes
-      if (isWoman && formeData.cycle) {
-        const microsCycleMultiplier = {
-          'Menstruel': 0.8,
-          'Folliculaire': 1.05,
-          'Ovulation': 1.1,
-          'Lutéal': 0.85
-        };
-        microsScore *= (microsCycleMultiplier[formeData.cycle.phase] || 1.0);
-      }
-
-      totalScore += microsScore * weights.micros;
-      totalWeight += weights.micros;
-    }
-
-    // Cycle hormonal pour les femmes
-    if (isWoman && formeData.cycle) {
-      let cycleScore = 75;
-      const dayInCycle = formeData.cycle.dayOfCycle || 1;
-
-      switch (formeData.cycle.phase) {
-        case 'Menstruel':
-          if (dayInCycle <= 2) {
-            cycleScore = 45;
-          } else if (dayInCycle <= 4) {
-            cycleScore = 55;
-          } else {
-            cycleScore = 65;
-          }
-          break;
-
-        case 'Folliculaire':
-          cycleScore = 70 + Math.min((dayInCycle - 5) * 3, 20);
-          break;
-
-        case 'Ovulation':
-          cycleScore = 95;
-          break;
-
-        case 'Lutéal':
-          const lutealDay = dayInCycle - 16;
-          if (lutealDay <= 4) {
-            cycleScore = 80;
-          } else if (lutealDay <= 8) {
-            cycleScore = 70;
-          } else {
-            cycleScore = 50;
-          }
-          break;
-      }
-
-      const symptomPenalty = Math.min((formeData.cycle.symptoms?.length || 0) * 8, 40);
-      cycleScore = Math.max(25, cycleScore - symptomPenalty);
-
-      if ((formeData.cycle.symptoms?.length || 0) === 0 && 
-          (formeData.cycle.phase === 'Folliculaire' || formeData.cycle.phase === 'Ovulation')) {
-        cycleScore = Math.min(100, cycleScore + 5);
-      }
-
-      totalScore += cycleScore * weights.cycle;
-      totalWeight += weights.cycle;
-    }
-
-    // Calculer le score final
-    let finalScore;
-    if (totalWeight === 0) {
-      finalScore = 50; // Score par défaut si aucune donnée
-    } else {
-      finalScore = totalScore / totalWeight;
-    }
-
-    return Math.max(0, Math.min(100, Math.round(finalScore)));
-  };
+  
 
   const loadTodayStats = async () => {
     try {

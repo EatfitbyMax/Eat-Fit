@@ -7,6 +7,7 @@ import { checkSubscriptionStatus } from '@/utils/subscription';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PersistentStorage } from '@/utils/storage';
 import { IntegrationsManager } from '@/utils/integrations';
+import { useFormeScore } from '@/hooks/useFormeScore';
 
 const { width } = Dimensions.get('window');
 
@@ -41,20 +42,12 @@ interface FormeData {
 }
 
 export default function FormeScreen() {
-  const [isPremium, setIsPremium] = useState(false);
-  const [currentSubscription, setCurrentSubscription] = useState<any>(null);
   const [selectedTab, setSelectedTab] = useState('Aujourd\'hui');
   const [userData, setUserData] = useState<any>(null);
-  const [formeData, setFormeData] = useState<FormeData>({
-    sleep: { hours: 0, quality: 'Moyen', bedTime: '', wakeTime: '' },
-    stress: { level: 5, factors: [], notes: '' },
-    heartRate: { resting: 0, variability: 0 },
-    rpe: { value: 5, notes: '' },
-    cycle: userData?.gender === 'Femme' ? { phase: 'Menstruel', dayOfCycle: 1, symptoms: [], notes: '' } : undefined,
-    date: new Date().toISOString().split('T')[0]
-  });
   const [weeklyData, setWeeklyData] = useState<FormeData[]>([]);
-  const [formeScore, setFormeScore] = useState(76);
+
+  // Utiliser le hook pour le score de forme
+  const { formeScore, formeData, isPremium, currentSubscription, refreshData } = useFormeScore(userData);
 
   // Modals state
   const [showSleepModal, setShowSleepModal] = useState(false);
@@ -83,25 +76,15 @@ export default function FormeScreen() {
     loadUserData();
   }, []);
 
-  useEffect(() => {
-    if (userData) {
-      loadFormeData();
-    }
-  }, [userData]);
-
   // Recharger les données quand l'écran devient visible
   useFocusEffect(
     useCallback(() => {
       if (userData) {
         console.log('Écran Forme refocalisé - rechargement des données RPE');
-        loadFormeData();
+        refreshData();
       }
-    }, [userData])
+    }, [userData, refreshData])
   );
-
-  useEffect(() => {
-    calculateFormeScore();
-  }, [formeData]);
 
   const loadUserData = async () => {
     try {
@@ -109,12 +92,6 @@ export default function FormeScreen() {
       if (currentUserString) {
         const user = JSON.parse(currentUserString);
         setUserData(user);
-
-        // Vérifier le statut premium
-        const subscription = await checkSubscriptionStatus();
-        setIsPremium(subscription.isPremium);
-        setCurrentSubscription(subscription);
-        console.log(`Statut Premium Forme: ${subscription.isPremium ? 'OUI' : 'NON'} (Plan: ${subscription.planId})`);
       }
     } catch (error) {
       console.error('Erreur chargement données utilisateur:', error);
@@ -227,8 +204,8 @@ export default function FormeScreen() {
         console.log('Serveur indisponible, sauvegarde locale effectuée');
       }
 
-      // Mettre à jour l'état local
-      setFormeData(newData);
+      // Rafraîchir les données via le hook
+      refreshData();
 
     } catch (error) {
       console.error('Erreur sauvegarde données forme:', error);
