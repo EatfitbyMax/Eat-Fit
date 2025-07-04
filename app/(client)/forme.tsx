@@ -1126,8 +1126,8 @@ export default function FormeScreen() {
           </Text>
           <Text style={styles.scoreDescription}>
             {userData?.gender === 'Femme' ? 
-              `Basé sur votre cycle hormonal, sommeil, stress${isPremium ? ', FC et RPE' : ''}` :
-              `Basé sur votre sommeil, stress${isPremium ? ', FC et RPE' : ''}`
+              'Basé sur votre cycle hormonal, sommeil, stress' + (isPremium ? ', FC et RPE' : '') :
+              'Basé sur votre sommeil, stress' + (isPremium ? ', FC et RPE' : '')
             }
           </Text>
         </View>
