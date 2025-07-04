@@ -98,7 +98,7 @@ export default function HomeScreen() {
         // Ensuite charger les autres données
         await loadTodayStats();
         refreshFormeData(); // Utiliser le hook pour rafraîchir les données de forme
-        await loadWeightData(); // Attendre le chargement des données de poids
+        loadWeightData();
         calculateWeeklyWorkouts();
       };
 
@@ -333,13 +333,12 @@ export default function HomeScreen() {
       // Charger depuis le serveur d'abord
       try {
         const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.replit.app';
-        const response = await fetch(`${VPS_URL}/api/weight/${currentUser.id}`);
+        const response = await fetch(`${VPS_URL}/api/weight/${user.id}`);
         if (response.ok) {
           const data = await response.json();
           setWeightData(data);
-          console.log('Données de poids chargées depuis le serveur (index):', data);
           // Sauvegarder en local comme backup
-          await AsyncStorage.setItem(`weight_data_${currentUser.id}`, JSON.stringify(data));
+          await AsyncStorage.setItem(`weight_data_${user.id}`, JSON.stringify(data));
           return;
         }
       } catch (serverError) {
@@ -351,9 +350,6 @@ export default function HomeScreen() {
       if (weightDataString) {
         const data = JSON.parse(weightDataString);
         setWeightData(data);
-        console.log('Données de poids chargées depuis le local (index):', data);
-      } else {
-        console.log('Aucune donnée de poids trouvée (index)');
       }
     } catch (error) {
       console.error('Erreur chargement données poids:', error);
