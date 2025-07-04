@@ -644,7 +644,7 @@ app.get('/api/health-check', (req, res) => {
 
 app.listen(PORT, '0.0.0.0', async () => {
   await initDataDir();
-  console.log(`Serveur démarré sur le port ${PORT}`);
-  console.log(`Serveur accessible sur : http://0.0.0.0:${PORT}`);
-  console.log(`Serveur VPS accessible sur : http://51.178.29.220:${PORT}`);
+  console.log(`Serveur VPS externe démarré sur le port ${PORT}`);
+  console.log(`Serveur accessible localement sur : http://0.0.0.0:${PORT}`);
+  console.log(`Serveur VPS externe accessible sur : http://51.178.29.220:${PORT}`);
 });
