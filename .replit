@@ -37,7 +37,7 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npx expo start --clear --port 8085 --host 0.0.0.0"
+args = "npx expo start --clear --port 8085 --host lan"
 
 [[workflows.workflow]]
 name = "EAS Init"
@@ -96,4 +96,4 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npx expo start --clear --port 8085 --host 0.0.0.0"
+args = "npx expo start --clear --port 8085 --host lan"
