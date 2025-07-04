@@ -836,7 +836,7 @@ export default function FormeScreen() {
                       style={[
                         styles.scorePoint, 
                         { 
-                          bottom: `${height}%`,
+                          bottom: height + '%',
                           backgroundColor: getScoreColor(dayScore)
                         }
                       ]} 
