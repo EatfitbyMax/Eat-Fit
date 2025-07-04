@@ -29,7 +29,7 @@ localPort = 8085
 externalPort = 3003
 
 [workflows]
-runButton = "Dev Server"
+runButton = "Dev Server with Tunnel"
 
 [[workflows.workflow]]
 name = "Start External VPS"
@@ -47,7 +47,7 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0 npx expo start --port 5000 --tunnel"
+args = "npx expo start --clear"
 
 [[workflows.workflow]]
 name = "Dev Server with Tunnel"
