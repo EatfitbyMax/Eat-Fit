@@ -6,6 +6,15 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Gestionnaire d'erreur global pour éviter les crashs
+process.on('uncaughtException', (error) => {
+  console.error('❌ Erreur non capturée:', error);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Promesse rejetée non gérée:', reason);
+});
 const DATA_DIR = path.join(__dirname, 'data');
 
 // Middleware
