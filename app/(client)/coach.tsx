@@ -928,7 +928,7 @@ export default function CoachScreen() {
                     />
                     <TouchableOpacity 
                       style={[styles.sendButton, !messageText.trim() && styles.sendButtonDisabled]}
-                      The code has been modified to import the correct premium status check function and use it to verify premium status.onPress={sendMessage}
+                      onPress={sendMessage}
                       disabled={!messageText.trim()}
                     >
                       <Text style={styles.sendButtonText}>➤</Text>
