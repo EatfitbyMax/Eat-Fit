@@ -50,7 +50,7 @@ args = "npm install"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npx expo start --web"
+args = "npx expo start --clear --web --dev-client"
 
 [[workflows.workflow]]
 name = "Start Backend Server"
@@ -68,3 +68,16 @@ args = "npm install"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "node server.js"
+
+[[workflows.workflow]]
+name = "Mobile Dev"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm install"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx expo start --tunnel"
