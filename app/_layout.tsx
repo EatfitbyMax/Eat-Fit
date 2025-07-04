@@ -10,9 +10,6 @@ const handleUnhandledRejection = (event: any) => {
 };
 
 // Ajouter le gestionnaire d'erreur si on est dans un environnement web
-if (typeof window !== 'undefined') {
-  window.addEventListener('unhandledrejection', handleUnhandledRejection);
-}eb
 if (typeof window !== 'undefined' && window.addEventListener) {
   window.addEventListener('unhandledrejection', handleUnhandledRejection);
 }
