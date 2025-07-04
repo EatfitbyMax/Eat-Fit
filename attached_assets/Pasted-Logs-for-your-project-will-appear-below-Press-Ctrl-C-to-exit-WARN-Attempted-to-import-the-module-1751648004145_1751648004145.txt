@@ -1,0 +1,32 @@
+Logs for your project will appear below. Press Ctrl+C to exit.
+ WARN  Attempted to import the module "/home/runner/workspace/node_modules/expo-asset/build/resolveAssetSource" which is not listed in the "exports" of "/home/runner/workspace/node_modules/expo-asset" under the requested subpath "./build/resolveAssetSource". Falling back to file-based resolution. Consider updating the call site or asking the package maintainer(s) to expose this API.
+ WARN  Attempted to import the module "/home/runner/workspace/node_modules/expo-asset/build/resolveAssetSource" which is not listed in the "exports" of "/home/runner/workspace/node_modules/expo-asset" under the requested subpath "./build/resolveAssetSource". Falling back to file-based resolution. Consider updating the call site or asking the package maintainer(s) to expose this API.
+λ Bundling failed 39610ms node_modules/expo-router/node/render.js (1466 modules)
+
+Metro error: Importing native-only module "react-native/Libraries/Utilities/codegenNativeCommands" on web from: /home/runner/workspace/node_modules/@stripe/stripe-react-native/lib/commonjs/specs/NativeCardForm.js
+
+  Error: Importing native-only module "react-native/Libraries/Utilities/codegenNativeCommands" on web from: /home/runner/workspace/node_modules/@stripe/stripe-react-native/lib/commonjs/specs/NativeCardForm.js
+    at resolver (/home/runner/workspace/node_modules/@expo/cli/src/start/server/metro/withMetroMultiPlatform.ts:625:19)
+    at firstResolver (/home/runner/workspace/node_modules/@expo/cli/src/start/server/metro/withMetroResolvers.ts:76:29)
+    at firstResolver (/home/runner/workspace/node_modules/@expo/cli/src/start/server/metro/withMetroResolvers.ts:108:16)
+    at resolveRequest (/home/runner/workspace/node_modules/@expo/cli/src/start/server/metro/withMetroResolvers.ts:137:16)
+    at Object.resolve (/home/runner/workspace/node_modules/metro-resolver/src/resolve.js:36:12)
+    at ModuleResolver.resolveDependency (/home/runner/workspace/node_modules/metro/src/node-haste/DependencyGraph/ModuleResolution.js:74:31)
+    at DependencyGraph.resolveDependency (/home/runner/workspace/node_modules/metro/src/node-haste/DependencyGraph.js:239:43)
+    at /home/runner/workspace/node_modules/metro/src/lib/transformHelpers.js:165:21
+    at resolveDependencies (/home/runner/workspace/node_modules/metro/src/DeltaBundler/buildSubgraph.js:42:25)
+    at visit (/home/runner/workspace/node_modules/metro/src/DeltaBundler/buildSubgraph.js:83:30)
+Web Bundling failed 39932ms node_modules/expo-router/entry.js (1339 modules)
+ ERROR  Error: Importing native-only module "react-native/Libraries/Utilities/codegenNativeCommands" on web from: /home/runner/workspace/node_modules/@stripe/stripe-react-native/lib/module/specs/NativeCardField.js
+    at resolver (/home/runner/workspace/node_modules/@expo/cli/src/start/server/metro/withMetroMultiPlatform.ts:625:19)
+    at firstResolver (/home/runner/workspace/node_modules/@expo/cli/src/start/server/metro/withMetroResolvers.ts:76:29)
+    at firstResolver (/home/runner/workspace/node_modules/@expo/cli/src/start/server/metro/withMetroResolvers.ts:108:16)
+    at resolveRequest (/home/runner/workspace/node_modules/@expo/cli/src/start/server/metro/withMetroResolvers.ts:137:16)
+    at Object.resolve (/home/runner/workspace/node_modules/metro-resolver/src/resolve.js:36:12)
+    at ModuleResolver.resolveDependency (/home/runner/workspace/node_modules/metro/src/node-haste/DependencyGraph/ModuleResolution.js:74:31)
+    at DependencyGraph.resolveDependency (/home/runner/workspace/node_modules/metro/src/node-haste/DependencyGraph.js:239:43)
+    at /home/runner/workspace/node_modules/metro/src/lib/transformHelpers.js:165:21
+    at resolveDependencies (/home/runner/workspace/node_modules/metro/src/DeltaBundler/buildSubgraph.js:42:25)
+    at visit (/home/runner/workspace/node_modules/metro/src/DeltaBundler/buildSubgraph.js:83:30)
+Web Bundling failed 39946ms node_modules/expo-router/entry.js (1339 modules)
+Web Bundled 216ms node_modules/expo-router/_error.js (234 modules)

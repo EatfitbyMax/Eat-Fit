@@ -7,7 +7,6 @@ import { checkSubscriptionStatus } from '@/utils/subscription';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PersistentStorage } from '@/utils/storage';
 import { IntegrationsManager } from '@/utils/integrations';
-import { useFormeScore } from '@/hooks/useFormeScore';
 
 const { width } = Dimensions.get('window');
 
@@ -42,20 +41,20 @@ interface FormeData {
 }
 
 export default function FormeScreen() {
+  const [isPremium, setIsPremium] = useState(false);
+  const [currentSubscription, setCurrentSubscription] = useState<any>(null);
   const [selectedTab, setSelectedTab] = useState('Aujourd\'hui');
   const [userData, setUserData] = useState<any>(null);
-  const [weeklyData, setWeeklyData] = useState<FormeData[]>([]);
-
-  // Utiliser le hook pour le score de forme
-  const { formeScore, formeData, isPremium, currentSubscription, refreshData } = useFormeScore(userData);
-  const currentFormeData = formeData || {
+  const [formeData, setFormeData] = useState<FormeData>({
     sleep: { hours: 0, quality: 'Moyen', bedTime: '', wakeTime: '' },
     stress: { level: 5, factors: [], notes: '' },
     heartRate: { resting: 0, variability: 0 },
     rpe: { value: 5, notes: '' },
     cycle: userData?.gender === 'Femme' ? { phase: 'Menstruel', dayOfCycle: 1, symptoms: [], notes: '' } : undefined,
     date: new Date().toISOString().split('T')[0]
-  };
+  });
+  const [weeklyData, setWeeklyData] = useState<FormeData[]>([]);
+  const [formeScore, setFormeScore] = useState(76);
 
   // Modals state
   const [showSleepModal, setShowSleepModal] = useState(false);
@@ -84,15 +83,25 @@ export default function FormeScreen() {
     loadUserData();
   }, []);
 
+  useEffect(() => {
+    if (userData) {
+      loadFormeData();
+    }
+  }, [userData]);
+
   // Recharger les données quand l'écran devient visible
   useFocusEffect(
     useCallback(() => {
       if (userData) {
         console.log('Écran Forme refocalisé - rechargement des données RPE');
-        refreshData();
+        loadFormeData();
       }
-    }, [userData?.id, refreshData])
+    }, [userData])
   );
+
+  useEffect(() => {
+    calculateFormeScore();
+  }, [formeData]);
 
   const loadUserData = async () => {
     try {
@@ -100,13 +109,19 @@ export default function FormeScreen() {
       if (currentUserString) {
         const user = JSON.parse(currentUserString);
         setUserData(user);
+
+        // Vérifier le statut premium
+        const subscription = await checkSubscriptionStatus();
+        setIsPremium(subscription.isPremium);
+        setCurrentSubscription(subscription);
+        console.log(`Statut Premium Forme: ${subscription.isPremium ? 'OUI' : 'NON'} (Plan: ${subscription.planId})`);
       }
     } catch (error) {
       console.error('Erreur chargement données utilisateur:', error);
     }
   };
 
-  const loadFormeDataLocal = useCallback(async () => {
+  const loadFormeData = async () => {
     try {
       if (!userData) return;
 
@@ -194,7 +209,7 @@ export default function FormeScreen() {
     } catch (error) {
       console.error('Erreur chargement données forme:', error);
     }
-  }, [userData?.id, isPremium]);
+  };
 
   const saveFormeData = async (newData: FormeData) => {
     try {
@@ -212,8 +227,8 @@ export default function FormeScreen() {
         console.log('Serveur indisponible, sauvegarde locale effectuée');
       }
 
-      // Rafraîchir les données via le hook
-      refreshData();
+      // Mettre à jour l'état local
+      setFormeData(newData);
 
     } catch (error) {
       console.error('Erreur sauvegarde données forme:', error);
@@ -221,7 +236,274 @@ export default function FormeScreen() {
     }
   };
 
-  
+  const calculateFormeScore = () => {
+    let totalScore = 0;
+    let totalWeight = 0;
+
+    // Adaptation des poids selon le genre
+    const isWoman = userData?.gender === 'Femme';
+
+    // Définir les poids de base
+    let baseWeights = {
+      sleep: 0.35,
+      stress: 0.30,
+      calories: 0.15,
+      training: 0.00,
+      heartRate: 0.00,
+      rpe: 0.00,
+      cycle: isWoman ? 0.20 : 0.00 // Poids plus important pour le cycle
+    };
+
+    // Ajuster les poids en fonction du plan d'abonnement
+    let weights = { ...baseWeights };
+
+    if (!isPremium) {
+      // Plan Gratuit: sommeil, stress, calories, entraînement
+      weights.heartRate = 0;
+      weights.rpe = 0;
+      weights.training = 0.20;
+      weights.calories = 0.15;
+    } else {
+      // Plans Bronze, Argent, Or, Diamant
+      weights.training = 0;
+
+      // Ajuster les poids pour les plans premium
+      weights.heartRate = 0.10; // FC repos
+      weights.rpe = 0.10;       // RPE
+      weights.calories = 0.05; // Calories (moins important dans les plans avancés)
+
+      // Ajustements spécifiques pour les plans Or et Diamant peuvent être ajoutés ici
+    }
+
+    // Normaliser les poids pour que la somme soit égale à 1 (ou 100%)
+    const totalBaseWeight = Object.values(weights).reduce((sum, weight) => sum + weight, 0);
+    for (const key in weights) {
+      weights[key] = weights[key] / totalBaseWeight;
+    }
+    console.log("Subscription Status:", isPremium);
+    console.log("Calculated Weights:", weights);
+
+    // Sommeil
+    if (formeData.sleep.hours > 0) {
+      // Score basé sur les heures de sommeil (optimal: 7-9h)
+      let sleepHoursScore;
+      if (formeData.sleep.hours >= 7 && formeData.sleep.hours <= 9) {
+        sleepHoursScore = 100;
+      } else if (formeData.sleep.hours >= 6 && formeData.sleep.hours <= 10) {
+        sleepHoursScore = 80;
+      } else if (formeData.sleep.hours >= 5 && formeData.sleep.hours <= 11) {
+        sleepHoursScore = 60;
+      } else {
+        sleepHoursScore = 30;
+      }
+
+      // Multiplicateur qualité
+      const qualityMultiplier = {
+        'Excellent': 1.0,
+        'Bien': 0.85,
+        'Moyen': 0.65,
+        'Mauvais': 0.4
+      };
+
+      let sleepScore = sleepHoursScore * qualityMultiplier[formeData.sleep.quality];
+
+      // Ajustement cycle pour les femmes: le sommeil est plus impacté selon la phase
+      if (isWoman && formeData.cycle) {
+        const cycleMultiplier = {
+          'Menstruel': 0.9,      // Sommeil plus difficile pendant les règles
+          'Folliculaire': 1.0,   // Sommeil normal
+          'Ovulation': 1.05,     // Légère amélioration
+          'Lutéal': 0.85         // Sommeil souvent perturbé en pré-menstruel
+        };
+        sleepScore *= cycleMultiplier[formeData.cycle.phase];
+      }
+
+      totalScore += sleepScore * weights.sleep;
+      totalWeight += weights.sleep;
+    }
+
+    // Stress - inversé (1 = excellent, 10 = très mauvais)
+    let stressScore = Math.max(0, ((10 - formeData.stress.level) / 9) * 100);
+
+    // Ajustement cycle pour les femmes: le stress est plus sensible selon la phase
+    if (isWoman && formeData.cycle) {
+      const stressCycleMultiplier = {
+        'Menstruel': 0.8,       // Plus de stress/irritabilité
+        'Folliculaire': 1.1,    // Généralement moins de stress
+        'Ovulation': 1.15,      // Pic de bien-être
+        'Lutéal': 0.7           // Stress pré-menstruel important
+      };
+      stressScore *= stressCycleMultiplier[formeData.cycle.phase];
+    }
+
+    totalScore += stressScore * weights.stress;
+    totalWeight += weights.stress;
+
+    // Apport calorique - Tous les plans
+    if (weights.calories > 0) {
+      let caloriesScore = 75; // Score par défaut
+
+      // Simuler un apport calorique basé sur les données utilisateur
+      const estimatedDailyCalories = Math.round(
+        (userData?.gender === 'Homme' ? 2200 : 1800) * 
+        (userData?.activityLevel === 'sedentaire' ? 1.2 : 
+         userData?.activityLevel === 'leger' ? 1.375 :
+         userData?.activityLevel === 'modere' ? 1.55 :
+         userData?.activityLevel === 'intense' ? 1.725 : 1.9)
+      );
+
+      // Score basé sur un apport théorique optimal
+      caloriesScore = Math.min(100, Math.max(30, 
+        100 - Math.abs(estimatedDailyCalories - (estimatedDailyCalories * 0.95)) / 50
+      ));
+
+      totalScore += caloriesScore * weights.calories;
+      totalWeight += weights.calories;
+    }
+
+    // Entraînement programmé - Plan gratuit uniquement
+    if (weights.training > 0) {
+      let trainingScore = 50; // Score par défaut
+
+      // Vérifier s'il y a des entraînements programmés aujourd'hui
+      const today = new Date().toISOString().split('T')[0];
+      // Simuler la présence d'entraînements (à adapter selon votre logique)
+      const hasTrainingToday = weeklyData.some(day => 
+        day.date === today && day.rpe?.value > 0
+      );
+
+      trainingScore = hasTrainingToday ? 85 : 40;
+
+      totalScore += trainingScore * weights.training;
+      totalWeight += weights.training;
+    }
+
+    // FC repos - Plans Bronze et plus
+    if (weights.heartRate > 0 && formeData.heartRate.resting > 0) {
+      const optimalResting = userData?.gender === 'Homme' ? 65 : 70;
+      let diff = Math.abs(formeData.heartRate.resting - optimalResting);
+
+      // Ajustement cycle pour les femmes: FC varie selon la phase
+      if (isWoman && formeData.cycle) {
+        const hrCycleAdjustment = {
+          'Menstruel': -3,       // FC légèrement plus élevée
+          'Folliculaire': 0,     // FC normale
+          'Ovulation': -2,       // FC peut être légèrement élevée
+          'Lutéal': -5           // FC souvent plus élevée en pré-menstruel
+        };
+
+        const adjustedOptimal = optimalResting + hrCycleAdjustment[formeData.cycle.phase];
+        const adjustedDiff = Math.abs(formeData.heartRate.resting - adjustedOptimal);
+
+        if (adjustedDiff <= 5) hrScore = 100;
+        else if (adjustedDiff <= 10) hrScore = 85;
+        else if (adjustedDiff <= 15) hrScore = 70;
+        else if (adjustedDiff <= 20) hrScore = 55;
+        else hrScore = 30;
+      } else {
+        let hrScore;
+        if (diff <= 5) hrScore = 100;
+        else if (diff <= 10) hrScore = 85;
+        else if (diff <= 15) hrScore = 70;
+        else if (diff <= 20) hrScore = 55;
+        else hrScore = 30;
+      }
+
+      totalScore += hrScore * weights.heartRate;
+      totalWeight += weights.heartRate;
+    }
+
+    // RPE - Premium (1-3 = excellent, 8-10 = épuisé)
+    if (isPremium && formeData.rpe.value > 0) {
+      let rpeScore;
+      if (formeData.rpe.value <= 3) rpeScore = 100;      // Très facile
+      else if (formeData.rpe.value <= 5) rpeScore = 80;  // Modéré
+      else if (formeData.rpe.value <= 7) rpeScore = 60;  // Difficile
+      else rpeScore = 30;                                // Très difficile
+
+      // Ajustement cycle pour les femmes: performance varie selon la phase
+      if (isWoman && formeData.cycle) {
+        const rpeCycleMultiplier = {
+          'Menstruel': 0.8,      // Performance réduite, récupération plus difficile
+          'Folliculaire': 1.15,  // Phase d'amélioration des performances
+          'Ovulation': 1.2,      // Pic de performance
+          'Lutéal': 0.85         // Fatigue pré-menstruelle
+        };
+        rpeScore *= rpeCycleMultiplier[formeData.cycle.phase];
+      }
+
+      totalScore += rpeScore * weights.rpe;
+      totalWeight += weights.rpe;
+    }
+
+    // Cycle hormonal pour les femmes (poids beaucoup plus important)
+    if (isWoman && formeData.cycle) {
+      let cycleScore = 75; // Score de base
+
+      // Ajustements détaillés selon la phase et le jour du cycle
+      const dayInCycle = formeData.cycle.dayOfCycle;
+
+      switch (formeData.cycle.phase) {
+        case 'Menstruel':
+          // Jours 1-5: Score bas mais progressif
+          if (dayInCycle <= 2) {
+            cycleScore = 45; // Jours les plus difficiles
+          } else if (dayInCycle <= 4) {
+            cycleScore = 55; // Amélioration progressive
+          } else {
+            cycleScore = 65; // Fin des règles
+          }
+          break;
+
+        case 'Folliculaire':
+          // Jours 6-13: Amélioration progressive
+          cycleScore = 70 + Math.min((dayInCycle - 5) * 3, 20); // 70 à 90
+          break;
+
+        case 'Ovulation':
+          // Jours 14-16: Pic d'énergie
+          cycleScore = 95;
+          break;
+
+        case 'Lutéal':
+          // Jours 17-28: Déclin progressif
+          const lutealDay = dayInCycle - 16;
+          if (lutealDay <= 4) {
+            cycleScore = 80; // Début de phase lutéale
+          } else if (lutealDay <= 8) {
+            cycleScore = 70; // Milieu de phase
+          } else {
+            cycleScore = 50; // SPM (syndrome pré-menstruel)
+          }
+          break;
+      }
+
+      // Réduction importante selon les symptômes
+      const symptomPenalty = Math.min(formeData.cycle.symptoms.length * 8, 40);
+      cycleScore = Math.max(25, cycleScore - symptomPenalty);
+
+      // Bonus pour absence de symptômes en phase favorable
+      if (formeData.cycle.symptoms.length === 0 && 
+          (formeData.cycle.phase === 'Folliculaire' || formeData.cycle.phase === 'Ovulation')) {
+        cycleScore = Math.min(100, cycleScore + 5);
+      }
+
+      totalScore += cycleScore * weights.cycle;
+      totalWeight += weights.cycle;
+    }
+
+    // Calculer le score final
+    let finalScore;
+    if (totalWeight === 0) {
+      finalScore = 50; // Score par défaut si aucune donnée
+    } else {
+      finalScore = totalScore / totalWeight;
+    }
+
+    // S'assurer que le score est entre 0 et 100
+    finalScore = Math.max(0, Math.min(100, Math.round(finalScore)));
+    setFormeScore(finalScore);
+  };
 
   const handleSaveSleep = async () => {
     const inputValue = tempSleep.hours.replace(',', '.');
@@ -529,8 +811,7 @@ export default function FormeScreen() {
 
     return (
       <View style={styles.chartContainer}>
-        <Text style={styles.chartTitle}>```
-Évolution de la forme (7 jours)</Text>
+        <Text style={styles.chartTitle}>Évolution de la forme (7 jours)</Text>
 
         <View style={styles.chartArea}>
           <View style={styles.yAxis}>
@@ -848,9 +1129,9 @@ export default function FormeScreen() {
             {(() => {
               const isWoman = userData?.gender === 'Femme';
               const planId = currentSubscription?.planId;
-
+              
               let metrics = ['sommeil', 'stress', 'apport calorique'];
-
+              
               if (!isPremium) {
                 metrics.push('entraînement programmé');
               } else {
@@ -859,11 +1140,11 @@ export default function FormeScreen() {
                   metrics.push('macronutriments', 'micronutriments');
                 }
               }
-
+              
               if (isWoman) {
                 metrics.push('cycle hormonal');
               }
-
+              
               return `Basé sur votre ${metrics.join(', ')}`;
             })()}
           </Text>
@@ -897,10 +1178,10 @@ export default function FormeScreen() {
               style={styles.metricCard}
               onPress={() => {
                 setTempSleep({
-                  hours: currentFormeData.sleep.hours.toString(),
-                  quality: currentFormeData.sleep.quality,
-                  bedTime: currentFormeData.sleep.bedTime,
-                  wakeTime: currentFormeData.sleep.wakeTime
+                  hours: formeData.sleep.hours.toString(),
+                  quality: formeData.sleep.quality,
+                  bedTime: formeData.sleep.bedTime,
+                  wakeTime: formeData.sleep.wakeTime
                 });
                 setShowSleepModal(true);
               }}
@@ -911,10 +1192,10 @@ export default function FormeScreen() {
               <View style={styles.metricInfo}>
                 <Text style={styles.metricLabel}>Sommeil</Text>
                 <Text style={styles.metricValue}>
-                  {formatSleepHours(currentFormeData.sleep.hours)}
+                  {formatSleepHours(formeData.sleep.hours)}
                 </Text>
                 <Text style={styles.metricDetail}>
-                  {currentFormeData.sleep.quality}
+                  {formeData.sleep.quality}
                 </Text>
               </View>
               <Text style={styles.updateHint}>Appuyez pour modifier</Text>
@@ -925,9 +1206,9 @@ export default function FormeScreen() {
               style={styles.metricCard}
               onPress={() => {
                 setTempStress({
-                  level: currentFormeData.stress.level,
-                  factors: currentFormeData.stress.factors,
-                  notes: currentFormeData.stress.notes
+                  level: formeData.stress.level,
+                  factors: formeData.stress.factors,
+                  notes: formeData.stress.notes
                 });
                 setShowStressModal(true);
               }}
@@ -937,10 +1218,10 @@ export default function FormeScreen() {
               </View>
               <View style={styles.metricInfo}>
                 <Text style={styles.metricLabel}>Niveau de stress</Text>
-                <Text style={styles.metricValue}>{currentFormeData.stress.level}/10</Text>
+                <Text style={styles.metricValue}>{formeData.stress.level}/10</Text>
                 <Text style={styles.metricDetail}>
-                  {currentFormeData.stress.level <= 3 ? 'Faible' : 
-                   currentFormeData.stress.level <= 6 ? 'Modéré' : 'Élevé'}
+                  {formeData.stress.level <= 3 ? 'Faible' : 
+                   formeData.stress.level <= 6 ? 'Modéré' : 'Élevé'}
                 </Text>
               </View>
               <Text style={styles.updateHint}>Appuyez pour modifier</Text>
@@ -966,13 +1247,13 @@ export default function FormeScreen() {
                 </Text>
                 <Text style={styles.metricValue}>
                   {isPremium ? 
-                    (currentFormeData.heartRate.resting > 0 ? currentFormeData.heartRate.resting + ' bpm' : 'Non renseigné') :
+                    (formeData.heartRate.resting > 0 ? formeData.heartRate.resting + ' bpm' : 'Non renseigné') :
                     'Premium requis'
                   }
                 </Text>
-                {isPremium && currentFormeData.heartRate.variability > 0 && (
+                {isPremium && formeData.heartRate.variability > 0 && (
                   <Text style={styles.metricDetail}>
-                    Variabilité: {currentFormeData.heartRate.variability}ms
+                    Variabilité: {formeData.heartRate.variability}ms
                   </Text>
                 )}
               </View>
@@ -995,7 +1276,7 @@ export default function FormeScreen() {
                   'Les données RPE sont automatiquement récupérées de vos séances terminées. Voulez-vous rafraîchir ?',
                   [
                     { text: 'Annuler', style: 'cancel' },
-                    { text: 'Synchroniser', onPress: () => loadFormeDataLocal() }
+                    { text: 'Synchroniser', onPress: () => loadFormeData() }
                   ]
                 );
               }}
@@ -1009,16 +1290,16 @@ export default function FormeScreen() {
                 </Text>
                 <Text style={styles.metricValue}>
                   {isPremium ? 
-                    (currentFormeData.rpe.workoutId === 'auto_from_activity' ? 
-                      currentFormeData.rpe.value + '/10' : 'Non renseigné'
+                    (formeData.rpe.workoutId === 'auto_from_activity' ? 
+                      formeData.rpe.value + '/10' : 'Non renseigné'
                     ) : 
                     'Premium requis'
                   }
                 </Text>
                 <Text style={styles.metricDetail}>
                   {isPremium ? 
-                    (currentFormeData.rpe.workoutId === 'auto_from_activity' ? 
-                      (currentFormeData.rpe.notes || 'Données des séances du jour') :
+                    (formeData.rpe.workoutId === 'auto_from_activity' ? 
+                      (formeData.rpe.notes || 'Données des séances du jour') :
                       'Aucune séance aujourd\'hui'
                     ) :
                     'Évaluation fatigue'
@@ -1156,10 +1437,10 @@ export default function FormeScreen() {
                 style={styles.metricCard}
                 onPress={() => {
                   setTempCycle({
-                    phase: currentFormeData.cycle?.phase || 'Menstruel',
-                    dayOfCycle: currentFormeData.cycle?.dayOfCycle || 1,
-                    symptoms: currentFormeData.cycle?.symptoms || [],
-                    notes: currentFormeData.cycle?.notes || ''
+                    phase: formeData.cycle?.phase || 'Menstruel',
+                    dayOfCycle: formeData.cycle?.dayOfCycle || 1,
+                    symptoms: formeData.cycle?.symptoms || [],
+                    notes: formeData.cycle?.notes || ''
                   });
                   setShowCycleModal(true);
                 }}
@@ -1170,10 +1451,10 @@ export default function FormeScreen() {
                 <View style={styles.metricInfo}>
                   <Text style={styles.metricLabel}>Cycle Hormonal</Text>
                   <Text style={styles.metricValue}>
-                    {currentFormeData.cycle ? 'Jour ' + currentFormeData.cycle.dayOfCycle : 'Non renseigné'}
+                    {formeData.cycle ? 'Jour ' + formeData.cycle.dayOfCycle : 'Non renseigné'}
                   </Text>
                   <Text style={styles.metricDetail}>
-                    {currentFormeData.cycle?.phase || 'Phase non définie'}
+                    {formeData.cycle?.phase || 'Phase non définie'}
                   </Text>
                 </View>
                 <Text style={styles.updateHint}>Appuyez pour modifier</Text>
@@ -1190,25 +1471,25 @@ export default function FormeScreen() {
             <View style={styles.recommendationsCard}>
               <Text style={styles.recommendationsTitle}>💡 Recommandations</Text>
 
-              {currentFormeData.sleep.hours < 7 && (
+              {formeData.sleep.hours < 7 && (
                 <Text style={styles.recommendation}>
                   • Essayez de dormir au moins 7-8h par nuit pour une meilleure récupération
                 </Text>
               )}
 
-              {currentFormeData.stress.level > 6 && (
+              {formeData.stress.level > 6 && (
                 <Text style={styles.recommendation}>
                   • Votre niveau de stress est élevé. Considérez des techniques de relaxation
                 </Text>
               )}
 
-              {isPremium && currentFormeData.heartRate.resting > 80 && (
+              {isPremium && formeData.heartRate.resting > 80 && (
                 <Text style={styles.recommendation}>
                   • Votre FC repos est élevée. Augmentez progressivement votre activité cardio
                 </Text>
               )}
 
-              {isPremium && currentFormeData.rpe.value > 7 && (
+              {isPremium && formeData.rpe.value > 7 && (
                 <Text style={styles.recommendation}>
                   • RPE élevé détecté. Prévoyez une récupération active ou un jour de repos
                 </Text>
@@ -1395,13 +1676,16 @@ export default function FormeScreen() {
               </TouchableOpacity>
               <TouchableOpacity 
                 style={styles.modalButtonPrimary}
-                onPress={handleSaveHeartRate}              >
+                onPress={handleSaveHeartRate}
+              >
                 <Text style={styles.modalButtonPrimaryText}>Sauvegarder</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
+
+
 
       {/* Modal Cycle Hormonal */}
       <Modal visible={showCycleModal} transparent={true} animationType="fade">
