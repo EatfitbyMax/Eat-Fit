@@ -1229,7 +1229,7 @@ export default function FormeScreen() {
                 </Text>
                 <Text style={styles.metricValue}>
                   {isPremium ? 
-                    (formeData.heartRate.resting > 0 ? `${formeData.heartRate.resting} bpm` : 'Non renseigné') :
+                    (formeData.heartRate.resting > 0 ? formeData.heartRate.resting + ' bpm' : 'Non renseigné') :
                     'Premium requis'
                   }
                 </Text>
