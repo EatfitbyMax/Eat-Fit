@@ -1273,7 +1273,7 @@ export default function FormeScreen() {
                 <Text style={styles.metricValue}>
                   {isPremium ? 
                     (formeData.rpe.workoutId === 'auto_from_activity' ? 
-                      `${formeData.rpe.value}/10` : 'Non renseigné'
+                      formeData.rpe.value + '/10' : 'Non renseigné'
                     ) : 
                     'Premium requis'
                   }
