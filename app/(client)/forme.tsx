@@ -59,14 +59,14 @@ export default function FormeScreen() {
   const [showSleepModal, setShowSleepModal] = useState(false);
   const [showStressModal, setShowStressModal] = useState(false);
   const [showHeartRateModal, setShowHeartRateModal] = useState(false);
-  const [showRPEModal, setShowRPEModal] = useState(false);
+  
   const [showCycleModal, setShowCycleModal] = useState(false);
 
   // Temporary form data
   const [tempSleep, setTempSleep] = useState({ hours: '', quality: 'Moyen', bedTime: '', wakeTime: '' });
   const [tempStress, setTempStress] = useState({ level: 5, factors: [], notes: '' });
   const [tempHeartRate, setTempHeartRate] = useState({ resting: '', variability: '' });
-  const [tempRPE, setTempRPE] = useState({ value: 5, notes: '' });
+  
   const [tempCycle, setTempCycle] = useState({ phase: 'Menstruel', dayOfCycle: 1, symptoms: [], notes: '' });
 
   const stressFactors = [
@@ -527,25 +527,7 @@ export default function FormeScreen() {
     Alert.alert('Succès', 'Données de fréquence cardiaque enregistrées !');
   };
 
-  const handleSaveRPE = async () => {
-    if (!isPremium) {
-      Alert.alert('Fonctionnalité Premium', 'Le suivi RPE est réservé aux abonnés premium.');
-      return;
-    }
-
-    const newData = {
-      ...formeData,
-      rpe: {
-        value: tempRPE.value,
-        notes: tempRPE.notes
-      }
-    };
-
-    await saveFormeData(newData);
-    setShowRPEModal(false);
-    setTempRPE({ value: 5, notes: '' });
-    Alert.alert('Succès', 'RPE post-entraînement enregistré !');
-  };
+  
 
   const handleSaveCycle = async () => {
     if (userData?.gender !== 'Femme') {
@@ -1143,23 +1125,15 @@ export default function FormeScreen() {
                   Alert.alert('Fonctionnalité Premium', 'Le suivi RPE est réservé aux abonnés premium.');
                   return;
                 }
-                if (formeData.rpe.workoutId === 'auto_from_activity') {
-                  // Si les données viennent des activités, proposer de synchroniser
-                  Alert.alert(
-                    'Synchronisation RPE',
-                    'Les données RPE sont automatiquement récupérées de vos séances terminées. Voulez-vous rafraîchir ?',
-                    [
-                      { text: 'Annuler', style: 'cancel' },
-                      { text: 'Synchroniser', onPress: () => loadFormeData() }
-                    ]
-                  );
-                } else {
-                  setTempRPE({
-                    value: formeData.rpe.value,
-                    notes: formeData.rpe.notes
-                  });
-                  setShowRPEModal(true);
-                }
+                // Toujours proposer uniquement la synchronisation
+                Alert.alert(
+                  'Synchronisation RPE',
+                  'Les données RPE sont automatiquement récupérées de vos séances terminées. Voulez-vous rafraîchir ?',
+                  [
+                    { text: 'Annuler', style: 'cancel' },
+                    { text: 'Synchroniser', onPress: () => loadFormeData() }
+                  ]
+                );
               }}
             >
               <View style={styles.metricIcon}>
@@ -1172,10 +1146,7 @@ export default function FormeScreen() {
                 <Text style={styles.metricValue}>
                   {isPremium ? 
                     (formeData.rpe.workoutId === 'auto_from_activity' ? 
-                      `${formeData.rpe.value}/10` : 
-                      (formeData.rpe.value === 5 && !formeData.rpe.notes ? 
-                        'Non renseigné' : `${formeData.rpe.value}/10`
-                      )
+                      `${formeData.rpe.value}/10` : 'Non renseigné'
                     ) : 
                     'Premium requis'
                   }
@@ -1184,27 +1155,14 @@ export default function FormeScreen() {
                   {isPremium ? 
                     (formeData.rpe.workoutId === 'auto_from_activity' ? 
                       (formeData.rpe.notes || 'Données des séances du jour') :
-                      (formeData.rpe.value === 5 && !formeData.rpe.notes ? 
-                        'Aucune séance aujourd\'hui' :
-                        (formeData.rpe.value <= 3 ? 'Très facile' :
-                         formeData.rpe.value <= 5 ? 'Modéré' :
-                         formeData.rpe.value <= 7 ? 'Difficile' : 'Très difficile')
-                      )
+                      'Aucune séance aujourd\'hui'
                     ) :
                     'Évaluation fatigue'
                   }
                 </Text>
               </View>
               <Text style={styles.updateHint}>
-                {isPremium ? 
-                  (formeData.rpe.workoutId === 'auto_from_activity' ? 
-                    'Récupéré automatiquement' : 
-                    (formeData.rpe.value === 5 && !formeData.rpe.notes ? 
-                      'Appuyez pour synchroniser' : 'Appuyez pour modifier'
-                    )
-                  ) : 
-                  'Mise à niveau requise'
-                }
+                {isPremium ? 'Appuyez pour synchroniser' : 'Mise à niveau requise'}
               </Text>
             </TouchableOpacity>
 
@@ -1462,71 +1420,7 @@ export default function FormeScreen() {
         </View>
       </Modal>
 
-      {/* Modal RPE */}
-      <Modal visible={showRPEModal} transparent={true} animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>RPE Post-Entraînement</Text>
-            <Text style={styles.modalSubtitle}>
-              Évaluez la difficulté ressentie lors de votre dernier entraînement
-            </Text>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Difficulté ressentie (1-10)</Text>
-              <View style={styles.rpeSlider}>
-                {[...Array(10)].map((_, i) => (
-                  <TouchableOpacity
-                    key={i}
-                    style={[
-                      styles.rpeLevel,
-                      tempRPE.value === i + 1 && styles.selectedRPELevel
-                    ]}
-                    onPress={() => setTempRPE({...tempRPE, value: i + 1})}
-                  >
-                    <Text style={[
-                      styles.rpeLevelText,
-                      tempRPE.value === i + 1 && styles.selectedRPELevelText
-                    ]}>
-                      {i + 1}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              <View style={styles.rpeLabels}>
-                <Text style={styles.rpeLabel}>Très facile</Text>
-                <Text style={styles.rpeLabel}>Très difficile</Text>
-              </View>
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Notes (optionnel)</Text>
-              <TextInput
-                style={[styles.modalInput, styles.notesInput]}
-                value={tempRPE.notes}
-                onChangeText={(text) => setTempRPE({...tempRPE, notes: text})}
-                placeholder="Ressenti général, zones difficiles..."
-                multiline={true}
-                numberOfLines={3}
-              />
-            </View>
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity 
-                style={styles.modalButtonSecondary}
-                onPress={() => setShowRPEModal(false)}
-              >
-                <Text style={styles.modalButtonSecondaryText}>Annuler</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.modalButtonPrimary}
-                onPress={handleSaveRPE}
-              >
-                <Text style={styles.modalButtonPrimaryText}>Sauvegarder</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      
 
       {/* Modal Cycle Hormonal */}
       <Modal visible={showCycleModal} transparent={true} animationType="fade">
