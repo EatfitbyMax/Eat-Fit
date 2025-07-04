@@ -421,21 +421,91 @@ export default function EntrainementScreen() {
     }
   };
 
-  const getActivityIcon = (type: string) => {
-    switch (type.toLowerCase()) {
+  const getActivityIcon = (type: string, activityName?: string) => {
+    const typeStr = type.toLowerCase();
+    const nameStr = activityName?.toLowerCase() || '';
+
+    // Détection spécifique par nom d'activité
+    if (nameStr.includes('tennis')) return '🎾';
+    if (nameStr.includes('padel')) return '🎾';
+    if (nameStr.includes('squash')) return '🎾';
+    if (nameStr.includes('badminton')) return '🏸';
+    if (nameStr.includes('ping') || nameStr.includes('table tennis')) return '🏓';
+    if (nameStr.includes('football') || nameStr.includes('foot') || nameStr.includes('soccer')) return '⚽';
+    if (nameStr.includes('basketball') || nameStr.includes('basket')) return '🏀';
+    if (nameStr.includes('volleyball') || nameStr.includes('volley')) return '🏐';
+    if (nameStr.includes('handball')) return '🤾';
+    if (nameStr.includes('rugby')) return '🏈';
+    if (nameStr.includes('golf')) return '⛳';
+    if (nameStr.includes('baseball')) return '⚾';
+    if (nameStr.includes('cricket')) return '🏏';
+    if (nameStr.includes('hockey')) return '🏒';
+    if (nameStr.includes('boxing') || nameStr.includes('boxe')) return '🥊';
+    if (nameStr.includes('karate') || nameStr.includes('judo') || nameStr.includes('taekwondo')) return '🥋';
+    if (nameStr.includes('escalade') || nameStr.includes('climbing')) return '🧗‍♂️';
+    if (nameStr.includes('ski')) return '🎿';
+    if (nameStr.includes('snowboard')) return '🏂';
+    if (nameStr.includes('surf')) return '🏄‍♂️';
+    if (nameStr.includes('voile') || nameStr.includes('sailing')) return '⛵';
+    if (nameStr.includes('kayak') || nameStr.includes('canoe')) return '🛶';
+    if (nameStr.includes('equitation') || nameStr.includes('horse')) return '🏇';
+    if (nameStr.includes('danse') || nameStr.includes('dance')) return '💃';
+    if (nameStr.includes('yoga')) return '🧘‍♀️';
+    if (nameStr.includes('pilates')) return '🧘‍♀️';
+    if (nameStr.includes('crossfit')) return '🏋️‍♂️';
+    if (nameStr.includes('musculation') || nameStr.includes('weight')) return '🏋️‍♂️';
+    if (nameStr.includes('natation') || nameStr.includes('swimming')) return '🏊‍♂️';
+
+    // Détection par type d'activité Strava
+    switch (typeStr) {
       case 'run':
+      case 'running':
+        if (nameStr.includes('trail')) return '🏃‍♀️';
+        if (nameStr.includes('marathon')) return '🏃‍♀️';
         return '🏃‍♂️';
       case 'ride':
+      case 'cycling':
+        if (nameStr.includes('vtt') || nameStr.includes('mountain')) return '🚵‍♂️';
+        if (nameStr.includes('route') || nameStr.includes('road')) return '🚴‍♂️';
         return '🚴‍♂️';
       case 'swim':
+      case 'swimming':
         return '🏊‍♂️';
       case 'walk':
+      case 'walking':
         return '🚶‍♂️';
       case 'hike':
+      case 'hiking':
         return '🥾';
       case 'workout':
+      case 'strength':
         return '💪';
+      case 'yoga':
+        return '🧘‍♀️';
+      case 'tennis':
+        return '🎾';
+      case 'golf':
+        return '⛳';
+      case 'soccer':
+      case 'football':
+        return '⚽';
+      case 'basketball':
+        return '🏀';
+      case 'volleyball':
+        return '🏐';
+      case 'climbing':
+        return '🧗‍♂️';
+      case 'skiing':
+        return '🎿';
+      case 'snowboarding':
+        return '🏂';
+      case 'surfing':
+        return '🏄‍♂️';
       default:
+        // Si aucune correspondance, essayer de deviner par le nom
+        if (nameStr.includes('cardio')) return '❤️';
+        if (nameStr.includes('fitness')) return '💪';
+        if (nameStr.includes('sport')) return '🏃‍♂️';
         return '🏋️‍♂️';
     }
   };
@@ -450,7 +520,7 @@ export default function EntrainementScreen() {
           onPress={() => setSelectedStravaActivity(activity)}
         >
           <View style={styles.activityHeader}>
-            <Text style={styles.activityIcon}>{getActivityIcon(activity.type)}</Text>
+            <Text style={styles.activityIcon}>{getActivityIcon(activity.type, activity.name)}</Text>
             <View style={styles.activityInfo}>
               <Text style={styles.activityName}>{activity.name}</Text>
               <Text style={styles.activityDate}>{formatDate(activity.date)}</Text>
@@ -536,7 +606,7 @@ export default function EntrainementScreen() {
 
           <ScrollView style={styles.modalBody}>
             <View style={styles.activityDetailHeader}>
-              <Text style={styles.activityDetailIcon}>{getActivityIcon(activity.type)}</Text>
+              <Text style={styles.activityDetailIcon}>{getActivityIcon(activity.type, activity.name)}</Text>
               <View style={styles.activityDetailInfo}>
                 <Text style={styles.activityDetailType}>{activity.type}</Text>
                 <Text style={styles.activityDetailDate}>{formatDate(activity.date)}</Text>
