@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const SERVER_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev:5001';
+const SERVER_URL = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
 
 export class PersistentStorage {
   // Test de connexion au serveur avec cache temporaire
@@ -27,7 +27,7 @@ export class PersistentStorage {
 
       clearTimeout(timeoutId);
       const isConnected = response.ok;
-      
+
       // Mettre à jour le cache
       this.connectionCache = {
         isConnected,
@@ -149,7 +149,7 @@ export class PersistentStorage {
   static async getUserNutrition(userId: string): Promise<any[]> {
     try {
       console.log('🔍 Récupération nutrition (VPS prioritaire)...');
-      
+
       // 1. STOCKAGE PRINCIPAL: Serveur VPS OBLIGATOIRE
       const isConnected = await this.testConnection();
       if (!isConnected) {
@@ -166,7 +166,7 @@ export class PersistentStorage {
           headers: { 'Content-Type': 'application/json' },
           signal: AbortSignal.timeout(10000)
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           console.log(`✅ ${data.length} entrées nutrition récupérées depuis VPS (stockage principal)`);
@@ -196,7 +196,7 @@ export class PersistentStorage {
 
     try {
       console.log(`🥗 Sauvegarde de ${nutrition.length} entrées nutrition (VPS prioritaire)...`);
-      
+
       // 1. STOCKAGE PRINCIPAL: Serveur VPS EN PREMIER
       const isConnected = await this.testConnection();
       if (!isConnected) {
@@ -215,12 +215,12 @@ export class PersistentStorage {
         if (response.ok) {
           vpsSaved = true;
           console.log('🚀 Sauvegarde nutrition VPS réussie (stockage principal)');
-          
+
           // 2. SYNCHRONISATION: Mettre à jour le cache local
           await AsyncStorage.setItem(`nutrition_data_${userId}`, JSON.stringify(nutrition));
           localSaved = true;
           console.log('💾 Cache local synchronisé avec VPS');
-          
+
         } else {
           throw new Error(`Erreur HTTP ${response.status} du serveur VPS`);
         }
@@ -238,7 +238,7 @@ export class PersistentStorage {
 
     } catch (error) {
       console.error('❌ Erreur sauvegarde nutrition VPS (stockage principal):', error);
-      
+
       // FALLBACK D'URGENCE: Sauvegarde locale uniquement
       try {
         await AsyncStorage.setItem(`nutrition_data_${userId}`, JSON.stringify(nutrition));
@@ -254,7 +254,7 @@ export class PersistentStorage {
   static async getUserWeight(userId: string): Promise<any> {
     try {
       console.log('🔍 Récupération des données de poids...');
-      
+
       // 1. PRIORITÉ: Essayer le serveur VPS
       const isConnected = await this.testConnection();
       if (isConnected) {
@@ -264,7 +264,7 @@ export class PersistentStorage {
             headers: { 'Content-Type': 'application/json' },
             signal: AbortSignal.timeout(5000)
           });
-          
+
           if (response.ok) {
             const data = await response.json();
             console.log('✅ Données poids récupérées depuis le serveur VPS');
@@ -307,7 +307,7 @@ export class PersistentStorage {
 
     try {
       console.log('💾 Sauvegarde des données de poids...');
-      
+
       // 1. TOUJOURS sauvegarder en local EN PREMIER
       await AsyncStorage.setItem(`weight_data_${userId}`, JSON.stringify(weightData));
       localSaved = true;
@@ -344,7 +344,7 @@ export class PersistentStorage {
 
     } catch (error) {
       console.error('❌ Erreur sauvegarde poids:', error);
-      
+
       if (!localSaved) {
         try {
           await AsyncStorage.setItem(`weight_data_${userId}`, JSON.stringify(weightData));
@@ -360,7 +360,7 @@ export class PersistentStorage {
   static async getUserMensurations(userId: string): Promise<any> {
     try {
       console.log('🔍 Récupération des mensurations...');
-      
+
       // 1. PRIORITÉ: Essayer le serveur VPS
       const isConnected = await this.testConnection();
       if (isConnected) {
@@ -370,7 +370,7 @@ export class PersistentStorage {
             headers: { 'Content-Type': 'application/json' },
             signal: AbortSignal.timeout(5000)
           });
-          
+
           if (response.ok) {
             const data = await response.json();
             console.log('✅ Mensurations récupérées depuis le serveur VPS');
@@ -429,7 +429,7 @@ export class PersistentStorage {
 
     try {
       console.log('💾 Sauvegarde des mensurations...');
-      
+
       // 1. TOUJOURS sauvegarder en local EN PREMIER
       await AsyncStorage.setItem(`mensurations_${userId}`, JSON.stringify(mensurations));
       localSaved = true;
@@ -466,7 +466,7 @@ export class PersistentStorage {
 
     } catch (error) {
       console.error('❌ Erreur sauvegarde mensurations:', error);
-      
+
       if (!localSaved) {
         try {
           await AsyncStorage.setItem(`mensurations_${userId}`, JSON.stringify(mensurations));
@@ -661,7 +661,7 @@ export class PersistentStorage {
   static async getNutritionData(userId: string): Promise<any[]> {
     try {
       console.log('🔍 Récupération des données nutrition...');
-      
+
       // 1. PRIORITÉ: Essayer le serveur VPS
       const isConnected = await this.testConnection();
       if (isConnected) {
@@ -671,7 +671,7 @@ export class PersistentStorage {
             headers: { 'Content-Type': 'application/json' },
             signal: AbortSignal.timeout(5000)
           });
-          
+
           if (response.ok) {
             const data = await response.json();
             console.log(`✅ ${data.length} entrées nutrition récupérées depuis le serveur VPS`);
@@ -690,7 +690,7 @@ export class PersistentStorage {
       const localData = await AsyncStorage.getItem(`food_entries_${userId}`);
       const nutrition = localData ? JSON.parse(localData) : [];
       console.log(`💾 ${nutrition.length} entrées nutrition trouvées en local`);
-      
+
       return nutrition;
     } catch (error) {
       console.error('❌ Erreur critique récupération nutrition:', error);
@@ -704,7 +704,7 @@ export class PersistentStorage {
 
     try {
       console.log(`🥗 Sauvegarde de ${nutritionData.length} entrées nutrition...`);
-      
+
       // 1. TOUJOURS sauvegarder en local EN PREMIER
       await AsyncStorage.setItem(`food_entries_${userId}`, JSON.stringify(nutritionData));
       localSaved = true;
@@ -741,7 +741,7 @@ export class PersistentStorage {
 
     } catch (error) {
       console.error('❌ Erreur sauvegarde nutrition:', error);
-      
+
       // Dernier recours
       if (!localSaved) {
         try {
@@ -759,7 +759,7 @@ export class PersistentStorage {
   static async getWorkouts(userId: string): Promise<any[]> {
     try {
       console.log('🔍 Récupération des entraînements (VPS prioritaire)...');
-      
+
       // 1. STOCKAGE PRINCIPAL: Serveur VPS OBLIGATOIRE
       const isConnected = await this.testConnection();
       if (!isConnected) {
@@ -777,7 +777,7 @@ export class PersistentStorage {
           headers: { 'Content-Type': 'application/json' },
           signal: AbortSignal.timeout(10000) // Timeout plus long pour le stockage principal
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           console.log(`✅ ${data.length} entraînements récupérés depuis VPS (stockage principal)`);
@@ -808,7 +808,7 @@ export class PersistentStorage {
 
     try {
       console.log(`💾 Sauvegarde de ${workouts.length} entraînements (VPS prioritaire)...`);
-      
+
       // 1. STOCKAGE PRINCIPAL: Serveur VPS EN PREMIER
       const isConnected = await this.testConnection();
       if (!isConnected) {
@@ -827,12 +827,12 @@ export class PersistentStorage {
         if (response.ok) {
           vpsSaved = true;
           console.log('🚀 Sauvegarde VPS réussie (stockage principal)');
-          
+
           // 2. SYNCHRONISATION: Mettre à jour le cache local
           await AsyncStorage.setItem(`workouts_${userId}`, JSON.stringify(workouts));
           localSaved = true;
           console.log('💾 Cache local synchronisé avec VPS');
-          
+
         } else {
           throw new Error(`Erreur HTTP ${response.status} du serveur VPS`);
         }
@@ -850,7 +850,7 @@ export class PersistentStorage {
 
     } catch (error) {
       console.error('❌ Erreur sauvegarde VPS (stockage principal):', error);
-      
+
       // FALLBACK D'URGENCE: Sauvegarde locale uniquement si VPS échoue
       try {
         await AsyncStorage.setItem(`workouts_${userId}`, JSON.stringify(workouts));
@@ -858,7 +858,7 @@ export class PersistentStorage {
         console.warn('⚠️ ATTENTION: Données non synchronisées avec le stockage principal');
       } catch (localError) {
         console.error('🔥 ERREUR CRITIQUE - Échec total de sauvegarde:', localError);
-        throw new Error('Échec critique: Aucune sauvegarde possible');
+        throw new Error('Échec critique: Aucune sauvegardepossible');
       }
     }
   }
@@ -959,7 +959,7 @@ export class PersistentStorage {
     try {
       // Sauvegarder en local
       await AsyncStorage.setItem('currentUser', JSON.stringify(user));
-      
+
       // Synchroniser avec le serveur VPS
       if (user?.id) {
         try {
