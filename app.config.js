@@ -24,11 +24,7 @@ export default {
         backgroundColor: "#1E1E1E"
       }
     },
-    web: {
-      bundler: "metro",
-      output: "static",
-      favicon: "./assets/images/crown-logo.png"
-    },
+    
     plugins: [
       "expo-router",
       "expo-web-browser",
