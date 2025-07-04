@@ -19,7 +19,7 @@ import { useFonts } from 'expo-font';
 import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
-import { StripeProvider } from '../utils/stripeWrapper';
+
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { initializeAdminAccount, getCurrentUser } from '@/utils/auth';
@@ -117,18 +117,13 @@ export default function RootLayout() {
     <LanguageProvider>
       <ThemeProvider>
         <NavigationThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <StripeProvider
-            publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_default'}
-            merchantIdentifier="merchant.com.eatfitbymax" // Identifiant Apple Pay
-          >
-            <Stack>
+          <Stack>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="(client)" options={{ headerShown: false }} />
               <Stack.Screen name="(coach)" options={{ headerShown: false }} />
               <Stack.Screen name="auth" options={{ headerShown: false }} />
               <Stack.Screen name="+not-found" />
             </Stack>
-          </StripeProvider>
         </NavigationThemeProvider>
       </ThemeProvider>
     </LanguageProvider>
