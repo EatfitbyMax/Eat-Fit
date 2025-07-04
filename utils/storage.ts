@@ -456,6 +456,7 @@ export class PersistentStorage {
       // Toujours sauvegarder en local d'abord
       const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
       await AsyncStorage.setItem(`food_entries_${userId}`, JSON.stringify(nutritionData));
+      console.log(`✅ ${nutritionData.length} entrées nutrition sauvegardées localement`);
 
       const isConnected = await this.testConnection();
       if (isConnected) {
@@ -468,18 +469,26 @@ export class PersistentStorage {
         });
 
         if (response.ok) {
-          console.log('Données nutrition sauvegardées sur le serveur VPS');
+          console.log('✅ Données nutrition sauvegardées sur le serveur VPS');
         } else {
-          console.log('Données nutrition sauvegardées localement (serveur indisponible)');
+          console.warn('⚠️ Échec sauvegarde nutrition serveur VPS');
+          throw new Error(`Erreur HTTP: ${response.status}`);
         }
       } else {
-        console.log('Données nutrition sauvegardées localement (serveur indisponible)');
+        console.warn('⚠️ Serveur VPS indisponible pour nutrition');
+        throw new Error('Serveur indisponible');
       }
     } catch (error) {
-      console.error('Erreur sauvegarde données nutrition:', error);
-      // Au moins garder la sauvegarde locale
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-      await AsyncStorage.setItem(`food_entries_${userId}`, JSON.stringify(nutritionData));
+      console.error('❌ Erreur sauvegarde données nutrition:', error);
+      // S'assurer que la sauvegarde locale est maintenue
+      try {
+        const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+        await AsyncStorage.setItem(`food_entries_${userId}`, JSON.stringify(nutritionData));
+        console.log('💾 Sauvegarde locale nutrition de secours effectuée');
+      } catch (localError) {
+        console.error('❌ Erreur critique - impossible de sauvegarder nutrition localement:', localError);
+        throw localError;
+      }
     }
   }
 
@@ -491,25 +500,33 @@ export class PersistentStorage {
         const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`);
         if (response.ok) {
           const data = await response.json();
-          console.log('Entraînements récupérés depuis le serveur VPS');
+          console.log(`📥 ${data.length} entraînements récupérés depuis le serveur VPS`);
           // Sauvegarder en local comme backup
           await AsyncStorage.setItem(`workouts_${userId}`, JSON.stringify(data));
           return data;
+        } else {
+          console.warn('⚠️ Erreur réponse serveur VPS, utilisation cache local');
         }
+      } else {
+        console.warn('⚠️ Serveur VPS non disponible, utilisation cache local');
       }
 
       // Fallback vers le stockage local
-      console.log('Fallback vers le stockage local pour les entraînements');
+      console.log('💾 Fallback vers le stockage local pour les entraînements');
       const localData = await AsyncStorage.getItem(`workouts_${userId}`);
-      return localData ? JSON.parse(localData) : [];
+      const workouts = localData ? JSON.parse(localData) : [];
+      console.log(`📱 ${workouts.length} entraînements trouvés en local`);
+      return workouts;
     } catch (error) {
-      console.error('Erreur récupération entraînements:', error);
+      console.error('❌ Erreur récupération entraînements:', error);
       // Essayer le stockage local en cas d'erreur
       try {
         const localData = await AsyncStorage.getItem(`workouts_${userId}`);
-        return localData ? JSON.parse(localData) : [];
+        const workouts = localData ? JSON.parse(localData) : [];
+        console.log(`💾 ${workouts.length} entraînements récupérés du cache local de secours`);
+        return workouts;
       } catch (localError) {
-        console.error('Erreur stockage local:', localError);
+        console.error('❌ Erreur critique stockage local:', localError);
         return [];
       }
     }
@@ -519,6 +536,7 @@ export class PersistentStorage {
     try {
       // Toujours sauvegarder en local d'abord
       await AsyncStorage.setItem(`workouts_${userId}`, JSON.stringify(workouts));
+      console.log('✅ Entraînements sauvegardés localement');
 
       const isConnected = await this.testConnection();
       if (isConnected) {
@@ -531,17 +549,25 @@ export class PersistentStorage {
         });
 
         if (response.ok) {
-          console.log('Entraînements sauvegardés sur le serveur VPS');
+          console.log('✅ Entraînements sauvegardés sur le serveur VPS');
         } else {
-          console.log('Entraînements sauvegardés localement (serveur indisponible)');
+          console.warn('⚠️ Échec sauvegarde serveur VPS, données conservées localement');
+          throw new Error(`Erreur HTTP: ${response.status}`);
         }
       } else {
-        console.log('Entraînements sauvegardés localement (serveur indisponible)');
+        console.warn('⚠️ Serveur VPS indisponible, données sauvegardées localement uniquement');
+        throw new Error('Serveur indisponible');
       }
     } catch (error) {
-      console.error('Erreur sauvegarde entraînements:', error);
-      // Au moins garder la sauvegarde locale
-      await AsyncStorage.setItem(`workouts_${userId}`, JSON.stringify(workouts));
+      console.error('❌ Erreur sauvegarde entraînements:', error);
+      // S'assurer que la sauvegarde locale est maintenue
+      try {
+        await AsyncStorage.setItem(`workouts_${userId}`, JSON.stringify(workouts));
+        console.log('💾 Sauvegarde locale de secours effectuée');
+      } catch (localError) {
+        console.error('❌ Erreur critique - impossible de sauvegarder localement:', localError);
+        throw localError;
+      }
     }
   }
 
