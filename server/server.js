@@ -4,6 +4,14 @@ const fs = require('fs').promises;
 const path = require('path');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
+// Validation des variables d'environnement critiques
+const requiredEnvVars = ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET'];
+const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingVars.length > 0) {
+  console.warn('⚠️ Variables d\'environnement manquantes:', missingVars.join(', '));
+}
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
