@@ -96,16 +96,26 @@ export default function ProfilScreen() {
   const loadSubscriptionStatus = async () => {
     try {
       const subscriptionData = await checkSubscriptionStatus();
+      console.log('🔍 Données d\'abonnement récupérées:', subscriptionData);
       setIsPremium(subscriptionData.isPremium);
+      
       // Mettre à jour les données d'abonnement pour l'affichage
       if (subscriptionData.isPremium) {
-        setCurrentSubscription({ 
+        const planName = subscriptionData.planId === 'diamond' ? 'DIAMANT' :
+                         subscriptionData.planId === 'gold' ? 'OR' : 
+                         subscriptionData.planId === 'silver' ? 'ARGENT' : 'BRONZE';
+        
+        const subscription = { 
           planId: subscriptionData.planId,
           status: 'active',
-          planName: subscriptionData.planId === 'diamond' ? 'DIAMANT' :
-                     subscriptionData.planId === 'gold' ? 'OR' : 
-                     subscriptionData.planId === 'silver' ? 'ARGENT' : 'BRONZE'
-        });
+          planName: planName
+        };
+        
+        console.log('💎 Configuration abonnement premium:', subscription);
+        setCurrentSubscription(subscription);
+      } else {
+        console.log('📝 Aucun abonnement premium détecté');
+        setCurrentSubscription(null);
       }
     } catch (error) {
       console.error("Failed to load subscription status:", error);
@@ -453,7 +463,10 @@ export default function ProfilScreen() {
             /* Affichage Premium */
             <View style={styles.premiumSubscriptionCard}>
               <LinearGradient
-                colors={['#FFD700', '#FFA500', '#FF8C00']}
+                colors={currentSubscription.planName === 'DIAMANT' ? 
+                  ['#4169E1', '#1E90FF', '#0080FF'] : // Bleu pour Diamant
+                  ['#FFD700', '#FFA500', '#FF8C00']    // Or pour les autres
+                }
                 style={styles.premiumGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
@@ -461,10 +474,12 @@ export default function ProfilScreen() {
                 {/* Header Premium */}
                 <View style={styles.premiumHeader}>
                   <View style={styles.premiumIconContainer}>
-                    <Text style={styles.premiumIcon}>👑</Text>
+                    <Text style={styles.premiumIcon}>
+                      {currentSubscription.planName === 'DIAMANT' ? '💎' : '👑'}
+                    </Text>
                   </View>
                   <View style={styles.premiumTextContainer}>
-                    <Text style={styles.premiumTitle}>Plan {currentSubscription.planName || 'OR'}</Text>
+                    <Text style={styles.premiumTitle}>Plan {currentSubscription.planName || 'DIAMANT'}</Text>
                     <Text style={styles.premiumSubtitle}>Accès complet à toutes les fonctionnalités</Text>
                   </View>
                   <View style={styles.premiumBadge}>
