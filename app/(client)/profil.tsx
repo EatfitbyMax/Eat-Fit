@@ -924,8 +924,7 @@ const styles = StyleSheet.create({
   stravaConnection: {
     backgroundColor: '#161B22',
     borderRadius: 12,
-    ```text
-padding: 20,
+    padding: 20,
     borderWidth: 1,
     borderColor: '#21262D',
     marginTop: 16,
