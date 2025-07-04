@@ -111,7 +111,8 @@ export default function FormeScreen() {
 
         // Vérifier le statut premium
         const subscription = await checkSubscriptionStatus();
-        setIsPremium(subscription.planId !== 'free');
+        setIsPremium(subscription.isPremium);
+        console.log(`Statut Premium Forme: ${subscription.isPremium ? 'OUI' : 'NON'} (Plan: ${subscription.planId})`);
       }
     } catch (error) {
       console.error('Erreur chargement données utilisateur:', error);

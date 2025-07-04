@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, TextInput, FlatList, KeyboardAvoidingView, Platform, Modal, Alert } from 'react-native';
 import { getMessages, saveMessages, PersistentStorage } from '../../utils/storage';
 import { getCurrentUser } from '../../utils/auth';
-import { checkSubscriptionStatus } from '../../utils/subscription';
+import { checkSubscriptionStatusBoolean } from '../../utils/subscription';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PanGestureHandler, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
@@ -519,7 +519,7 @@ export default function CoachScreen() {
   };
 
   const checkPremiumStatus = async () => {
-    const premium = await checkSubscriptionStatus();
+    const premium = await checkSubscriptionStatusBoolean();
     setIsPremium(premium);
   };
 
@@ -928,7 +928,7 @@ export default function CoachScreen() {
                     />
                     <TouchableOpacity 
                       style={[styles.sendButton, !messageText.trim() && styles.sendButtonDisabled]}
-                      onPress={sendMessage}
+                      The code has been modified to import the correct premium status check function and use it to verify premium status.onPress={sendMessage}
                       disabled={!messageText.trim()}
                     >
                       <Text style={styles.sendButtonText}>➤</Text>
