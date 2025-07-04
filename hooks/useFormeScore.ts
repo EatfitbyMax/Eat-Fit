@@ -37,7 +37,13 @@ interface FormeData {
 
 export const useFormeScore = (userData: any) => {
   const [formeScore, setFormeScore] = useState(75);
-  const [formeData, setFormeData] = useState<FormeData | null>(null);
+  const [formeData, setFormeData] = useState<FormeData>({
+    sleep: { hours: 0, quality: 'Moyen', bedTime: '', wakeTime: '' },
+    stress: { level: 5, factors: [], notes: '' },
+    heartRate: { resting: 0, variability: 0 },
+    rpe: { value: 5, notes: '' },
+    date: new Date().toISOString().split('T')[0]
+  });
   const [isPremium, setIsPremium] = useState(false);
   const [currentSubscription, setCurrentSubscription] = useState<any>(null);
   const [loading, setLoading] = useState(true);
