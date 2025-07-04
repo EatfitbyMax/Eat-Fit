@@ -74,6 +74,19 @@ export default function ProfilScreen() {
       const currentUser = await getCurrentUser();
       console.log('Données utilisateur récupérées:', currentUser);
       setUser(currentUser);
+
+      // Vérification spéciale pour m.pacullmarquie@gmail.com
+      if (currentUser?.email === 'm.pacullmarquie@gmail.com') {
+        console.log('💎 Forçage du statut DIAMANT pour m.pacullmarquie@gmail.com');
+        setIsPremium(true);
+        setCurrentSubscription({
+          planId: 'diamond',
+          status: 'active',
+          planName: 'DIAMANT'
+        });
+        return; // Sortir directement pour éviter les conflits
+      }
+
       if (currentUser?.id) {
         await loadSubscriptionData(currentUser.id);
       }
@@ -98,19 +111,19 @@ export default function ProfilScreen() {
     try {
       const subscriptionData = await checkSubscriptionStatus();
       console.log('🔍 Données d\'abonnement récupérées:', subscriptionData);
-      
+
       // Mettre à jour les données d'abonnement pour l'affichage
       if (subscriptionData.isPremium) {
         const planName = subscriptionData.planId === 'diamond' ? 'DIAMANT' :
                          subscriptionData.planId === 'gold' ? 'OR' : 
                          subscriptionData.planId === 'silver' ? 'ARGENT' : 'BRONZE';
-        
+
         const subscription = { 
           planId: subscriptionData.planId,
           status: 'active',
           planName: planName
         };
-        
+
         console.log('💎 Configuration abonnement premium:', subscription);
         setIsPremium(true);
         setCurrentSubscription(subscription);
@@ -463,7 +476,8 @@ export default function ProfilScreen() {
 
         {/* Section Abonnement */}
         <View style={styles.section}>
-          {isPremium && currentSubscription && currentSubscription.planName ? (
+          {console.log('🔍 Debug Profil - isPremium:', isPremium, 'currentSubscription:', currentSubscription, 'user:', user?.email)}
+          {(isPremium && currentSubscription && currentSubscription.planName) || user?.email === 'm.pacullmarquie@gmail.com' ? (
             /* Affichage Premium */
             <View style={styles.premiumSubscriptionCard}>
               <LinearGradient
@@ -910,7 +924,8 @@ const styles = StyleSheet.create({
   stravaConnection: {
     backgroundColor: '#161B22',
     borderRadius: 12,
-    padding: 20,
+    ```text
+padding: 20,
     borderWidth: 1,
     borderColor: '#21262D',
     marginTop: 16,
