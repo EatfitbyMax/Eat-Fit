@@ -91,7 +91,7 @@ export default function FormeScreen() {
         console.log('Écran Forme refocalisé - rechargement des données RPE');
         refreshData();
       }
-    }, [userData, refreshData])
+    }, [userData?.id, refreshData])
   );
 
   const loadUserData = async () => {
@@ -106,7 +106,7 @@ export default function FormeScreen() {
     }
   };
 
-  const loadFormeData = async () => {
+  const loadFormeDataLocal = useCallback(async () => {
     try {
       if (!userData) return;
 
@@ -194,7 +194,7 @@ export default function FormeScreen() {
     } catch (error) {
       console.error('Erreur chargement données forme:', error);
     }
-  };
+  }, [userData?.id, isPremium]);
 
   const saveFormeData = async (newData: FormeData) => {
     try {
@@ -221,274 +221,7 @@ export default function FormeScreen() {
     }
   };
 
-  const calculateFormeScore = () => {
-    let totalScore = 0;
-    let totalWeight = 0;
-
-    // Adaptation des poids selon le genre
-    const isWoman = userData?.gender === 'Femme';
-
-    // Définir les poids de base
-    let baseWeights = {
-      sleep: 0.35,
-      stress: 0.30,
-      calories: 0.15,
-      training: 0.00,
-      heartRate: 0.00,
-      rpe: 0.00,
-      cycle: isWoman ? 0.20 : 0.00 // Poids plus important pour le cycle
-    };
-
-    // Ajuster les poids en fonction du plan d'abonnement
-    let weights = { ...baseWeights };
-
-    if (!isPremium) {
-      // Plan Gratuit: sommeil, stress, calories, entraînement
-      weights.heartRate = 0;
-      weights.rpe = 0;
-      weights.training = 0.20;
-      weights.calories = 0.15;
-    } else {
-      // Plans Bronze, Argent, Or, Diamant
-      weights.training = 0;
-
-      // Ajuster les poids pour les plans premium
-      weights.heartRate = 0.10; // FC repos
-      weights.rpe = 0.10;       // RPE
-      weights.calories = 0.05; // Calories (moins important dans les plans avancés)
-
-      // Ajustements spécifiques pour les plans Or et Diamant peuvent être ajoutés ici
-    }
-
-    // Normaliser les poids pour que la somme soit égale à 1 (ou 100%)
-    const totalBaseWeight = Object.values(weights).reduce((sum, weight) => sum + weight, 0);
-    for (const key in weights) {
-      weights[key] = weights[key] / totalBaseWeight;
-    }
-    console.log("Subscription Status:", isPremium);
-    console.log("Calculated Weights:", weights);
-
-    // Sommeil
-    if (currentFormeData.sleep.hours > 0) {
-      // Score basé sur les heures de sommeil (optimal: 7-9h)
-      let sleepHoursScore;
-      if (currentFormeData.sleep.hours >= 7 && currentFormeData.sleep.hours <= 9) {
-        sleepHoursScore = 100;
-      } else if (currentFormeData.sleep.hours >= 6 && currentFormeData.sleep.hours <= 10) {
-        sleepHoursScore = 80;
-      } else if (currentFormeData.sleep.hours >= 5 && currentFormeData.sleep.hours <= 11) {
-        sleepHoursScore = 60;
-      } else {
-        sleepHoursScore = 30;
-      }
-
-      // Multiplicateur qualité
-      const qualityMultiplier = {
-        'Excellent': 1.0,
-        'Bien': 0.85,
-        'Moyen': 0.65,
-        'Mauvais': 0.4
-      };
-
-      let sleepScore = sleepHoursScore * qualityMultiplier[currentFormeData.sleep.quality];
-
-      // Ajustement cycle pour les femmes: le sommeil est plus impacté selon la phase
-      if (isWoman && currentFormeData.cycle) {
-        const cycleMultiplier = {
-          'Menstruel': 0.9,      // Sommeil plus difficile pendant les règles
-          'Folliculaire': 1.0,   // Sommeil normal
-          'Ovulation': 1.05,     // Légère amélioration
-          'Lutéal': 0.85         // Sommeil souvent perturbé en pré-menstruel
-        };
-        sleepScore *= cycleMultiplier[currentFormeData.cycle.phase];
-      }
-
-      totalScore += sleepScore * weights.sleep;
-      totalWeight += weights.sleep;
-    }
-
-    // Stress - inversé (1 = excellent, 10 = très mauvais)
-    let stressScore = Math.max(0, ((10 - currentFormeData.stress.level) / 9) * 100);
-
-    // Ajustement cycle pour les femmes: le stress est plus sensible selon la phase
-    if (isWoman && currentFormeData.cycle) {
-      const stressCycleMultiplier = {
-        'Menstruel': 0.8,       // Plus de stress/irritabilité
-        'Folliculaire': 1.1,    // Généralement moins de stress
-        'Ovulation': 1.15,      // Pic de bien-être
-        'Lutéal': 0.7           // Stress pré-menstruel important
-      };
-      stressScore *= stressCycleMultiplier[currentFormeData.cycle.phase];
-    }
-
-    totalScore += stressScore * weights.stress;
-    totalWeight += weights.stress;
-
-    // Apport calorique - Tous les plans
-    if (weights.calories > 0) {
-      let caloriesScore = 75; // Score par défaut
-
-      // Simuler un apport calorique basé sur les données utilisateur
-      const estimatedDailyCalories = Math.round(
-        (userData?.gender === 'Homme' ? 2200 : 1800) * 
-        (userData?.activityLevel === 'sedentaire' ? 1.2 : 
-         userData?.activityLevel === 'leger' ? 1.375 :
-         userData?.activityLevel === 'modere' ? 1.55 :
-         userData?.activityLevel === 'intense' ? 1.725 : 1.9)
-      );
-
-      // Score basé sur un apport théorique optimal
-      caloriesScore = Math.min(100, Math.max(30, 
-        100 - Math.abs(estimatedDailyCalories - (estimatedDailyCalories * 0.95)) / 50
-      ));
-
-      totalScore += caloriesScore * weights.calories;
-      totalWeight += weights.calories;
-    }
-
-    // Entraînement programmé - Plan gratuit uniquement
-    if (weights.training > 0) {
-      let trainingScore = 50; // Score par défaut
-
-      // Vérifier s'il y a des entraînements programmés aujourd'hui
-      const today = new Date().toISOString().split('T')[0];
-      // Simuler la présence d'entraînements (à adapter selon votre logique)
-      const hasTrainingToday = weeklyData.some(day => 
-        day.date === today && day.rpe?.value > 0
-      );
-
-      trainingScore = hasTrainingToday ? 85 : 40;
-
-      totalScore += trainingScore * weights.training;
-      totalWeight += weights.training;
-    }
-
-    // FC repos - Plans Bronze et plus
-    if (weights.heartRate > 0 && currentFormeData.heartRate.resting > 0) {
-      const optimalResting = userData?.gender === 'Homme' ? 65 : 70;
-      let diff = Math.abs(currentFormeData.heartRate.resting - optimalResting);
-
-      // Ajustement cycle pour les femmes: FC varie selon la phase
-      if (isWoman && currentFormeData.cycle) {
-        const hrCycleAdjustment = {
-          'Menstruel': -3,       // FC légèrement plus élevée
-          'Folliculaire': 0,     // FC normale
-          'Ovulation': -2,       // FC peut être légèrement élevée
-          'Lutéal': -5           // FC souvent plus élevée en pré-menstruel
-        };
-
-        const adjustedOptimal = optimalResting + hrCycleAdjustment[currentFormeData.cycle.phase];
-        const adjustedDiff = Math.abs(currentFormeData.heartRate.resting - adjustedOptimal);
-
-        if (adjustedDiff <= 5) hrScore = 100;
-        else if (adjustedDiff <= 10) hrScore = 85;
-        else if (adjustedDiff <= 15) hrScore = 70;
-        else if (adjustedDiff <= 20) hrScore = 55;
-        else hrScore = 30;
-      } else {
-        let hrScore;
-        if (diff <= 5) hrScore = 100;
-        else if (diff <= 10) hrScore = 85;
-        else if (diff <= 15) hrScore = 70;
-        else if (diff <= 20) hrScore = 55;
-        else hrScore = 30;
-      }
-
-      totalScore += hrScore * weights.heartRate;
-      totalWeight += weights.heartRate;
-    }
-
-    // RPE - Premium (1-3 = excellent, 8-10 = épuisé)
-    if (isPremium && currentFormeData.rpe.value > 0) {
-      let rpeScore;
-      if (currentFormeData.rpe.value <= 3) rpeScore = 100;      // Très facile
-      else if (currentFormeData.rpe.value <= 5) rpeScore = 80;  // Modéré
-      else if (currentFormeData.rpe.value <= 7) rpeScore = 60;  // Difficile
-      else rpeScore = 30;                                // Très difficile
-
-      // Ajustement cycle pour les femmes: performance varie selon la phase
-      if (isWoman && currentFormeData.cycle) {
-        const rpeCycleMultiplier = {
-          'Menstruel': 0.8,      // Performance réduite, récupération plus difficile
-          'Folliculaire': 1.15,  // Phase d'amélioration des performances
-          'Ovulation': 1.2,      // Pic de performance
-          'Lutéal': 0.85         // Fatigue pré-menstruelle
-        };
-        rpeScore *= rpeCycleMultiplier[currentFormeData.cycle.phase];
-      }
-
-      totalScore += rpeScore * weights.rpe;
-      totalWeight += weights.rpe;
-    }
-
-    // Cycle hormonal pour les femmes (poids beaucoup plus important)
-    if (isWoman && currentFormeData.cycle) {
-      let cycleScore = 75; // Score de base
-
-      // Ajustements détaillés selon la phase et le jour du cycle
-      const dayInCycle = currentFormeData.cycle.dayOfCycle;
-
-      switch (currentFormeData.cycle.phase) {
-        case 'Menstruel':
-          // Jours 1-5: Score bas mais progressif
-          if (dayInCycle <= 2) {
-            cycleScore = 45; // Jours les plus difficiles
-          } else if (dayInCycle <= 4) {
-            cycleScore = 55; // Amélioration progressive
-          } else {
-            cycleScore = 65; // Fin des règles
-          }
-          break;
-
-        case 'Folliculaire':
-          // Jours 6-13: Amélioration progressive
-          cycleScore = 70 + Math.min((dayInCycle - 5) * 3, 20); // 70 à 90
-          break;
-
-        case 'Ovulation':
-          // Jours 14-16: Pic d'énergie
-          cycleScore = 95;
-          break;
-
-        case 'Lutéal':
-          // Jours 17-28: Déclin progressif
-          const lutealDay = dayInCycle - 16;
-          if (lutealDay <= 4) {
-            cycleScore = 80; // Début de phase lutéale
-          } else if (lutealDay <= 8) {
-            cycleScore = 70; // Milieu de phase
-          } else {
-            cycleScore = 50; // SPM (syndrome pré-menstruel)
-          }
-          break;
-      }
-
-      // Réduction importante selon les symptômes
-      const symptomPenalty = Math.min(currentFormeData.cycle.symptoms.length * 8, 40);
-      cycleScore = Math.max(25, cycleScore - symptomPenalty);
-
-      // Bonus pour absence de symptômes en phase favorable
-      if (currentFormeData.cycle.symptoms.length === 0 && 
-          (currentFormeData.cycle.phase === 'Folliculaire' || currentFormeData.cycle.phase === 'Ovulation')) {
-        cycleScore = Math.min(100, cycleScore + 5);
-      }
-
-      totalScore += cycleScore * weights.cycle;
-      totalWeight += weights.cycle;
-    }
-
-    // Calculer le score final
-    let finalScore;
-    if (totalWeight === 0) {
-      finalScore = 50; // Score par défaut si aucune donnée
-    } else {
-      finalScore = totalScore / totalWeight;
-    }
-
-    // S'assurer que le score est entre 0 et 100
-    finalScore = Math.max(0, Math.min(100, Math.round(finalScore)));
-    setFormeScore(finalScore);
-  };
+  
 
   const handleSaveSleep = async () => {
     const inputValue = tempSleep.hours.replace(',', '.');
@@ -1262,7 +995,7 @@ export default function FormeScreen() {
                   'Les données RPE sont automatiquement récupérées de vos séances terminées. Voulez-vous rafraîchir ?',
                   [
                     { text: 'Annuler', style: 'cancel' },
-                    { text: 'Synchroniser', onPress: () => loadFormeData() }
+                    { text: 'Synchroniser', onPress: () => loadFormeDataLocal() }
                   ]
                 );
               }}

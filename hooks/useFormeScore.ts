@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PersistentStorage } from '@/utils/storage';
 import { IntegrationsManager } from '@/utils/integrations';
@@ -429,6 +429,13 @@ export const useFormeScore = (userData: any) => {
     }
   };
 
+  // Utiliser useCallback pour stabiliser la fonction loadFormeData
+  const refreshData = useCallback(() => {
+    if (userData) {
+      loadFormeData();
+    }
+  }, [userData]);
+
   // Recharger les données quand userData change
   useEffect(() => {
     if (userData) {
@@ -442,6 +449,6 @@ export const useFormeScore = (userData: any) => {
     isPremium,
     currentSubscription,
     loading,
-    refreshData: loadFormeData
+    refreshData
   };
 };
