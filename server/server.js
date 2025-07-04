@@ -4,25 +4,8 @@ const fs = require('fs').promises;
 const path = require('path');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
-// Validation des variables d'environnement critiques
-const requiredEnvVars = ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET'];
-const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
-
-if (missingVars.length > 0) {
-  console.warn('⚠️ Variables d\'environnement manquantes:', missingVars.join(', '));
-}
-
 const app = express();
 const PORT = process.env.PORT || 5000;
-
-// Gestionnaire d'erreur global pour éviter les crashs
-process.on('uncaughtException', (error) => {
-  console.error('❌ Erreur non capturée:', error);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ Promesse rejetée non gérée:', reason);
-});
 const DATA_DIR = path.join(__dirname, 'data');
 
 // Middleware
@@ -657,19 +640,6 @@ app.post('/api/app-preferences/:userId', async (req, res) => {
 // Route de test
 app.get('/api/health-check', (req, res) => {
   res.json({ status: 'OK', message: 'Serveur VPS fonctionnel' });
-});
-
-// Mise à jour périodique de la base OpenFoodFacts (toutes les 24h)
-setInterval(() => {
-  updateOpenFoodFacts().catch(error => {
-    console.error('❌ Erreur mise à jour OpenFoodFacts planifiée:', error.message);
-  });
-}, 24 * 60 * 60 * 1000);
-
-// Première mise à jour au démarrage (non bloquante)
-updateOpenFoodFacts().catch(error => {
-  console.error('❌ Erreur mise à jour OpenFoodFacts initiale:', error.message);
-  console.log('ℹ️ Le serveur continue sans la base OpenFoodFacts');
 });
 
 app.listen(PORT, '0.0.0.0', async () => {
