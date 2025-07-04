@@ -11,7 +11,7 @@ export const checkSubscriptionStatus = async (): Promise<{ isPremium: boolean; p
     const premiumEmails = ['m.pacullmarquie@gmail.com'];
     
     if (premiumEmails.includes(currentUser.email)) {
-      return { isPremium: true, planId: 'gold' };
+      return { isPremium: true, planId: 'diamond' };
     }
 
     // Vérifier le statut d'abonnement depuis le stockage local ou serveur

@@ -102,8 +102,9 @@ export default function ProfilScreen() {
         setCurrentSubscription({ 
           planId: subscriptionData.planId,
           status: 'active',
-          planName: subscriptionData.planId === 'gold' ? 'OR' : 
-                   subscriptionData.planId === 'silver' ? 'ARGENT' : 'BRONZE'
+          planName: subscriptionData.planId === 'diamond' ? 'DIAMANT' :
+                     subscriptionData.planId === 'gold' ? 'OR' : 
+                     subscriptionData.planId === 'silver' ? 'ARGENT' : 'BRONZE'
         });
       }
     } catch (error) {
@@ -124,7 +125,7 @@ export default function ProfilScreen() {
     if (!user?.favoriteSport) {
       return { emoji: '🏃', name: 'Non renseigné' };
     }
-    
+
     const sport = allSports.find(s => s.id === user.favoriteSport);
     return sport ? { emoji: sport.emoji, name: sport.name } : { emoji: '🏃', name: 'Non renseigné' };
   };
@@ -512,7 +513,7 @@ export default function ProfilScreen() {
               {/* Upgrade Section */}
               <View style={styles.compactUpgradeSection}>
                 <Text style={styles.compactUpgradeTitle}>🚀 Passez au niveau supérieur</Text>
-                
+
                 <Text style={styles.compactUpgradeDescription}>
                   Débloquez votre coach personnel et tous nos programmes premium
                 </Text>
@@ -537,7 +538,7 @@ export default function ProfilScreen() {
           )}
         </View>
 
-        
+
 
         {/* Integrations */}
         <View style={[styles.section, {marginTop: 20}]}>
@@ -939,8 +940,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#FFFFFF',
     fontWeight: '600',
-  },
-    testButton: {
+  },  testButton: {
     backgroundColor: '#6C757D',
     paddingVertical: 10,
     paddingHorizontal: 16,
