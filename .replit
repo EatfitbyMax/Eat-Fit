@@ -29,7 +29,7 @@ localPort = 8085
 externalPort = 3003
 
 [workflows]
-runButton = "Expo Development"
+runButton = "Expo + VPS"
 
 [[workflows.workflow]]
 name = "Start External VPS"
@@ -78,6 +78,15 @@ args = "curl -s http://51.178.29.220:5000/api/health-check || echo \"VPS non acc
 
 [[workflows.workflow]]
 name = "Expo Development"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx expo start --port 8081 --tunnel"
+
+[[workflows.workflow]]
+name = "Expo + VPS"
 author = 42598128
 mode = "sequential"
 
