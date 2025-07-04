@@ -19,7 +19,7 @@ import { useFonts } from 'expo-font';
 import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
-import { StripeProvider } from '@stripe/stripe-react-native';
+import { Platform } from 'react-native';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { initializeAdminAccount, getCurrentUser } from '@/utils/auth';
@@ -28,6 +28,17 @@ import { PersistentStorage } from '../utils/storage';
 import SplashScreenComponent from '@/components/SplashScreen';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { LanguageProvider } from '@/context/LanguageContext';
+
+// Import conditionnel de Stripe uniquement sur mobile
+let StripeProvider: any = null;
+if (Platform.OS !== 'web') {
+  try {
+    const stripe = require('@stripe/stripe-react-native');
+    StripeProvider = stripe.StripeProvider;
+  } catch (error) {
+    console.warn('Stripe non disponible:', error);
+  }
+}
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -113,22 +124,30 @@ export default function RootLayout() {
     return <SplashScreenComponent onFinish={() => {}} />;
   }
 
+  const StackContent = () => (
+    <Stack>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="(client)" options={{ headerShown: false }} />
+      <Stack.Screen name="(coach)" options={{ headerShown: false }} />
+      <Stack.Screen name="auth" options={{ headerShown: false }} />
+      <Stack.Screen name="+not-found" />
+    </Stack>
+  );
+
   return (
     <LanguageProvider>
       <ThemeProvider>
         <NavigationThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <StripeProvider
-            publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_default'}
-            merchantIdentifier="merchant.com.eatfitbymax" // Identifiant Apple Pay
-          >
-            <Stack>
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="(client)" options={{ headerShown: false }} />
-              <Stack.Screen name="(coach)" options={{ headerShown: false }} />
-              <Stack.Screen name="auth" options={{ headerShown: false }} />
-              <Stack.Screen name="+not-found" />
-            </Stack>
-          </StripeProvider>
+          {Platform.OS !== 'web' && StripeProvider ? (
+            <StripeProvider
+              publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_default'}
+              merchantIdentifier="merchant.com.eatfitbymax"
+            >
+              <StackContent />
+            </StripeProvider>
+          ) : (
+            <StackContent />
+          )}
         </NavigationThemeProvider>
       </ThemeProvider>
     </LanguageProvider>
