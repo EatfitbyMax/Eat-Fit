@@ -893,7 +893,7 @@ export default function EntrainementScreen() {
             </View>
 
             <View style={styles.rpeInputContainer}>
-              <Text style={styles.rpeInputLabel}>Difficulté ressentie (1-10)</Text>
+              <Text style={styles.rpeInputLabel}>Évaluez la difficulté ressentie lors de cette séance (1-10)</Text>
               <View style={styles.rpeSliderContainer}>
                 <View style={styles.rpeSlider}>
                   {[...Array(10)].map((_, i) => (
@@ -925,10 +925,6 @@ export default function EntrainementScreen() {
                      rpeRating <= 8 ? '😅 Difficile' : '🥵 Très difficile'}
                   </Text>
                 </View>
-              </View>
-              <View style={styles.rpeLabels}>
-                <Text style={styles.rpeLabel}>Très facile</Text>
-                <Text style={styles.rpeLabel}>Très difficile</Text>
               </View>
             </View>
 
