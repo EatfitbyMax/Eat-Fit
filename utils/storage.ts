@@ -3,11 +3,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const SERVER_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev:5001';
 
 export class PersistentStorage {
-  // Test de connexion au serveur
+  // Test de connexion au serveur avec cache temporaire
+  private static connectionCache: { isConnected: boolean; timestamp: number } | null = null;
+  private static readonly CACHE_DURATION = 30000; // 30 secondes
+
   static async testConnection(): Promise<boolean> {
+    // Utiliser le cache si disponible et récent
+    if (this.connectionCache && Date.now() - this.connectionCache.timestamp < this.CACHE_DURATION) {
+      return this.connectionCache.isConnected;
+    }
+
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000); // Réduit à 3s pour plus de réactivité
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
 
       const response = await fetch(`${SERVER_URL}/api/health-check`, {
         method: 'GET',
@@ -19,9 +27,21 @@ export class PersistentStorage {
 
       clearTimeout(timeoutId);
       const isConnected = response.ok;
+      
+      // Mettre à jour le cache
+      this.connectionCache = {
+        isConnected,
+        timestamp: Date.now()
+      };
+
       console.log(`🔌 Serveur VPS: ${isConnected ? 'CONNECTÉ' : 'DÉCONNECTÉ'}`);
       return isConnected;
     } catch (error) {
+      // Mettre à jour le cache avec l'état déconnecté
+      this.connectionCache = {
+        isConnected: false,
+        timestamp: Date.now()
+      };
       console.warn('⚠️ Serveur VPS indisponible, utilisation du stockage local');
       return false;
     }
@@ -128,45 +148,137 @@ export class PersistentStorage {
 
   static async getUserNutrition(userId: string): Promise<any[]> {
     try {
-      await this.testConnection();
-      const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`);
-      if (response.ok) {
-        return await response.json();
+      console.log('🔍 Récupération des données nutrition (getUserNutrition)...');
+      
+      // 1. PRIORITÉ: Essayer le serveur VPS
+      const isConnected = await this.testConnection();
+      if (isConnected) {
+        try {
+          const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            signal: AbortSignal.timeout(5000)
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log(`✅ ${data.length} entrées nutrition récupérées depuis le serveur VPS`);
+            // Mettre à jour le cache local
+            await AsyncStorage.setItem(`nutrition_data_${userId}`, JSON.stringify(data));
+            return data;
+          }
+        } catch (vpsError) {
+          console.warn('⚠️ Erreur récupération nutrition VPS:', vpsError);
+        }
       }
-      throw new Error('Erreur récupération nutrition');
+
+      // 2. FALLBACK: Utiliser le stockage local
+      console.log('📱 Utilisation du stockage local nutrition (fallback)');
+      const localData = await AsyncStorage.getItem(`nutrition_data_${userId}`);
+      const nutrition = localData ? JSON.parse(localData) : [];
+      console.log(`💾 ${nutrition.length} entrées nutrition trouvées en local`);
+      return nutrition;
     } catch (error) {
-      console.error('Erreur récupération nutrition:', error);
+      console.error('❌ Erreur critique récupération nutrition:', error);
       return [];
     }
   }
 
   static async saveUserNutrition(userId: string, nutrition: any[]): Promise<void> {
+    let localSaved = false;
+    let vpsSaved = false;
+
     try {
-      await this.testConnection();
-      const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(nutrition),
-      });
-      if (!response.ok) {
-        throw new Error('Erreur sauvegarde nutrition');
+      console.log(`🥗 Sauvegarde de ${nutrition.length} entrées nutrition (saveUserNutrition)...`);
+      
+      // 1. TOUJOURS sauvegarder en local EN PREMIER
+      await AsyncStorage.setItem(`nutrition_data_${userId}`, JSON.stringify(nutrition));
+      localSaved = true;
+      console.log('✅ Sauvegarde nutrition locale réussie');
+
+      // 2. PRIORITÉ: Essayer de sauvegarder sur le serveur VPS
+      const isConnected = await this.testConnection();
+      if (isConnected) {
+        try {
+          const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(nutrition),
+            signal: AbortSignal.timeout(8000)
+          });
+
+          if (response.ok) {
+            vpsSaved = true;
+            console.log('🚀 Sauvegarde nutrition VPS réussie');
+          } else {
+            console.warn(`⚠️ Échec sauvegarde nutrition VPS (HTTP ${response.status})`);
+          }
+        } catch (vpsError) {
+          console.warn('⚠️ Erreur sauvegarde nutrition VPS:', vpsError);
+        }
       }
+
+      // 3. Rapport final
+      if (localSaved && vpsSaved) {
+        console.log('🎉 Sauvegarde nutrition complète (local + VPS)');
+      } else if (localSaved) {
+        console.log('⚠️ Sauvegarde nutrition locale uniquement');
+      }
+
     } catch (error) {
-      console.error('Erreur sauvegarde nutrition:', error);
-      throw error;
+      console.error('❌ Erreur sauvegarde nutrition:', error);
+      
+      if (!localSaved) {
+        try {
+          await AsyncStorage.setItem(`nutrition_data_${userId}`, JSON.stringify(nutrition));
+          console.log('🆘 Sauvegarde nutrition locale de secours');
+        } catch (localError) {
+          console.error('🔥 ERREUR CRITIQUE nutrition:', localError);
+          throw localError;
+        }
+      }
     }
   }
 
   static async getUserWeight(userId: string): Promise<any> {
     try {
-      await this.testConnection();
-      const response = await fetch(`${SERVER_URL}/api/weight/${userId}`);
-      if (response.ok) {
-        return await response.json();
+      console.log('🔍 Récupération des données de poids...');
+      
+      // 1. PRIORITÉ: Essayer le serveur VPS
+      const isConnected = await this.testConnection();
+      if (isConnected) {
+        try {
+          const response = await fetch(`${SERVER_URL}/api/weight/${userId}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            signal: AbortSignal.timeout(5000)
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log('✅ Données poids récupérées depuis le serveur VPS');
+            // Mettre à jour le cache local
+            await AsyncStorage.setItem(`weight_data_${userId}`, JSON.stringify(data));
+            return data;
+          }
+        } catch (vpsError) {
+          console.warn('⚠️ Erreur récupération poids VPS:', vpsError);
+        }
       }
-      throw new Error('Erreur récupération poids');
+
+      // 2. FALLBACK: Utiliser le stockage local
+      console.log('📱 Utilisation du stockage local poids (fallback)');
+      const localData = await AsyncStorage.getItem(`weight_data_${userId}`);
+      return localData ? JSON.parse(localData) : {
+        startWeight: 0,
+        currentWeight: 0,
+        targetWeight: 0,
+        lastWeightUpdate: null,
+        targetAsked: false,
+        weightHistory: [],
+      };
     } catch (error) {
-      console.error('Erreur récupération poids:', error);
+      console.error('❌ Erreur critique récupération poids:', error);
       return {
         startWeight: 0,
         currentWeight: 0,
@@ -179,32 +291,108 @@ export class PersistentStorage {
   }
 
   static async saveUserWeight(userId: string, weightData: any): Promise<void> {
+    let localSaved = false;
+    let vpsSaved = false;
+
     try {
-      await this.testConnection();
-      const response = await fetch(`${SERVER_URL}/api/weight/${userId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(weightData),
-      });
-      if (!response.ok) {
-        throw new Error('Erreur sauvegarde poids');
+      console.log('💾 Sauvegarde des données de poids...');
+      
+      // 1. TOUJOURS sauvegarder en local EN PREMIER
+      await AsyncStorage.setItem(`weight_data_${userId}`, JSON.stringify(weightData));
+      localSaved = true;
+      console.log('✅ Sauvegarde poids locale réussie');
+
+      // 2. PRIORITÉ: Essayer de sauvegarder sur le serveur VPS
+      const isConnected = await this.testConnection();
+      if (isConnected) {
+        try {
+          const response = await fetch(`${SERVER_URL}/api/weight/${userId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(weightData),
+            signal: AbortSignal.timeout(8000)
+          });
+
+          if (response.ok) {
+            vpsSaved = true;
+            console.log('🚀 Sauvegarde poids VPS réussie');
+          } else {
+            console.warn(`⚠️ Échec sauvegarde poids VPS (HTTP ${response.status})`);
+          }
+        } catch (vpsError) {
+          console.warn('⚠️ Erreur sauvegarde poids VPS:', vpsError);
+        }
       }
+
+      // 3. Rapport final
+      if (localSaved && vpsSaved) {
+        console.log('🎉 Sauvegarde poids complète (local + VPS)');
+      } else if (localSaved) {
+        console.log('⚠️ Sauvegarde poids locale uniquement');
+      }
+
     } catch (error) {
-      console.error('Erreur sauvegarde poids:', error);
-      throw error;
+      console.error('❌ Erreur sauvegarde poids:', error);
+      
+      if (!localSaved) {
+        try {
+          await AsyncStorage.setItem(`weight_data_${userId}`, JSON.stringify(weightData));
+          console.log('🆘 Sauvegarde poids locale de secours');
+        } catch (localError) {
+          console.error('🔥 ERREUR CRITIQUE poids:', localError);
+          throw localError;
+        }
+      }
     }
   }
 
   static async getUserMensurations(userId: string): Promise<any> {
     try {
-      await this.testConnection();
-      const response = await fetch(`${SERVER_URL}/api/mensurations/${userId}`);
-      if (response.ok) {
-        return await response.json();
+      console.log('🔍 Récupération des mensurations...');
+      
+      // 1. PRIORITÉ: Essayer le serveur VPS
+      const isConnected = await this.testConnection();
+      if (isConnected) {
+        try {
+          const response = await fetch(`${SERVER_URL}/api/mensurations/${userId}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            signal: AbortSignal.timeout(5000)
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log('✅ Mensurations récupérées depuis le serveur VPS');
+            // Mettre à jour le cache local
+            await AsyncStorage.setItem(`mensurations_${userId}`, JSON.stringify(data));
+            return data;
+          }
+        } catch (vpsError) {
+          console.warn('⚠️ Erreur récupération mensurations VPS:', vpsError);
+        }
       }
-      throw new Error('Erreur récupération mensurations');
+
+      // 2. FALLBACK: Utiliser le stockage local
+      console.log('📱 Utilisation du stockage local mensurations (fallback)');
+      const localData = await AsyncStorage.getItem(`mensurations_${userId}`);
+      return localData ? JSON.parse(localData) : {
+        biceps: { start: 0, current: 0 },
+        bicepsGauche: { start: 0, current: 0 },
+        bicepsDroit: { start: 0, current: 0 },
+        cuisses: { start: 0, current: 0 },
+        cuissesGauche: { start: 0, current: 0 },
+        cuissesDroit: { start: 0, current: 0 },
+        pectoraux: { start: 0, current: 0 },
+        taille: { start: 0, current: 0 },
+        avantBras: { start: 0, current: 0 },
+        avantBrasGauche: { start: 0, current: 0 },
+        avantBrasDroit: { start: 0, current: 0 },
+        mollets: { start: 0, current: 0 },
+        molletsGauche: { start: 0, current: 0 },
+        molletsDroit: { start: 0, current: 0 },
+      };
     } catch (error) {
-      console.error('Erreur récupération mensurations:', error);
+      console.error('❌ Erreur critique récupération mensurations:', error);
       return {
         biceps: { start: 0, current: 0 },
         bicepsGauche: { start: 0, current: 0 },
@@ -225,19 +413,58 @@ export class PersistentStorage {
   }
 
   static async saveUserMensurations(userId: string, mensurations: any): Promise<void> {
+    let localSaved = false;
+    let vpsSaved = false;
+
     try {
-      await this.testConnection();
-      const response = await fetch(`${SERVER_URL}/api/mensurations/${userId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(mensurations),
-      });
-      if (!response.ok) {
-        throw new Error('Erreur sauvegarde mensurations');
+      console.log('💾 Sauvegarde des mensurations...');
+      
+      // 1. TOUJOURS sauvegarder en local EN PREMIER
+      await AsyncStorage.setItem(`mensurations_${userId}`, JSON.stringify(mensurations));
+      localSaved = true;
+      console.log('✅ Sauvegarde mensurations locale réussie');
+
+      // 2. PRIORITÉ: Essayer de sauvegarder sur le serveur VPS
+      const isConnected = await this.testConnection();
+      if (isConnected) {
+        try {
+          const response = await fetch(`${SERVER_URL}/api/mensurations/${userId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(mensurations),
+            signal: AbortSignal.timeout(8000)
+          });
+
+          if (response.ok) {
+            vpsSaved = true;
+            console.log('🚀 Sauvegarde mensurations VPS réussie');
+          } else {
+            console.warn(`⚠️ Échec sauvegarde mensurations VPS (HTTP ${response.status})`);
+          }
+        } catch (vpsError) {
+          console.warn('⚠️ Erreur sauvegarde mensurations VPS:', vpsError);
+        }
       }
+
+      // 3. Rapport final
+      if (localSaved && vpsSaved) {
+        console.log('🎉 Sauvegarde mensurations complète (local + VPS)');
+      } else if (localSaved) {
+        console.log('⚠️ Sauvegarde mensurations locale uniquement');
+      }
+
     } catch (error) {
-      console.error('Erreur sauvegarde mensurations:', error);
-      throw error;
+      console.error('❌ Erreur sauvegarde mensurations:', error);
+      
+      if (!localSaved) {
+        try {
+          await AsyncStorage.setItem(`mensurations_${userId}`, JSON.stringify(mensurations));
+          console.log('🆘 Sauvegarde mensurations locale de secours');
+        } catch (localError) {
+          console.error('🔥 ERREUR CRITIQUE mensurations:', localError);
+          throw localError;
+        }
+      }
     }
   }
 
