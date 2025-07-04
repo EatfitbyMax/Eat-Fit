@@ -65,13 +65,25 @@ export default function RootLayout() {
 
       // Toute l'initialisation se fait pendant que le splash screen s'affiche
       console.log('Synchronisation avec le serveur VPS...');
-      await PersistentStorage.syncData();
+      try {
+        await PersistentStorage.syncData();
+      } catch (error) {
+        console.warn('Synchronisation VPS échouée, mode hors ligne activé:', error);
+      }
 
       console.log('Initialisation du compte admin...');
-      await initializeAdminAccount();
+      try {
+        await initializeAdminAccount();
+      } catch (error) {
+        console.warn('Initialisation admin échouée:', error);
+      }
 
       console.log('Migration des données existantes...');
-      await migrateExistingData();
+      try {
+        await migrateExistingData();
+      } catch (error) {
+        console.warn('Migration échouée:', error);
+      }
 
       console.log('Vérification de l\'utilisateur connecté...');
       const user = await getCurrentUser();

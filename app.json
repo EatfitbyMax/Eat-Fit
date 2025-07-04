@@ -28,6 +28,11 @@
       "output": "static",
       "favicon": "./assets/images/crown-logo.png"
     },
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id"
+      }
+    },
     "plugins": [
       "expo-router",
       "expo-web-browser",
