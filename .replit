@@ -29,7 +29,6 @@ localPort = 8085
 externalPort = 3003
 
 [workflows]
-runButton = "Dev Server"
 
 [[workflows.workflow]]
 name = "Start External VPS"
