@@ -151,15 +151,15 @@ export default function FormeScreen() {
         }
       }
 
-      // Si RPE n'est pas renseigné et que l'utilisateur est premium, chercher automatiquement
-      if (isPremium && todayData.rpe.value === 5 && !todayData.rpe.notes) {
-        const latestRPE = await getLatestActivityRPE();
-        if (latestRPE) {
+      // Récupérer les notes RPE du jour depuis les activités
+      if (isPremium) {
+        const todayRPEData = await getTodayActivityRPE();
+        if (todayRPEData) {
           todayData = {
             ...todayData,
             rpe: {
-              value: latestRPE.rpe,
-              notes: latestRPE.notes || '',
+              value: todayRPEData.rpe,
+              notes: todayRPEData.notes || '',
               workoutId: 'auto_from_activity'
             }
           };
@@ -574,7 +574,7 @@ export default function FormeScreen() {
     Alert.alert('Succès', 'Informations sur le cycle hormonal enregistrées !');
   };
 
-  const getLatestActivityRPE = async () => {
+  const getTodayActivityRPE = async () => {
     try {
       if (!userData) return null;
 
@@ -587,7 +587,6 @@ export default function FormeScreen() {
       }
 
       const ratings = JSON.parse(storedRatings);
-      console.log('Notes RPE trouvées:', Object.keys(ratings).length, 'activités');
       
       // Date du jour en format YYYY-MM-DD dans le timezone local
       const today = new Date();
@@ -595,66 +594,40 @@ export default function FormeScreen() {
         String(today.getMonth() + 1).padStart(2, '0') + '-' + 
         String(today.getDate()).padStart(2, '0');
       
-      console.log('Date du jour recherchée:', todayString);
+      console.log('Recherche RPE pour le jour:', todayString);
       
-      // Récupérer toutes les activités notées et les trier par date (plus récente en premier)
-      const allRatings = Object.entries(ratings)
+      // Récupérer toutes les activités du jour et fusionner leurs notes
+      const todayRatings = Object.entries(ratings)
         .map(([activityId, rating]: [string, any]) => ({
           activityId,
           ...rating
         }))
-        .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-      console.log('Toutes les activités notées:', allRatings.map(r => ({ 
-        id: r.activityId, 
-        date: r.date.includes('T') ? r.date.split('T')[0] : r.date, 
-        rpe: r.rpe 
-      })));
-
-      // Chercher d'abord les activités du jour (avec gestion flexible du format de date)
-      const todayRatings = allRatings.filter((rating: any) => {
-        const ratingDate = rating.date.includes('T') ? rating.date.split('T')[0] : rating.date;
-        return ratingDate === todayString;
-      });
+        .filter((rating: any) => {
+          const ratingDate = rating.date.includes('T') ? rating.date.split('T')[0] : rating.date;
+          return ratingDate === todayString;
+        });
 
       if (todayRatings.length > 0) {
-        console.log('RPE du jour trouvé:', todayRatings[0]);
-        return todayRatings[0];
+        console.log(`${todayRatings.length} activité(s) RPE trouvée(s) pour aujourd'hui`);
+        
+        // Calculer la moyenne des RPE et fusionner les notes
+        const avgRPE = Math.round(todayRatings.reduce((sum: number, r: any) => sum + r.rpe, 0) / todayRatings.length);
+        const allNotes = todayRatings
+          .map((r: any) => r.notes)
+          .filter((note: string) => note && note.trim() !== '')
+          .join(' • ');
+        
+        return {
+          rpe: avgRPE,
+          notes: allNotes || `${todayRatings.length} séance${todayRatings.length > 1 ? 's' : ''} terminée${todayRatings.length > 1 ? 's' : ''} aujourd'hui`,
+          activityCount: todayRatings.length
+        };
       }
 
-      // Si pas d'activité aujourd'hui, prendre la plus récente des 3 derniers jours
-      const threeDaysAgo = new Date();
-      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-      
-      const recentRatings = allRatings.filter((rating: any) => {
-        const activityDate = new Date(rating.date);
-        return activityDate >= threeDaysAgo;
-      });
-
-      console.log(`Activités récentes (3 derniers jours): ${recentRatings.length}`);
-      
-      if (recentRatings.length > 0) {
-        console.log('RPE récent trouvé (3 jours):', recentRatings[0]);
-        return recentRatings[0];
-      }
-
-      // Si rien dans les 3 derniers jours, prendre la plus récente de la semaine
-      const oneWeekAgo = new Date();
-      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-      
-      const weeklyRatings = allRatings.filter((rating: any) => {
-        const activityDate = new Date(rating.date);
-        return activityDate >= oneWeekAgo;
-      });
-
-      if (weeklyRatings.length > 0) {
-        console.log('RPE récent trouvé (7 jours):', weeklyRatings[0]);
-        return weeklyRatings[0];
-      }
-
+      console.log('Aucune activité RPE trouvée pour aujourd\'hui');
       return null;
     } catch (error) {
-      console.error('Erreur récupération RPE activités:', error);
+      console.error('Erreur récupération RPE du jour:', error);
       return null;
     }
   };
@@ -1170,11 +1143,23 @@ export default function FormeScreen() {
                   Alert.alert('Fonctionnalité Premium', 'Le suivi RPE est réservé aux abonnés premium.');
                   return;
                 }
-                setTempRPE({
-                  value: formeData.rpe.value,
-                  notes: formeData.rpe.notes
-                });
-                setShowRPEModal(true);
+                if (formeData.rpe.workoutId === 'auto_from_activity') {
+                  // Si les données viennent des activités, proposer de synchroniser
+                  Alert.alert(
+                    'Synchronisation RPE',
+                    'Les données RPE sont automatiquement récupérées de vos séances terminées. Voulez-vous rafraîchir ?',
+                    [
+                      { text: 'Annuler', style: 'cancel' },
+                      { text: 'Synchroniser', onPress: () => loadFormeData() }
+                    ]
+                  );
+                } else {
+                  setTempRPE({
+                    value: formeData.rpe.value,
+                    notes: formeData.rpe.notes
+                  });
+                  setShowRPEModal(true);
+                }
               }}
             >
               <View style={styles.metricIcon}>
@@ -1185,17 +1170,26 @@ export default function FormeScreen() {
                   RPE Post-Entraînement {!isPremium && '👑'}
                 </Text>
                 <Text style={styles.metricValue}>
-                  {isPremium ? `${formeData.rpe.value}/10` : 'Premium requis'}
+                  {isPremium ? 
+                    (formeData.rpe.workoutId === 'auto_from_activity' ? 
+                      `${formeData.rpe.value}/10` : 
+                      (formeData.rpe.value === 5 && !formeData.rpe.notes ? 
+                        'Non renseigné' : `${formeData.rpe.value}/10`
+                      )
+                    ) : 
+                    'Premium requis'
+                  }
                 </Text>
                 <Text style={styles.metricDetail}>
                   {isPremium ? 
                     (formeData.rpe.workoutId === 'auto_from_activity' ? 
-                      `${formeData.rpe.value <= 3 ? 'Très facile' :
-                        formeData.rpe.value <= 5 ? 'Modéré' :
-                        formeData.rpe.value <= 7 ? 'Difficile' : 'Très difficile'} (Auto)` :
-                      (formeData.rpe.value <= 3 ? 'Très facile' :
-                       formeData.rpe.value <= 5 ? 'Modéré' :
-                       formeData.rpe.value <= 7 ? 'Difficile' : 'Très difficile')
+                      (formeData.rpe.notes || 'Données des séances du jour') :
+                      (formeData.rpe.value === 5 && !formeData.rpe.notes ? 
+                        'Aucune séance aujourd\'hui' :
+                        (formeData.rpe.value <= 3 ? 'Très facile' :
+                         formeData.rpe.value <= 5 ? 'Modéré' :
+                         formeData.rpe.value <= 7 ? 'Difficile' : 'Très difficile')
+                      )
                     ) :
                     'Évaluation fatigue'
                   }
@@ -1204,7 +1198,10 @@ export default function FormeScreen() {
               <Text style={styles.updateHint}>
                 {isPremium ? 
                   (formeData.rpe.workoutId === 'auto_from_activity' ? 
-                    'Récupéré automatiquement' : 'Appuyez pour modifier'
+                    'Récupéré automatiquement' : 
+                    (formeData.rpe.value === 5 && !formeData.rpe.notes ? 
+                      'Appuyez pour synchroniser' : 'Appuyez pour modifier'
+                    )
                   ) : 
                   'Mise à niveau requise'
                 }
