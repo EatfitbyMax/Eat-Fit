@@ -887,9 +887,6 @@ export default function EntrainementScreen() {
                 <Text style={styles.rpeModalIcon}>💪</Text>
               </View>
               <Text style={styles.rpeModalTitle}>Ressenti (RPE)</Text>
-              <Text style={styles.rpeModalSubtitle}>
-                Évaluez la difficulté ressentie lors de cette séance
-              </Text>
             </View>
 
             <View style={styles.rpeInputContainer}>
