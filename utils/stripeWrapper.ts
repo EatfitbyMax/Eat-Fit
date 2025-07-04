@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
@@ -23,7 +24,7 @@ if (!isExpoGo && Platform.OS !== 'web') {
 
 // Composant de fallback pour Expo Go
 const MockStripeProvider = ({ children }: { children: React.ReactNode }) => {
-  return <>{children}</>;
+  return children;
 };
 
 const mockUseStripe = () => ({
