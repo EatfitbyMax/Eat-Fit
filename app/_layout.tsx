@@ -2,6 +2,27 @@ import React from 'react';
 import { Alert } from 'react-native';
 
 // Gestion globale des erreurs non capturées
+const ErrorHandler = {
+  setJSExceptionHandler: (callback: (error: Error, isFatal: boolean) => void) => {
+    const originalHandler = ErrorUtils.getGlobalHandler();
+    ErrorUtils.setGlobalHandler((error, isFatal) => {
+      callback(error, isFatal);
+      originalHandler(error, isFatal);
+    });
+  }
+};
+
+// Configurer le gestionnaire d'erreurs
+ErrorHandler.setJSExceptionHandler((error, isFatal) => {
+  console.error('🚨 Erreur JS globale:', error);
+  if (isFatal) {
+    Alert.alert(
+      'Erreur critique',
+      'Une erreur critique s\'est produite. L\'application doit être redémarrée.',
+      [{ text: 'Redémarrer', onPress: () => {} }]
+    );
+  }
+});s
 const handleUnhandledRejection = (event: any) => {
   console.error('Promesse non capturée:', event.reason);
   if (event.preventDefault) {
