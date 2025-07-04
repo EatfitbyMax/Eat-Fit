@@ -95,8 +95,17 @@ export default function ProfilScreen() {
 
   const loadSubscriptionStatus = async () => {
     try {
-      const premiumStatus = await checkSubscriptionStatus();
-      setIsPremium(premiumStatus);
+      const subscriptionData = await checkSubscriptionStatus();
+      setIsPremium(subscriptionData.isPremium);
+      // Mettre à jour les données d'abonnement pour l'affichage
+      if (subscriptionData.isPremium) {
+        setCurrentSubscription({ 
+          planId: subscriptionData.planId,
+          status: 'active',
+          planName: subscriptionData.planId === 'gold' ? 'OR' : 
+                   subscriptionData.planId === 'silver' ? 'ARGENT' : 'BRONZE'
+        });
+      }
     } catch (error) {
       console.error("Failed to load subscription status:", error);
     }
@@ -437,45 +446,95 @@ export default function ProfilScreen() {
           )}
         </View>
 
-        {/* Section Abonnement - Version Compacte */}
+        {/* Section Abonnement */}
         <View style={styles.section}>
-          <View style={styles.compactSubscriptionCard}>
-            {/* Header avec badge FREE */}
-            <View style={styles.compactHeader}>
-              <View style={styles.compactFreeBadge}>
-                <Text style={styles.compactFreeBadgeText}>FREE</Text>
-              </View>
-              <View style={styles.compactHeaderText}>
-                <Text style={styles.compactTitle}>Version Gratuite</Text>
-                <Text style={styles.compactSubtitle}>Fonctionnalités de base</Text>
-              </View>
-            </View>
-
-            {/* Upgrade Section */}
-            <View style={styles.compactUpgradeSection}>
-              <Text style={styles.compactUpgradeTitle}>🚀 Passez au niveau supérieur</Text>
-              
-              <Text style={styles.compactUpgradeDescription}>
-                Débloquez votre coach personnel et tous nos programmes premium
-              </Text>
-
-              {/* CTA Button */}
-              <TouchableOpacity 
-                style={styles.compactUpgradeButton}
-                onPress={() => setSubscriptionModalVisible(true)}
-                activeOpacity={0.8}
+          {isPremium && currentSubscription ? (
+            /* Affichage Premium */
+            <View style={styles.premiumSubscriptionCard}>
+              <LinearGradient
+                colors={['#FFD700', '#FFA500', '#FF8C00']}
+                style={styles.premiumGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
               >
-                <LinearGradient
-                  colors={['#FF8C42', '#FF6B35']}
-                  style={styles.compactUpgradeGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                >
-                  <Text style={styles.compactUpgradeButtonText}>✨ Découvrir Premium →</Text>
-                </LinearGradient>
-              </TouchableOpacity>
+                {/* Header Premium */}
+                <View style={styles.premiumHeader}>
+                  <View style={styles.premiumIconContainer}>
+                    <Text style={styles.premiumIcon}>👑</Text>
+                  </View>
+                  <View style={styles.premiumTextContainer}>
+                    <Text style={styles.premiumTitle}>Plan {currentSubscription.planName || 'OR'}</Text>
+                    <Text style={styles.premiumSubtitle}>Accès complet à toutes les fonctionnalités</Text>
+                  </View>
+                  <View style={styles.premiumBadge}>
+                    <Text style={styles.premiumBadgeText}>PREMIUM</Text>
+                  </View>
+                </View>
+
+                {/* Avantages Premium */}
+                <View style={styles.premiumBenefitsContainer}>
+                  <Text style={styles.benefitsTitle}>Vos avantages :</Text>
+                  <View style={styles.benefitsList}>
+                    <View style={styles.benefitRow}>
+                      <Text style={styles.benefitIcon}>💬</Text>
+                      <Text style={styles.benefitText}>Coach personnel 24h/24</Text>
+                    </View>
+                    <View style={styles.benefitRow}>
+                      <Text style={styles.benefitIcon}>📊</Text>
+                      <Text style={styles.benefitText}>Suivi de forme avancé</Text>
+                    </View>
+                    <View style={styles.benefitRow}>
+                      <Text style={styles.benefitIcon}>🎯</Text>
+                      <Text style={styles.benefitText}>Programmes personnalisés</Text>
+                    </View>
+                    <View style={styles.benefitRow}>
+                      <Text style={styles.benefitIcon}>📅</Text>
+                      <Text style={styles.benefitText}>Rendez-vous illimités</Text>
+                    </View>
+                  </View>
+                </View>
+              </LinearGradient>
             </View>
-          </View>
+          ) : (
+            /* Affichage Gratuit */
+            <View style={styles.compactSubscriptionCard}>
+              {/* Header avec badge FREE */}
+              <View style={styles.compactHeader}>
+                <View style={styles.compactFreeBadge}>
+                  <Text style={styles.compactFreeBadgeText}>FREE</Text>
+                </View>
+                <View style={styles.compactHeaderText}>
+                  <Text style={styles.compactTitle}>Version Gratuite</Text>
+                  <Text style={styles.compactSubtitle}>Fonctionnalités de base</Text>
+                </View>
+              </View>
+
+              {/* Upgrade Section */}
+              <View style={styles.compactUpgradeSection}>
+                <Text style={styles.compactUpgradeTitle}>🚀 Passez au niveau supérieur</Text>
+                
+                <Text style={styles.compactUpgradeDescription}>
+                  Débloquez votre coach personnel et tous nos programmes premium
+                </Text>
+
+                {/* CTA Button */}
+                <TouchableOpacity 
+                  style={styles.compactUpgradeButton}
+                  onPress={() => setSubscriptionModalVisible(true)}
+                  activeOpacity={0.8}
+                >
+                  <LinearGradient
+                    colors={['#FF8C42', '#FF6B35']}
+                    style={styles.compactUpgradeGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                  >
+                    <Text style={styles.compactUpgradeButtonText}>✨ Découvrir Premium →</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
         </View>
 
         
@@ -1148,6 +1207,15 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: 'bold',
     color: '#FFFFFF',
+  },
+  // Styles pour l'affichage Premium
+  premiumSubscriptionCard: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  premiumGradient: {
+    padding: 20,
   },
   premiumHeader: {
     flexDirection: 'row',
