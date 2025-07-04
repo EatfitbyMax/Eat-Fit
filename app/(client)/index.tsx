@@ -187,6 +187,11 @@ export default function HomeScreen() {
         setUser(currentUser);
         console.log('Données utilisateur rechargées:', currentUser.firstName, currentUser.lastName);
 
+        // Vérifier le statut premium
+        const { checkSubscriptionStatus } = await import('@/utils/subscription');
+        const subscription = await checkSubscriptionStatus();
+        setIsPremium(subscription.planId !== 'free');
+
         // Calculer les objectifs personnalisés
         const personalizedGoals = calculatePersonalizedGoals(currentUser);
         setCalorieGoals(personalizedGoals);
@@ -251,6 +256,21 @@ export default function HomeScreen() {
         }
       }
 
+      // Récupérer les notes RPE du jour si premium
+      if (isPremium && todayData) {
+        const todayRPEData = await getTodayActivityRPE(currentUser.id);
+        if (todayRPEData) {
+          todayData = {
+            ...todayData,
+            rpe: {
+              value: todayRPEData.rpe,
+              notes: todayRPEData.notes || '',
+              workoutId: 'auto_from_activity'
+            }
+          };
+        }
+      }
+
       if (todayData) {
         // Utiliser la même logique de calcul que dans forme.tsx
         const realScore = calculateRealFormeScore(todayData, currentUser);
@@ -262,6 +282,63 @@ export default function HomeScreen() {
     } catch (error) {
       console.error('Erreur calcul score de forme:', error);
       setFormeScore(75); // Valeur par défaut
+    }
+  };
+
+  // Fonction pour récupérer les données RPE du jour
+  const getTodayActivityRPE = async (userId: string) => {
+    try {
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+      const storedRatings = await AsyncStorage.getItem(`activity_ratings_${userId}`);
+      
+      if (!storedRatings) {
+        console.log('Aucune note RPE trouvée dans le stockage (accueil)');
+        return null;
+      }
+
+      const ratings = JSON.parse(storedRatings);
+      
+      // Date du jour en format YYYY-MM-DD dans le timezone local
+      const today = new Date();
+      const todayString = today.getFullYear() + '-' + 
+        String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+        String(today.getDate()).padStart(2, '0');
+      
+      console.log('Recherche RPE pour le jour (accueil):', todayString);
+      
+      // Récupérer toutes les activités du jour et fusionner leurs notes
+      const todayRatings = Object.entries(ratings)
+        .map(([activityId, rating]: [string, any]) => ({
+          activityId,
+          ...rating
+        }))
+        .filter((rating: any) => {
+          const ratingDate = rating.date.includes('T') ? rating.date.split('T')[0] : rating.date;
+          return ratingDate === todayString;
+        });
+
+      if (todayRatings.length > 0) {
+        console.log(`${todayRatings.length} activité(s) RPE trouvée(s) pour aujourd'hui (accueil)`);
+        
+        // Calculer la moyenne des RPE et fusionner les notes
+        const avgRPE = Math.round(todayRatings.reduce((sum: number, r: any) => sum + r.rpe, 0) / todayRatings.length);
+        const allNotes = todayRatings
+          .map((r: any) => r.notes)
+          .filter((note: string) => note && note.trim() !== '')
+          .join(' • ');
+        
+        return {
+          rpe: avgRPE,
+          notes: allNotes || `${todayRatings.length} séance${todayRatings.length > 1 ? 's' : ''} terminée${todayRatings.length > 1 ? 's' : ''} aujourd'hui`,
+          activityCount: todayRatings.length
+        };
+      }
+
+      console.log('Aucune activité RPE trouvée pour aujourd\'hui (accueil)');
+      return null;
+    } catch (error) {
+      console.error('Erreur récupération RPE du jour (accueil):', error);
+      return null;
     }
   };
 
