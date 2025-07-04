@@ -370,36 +370,52 @@ export default function EntrainementScreen() {
   const handleDayPress = (jour: string) => {
     const { start } = getWeekRange();
     const dayIndex = daysOfWeek.indexOf(jour);
-    const targetDate = new Date(start);
+
+    // Créer une nouvelle date pour éviter les mutations
+    const targetDate = new Date(start.getTime());
     targetDate.setDate(start.getDate() + dayIndex);
+    targetDate.setHours(0, 0, 0, 0);
 
-    // S'assurer que la date est en UTC pour éviter les décalages
-    const formattedDate = targetDate.toISOString().split('T')[0];
+    // Formater la date au format YYYY-MM-DD en UTC pour éviter les décalages de fuseau horaire
+    const year = targetDate.getFullYear();
+    const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+    const dayNum = String(targetDate.getDate()).padStart(2, '0');
+    const dateString = `${year}-${month}-${dayNum}`;
 
-    console.log('=== NAVIGATION VERS JOUR ===');
-    console.log('Jour sélectionné:', jour);
-    console.log('Index du jour:', dayIndex);
-    console.log('Date de début de semaine:', start.toISOString().split('T')[0]);
-    console.log('Date calculée:', formattedDate);
-    console.log('Date object:', targetDate.toDateString());
-    console.log('========================');
+    console.log(`=== CLIC SUR ${jour.toUpperCase()} ===`);
+    console.log(`Index du jour: ${dayIndex}`);
+    console.log(`Date de début de semaine: ${start.toISOString().split('T')[0]}`);
+    console.log(`Date calculée: ${dateString}`);
+    console.log(`Date complète: ${targetDate.toDateString()}`);
+    console.log(`Jour de la semaine calculé: ${targetDate.toLocaleDateString('fr-FR', { weekday: 'long' })}`);
 
-    if (getWorkoutsCountForDay(jour) > 0) {
-      // Il y a des séances, aller vers la gestion
+    // Récupérer les entraînements du jour
+    const dayWorkouts = workouts.filter(workout => {
+      console.log(`Comparaison: workout.date="${workout.date}" vs dateString="${dateString}"`);
+      return workout.date === dateString;
+    });
+
+    console.log(`Entraînements trouvés pour ${jour}: ${dayWorkouts.length}`);
+    console.log('Workouts disponibles:', workouts.map(w => `${w.date}: ${w.name}`));
+    console.log('=== FIN DEBUG CLIC ===');
+
+    if (dayWorkouts.length > 0) {
+      // S'il y a des entraînements, naviguer vers la gestion
       router.push({
         pathname: '/(client)/gerer-entrainements',
         params: {
           selectedDay: jour,
-          selectedDate: formattedDate
+          selectedDate: dateString,
+          workouts: JSON.stringify(dayWorkouts)
         }
       });
     } else {
-      // Pas de séances, aller directement à la création
+      // S'il n'y en a pas, créer un nouvel entraînement
       router.push({
         pathname: '/(client)/creer-entrainement',
         params: {
           selectedDay: jour,
-          selectedDate: formattedDate
+          selectedDate: dateString
         }
       });
     }
@@ -851,76 +867,82 @@ export default function EntrainementScreen() {
               <Text style={styles.emptySubmessage}>
                 Programmes créés spécialement pour vous par votre coach
               </Text>
+              <TouchableOpacity style={styles.addWorkoutButton}>
+                <Text style={styles.addWorkoutText}>Voir mes programmes</Text>
+              </TouchableOpacity>
             </View>
           )}
         </View>
+      </ScrollView>
 
-        {/* Modal détail activité Strava */}
-        {selectedStravaActivity && renderStravaActivityDetail()}
+    {/* Modal pour les détails de l'activité Strava */}
+      {selectedStravaActivity && renderStravaActivityDetail()}
 
-        {/* Modal RPE */}
-        {showRPEModal && activityToRate && (
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Noter cette séance</Text>
-                <TouchableOpacity 
-                  style={styles.closeButton}
-                  onPress={() => setShowRPEModal(false)}
-                >
-                  <Text style={styles.closeButtonText}>✕</Text>
-                </TouchableOpacity>
+      {/* Modal RPE */}
+      {showRPEModal && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Noter cette séance</Text>
+            <Text style={styles.modalSubtitle}>
+              Évaluez la difficulté ressentie lors de cette séance
+            </Text>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Difficulté ressentie (1-10)</Text>
+              <View style={styles.rpeSlider}>
+                {[...Array(10)].map((_, i) => (
+                  <TouchableOpacity
+                    key={i}
+                    style={[
+                      styles.rpeLevel,
+                      rpeRating === i + 1 && styles.selectedRPELevel
+                    ]}
+                    onPress={() => setRpeRating(i + 1)}
+                  >
+                    <Text style={[
+                      styles.rpeLevelText,
+                      rpeRating === i + 1 && styles.selectedRPELevelText
+                    ]}>
+                      {i + 1}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
+              <View style={styles.rpeLabels}>
+                <Text style={styles.rpeLabel}>Très facile</Text>
+                <Text style={styles.rpeLabel}>Très difficile</Text>
+              </View>
+            </View>
 
-              <ScrollView style={styles.modalBody}>
-                <Text style={styles.rpeModalLabel}>Ressenti de l'effort (RPE)</Text>
-                <Text style={styles.rpeModalDescription}>
-                  Notez votre ressenti sur une échelle de 1 à 10
-                </Text>
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Notes (optionnel)</Text>
+              <TextInput
+                style={[styles.modalInput, styles.notesInput]}
+                value={rpeNotes}
+                onChangeText={setRpeNotes}
+                placeholder="Ressenti général, zones difficiles..."
+                multiline={true}
+                numberOfLines={3}
+              />
+            </View>
 
-                <View style={styles.rpeSliderContainer}>
-                  <TextInput
-                    style={styles.rpeInput}
-                    value={rpeRating.toString()}
-                    onChangeText={(text) => {
-                      const value = parseInt(text) || 1;
-                      setRpeRating(Math.max(1, Math.min(10, value)));
-                    }}
-                    keyboardType="numeric"
-                    maxLength={2}
-                  />
-                  <Text style={styles.rpeSliderLabel}>/ 10</Text>
-                </View>
-
-                <View style={styles.rpeLabels}>
-                  <Text style={styles.rpeLabel}>
-                    {rpeRating <= 3 ? 'Très facile' :
-                     rpeRating <= 5 ? 'Modéré' :
-                     rpeRating <= 7 ? 'Difficile' : 'Très difficile'}
-                  </Text>
-                </View>
-
-                <Text style={styles.rpeModalLabel}>Notes (optionnel)</Text>
-                <TextInput
-                  style={styles.rpeNotesInput}
-                  value={rpeNotes}
-                  onChangeText={setRpeNotes}
-                  placeholder="Ajoutez vos commentaires..."
-                  multiline
-                  numberOfLines={3}
-                />
-
-                <TouchableOpacity 
-                  style={styles.saveRpeButton}
-                  onPress={handleSaveRPE}
-                >
-                  <Text style={styles.saveRpeButtonText}>Enregistrer</Text>
-                </TouchableOpacity>
-              </ScrollView>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={styles.modalButtonSecondary}
+                onPress={() => setShowRPEModal(false)}
+              >
+                <Text style={styles.modalButtonSecondaryText}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.modalButtonPrimary}
+                onPress={handleSaveRPE}
+              >
+                <Text style={styles.modalButtonPrimaryText}>Sauvegarder</Text>
+              </TouchableOpacity>
             </View>
           </View>
-        )}
-      </ScrollView>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -934,108 +956,154 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    padding: 20,
-    paddingTop: 10,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 20,
+    backgroundColor: 'rgba(13, 17, 23, 0.95)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 165, 0, 0.1)',
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontWeight: '700',
     color: '#FFFFFF',
-    marginBottom: 20,
+    marginBottom: 16,
+    textAlign: 'center',
+    letterSpacing: 0.5,
   },
   weekNavigation: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
+    paddingHorizontal: 8,
   },
   weekArrow: {
+    borderRadius: 12,
+    backgroundColor: 'rgba(245, 166, 35, 0.15)',
+    borderWidth: 2,
+    borderColor: 'rgba(245, 166, 35, 0.4)',
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: '#21262D',
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 15,
+    shadowColor: '#FFA500',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
   },
   arrowText: {
-    fontSize: 18,
-    color: '#F5A623',
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#FFA500',
+    textShadowColor: 'rgba(245, 166, 35, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+    textAlign: 'center',
+    lineHeight: 22,
+    textAlignVertical: 'center',
+    includeFontPadding: false,
   },
   weekContainer: {
     flex: 1,
     alignItems: 'center',
+    marginHorizontal: 20,
+    backgroundColor: 'rgba(22, 27, 34, 0.6)',
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 165, 0, 0.2)',
   },
   weekRange: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
+    textAlign: 'center',
+    letterSpacing: 0.3,
   },
   tabsContainer: {
     flexDirection: 'row',
-    backgroundColor: '#0D1117',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     marginBottom: 20,
+    marginTop: 16,
   },
   tab: {
     flex: 1,
     paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 16,
+    marginHorizontal: 4,
+    backgroundColor: '#161B22',
+    borderWidth: 1,
+    borderColor: '#21262D',
     alignItems: 'center',
     position: 'relative',
   },
   activeTab: {
-    // Style géré par l'indicateur
+    backgroundColor: '#1F6FEB',
+    borderColor: '#1F6FEB',
+    shadowColor: '#1F6FEB',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
-  lockedTab: {
-    opacity: 0.6,
+  tabText: {
+    fontSize: 12,
+    color: '#8B949E',
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  activeTabText: {
+    color: '#FFFFFF',
   },
   tabContent: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
   },
   tabIcon: {
     fontSize: 16,
-  },
-  tabText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#8B949E',
-  },
-  activeTabText: {
-    color: '#F5A623',
-    fontWeight: '600',
-  },
-  lockedTabText: {
-    color: '#6A737D',
+    marginBottom: 2,
   },
   tabIndicator: {
     position: 'absolute',
-    bottom: 0,
+    bottom: -1,
     left: '25%',
     right: '25%',
     height: 3,
     backgroundColor: '#F5A623',
     borderRadius: 2,
   },
-  contentContainer: {
-    flex: 1,
-    paddingHorizontal: 20,
+  lockedTab: {
+    opacity: 0.7,
+  },
+  lockedTabText: {
+    color: '#6A737D',
   },
   daysContainer: {
-    gap: 12,
+    flex: 1,
+    paddingHorizontal: 1,
+    paddingTop: 20,
   },
   dayCard: {
     backgroundColor: '#161B22',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: '#21262D',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   todayCard: {
     borderColor: '#F5A623',
-    backgroundColor: '#1C1A17',
+    borderWidth: 2,
+    shadowColor: '#F5A623',
+    shadowOpacity: 0.2,
   },
   dayHeader: {
     flexDirection: 'row',
@@ -1052,14 +1120,17 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#FFFFFF',
-    minWidth: 70,
   },
   todayDayName: {
     color: '#F5A623',
   },
   dayDate: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#8B949E',
+    backgroundColor: '#21262D',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
     fontWeight: '500',
   },
   dayStatus: {
@@ -1068,34 +1139,33 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sessionBadge: {
-    backgroundColor: '#238636',
+    backgroundColor: '#F5A623',
     borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    minWidth: 24,
+    width: 24,
+    height: 24,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   sessionBadgeText: {
-    color: '#FFFFFF',
     fontSize: 12,
     fontWeight: 'bold',
+    color: '#000',
   },
   emptyBadge: {
     backgroundColor: '#21262D',
     borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    minWidth: 24,
+    width: 24,
+    height: 24,
     alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#8B949E',
+    borderStyle: 'dashed',
   },
   emptyBadgeText: {
-    color: '#8B949E',
     fontSize: 14,
-    fontWeight: 'bold',
-  },
-  arrowIcon: {
-    fontSize: 16,
     color: '#8B949E',
+    fontWeight: 'bold',
   },
   dayFooter: {
     flexDirection: 'row',
@@ -1103,20 +1173,91 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sessionDetails: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#8B949E',
+    flex: 1,
   },
   todayIndicator: {
     backgroundColor: '#F5A623',
-    borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 2,
+    borderRadius: 8,
   },
   todayText: {
-    fontSize: 12,
-    color: '#0D1117',
+    fontSize: 10,
+    color: '#000',
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+  },
+  arrowIcon: {
+    fontSize: 18,
+    color: '#8B949E',
     fontWeight: 'bold',
   },
+
+  contentContainer: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingBottom: 90,
+  },
+  emptyState: {
+    backgroundColor: '#161B22',
+    borderRadius: 12,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  emptyIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#21262D',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  emptyIconText: {
+    fontSize: 28,
+  },
+  emptyTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  emptyMessage: {
+    fontSize: 15,
+    color: '#8B949E',
+    textAlign: 'center',
+    marginBottom: 6,
+    lineHeight: 20,
+  },
+  emptySubmessage: {
+    fontSize: 13,
+    color: '#8B949E',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 18,
+    paddingHorizontal: 8,
+  },
+  addWorkoutButton: {
+    backgroundColor: '#0D1117',
+    borderWidth: 1,
+    borderColor: '#21262D',
+    borderStyle: 'dashed',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  addWorkoutText: {
+    fontSize: 14,
+    color: '#8B949E',
+  },
+
+  // Styles pour les activités Strava
   completedContainer: {
     flex: 1,
   },
@@ -1124,8 +1265,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '600',
     color: '#FFFFFF',
     marginBottom: 4,
   },
@@ -1135,8 +1276,8 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
     paddingVertical: 40,
   },
   loadingText: {
@@ -1148,114 +1289,71 @@ const styles = StyleSheet.create({
   },
   activityCard: {
     backgroundColor: '#161B22',
-    borderRadius: 12,
-    marginBottom: 12,
+    borderRadius: 10,
+    padding: 12,
     borderWidth: 1,
     borderColor: '#21262D',
-    overflow: 'hidden',
-  },
-  activityContent: {
-    padding: 16,
+    marginBottom: 10,
   },
   activityHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   activityIcon: {
-    fontSize: 24,
-    marginRight: 12,
+    fontSize: 20,
+    marginRight: 10,
   },
   activityInfo: {
     flex: 1,
   },
   activityName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: '#FFFFFF',
     marginBottom: 2,
   },
   activityDate: {
-    fontSize: 14,
+    fontSize: 11,
     color: '#8B949E',
+  },
+  activityType: {
+    fontSize: 11,
+    color: '#000000',
+    fontWeight: '500',
+    backgroundColor: '#F5A623',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  activityStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    flexWrap: 'wrap',
+  },
+  statItem: {
+    alignItems: 'center',
+    minWidth: 50,
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 9,
+    color: '#8B949E',
+    marginBottom: 2,
+    textTransform: 'uppercase',
+  },
+  statValue: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   activityTypeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
   },
-  activityType: {
-    fontSize: 14,
-    color: '#F5A623',
-    fontWeight: '500',
-  },
-  activityStats: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#8B949E',
-    marginBottom: 2,
-  },
-  statValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  rpeSection: {
-    borderTopWidth: 1,
-    borderTopColor: '#21262D',
-    padding: 16,
-    backgroundColor: '#0D1117',
-  },
-  rpeSectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  rpeSectionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  rpeDisplay: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  rpeValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#F5A623',
-  },
-  rpeLabel: {
-    fontSize: 12,
-    color: '#8B949E',
-  },
-  rpeButton: {
-    backgroundColor: '#21262D',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    alignItems: 'center',
-  },
-  rpeButtonRated: {
-    backgroundColor: '#F5A623',
-  },
-  rpeButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#8B949E',
-  },
-  rpeButtonTextRated: {
-    color: '#0D1117',
-  },
+
+  // Styles pour le modal de détail
   modalOverlay: {
     position: 'absolute',
     top: 0,
@@ -1270,8 +1368,9 @@ const styles = StyleSheet.create({
   modalContent: {
     backgroundColor: '#161B22',
     borderRadius: 16,
-    width: '90%',
+    margin: 20,
     maxHeight: '80%',
+    width: '90%',
     borderWidth: 1,
     borderColor: '#21262D',
   },
@@ -1284,9 +1383,10 @@ const styles = StyleSheet.create({
     borderBottomColor: '#21262D',
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '600',
     color: '#FFFFFF',
+    flex: 1,
   },
   closeButton: {
     width: 32,
@@ -1307,7 +1407,7 @@ const styles = StyleSheet.create({
   activityDetailHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   activityDetailIcon: {
     fontSize: 32,
@@ -1317,9 +1417,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   activityDetailType: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
-    color: '#F5A623',
+    color: '#FFFFFF',
     marginBottom: 4,
   },
   activityDetailDate: {
@@ -1333,115 +1433,223 @@ const styles = StyleSheet.create({
   },
   detailStatCard: {
     backgroundColor: '#0D1117',
-    borderRadius: 8,
-    padding: 12,
-    alignItems: 'center',
-    minWidth: '45%',
+    borderRadius: 12,
+    padding: 16,
     borderWidth: 1,
     borderColor: '#21262D',
+    minWidth: '45%',
+    alignItems: 'center',
   },
   detailStatLabel: {
     fontSize: 12,
     color: '#8B949E',
-    marginBottom: 4,
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    fontWeight: '500',
   },
   detailStatValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '600',
     color: '#FFFFFF',
+    textAlign: 'center',
   },
-  rpeModalLabel: {
+  activityContent: {
+    flex: 1,
+  },
+  rpeSection: {
+    borderTopWidth: 1,
+    borderTopColor: '#21262D',
+    paddingTop: 12,
+    marginTop: 12,
+  },
+  rpeSectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  rpeSectionTitle: {
+    fontSize: 13,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  rpeDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  rpeValue: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#F5A623',
+  },
+  rpeLabel: {
+    fontSize: 11,
+    color: '#8B949E',
+  },
+  rpeButton: {
+    backgroundColor: '#21262D',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#30363D',
+    borderStyle: 'dashed',
+    alignItems: 'center',
+  },
+  rpeButtonRated: {
+    backgroundColor: 'rgba(245, 166, 35, 0.1)',
+    borderColor: '#F5A623',
+    borderStyle: 'solid',
+  },
+  rpeButtonText: {
+    fontSize: 12,
+    color: '#8B949E',
+    fontWeight: '500',
+  },
+  rpeButtonTextRated: {
+    color: '#F5A623',
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    marginBottom: 8,
+    fontWeight: '500',
+  },
+  modalInput: {
+    backgroundColor: '#0D1117',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  notesInput: {
+    height: 80,
+    textAlignVertical: 'top',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#8B949E',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  rpeSlider: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  rpeLevel: {
+    width: 28,
+    height: 28,
+    backgroundColor: '#21262D',
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#30363D',
+  },
+  selectedRPELevel: {
+    backgroundColor: '#F5A623',
+    borderColor: '#F5A623',
+  },
+  rpeLevelText: {
+    fontSize: 12,
+    color: '#8B949E',
+    fontWeight: '600',
+  },
+  selectedRPELevelText: {
+    color: '#000000',
+  },
+  rpeLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+  },
+  modalButtonSecondary: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#21262D',
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  modalButtonSecondaryText: {
+    color: '#8B949E',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalButtonPrimary: {
+    flex: 1,
+    backgroundColor: '#F5A623',
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  modalButtonPrimaryText: {
+    color: '#000000',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  exerciseCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  exerciseHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  exerciseTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
-    marginBottom: 8,
   },
-  rpeModalDescription: {
-    fontSize: 14,
+  exerciseReps: {
+    fontSize: 12,
     color: '#8B949E',
-    marginBottom: 16,
   },
-  rpeSliderContainer: {
+  favoriteSportSection: {
+    marginHorizontal: 20,
+    marginBottom: 25,
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  favoriteSportHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
   },
-  rpeInput: {
-    backgroundColor: '#21262D',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    minWidth: 60,
-    borderWidth: 1,
-    borderColor: '#30363D',
+  favoriteSportEmoji: {
+    fontSize: 32,
+    marginRight: 16,
   },
-  rpeSliderLabel: {
+  favoriteSportTitle: {
     fontSize: 18,
-    color: '#8B949E',
-    marginLeft: 8,
-  },
-  rpeLabels: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  rpeNotesInput: {
-    backgroundColor: '#21262D',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    fontSize: 14,
-    color: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#30363D',
-    marginBottom: 24,
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
-  saveRpeButton: {
-    backgroundColor: '#F5A623',
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  saveRpeButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#0D1117',
-  },
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 40,
-    paddingHorizontal: 20,
-  },
-  emptyIcon: {
-    marginBottom: 16,
-  },
-  emptyIconText: {
-    fontSize: 48,
-  },
-  emptyTitle: {
-    fontSize: 20,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  emptyMessage: {
-    fontSize: 16,
-    color: '#8B949E',
-    textAlign: 'center',
     marginBottom: 4,
   },
-  emptySubmessage: {
+  favoriteSportSubtitle: {
     fontSize: 14,
-    color: '#6A737D',
-    textAlign: 'center',
+    color: '#F5A623',
+    fontWeight: '500',
   },
 });
