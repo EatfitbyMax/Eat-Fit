@@ -1,17 +1,16 @@
 
 import React from 'react';
-import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
 // Vérifier si on est dans Expo Go
 const isExpoGo = Constants.appOwnership === 'expo';
 
-// Importer Stripe seulement si ce n'est pas Expo Go et pas sur le web
+// Importer Stripe seulement si ce n'est pas Expo Go
 let StripeProvider: any = null;
 let useStripe: any = null;
 let CardField: any = null;
 
-if (!isExpoGo && Platform.OS !== 'web') {
+if (!isExpoGo) {
   try {
     const stripe = require('@stripe/stripe-react-native');
     StripeProvider = stripe.StripeProvider;
@@ -22,29 +21,28 @@ if (!isExpoGo && Platform.OS !== 'web') {
   }
 }
 
-// Composant de fallback pour Expo Go et Web
+// Composant de fallback pour Expo Go
 const MockStripeProvider = ({ children }: { children: React.ReactNode }) => {
-  return React.createElement('div', null, children);
+  return React.createElement(React.Fragment, null, children);
 };
+
+const mockUseStripe = () => ({
+  confirmPayment: async () => ({ error: { message: 'Stripe non disponible en mode développement' } }),
+  createPaymentMethod: async () => ({ error: { message: 'Stripe non disponible en mode développement' } }),
+});
 
 const MockCardField = () => {
   return React.createElement('div', { 
     style: { 
-      padding: '10px', 
+      padding: 20, 
       border: '1px solid #ccc', 
-      borderRadius: '4px',
-      backgroundColor: '#f0f0f0',
+      borderRadius: 8,
+      backgroundColor: '#f9f9f9',
       textAlign: 'center' as const
     } 
-  }, 'Stripe non disponible dans cet environnement');
+  }, 'Champ de carte non disponible en mode développement');
 };
 
-const mockUseStripe = () => ({
-  confirmPayment: async () => ({ error: { message: 'Stripe non disponible dans cet environnement' } }),
-  createPaymentMethod: async () => ({ error: { message: 'Stripe non disponible dans cet environnement' } }),
-});
-
-// Export correct avec des noms d'alias
 const ExportedStripeProvider = StripeProvider || MockStripeProvider;
 const ExportedUseStripe = useStripe || mockUseStripe;
 const ExportedCardField = CardField || MockCardField;
