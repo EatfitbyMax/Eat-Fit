@@ -651,6 +651,19 @@ app.get('/api/health-check', (req, res) => {
   res.json({ status: 'OK', message: 'Serveur VPS fonctionnel' });
 });
 
+// Mise à jour périodique de la base OpenFoodFacts (toutes les 24h)
+setInterval(() => {
+  updateOpenFoodFacts().catch(error => {
+    console.error('❌ Erreur mise à jour OpenFoodFacts planifiée:', error.message);
+  });
+}, 24 * 60 * 60 * 1000);
+
+// Première mise à jour au démarrage (non bloquante)
+updateOpenFoodFacts().catch(error => {
+  console.error('❌ Erreur mise à jour OpenFoodFacts initiale:', error.message);
+  console.log('ℹ️ Le serveur continue sans la base OpenFoodFacts');
+});
+
 app.listen(PORT, '0.0.0.0', async () => {
   await initDataDir();
   console.log(`Serveur démarré sur le port ${PORT}`);
