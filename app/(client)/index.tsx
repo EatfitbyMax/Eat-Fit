@@ -226,22 +226,227 @@ export default function HomeScreen() {
 
   const calculateFormeScore = async () => {
     try {
-      // Simulation du calcul du score de forme basé sur le sommeil et la variabilité cardiaque
-      // En réalité, ces données viendraient des intégrations Apple Health/Strava
       const currentUser = await getCurrentUser();
       if (!currentUser) return;
 
-      // Valeurs simulées pour la démonstration
-      const sleepQuality = Math.floor(Math.random() * 40) + 60; // 60-100
-      const heartRateVariability = Math.floor(Math.random() * 30) + 70; // 70-100
+      const today = new Date().toISOString().split('T')[0];
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+      
+      // Essayer d'abord le stockage local
+      let todayData = null;
+      const localDataString = await AsyncStorage.getItem(`forme_data_${currentUser.id}_${today}`);
+      
+      if (localDataString) {
+        todayData = JSON.parse(localDataString);
+        console.log('Données de forme chargées depuis le stockage local pour l\'accueil');
+      } else {
+        // Fallback vers le serveur si pas de données locales
+        try {
+          todayData = await PersistentStorage.getFormeData(currentUser.id, today);
+          console.log('Données de forme chargées depuis le serveur VPS pour l\'accueil');
+        } catch (serverError) {
+          console.log('Aucune donnée de forme trouvée, utilisation du score par défaut');
+          setFormeScore(75); // Valeur par défaut si aucune donnée
+          return;
+        }
+      }
 
-      // Calcul du score de forme (moyenne pondérée)
-      const score = Math.round((sleepQuality * 0.6) + (heartRateVariability * 0.4));
-      setFormeScore(score);
+      if (todayData) {
+        // Utiliser la même logique de calcul que dans forme.tsx
+        const realScore = calculateRealFormeScore(todayData, currentUser);
+        setFormeScore(realScore);
+        console.log(`Score de forme réel calculé pour l'accueil: ${realScore}/100`);
+      } else {
+        setFormeScore(75); // Valeur par défaut
+      }
     } catch (error) {
       console.error('Erreur calcul score de forme:', error);
       setFormeScore(75); // Valeur par défaut
     }
+  };
+
+  // Fonction pour calculer le score de forme réel (même logique que forme.tsx)
+  const calculateRealFormeScore = (formeData: any, userData: any) => {
+    let totalScore = 0;
+    let totalWeight = 0;
+
+    // Adaptation des poids selon le genre
+    const isWoman = userData?.gender === 'Femme';
+    
+    const weights = isWoman ? {
+      sleep: 0.30,      // 30% (au lieu de 35%)
+      stress: 0.25,     // 25% (au lieu de 30%)
+      heartRate: 0.15,  // 15% (au lieu de 20%) - Premium
+      rpe: 0.15,        // 15% (inchangé) - Premium
+      cycle: 0.15       // 15% (au lieu de 5%) - Femmes uniquement
+    } : {
+      sleep: 0.35,      // 35%
+      stress: 0.30,     // 30%
+      heartRate: 0.20,  // 20% - Premium
+      rpe: 0.15,        // 15% - Premium
+      cycle: 0         // 0% pour les hommes
+    };
+
+    // Sommeil
+    if (formeData.sleep?.hours > 0) {
+      let sleepHoursScore;
+      if (formeData.sleep.hours >= 7 && formeData.sleep.hours <= 9) {
+        sleepHoursScore = 100;
+      } else if (formeData.sleep.hours >= 6 && formeData.sleep.hours <= 10) {
+        sleepHoursScore = 80;
+      } else if (formeData.sleep.hours >= 5 && formeData.sleep.hours <= 11) {
+        sleepHoursScore = 60;
+      } else {
+        sleepHoursScore = 30;
+      }
+
+      const qualityMultiplier = {
+        'Excellent': 1.0,
+        'Bien': 0.85,
+        'Moyen': 0.65,
+        'Mauvais': 0.4
+      };
+
+      let sleepScore = sleepHoursScore * (qualityMultiplier[formeData.sleep.quality] || 0.65);
+      
+      // Ajustement cycle pour les femmes
+      if (isWoman && formeData.cycle) {
+        const cycleMultiplier = {
+          'Menstruel': 0.9,
+          'Folliculaire': 1.0,
+          'Ovulation': 1.05,
+          'Lutéal': 0.85
+        };
+        sleepScore *= (cycleMultiplier[formeData.cycle.phase] || 1.0);
+      }
+
+      totalScore += sleepScore * weights.sleep;
+      totalWeight += weights.sleep;
+    }
+
+    // Stress - inversé (1 = excellent, 10 = très mauvais)
+    let stressScore = Math.max(0, ((10 - (formeData.stress?.level || 5)) / 9) * 100);
+    
+    if (isWoman && formeData.cycle) {
+      const stressCycleMultiplier = {
+        'Menstruel': 0.8,
+        'Folliculaire': 1.1,
+        'Ovulation': 1.15,
+        'Lutéal': 0.7
+      };
+      stressScore *= (stressCycleMultiplier[formeData.cycle.phase] || 1.0);
+    }
+    
+    totalScore += stressScore * weights.stress;
+    totalWeight += weights.stress;
+
+    // FC repos - Premium
+    if (isPremium && formeData.heartRate?.resting > 0) {
+      const optimalResting = userData?.gender === 'Homme' ? 65 : 70;
+      let diff = Math.abs(formeData.heartRate.resting - optimalResting);
+      
+      if (isWoman && formeData.cycle) {
+        const hrCycleAdjustment = {
+          'Menstruel': -3,
+          'Folliculaire': 0,
+          'Ovulation': -2,
+          'Lutéal': -5
+        };
+        
+        const adjustedOptimal = optimalResting + (hrCycleAdjustment[formeData.cycle.phase] || 0);
+        diff = Math.abs(formeData.heartRate.resting - adjustedOptimal);
+      }
+      
+      let hrScore;
+      if (diff <= 5) hrScore = 100;
+      else if (diff <= 10) hrScore = 85;
+      else if (diff <= 15) hrScore = 70;
+      else if (diff <= 20) hrScore = 55;
+      else hrScore = 30;
+
+      totalScore += hrScore * weights.heartRate;
+      totalWeight += weights.heartRate;
+    }
+
+    // RPE - Premium
+    if (isPremium && formeData.rpe?.value > 0) {
+      let rpeScore;
+      if (formeData.rpe.value <= 3) rpeScore = 100;
+      else if (formeData.rpe.value <= 5) rpeScore = 80;
+      else if (formeData.rpe.value <= 7) rpeScore = 60;
+      else rpeScore = 30;
+
+      if (isWoman && formeData.cycle) {
+        const rpeCycleMultiplier = {
+          'Menstruel': 0.8,
+          'Folliculaire': 1.15,
+          'Ovulation': 1.2,
+          'Lutéal': 0.85
+        };
+        rpeScore *= (rpeCycleMultiplier[formeData.cycle.phase] || 1.0);
+      }
+
+      totalScore += rpeScore * weights.rpe;
+      totalWeight += weights.rpe;
+    }
+
+    // Cycle hormonal pour les femmes
+    if (isWoman && formeData.cycle) {
+      let cycleScore = 75;
+      const dayInCycle = formeData.cycle.dayOfCycle || 1;
+      
+      switch (formeData.cycle.phase) {
+        case 'Menstruel':
+          if (dayInCycle <= 2) {
+            cycleScore = 45;
+          } else if (dayInCycle <= 4) {
+            cycleScore = 55;
+          } else {
+            cycleScore = 65;
+          }
+          break;
+          
+        case 'Folliculaire':
+          cycleScore = 70 + Math.min((dayInCycle - 5) * 3, 20);
+          break;
+          
+        case 'Ovulation':
+          cycleScore = 95;
+          break;
+          
+        case 'Lutéal':
+          const lutealDay = dayInCycle - 16;
+          if (lutealDay <= 4) {
+            cycleScore = 80;
+          } else if (lutealDay <= 8) {
+            cycleScore = 70;
+          } else {
+            cycleScore = 50;
+          }
+          break;
+      }
+
+      const symptomPenalty = Math.min((formeData.cycle.symptoms?.length || 0) * 8, 40);
+      cycleScore = Math.max(25, cycleScore - symptomPenalty);
+
+      if ((formeData.cycle.symptoms?.length || 0) === 0 && 
+          (formeData.cycle.phase === 'Folliculaire' || formeData.cycle.phase === 'Ovulation')) {
+        cycleScore = Math.min(100, cycleScore + 5);
+      }
+
+      totalScore += cycleScore * weights.cycle;
+      totalWeight += weights.cycle;
+    }
+
+    // Calculer le score final
+    let finalScore;
+    if (totalWeight === 0) {
+      finalScore = 50; // Score par défaut si aucune donnée
+    } else {
+      finalScore = totalScore / totalWeight;
+    }
+
+    return Math.max(0, Math.min(100, Math.round(finalScore)));
   };
 
   const loadTodayStats = async () => {
