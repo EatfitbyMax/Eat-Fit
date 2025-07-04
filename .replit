@@ -37,6 +37,7 @@ localPort = 8087
 externalPort = 5173
 
 [workflows]
+runButton = "Dev Server"
 
 [[workflows.workflow]]
 name = "Dev Server"
@@ -106,28 +107,10 @@ task = "shell.exec"
 args = "npx expo start --clear --port 8085 --host lan"
 
 [[workflows.workflow]]
-name = "Dev Server Alt Port"
-author = 42598128
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npx expo start --clear --port 8086 --host lan"
-
-[[workflows.workflow]]
-name = "Mobile Dev Server"
-author = 42598128
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npx expo start --clear --port 8085 --host lan --tunnel"
-
-[[workflows.workflow]]
 name = "Mobile Only Dev"
 author = 42598128
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npx expo start --clear --port 8085 --host lan --no-web"
+args = "npx expo start --clear --port 8085 --host lan"
