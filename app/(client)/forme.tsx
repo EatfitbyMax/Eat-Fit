@@ -808,7 +808,6 @@ export default function FormeScreen() {
     const maxScore = Math.max(...weeklyData.map(d => calculateDayScore(d)), 100);
 
     return (
-```python
       <View style={styles.chartContainer}>
         <Text style={styles.chartTitle}>Évolution de la forme (7 jours)</Text>
 
