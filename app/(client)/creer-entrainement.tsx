@@ -166,7 +166,7 @@ export default function CreerEntrainementScreen() {
   const [workout, setWorkout] = useState<Workout>({
     id: '',
     name: '',
-    date: params.selectedDate as string || '',
+    date: params.selectedDate as string || new Date().toISOString().split('T')[0],
     type: '',
     specificity: '',
     difficulty: '',
@@ -201,6 +201,13 @@ export default function CreerEntrainementScreen() {
     loadUserData();
     loadRecentSports();
   }, []);
+
+  // Mettre à jour la date quand les paramètres changent
+  useEffect(() => {
+    if (params.selectedDate) {
+      setWorkout(prev => ({ ...prev, date: params.selectedDate as string }));
+    }
+  }, [params.selectedDate]);
 
   useEffect(() => {
     // Calculer les calories estimées basées sur le type et la durée
@@ -340,7 +347,8 @@ export default function CreerEntrainementScreen() {
 
       const workoutToSave: Workout = {
         ...workout,
-        id: Date.now().toString()
+        id: Date.now().toString(),
+        date: params.selectedDate as string || workout.date
       };
 
       // Récupérer les entraînements existants
@@ -938,7 +946,12 @@ export default function CreerEntrainementScreen() {
 
   // Fonction pour formater la date correctement
   const formatSelectedDate = () => {
-    const date = new Date(params.selectedDate as string);
+    if (!params.selectedDate) return '';
+    
+    // Créer la date en ajustant pour le fuseau horaire local
+    const dateString = params.selectedDate as string;
+    const date = new Date(dateString + 'T00:00:00');
+    
     return date.toLocaleDateString('fr-FR', {
       weekday: 'long',
       day: 'numeric',
@@ -965,7 +978,7 @@ export default function CreerEntrainementScreen() {
             <Text style={styles.sectionTitle}>Informations générales</Text>
 
             <Text style={styles.dateInfo}>
-              {formatSelectedDate()}
+              {params.selectedDate ? formatSelectedDate() : 'Date non sélectionnée'}
             </Text>
 
             <View style={styles.inputGroup}>
