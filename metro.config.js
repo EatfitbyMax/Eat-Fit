@@ -9,14 +9,18 @@ config.resolver.platforms = ['ios', 'android', 'native'];
 // Résoudre les conflits avec les modules natifs Stripe
 config.resolver.resolverMainFields = ['react-native', 'main'];
 
-// Exclure complètement tous les modules Stripe sur web
+// Bloquer complètement tous les modules Stripe
 config.resolver.blockList = [
-  /.*\/node_modules\/@stripe\/stripe-react-native\/.*\.web\..*/,
-  /.*\/node_modules\/@stripe\/stripe-react-native\/.*\/specs\/.*/,
-  /.*\/node_modules\/@stripe\/stripe-react-native\/lib\/.*\/specs\/.*/,
-  /.*\/node_modules\/@stripe\/stripe-react-native\/lib\/module\/specs\/.*/,
-  /.*\/node_modules\/@stripe\/stripe-react-native\/lib\/commonjs\/specs\/.*/,
+  // Bloquer tous les fichiers Stripe
+  /.*node_modules\/@stripe\/stripe-react-native\/.*/,
+  /.*node_modules\/expo-payments-stripe\/.*/,
+  /.*node_modules\/stripe\/.*/,
 ];
+
+// Alias pour rediriger Stripe vers notre wrapper
+config.resolver.alias = {
+  '@stripe/stripe-react-native': require.resolve('./utils/stripeWrapper.ts'),
+};
 
 // Optimiser le cache
 config.resetCache = true;
