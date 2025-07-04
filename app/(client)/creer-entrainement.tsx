@@ -202,6 +202,22 @@ export default function CreerEntrainementScreen() {
     loadRecentSports();
   }, []);
 
+  // Surveiller les changements de paramètres pour mettre à jour la date
+  useEffect(() => {
+    if (params.selectedDate && params.selectedDate !== workout.date) {
+      console.log('=== MISE À JOUR DATE PARAMÈTRES ===');
+      console.log('Ancienne date:', workout.date);
+      console.log('Nouvelle date:', params.selectedDate);
+      console.log('Jour sélectionné:', params.selectedDay);
+      console.log('=================================');
+      
+      setWorkout(prev => ({
+        ...prev,
+        date: params.selectedDate as string
+      }));
+    }
+  }, [params.selectedDate, params.selectedDay]);
+
   useEffect(() => {
     // Calculer les calories estimées basées sur le type et la durée
     calculateCalories();
@@ -343,15 +359,28 @@ export default function CreerEntrainementScreen() {
         id: Date.now().toString()
       };
 
+      console.log('=== SAUVEGARDE ENTRAÎNEMENT ===');
+      console.log('Date paramètre:', params.selectedDate);
+      console.log('Date workout:', workout.date);
+      console.log('Jour paramètre:', params.selectedDay);
+      console.log('Entraînement à sauvegarder:', workoutToSave);
+      console.log('==============================');
+
       // Récupérer les entraînements existants
       const existingWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
       const workouts = existingWorkouts ? JSON.parse(existingWorkouts) : [];
 
+      console.log('Entraînements existants:', workouts.length);
+
       // Ajouter le nouvel entraînement
       workouts.push(workoutToSave);
 
+      console.log('Total après ajout:', workouts.length);
+
       // Sauvegarder
       await AsyncStorage.setItem(`workouts_${currentUser.id}`, JSON.stringify(workouts));
+
+      console.log('Sauvegarde terminée avec succès');
 
       Alert.alert(
         'Succès', 
@@ -938,13 +967,22 @@ export default function CreerEntrainementScreen() {
 
   // Fonction pour formater la date correctement
   const formatSelectedDate = () => {
-    const date = new Date(params.selectedDate as string);
-    return date.toLocaleDateString('fr-FR', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
+    if (!params.selectedDate) return 'Date non définie';
+    
+    try {
+      // Parser la date en UTC pour éviter les décalages de fuseau horaire
+      const date = new Date(params.selectedDate + 'T00:00:00.000Z');
+      return date.toLocaleDateString('fr-FR', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'Europe/Paris'
+      });
+    } catch (error) {
+      console.error('Erreur formatage date:', error);
+      return params.selectedDate as string;
+    }
   };
 
   return (
