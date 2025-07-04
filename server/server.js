@@ -645,5 +645,6 @@ app.get('/api/health-check', (req, res) => {
 app.listen(PORT, '0.0.0.0', async () => {
   await initDataDir();
   console.log(`Serveur démarré sur le port ${PORT}`);
-  console.log(`Serveur accessible sur : https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.replit.dev:${PORT}`);
+  console.log(`Serveur accessible sur : http://0.0.0.0:${PORT}`);
+  console.log(`Serveur VPS accessible sur : http://51.178.29.220:${PORT}`);
 });
