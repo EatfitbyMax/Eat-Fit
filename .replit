@@ -1,6 +1,9 @@
-run = "npx expo start --web"
+run = "npx expo start --web --clear"
 entrypoint = "App.js"
 modules = ["nodejs-20"]
+
+[env]
+EXPO_USE_FAST_RESOLVER = "1"
 
 [[ports]]
 localPort = 8081
