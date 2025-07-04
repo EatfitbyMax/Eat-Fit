@@ -88,3 +88,12 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd server && npm install && node server.js"
+
+[[workflows.workflow]]
+name = "Expo Dev Clean"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx expo start --clear --port 8085 --host 0.0.0.0"
