@@ -1,5 +1,20 @@
 import { Platform } from 'react-native';
-import { initPaymentSheet, presentPaymentSheet, confirmPaymentSheetPayment } from '@stripe/stripe-react-native';
+
+// Import conditionnel de Stripe uniquement sur mobile
+let initPaymentSheet: any = null;
+let presentPaymentSheet: any = null;
+let confirmPaymentSheetPayment: any = null;
+
+if (Platform.OS !== 'web') {
+  try {
+    const stripe = require('@stripe/stripe-react-native');
+    initPaymentSheet = stripe.initPaymentSheet;
+    presentPaymentSheet = stripe.presentPaymentSheet;
+    confirmPaymentSheetPayment = stripe.confirmPaymentSheetPayment;
+  } catch (error) {
+    console.warn('Stripe non disponible:', error);
+  }
+}
 
 export interface AppointmentLimits {
   monthly: number;
@@ -233,6 +248,10 @@ export class PaymentService {
         throw new Error('Apple Pay uniquement disponible sur iOS');
       }
 
+      if (!initPaymentSheet || !presentPaymentSheet) {
+        throw new Error('Stripe non disponible sur cette plateforme');
+      }
+
       // Créer le PaymentIntent
       const { clientSecret, ephemeralKey, customer } = await this.createPaymentIntent(plan.id, userId);
 
@@ -296,6 +315,10 @@ export class PaymentService {
     try {
       if (Platform.OS !== 'android') {
         throw new Error('Google Pay uniquement disponible sur Android');
+      }
+
+      if (!initPaymentSheet || !presentPaymentSheet) {
+        throw new Error('Stripe non disponible sur cette plateforme');
       }
 
       // Créer le PaymentIntent
