@@ -7,7 +7,7 @@ export class PersistentStorage {
   static async testConnection(): Promise<boolean> {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const timeoutId = setTimeout(() => controller.abort(), 3000); // Réduit à 3s pour plus de réactivité
 
       const response = await fetch(`${SERVER_URL}/api/health-check`, {
         method: 'GET',
@@ -18,10 +18,12 @@ export class PersistentStorage {
       });
 
       clearTimeout(timeoutId);
-      return response.ok;
+      const isConnected = response.ok;
+      console.log(`🔌 Serveur VPS: ${isConnected ? 'CONNECTÉ' : 'DÉCONNECTÉ'}`);
+      return isConnected;
     } catch (error) {
-      console.error('Erreur connexion serveur VPS:', error);
-      return false; // Ne pas jeter d'erreur, retourner false
+      console.warn('⚠️ Serveur VPS indisponible, utilisation du stockage local');
+      return false;
     }
   }
 
@@ -420,153 +422,203 @@ export class PersistentStorage {
   // Méthodes pour les données nutritionnelles
   static async getNutritionData(userId: string): Promise<any[]> {
     try {
+      console.log('🔍 Récupération des données nutrition...');
+      
+      // 1. PRIORITÉ: Essayer le serveur VPS
       const isConnected = await this.testConnection();
       if (isConnected) {
-        const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`);
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Données nutrition récupérées depuis le serveur VPS');
-          // Sauvegarder en local comme backup
-          const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-          await AsyncStorage.setItem(`food_entries_${userId}`, JSON.stringify(data));
-          return data;
+        try {
+          const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            signal: AbortSignal.timeout(5000)
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log(`✅ ${data.length} entrées nutrition récupérées depuis le serveur VPS`);
+            // Mettre à jour le cache local
+            await AsyncStorage.setItem(`food_entries_${userId}`, JSON.stringify(data));
+            console.log('💾 Cache nutrition local mis à jour');
+            return data;
+          }
+        } catch (vpsError) {
+          console.warn('⚠️ Erreur récupération nutrition VPS:', vpsError);
         }
       }
 
-      // Fallback vers le stockage local
-      console.log('Fallback vers le stockage local pour la nutrition');
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+      // 2. FALLBACK: Utiliser le stockage local
+      console.log('📱 Utilisation du cache local nutrition (fallback)');
       const localData = await AsyncStorage.getItem(`food_entries_${userId}`);
-      return localData ? JSON.parse(localData) : [];
+      const nutrition = localData ? JSON.parse(localData) : [];
+      console.log(`💾 ${nutrition.length} entrées nutrition trouvées en local`);
+      
+      return nutrition;
     } catch (error) {
-      console.error('Erreur récupération données nutrition:', error);
-      try {
-        const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-        const localData = await AsyncStorage.getItem(`food_entries_${userId}`);
-        return localData ? JSON.parse(localData) : [];
-      } catch (localError) {
-        console.error('Erreur stockage local nutrition:', localError);
-        return [];
-      }
+      console.error('❌ Erreur critique récupération nutrition:', error);
+      return [];
     }
   }
 
   static async saveNutritionData(userId: string, nutritionData: any[]): Promise<void> {
-    try {
-      // Toujours sauvegarder en local d'abord
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-      await AsyncStorage.setItem(`food_entries_${userId}`, JSON.stringify(nutritionData));
-      console.log(`✅ ${nutritionData.length} entrées nutrition sauvegardées localement`);
+    let localSaved = false;
+    let vpsSaved = false;
 
+    try {
+      console.log(`🥗 Sauvegarde de ${nutritionData.length} entrées nutrition...`);
+      
+      // 1. TOUJOURS sauvegarder en local EN PREMIER
+      await AsyncStorage.setItem(`food_entries_${userId}`, JSON.stringify(nutritionData));
+      localSaved = true;
+      console.log('✅ Sauvegarde nutrition locale réussie');
+
+      // 2. PRIORITÉ: Essayer de sauvegarder sur le serveur VPS
       const isConnected = await this.testConnection();
       if (isConnected) {
-        const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(nutritionData),
-        });
+        try {
+          const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(nutritionData),
+            signal: AbortSignal.timeout(8000)
+          });
 
-        if (response.ok) {
-          console.log('✅ Données nutrition sauvegardées sur le serveur VPS');
-        } else {
-          console.warn('⚠️ Échec sauvegarde nutrition serveur VPS');
-          throw new Error(`Erreur HTTP: ${response.status}`);
+          if (response.ok) {
+            vpsSaved = true;
+            console.log('🚀 Sauvegarde nutrition VPS réussie');
+          } else {
+            console.warn(`⚠️ Échec sauvegarde nutrition VPS (HTTP ${response.status})`);
+          }
+        } catch (vpsError) {
+          console.warn('⚠️ Erreur sauvegarde nutrition VPS:', vpsError);
         }
-      } else {
-        console.warn('⚠️ Serveur VPS indisponible pour nutrition');
-        throw new Error('Serveur indisponible');
       }
+
+      // 3. Rapport final
+      if (localSaved && vpsSaved) {
+        console.log('🎉 Sauvegarde nutrition complète (local + VPS)');
+      } else if (localSaved) {
+        console.log('⚠️ Sauvegarde nutrition locale uniquement');
+      }
+
     } catch (error) {
-      console.error('❌ Erreur sauvegarde données nutrition:', error);
-      // S'assurer que la sauvegarde locale est maintenue
-      try {
-        const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-        await AsyncStorage.setItem(`food_entries_${userId}`, JSON.stringify(nutritionData));
-        console.log('💾 Sauvegarde locale nutrition de secours effectuée');
-      } catch (localError) {
-        console.error('❌ Erreur critique - impossible de sauvegarder nutrition localement:', localError);
-        throw localError;
+      console.error('❌ Erreur sauvegarde nutrition:', error);
+      
+      // Dernier recours
+      if (!localSaved) {
+        try {
+          await AsyncStorage.setItem(`food_entries_${userId}`, JSON.stringify(nutritionData));
+          console.log('🆘 Sauvegarde nutrition locale de secours');
+        } catch (localError) {
+          console.error('🔥 ERREUR CRITIQUE nutrition:', localError);
+          throw localError;
+        }
       }
     }
   }
 
-  // Méthodes pour les entraînements (workouts)
+  // Méthodes pour les entraînements (workouts) avec priorité serveur VPS
   static async getWorkouts(userId: string): Promise<any[]> {
     try {
+      console.log('🔍 Récupération des entraînements...');
+      
+      // 1. PRIORITÉ: Essayer le serveur VPS
       const isConnected = await this.testConnection();
       if (isConnected) {
-        const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`);
-        if (response.ok) {
-          const data = await response.json();
-          console.log(`📥 ${data.length} entraînements récupérés depuis le serveur VPS`);
-          // Sauvegarder en local comme backup
-          await AsyncStorage.setItem(`workouts_${userId}`, JSON.stringify(data));
-          return data;
-        } else {
-          console.warn('⚠️ Erreur réponse serveur VPS, utilisation cache local');
+        try {
+          const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            signal: AbortSignal.timeout(5000) // Timeout de 5 secondes
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log(`✅ ${data.length} entraînements récupérés depuis le serveur VPS`);
+            // Mettre à jour le cache local avec les données du serveur
+            await AsyncStorage.setItem(`workouts_${userId}`, JSON.stringify(data));
+            console.log('💾 Cache local mis à jour');
+            return data;
+          }
+        } catch (vpsError) {
+          console.warn('⚠️ Erreur lors de la récupération VPS:', vpsError);
         }
-      } else {
-        console.warn('⚠️ Serveur VPS non disponible, utilisation cache local');
       }
 
-      // Fallback vers le stockage local
-      console.log('💾 Fallback vers le stockage local pour les entraînements');
+      // 2. FALLBACK: Utiliser le stockage local
+      console.log('📱 Utilisation du stockage local (fallback)');
       const localData = await AsyncStorage.getItem(`workouts_${userId}`);
       const workouts = localData ? JSON.parse(localData) : [];
-      console.log(`📱 ${workouts.length} entraînements trouvés en local`);
+      console.log(`💾 ${workouts.length} entraînements trouvés en local`);
+      
+      if (workouts.length === 0) {
+        console.log('ℹ️ Aucun entraînement trouvé (ni serveur, ni local)');
+      }
+      
       return workouts;
     } catch (error) {
-      console.error('❌ Erreur récupération entraînements:', error);
-      // Essayer le stockage local en cas d'erreur
-      try {
-        const localData = await AsyncStorage.getItem(`workouts_${userId}`);
-        const workouts = localData ? JSON.parse(localData) : [];
-        console.log(`💾 ${workouts.length} entraînements récupérés du cache local de secours`);
-        return workouts;
-      } catch (localError) {
-        console.error('❌ Erreur critique stockage local:', localError);
-        return [];
-      }
+      console.error('❌ Erreur critique récupération entraînements:', error);
+      return [];
     }
   }
 
   static async saveWorkouts(userId: string, workouts: any[]): Promise<void> {
-    try {
-      // Toujours sauvegarder en local d'abord
-      await AsyncStorage.setItem(`workouts_${userId}`, JSON.stringify(workouts));
-      console.log('✅ Entraînements sauvegardés localement');
+    let localSaved = false;
+    let vpsSaved = false;
 
+    try {
+      console.log(`💾 Sauvegarde de ${workouts.length} entraînements...`);
+      
+      // 1. TOUJOURS sauvegarder en local EN PREMIER (garantie de persistance)
+      await AsyncStorage.setItem(`workouts_${userId}`, JSON.stringify(workouts));
+      localSaved = true;
+      console.log('✅ Sauvegarde locale réussie');
+
+      // 2. PRIORITÉ: Essayer de sauvegarder sur le serveur VPS
       const isConnected = await this.testConnection();
       if (isConnected) {
-        const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(workouts),
-        });
+        try {
+          const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(workouts),
+            signal: AbortSignal.timeout(8000) // Timeout de 8 secondes pour la sauvegarde
+          });
 
-        if (response.ok) {
-          console.log('✅ Entraînements sauvegardés sur le serveur VPS');
-        } else {
-          console.warn('⚠️ Échec sauvegarde serveur VPS, données conservées localement');
-          throw new Error(`Erreur HTTP: ${response.status}`);
+          if (response.ok) {
+            vpsSaved = true;
+            console.log('🚀 Sauvegarde serveur VPS réussie');
+          } else {
+            console.warn(`⚠️ Échec sauvegarde VPS (HTTP ${response.status})`);
+          }
+        } catch (vpsError) {
+          console.warn('⚠️ Erreur sauvegarde VPS:', vpsError);
         }
       } else {
-        console.warn('⚠️ Serveur VPS indisponible, données sauvegardées localement uniquement');
-        throw new Error('Serveur indisponible');
+        console.log('📶 Serveur VPS indisponible - sauvegarde locale uniquement');
       }
+
+      // 3. Rapport final
+      if (localSaved && vpsSaved) {
+        console.log('🎉 Sauvegarde complète (local + VPS)');
+      } else if (localSaved) {
+        console.log('⚠️ Sauvegarde locale uniquement (VPS indisponible)');
+      } else {
+        throw new Error('Échec de toutes les sauvegardes');
+      }
+
     } catch (error) {
-      console.error('❌ Erreur sauvegarde entraînements:', error);
-      // S'assurer que la sauvegarde locale est maintenue
-      try {
-        await AsyncStorage.setItem(`workouts_${userId}`, JSON.stringify(workouts));
-        console.log('💾 Sauvegarde locale de secours effectuée');
-      } catch (localError) {
-        console.error('❌ Erreur critique - impossible de sauvegarder localement:', localError);
-        throw localError;
+      console.error('❌ Erreur lors de la sauvegarde:', error);
+      
+      // Dernier recours: s'assurer que la sauvegarde locale est faite
+      if (!localSaved) {
+        try {
+          await AsyncStorage.setItem(`workouts_${userId}`, JSON.stringify(workouts));
+          console.log('🆘 Sauvegarde locale de secours effectuée');
+        } catch (localError) {
+          console.error('🔥 ERREUR CRITIQUE - Impossible de sauvegarder:', localError);
+          throw new Error('Échec critique de la sauvegarde');
+        }
       }
     }
   }
