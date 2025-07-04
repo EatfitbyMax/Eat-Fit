@@ -32,47 +32,7 @@ externalPort = 3003
 runButton = "Dev Server"
 
 [[workflows.workflow]]
-name = "Dev Server"
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN npx expo start"
-
-[[workflows.workflow]]
-name = "EAS Init"
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npx eas init"
-
-[[workflows.workflow]]
-name = "EAS Update"
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npx eas update --auto"
-
-[[workflows.workflow]]
-name = "EAS Publish Preview iOS"
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npx eas build --platform ios --profile preview"
-
-[[workflows.workflow]]
-name = "EAS Publish Preview Android"
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npx eas build --platform android --profile preview"
-
-[[workflows.workflow]]
-name = "Start Server"
+name = "Start External VPS"
 author = 42598128
 mode = "sequential"
 
@@ -81,7 +41,16 @@ task = "shell.exec"
 args = "cd server && npm install && node server.js"
 
 [[workflows.workflow]]
-name = "Start VPS Server"
+name = "Dev Server"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx expo start --port 8081"
+
+[[workflows.workflow]]
+name = "Local Server"
 author = 42598128
 mode = "sequential"
 
