@@ -1,4 +1,3 @@
-
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
@@ -60,10 +59,10 @@ async function updateOpenFoodFacts() {
   try {
     console.log('[OpenFoodFacts] 🔄 Téléchargement de la base OpenFoodFacts...');
     console.log('[OpenFoodFacts] 📥 Début du téléchargement depuis OpenFoodFacts...');
-    
+
     const url = 'https://static.openfoodfacts.org/data/en.openfoodfacts.org.products.json';
     await downloadWithRedirects(url);
-    
+
     console.log('[OpenFoodFacts] ✅ Mise à jour terminée avec succès');
   } catch (error) {
     console.error('[OpenFoodFacts] ❌ Erreur téléchargement:', error);
