@@ -65,6 +65,7 @@ export default function ProfilScreen() {
     React.useCallback(() => {
       loadUserData();
       loadIntegrationStatus();
+      loadSubscriptionStatus();
     }, [])
   );
 
@@ -97,7 +98,6 @@ export default function ProfilScreen() {
     try {
       const subscriptionData = await checkSubscriptionStatus();
       console.log('🔍 Données d\'abonnement récupérées:', subscriptionData);
-      setIsPremium(subscriptionData.isPremium);
       
       // Mettre à jour les données d'abonnement pour l'affichage
       if (subscriptionData.isPremium) {
@@ -112,13 +112,17 @@ export default function ProfilScreen() {
         };
         
         console.log('💎 Configuration abonnement premium:', subscription);
+        setIsPremium(true);
         setCurrentSubscription(subscription);
       } else {
         console.log('📝 Aucun abonnement premium détecté');
+        setIsPremium(false);
         setCurrentSubscription(null);
       }
     } catch (error) {
       console.error("Failed to load subscription status:", error);
+      setIsPremium(false);
+      setCurrentSubscription(null);
     }
   };
 
@@ -459,7 +463,7 @@ export default function ProfilScreen() {
 
         {/* Section Abonnement */}
         <View style={styles.section}>
-          {isPremium && currentSubscription ? (
+          {isPremium && currentSubscription && currentSubscription.planName ? (
             /* Affichage Premium */
             <View style={styles.premiumSubscriptionCard}>
               <LinearGradient
