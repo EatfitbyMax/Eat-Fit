@@ -23,7 +23,8 @@ const { width } = Dimensions.get('window');
 let BarCodeScanner: any = null;
 if (Platform.OS !== 'web') {
   try {
-    BarCodeScanner = require('expo-barcode-scanner').BarCodeScanner;
+    const { BarCodeScanner: Scanner } = require('expo-barcode-scanner');
+    BarCodeScanner = Scanner;
   } catch (error) {
     console.log('BarCodeScanner non disponible:', error);
   }

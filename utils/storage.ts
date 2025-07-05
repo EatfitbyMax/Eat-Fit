@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const SERVER_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://vps-68f3d9a8.vps.ovh.net:5000';
+const SERVER_URL = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
 
 export class PersistentStorage {
   // Test de connexion au serveur avec cache temporaire
@@ -8,37 +8,36 @@ export class PersistentStorage {
   private static readonly CACHE_DURATION = 30000; // 30 secondes
 
   static async testConnection(): Promise<boolean> {
-    // Vérifier le cache
-    if (this.connectionCache) {
-      const age = Date.now() - this.connectionCache.timestamp;
-      if (age < this.CACHE_DURATION) {
-        return this.connectionCache.isConnected;
-      }
-    }
-
     try {
+      console.log(`Test de connexion au serveur VPS: ${SERVER_URL}`);
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
       const response = await fetch(`${SERVER_URL}/api/health-check`, {
         method: 'GET',
-        signal: AbortSignal.timeout(2000) // Réduire le timeout à 2 secondes
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal
       });
 
-      const isConnected = response.ok;
+      clearTimeout(timeoutId);
 
-      // Mettre à jour le cache
-      this.connectionCache = {
-        isConnected,
-        timestamp: Date.now()
-      };
-
-      console.log(`🔌 Serveur: ${isConnected ? 'CONNECTÉ' : 'DÉCONNECTÉ'} (${SERVER_URL})`);
-      return isConnected;
-    } catch (error) {
-      // Mettre à jour le cache avec l'état déconnecté
-      this.connectionCache = {
-        isConnected: false,
-        timestamp: Date.now()
-      };
-      console.warn(`⚠️ Serveur indisponible (${SERVER_URL}), utilisation du stockage local`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Serveur VPS opérationnel -', data.message);
+        return true;
+      } else {
+        console.warn(`⚠️ Serveur indisponible (status: ${response.status})`);
+        return false;
+      }
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.warn('⚠️ Timeout de connexion au serveur VPS');
+      } else {
+        console.warn(`⚠️ Erreur de connexion au serveur ${SERVER_URL}:`, error.message);
+      }
       return false;
     }
   }
