@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SERVER_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://vps-68f3d9a8.vps.ovh.net:5000';
 
-export export class PersistentStorage {
+export class PersistentStorage {
   // Test de connexion au serveur avec cache temporaire
   private static connectionCache: { isConnected: boolean; timestamp: number } | null = null;
   private static readonly CACHE_DURATION = 30000; // 30 secondes
