@@ -15,16 +15,8 @@ export class DataMigration {
       }
 
       // Vérifier s'il y a des données existantes
-      let existingProgrammes = [];
-      let existingUsers = [];
-      
-      try {
-        existingProgrammes = await PersistentStorage.getProgrammes();
-        existingUsers = await PersistentStorage.getUsers();
-      } catch (error) {
-        console.warn('Erreur lors de la vérification des données existantes:', error);
-        return;
-      }
+      const existingProgrammes = await PersistentStorage.getProgrammes();
+      const existingUsers = await PersistentStorage.getUsers();
 
       if (existingProgrammes.length > 0 || existingUsers.length > 0) {
         console.log(`Migration: ${existingProgrammes.length} programmes et ${existingUsers.length} utilisateurs déjà présents`);
@@ -34,7 +26,7 @@ export class DataMigration {
       console.log('Migration terminée');
 
     } catch (error) {
-      console.warn('Migration échouée - serveur VPS non accessible, données conservées localement');
+      console.warn('Migration échouée - serveur VPS non accessible, données conservées localement:', error);
       // Ne pas rethrow l'erreur pour permettre à l'app de continuer
     }
   }
