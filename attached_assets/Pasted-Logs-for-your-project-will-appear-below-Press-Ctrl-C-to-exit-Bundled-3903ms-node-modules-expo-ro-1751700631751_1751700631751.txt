@@ -1,0 +1,50 @@
+Logs for your project will appear below. Press Ctrl+C to exit.
+λ Bundled 3903ms node_modules/expo-router/node/render.js (1379 modules)
+λ Bundled 3957ms node_modules/expo-router/node/render.js (1 module)
+Web Bundled 4861ms node_modules/expo-router/entry.js (1075 modules)
+Web Bundled 4877ms node_modules/expo-router/entry.js (1 module)
+λ  WARN  "shadow*" style props are deprecated. Use "boxShadow". 
+λ  WARN  "textShadow*" style props are deprecated. Use "textShadow". 
+  factory (app/(client)/entrainement.tsx:1035:27)
+λ  LOG  🔧 Configuration EmailJS: {
+  SERVICE_ID: 'service_test_eatfit',
+  TEMPLATE_ID: 'template_test_eatfit',
+  PUBLIC_KEY: 'pk_test_ea...'
+}
+λ  WARN  "shadow*" style props are deprecated. Use "boxShadow". 
+λ  WARN  "textShadow*" style props are deprecated. Use "textShadow". 
+  factory (app/(client)/entrainement.tsx:1035:27)
+λ  LOG  🔧 Configuration EmailJS: {
+  SERVICE_ID: 'service_test_eatfit',
+  TEMPLATE_ID: 'template_test_eatfit',
+  PUBLIC_KEY: 'pk_test_ea...'
+}
+Web Bundled 1612ms node_modules/expo-router/entry.js (1137 modules)
+iOS Bundled 2345ms node_modules/expo-router/entry.js (1644 modules)
+ LOG  [web] Logs will appear in the browser console
+ LOG  [web] Logs will appear in the browser console
+ LOG  BarCodeScanner non disponible: [Error: Cannot find native module 'ExpoBarCodeScanner']
+ LOG  🔧 Configuration EmailJS: {"PUBLIC_KEY": "pk_test_ea...", "SERVICE_ID": "service_test_eatfit", "TEMPLATE_ID": "template_test_eatfit"}
+ LOG  === DÉBUT INITIALISATION ===
+ LOG  Synchronisation avec le serveur VPS...
+ WARN  ⚠️ Serveur indisponible (http://localhost:5000), utilisation du stockage local
+ WARN  Serveur VPS non disponible, utilisation du stockage local uniquement
+ LOG  Initialisation du compte admin...
+ LOG  Compte admin déjà existant
+ LOG  Migration des données existantes...
+ LOG  Début de la migration des données...
+ LOG  ⚠️ Serveur VPS indisponible, migration différée
+ LOG  Vérification de l'utilisateur connecté...
+ LOG  Aucun utilisateur connecté
+ LOG  === FIN INITIALISATION ===
+ LOG  Aucun utilisateur connecté
+ LOG  Aucun utilisateur connecté
+ LOG  Aucun utilisateur connecté
+ LOG  Aucun utilisateur connecté
+ LOG  Aucun utilisateur connecté
+ LOG  Aucun utilisateur connecté
+ LOG  Aucun utilisateur connecté
+ LOG  Aucun utilisateur connecté
+ LOG  Aucun utilisateur connecté
+ LOG  Aucun utilisateur connecté
+ LOG  Aucun utilisateur, redirection vers login
