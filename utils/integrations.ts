@@ -177,8 +177,12 @@ export class IntegrationsManager {
       
       try {
         // Tentative de synchronisation avec le serveur VPS
-        await PersistentStorage.saveHealthData(userId, healthDataArray);
-        console.log('Données Apple Health sauvegardées sur le serveur VPS');
+        try {
+          await PersistentStorage.saveHealthData(userId, healthDataArray);
+          console.log('Données Apple Health sauvegardées sur le serveur VPS');
+        } catch (vpsError) {
+          console.warn('Serveur VPS non accessible, données conservées localement uniquement');
+        }
       } catch (serverError) {
         console.warn('Impossible de sauvegarder sur le serveur, données conservées localement:', serverError);
       }
@@ -502,8 +506,12 @@ export class IntegrationsManager {
       
       try {
         // Tentative de synchronisation avec le serveur VPS
-        await PersistentStorage.saveStravaActivities(userId, activities);
-        console.log('Activités Strava sauvegardées sur le serveur VPS');
+        try {
+          await PersistentStorage.saveStravaActivities(userId, activities);
+          console.log('Activités Strava sauvegardées sur le serveur VPS');
+        } catch (vpsError) {
+          console.warn('Serveur VPS non accessible, données conservées localement uniquement');
+        }
       } catch (serverError) {
         console.warn('Serveur VPS non disponible, données conservées localement uniquement');
         // Continuer même si le serveur échoue - c'est normal en développement
