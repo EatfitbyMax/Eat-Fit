@@ -539,23 +539,58 @@ export class PersistentStorage {
   }
 
   static async saveUsers(users: any[]): Promise<void> {
-    try {
-      await this.testConnection();
-      const response = await fetch(`${SERVER_URL}/api/users`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(users),
-      });
+    let localSaved = false;
+    let serverSaved = false;
 
-      if (response.ok) {
-        console.log('Utilisateurs sauvegardés sur le serveur VPS');
-        return;
+    try {
+      // 1. Toujours sauvegarder en local d'abord
+      await AsyncStorage.setItem('users', JSON.stringify(users));
+      localSaved = true;
+      console.log('✅ Utilisateurs sauvegardés localement');
+
+      // 2. Essayer la sauvegarde serveur
+      const isConnected = await this.testConnection();
+      if (isConnected) {
+        try {
+          const response = await fetch(`${SERVER_URL}/api/users`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(users),
+            signal: AbortSignal.timeout(8000)
+          });
+
+          if (response.ok) {
+            serverSaved = true;
+            console.log('✅ Utilisateurs sauvegardés sur le serveur VPS');
+          } else {
+            console.warn(`⚠️ Échec sauvegarde serveur (HTTP ${response.status})`);
+          }
+        } catch (serverError) {
+          console.warn('⚠️ Erreur sauvegarde serveur:', serverError);
+        }
       }
-      throw new Error('Erreur sauvegarde utilisateurs sur le serveur');
+
+      // 3. Rapport final
+      if (localSaved && serverSaved) {
+        console.log('🎉 Sauvegarde complète (local + serveur)');
+      } else if (localSaved) {
+        console.log('⚠️ Sauvegarde locale uniquement (serveur indisponible)');
+      } else {
+        throw new Error('Échec de toutes les sauvegardes');
+      }
+
     } catch (error) {
-      console.error('Erreur sauvegarde utilisateurs:', error);
+      console.error('❌ Erreur sauvegarde utilisateurs:', error);
+      // Dernier recours: s'assurer de la sauvegarde locale
+      if (!localSaved) {
+        try {
+          await AsyncStorage.setItem('users', JSON.stringify(users));
+          console.log('🆘 Sauvegarde locale de secours réussie');
+        } catch (localError) {
+          console.error('🔥 ERREUR CRITIQUE utilisateurs:', localError);
+          throw localError;
+        }
+      }
       throw error;
     }
   }
@@ -853,7 +888,7 @@ export class PersistentStorage {
     } catch (error) {
       console.error('❌ Erreur lors de la sauvegarde:', error);
 
-      // Dernier recours: s'assurer que la sauvegarde locale est faite
+      // Dernier recours: s'assurerque la sauvegarde locale est faite
       if (!localSaved) {
         try {
           await AsyncStorage.setItem(`workouts_${userId}`, JSON.stringify(workouts));

@@ -2,6 +2,16 @@ import React from 'react';
 import { Alert } from 'react-native';
 
 // Gestion globale des erreurs non capturées
+if (typeof window !== 'undefined') {
+  window.addEventListener('unhandledrejection', (event) => {
+    console.warn('Promesse non capturée:', event.reason);
+    event.preventDefault();
+  });
+
+  window.addEventListener('error', (event) => {
+    console.error('Erreur globale:', event.error);
+  });
+}s
 const handleUnhandledRejection = (event: any) => {
   console.error('Promesse non capturée:', event.reason);
   if (event.preventDefault) {
