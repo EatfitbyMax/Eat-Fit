@@ -7,6 +7,13 @@ export class DataMigration {
     try {
       console.log('Début de la migration des données...');
 
+      // Vérifier la connectivité au serveur VPS
+      const isConnected = await PersistentStorage.testConnection();
+      if (!isConnected) {
+        console.log('⚠️ Serveur VPS indisponible, migration différée');
+        return;
+      }
+
       // Vérifier s'il y a des données existantes
       const existingProgrammes = await PersistentStorage.getProgrammes();
       const existingUsers = await PersistentStorage.getUsers();
@@ -19,9 +26,9 @@ export class DataMigration {
       console.log('Migration terminée');
 
     } catch (error) {
-    console.warn('Migration échouée - serveur VPS non accessible, données conservées localement:', error);
-    // Ne pas rethrow l'erreur pour permettre à l'app de continuer
-  }
+      console.warn('Migration échouée - serveur VPS non accessible, données conservées localement:', error);
+      // Ne pas rethrow l'erreur pour permettre à l'app de continuer
+    }
   }
 
   static async initializeDefaultData(): Promise<void> {

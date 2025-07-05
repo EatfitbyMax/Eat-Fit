@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const SERVER_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://vps-68f3d9a8.vps.ovh.net:5001';
+const SERVER_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://vps-68f3d9a8.vps.ovh.net:5000';
 
 export class PersistentStorage {
   // Test de connexion au serveur avec cache temporaire
@@ -15,7 +15,7 @@ export class PersistentStorage {
 
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
 
       const response = await fetch(`${SERVER_URL}/api/health-check`, {
         method: 'GET',
@@ -34,7 +34,7 @@ export class PersistentStorage {
         timestamp: Date.now()
       };
 
-      console.log(`🔌 Serveur VPS: ${isConnected ? 'CONNECTÉ' : 'DÉCONNECTÉ'}`);
+      console.log(`🔌 Serveur VPS: ${isConnected ? 'CONNECTÉ' : 'DÉCONNECTÉ'} (${SERVER_URL})`);
       return isConnected;
     } catch (error) {
       // Mettre à jour le cache avec l'état déconnecté
@@ -42,7 +42,7 @@ export class PersistentStorage {
         isConnected: false,
         timestamp: Date.now()
       };
-      console.warn('⚠️ Serveur VPS indisponible, utilisation du stockage local');
+      console.warn(`⚠️ Serveur VPS indisponible (${SERVER_URL}), utilisation du stockage local`);
       return false;
     }
   }
@@ -50,17 +50,27 @@ export class PersistentStorage {
   // Programmes storage
   static async getProgrammes(): Promise<any[]> {
     try {
-      await this.testConnection();
-      const response = await fetch(`${SERVER_URL}/api/programmes`);
+      const isConnected = await this.testConnection();
+      if (!isConnected) {
+        console.log('📱 Serveur VPS indisponible, retour liste vide');
+        return [];
+      }
+
+      const response = await fetch(`${SERVER_URL}/api/programmes`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(5000)
+      });
+
       if (response.ok) {
         const data = await response.json();
         console.log('Programmes récupérés depuis le serveur VPS');
         return data;
       }
-      throw new Error('Erreur récupération programmes depuis le serveur');
+      throw new Error(`Erreur HTTP ${response.status}`);
     } catch (error) {
       console.error('Erreur récupération programmes:', error);
-      throw error;
+      return [];
     }
   }
 
@@ -508,17 +518,27 @@ export class PersistentStorage {
   // Users storage
   static async getUsers(): Promise<any[]> {
     try {
-      await this.testConnection();
-      const response = await fetch(`${SERVER_URL}/api/users`);
+      const isConnected = await this.testConnection();
+      if (!isConnected) {
+        console.log('📱 Serveur VPS indisponible, retour liste vide');
+        return [];
+      }
+
+      const response = await fetch(`${SERVER_URL}/api/users`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(5000)
+      });
+
       if (response.ok) {
         const data = await response.json();
         console.log('Utilisateurs récupérés depuis le serveur VPS');
         return data;
       }
-      throw new Error('Erreur récupération utilisateurs depuis le serveur');
+      throw new Error(`Erreur HTTP ${response.status}`);
     } catch (error) {
       console.error('Erreur récupération utilisateurs:', error);
-      throw error;
+      return [];
     }
   }
 
