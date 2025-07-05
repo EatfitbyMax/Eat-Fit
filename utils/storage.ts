@@ -8,24 +8,20 @@ export class PersistentStorage {
   private static readonly CACHE_DURATION = 30000; // 30 secondes
 
   static async testConnection(): Promise<boolean> {
-    // Utiliser le cache si disponible et récent
-    if (this.connectionCache && Date.now() - this.connectionCache.timestamp < this.CACHE_DURATION) {
-      return this.connectionCache.isConnected;
+    // Vérifier le cache
+    if (this.connectionCache) {
+      const age = Date.now() - this.connectionCache.timestamp;
+      if (age < this.CACHE_DURATION) {
+        return this.connectionCache.isConnected;
+      }
     }
 
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-
       const response = await fetch(`${SERVER_URL}/api/health-check`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        signal: controller.signal
+        signal: AbortSignal.timeout(2000) // Réduire le timeout à 2 secondes
       });
 
-      clearTimeout(timeoutId);
       const isConnected = response.ok;
 
       // Mettre à jour le cache
@@ -34,7 +30,7 @@ export class PersistentStorage {
         timestamp: Date.now()
       };
 
-      console.log(`🔌 Serveur VPS: ${isConnected ? 'CONNECTÉ' : 'DÉCONNECTÉ'} (${SERVER_URL})`);
+      console.log(`🔌 Serveur: ${isConnected ? 'CONNECTÉ' : 'DÉCONNECTÉ'} (${SERVER_URL})`);
       return isConnected;
     } catch (error) {
       // Mettre à jour le cache avec l'état déconnecté
@@ -42,7 +38,7 @@ export class PersistentStorage {
         isConnected: false,
         timestamp: Date.now()
       };
-      console.warn(`⚠️ Serveur VPS indisponible (${SERVER_URL}), utilisation du stockage local`);
+      console.warn(`⚠️ Serveur indisponible (${SERVER_URL}), utilisation du stockage local`);
       return false;
     }
   }

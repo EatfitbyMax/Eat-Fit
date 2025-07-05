@@ -79,8 +79,19 @@ export async function login(email: string, password: string): Promise<User | nul
   try {
     console.log('🔄 Tentative de connexion pour:', email);
     
-    // Récupérer les utilisateurs depuis le serveur VPS uniquement
-    const users = await PersistentStorage.getUsers();
+    // Récupérer les utilisateurs depuis le serveur ou fallback local
+    let users = [];
+    try {
+      users = await PersistentStorage.getUsers();
+    } catch (error) {
+      console.warn('Erreur serveur, tentative récupération locale...');
+      // Fallback vers AsyncStorage local
+      const localUsers = await AsyncStorage.getItem(USERS_KEY);
+      if (localUsers) {
+        users = JSON.parse(localUsers);
+        console.log('Utilisateurs récupérés depuis le stockage local');
+      }
+    }
 
     console.log('📊 Nombre d\'utilisateurs récupérés:', users.length);
     console.log('👥 Utilisateurs disponibles:', users.map((u: any) => ({ 
@@ -206,8 +217,17 @@ export async function register(userData: {
   userType?: 'client' | 'coach';
 }): Promise<User | null> {
   try {
-    // Récupérer les utilisateurs depuis le serveur VPS uniquement
-    const users = await PersistentStorage.getUsers();
+    // Récupérer les utilisateurs existants avec fallback local
+    let users = [];
+    try {
+      users = await PersistentStorage.getUsers();
+    } catch (error) {
+      console.warn('Erreur serveur, récupération locale...');
+      const localUsers = await AsyncStorage.getItem(USERS_KEY);
+      if (localUsers) {
+        users = JSON.parse(localUsers);
+      }
+    }
 
     // Vérifier si l'email existe déjà
     const existingUser = users.find((u: any) => u.email === userData.email);
@@ -236,8 +256,15 @@ export async function register(userData: {
 
     users.push(newUser);
 
-    // Sauvegarder uniquement sur le serveur VPS
-    await PersistentStorage.saveUsers(users);
+    // Sauvegarder avec fallback local
+    try {
+      await PersistentStorage.saveUsers(users);
+      console.log('Utilisateur sauvegardé sur le serveur');
+    } catch (error) {
+      console.warn('Erreur serveur, sauvegarde locale...');
+      await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
+      console.log('Utilisateur sauvegardé localement');
+    }
 
     // Connecter automatiquement l'utilisateur (session locale uniquement)
     const { password: _, ...userWithoutPassword } = newUser;
