@@ -66,9 +66,14 @@ export default function RootLayout() {
       // Toute l'initialisation se fait pendant que le splash screen s'affiche
       console.log('Synchronisation avec le serveur VPS...');
       try {
-        await PersistentStorage.syncData();
+        const isConnected = await PersistentStorage.testConnection();
+        if (isConnected) {
+          console.log('Serveur VPS opérationnel - toutes les données sont sur le serveur');
+        } else {
+          console.warn('Serveur VPS non disponible, utilisation du stockage local uniquement');
+        }
       } catch (error) {
-        console.warn('Synchronisation VPS échouée, mode hors ligne activé:', error);
+        console.warn('Serveur VPS non disponible, utilisation du stockage local uniquement');
       }
 
       console.log('Initialisation du compte admin...');
@@ -93,7 +98,7 @@ export default function RootLayout() {
       // Attendre que le splash screen termine son animation (6 secondes)
       setTimeout(() => {
         setIsInitializing(false);
-        
+
         // Navigation directe après le splash
         setTimeout(() => {
           try {
