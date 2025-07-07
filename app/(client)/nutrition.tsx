@@ -2012,6 +2012,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+    justifyContent: 'center',
   },
   microItem: {
     backgroundColor: 'rgba(13, 17, 23, 0.7)',
@@ -2019,7 +2020,7 @@ const styles = StyleSheet.create({
     padding: width < 375 ? 8 : 10,
     borderWidth: 1,
     borderColor: 'rgba(255, 165, 0, 0.2)',
-    width: (width - 120) / 3 - 5, // 3 colonnes avec espacement optimisé
+    width: (width - 120) / 4 - 6, // 4 colonnes avec espacement optimisé
     alignItems: 'center',
     minHeight: 60,
   },
