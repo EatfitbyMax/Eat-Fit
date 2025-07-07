@@ -5,9 +5,18 @@ const SERVER_URL = 'http://51.178.29.220:5000';
 
 async function testConnection() {
   try {
-    const response = await fetch(`${SERVER_URL}/api/health`);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+    const response = await fetch(`${SERVER_URL}/api/health-check`, {
+      method: 'GET',
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
     return response.ok;
   } catch (error) {
+    console.error('Erreur de connexion au serveur:', error.message);
     return false;
   }
 }
