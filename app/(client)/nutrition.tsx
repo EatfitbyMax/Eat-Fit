@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Modal, Alert } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Modal, Alert, PanGestureHandler, Animated } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import FoodSearchModal from '@/components/FoodSearchModal';
 import { FoodProduct, OpenFoodFactsService, FoodEntry } from '@/utils/openfoodfacts';
@@ -21,6 +21,19 @@ function NutritionScreen() {
     proteins: 0,
     carbohydrates: 0,
     fat: 0,
+    // Micronutriments
+    vitaminA: 0,
+    vitaminC: 0,
+    vitaminD: 0,
+    vitaminE: 0,
+    vitaminB1: 0,
+    vitaminB6: 0,
+    vitaminB12: 0,
+    calcium: 0,
+    iron: 0,
+    magnesium: 0,
+    potassium: 0,
+    zinc: 0,
   });
   const [calorieGoals, setCalorieGoals] = useState({
     calories: 2495,
@@ -28,8 +41,27 @@ function NutritionScreen() {
     carbohydrates: 312,
     fat: 83,
   });
+  
+  const [microGoals, setMicroGoals] = useState({
+    vitaminA: 900, // μg
+    vitaminC: 90, // mg
+    vitaminD: 15, // μg
+    vitaminE: 15, // mg
+    vitaminB1: 1.2, // mg
+    vitaminB6: 1.4, // mg
+    vitaminB12: 2.4, // μg
+    calcium: 1000, // mg
+    iron: 8, // mg
+    magnesium: 400, // mg
+    potassium: 3500, // mg
+    zinc: 11, // mg
+  });
   const [waterIntake, setWaterIntake] = useState(0); // en ml
   const [dailyWaterGoal, setDailyWaterGoal] = useState(2000); // objectif de base en ml
+  
+  // États pour le système de swipe
+  const [currentView, setCurrentView] = useState<'macros' | 'micros'>('macros');
+  const translateX = useRef(new Animated.Value(0)).current;
 
   const formatDate = (date: Date) => {
     const options: Intl.DateTimeFormatOptions = {
@@ -337,16 +369,117 @@ function NutritionScreen() {
     const dayEntries = entries.filter(entry => entry.date === dateString);
 
     const totals = dayEntries.reduce(
-      (acc, entry) => ({
-        calories: acc.calories + entry.calories,
-        proteins: acc.proteins + entry.proteins,
-        carbohydrates: acc.carbohydrates + entry.carbohydrates,
-        fat: acc.fat + entry.fat,
-      }),
-      { calories: 0, proteins: 0, carbohydrates: 0, fat: 0 }
+      (acc, entry) => {
+        // Estimation des micronutriments basée sur les macronutriments
+        const estimatedMicros = estimateMicronutrients(entry);
+        
+        return {
+          calories: acc.calories + entry.calories,
+          proteins: acc.proteins + entry.proteins,
+          carbohydrates: acc.carbohydrates + entry.carbohydrates,
+          fat: acc.fat + entry.fat,
+          vitaminA: acc.vitaminA + estimatedMicros.vitaminA,
+          vitaminC: acc.vitaminC + estimatedMicros.vitaminC,
+          vitaminD: acc.vitaminD + estimatedMicros.vitaminD,
+          vitaminE: acc.vitaminE + estimatedMicros.vitaminE,
+          vitaminB1: acc.vitaminB1 + estimatedMicros.vitaminB1,
+          vitaminB6: acc.vitaminB6 + estimatedMicros.vitaminB6,
+          vitaminB12: acc.vitaminB12 + estimatedMicros.vitaminB12,
+          calcium: acc.calcium + estimatedMicros.calcium,
+          iron: acc.iron + estimatedMicros.iron,
+          magnesium: acc.magnesium + estimatedMicros.magnesium,
+          potassium: acc.potassium + estimatedMicros.potassium,
+          zinc: acc.zinc + estimatedMicros.zinc,
+        };
+      },
+      { 
+        calories: 0, proteins: 0, carbohydrates: 0, fat: 0,
+        vitaminA: 0, vitaminC: 0, vitaminD: 0, vitaminE: 0,
+        vitaminB1: 0, vitaminB6: 0, vitaminB12: 0,
+        calcium: 0, iron: 0, magnesium: 0, potassium: 0, zinc: 0
+      }
     );
 
     setDailyTotals(totals);
+  };
+
+  // Fonction d'estimation des micronutriments basée sur les macronutriments et le nom du produit
+  const estimateMicronutrients = (entry: FoodEntry) => {
+    const productName = entry.product.name?.toLowerCase() || '';
+    const calories = entry.calories;
+    
+    // Coefficients de base par 100 kcal
+    let vitaminA = 0, vitaminC = 0, vitaminD = 0, vitaminE = 0;
+    let vitaminB1 = 0, vitaminB6 = 0, vitaminB12 = 0;
+    let calcium = 0, iron = 0, magnesium = 0, potassium = 0, zinc = 0;
+
+    // Estimation basée sur les types d'aliments
+    if (productName.includes('fruit') || productName.includes('orange') || productName.includes('pomme') || productName.includes('banane')) {
+      vitaminC = calories * 0.8; // Fruits riches en vitamine C
+      potassium = calories * 3;
+      vitaminA = calories * 0.1;
+    } else if (productName.includes('légume') || productName.includes('carotte') || productName.includes('épinard') || productName.includes('brocoli')) {
+      vitaminA = calories * 1.2; // Légumes riches en vitamine A
+      vitaminC = calories * 0.6;
+      vitaminK = calories * 0.3;
+      iron = calories * 0.05;
+      magnesium = calories * 0.8;
+    } else if (productName.includes('viande') || productName.includes('porc') || productName.includes('bœuf') || productName.includes('agneau')) {
+      vitaminB12 = calories * 0.02;
+      vitaminB6 = calories * 0.008;
+      iron = calories * 0.08;
+      zinc = calories * 0.06;
+      vitaminB1 = calories * 0.004;
+    } else if (productName.includes('poisson') || productName.includes('saumon') || productName.includes('thon') || productName.includes('sardine')) {
+      vitaminD = calories * 0.03;
+      vitaminB12 = calories * 0.025;
+      calcium = calories * 0.5;
+      vitaminE = calories * 0.05;
+    } else if (productName.includes('lait') || productName.includes('fromage') || productName.includes('yaourt') || productName.includes('dairy')) {
+      calcium = calories * 2.5;
+      vitaminD = calories * 0.01;
+      vitaminB12 = calories * 0.01;
+      vitaminA = calories * 0.08;
+    } else if (productName.includes('céréale') || productName.includes('pain') || productName.includes('riz') || productName.includes('pâte')) {
+      vitaminB1 = calories * 0.006;
+      vitaminB6 = calories * 0.005;
+      iron = calories * 0.03;
+      magnesium = calories * 0.6;
+    } else if (productName.includes('noix') || productName.includes('amande') || productName.includes('noisette') || productName.includes('graine')) {
+      vitaminE = calories * 0.15;
+      magnesium = calories * 1.2;
+      zinc = calories * 0.04;
+      vitaminB6 = calories * 0.006;
+    } else {
+      // Valeurs par défaut pour les aliments non catégorisés
+      vitaminA = calories * 0.05;
+      vitaminC = calories * 0.3;
+      vitaminD = calories * 0.005;
+      vitaminE = calories * 0.03;
+      vitaminB1 = calories * 0.003;
+      vitaminB6 = calories * 0.004;
+      vitaminB12 = calories * 0.008;
+      calcium = calories * 0.8;
+      iron = calories * 0.04;
+      magnesium = calories * 0.5;
+      potassium = calories * 2;
+      zinc = calories * 0.03;
+    }
+
+    return {
+      vitaminA: Math.round(vitaminA * 10) / 10,
+      vitaminC: Math.round(vitaminC * 10) / 10,
+      vitaminD: Math.round(vitaminD * 10) / 10,
+      vitaminE: Math.round(vitaminE * 10) / 10,
+      vitaminB1: Math.round(vitaminB1 * 100) / 100,
+      vitaminB6: Math.round(vitaminB6 * 100) / 100,
+      vitaminB12: Math.round(vitaminB12 * 100) / 100,
+      calcium: Math.round(calcium * 10) / 10,
+      iron: Math.round(iron * 100) / 100,
+      magnesium: Math.round(magnesium * 10) / 10,
+      potassium: Math.round(potassium * 10) / 10,
+      zinc: Math.round(zinc * 100) / 100,
+    };
   };
 
   const loadUserFoodData = async () => {
@@ -424,6 +557,39 @@ function NutritionScreen() {
       await AsyncStorage.setItem(`water_intake_${user.id}_${dateKey}`, '0');
     } catch (error) {
       console.error('Erreur reset eau:', error);
+    }
+  };
+
+  // Fonctions de gestion du swipe
+  const handleSwipeLeft = () => {
+    if (currentView === 'macros') {
+      setCurrentView('micros');
+      Animated.timing(translateX, {
+        toValue: -width,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+  };
+
+  const handleSwipeRight = () => {
+    if (currentView === 'micros') {
+      setCurrentView('macros');
+      Animated.timing(translateX, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+  };
+
+  const onGestureEvent = (event: any) => {
+    const { translationX } = event.nativeEvent;
+    
+    if (translationX < -50 && currentView === 'macros') {
+      handleSwipeLeft();
+    } else if (translationX > 50 && currentView === 'micros') {
+      handleSwipeRight();
     }
   };
 
@@ -513,92 +679,284 @@ function NutritionScreen() {
           </View>
         </View>
 
-        {/* Stats */}
+        {/* Stats avec swipe */}
         <View style={styles.statsContainer}>
-          {/* Combined Calories and Macros Card */}
-          <View style={styles.combinedStatsCard}>
-            {/* Calories Circular Gauge - Left Side */}
-            <View style={styles.caloriesSection}>
-              <View style={styles.circularGauge}>
-                <Svg width={width < 375 ? 110 : 120} height={width < 375 ? 110 : 120} style={styles.svgGauge}>
-                  {/* Background circle */}
-                  <Circle
-                    cx={(width < 375 ? 110 : 120) / 2}
-                    cy={(width < 375 ? 110 : 120) / 2}
-                    r={(width < 375 ? 110 : 120) / 2 - 8}
-                    stroke="rgba(33, 38, 45, 0.8)"
-                    strokeWidth="8"
-                    fill="transparent"
-                  />
-                  {/* Progress circle */}
-                  <Circle
-                    cx={(width < 375 ? 110 : 120) / 2}
-                    cy={(width < 375 ? 110 : 120) / 2}
-                    r={(width < 375 ? 110 : 120) / 2 - 8}
-                    stroke="#FFA500"
-                    strokeWidth="8"
-                    fill="transparent"
-                    strokeDasharray={`${2 * Math.PI * ((width < 375 ? 110 : 120) / 2 - 8)}`}
-                    strokeDashoffset={`${2 * Math.PI * ((width < 375 ? 110 : 120) / 2 - 8) * (1 - Math.min(dailyTotals.calories / calorieGoals.calories, 1))}`}
-                    strokeLinecap="round"
-                    transform={`rotate(-90 ${(width < 375 ? 110 : 120) / 2} ${(width < 375 ? 110 : 120) / 2})`}
-                  />
-                </Svg>
-                <View style={styles.circularGaugeInner}>
-                  <Text style={styles.caloriesValue}>{dailyTotals.calories}</Text>
-                  <Text style={styles.caloriesTarget}>/ {calorieGoals.calories}</Text>
-                  <Text style={styles.caloriesLabel}>kcal</Text>
+          <PanGestureHandler onGestureEvent={onGestureEvent}>
+            <Animated.View style={styles.swipeContainer}>
+              <Animated.View style={[styles.statsWrapper, { transform: [{ translateX }] }]}>
+                {/* Vue Calories et Macros */}
+                <View style={styles.combinedStatsCard}>
+                  {/* Calories Circular Gauge - Left Side */}
+                  <View style={styles.caloriesSection}>
+                    <View style={styles.circularGauge}>
+                      <Svg width={width < 375 ? 110 : 120} height={width < 375 ? 110 : 120} style={styles.svgGauge}>
+                        {/* Background circle */}
+                        <Circle
+                          cx={(width < 375 ? 110 : 120) / 2}
+                          cy={(width < 375 ? 110 : 120) / 2}
+                          r={(width < 375 ? 110 : 120) / 2 - 8}
+                          stroke="rgba(33, 38, 45, 0.8)"
+                          strokeWidth="8"
+                          fill="transparent"
+                        />
+                        {/* Progress circle */}
+                        <Circle
+                          cx={(width < 375 ? 110 : 120) / 2}
+                          cy={(width < 375 ? 110 : 120) / 2}
+                          r={(width < 375 ? 110 : 120) / 2 - 8}
+                          stroke="#FFA500"
+                          strokeWidth="8"
+                          fill="transparent"
+                          strokeDasharray={`${2 * Math.PI * ((width < 375 ? 110 : 120) / 2 - 8)}`}
+                          strokeDashoffset={`${2 * Math.PI * ((width < 375 ? 110 : 120) / 2 - 8) * (1 - Math.min(dailyTotals.calories / calorieGoals.calories, 1))}`}
+                          strokeLinecap="round"
+                          transform={`rotate(-90 ${(width < 375 ? 110 : 120) / 2} ${(width < 375 ? 110 : 120) / 2})`}
+                        />
+                      </Svg>
+                      <View style={styles.circularGaugeInner}>
+                        <Text style={styles.caloriesValue}>{dailyTotals.calories}</Text>
+                        <Text style={styles.caloriesTarget}>/ {calorieGoals.calories}</Text>
+                        <Text style={styles.caloriesLabel}>kcal</Text>
+                      </View>
+                    </View>
+                    <Text style={styles.caloriesSubtext}>
+                      {Math.max(0, calorieGoals.calories - dailyTotals.calories)} kcal restantes
+                    </Text>
+                  </View>
+
+                  {/* Macros Progress Bars - Right Side */}
+                  <View style={styles.macrosSection}>
+                    {/* Protéines */}
+                    <View style={styles.macroItem}>
+                      <View style={styles.macroHeader}>
+                        <Text style={styles.macroLabel}>Protéines</Text>
+                        <Text style={styles.macroValue}>{Math.round(dailyTotals.proteins)}g / {calorieGoals.proteins}g</Text>
+                      </View>
+                      <View style={styles.progressBar}>
+                        <View style={[styles.progressFill, { 
+                          width: `${Math.min((dailyTotals.proteins / calorieGoals.proteins) * 100, 100)}%`, 
+                          backgroundColor: '#FF6B6B' 
+                        }]} />
+                      </View>
+                    </View>
+
+                    {/* Glucides */}
+                    <View style={styles.macroItem}>
+                      <View style={styles.macroHeader}>
+                        <Text style={styles.macroLabel}>Glucides</Text>
+                        <Text style={styles.macroValue}>{Math.round(dailyTotals.carbohydrates)}g / {calorieGoals.carbohydrates}g</Text>
+                      </View>
+                      <View style={styles.progressBar}>
+                        <View style={[styles.progressFill, { 
+                          width: `${Math.min((dailyTotals.carbohydrates / calorieGoals.carbohydrates) * 100, 100)}%`, 
+                          backgroundColor: '#4ECDC4' 
+                        }]} />
+                      </View>
+                    </View>
+
+                    {/* Lipides */}
+                    <View style={styles.macroItem}>
+                      <View style={styles.macroHeader}>
+                        <Text style={styles.macroLabel}>Lipides</Text>
+                        <Text style={styles.macroValue}>{Math.round(dailyTotals.fat)}g / {calorieGoals.fat}g</Text>
+                      </View>
+                      <View style={styles.progressBar}>
+                        <View style={[styles.progressFill, { 
+                          width: `${Math.min((dailyTotals.fat / calorieGoals.fat) * 100, 100)}%`, 
+                          backgroundColor: '#FFE66D' 
+                        }]} />
+                      </View>
+                    </View>
+                  </View>
                 </View>
-              </View>
-              <Text style={styles.caloriesSubtext}>
-                {Math.max(0, calorieGoals.calories - dailyTotals.calories)} kcal restantes
+
+                {/* Vue Micronutriments */}
+                <View style={styles.combinedStatsCard}>
+                  {/* Section titre micronutriments */}
+                  <View style={styles.microTitle}>
+                    <Text style={styles.microTitleText}>💊 Micronutriments</Text>
+                    <Text style={styles.microSubtitle}>Vitamines & Minéraux</Text>
+                  </View>
+
+                  {/* Vitamines */}
+                  <View style={styles.microSection}>
+                    <Text style={styles.microSectionTitle}>🍊 Vitamines</Text>
+                    
+                    <View style={styles.microGrid}>
+                      <View style={styles.microItem}>
+                        <Text style={styles.microLabel}>Vit. A</Text>
+                        <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminA)}μg</Text>
+                        <View style={styles.microProgressBar}>
+                          <View style={[styles.microProgressFill, { 
+                            width: `${Math.min((dailyTotals.vitaminA / microGoals.vitaminA) * 100, 100)}%`,
+                            backgroundColor: dailyTotals.vitaminA >= microGoals.vitaminA * 0.8 ? '#28A745' : '#F5A623'
+                          }]} />
+                        </View>
+                      </View>
+
+                      <View style={styles.microItem}>
+                        <Text style={styles.microLabel}>Vit. C</Text>
+                        <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminC)}mg</Text>
+                        <View style={styles.microProgressBar}>
+                          <View style={[styles.microProgressFill, { 
+                            width: `${Math.min((dailyTotals.vitaminC / microGoals.vitaminC) * 100, 100)}%`,
+                            backgroundColor: dailyTotals.vitaminC >= microGoals.vitaminC * 0.8 ? '#28A745' : '#F5A623'
+                          }]} />
+                        </View>
+                      </View>
+
+                      <View style={styles.microItem}>
+                        <Text style={styles.microLabel}>Vit. D</Text>
+                        <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminD * 10) / 10}μg</Text>
+                        <View style={styles.microProgressBar}>
+                          <View style={[styles.microProgressFill, { 
+                            width: `${Math.min((dailyTotals.vitaminD / microGoals.vitaminD) * 100, 100)}%`,
+                            backgroundColor: dailyTotals.vitaminD >= microGoals.vitaminD * 0.8 ? '#28A745' : '#F5A623'
+                          }]} />
+                        </View>
+                      </View>
+
+                      <View style={styles.microItem}>
+                        <Text style={styles.microLabel}>Vit. E</Text>
+                        <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminE * 10) / 10}mg</Text>
+                        <View style={styles.microProgressBar}>
+                          <View style={[styles.microProgressFill, { 
+                            width: `${Math.min((dailyTotals.vitaminE / microGoals.vitaminE) * 100, 100)}%`,
+                            backgroundColor: dailyTotals.vitaminE >= microGoals.vitaminE * 0.8 ? '#28A745' : '#F5A623'
+                          }]} />
+                        </View>
+                      </View>
+
+                      <View style={styles.microItem}>
+                        <Text style={styles.microLabel}>Vit. B1</Text>
+                        <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminB1 * 100) / 100}mg</Text>
+                        <View style={styles.microProgressBar}>
+                          <View style={[styles.microProgressFill, { 
+                            width: `${Math.min((dailyTotals.vitaminB1 / microGoals.vitaminB1) * 100, 100)}%`,
+                            backgroundColor: dailyTotals.vitaminB1 >= microGoals.vitaminB1 * 0.8 ? '#28A745' : '#F5A623'
+                          }]} />
+                        </View>
+                      </View>
+
+                      <View style={styles.microItem}>
+                        <Text style={styles.microLabel}>Vit. B12</Text>
+                        <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminB12 * 100) / 100}μg</Text>
+                        <View style={styles.microProgressBar}>
+                          <View style={[styles.microProgressFill, { 
+                            width: `${Math.min((dailyTotals.vitaminB12 / microGoals.vitaminB12) * 100, 100)}%`,
+                            backgroundColor: dailyTotals.vitaminB12 >= microGoals.vitaminB12 * 0.8 ? '#28A745' : '#F5A623'
+                          }]} />
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+
+                  {/* Minéraux */}
+                  <View style={styles.microSection}>
+                    <Text style={styles.microSectionTitle}>⚡ Minéraux</Text>
+                    
+                    <View style={styles.microGrid}>
+                      <View style={styles.microItem}>
+                        <Text style={styles.microLabel}>Calcium</Text>
+                        <Text style={styles.microValue}>{Math.round(dailyTotals.calcium)}mg</Text>
+                        <View style={styles.microProgressBar}>
+                          <View style={[styles.microProgressFill, { 
+                            width: `${Math.min((dailyTotals.calcium / microGoals.calcium) * 100, 100)}%`,
+                            backgroundColor: dailyTotals.calcium >= microGoals.calcium * 0.8 ? '#28A745' : '#F5A623'
+                          }]} />
+                        </View>
+                      </View>
+
+                      <View style={styles.microItem}>
+                        <Text style={styles.microLabel}>Fer</Text>
+                        <Text style={styles.microValue}>{Math.round(dailyTotals.iron * 100) / 100}mg</Text>
+                        <View style={styles.microProgressBar}>
+                          <View style={[styles.microProgressFill, { 
+                            width: `${Math.min((dailyTotals.iron / microGoals.iron) * 100, 100)}%`,
+                            backgroundColor: dailyTotals.iron >= microGoals.iron * 0.8 ? '#28A745' : '#F5A623'
+                          }]} />
+                        </View>
+                      </View>
+
+                      <View style={styles.microItem}>
+                        <Text style={styles.microLabel}>Magnésium</Text>
+                        <Text style={styles.microValue}>{Math.round(dailyTotals.magnesium)}mg</Text>
+                        <View style={styles.microProgressBar}>
+                          <View style={[styles.microProgressFill, { 
+                            width: `${Math.min((dailyTotals.magnesium / microGoals.magnesium) * 100, 100)}%`,
+                            backgroundColor: dailyTotals.magnesium >= microGoals.magnesium * 0.8 ? '#28A745' : '#F5A623'
+                          }]} />
+                        </View>
+                      </View>
+
+                      <View style={styles.microItem}>
+                        <Text style={styles.microLabel}>Potassium</Text>
+                        <Text style={styles.microValue}>{Math.round(dailyTotals.potassium)}mg</Text>
+                        <View style={styles.microProgressBar}>
+                          <View style={[styles.microProgressFill, { 
+                            width: `${Math.min((dailyTotals.potassium / microGoals.potassium) * 100, 100)}%`,
+                            backgroundColor: dailyTotals.potassium >= microGoals.potassium * 0.8 ? '#28A745' : '#F5A623'
+                          }]} />
+                        </View>
+                      </View>
+
+                      <View style={styles.microItem}>
+                        <Text style={styles.microLabel}>Zinc</Text>
+                        <Text style={styles.microValue}>{Math.round(dailyTotals.zinc * 100) / 100}mg</Text>
+                        <View style={styles.microProgressBar}>
+                          <View style={[styles.microProgressFill, { 
+                            width: `${Math.min((dailyTotals.zinc / microGoals.zinc) * 100, 100)}%`,
+                            backgroundColor: dailyTotals.zinc >= microGoals.zinc * 0.8 ? '#28A745' : '#F5A623'
+                          }]} />
+                        </View>
+                      </View>
+
+                      <View style={styles.microItem}>
+                        <Text style={styles.microLabel}>Vit. B6</Text>
+                        <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminB6 * 100) / 100}mg</Text>
+                        <View style={styles.microProgressBar}>
+                          <View style={[styles.microProgressFill, { 
+                            width: `${Math.min((dailyTotals.vitaminB6 / microGoals.vitaminB6) * 100, 100)}%`,
+                            backgroundColor: dailyTotals.vitaminB6 >= microGoals.vitaminB6 * 0.8 ? '#28A745' : '#F5A623'
+                          }]} />
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              </Animated.View>
+            </Animated.View>
+          </PanGestureHandler>
+
+          {/* Indicateurs de navigation */}
+          <View style={styles.navigationIndicators}>
+            <View style={[styles.indicator, currentView === 'macros' && styles.activeIndicator]} />
+            <View style={[styles.indicator, currentView === 'micros' && styles.activeIndicator]} />
+          </View>
+
+          {/* Boutons de navigation */}
+          <View style={styles.navigationButtons}>
+            <TouchableOpacity 
+              style={[styles.navButton, currentView === 'macros' && styles.activeNavButton]}
+              onPress={() => {
+                if (currentView !== 'macros') handleSwipeRight();
+              }}
+            >
+              <Text style={[styles.navButtonText, currentView === 'macros' && styles.activeNavButtonText]}>
+                Macros
               </Text>
-            </View>
-
-            {/* Macros Progress Bars - Right Side */}
-            <View style={styles.macrosSection}>
-              {/* Protéines */}
-              <View style={styles.macroItem}>
-                <View style={styles.macroHeader}>
-                  <Text style={styles.macroLabel}>Protéines</Text>
-                  <Text style={styles.macroValue}>{Math.round(dailyTotals.proteins)}g / {calorieGoals.proteins}g</Text>
-                </View>
-                <View style={styles.progressBar}>
-                  <View style={[styles.progressFill, { 
-                    width: `${Math.min((dailyTotals.proteins / calorieGoals.proteins) * 100, 100)}%`, 
-                    backgroundColor: '#FF6B6B' 
-                  }]} />
-                </View>
-              </View>
-
-              {/* Glucides */}
-              <View style={styles.macroItem}>
-                <View style={styles.macroHeader}>
-                  <Text style={styles.macroLabel}>Glucides</Text>
-                  <Text style={styles.macroValue}>{Math.round(dailyTotals.carbohydrates)}g / {calorieGoals.carbohydrates}g</Text>
-                </View>
-                <View style={styles.progressBar}>
-                  <View style={[styles.progressFill, { 
-                    width: `${Math.min((dailyTotals.carbohydrates / calorieGoals.carbohydrates) * 100, 100)}%`, 
-                    backgroundColor: '#4ECDC4' 
-                  }]} />
-                </View>
-              </View>
-
-              {/* Lipides */}
-              <View style={styles.macroItem}>
-                <View style={styles.macroHeader}>
-                  <Text style={styles.macroLabel}>Lipides</Text>
-                  <Text style={styles.macroValue}>{Math.round(dailyTotals.fat)}g / {calorieGoals.fat}g</Text>
-                </View>
-                <View style={styles.progressBar}>
-                  <View style={[styles.progressFill, { 
-                    width: `${Math.min((dailyTotals.fat / calorieGoals.fat) * 100, 100)}%`, 
-                    backgroundColor: '#FFE66D' 
-                  }]} />
-                </View>
-              </View>
-            </View>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.navButton, currentView === 'micros' && styles.activeNavButton]}
+              onPress={() => {
+                if (currentView !== 'micros') handleSwipeLeft();
+              }}
+            >
+              <Text style={[styles.navButtonText, currentView === 'micros' && styles.activeNavButtonText]}>
+                Micros
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -1308,6 +1666,133 @@ const styles = StyleSheet.create({
   waterButtonText: {
     color: '#FFFFFF',
     fontSize: width < 375 ? 13 : 15,
+    fontWeight: '700',
+  },
+
+  // Styles pour le système de swipe
+  swipeContainer: {
+    width: '100%',
+    overflow: 'hidden',
+  },
+  statsWrapper: {
+    flexDirection: 'row',
+    width: width * 2,
+  },
+
+  // Styles pour les micronutriments
+  microTitle: {
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 165, 0, 0.2)',
+  },
+  microTitleText: {
+    fontSize: width < 375 ? 18 : 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  microSubtitle: {
+    fontSize: width < 375 ? 12 : 14,
+    color: '#8B949E',
+    fontWeight: '500',
+  },
+  microSection: {
+    marginBottom: 20,
+  },
+  microSectionTitle: {
+    fontSize: width < 375 ? 14 : 16,
+    fontWeight: '600',
+    color: '#FFA500',
+    marginBottom: 12,
+  },
+  microGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  microItem: {
+    backgroundColor: 'rgba(13, 17, 23, 0.7)',
+    borderRadius: 10,
+    padding: width < 375 ? 8 : 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 165, 0, 0.2)',
+    width: (width - 80) / 3 - 8, // 3 colonnes avec espacement
+    alignItems: 'center',
+  },
+  microLabel: {
+    fontSize: width < 375 ? 9 : 10,
+    color: '#8B949E',
+    fontWeight: '600',
+    marginBottom: 2,
+    textAlign: 'center',
+  },
+  microValue: {
+    fontSize: width < 375 ? 10 : 11,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  microProgressBar: {
+    height: 3,
+    backgroundColor: 'rgba(33, 38, 45, 0.8)',
+    borderRadius: 1.5,
+    overflow: 'hidden',
+    width: '100%',
+  },
+  microProgressFill: {
+    height: '100%',
+    borderRadius: 1.5,
+  },
+
+  // Styles pour les indicateurs de navigation
+  navigationIndicators: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 12,
+    gap: 8,
+  },
+  indicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(139, 148, 158, 0.3)',
+  },
+  activeIndicator: {
+    backgroundColor: '#FFA500',
+    width: 20,
+  },
+
+  // Styles pour les boutons de navigation
+  navigationButtons: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 12,
+    gap: 12,
+  },
+  navButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: 'rgba(22, 27, 34, 0.8)',
+    borderWidth: 1,
+    borderColor: 'rgba(139, 148, 158, 0.3)',
+  },
+  activeNavButton: {
+    backgroundColor: 'rgba(255, 165, 0, 0.2)',
+    borderColor: '#FFA500',
+  },
+  navButtonText: {
+    fontSize: width < 375 ? 11 : 12,
+    color: '#8B949E',
+    fontWeight: '600',
+  },
+  activeNavButtonText: {
+    color: '#FFA500',
     fontWeight: '700',
   },
 });
