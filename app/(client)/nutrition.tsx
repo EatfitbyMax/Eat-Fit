@@ -101,7 +101,7 @@ function NutritionScreen() {
   const [dailyWaterGoal, setDailyWaterGoal] = useState(2000); // objectif de base en ml
   
   // États pour le système de navigation
-  const [currentView, setCurrentView] = useState<'macros' | 'micros'>('macros');
+  const [currentView, setCurrentView] = useState<'macros' | 'vitamines' | 'mineraux' | 'autres'>('macros');
 
   const formatDate = (date: Date) => {
     const options: Intl.DateTimeFormatOptions = {
@@ -896,340 +896,344 @@ function NutritionScreen() {
               </View>
             )}
 
-            {/* Vue Micronutriments */}
-            {currentView === 'micros' && (
+            {/* Vue Vitamines */}
+            {currentView === 'vitamines' && (
               <View style={styles.combinedStatsCard}>
-                {/* Section titre micronutriments */}
                 <View style={styles.microTitle}>
-                  <Text style={styles.microTitleText}>💊 Micronutriments</Text>
-                  <Text style={styles.microSubtitle}>Vitamines & Minéraux</Text>
+                  <Text style={styles.microTitleText}>🍊 Vitamines</Text>
+                  <Text style={styles.microSubtitle}>Essentielles au bon fonctionnement</Text>
                 </View>
-
-                {/* Vitamines */}
-                <View style={styles.microSection}>
-                  <Text style={styles.microSectionTitle}>🍊 Vitamines</Text>
-                  
-                  <View style={styles.microGrid}>
-                    <View style={styles.microItem}>
-                      <Text style={styles.microLabel}>Vit. A</Text>
-                      <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminA)}μg</Text>
-                      <View style={styles.microProgressBar}>
-                        <View style={[styles.microProgressFill, { 
-                          width: `${Math.min((dailyTotals.vitaminA / microGoals.vitaminA) * 100, 100)}%`,
-                          backgroundColor: dailyTotals.vitaminA >= microGoals.vitaminA * 0.8 ? '#28A745' : '#F5A623'
-                        }]} />
-                      </View>
+                
+                <View style={styles.microGrid}>
+                  <View style={styles.microItem}>
+                    <Text style={styles.microLabel}>Vit. A</Text>
+                    <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminA)}μg</Text>
+                    <View style={styles.microProgressBar}>
+                      <View style={[styles.microProgressFill, { 
+                        width: `${Math.min((dailyTotals.vitaminA / microGoals.vitaminA) * 100, 100)}%`,
+                        backgroundColor: dailyTotals.vitaminA >= microGoals.vitaminA * 0.8 ? '#28A745' : '#F5A623'
+                      }]} />
                     </View>
+                  </View>
 
-                    <View style={styles.microItem}>
-                      <Text style={styles.microLabel}>Vit. C</Text>
-                      <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminC)}mg</Text>
-                      <View style={styles.microProgressBar}>
-                        <View style={[styles.microProgressFill, { 
-                          width: `${Math.min((dailyTotals.vitaminC / microGoals.vitaminC) * 100, 100)}%`,
-                          backgroundColor: dailyTotals.vitaminC >= microGoals.vitaminC * 0.8 ? '#28A745' : '#F5A623'
-                        }]} />
-                      </View>
+                  <View style={styles.microItem}>
+                    <Text style={styles.microLabel}>Vit. C</Text>
+                    <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminC)}mg</Text>
+                    <View style={styles.microProgressBar}>
+                      <View style={[styles.microProgressFill, { 
+                        width: `${Math.min((dailyTotals.vitaminC / microGoals.vitaminC) * 100, 100)}%`,
+                        backgroundColor: dailyTotals.vitaminC >= microGoals.vitaminC * 0.8 ? '#28A745' : '#F5A623'
+                      }]} />
                     </View>
+                  </View>
 
-                    <View style={styles.microItem}>
-                      <Text style={styles.microLabel}>Vit. D</Text>
-                      <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminD * 10) / 10}μg</Text>
-                      <View style={styles.microProgressBar}>
-                        <View style={[styles.microProgressFill, { 
-                          width: `${Math.min((dailyTotals.vitaminD / microGoals.vitaminD) * 100, 100)}%`,
-                          backgroundColor: dailyTotals.vitaminD >= microGoals.vitaminD * 0.8 ? '#28A745' : '#F5A623'
-                        }]} />
-                      </View>
+                  <View style={styles.microItem}>
+                    <Text style={styles.microLabel}>Vit. D</Text>
+                    <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminD * 10) / 10}μg</Text>
+                    <View style={styles.microProgressBar}>
+                      <View style={[styles.microProgressFill, { 
+                        width: `${Math.min((dailyTotals.vitaminD / microGoals.vitaminD) * 100, 100)}%`,
+                        backgroundColor: dailyTotals.vitaminD >= microGoals.vitaminD * 0.8 ? '#28A745' : '#F5A623'
+                      }]} />
                     </View>
+                  </View>
 
-                    <View style={styles.microItem}>
-                      <Text style={styles.microLabel}>Vit. E</Text>
-                      <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminE * 10) / 10}mg</Text>
-                      <View style={styles.microProgressBar}>
-                        <View style={[styles.microProgressFill, { 
-                          width: `${Math.min((dailyTotals.vitaminE / microGoals.vitaminE) * 100, 100)}%`,
-                          backgroundColor: dailyTotals.vitaminE >= microGoals.vitaminE * 0.8 ? '#28A745' : '#F5A623'
-                        }]} />
-                      </View>
+                  <View style={styles.microItem}>
+                    <Text style={styles.microLabel}>Vit. E</Text>
+                    <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminE * 10) / 10}mg</Text>
+                    <View style={styles.microProgressBar}>
+                      <View style={[styles.microProgressFill, { 
+                        width: `${Math.min((dailyTotals.vitaminE / microGoals.vitaminE) * 100, 100)}%`,
+                        backgroundColor: dailyTotals.vitaminE >= microGoals.vitaminE * 0.8 ? '#28A745' : '#F5A623'
+                      }]} />
                     </View>
+                  </View>
 
-                    <View style={styles.microItem}>
-                      <Text style={styles.microLabel}>Vit. K</Text>
-                      <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminK * 10) / 10}μg</Text>
-                      <View style={styles.microProgressBar}>
-                        <View style={[styles.microProgressFill, { 
-                          width: `${Math.min((dailyTotals.vitaminK / microGoals.vitaminK) * 100, 100)}%`,
-                          backgroundColor: dailyTotals.vitaminK >= microGoals.vitaminK * 0.8 ? '#28A745' : '#F5A623'
-                        }]} />
-                      </View>
+                  <View style={styles.microItem}>
+                    <Text style={styles.microLabel}>Vit. K</Text>
+                    <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminK * 10) / 10}μg</Text>
+                    <View style={styles.microProgressBar}>
+                      <View style={[styles.microProgressFill, { 
+                        width: `${Math.min((dailyTotals.vitaminK / microGoals.vitaminK) * 100, 100)}%`,
+                        backgroundColor: dailyTotals.vitaminK >= microGoals.vitaminK * 0.8 ? '#28A745' : '#F5A623'
+                      }]} />
                     </View>
+                  </View>
 
-                    <View style={styles.microItem}>
-                      <Text style={styles.microLabel}>Vit. B1</Text>
-                      <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminB1 * 100) / 100}mg</Text>
-                      <View style={styles.microProgressBar}>
-                        <View style={[styles.microProgressFill, { 
-                          width: `${Math.min((dailyTotals.vitaminB1 / microGoals.vitaminB1) * 100, 100)}%`,
-                          backgroundColor: dailyTotals.vitaminB1 >= microGoals.vitaminB1 * 0.8 ? '#28A745' : '#F5A623'
-                        }]} />
-                      </View>
+                  <View style={styles.microItem}>
+                    <Text style={styles.microLabel}>Vit. B1</Text>
+                    <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminB1 * 100) / 100}mg</Text>
+                    <View style={styles.microProgressBar}>
+                      <View style={[styles.microProgressFill, { 
+                        width: `${Math.min((dailyTotals.vitaminB1 / microGoals.vitaminB1) * 100, 100)}%`,
+                        backgroundColor: dailyTotals.vitaminB1 >= microGoals.vitaminB1 * 0.8 ? '#28A745' : '#F5A623'
+                      }]} />
                     </View>
+                  </View>
 
-                    <View style={styles.microItem}>
-                      <Text style={styles.microLabel}>Vit. B2</Text>
-                      <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminB2 * 100) / 100}mg</Text>
-                      <View style={styles.microProgressBar}>
-                        <View style={[styles.microProgressFill, { 
-                          width: `${Math.min((dailyTotals.vitaminB2 / microGoals.vitaminB2) * 100, 100)}%`,
-                          backgroundColor: dailyTotals.vitaminB2 >= microGoals.vitaminB2 * 0.8 ? '#28A745' : '#F5A623'
-                        }]} />
-                      </View>
+                  <View style={styles.microItem}>
+                    <Text style={styles.microLabel}>Vit. B2</Text>
+                    <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminB2 * 100) / 100}mg</Text>
+                    <View style={styles.microProgressBar}>
+                      <View style={[styles.microProgressFill, { 
+                        width: `${Math.min((dailyTotals.vitaminB2 / microGoals.vitaminB2) * 100, 100)}%`,
+                        backgroundColor: dailyTotals.vitaminB2 >= microGoals.vitaminB2 * 0.8 ? '#28A745' : '#F5A623'
+                      }]} />
                     </View>
+                  </View>
 
-                    <View style={styles.microItem}>
-                      <Text style={styles.microLabel}>Vit. B3</Text>
-                      <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminB3 * 10) / 10}mg</Text>
-                      <View style={styles.microProgressBar}>
-                        <View style={[styles.microProgressFill, { 
-                          width: `${Math.min((dailyTotals.vitaminB3 / microGoals.vitaminB3) * 100, 100)}%`,
-                          backgroundColor: dailyTotals.vitaminB3 >= microGoals.vitaminB3 * 0.8 ? '#28A745' : '#F5A623'
-                        }]} />
-                      </View>
+                  <View style={styles.microItem}>
+                    <Text style={styles.microLabel}>Vit. B3</Text>
+                    <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminB3 * 10) / 10}mg</Text>
+                    <View style={styles.microProgressBar}>
+                      <View style={[styles.microProgressFill, { 
+                        width: `${Math.min((dailyTotals.vitaminB3 / microGoals.vitaminB3) * 100, 100)}%`,
+                        backgroundColor: dailyTotals.vitaminB3 >= microGoals.vitaminB3 * 0.8 ? '#28A745' : '#F5A623'
+                      }]} />
                     </View>
+                  </View>
 
-                    <View style={styles.microItem}>
-                      <Text style={styles.microLabel}>Vit. B6</Text>
-                      <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminB6 * 100) / 100}mg</Text>
-                      <View style={styles.microProgressBar}>
-                        <View style={[styles.microProgressFill, { 
-                          width: `${Math.min((dailyTotals.vitaminB6 / microGoals.vitaminB6) * 100, 100)}%`,
-                          backgroundColor: dailyTotals.vitaminB6 >= microGoals.vitaminB6 * 0.8 ? '#28A745' : '#F5A623'
-                        }]} />
-                      </View>
+                  <View style={styles.microItem}>
+                    <Text style={styles.microLabel}>Vit. B6</Text>
+                    <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminB6 * 100) / 100}mg</Text>
+                    <View style={styles.microProgressBar}>
+                      <View style={[styles.microProgressFill, { 
+                        width: `${Math.min((dailyTotals.vitaminB6 / microGoals.vitaminB6) * 100, 100)}%`,
+                        backgroundColor: dailyTotals.vitaminB6 >= microGoals.vitaminB6 * 0.8 ? '#28A745' : '#F5A623'
+                      }]} />
                     </View>
+                  </View>
 
-                    <View style={styles.microItem}>
-                      <Text style={styles.microLabel}>Vit. B9</Text>
-                      <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminB9 * 10) / 10}μg</Text>
-                      <View style={styles.microProgressBar}>
-                        <View style={[styles.microProgressFill, { 
-                          width: `${Math.min((dailyTotals.vitaminB9 / microGoals.vitaminB9) * 100, 100)}%`,
-                          backgroundColor: dailyTotals.vitaminB9 >= microGoals.vitaminB9 * 0.8 ? '#28A745' : '#F5A623'
-                        }]} />
-                      </View>
+                  <View style={styles.microItem}>
+                    <Text style={styles.microLabel}>Vit. B9</Text>
+                    <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminB9 * 10) / 10}μg</Text>
+                    <View style={styles.microProgressBar}>
+                      <View style={[styles.microProgressFill, { 
+                        width: `${Math.min((dailyTotals.vitaminB9 / microGoals.vitaminB9) * 100, 100)}%`,
+                        backgroundColor: dailyTotals.vitaminB9 >= microGoals.vitaminB9 * 0.8 ? '#28A745' : '#F5A623'
+                      }]} />
                     </View>
+                  </View>
 
-                    <View style={styles.microItem}>
-                      <Text style={styles.microLabel}>Vit. B12</Text>
-                      <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminB12 * 100) / 100}μg</Text>
-                      <View style={styles.microProgressBar}>
-                        <View style={[styles.microProgressFill, { 
-                          width: `${Math.min((dailyTotals.vitaminB12 / microGoals.vitaminB12) * 100, 100)}%`,
-                          backgroundColor: dailyTotals.vitaminB12 >= microGoals.vitaminB12 * 0.8 ? '#28A745' : '#F5A623'
-                        }]} />
-                      </View>
+                  <View style={styles.microItem}>
+                    <Text style={styles.microLabel}>Vit. B12</Text>
+                    <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminB12 * 100) / 100}μg</Text>
+                    <View style={styles.microProgressBar}>
+                      <View style={[styles.microProgressFill, { 
+                        width: `${Math.min((dailyTotals.vitaminB12 / microGoals.vitaminB12) * 100, 100)}%`,
+                        backgroundColor: dailyTotals.vitaminB12 >= microGoals.vitaminB12 * 0.8 ? '#28A745' : '#F5A623'
+                      }]} />
                     </View>
+                  </View>
 
-                    <View style={styles.microItem}>
-                      <Text style={styles.microLabel}>Biotine</Text>
-                      <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminB7 * 1000) / 1000}μg</Text>
-                      <View style={styles.microProgressBar}>
-                        <View style={[styles.microProgressFill, { 
-                          width: `${Math.min((dailyTotals.vitaminB7 / microGoals.vitaminB7) * 100, 100)}%`,
-                          backgroundColor: dailyTotals.vitaminB7 >= microGoals.vitaminB7 * 0.8 ? '#28A745' : '#F5A623'
-                        }]} />
-                      </View>
+                  <View style={styles.microItem}>
+                    <Text style={styles.microLabel}>Biotine</Text>
+                    <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminB7 * 1000) / 1000}μg</Text>
+                    <View style={styles.microProgressBar}>
+                      <View style={[styles.microProgressFill, { 
+                        width: `${Math.min((dailyTotals.vitaminB7 / microGoals.vitaminB7) * 100, 100)}%`,
+                        backgroundColor: dailyTotals.vitaminB7 >= microGoals.vitaminB7 * 0.8 ? '#28A745' : '#F5A623'
+                      }]} />
                     </View>
                   </View>
                 </View>
+              </View>
+            )}
 
-                {/* Minéraux */}
-                <View style={styles.microSection}>
-                  <Text style={styles.microSectionTitle}>⚡ Minéraux</Text>
-                  
-                  <View style={styles.microGrid}>
-                    <View style={styles.microItem}>
-                      <Text style={styles.microLabel}>Calcium</Text>
-                      <Text style={styles.microValue}>{Math.round(dailyTotals.calcium)}mg</Text>
-                      <View style={styles.microProgressBar}>
-                        <View style={[styles.microProgressFill, { 
-                          width: `${Math.min((dailyTotals.calcium / microGoals.calcium) * 100, 100)}%`,
-                          backgroundColor: dailyTotals.calcium >= microGoals.calcium * 0.8 ? '#28A745' : '#F5A623'
-                        }]} />
-                      </View>
+            {/* Vue Minéraux */}
+            {currentView === 'mineraux' && (
+              <View style={styles.combinedStatsCard}>
+                <View style={styles.microTitle}>
+                  <Text style={styles.microTitleText}>⚡ Minéraux</Text>
+                  <Text style={styles.microSubtitle}>Équilibre électrolytique</Text>
+                </View>
+                
+                <View style={styles.microGrid}>
+                  <View style={styles.microItem}>
+                    <Text style={styles.microLabel}>Calcium</Text>
+                    <Text style={styles.microValue}>{Math.round(dailyTotals.calcium)}mg</Text>
+                    <View style={styles.microProgressBar}>
+                      <View style={[styles.microProgressFill, { 
+                        width: `${Math.min((dailyTotals.calcium / microGoals.calcium) * 100, 100)}%`,
+                        backgroundColor: dailyTotals.calcium >= microGoals.calcium * 0.8 ? '#28A745' : '#F5A623'
+                      }]} />
                     </View>
+                  </View>
 
-                    <View style={styles.microItem}>
-                      <Text style={styles.microLabel}>Fer</Text>
-                      <Text style={styles.microValue}>{Math.round(dailyTotals.iron * 100) / 100}mg</Text>
-                      <View style={styles.microProgressBar}>
-                        <View style={[styles.microProgressFill, { 
-                          width: `${Math.min((dailyTotals.iron / microGoals.iron) * 100, 100)}%`,
-                          backgroundColor: dailyTotals.iron >= microGoals.iron * 0.8 ? '#28A745' : '#F5A623'
-                        }]} />
-                      </View>
+                  <View style={styles.microItem}>
+                    <Text style={styles.microLabel}>Fer</Text>
+                    <Text style={styles.microValue}>{Math.round(dailyTotals.iron * 100) / 100}mg</Text>
+                    <View style={styles.microProgressBar}>
+                      <View style={[styles.microProgressFill, { 
+                        width: `${Math.min((dailyTotals.iron / microGoals.iron) * 100, 100)}%`,
+                        backgroundColor: dailyTotals.iron >= microGoals.iron * 0.8 ? '#28A745' : '#F5A623'
+                      }]} />
                     </View>
+                  </View>
 
-                    <View style={styles.microItem}>
-                      <Text style={styles.microLabel}>Magnésium</Text>
-                      <Text style={styles.microValue}>{Math.round(dailyTotals.magnesium)}mg</Text>
-                      <View style={styles.microProgressBar}>
-                        <View style={[styles.microProgressFill, { 
-                          width: `${Math.min((dailyTotals.magnesium / microGoals.magnesium) * 100, 100)}%`,
-                          backgroundColor: dailyTotals.magnesium >= microGoals.magnesium * 0.8 ? '#28A745' : '#F5A623'
-                        }]} />
-                      </View>
+                  <View style={styles.microItem}>
+                    <Text style={styles.microLabel}>Magnésium</Text>
+                    <Text style={styles.microValue}>{Math.round(dailyTotals.magnesium)}mg</Text>
+                    <View style={styles.microProgressBar}>
+                      <View style={[styles.microProgressFill, { 
+                        width: `${Math.min((dailyTotals.magnesium / microGoals.magnesium) * 100, 100)}%`,
+                        backgroundColor: dailyTotals.magnesium >= microGoals.magnesium * 0.8 ? '#28A745' : '#F5A623'
+                      }]} />
                     </View>
+                  </View>
 
-                    <View style={styles.microItem}>
-                      <Text style={styles.microLabel}>Potassium</Text>
-                      <Text style={styles.microValue}>{Math.round(dailyTotals.potassium)}mg</Text>
-                      <View style={styles.microProgressBar}>
-                        <View style={[styles.microProgressFill, { 
-                          width: `${Math.min((dailyTotals.potassium / microGoals.potassium) * 100, 100)}%`,
-                          backgroundColor: dailyTotals.potassium >= microGoals.potassium * 0.8 ? '#28A745' : '#F5A623'
-                        }]} />
-                      </View>
+                  <View style={styles.microItem}>
+                    <Text style={styles.microLabel}>Potassium</Text>
+                    <Text style={styles.microValue}>{Math.round(dailyTotals.potassium)}mg</Text>
+                    <View style={styles.microProgressBar}>
+                      <View style={[styles.microProgressFill, { 
+                        width: `${Math.min((dailyTotals.potassium / microGoals.potassium) * 100, 100)}%`,
+                        backgroundColor: dailyTotals.potassium >= microGoals.potassium * 0.8 ? '#28A745' : '#F5A623'
+                      }]} />
                     </View>
+                  </View>
 
-                    <View style={styles.microItem}>
-                      <Text style={styles.microLabel}>Zinc</Text>
-                      <Text style={styles.microValue}>{Math.round(dailyTotals.zinc * 100) / 100}mg</Text>
-                      <View style={styles.microProgressBar}>
-                        <View style={[styles.microProgressFill, { 
-                          width: `${Math.min((dailyTotals.zinc / microGoals.zinc) * 100, 100)}%`,
-                          backgroundColor: dailyTotals.zinc >= microGoals.zinc * 0.8 ? '#28A745' : '#F5A623'
-                        }]} />
-                      </View>
+                  <View style={styles.microItem}>
+                    <Text style={styles.microLabel}>Zinc</Text>
+                    <Text style={styles.microValue}>{Math.round(dailyTotals.zinc * 100) / 100}mg</Text>
+                    <View style={styles.microProgressBar}>
+                      <View style={[styles.microProgressFill, { 
+                        width: `${Math.min((dailyTotals.zinc / microGoals.zinc) * 100, 100)}%`,
+                        backgroundColor: dailyTotals.zinc >= microGoals.zinc * 0.8 ? '#28A745' : '#F5A623'
+                      }]} />
                     </View>
+                  </View>
 
-                    <View style={styles.microItem}>
-                      <Text style={styles.microLabel}>Sodium</Text>
-                      <Text style={styles.microValue}>{Math.round(dailyTotals.sodium)}mg</Text>
-                      <View style={styles.microProgressBar}>
-                        <View style={[styles.microProgressFill, { 
-                          width: `${Math.min((dailyTotals.sodium / microGoals.sodium) * 100, 100)}%`,
-                          backgroundColor: dailyTotals.sodium <= microGoals.sodium * 0.8 ? '#28A745' : '#FF6B6B'
-                        }]} />
-                      </View>
+                  <View style={styles.microItem}>
+                    <Text style={styles.microLabel}>Sodium</Text>
+                    <Text style={styles.microValue}>{Math.round(dailyTotals.sodium)}mg</Text>
+                    <View style={styles.microProgressBar}>
+                      <View style={[styles.microProgressFill, { 
+                        width: `${Math.min((dailyTotals.sodium / microGoals.sodium) * 100, 100)}%`,
+                        backgroundColor: dailyTotals.sodium <= microGoals.sodium * 0.8 ? '#28A745' : '#FF6B6B'
+                      }]} />
                     </View>
+                  </View>
 
-                    <View style={styles.microItem}>
-                      <Text style={styles.microLabel}>Phosphore</Text>
-                      <Text style={styles.microValue}>{Math.round(dailyTotals.phosphorus)}mg</Text>
-                      <View style={styles.microProgressBar}>
-                        <View style={[styles.microProgressFill, { 
-                          width: `${Math.min((dailyTotals.phosphorus / microGoals.phosphorus) * 100, 100)}%`,
-                          backgroundColor: dailyTotals.phosphorus >= microGoals.phosphorus * 0.8 ? '#28A745' : '#F5A623'
-                        }]} />
-                      </View>
+                  <View style={styles.microItem}>
+                    <Text style={styles.microLabel}>Phosphore</Text>
+                    <Text style={styles.microValue}>{Math.round(dailyTotals.phosphorus)}mg</Text>
+                    <View style={styles.microProgressBar}>
+                      <View style={[styles.microProgressFill, { 
+                        width: `${Math.min((dailyTotals.phosphorus / microGoals.phosphorus) * 100, 100)}%`,
+                        backgroundColor: dailyTotals.phosphorus >= microGoals.phosphorus * 0.8 ? '#28A745' : '#F5A623'
+                      }]} />
                     </View>
+                  </View>
 
-                    <View style={styles.microItem}>
-                      <Text style={styles.microLabel}>Sélénium</Text>
-                      <Text style={styles.microValue}>{Math.round(dailyTotals.selenium * 100) / 100}μg</Text>
-                      <View style={styles.microProgressBar}>
-                        <View style={[styles.microProgressFill, { 
-                          width: `${Math.min((dailyTotals.selenium / microGoals.selenium) * 100, 100)}%`,
-                          backgroundColor: dailyTotals.selenium >= microGoals.selenium * 0.8 ? '#28A745' : '#F5A623'
-                        }]} />
-                      </View>
+                  <View style={styles.microItem}>
+                    <Text style={styles.microLabel}>Sélénium</Text>
+                    <Text style={styles.microValue}>{Math.round(dailyTotals.selenium * 100) / 100}μg</Text>
+                    <View style={styles.microProgressBar}>
+                      <View style={[styles.microProgressFill, { 
+                        width: `${Math.min((dailyTotals.selenium / microGoals.selenium) * 100, 100)}%`,
+                        backgroundColor: dailyTotals.selenium >= microGoals.selenium * 0.8 ? '#28A745' : '#F5A623'
+                      }]} />
                     </View>
+                  </View>
 
-                    <View style={styles.microItem}>
-                      <Text style={styles.microLabel}>Cuivre</Text>
-                      <Text style={styles.microValue}>{Math.round(dailyTotals.copper * 1000) / 1000}mg</Text>
-                      <View style={styles.microProgressBar}>
-                        <View style={[styles.microProgressFill, { 
-                          width: `${Math.min((dailyTotals.copper / microGoals.copper) * 100, 100)}%`,
-                          backgroundColor: dailyTotals.copper >= microGoals.copper * 0.8 ? '#28A745' : '#F5A623'
-                        }]} />
-                      </View>
+                  <View style={styles.microItem}>
+                    <Text style={styles.microLabel}>Cuivre</Text>
+                    <Text style={styles.microValue}>{Math.round(dailyTotals.copper * 1000) / 1000}mg</Text>
+                    <View style={styles.microProgressBar}>
+                      <View style={[styles.microProgressFill, { 
+                        width: `${Math.min((dailyTotals.copper / microGoals.copper) * 100, 100)}%`,
+                        backgroundColor: dailyTotals.copper >= microGoals.copper * 0.8 ? '#28A745' : '#F5A623'
+                      }]} />
                     </View>
+                  </View>
 
-                    <View style={styles.microItem}>
-                      <Text style={styles.microLabel}>Iode</Text>
-                      <Text style={styles.microValue}>{Math.round(dailyTotals.iodine * 100) / 100}μg</Text>
-                      <View style={styles.microProgressBar}>
-                        <View style={[styles.microProgressFill, { 
-                          width: `${Math.min((dailyTotals.iodine / microGoals.iodine) * 100, 100)}%`,
-                          backgroundColor: dailyTotals.iodine >= microGoals.iodine * 0.8 ? '#28A745' : '#F5A623'
-                        }]} />
-                      </View>
+                  <View style={styles.microItem}>
+                    <Text style={styles.microLabel}>Iode</Text>
+                    <Text style={styles.microValue}>{Math.round(dailyTotals.iodine * 100) / 100}μg</Text>
+                    <View style={styles.microProgressBar}>
+                      <View style={[styles.microProgressFill, { 
+                        width: `${Math.min((dailyTotals.iodine / microGoals.iodine) * 100, 100)}%`,
+                        backgroundColor: dailyTotals.iodine >= microGoals.iodine * 0.8 ? '#28A745' : '#F5A623'
+                      }]} />
                     </View>
+                  </View>
 
-                    <View style={styles.microItem}>
-                      <Text style={styles.microLabel}>Manganèse</Text>
-                      <Text style={styles.microValue}>{Math.round(dailyTotals.manganese * 1000) / 1000}mg</Text>
-                      <View style={styles.microProgressBar}>
-                        <View style={[styles.microProgressFill, { 
-                          width: `${Math.min((dailyTotals.manganese / microGoals.manganese) * 100, 100)}%`,
-                          backgroundColor: dailyTotals.manganese >= microGoals.manganese * 0.8 ? '#28A745' : '#F5A623'
-                        }]} />
-                      </View>
+                  <View style={styles.microItem}>
+                    <Text style={styles.microLabel}>Manganèse</Text>
+                    <Text style={styles.microValue}>{Math.round(dailyTotals.manganese * 1000) / 1000}mg</Text>
+                    <View style={styles.microProgressBar}>
+                      <View style={[styles.microProgressFill, { 
+                        width: `${Math.min((dailyTotals.manganese / microGoals.manganese) * 100, 100)}%`,
+                        backgroundColor: dailyTotals.manganese >= microGoals.manganese * 0.8 ? '#28A745' : '#F5A623'
+                      }]} />
                     </View>
+                  </View>
 
-                    <View style={styles.microItem}>
-                      <Text style={styles.microLabel}>Chrome</Text>
-                      <Text style={styles.microValue}>{Math.round(dailyTotals.chromium * 1000) / 1000}μg</Text>
-                      <View style={styles.microProgressBar}>
-                        <View style={[styles.microProgressFill, { 
-                          width: `${Math.min((dailyTotals.chromium / microGoals.chromium) * 100, 100)}%`,
-                          backgroundColor: dailyTotals.chromium >= microGoals.chromium * 0.8 ? '#28A745' : '#F5A623'
-                        }]} />
-                      </View>
+                  <View style={styles.microItem}>
+                    <Text style={styles.microLabel}>Chrome</Text>
+                    <Text style={styles.microValue}>{Math.round(dailyTotals.chromium * 1000) / 1000}μg</Text>
+                    <View style={styles.microProgressBar}>
+                      <View style={[styles.microProgressFill, { 
+                        width: `${Math.min((dailyTotals.chromium / microGoals.chromium) * 100, 100)}%`,
+                        backgroundColor: dailyTotals.chromium >= microGoals.chromium * 0.8 ? '#28A745' : '#F5A623'
+                      }]} />
                     </View>
                   </View>
                 </View>
+              </View>
+            )}
 
-                {/* Autres nutriments */}
-                <View style={styles.microSection}>
-                  <Text style={styles.microSectionTitle}>☕ Autres</Text>
-                  
-                  <View style={styles.microGrid}>
-                    <View style={styles.microItem}>
-                      <Text style={styles.microLabel}>Caféine</Text>
-                      <Text style={styles.microValue}>{Math.round(dailyTotals.caffeine * 10) / 10}mg</Text>
-                      <View style={styles.microProgressBar}>
-                        <View style={[styles.microProgressFill, { 
-                          width: `${Math.min((dailyTotals.caffeine / microGoals.caffeine) * 100, 100)}%`,
-                          backgroundColor: dailyTotals.caffeine <= microGoals.caffeine * 0.8 ? '#28A745' : '#FF6B6B'
-                        }]} />
-                      </View>
+            {/* Vue Autres */}
+            {currentView === 'autres' && (
+              <View style={styles.combinedStatsCard}>
+                <View style={styles.microTitle}>
+                  <Text style={styles.microTitleText}>☕ Autres</Text>
+                  <Text style={styles.microSubtitle}>Compléments nutritionnels</Text>
+                </View>
+                
+                <View style={styles.microGrid}>
+                  <View style={styles.microItem}>
+                    <Text style={styles.microLabel}>Caféine</Text>
+                    <Text style={styles.microValue}>{Math.round(dailyTotals.caffeine * 10) / 10}mg</Text>
+                    <View style={styles.microProgressBar}>
+                      <View style={[styles.microProgressFill, { 
+                        width: `${Math.min((dailyTotals.caffeine / microGoals.caffeine) * 100, 100)}%`,
+                        backgroundColor: dailyTotals.caffeine <= microGoals.caffeine * 0.8 ? '#28A745' : '#FF6B6B'
+                      }]} />
                     </View>
+                  </View>
 
-                    <View style={styles.microItem}>
-                      <Text style={styles.microLabel}>Fibres</Text>
-                      <Text style={styles.microValue}>{Math.round(dailyTotals.fiber * 10) / 10}g</Text>
-                      <View style={styles.microProgressBar}>
-                        <View style={[styles.microProgressFill, { 
-                          width: `${Math.min((dailyTotals.fiber / microGoals.fiber) * 100, 100)}%`,
-                          backgroundColor: dailyTotals.fiber >= microGoals.fiber * 0.8 ? '#28A745' : '#F5A623'
-                        }]} />
-                      </View>
+                  <View style={styles.microItem}>
+                    <Text style={styles.microLabel}>Fibres</Text>
+                    <Text style={styles.microValue}>{Math.round(dailyTotals.fiber * 10) / 10}g</Text>
+                    <View style={styles.microProgressBar}>
+                      <View style={[styles.microProgressFill, { 
+                        width: `${Math.min((dailyTotals.fiber / microGoals.fiber) * 100, 100)}%`,
+                        backgroundColor: dailyTotals.fiber >= microGoals.fiber * 0.8 ? '#28A745' : '#F5A623'
+                      }]} />
                     </View>
+                  </View>
 
-                    <View style={styles.microItem}>
-                      <Text style={styles.microLabel}>Oméga-3</Text>
-                      <Text style={styles.microValue}>{Math.round(dailyTotals.omega3 * 100) / 100}g</Text>
-                      <View style={styles.microProgressBar}>
-                        <View style={[styles.microProgressFill, { 
-                          width: `${Math.min((dailyTotals.omega3 / microGoals.omega3) * 100, 100)}%`,
-                          backgroundColor: dailyTotals.omega3 >= microGoals.omega3 * 0.8 ? '#28A745' : '#F5A623'
-                        }]} />
-                      </View>
+                  <View style={styles.microItem}>
+                    <Text style={styles.microLabel}>Oméga-3</Text>
+                    <Text style={styles.microValue}>{Math.round(dailyTotals.omega3 * 100) / 100}g</Text>
+                    <View style={styles.microProgressBar}>
+                      <View style={[styles.microProgressFill, { 
+                        width: `${Math.min((dailyTotals.omega3 / microGoals.omega3) * 100, 100)}%`,
+                        backgroundColor: dailyTotals.omega3 >= microGoals.omega3 * 0.8 ? '#28A745' : '#F5A623'
+                      }]} />
                     </View>
+                  </View>
 
-                    <View style={styles.microItem}>
-                      <Text style={styles.microLabel}>Oméga-6</Text>
-                      <Text style={styles.microValue}>{Math.round(dailyTotals.omega6 * 100) / 100}g</Text>
-                      <View style={styles.microProgressBar}>
-                        <View style={[styles.microProgressFill, { 
-                          width: `${Math.min((dailyTotals.omega6 / microGoals.omega6) * 100, 100)}%`,
-                          backgroundColor: dailyTotals.omega6 >= microGoals.omega6 * 0.8 ? '#28A745' : '#F5A623'
-                        }]} />
-                      </View>
+                  <View style={styles.microItem}>
+                    <Text style={styles.microLabel}>Oméga-6</Text>
+                    <Text style={styles.microValue}>{Math.round(dailyTotals.omega6 * 100) / 100}g</Text>
+                    <View style={styles.microProgressBar}>
+                      <View style={[styles.microProgressFill, { 
+                        width: `${Math.min((dailyTotals.omega6 / microGoals.omega6) * 100, 100)}%`,
+                        backgroundColor: dailyTotals.omega6 >= microGoals.omega6 * 0.8 ? '#28A745' : '#F5A623'
+                      }]} />
                     </View>
                   </View>
                 </View>
@@ -1240,7 +1244,9 @@ function NutritionScreen() {
           {/* Indicateurs de navigation */}
           <View style={styles.navigationIndicators}>
             <View style={[styles.indicator, currentView === 'macros' && styles.activeIndicator]} />
-            <View style={[styles.indicator, currentView === 'micros' && styles.activeIndicator]} />
+            <View style={[styles.indicator, currentView === 'vitamines' && styles.activeIndicator]} />
+            <View style={[styles.indicator, currentView === 'mineraux' && styles.activeIndicator]} />
+            <View style={[styles.indicator, currentView === 'autres' && styles.activeIndicator]} />
           </View>
 
           {/* Boutons de navigation */}
@@ -1255,11 +1261,29 @@ function NutritionScreen() {
             </TouchableOpacity>
             
             <TouchableOpacity 
-              style={[styles.navButton, currentView === 'micros' && styles.activeNavButton]}
-              onPress={() => setCurrentView('micros')}
+              style={[styles.navButton, currentView === 'vitamines' && styles.activeNavButton]}
+              onPress={() => setCurrentView('vitamines')}
             >
-              <Text style={[styles.navButtonText, currentView === 'micros' && styles.activeNavButtonText]}>
-                Micros
+              <Text style={[styles.navButtonText, currentView === 'vitamines' && styles.activeNavButtonText]}>
+                Vitamines
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.navButton, currentView === 'mineraux' && styles.activeNavButton]}
+              onPress={() => setCurrentView('mineraux')}
+            >
+              <Text style={[styles.navButtonText, currentView === 'mineraux' && styles.activeNavButtonText]}>
+                Minéraux
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.navButton, currentView === 'autres' && styles.activeNavButton]}
+              onPress={() => setCurrentView('autres')}
+            >
+              <Text style={[styles.navButtonText, currentView === 'autres' && styles.activeNavButtonText]}>
+                Autres
               </Text>
             </TouchableOpacity>
           </View>
@@ -2075,11 +2099,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 12,
-    gap: 12,
+    gap: 8,
   },
   navButton: {
     paddingVertical: 6,
-    paddingHorizontal: 16,
+    paddingHorizontal: width < 375 ? 10 : 12,
     borderRadius: 12,
     backgroundColor: 'rgba(22, 27, 34, 0.8)',
     borderWidth: 1,
@@ -2090,7 +2114,7 @@ const styles = StyleSheet.create({
     borderColor: '#FFA500',
   },
   navButtonText: {
-    fontSize: width < 375 ? 11 : 12,
+    fontSize: width < 375 ? 9 : 10,
     color: '#8B949E',
     fontWeight: '600',
   },
