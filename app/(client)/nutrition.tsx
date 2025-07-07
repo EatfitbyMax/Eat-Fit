@@ -61,7 +61,7 @@ function NutritionScreen() {
     carbohydrates: 312,
     fat: 83,
   });
-
+  
   const [microGoals, setMicroGoals] = useState({
     // Vitamines
     vitaminA: 900, // μg
@@ -99,7 +99,7 @@ function NutritionScreen() {
   });
   const [waterIntake, setWaterIntake] = useState(0); // en ml
   const [dailyWaterGoal, setDailyWaterGoal] = useState(2000); // objectif de base en ml
-
+  
   // États pour le système de navigation
   const [currentView, setCurrentView] = useState<'macros' | 'vitamines' | 'mineraux' | 'autres'>('macros');
 
@@ -412,7 +412,7 @@ function NutritionScreen() {
       (acc, entry) => {
         // Estimation des micronutriments basée sur les macronutriments
         const estimatedMicros = estimateMicronutrients(entry);
-
+        
         return {
           calories: acc.calories + entry.calories,
           proteins: acc.proteins + entry.proteins,
@@ -475,7 +475,7 @@ function NutritionScreen() {
   const estimateMicronutrients = (entry: FoodEntry) => {
     const productName = entry.product.name?.toLowerCase() || '';
     const calories = entry.calories;
-
+    
     // Coefficients de base par 100 kcal
     let vitaminA = 0, vitaminC = 0, vitaminD = 0, vitaminE = 0, vitaminK = 0;
     let vitaminB1 = 0, vitaminB2 = 0, vitaminB3 = 0, vitaminB5 = 0, vitaminB6 = 0;
@@ -672,7 +672,7 @@ function NutritionScreen() {
           const entries = JSON.parse(stored);
           setFoodEntries(entries);
           calculateDailyTotals(entries);
-                }
+        }
       }
 
       // Charger les données d'hydratation
@@ -715,7 +715,7 @@ function NutritionScreen() {
     }
   };
 
-
+  
 
   const getMealEntries = (mealType: string) => {
     const dateString = selectedDate.toISOString().split('T')[0];
@@ -899,6 +899,11 @@ function NutritionScreen() {
             {/* Vue Vitamines */}
             {currentView === 'vitamines' && (
               <View style={styles.combinedStatsCard}>
+                <View style={styles.microTitle}>
+                  <Text style={styles.microTitleText}>🍊 Vitamines</Text>
+                  <Text style={styles.microSubtitle}>Essentielles au bon fonctionnement</Text>
+                </View>
+                
                 <View style={styles.microGrid}>
                   <View style={styles.microItem}>
                     <Text style={styles.microLabel}>Vit. A</Text>
@@ -1038,6 +1043,11 @@ function NutritionScreen() {
             {/* Vue Minéraux */}
             {currentView === 'mineraux' && (
               <View style={styles.combinedStatsCard}>
+                <View style={styles.microTitle}>
+                  <Text style={styles.microTitleText}>⚡ Minéraux</Text>
+                  <Text style={styles.microSubtitle}>Équilibre électrolytique</Text>
+                </View>
+                
                 <View style={styles.microGrid}>
                   <View style={styles.microItem}>
                     <Text style={styles.microLabel}>Calcium</Text>
@@ -1177,6 +1187,11 @@ function NutritionScreen() {
             {/* Vue Autres */}
             {currentView === 'autres' && (
               <View style={styles.combinedStatsCard}>
+                <View style={styles.microTitle}>
+                  <Text style={styles.microTitleText}>☕ Autres</Text>
+                  <Text style={styles.microSubtitle}>Compléments nutritionnels</Text>
+                </View>
+                
                 <View style={styles.microGrid}>
                   <View style={styles.microItem}>
                     <Text style={styles.microLabel}>Caféine</Text>
@@ -1226,7 +1241,7 @@ function NutritionScreen() {
             )}
           </View>
 
-
+          
 
           {/* Boutons de navigation */}
           <View style={styles.navigationButtons}>
@@ -1238,7 +1253,7 @@ function NutritionScreen() {
                 Macros
               </Text>
             </TouchableOpacity>
-
+            
             <TouchableOpacity 
               style={[styles.navButton, currentView === 'vitamines' && styles.activeNavButton]}
               onPress={() => setCurrentView('vitamines')}
@@ -1348,7 +1363,6 @@ function NutritionScreen() {
                 const mealCalories = mealEntries.reduce((sum, entry) => sum + entry.calories, 0);
 
                 return (
-```javascript
                   <View key={mealType} style={styles.mealCard}>
                     <View style={styles.mealHeader}>
                       <Text style={styles.mealTitle}>{mealType}</Text>
@@ -1552,7 +1566,6 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
     width: width - 40,
-    minHeight: 200, // Hauteur minimale fixe pour toutes les vues
   },
   macrosLayout: {
     flexDirection: 'row',
@@ -2016,39 +2029,37 @@ const styles = StyleSheet.create({
   microGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: width < 375 ? 6 : 8,
+    gap: 3,
     justifyContent: 'space-between',
-    flex: 1,
-    alignContent: 'flex-start',
   },
   microItem: {
     backgroundColor: 'rgba(13, 17, 23, 0.7)',
-    borderRadius: 10,
-    padding: width < 375 ? 8 : 12,
+    borderRadius: 6,
+    padding: width < 375 ? 4 : 6,
     borderWidth: 1,
     borderColor: 'rgba(255, 165, 0, 0.15)',
-    width: '31%', // 3 colonnes avec plus d'espace
+    width: '24%', // 4 colonnes avec 1% d'espacement
     alignItems: 'center',
-    minHeight: width < 375 ? 65 : 75,
+    minHeight: 42,
   },
   microLabel: {
-    fontSize: width < 375 ? 10 : 12,
+    fontSize: width < 375 ? 7 : 8,
     color: '#8B949E',
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: 1,
     textAlign: 'center',
   },
   microValue: {
-    fontSize: width < 375 ? 12 : 14,
+    fontSize: width < 375 ? 8 : 9,
     fontWeight: '700',
     color: '#FFFFFF',
-    marginBottom: 6,
+    marginBottom: 2,
     textAlign: 'center',
   },
   microProgressBar: {
-    height: 3,
+    height: 2,
     backgroundColor: 'rgba(33, 38, 45, 0.8)',
-    borderRadius: 1.5,
+    borderRadius: 1,
     overflow: 'hidden',
     width: '100%',
   },
@@ -2057,7 +2068,7 @@ const styles = StyleSheet.create({
     borderRadius: 1.5,
   },
 
-
+  
 
   // Styles pour les boutons de navigation
   navigationButtons: {
