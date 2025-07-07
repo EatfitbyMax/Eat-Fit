@@ -155,6 +155,14 @@ export default function FormeScreen() {
         }
       }
 
+      // Récupérer les calories réelles depuis la nutrition
+      const actualCalories = await getTodayNutritionCalories();
+      todayData = {
+        ...todayData,
+        actualCalories: actualCalories
+      };
+      console.log(`Calories réelles du jour récupérées: ${actualCalories} kcal`);
+
       // Récupérer les notes RPE du jour depuis les activités
       if (isPremium) {
         const todayRPEData = await getTodayActivityRPE();
@@ -641,6 +649,49 @@ export default function FormeScreen() {
     setShowCycleModal(false);
     setTempCycle({ phase: 'Menstruel', dayOfCycle: 1, symptoms: [], notes: '' });
     Alert.alert('Succès', 'Informations sur le cycle hormonal enregistrées !');
+  };
+
+  const getTodayNutritionCalories = async () => {
+    try {
+      if (!userData) return 0;
+
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+      const today = new Date().toISOString().split('T')[0];
+
+      // Essayer d'abord de charger depuis le serveur VPS
+      try {
+        const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.replit.app';
+        const response = await fetch(`${VPS_URL}/api/nutrition/${userData.id}`, { 
+          timeout: 5000 
+        });
+
+        if (response.ok) {
+          const nutritionEntries = await response.json();
+          const todayEntries = nutritionEntries.filter((entry: any) => entry.date === today);
+          const totalCalories = todayEntries.reduce((sum: number, entry: any) => sum + (entry.calories || 0), 0);
+          console.log(`Calories nutrition depuis serveur: ${totalCalories} kcal`);
+          return totalCalories;
+        }
+      } catch (serverError) {
+        console.log('Serveur nutrition indisponible, utilisation stockage local');
+      }
+
+      // Fallback vers le stockage local
+      const storedEntries = await AsyncStorage.getItem(`food_entries_${userData.id}`);
+      if (storedEntries) {
+        const entries = JSON.parse(storedEntries);
+        const todayEntries = entries.filter((entry: any) => entry.date === today);
+        const totalCalories = todayEntries.reduce((sum: number, entry: any) => sum + (entry.calories || 0), 0);
+        console.log(`Calories nutrition depuis stockage local: ${totalCalories} kcal`);
+        return totalCalories;
+      }
+
+      console.log('Aucune donnée nutrition trouvée');
+      return 0;
+    } catch (error) {
+      console.error('Erreur récupération calories nutrition:', error);
+      return 0;
+    }
   };
 
   const getTodayActivityRPE = async () => {
@@ -1353,9 +1404,17 @@ export default function FormeScreen() {
             <TouchableOpacity 
               style={styles.metricCard}
               onPress={() => {
+                const targetCalories = Math.round(
+                  (userData?.gender === 'Homme' ? 2200 : 1800) * 
+                  (userData?.activityLevel === 'sedentaire' ? 1.2 : 
+                   userData?.activityLevel === 'leger' ? 1.375 :
+                   userData?.activityLevel === 'modere' ? 1.55 :
+                   userData?.activityLevel === 'intense' ? 1.725 : 1.9)
+                );
+
                 Alert.alert(
                   'Apport Calorique',
-                  'Cette métrique est calculée automatiquement selon votre profil et niveau d\'activité.\n\nPour plus de précision, utilisez la section Nutrition pour suivre vos repas.',
+                  `Consommé aujourd'hui: ${formeData.actualCalories || 0} kcal\nObjectif estimé: ${targetCalories} kcal\n\nLes données sont récupérées depuis votre journal nutrition. Utilisez la section Nutrition pour ajouter vos repas.`,
                   [{ text: 'OK' }]
                 );
               }}
@@ -1366,16 +1425,13 @@ export default function FormeScreen() {
               <View style={styles.metricInfo}>
                 <Text style={styles.metricLabel}>Apport Calorique</Text>
                 <Text style={styles.metricValue}>
-                  {Math.round(
-                    (userData?.gender === 'Homme' ? 2200 : 1800) * 
-                    (userData?.activityLevel === 'sedentaire' ? 1.2 : 
-                     userData?.activityLevel === 'leger' ? 1.375 :
-                     userData?.activityLevel === 'modere' ? 1.55 :
-                     userData?.activityLevel === 'intense' ? 1.725 : 1.9)
-                  )} kcal
+                  {formeData.actualCalories || 0} kcal
                 </Text>
                 <Text style={styles.metricDetail}>
-                  Estimation basée sur votre profil
+                  {formeData.actualCalories > 0 ? 
+                    'Données nutrition du jour' : 
+                    'Aucune donnée nutrition'
+                  }
                 </Text>
               </View>
               <Text style={styles.updateHint}>Appuyez pour plus d'infos</Text>
