@@ -1241,13 +1241,7 @@ function NutritionScreen() {
             )}
           </View>
 
-          {/* Indicateurs de navigation */}
-          <View style={styles.navigationIndicators}>
-            <View style={[styles.indicator, currentView === 'macros' && styles.activeIndicator]} />
-            <View style={[styles.indicator, currentView === 'vitamines' && styles.activeIndicator]} />
-            <View style={[styles.indicator, currentView === 'mineraux' && styles.activeIndicator]} />
-            <View style={[styles.indicator, currentView === 'autres' && styles.activeIndicator]} />
-          </View>
+          
 
           {/* Boutons de navigation */}
           <View style={styles.navigationButtons}>
@@ -2074,24 +2068,7 @@ const styles = StyleSheet.create({
     borderRadius: 1.5,
   },
 
-  // Styles pour les indicateurs de navigation
-  navigationIndicators: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 12,
-    gap: 8,
-  },
-  indicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(139, 148, 158, 0.3)',
-  },
-  activeIndicator: {
-    backgroundColor: '#FFA500',
-    width: 20,
-  },
+  
 
   // Styles pour les boutons de navigation
   navigationButtons: {
