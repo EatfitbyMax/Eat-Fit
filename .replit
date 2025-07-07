@@ -58,3 +58,21 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npx eas build --platform android --profile preview"
+
+[[workflows.workflow]]
+name = "Serveur API"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd server && npm install && node server.js"
+
+[[workflows.workflow]]
+name = "Serveur OVH Local"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd server && npm start"
