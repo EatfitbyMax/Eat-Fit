@@ -13,7 +13,7 @@ localPort = 8082
 externalPort = 3000
 
 [workflows]
-runButton = "Dev Server"
+runButton = "Start VPS Server"
 
 [[workflows.workflow]]
 name = "Dev Server"
@@ -54,3 +54,30 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npx eas build --platform android --profile preview"
+
+[[workflows.workflow]]
+name = "Start Server"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd server && npm install && node server.js"
+
+[[workflows.workflow]]
+name = "Start VPS Server"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd server && npm install && node server.js"
+
+[[workflows.workflow]]
+name = "Start Local Server"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd server && npm install && node server.js"

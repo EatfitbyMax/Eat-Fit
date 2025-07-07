@@ -1390,3 +1390,35 @@ export const saveMessages = async (userId: string, messages: any[]): Promise<boo
     return false;
   }
 };
+
+export const testServerConnection = async (): Promise<boolean> => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 secondes timeout
+
+    const response = await fetch(`${SERVER_URL}/api/health`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (response.ok) {
+      console.log('✅ Serveur VPS connecté');
+      return true;
+    } else {
+      console.log(`⚠️ Serveur indisponible (status: ${response.status})`);
+      return false;
+    }
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      console.log('⚠️ Timeout de connexion au serveur VPS');
+    } else {
+      console.log('⚠️ Erreur de connexion au serveur VPS:', error.message);
+    }
+    return false;
+  }
+};

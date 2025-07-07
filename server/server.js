@@ -637,21 +637,37 @@ app.post('/api/app-preferences/:userId', async (req, res) => {
   }
 });
 
-// Route de test
-app.get('/api/health-check', (req, res) => {
-  res.json({ status: 'OK', message: 'Serveur VPS fonctionnel' });
+// Route de santé
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'OK', 
+    message: 'Serveur EatFitByMax fonctionnel',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
+// Route de statut détaillé
+app.get('/api/status', (req, res) => {
+  res.status(200).json({
+    server: 'EatFitByMax API',
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    port: PORT,
+    timestamp: new Date().toISOString()
+  });
 });
 
 app.listen(PORT, '0.0.0.0', async () => {
   await initDataDir();
   console.log(`Serveur démarré sur le port ${PORT}`);
   console.log(`Serveur accessible sur : http://0.0.0.0:${PORT}`);
-  
+
   // Log des différentes URLs d'accès possibles
   if (process.env.REPL_SLUG && process.env.REPL_OWNER) {
     console.log(`Replit URL : https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.replit.dev:${PORT}`);
   }
-  
+
   // Pour production VPS
   console.log(`Production VPS URL : http://51.178.29.220:${PORT}`);
   console.log(`Local URL : http://localhost:${PORT}`);
