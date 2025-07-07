@@ -33,50 +33,36 @@ localPort = 8086
 externalPort = 4200
 
 [workflows]
-runButton = "Start Local Server"
+runButton = "Expo Dev"
 
 [[workflows.workflow]]
-name = "Dev Server"
+name = "Expo Dev Clean"
+author = 42598128
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN npx expo start"
+args = "rm -rf node_modules/.cache"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "rm -rf .expo"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN npx expo start --clear"
 
 [[workflows.workflow]]
-name = "EAS Init"
+name = "Expo Dev"
+author = 42598128
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npx eas init"
+args = "npx expo start --web --dev-client --clear"
 
 [[workflows.workflow]]
-name = "EAS Update"
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npx eas update --auto"
-
-[[workflows.workflow]]
-name = "EAS Publish Preview iOS"
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npx eas build --platform ios --profile preview"
-
-[[workflows.workflow]]
-name = "EAS Publish Preview Android"
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npx eas build --platform android --profile preview"
-
-[[workflows.workflow]]
-name = "Start Server"
+name = "Backend Server"
 author = 42598128
 mode = "sequential"
 
@@ -85,19 +71,31 @@ task = "shell.exec"
 args = "cd server && npm install && node server.js"
 
 [[workflows.workflow]]
-name = "Start VPS Server"
+name = "Expo Start"
 author = 42598128
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd server && npm install && node server.js"
+args = "rm -rf node_modules/.cache"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "rm -rf .expo"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN npx expo start --clear"
 
 [[workflows.workflow]]
-name = "Start Local Server"
+name = "Full Stack Dev"
 author = 42598128
-mode = "sequential"
+mode = "parallel"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd server && npm install && node server.js"
+args = "npx expo start --web --dev-client --clear"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd server && node server.js"
