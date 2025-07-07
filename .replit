@@ -110,25 +110,3 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "node start-replit.js"
-
-[[workflows.workflow]]
-name = "Web Development"
-author = 42598128
-mode = "parallel"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd server && node server.js"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0 WEB_HOST=0.0.0.0 WEB_PORT=8082 npx expo start --web-only --port 8082"
-
-[[workflows.workflow]]
-name = "Expo Go Development"
-author = 42598128
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0 REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN npx expo start --host tunnel"
