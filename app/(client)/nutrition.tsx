@@ -899,11 +899,6 @@ function NutritionScreen() {
             {/* Vue Vitamines */}
             {currentView === 'vitamines' && (
               <View style={styles.combinedStatsCard}>
-                <View style={styles.microTitle}>
-                  <Text style={styles.microTitleText}>🍊 Vitamines</Text>
-                  <Text style={styles.microSubtitle}>Essentielles au bon fonctionnement</Text>
-                </View>
-                
                 <View style={styles.microGrid}>
                   <View style={styles.microItem}>
                     <Text style={styles.microLabel}>Vit. A</Text>
@@ -1043,11 +1038,6 @@ function NutritionScreen() {
             {/* Vue Minéraux */}
             {currentView === 'mineraux' && (
               <View style={styles.combinedStatsCard}>
-                <View style={styles.microTitle}>
-                  <Text style={styles.microTitleText}>⚡ Minéraux</Text>
-                  <Text style={styles.microSubtitle}>Équilibre électrolytique</Text>
-                </View>
-                
                 <View style={styles.microGrid}>
                   <View style={styles.microItem}>
                     <Text style={styles.microLabel}>Calcium</Text>
@@ -1187,11 +1177,6 @@ function NutritionScreen() {
             {/* Vue Autres */}
             {currentView === 'autres' && (
               <View style={styles.combinedStatsCard}>
-                <View style={styles.microTitle}>
-                  <Text style={styles.microTitleText}>☕ Autres</Text>
-                  <Text style={styles.microSubtitle}>Compléments nutritionnels</Text>
-                </View>
-                
                 <View style={styles.microGrid}>
                   <View style={styles.microItem}>
                     <Text style={styles.microLabel}>Caféine</Text>
@@ -2031,6 +2016,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 3,
     justifyContent: 'space-between',
+    paddingTop: 8,
   },
   microItem: {
     backgroundColor: 'rgba(13, 17, 23, 0.7)',
