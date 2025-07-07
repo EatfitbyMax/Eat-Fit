@@ -38,6 +38,7 @@ interface FormeData {
     notes: string;
   };
   date: string;
+  actualCalories?: number;
 }
 
 export default function FormeScreen() {
@@ -343,19 +344,39 @@ export default function FormeScreen() {
     if (weights.calories > 0) {
       let caloriesScore = 75; // Score par défaut
 
-      // Simuler un apport calorique basé sur les données utilisateur
-      const estimatedDailyCalories = Math.round(
-        (userData?.gender === 'Homme' ? 2200 : 1800) * 
-        (userData?.activityLevel === 'sedentaire' ? 1.2 : 
-         userData?.activityLevel === 'leger' ? 1.375 :
-         userData?.activityLevel === 'modere' ? 1.55 :
-         userData?.activityLevel === 'intense' ? 1.725 : 1.9)
-      );
+      // Utiliser les calories réelles si disponibles
+      const actualCalories = formeData.actualCalories || 0;
 
-      // Score basé sur un apport théorique optimal
-      caloriesScore = Math.min(100, Math.max(30, 
-        100 - Math.abs(estimatedDailyCalories - (estimatedDailyCalories * 0.95)) / 50
-      ));
+      if (actualCalories > 0) {
+        // Calculer l'objectif calorique basé sur le profil utilisateur
+        const targetCalories = Math.round(
+          (userData?.gender === 'Homme' ? 2200 : 1800) * 
+          (userData?.activityLevel === 'sedentaire' ? 1.2 : 
+           userData?.activityLevel === 'leger' ? 1.375 :
+           userData?.activityLevel === 'modere' ? 1.55 :
+           userData?.activityLevel === 'intense' ? 1.725 : 1.9)
+        );
+
+        // Score basé sur la proximité avec l'objectif (±20% de marge acceptable)
+        const lowerBound = targetCalories * 0.8;
+        const upperBound = targetCalories * 1.2;
+
+        if (actualCalories >= lowerBound && actualCalories <= upperBound) {
+          caloriesScore = 100; // Parfait dans la fourchette
+        } else if (actualCalories >= lowerBound * 0.7 && actualCalories <= upperBound * 1.3) {
+          caloriesScore = 80; // Acceptable
+        } else if (actualCalories >= lowerBound * 0.5 && actualCalories <= upperBound * 1.5) {
+          caloriesScore = 60; // Moyen
+        } else {
+          caloriesScore = 40; // Trop loin de l'objectif
+        }
+
+        console.log(`Score calories: ${caloriesScore} (consommé: ${actualCalories}, objectif: ${targetCalories})`);
+      } else {
+        // Pas de données nutrition = score neutre
+        caloriesScore = 50;
+        console.log('Aucune donnée calorique - score neutre');
+      }
 
       totalScore += caloriesScore * weights.calories;
       totalWeight += weights.calories;
@@ -782,7 +803,7 @@ export default function FormeScreen() {
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return '#28A745';
+    if (score >= 80) return'#28A745';
     if (score >= 60) return '#F5A623';
     return '#DC3545';
   };
@@ -956,19 +977,36 @@ export default function FormeScreen() {
     if (weights.calories > 0) {
       let caloriesScore = 75; // Score par défaut
 
-      // Simuler un apport calorique basé sur les données utilisateur
-      const estimatedDailyCalories = Math.round(
-        (userData?.gender === 'Homme' ? 2200 : 1800) * 
-        (userData?.activityLevel === 'sedentaire' ? 1.2 : 
-         userData?.activityLevel === 'leger' ? 1.375 :
-         userData?.activityLevel === 'modere' ? 1.55 :
-         userData?.activityLevel === 'intense' ? 1.725 : 1.9)
-      );
+      // Utiliser les calories réelles si disponibles
+      const actualCalories = dayData.actualCalories || 0;
 
-      // Score basé sur un apport théorique optimal
-      caloriesScore = Math.min(100, Math.max(30, 
-        100 - Math.abs(estimatedDailyCalories - (estimatedDailyCalories * 0.95)) / 50
-      ));
+      if (actualCalories > 0) {
+        // Calculer l'objectif calorique basé sur le profil utilisateur
+        const targetCalories = Math.round(
+          (userData?.gender === 'Homme' ? 2200 : 1800) * 
+          (userData?.activityLevel === 'sedentaire' ? 1.2 : 
+           userData?.activityLevel === 'leger' ? 1.375 :
+           userData?.activityLevel === 'modere' ? 1.55 :
+           userData?.activityLevel === 'intense' ? 1.725 : 1.9)
+        );
+
+        // Score basé sur la proximité avec l'objectif (±20% de marge acceptable)
+        const lowerBound = targetCalories * 0.8;
+        const upperBound = targetCalories * 1.2;
+
+        if (actualCalories >= lowerBound && actualCalories <= upperBound) {
+          caloriesScore = 100; // Parfait dans la fourchette
+        } else if (actualCalories >= lowerBound * 0.7 && actualCalories <= upperBound * 1.3) {
+          caloriesScore = 80; // Acceptable
+        } else if (actualCalories >= lowerBound * 0.5 && actualCalories <= upperBound * 1.5) {
+          caloriesScore = 60; // Moyen
+        } else {
+          caloriesScore = 40; // Trop loin de l'objectif
+        }
+      } else {
+        // Pas de données nutrition = score neutre
+        caloriesScore = 50;
+      }
 
       totalScore += caloriesScore * weights.calories;
       totalWeight += weights.calories;
@@ -1129,9 +1167,9 @@ export default function FormeScreen() {
             {(() => {
               const isWoman = userData?.gender === 'Femme';
               const planId = currentSubscription?.planId;
-              
+
               let metrics = ['sommeil', 'stress', 'apport calorique'];
-              
+
               if (!isPremium) {
                 metrics.push('entraînement programmé');
               } else {
@@ -1140,11 +1178,11 @@ export default function FormeScreen() {
                   metrics.push('macronutriments', 'micronutriments');
                 }
               }
-              
+
               if (isWoman) {
                 metrics.push('cycle hormonal');
               }
-              
+
               return `Basé sur votre ${metrics.join(', ')}`;
             })()}
           </Text>
@@ -1631,7 +1669,8 @@ export default function FormeScreen() {
               <TouchableOpacity 
                 style={styles.modalButtonPrimary}
                 onPress={handleSaveStress}
-              >
+              >```python
+This code incorporates calorie data from the nutrition screen into the form screen's calculations.
                 <Text style={styles.modalButtonPrimaryText}>Sauvegarder</Text>
               </TouchableOpacity>
             </View>
