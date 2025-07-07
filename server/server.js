@@ -637,6 +637,22 @@ app.post('/api/app-preferences/:userId', async (req, res) => {
   }
 });
 
+// Route racine
+app.get('/', (req, res) => {
+  res.status(200).json({
+    message: 'Serveur EatFitByMax API',
+    version: '1.0.0',
+    status: 'Opérationnel',
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      health: '/api/health-check',
+      status: '/api/status',
+      users: '/api/users',
+      programmes: '/api/programmes'
+    }
+  });
+});
+
 // Route de santé
 app.get('/api/health', (req, res) => {
   res.status(200).json({ 
