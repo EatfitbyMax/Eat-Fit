@@ -704,7 +704,7 @@ function NutritionScreen() {
               <Animated.View style={[styles.statsWrapper, { transform: [{ translateX }] }]}>
                 {/* Vue Calories et Macros */}
                 <View style={styles.combinedStatsCard}>
-                  {/* Calories Circular Gauge - Left Side */}
+                  {/* Calories Circular Gauge - Top */}
                   <View style={styles.caloriesSection}>
                     <View style={styles.circularGauge}>
                       <Svg width={width < 375 ? 110 : 120} height={width < 375 ? 110 : 120} style={styles.svgGauge}>
@@ -742,7 +742,7 @@ function NutritionScreen() {
                     </Text>
                   </View>
 
-                  {/* Macros Progress Bars - Right Side */}
+                  {/* Macros Progress Bars - Bottom */}
                   <View style={styles.macrosSection}>
                     {/* Protéines */}
                     <View style={styles.macroItem}>
@@ -1256,18 +1256,19 @@ const styles = StyleSheet.create({
     padding: width < 375 ? 16 : 20,
     borderWidth: 1.5,
     borderColor: 'rgba(255, 165, 0, 0.3)',
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'column',
     gap: width < 375 ? 16 : 20,
     shadowColor: '#FFA500',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 12,
     elevation: 8,
+    width: width - 40,
   },
   caloriesSection: {
     alignItems: 'center',
-    minWidth: width < 375 ? 130 : 140,
+    width: '100%',
+    marginBottom: 16,
   },
   circularGauge: {
     width: width < 375 ? 110 : 120,
@@ -1308,7 +1309,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   macrosSection: {
-    flex: 1,
+    width: '100%',
     gap: width < 375 ? 10 : 12,
   },
   macroItem: {
@@ -1689,10 +1690,12 @@ const styles = StyleSheet.create({
   swipeContainer: {
     width: '100%',
     overflow: 'hidden',
+    alignItems: 'center',
   },
   statsWrapper: {
     flexDirection: 'row',
     width: width * 2,
+    alignItems: 'flex-start',
   },
 
   // Styles pour les micronutriments
@@ -1734,8 +1737,9 @@ const styles = StyleSheet.create({
     padding: width < 375 ? 8 : 10,
     borderWidth: 1,
     borderColor: 'rgba(255, 165, 0, 0.2)',
-    width: (width - 80) / 3 - 8, // 3 colonnes avec espacement
+    width: (width - 120) / 3 - 5, // 3 colonnes avec espacement optimisé
     alignItems: 'center',
+    minHeight: 60,
   },
   microLabel: {
     fontSize: width < 375 ? 9 : 10,
