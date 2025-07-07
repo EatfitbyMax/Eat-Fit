@@ -1551,6 +1551,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
     width: width - 40,
+    minHeight: 200, // Hauteur minimale fixe pour toutes les vues
   },
   macrosLayout: {
     flexDirection: 'row',
@@ -2016,6 +2017,8 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: width < 375 ? 6 : 8,
     justifyContent: 'space-between',
+    flex: 1,
+    alignContent: 'flex-start',
   },
   microItem: {
     backgroundColor: 'rgba(13, 17, 23, 0.7)',
