@@ -40,16 +40,6 @@
     ],
     "experiments": {
       "typedRoutes": true
-    },
-    "packagerOpts": {
-      "config": "metro.config.js"
-    },
-    "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/crown-logo.png"
-    },
-    "hostType": "tunnel"
     }
   }
 }
