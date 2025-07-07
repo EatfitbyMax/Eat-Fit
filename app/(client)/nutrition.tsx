@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Modal, Alert, PanGestureHandler, Animated } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Modal, Alert, Animated } from 'react-native';
+import { PanGestureHandler, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Svg, { Circle } from 'react-native-svg';
 import FoodSearchModal from '@/components/FoodSearchModal';
 import { FoodProduct, OpenFoodFactsService, FoodEntry } from '@/utils/openfoodfacts';
@@ -583,13 +584,26 @@ function NutritionScreen() {
     }
   };
 
-  const onGestureEvent = (event: any) => {
-    const { translationX } = event.nativeEvent;
-    
-    if (translationX < -50 && currentView === 'macros') {
-      handleSwipeLeft();
-    } else if (translationX > 50 && currentView === 'micros') {
-      handleSwipeRight();
+  const onGestureEvent = Animated.event(
+    [{ nativeEvent: { translationX: translateX } }],
+    { useNativeDriver: false }
+  );
+
+  const onHandlerStateChange = (event: any) => {
+    if (event.nativeEvent.state === 5) { // END state
+      const { translationX } = event.nativeEvent;
+      
+      if (translationX < -50 && currentView === 'macros') {
+        handleSwipeLeft();
+      } else if (translationX > 50 && currentView === 'micros') {
+        handleSwipeRight();
+      } else {
+        // Reset position if swipe is not complete
+        Animated.spring(translateX, {
+          toValue: currentView === 'macros' ? 0 : -width,
+          useNativeDriver: true,
+        }).start();
+      }
     }
   };
 
@@ -649,8 +663,9 @@ function NutritionScreen() {
   }, [selectedDate]);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaView style={styles.container}>
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Nutrition</Text>
@@ -681,7 +696,10 @@ function NutritionScreen() {
 
         {/* Stats avec swipe */}
         <View style={styles.statsContainer}>
-          <PanGestureHandler onGestureEvent={onGestureEvent}>
+          <PanGestureHandler
+            onGestureEvent={onGestureEvent}
+            onHandlerStateChange={onHandlerStateChange}
+          >
             <Animated.View style={styles.swipeContainer}>
               <Animated.View style={[styles.statsWrapper, { transform: [{ translateX }] }]}>
                 {/* Vue Calories et Macros */}
@@ -1145,7 +1163,8 @@ function NutritionScreen() {
           mealType={selectedMealType}
         />
       </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </GestureHandlerRootView>
   );
 }
 
@@ -1189,10 +1208,7 @@ const styles = StyleSheet.create({
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#FFA500',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
+    boxShadow: '0px 4px 12px rgba(255, 165, 0, 0.25)',
     elevation: 8,
   },
   arrowText: {
