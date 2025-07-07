@@ -1401,9 +1401,6 @@ export const testServerConnection = async (): Promise<boolean> => {
       headers: {
         'Content-Type': 'application/json',
       },
-      signal: controller.signal
-        'Content-Type': 'application/json',
-      },
       signal: controller.signal,
     });
 
