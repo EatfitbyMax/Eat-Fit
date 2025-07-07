@@ -39,6 +39,11 @@ interface FormeData {
   };
   date: string;
   actualCalories?: number;
+  actualMacros?: {
+    proteins: number;
+    carbohydrates: number;
+    fat: number;
+  };
 }
 
 export default function FormeScreen() {
@@ -155,13 +160,18 @@ export default function FormeScreen() {
         }
       }
 
-      // Récupérer les calories réelles depuis la nutrition
-      const actualCalories = await getTodayNutritionCalories();
+      // Récupérer les données nutritionnelles réelles depuis la nutrition
+      const nutritionData = await getTodayNutritionData();
       todayData = {
         ...todayData,
-        actualCalories: actualCalories
+        actualCalories: nutritionData.calories,
+        actualMacros: {
+          proteins: nutritionData.proteins,
+          carbohydrates: nutritionData.carbohydrates,
+          fat: nutritionData.fat
+        }
       };
-      console.log(`Calories réelles du jour récupérées: ${actualCalories} kcal`);
+      console.log(`Données nutrition du jour récupérées: ${nutritionData.calories} kcal, ${nutritionData.proteins}g protéines, ${nutritionData.carbohydrates}g glucides, ${nutritionData.fat}g lipides`);
 
       // Récupérer les notes RPE du jour depuis les activités
       if (isPremium) {
@@ -651,9 +661,9 @@ export default function FormeScreen() {
     Alert.alert('Succès', 'Informations sur le cycle hormonal enregistrées !');
   };
 
-  const getTodayNutritionCalories = async () => {
+  const getTodayNutritionData = async () => {
     try {
-      if (!userData) return 0;
+      if (!userData) return { calories: 0, proteins: 0, carbohydrates: 0, fat: 0 };
 
       const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
       const today = new Date().toISOString().split('T')[0];
@@ -668,9 +678,16 @@ export default function FormeScreen() {
         if (response.ok) {
           const nutritionEntries = await response.json();
           const todayEntries = nutritionEntries.filter((entry: any) => entry.date === today);
-          const totalCalories = todayEntries.reduce((sum: number, entry: any) => sum + (entry.calories || 0), 0);
-          console.log(`Calories nutrition depuis serveur: ${totalCalories} kcal`);
-          return totalCalories;
+          
+          const totals = todayEntries.reduce((sum: any, entry: any) => ({
+            calories: sum.calories + (entry.calories || 0),
+            proteins: sum.proteins + (entry.proteins || 0),
+            carbohydrates: sum.carbohydrates + (entry.carbohydrates || 0),
+            fat: sum.fat + (entry.fat || 0)
+          }), { calories: 0, proteins: 0, carbohydrates: 0, fat: 0 });
+
+          console.log(`Macros nutrition depuis serveur: ${totals.calories} kcal, ${totals.proteins}g protéines, ${totals.carbohydrates}g glucides, ${totals.fat}g lipides`);
+          return totals;
         }
       } catch (serverError) {
         console.log('Serveur nutrition indisponible, utilisation stockage local');
@@ -681,17 +698,132 @@ export default function FormeScreen() {
       if (storedEntries) {
         const entries = JSON.parse(storedEntries);
         const todayEntries = entries.filter((entry: any) => entry.date === today);
-        const totalCalories = todayEntries.reduce((sum: number, entry: any) => sum + (entry.calories || 0), 0);
-        console.log(`Calories nutrition depuis stockage local: ${totalCalories} kcal`);
-        return totalCalories;
+        
+        const totals = todayEntries.reduce((sum: any, entry: any) => ({
+          calories: sum.calories + (entry.calories || 0),
+          proteins: sum.proteins + (entry.proteins || 0),
+          carbohydrates: sum.carbohydrates + (entry.carbohydrates || 0),
+          fat: sum.fat + (entry.fat || 0)
+        }), { calories: 0, proteins: 0, carbohydrates: 0, fat: 0 });
+
+        console.log(`Macros nutrition depuis stockage local: ${totals.calories} kcal, ${totals.proteins}g protéines, ${totals.carbohydrates}g glucides, ${totals.fat}g lipides`);
+        return totals;
       }
 
       console.log('Aucune donnée nutrition trouvée');
-      return 0;
+      return { calories: 0, proteins: 0, carbohydrates: 0, fat: 0 };
     } catch (error) {
-      console.error('Erreur récupération calories nutrition:', error);
-      return 0;
+      console.error('Erreur récupération données nutrition:', error);
+      return { calories: 0, proteins: 0, carbohydrates: 0, fat: 0 };
     }
+  };
+
+  const analyzeMacroBalance = (macros: { proteins: number; carbohydrates: number; fat: number }, totalCalories: number) => {
+    if (totalCalories === 0 || (!macros.proteins && !macros.carbohydrates && !macros.fat)) {
+      return {
+        status: 'Aucune donnée',
+        score: 50,
+        issues: ['Pas de données nutritionnelles disponibles']
+      };
+    }
+
+    // Calculer les pourcentages d'énergie de chaque macronutriment
+    const proteinCalories = macros.proteins * 4;
+    const carbCalories = macros.carbohydrates * 4;
+    const fatCalories = macros.fat * 9;
+    const totalMacroCalories = proteinCalories + carbCalories + fatCalories;
+
+    if (totalMacroCalories === 0) {
+      return {
+        status: 'Données incomplètes',
+        score: 40,
+        issues: ['Macronutriments non renseignés']
+      };
+    }
+
+    const proteinPercent = (proteinCalories / totalMacroCalories) * 100;
+    const carbPercent = (carbCalories / totalMacroCalories) * 100;
+    const fatPercent = (fatCalories / totalMacroCalories) * 100;
+
+    // Définir les fourchettes optimales selon les objectifs
+    const goals = userData?.goals || [];
+    let optimalRanges = {
+      protein: { min: 15, max: 25 },
+      carb: { min: 45, max: 60 },
+      fat: { min: 20, max: 35 }
+    };
+
+    if (goals.includes('Me muscler')) {
+      optimalRanges = {
+        protein: { min: 25, max: 35 },
+        carb: { min: 40, max: 50 },
+        fat: { min: 20, max: 30 }
+      };
+    } else if (goals.includes('Gagner en performance')) {
+      optimalRanges = {
+        protein: { min: 20, max: 30 },
+        carb: { min: 50, max: 65 },
+        fat: { min: 15, max: 25 }
+      };
+    }
+
+    // Analyser chaque macronutriment
+    const issues = [];
+    let score = 100;
+
+    // Protéines
+    if (proteinPercent < optimalRanges.protein.min) {
+      issues.push(`Protéines insuffisantes (${Math.round(proteinPercent)}% vs ${optimalRanges.protein.min}-${optimalRanges.protein.max}%)`);
+      score -= 20;
+    } else if (proteinPercent > optimalRanges.protein.max) {
+      issues.push(`Protéines excessives (${Math.round(proteinPercent)}% vs ${optimalRanges.protein.min}-${optimalRanges.protein.max}%)`);
+      score -= 10;
+    }
+
+    // Glucides
+    if (carbPercent < optimalRanges.carb.min) {
+      issues.push(`Glucides insuffisants (${Math.round(carbPercent)}% vs ${optimalRanges.carb.min}-${optimalRanges.carb.max}%)`);
+      score -= 15;
+    } else if (carbPercent > optimalRanges.carb.max) {
+      issues.push(`Glucides excessifs (${Math.round(carbPercent)}% vs ${optimalRanges.carb.min}-${optimalRanges.carb.max}%)`);
+      score -= 10;
+    }
+
+    // Lipides
+    if (fatPercent < optimalRanges.fat.min) {
+      issues.push(`Lipides insuffisants (${Math.round(fatPercent)}% vs ${optimalRanges.fat.min}-${optimalRanges.fat.max}%)`);
+      score -= 15;
+    } else if (fatPercent > optimalRanges.fat.max) {
+      issues.push(`Lipides excessifs (${Math.round(fatPercent)}% vs ${optimalRanges.fat.min}-${optimalRanges.fat.max}%)`);
+      score -= 10;
+    }
+
+    // Déterminer le statut
+    let status;
+    if (score >= 90) {
+      status = 'Équilibre optimal';
+    } else if (score >= 70) {
+      status = 'Bon équilibre';
+    } else if (score >= 50) {
+      status = 'Déséquilibre modéré';
+    } else {
+      status = 'Déséquilibre important';
+    }
+
+    if (issues.length === 0) {
+      issues.push('Répartition équilibrée selon vos objectifs');
+    }
+
+    return {
+      status,
+      score: Math.max(0, score),
+      issues,
+      percentages: {
+        protein: Math.round(proteinPercent),
+        carb: Math.round(carbPercent),
+        fat: Math.round(fatPercent)
+      }
+    };
   };
 
   const getTodayActivityRPE = async () => {
@@ -1474,9 +1606,25 @@ export default function FormeScreen() {
               <TouchableOpacity 
                 style={styles.metricCard}
                 onPress={() => {
+                  const macros = formeData.actualMacros;
+                  const calories = formeData.actualCalories || 0;
+                  
+                  if (!macros || calories === 0) {
+                    Alert.alert(
+                      'Macronutriments/Fatigue',
+                      'Aucune donnée nutritionnelle disponible pour aujourd\'hui.\n\nUtilisez la section Nutrition pour ajouter vos repas et obtenir une analyse détaillée de l\'équilibre de vos macronutriments.',
+                      [{ text: 'OK' }]
+                    );
+                    return;
+                  }
+
+                  const analysis = analyzeMacroBalance(macros, calories);
+                  
+                  const detailMessage = `Répartition actuelle:\n• Protéines: ${macros.proteins}g (${analysis.percentages?.protein || 0}%)\n• Glucides: ${macros.carbohydrates}g (${analysis.percentages?.carb || 0}%)\n• Lipides: ${macros.fat}g (${analysis.percentages?.fat || 0}%)\n\nAnalyse: ${analysis.issues.join(', ')}`;
+
                   Alert.alert(
-                    'Relation Macronutriment/Fatigue',
-                    'Cette métrique avancée analyse l\'impact de votre répartition en macronutriments (glucides, protéines, lipides) sur votre niveau de fatigue.\n\nUtilisez la section Nutrition pour un suivi détaillé.',
+                    'Analyse Macronutriments/Fatigue',
+                    detailMessage,
                     [{ text: 'OK' }]
                   );
                 }}
@@ -1487,10 +1635,29 @@ export default function FormeScreen() {
                 <View style={styles.metricInfo}>
                   <Text style={styles.metricLabel}>Macronutriments/Fatigue</Text>
                   <Text style={styles.metricValue}>
-                    Équilibre optimal
+                    {(() => {
+                      const macros = formeData.actualMacros;
+                      const calories = formeData.actualCalories || 0;
+                      
+                      if (!macros || calories === 0) {
+                        return 'Aucune donnée';
+                      }
+                      
+                      const analysis = analyzeMacroBalance(macros, calories);
+                      return analysis.status;
+                    })()}
                   </Text>
                   <Text style={styles.metricDetail}>
-                    Analyse avancée disponible
+                    {(() => {
+                      const macros = formeData.actualMacros;
+                      const calories = formeData.actualCalories || 0;
+                      
+                      if (!macros || calories === 0) {
+                        return 'Ajoutez vos repas dans Nutrition';
+                      }
+                      
+                      return `P:${macros.proteins}g C:${macros.carbohydrates}g L:${macros.fat}g`;
+                    })()}
                   </Text>
                 </View>
                 <Text style={styles.updateHint}>Appuyez pour plus d'infos</Text>
