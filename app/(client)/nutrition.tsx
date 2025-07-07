@@ -899,6 +899,11 @@ function NutritionScreen() {
             {/* Vue Vitamines */}
             {currentView === 'vitamines' && (
               <View style={styles.combinedStatsCard}>
+                <View style={styles.microTitle}>
+                  <Text style={styles.microTitleText}>🍊 Vitamines</Text>
+                  <Text style={styles.microSubtitle}>Essentielles au bon fonctionnement</Text>
+                </View>
+                
                 <View style={styles.microGrid}>
                   <View style={styles.microItem}>
                     <Text style={styles.microLabel}>Vit. A</Text>
@@ -1038,6 +1043,11 @@ function NutritionScreen() {
             {/* Vue Minéraux */}
             {currentView === 'mineraux' && (
               <View style={styles.combinedStatsCard}>
+                <View style={styles.microTitle}>
+                  <Text style={styles.microTitleText}>⚡ Minéraux</Text>
+                  <Text style={styles.microSubtitle}>Équilibre électrolytique</Text>
+                </View>
+                
                 <View style={styles.microGrid}>
                   <View style={styles.microItem}>
                     <Text style={styles.microLabel}>Calcium</Text>
@@ -1177,6 +1187,11 @@ function NutritionScreen() {
             {/* Vue Autres */}
             {currentView === 'autres' && (
               <View style={styles.combinedStatsCard}>
+                <View style={styles.microTitle}>
+                  <Text style={styles.microTitleText}>☕ Autres</Text>
+                  <Text style={styles.microSubtitle}>Compléments nutritionnels</Text>
+                </View>
+                
                 <View style={styles.microGrid}>
                   <View style={styles.microItem}>
                     <Text style={styles.microLabel}>Caféine</Text>
@@ -1551,7 +1566,6 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
     width: width - 40,
-    minHeight: 200, // Hauteur minimale fixe pour toutes les vues
   },
   macrosLayout: {
     flexDirection: 'row',
@@ -2015,39 +2029,37 @@ const styles = StyleSheet.create({
   microGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: width < 375 ? 6 : 8,
+    gap: 3,
     justifyContent: 'space-between',
-    flex: 1,
-    alignContent: 'flex-start',
   },
   microItem: {
     backgroundColor: 'rgba(13, 17, 23, 0.7)',
-    borderRadius: 10,
-    padding: width < 375 ? 8 : 12,
+    borderRadius: 6,
+    padding: width < 375 ? 4 : 6,
     borderWidth: 1,
     borderColor: 'rgba(255, 165, 0, 0.15)',
-    width: '31%', // 3 colonnes avec plus d'espace
+    width: '24%', // 4 colonnes avec 1% d'espacement
     alignItems: 'center',
-    minHeight: width < 375 ? 65 : 75,
+    minHeight: 42,
   },
   microLabel: {
-    fontSize: width < 375 ? 10 : 12,
+    fontSize: width < 375 ? 7 : 8,
     color: '#8B949E',
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: 1,
     textAlign: 'center',
   },
   microValue: {
-    fontSize: width < 375 ? 12 : 14,
+    fontSize: width < 375 ? 8 : 9,
     fontWeight: '700',
     color: '#FFFFFF',
-    marginBottom: 6,
+    marginBottom: 2,
     textAlign: 'center',
   },
   microProgressBar: {
-    height: 3,
+    height: 2,
     backgroundColor: 'rgba(33, 38, 45, 0.8)',
-    borderRadius: 1.5,
+    borderRadius: 1,
     overflow: 'hidden',
     width: '100%',
   },
