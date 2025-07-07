@@ -674,8 +674,10 @@ app.listen(PORT, '0.0.0.0', async () => {
 
   // Log des différentes URLs d'accès possibles
   if (process.env.REPL_SLUG && process.env.REPL_OWNER) {
-    console.log(`Replit URL : https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.replit.dev`);
+    console.log(`Replit URL : https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.replit.dev:${PORT}`);
   }
 
+  // Pour production VPS
+  console.log(`Production VPS URL : http://51.178.29.220:${PORT}`);
   console.log(`Local URL : http://localhost:${PORT}`);
 });
