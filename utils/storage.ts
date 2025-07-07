@@ -1394,11 +1394,14 @@ export const saveMessages = async (userId: string, messages: any[]): Promise<boo
 export const testServerConnection = async (): Promise<boolean> => {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 secondes timeout
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 secondes timeout
 
-    const response = await fetch(`${SERVER_URL}/api/health`, {
+    const response = await fetch(`${SERVER_URL}/api/health-check`, {
       method: 'GET',
       headers: {
+        'Content-Type': 'application/json',
+      },
+      signal: controller.signal
         'Content-Type': 'application/json',
       },
       signal: controller.signal,
