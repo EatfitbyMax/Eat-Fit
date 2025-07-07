@@ -3,20 +3,19 @@
 
 const { spawn } = require('child_process');
 
-// Configuration pour Replit
+// Configuration pour Expo Go sur Replit
 const env = {
   ...process.env,
   EXPO_DEVTOOLS_LISTEN_ADDRESS: '0.0.0.0',
-  EXPO_PACKAGER_PROXY_URL: `https://${process.env.REPLIT_DEV_DOMAIN}`,
-  REACT_NATIVE_PACKAGER_HOSTNAME: process.env.REPLIT_DEV_DOMAIN || '0.0.0.0',
-  WEB_HOST: '0.0.0.0',
-  WEB_PORT: '8082'
+  REACT_NATIVE_PACKAGER_HOSTNAME: process.env.REPLIT_DEV_DOMAIN || 'localhost'
 };
 
-console.log('🚀 Démarrage d\'Expo pour Replit...');
+console.log('🚀 Démarrage d\'Expo pour Expo Go...');
 console.log(`📱 Domaine Replit: ${env.REPLIT_DEV_DOMAIN}`);
+console.log('📋 Scannez le QR code avec l\'application Expo Go');
 
-const expo = spawn('npx', ['expo', 'start', '--web-only', '--port', '8082', '--host', '0.0.0.0'], {
+// Utiliser le mode tunnel pour Expo Go
+const expo = spawn('npx', ['expo', 'start', '--host', 'tunnel'], {
   env,
   stdio: 'inherit'
 });
