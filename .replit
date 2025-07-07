@@ -5,6 +5,10 @@ modules = ["nodejs-20"]
 channel = "stable-24_05"
 
 [[ports]]
+localPort = 5000
+externalPort = 5000
+
+[[ports]]
 localPort = 8081
 externalPort = 80
 
@@ -13,7 +17,7 @@ localPort = 8082
 externalPort = 3000
 
 [workflows]
-runButton = "Start VPS Server"
+runButton = "Dev Server"
 
 [[workflows.workflow]]
 name = "Dev Server"
@@ -54,30 +58,3 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npx eas build --platform android --profile preview"
-
-[[workflows.workflow]]
-name = "Start Server"
-author = 42598128
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd server && npm install && node server.js"
-
-[[workflows.workflow]]
-name = "Start VPS Server"
-author = 42598128
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd server && npm install && node server.js"
-
-[[workflows.workflow]]
-name = "Start Local Server"
-author = 42598128
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd server && npm install && node server.js"
