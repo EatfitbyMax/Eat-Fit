@@ -41,10 +41,15 @@
     "experiments": {
       "typedRoutes": true
     },
-    "expo": {
-      "packagerOpts": {
-        "config": "metro.config.js"
-      }
+    "packagerOpts": {
+      "config": "metro.config.js"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/crown-logo.png"
+    },
+    "hostType": "tunnel"
     }
   }
 }
