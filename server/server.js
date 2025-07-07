@@ -647,6 +647,15 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Route de test de connexion (utilisée par l'app)
+app.get('/api/health-check', (req, res) => {
+  res.status(200).json({ 
+    status: 'OK', 
+    message: 'Serveur VPS opérationnel',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Route de statut détaillé
 app.get('/api/status', (req, res) => {
   res.status(200).json({
