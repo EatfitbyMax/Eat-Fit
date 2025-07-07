@@ -137,6 +137,22 @@ export default function RootLayout() {
     }
   };
 
+  // Gestion des erreurs globales
+  React.useEffect(() => {
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      console.log('Promesse non capturée:', event.reason);
+      event.preventDefault();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('unhandledrejection', handleUnhandledRejection);
+
+      return () => {
+        window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      };
+    }
+  }, []);
+
   if (!loaded || isInitializing) {
     return <SplashScreenComponent onFinish={() => {}} />;
   }

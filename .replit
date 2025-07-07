@@ -17,7 +17,7 @@ localPort = 8082
 externalPort = 3000
 
 [workflows]
-runButton = "Dev Server"
+runButton = "Dev Full Stack"
 
 [[workflows.workflow]]
 name = "Dev Server"
@@ -72,6 +72,19 @@ args = "cd server && npm install && node server.js"
 name = "Serveur OVH Local"
 author = 42598128
 mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd server && npm start"
+
+[[workflows.workflow]]
+name = "Dev Full Stack"
+author = 42598128
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN npx expo start"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
