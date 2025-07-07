@@ -21,19 +21,39 @@ function NutritionScreen() {
     proteins: 0,
     carbohydrates: 0,
     fat: 0,
-    // Micronutriments
+    // Micronutriments - Vitamines
     vitaminA: 0,
     vitaminC: 0,
     vitaminD: 0,
     vitaminE: 0,
+    vitaminK: 0,
     vitaminB1: 0,
+    vitaminB2: 0,
+    vitaminB3: 0,
+    vitaminB5: 0,
     vitaminB6: 0,
+    vitaminB7: 0, // Biotine
+    vitaminB9: 0, // Folate
     vitaminB12: 0,
+    // Micronutriments - Minéraux
     calcium: 0,
     iron: 0,
     magnesium: 0,
     potassium: 0,
     zinc: 0,
+    sodium: 0,
+    phosphorus: 0,
+    selenium: 0,
+    copper: 0,
+    manganese: 0,
+    iodine: 0,
+    chromium: 0,
+    molybdenum: 0,
+    // Autres
+    caffeine: 0,
+    fiber: 0,
+    omega3: 0,
+    omega6: 0,
   });
   const [calorieGoals, setCalorieGoals] = useState({
     calories: 2495,
@@ -43,18 +63,39 @@ function NutritionScreen() {
   });
   
   const [microGoals, setMicroGoals] = useState({
+    // Vitamines
     vitaminA: 900, // μg
     vitaminC: 90, // mg
     vitaminD: 15, // μg
     vitaminE: 15, // mg
+    vitaminK: 120, // μg
     vitaminB1: 1.2, // mg
+    vitaminB2: 1.3, // mg
+    vitaminB3: 16, // mg
+    vitaminB5: 5, // mg
     vitaminB6: 1.4, // mg
+    vitaminB7: 30, // μg (Biotine)
+    vitaminB9: 400, // μg (Folate)
     vitaminB12: 2.4, // μg
+    // Minéraux
     calcium: 1000, // mg
     iron: 8, // mg
     magnesium: 400, // mg
     potassium: 3500, // mg
     zinc: 11, // mg
+    sodium: 2300, // mg (limite supérieure)
+    phosphorus: 700, // mg
+    selenium: 55, // μg
+    copper: 0.9, // mg
+    manganese: 2.3, // mg
+    iodine: 150, // μg
+    chromium: 35, // μg
+    molybdenum: 45, // μg
+    // Autres
+    caffeine: 400, // mg (limite supérieure recommandée)
+    fiber: 25, // g
+    omega3: 1.6, // g
+    omega6: 17, // g
   });
   const [waterIntake, setWaterIntake] = useState(0); // en ml
   const [dailyWaterGoal, setDailyWaterGoal] = useState(2000); // objectif de base en ml
@@ -377,25 +418,53 @@ function NutritionScreen() {
           proteins: acc.proteins + entry.proteins,
           carbohydrates: acc.carbohydrates + entry.carbohydrates,
           fat: acc.fat + entry.fat,
+          // Vitamines
           vitaminA: acc.vitaminA + estimatedMicros.vitaminA,
           vitaminC: acc.vitaminC + estimatedMicros.vitaminC,
           vitaminD: acc.vitaminD + estimatedMicros.vitaminD,
           vitaminE: acc.vitaminE + estimatedMicros.vitaminE,
+          vitaminK: acc.vitaminK + estimatedMicros.vitaminK,
           vitaminB1: acc.vitaminB1 + estimatedMicros.vitaminB1,
+          vitaminB2: acc.vitaminB2 + estimatedMicros.vitaminB2,
+          vitaminB3: acc.vitaminB3 + estimatedMicros.vitaminB3,
+          vitaminB5: acc.vitaminB5 + estimatedMicros.vitaminB5,
           vitaminB6: acc.vitaminB6 + estimatedMicros.vitaminB6,
+          vitaminB7: acc.vitaminB7 + estimatedMicros.vitaminB7,
+          vitaminB9: acc.vitaminB9 + estimatedMicros.vitaminB9,
           vitaminB12: acc.vitaminB12 + estimatedMicros.vitaminB12,
+          // Minéraux
           calcium: acc.calcium + estimatedMicros.calcium,
           iron: acc.iron + estimatedMicros.iron,
           magnesium: acc.magnesium + estimatedMicros.magnesium,
           potassium: acc.potassium + estimatedMicros.potassium,
           zinc: acc.zinc + estimatedMicros.zinc,
+          sodium: acc.sodium + estimatedMicros.sodium,
+          phosphorus: acc.phosphorus + estimatedMicros.phosphorus,
+          selenium: acc.selenium + estimatedMicros.selenium,
+          copper: acc.copper + estimatedMicros.copper,
+          manganese: acc.manganese + estimatedMicros.manganese,
+          iodine: acc.iodine + estimatedMicros.iodine,
+          chromium: acc.chromium + estimatedMicros.chromium,
+          molybdenum: acc.molybdenum + estimatedMicros.molybdenum,
+          // Autres
+          caffeine: acc.caffeine + estimatedMicros.caffeine,
+          fiber: acc.fiber + estimatedMicros.fiber,
+          omega3: acc.omega3 + estimatedMicros.omega3,
+          omega6: acc.omega6 + estimatedMicros.omega6,
         };
       },
       { 
         calories: 0, proteins: 0, carbohydrates: 0, fat: 0,
-        vitaminA: 0, vitaminC: 0, vitaminD: 0, vitaminE: 0,
-        vitaminB1: 0, vitaminB6: 0, vitaminB12: 0,
-        calcium: 0, iron: 0, magnesium: 0, potassium: 0, zinc: 0
+        // Vitamines
+        vitaminA: 0, vitaminC: 0, vitaminD: 0, vitaminE: 0, vitaminK: 0,
+        vitaminB1: 0, vitaminB2: 0, vitaminB3: 0, vitaminB5: 0, vitaminB6: 0,
+        vitaminB7: 0, vitaminB9: 0, vitaminB12: 0,
+        // Minéraux
+        calcium: 0, iron: 0, magnesium: 0, potassium: 0, zinc: 0,
+        sodium: 0, phosphorus: 0, selenium: 0, copper: 0, manganese: 0,
+        iodine: 0, chromium: 0, molybdenum: 0,
+        // Autres
+        caffeine: 0, fiber: 0, omega3: 0, omega6: 0
       }
     );
 
@@ -408,76 +477,163 @@ function NutritionScreen() {
     const calories = entry.calories;
     
     // Coefficients de base par 100 kcal
-    let vitaminA = 0, vitaminC = 0, vitaminD = 0, vitaminE = 0;
-    let vitaminB1 = 0, vitaminB6 = 0, vitaminB12 = 0;
+    let vitaminA = 0, vitaminC = 0, vitaminD = 0, vitaminE = 0, vitaminK = 0;
+    let vitaminB1 = 0, vitaminB2 = 0, vitaminB3 = 0, vitaminB5 = 0, vitaminB6 = 0;
+    let vitaminB7 = 0, vitaminB9 = 0, vitaminB12 = 0;
     let calcium = 0, iron = 0, magnesium = 0, potassium = 0, zinc = 0;
+    let sodium = 0, phosphorus = 0, selenium = 0, copper = 0, manganese = 0;
+    let iodine = 0, chromium = 0, molybdenum = 0;
+    let caffeine = 0, fiber = 0, omega3 = 0, omega6 = 0;
 
     // Estimation basée sur les types d'aliments
-    if (productName.includes('fruit') || productName.includes('orange') || productName.includes('pomme') || productName.includes('banane')) {
-      vitaminC = calories * 0.8; // Fruits riches en vitamine C
+    if (productName.includes('café') || productName.includes('coffee') || productName.includes('expresso')) {
+      caffeine = calories * 8; // Café très riche en caféine
+      potassium = calories * 2;
+      magnesium = calories * 0.3;
+    } else if (productName.includes('thé') || productName.includes('tea')) {
+      caffeine = calories * 3; // Thé moins riche que le café
+      vitaminC = calories * 0.5;
+      manganese = calories * 0.02;
+    } else if (productName.includes('chocolat') || productName.includes('cacao')) {
+      caffeine = calories * 0.8;
+      magnesium = calories * 1.5;
+      iron = calories * 0.12;
+      copper = calories * 0.008;
+      fiber = calories * 0.3;
+    } else if (productName.includes('fruit') || productName.includes('orange') || productName.includes('pomme') || productName.includes('banane')) {
+      vitaminC = calories * 0.8;
       potassium = calories * 3;
       vitaminA = calories * 0.1;
+      fiber = calories * 0.4;
+      vitaminB9 = calories * 0.02;
     } else if (productName.includes('légume') || productName.includes('carotte') || productName.includes('épinard') || productName.includes('brocoli')) {
-      vitaminA = calories * 1.2; // Légumes riches en vitamine A
+      vitaminA = calories * 1.2;
       vitaminC = calories * 0.6;
-      vitaminK = calories * 0.3;
+      vitaminK = calories * 0.8;
       iron = calories * 0.05;
       magnesium = calories * 0.8;
+      fiber = calories * 0.5;
+      vitaminB9 = calories * 0.03;
+      manganese = calories * 0.01;
     } else if (productName.includes('viande') || productName.includes('porc') || productName.includes('bœuf') || productName.includes('agneau')) {
       vitaminB12 = calories * 0.02;
       vitaminB6 = calories * 0.008;
+      vitaminB3 = calories * 0.06;
       iron = calories * 0.08;
       zinc = calories * 0.06;
       vitaminB1 = calories * 0.004;
+      selenium = calories * 0.015;
+      phosphorus = calories * 2;
     } else if (productName.includes('poisson') || productName.includes('saumon') || productName.includes('thon') || productName.includes('sardine')) {
       vitaminD = calories * 0.03;
       vitaminB12 = calories * 0.025;
       calcium = calories * 0.5;
       vitaminE = calories * 0.05;
+      omega3 = calories * 0.08;
+      selenium = calories * 0.02;
+      iodine = calories * 0.01;
+      phosphorus = calories * 2.5;
     } else if (productName.includes('lait') || productName.includes('fromage') || productName.includes('yaourt') || productName.includes('dairy')) {
       calcium = calories * 2.5;
       vitaminD = calories * 0.01;
       vitaminB12 = calories * 0.01;
       vitaminA = calories * 0.08;
+      vitaminB2 = calories * 0.008;
+      phosphorus = calories * 2;
+      sodium = calories * 0.5;
     } else if (productName.includes('céréale') || productName.includes('pain') || productName.includes('riz') || productName.includes('pâte')) {
       vitaminB1 = calories * 0.006;
       vitaminB6 = calories * 0.005;
+      vitaminB3 = calories * 0.04;
       iron = calories * 0.03;
       magnesium = calories * 0.6;
+      fiber = calories * 0.3;
+      vitaminB9 = calories * 0.025;
+      manganese = calories * 0.008;
     } else if (productName.includes('noix') || productName.includes('amande') || productName.includes('noisette') || productName.includes('graine')) {
       vitaminE = calories * 0.15;
       magnesium = calories * 1.2;
       zinc = calories * 0.04;
       vitaminB6 = calories * 0.006;
+      copper = calories * 0.01;
+      manganese = calories * 0.01;
+      omega6 = calories * 0.12;
+      fiber = calories * 0.4;
+    } else if (productName.includes('œuf') || productName.includes('egg')) {
+      vitaminB12 = calories * 0.01;
+      vitaminA = calories * 0.1;
+      vitaminD = calories * 0.015;
+      vitaminB7 = calories * 0.002;
+      selenium = calories * 0.02;
+      phosphorus = calories * 1.5;
+      vitaminB2 = calories * 0.006;
     } else {
       // Valeurs par défaut pour les aliments non catégorisés
       vitaminA = calories * 0.05;
       vitaminC = calories * 0.3;
       vitaminD = calories * 0.005;
       vitaminE = calories * 0.03;
+      vitaminK = calories * 0.02;
       vitaminB1 = calories * 0.003;
+      vitaminB2 = calories * 0.003;
+      vitaminB3 = calories * 0.02;
+      vitaminB5 = calories * 0.01;
       vitaminB6 = calories * 0.004;
+      vitaminB7 = calories * 0.001;
+      vitaminB9 = calories * 0.015;
       vitaminB12 = calories * 0.008;
       calcium = calories * 0.8;
       iron = calories * 0.04;
       magnesium = calories * 0.5;
       potassium = calories * 2;
       zinc = calories * 0.03;
+      sodium = calories * 0.3;
+      phosphorus = calories * 1;
+      selenium = calories * 0.005;
+      copper = calories * 0.003;
+      manganese = calories * 0.005;
+      iodine = calories * 0.002;
+      chromium = calories * 0.001;
+      molybdenum = calories * 0.001;
+      fiber = calories * 0.2;
+      omega3 = calories * 0.01;
+      omega6 = calories * 0.03;
     }
 
     return {
+      // Vitamines
       vitaminA: Math.round(vitaminA * 10) / 10,
       vitaminC: Math.round(vitaminC * 10) / 10,
       vitaminD: Math.round(vitaminD * 10) / 10,
       vitaminE: Math.round(vitaminE * 10) / 10,
+      vitaminK: Math.round(vitaminK * 10) / 10,
       vitaminB1: Math.round(vitaminB1 * 100) / 100,
+      vitaminB2: Math.round(vitaminB2 * 100) / 100,
+      vitaminB3: Math.round(vitaminB3 * 10) / 10,
+      vitaminB5: Math.round(vitaminB5 * 10) / 10,
       vitaminB6: Math.round(vitaminB6 * 100) / 100,
+      vitaminB7: Math.round(vitaminB7 * 1000) / 1000,
+      vitaminB9: Math.round(vitaminB9 * 10) / 10,
       vitaminB12: Math.round(vitaminB12 * 100) / 100,
+      // Minéraux
       calcium: Math.round(calcium * 10) / 10,
       iron: Math.round(iron * 100) / 100,
       magnesium: Math.round(magnesium * 10) / 10,
       potassium: Math.round(potassium * 10) / 10,
       zinc: Math.round(zinc * 100) / 100,
+      sodium: Math.round(sodium * 10) / 10,
+      phosphorus: Math.round(phosphorus * 10) / 10,
+      selenium: Math.round(selenium * 100) / 100,
+      copper: Math.round(copper * 1000) / 1000,
+      manganese: Math.round(manganese * 1000) / 1000,
+      iodine: Math.round(iodine * 100) / 100,
+      chromium: Math.round(chromium * 1000) / 1000,
+      molybdenum: Math.round(molybdenum * 1000) / 1000,
+      // Autres
+      caffeine: Math.round(caffeine * 10) / 10,
+      fiber: Math.round(fiber * 10) / 10,
+      omega3: Math.round(omega3 * 100) / 100,
+      omega6: Math.round(omega6 * 100) / 100,
     };
   };
 
@@ -799,6 +955,17 @@ function NutritionScreen() {
                     </View>
 
                     <View style={styles.microItem}>
+                      <Text style={styles.microLabel}>Vit. K</Text>
+                      <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminK * 10) / 10}μg</Text>
+                      <View style={styles.microProgressBar}>
+                        <View style={[styles.microProgressFill, { 
+                          width: `${Math.min((dailyTotals.vitaminK / microGoals.vitaminK) * 100, 100)}%`,
+                          backgroundColor: dailyTotals.vitaminK >= microGoals.vitaminK * 0.8 ? '#28A745' : '#F5A623'
+                        }]} />
+                      </View>
+                    </View>
+
+                    <View style={styles.microItem}>
                       <Text style={styles.microLabel}>Vit. B1</Text>
                       <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminB1 * 100) / 100}mg</Text>
                       <View style={styles.microProgressBar}>
@@ -810,12 +977,67 @@ function NutritionScreen() {
                     </View>
 
                     <View style={styles.microItem}>
+                      <Text style={styles.microLabel}>Vit. B2</Text>
+                      <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminB2 * 100) / 100}mg</Text>
+                      <View style={styles.microProgressBar}>
+                        <View style={[styles.microProgressFill, { 
+                          width: `${Math.min((dailyTotals.vitaminB2 / microGoals.vitaminB2) * 100, 100)}%`,
+                          backgroundColor: dailyTotals.vitaminB2 >= microGoals.vitaminB2 * 0.8 ? '#28A745' : '#F5A623'
+                        }]} />
+                      </View>
+                    </View>
+
+                    <View style={styles.microItem}>
+                      <Text style={styles.microLabel}>Vit. B3</Text>
+                      <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminB3 * 10) / 10}mg</Text>
+                      <View style={styles.microProgressBar}>
+                        <View style={[styles.microProgressFill, { 
+                          width: `${Math.min((dailyTotals.vitaminB3 / microGoals.vitaminB3) * 100, 100)}%`,
+                          backgroundColor: dailyTotals.vitaminB3 >= microGoals.vitaminB3 * 0.8 ? '#28A745' : '#F5A623'
+                        }]} />
+                      </View>
+                    </View>
+
+                    <View style={styles.microItem}>
+                      <Text style={styles.microLabel}>Vit. B6</Text>
+                      <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminB6 * 100) / 100}mg</Text>
+                      <View style={styles.microProgressBar}>
+                        <View style={[styles.microProgressFill, { 
+                          width: `${Math.min((dailyTotals.vitaminB6 / microGoals.vitaminB6) * 100, 100)}%`,
+                          backgroundColor: dailyTotals.vitaminB6 >= microGoals.vitaminB6 * 0.8 ? '#28A745' : '#F5A623'
+                        }]} />
+                      </View>
+                    </View>
+
+                    <View style={styles.microItem}>
+                      <Text style={styles.microLabel}>Vit. B9</Text>
+                      <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminB9 * 10) / 10}μg</Text>
+                      <View style={styles.microProgressBar}>
+                        <View style={[styles.microProgressFill, { 
+                          width: `${Math.min((dailyTotals.vitaminB9 / microGoals.vitaminB9) * 100, 100)}%`,
+                          backgroundColor: dailyTotals.vitaminB9 >= microGoals.vitaminB9 * 0.8 ? '#28A745' : '#F5A623'
+                        }]} />
+                      </View>
+                    </View>
+
+                    <View style={styles.microItem}>
                       <Text style={styles.microLabel}>Vit. B12</Text>
                       <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminB12 * 100) / 100}μg</Text>
                       <View style={styles.microProgressBar}>
                         <View style={[styles.microProgressFill, { 
                           width: `${Math.min((dailyTotals.vitaminB12 / microGoals.vitaminB12) * 100, 100)}%`,
                           backgroundColor: dailyTotals.vitaminB12 >= microGoals.vitaminB12 * 0.8 ? '#28A745' : '#F5A623'
+                        }]} />
+                      </View>
+                    </View>
+
+                    <View style={styles.microItem}>
+                      <Text style={styles.microLabel}>Biotine</Text>
+                      <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminB7 * 1000) / 1000}μg</Text>
+                      <View style={styles.microProgressBar}>
+                        <View style={[styles.microProgressFill, { 
+                          width: `${Math.min((dailyTotals.vitaminB7 / microGoals.vitaminB7) * 100, 100)}%`,
+                          backgroundColor: dailyTotals.vitaminB7 >= microGoals.vitaminB7 * 0.8 ? '#28A745' : '#F5A623'
                         }]} />
                       </View>
                     </View>
@@ -883,12 +1105,129 @@ function NutritionScreen() {
                     </View>
 
                     <View style={styles.microItem}>
-                      <Text style={styles.microLabel}>Vit. B6</Text>
-                      <Text style={styles.microValue}>{Math.round(dailyTotals.vitaminB6 * 100) / 100}mg</Text>
+                      <Text style={styles.microLabel}>Sodium</Text>
+                      <Text style={styles.microValue}>{Math.round(dailyTotals.sodium)}mg</Text>
                       <View style={styles.microProgressBar}>
                         <View style={[styles.microProgressFill, { 
-                          width: `${Math.min((dailyTotals.vitaminB6 / microGoals.vitaminB6) * 100, 100)}%`,
-                          backgroundColor: dailyTotals.vitaminB6 >= microGoals.vitaminB6 * 0.8 ? '#28A745' : '#F5A623'
+                          width: `${Math.min((dailyTotals.sodium / microGoals.sodium) * 100, 100)}%`,
+                          backgroundColor: dailyTotals.sodium <= microGoals.sodium * 0.8 ? '#28A745' : '#FF6B6B'
+                        }]} />
+                      </View>
+                    </View>
+
+                    <View style={styles.microItem}>
+                      <Text style={styles.microLabel}>Phosphore</Text>
+                      <Text style={styles.microValue}>{Math.round(dailyTotals.phosphorus)}mg</Text>
+                      <View style={styles.microProgressBar}>
+                        <View style={[styles.microProgressFill, { 
+                          width: `${Math.min((dailyTotals.phosphorus / microGoals.phosphorus) * 100, 100)}%`,
+                          backgroundColor: dailyTotals.phosphorus >= microGoals.phosphorus * 0.8 ? '#28A745' : '#F5A623'
+                        }]} />
+                      </View>
+                    </View>
+
+                    <View style={styles.microItem}>
+                      <Text style={styles.microLabel}>Sélénium</Text>
+                      <Text style={styles.microValue}>{Math.round(dailyTotals.selenium * 100) / 100}μg</Text>
+                      <View style={styles.microProgressBar}>
+                        <View style={[styles.microProgressFill, { 
+                          width: `${Math.min((dailyTotals.selenium / microGoals.selenium) * 100, 100)}%`,
+                          backgroundColor: dailyTotals.selenium >= microGoals.selenium * 0.8 ? '#28A745' : '#F5A623'
+                        }]} />
+                      </View>
+                    </View>
+
+                    <View style={styles.microItem}>
+                      <Text style={styles.microLabel}>Cuivre</Text>
+                      <Text style={styles.microValue}>{Math.round(dailyTotals.copper * 1000) / 1000}mg</Text>
+                      <View style={styles.microProgressBar}>
+                        <View style={[styles.microProgressFill, { 
+                          width: `${Math.min((dailyTotals.copper / microGoals.copper) * 100, 100)}%`,
+                          backgroundColor: dailyTotals.copper >= microGoals.copper * 0.8 ? '#28A745' : '#F5A623'
+                        }]} />
+                      </View>
+                    </View>
+
+                    <View style={styles.microItem}>
+                      <Text style={styles.microLabel}>Iode</Text>
+                      <Text style={styles.microValue}>{Math.round(dailyTotals.iodine * 100) / 100}μg</Text>
+                      <View style={styles.microProgressBar}>
+                        <View style={[styles.microProgressFill, { 
+                          width: `${Math.min((dailyTotals.iodine / microGoals.iodine) * 100, 100)}%`,
+                          backgroundColor: dailyTotals.iodine >= microGoals.iodine * 0.8 ? '#28A745' : '#F5A623'
+                        }]} />
+                      </View>
+                    </View>
+
+                    <View style={styles.microItem}>
+                      <Text style={styles.microLabel}>Manganèse</Text>
+                      <Text style={styles.microValue}>{Math.round(dailyTotals.manganese * 1000) / 1000}mg</Text>
+                      <View style={styles.microProgressBar}>
+                        <View style={[styles.microProgressFill, { 
+                          width: `${Math.min((dailyTotals.manganese / microGoals.manganese) * 100, 100)}%`,
+                          backgroundColor: dailyTotals.manganese >= microGoals.manganese * 0.8 ? '#28A745' : '#F5A623'
+                        }]} />
+                      </View>
+                    </View>
+
+                    <View style={styles.microItem}>
+                      <Text style={styles.microLabel}>Chrome</Text>
+                      <Text style={styles.microValue}>{Math.round(dailyTotals.chromium * 1000) / 1000}μg</Text>
+                      <View style={styles.microProgressBar}>
+                        <View style={[styles.microProgressFill, { 
+                          width: `${Math.min((dailyTotals.chromium / microGoals.chromium) * 100, 100)}%`,
+                          backgroundColor: dailyTotals.chromium >= microGoals.chromium * 0.8 ? '#28A745' : '#F5A623'
+                        }]} />
+                      </View>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Autres nutriments */}
+                <View style={styles.microSection}>
+                  <Text style={styles.microSectionTitle}>☕ Autres</Text>
+                  
+                  <View style={styles.microGrid}>
+                    <View style={styles.microItem}>
+                      <Text style={styles.microLabel}>Caféine</Text>
+                      <Text style={styles.microValue}>{Math.round(dailyTotals.caffeine * 10) / 10}mg</Text>
+                      <View style={styles.microProgressBar}>
+                        <View style={[styles.microProgressFill, { 
+                          width: `${Math.min((dailyTotals.caffeine / microGoals.caffeine) * 100, 100)}%`,
+                          backgroundColor: dailyTotals.caffeine <= microGoals.caffeine * 0.8 ? '#28A745' : '#FF6B6B'
+                        }]} />
+                      </View>
+                    </View>
+
+                    <View style={styles.microItem}>
+                      <Text style={styles.microLabel}>Fibres</Text>
+                      <Text style={styles.microValue}>{Math.round(dailyTotals.fiber * 10) / 10}g</Text>
+                      <View style={styles.microProgressBar}>
+                        <View style={[styles.microProgressFill, { 
+                          width: `${Math.min((dailyTotals.fiber / microGoals.fiber) * 100, 100)}%`,
+                          backgroundColor: dailyTotals.fiber >= microGoals.fiber * 0.8 ? '#28A745' : '#F5A623'
+                        }]} />
+                      </View>
+                    </View>
+
+                    <View style={styles.microItem}>
+                      <Text style={styles.microLabel}>Oméga-3</Text>
+                      <Text style={styles.microValue}>{Math.round(dailyTotals.omega3 * 100) / 100}g</Text>
+                      <View style={styles.microProgressBar}>
+                        <View style={[styles.microProgressFill, { 
+                          width: `${Math.min((dailyTotals.omega3 / microGoals.omega3) * 100, 100)}%`,
+                          backgroundColor: dailyTotals.omega3 >= microGoals.omega3 * 0.8 ? '#28A745' : '#F5A623'
+                        }]} />
+                      </View>
+                    </View>
+
+                    <View style={styles.microItem}>
+                      <Text style={styles.microLabel}>Oméga-6</Text>
+                      <Text style={styles.microValue}>{Math.round(dailyTotals.omega6 * 100) / 100}g</Text>
+                      <View style={styles.microProgressBar}>
+                        <View style={[styles.microProgressFill, { 
+                          width: `${Math.min((dailyTotals.omega6 / microGoals.omega6) * 100, 100)}%`,
+                          backgroundColor: dailyTotals.omega6 >= microGoals.omega6 * 0.8 ? '#28A745' : '#F5A623'
                         }]} />
                       </View>
                     </View>
