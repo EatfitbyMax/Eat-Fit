@@ -899,11 +899,6 @@ function NutritionScreen() {
             {/* Vue Vitamines */}
             {currentView === 'vitamines' && (
               <View style={styles.combinedStatsCard}>
-                <View style={styles.microTitle}>
-                  <Text style={styles.microTitleText}>🍊 Vitamines</Text>
-                  <Text style={styles.microSubtitle}>Essentielles au bon fonctionnement</Text>
-                </View>
-                
                 <View style={styles.microGrid}>
                   <View style={styles.microItem}>
                     <Text style={styles.microLabel}>Vit. A</Text>
@@ -1043,11 +1038,6 @@ function NutritionScreen() {
             {/* Vue Minéraux */}
             {currentView === 'mineraux' && (
               <View style={styles.combinedStatsCard}>
-                <View style={styles.microTitle}>
-                  <Text style={styles.microTitleText}>⚡ Minéraux</Text>
-                  <Text style={styles.microSubtitle}>Équilibre électrolytique</Text>
-                </View>
-                
                 <View style={styles.microGrid}>
                   <View style={styles.microItem}>
                     <Text style={styles.microLabel}>Calcium</Text>
@@ -1187,11 +1177,6 @@ function NutritionScreen() {
             {/* Vue Autres */}
             {currentView === 'autres' && (
               <View style={styles.combinedStatsCard}>
-                <View style={styles.microTitle}>
-                  <Text style={styles.microTitleText}>☕ Autres</Text>
-                  <Text style={styles.microSubtitle}>Compléments nutritionnels</Text>
-                </View>
-                
                 <View style={styles.microGrid}>
                   <View style={styles.microItem}>
                     <Text style={styles.microLabel}>Caféine</Text>
@@ -2029,37 +2014,37 @@ const styles = StyleSheet.create({
   microGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 3,
+    gap: width < 375 ? 6 : 8,
     justifyContent: 'space-between',
   },
   microItem: {
     backgroundColor: 'rgba(13, 17, 23, 0.7)',
-    borderRadius: 6,
-    padding: width < 375 ? 4 : 6,
+    borderRadius: 10,
+    padding: width < 375 ? 8 : 12,
     borderWidth: 1,
     borderColor: 'rgba(255, 165, 0, 0.15)',
-    width: '24%', // 4 colonnes avec 1% d'espacement
+    width: '31%', // 3 colonnes avec plus d'espace
     alignItems: 'center',
-    minHeight: 42,
+    minHeight: width < 375 ? 65 : 75,
   },
   microLabel: {
-    fontSize: width < 375 ? 7 : 8,
+    fontSize: width < 375 ? 10 : 12,
     color: '#8B949E',
     fontWeight: '600',
-    marginBottom: 1,
+    marginBottom: 4,
     textAlign: 'center',
   },
   microValue: {
-    fontSize: width < 375 ? 8 : 9,
+    fontSize: width < 375 ? 12 : 14,
     fontWeight: '700',
     color: '#FFFFFF',
-    marginBottom: 2,
+    marginBottom: 6,
     textAlign: 'center',
   },
   microProgressBar: {
-    height: 2,
+    height: 3,
     backgroundColor: 'rgba(33, 38, 45, 0.8)',
-    borderRadius: 1,
+    borderRadius: 1.5,
     overflow: 'hidden',
     width: '100%',
   },
