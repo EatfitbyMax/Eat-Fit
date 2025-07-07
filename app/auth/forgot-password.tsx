@@ -130,12 +130,24 @@ export default function ForgotPasswordScreen() {
 
           <View style={styles.infoContainer}>
             <Text style={styles.infoText}>
-              ⚠️ Service d'envoi d'email temporairement indisponible.
-              Contactez le support pour réinitialiser votre mot de passe.
+              📧 Un nouveau mot de passe temporaire sera envoyé à votre adresse email.
+              Vérifiez votre boîte de réception (et vos spams) puis changez ce mot de passe lors de votre prochaine connexion.
             </Text>
           </View>
 
-          {/* Service email désactivé */}
+          {/* Bouton de test temporaire - à supprimer après test */}
+          <TouchableOpacity 
+            style={[styles.button, { backgroundColor: '#28a745', marginTop: 20 }]} 
+            onPress={async () => {
+              const testResult = await EmailService.testEmailConfiguration();
+              Alert.alert(
+                'Test EmailJS', 
+                testResult ? 'Configuration OK ! ✅' : 'Erreur de configuration ❌'
+              );
+            }}
+          >
+            <Text style={styles.buttonText}>🧪 Tester la configuration EmailJS</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </SafeAreaView>

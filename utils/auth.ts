@@ -90,19 +90,6 @@ export async function login(email: string, password: string): Promise<User | nul
       if (localUsers) {
         users = JSON.parse(localUsers);
         console.log('Utilisateurs récupérés depuis le stockage local');
-      } else {
-        // Si aucun utilisateur local, créer un utilisateur de test
-        const testUser = {
-          id: 'test-user',
-          email: 'm.pacullmarquie@gmail.com',
-          password: 'test123',
-          userType: 'client',
-          firstName: 'Test',
-          lastName: 'User'
-        };
-        users = [testUser];
-        await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
-        console.log('Utilisateur de test créé');
       }
     }
 
