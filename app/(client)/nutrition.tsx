@@ -653,85 +653,87 @@ function NutritionScreen() {
             {/* Vue Macros */}
             {currentView === 'macros' && (
               <View style={styles.combinedStatsCard}>
-                {/* Calories Circular Gauge - Top */}
-                <View style={styles.caloriesSection}>
-                  <View style={styles.circularGauge}>
-                    <Svg width={width < 375 ? 110 : 120} height={width < 375 ? 110 : 120} style={styles.svgGauge}>
-                      {/* Background circle */}
-                      <Circle
-                        cx={(width < 375 ? 110 : 120) / 2}
-                        cy={(width < 375 ? 110 : 120) / 2}
-                        r={(width < 375 ? 110 : 120) / 2 - 8}
-                        stroke="rgba(33, 38, 45, 0.8)"
-                        strokeWidth="8"
-                        fill="transparent"
-                      />
-                      {/* Progress circle */}
-                      <Circle
-                        cx={(width < 375 ? 110 : 120) / 2}
-                        cy={(width < 375 ? 110 : 120) / 2}
-                        r={(width < 375 ? 110 : 120) / 2 - 8}
-                        stroke="#FFA500"
-                        strokeWidth="8"
-                        fill="transparent"
-                        strokeDasharray={`${2 * Math.PI * ((width < 375 ? 110 : 120) / 2 - 8)}`}
-                        strokeDashoffset={`${2 * Math.PI * ((width < 375 ? 110 : 120) / 2 - 8) * (1 - Math.min(dailyTotals.calories / calorieGoals.calories, 1))}`}
-                        strokeLinecap="round"
-                        transform={`rotate(-90 ${(width < 375 ? 110 : 120) / 2} ${(width < 375 ? 110 : 120) / 2})`}
-                      />
-                    </Svg>
-                    <View style={styles.circularGaugeInner}>
-                      <Text style={styles.caloriesValue}>{dailyTotals.calories}</Text>
-                      <Text style={styles.caloriesTarget}>/ {calorieGoals.calories}</Text>
-                      <Text style={styles.caloriesLabel}>kcal</Text>
+                <View style={styles.macrosLayout}>
+                  {/* Calories Circular Gauge - Gauche */}
+                  <View style={styles.caloriesGaugeContainer}>
+                    <View style={styles.circularGauge}>
+                      <Svg width={120} height={120} style={styles.svgGauge}>
+                        {/* Background circle */}
+                        <Circle
+                          cx={60}
+                          cy={60}
+                          r={52}
+                          stroke="rgba(33, 38, 45, 0.8)"
+                          strokeWidth="8"
+                          fill="transparent"
+                        />
+                        {/* Progress circle */}
+                        <Circle
+                          cx={60}
+                          cy={60}
+                          r={52}
+                          stroke="#FFA500"
+                          strokeWidth="8"
+                          fill="transparent"
+                          strokeDasharray={`${2 * Math.PI * 52}`}
+                          strokeDashoffset={`${2 * Math.PI * 52 * (1 - Math.min(dailyTotals.calories / calorieGoals.calories, 1))}`}
+                          strokeLinecap="round"
+                          transform="rotate(-90 60 60)"
+                        />
+                      </Svg>
+                      <View style={styles.circularGaugeInner}>
+                        <Text style={styles.caloriesValue}>{dailyTotals.calories}</Text>
+                        <Text style={styles.caloriesTarget}>/ {calorieGoals.calories}</Text>
+                        <Text style={styles.caloriesLabel}>kcal</Text>
+                      </View>
                     </View>
-                  </View>
-                  <Text style={styles.caloriesSubtext}>
-                    {Math.max(0, calorieGoals.calories - dailyTotals.calories)} kcal restantes
-                  </Text>
-                </View>
-
-                {/* Macros Progress Bars - Bottom */}
-                <View style={styles.macrosSection}>
-                  {/* Protéines */}
-                  <View style={styles.macroItem}>
-                    <View style={styles.macroHeader}>
-                      <Text style={styles.macroLabel}>Protéines</Text>
-                      <Text style={styles.macroValue}>{Math.round(dailyTotals.proteins)}g / {calorieGoals.proteins}g</Text>
-                    </View>
-                    <View style={styles.progressBar}>
-                      <View style={[styles.progressFill, { 
-                        width: `${Math.min((dailyTotals.proteins / calorieGoals.proteins) * 100, 100)}%`, 
-                        backgroundColor: '#FF6B6B' 
-                      }]} />
-                    </View>
+                    <Text style={styles.caloriesSubtext}>
+                      {Math.max(0, calorieGoals.calories - dailyTotals.calories)} kcal restantes
+                    </Text>
                   </View>
 
-                  {/* Glucides */}
-                  <View style={styles.macroItem}>
-                    <View style={styles.macroHeader}>
-                      <Text style={styles.macroLabel}>Glucides</Text>
-                      <Text style={styles.macroValue}>{Math.round(dailyTotals.carbohydrates)}g / {calorieGoals.carbohydrates}g</Text>
+                  {/* Macros Progress Bars - Droite */}
+                  <View style={styles.macrosProgressContainer}>
+                    {/* Protéines */}
+                    <View style={styles.macroProgressItem}>
+                      <View style={styles.macroProgressHeader}>
+                        <Text style={styles.macroProgressLabel}>Protéines</Text>
+                        <Text style={styles.macroProgressValue}>{Math.round(dailyTotals.proteins)}g / {calorieGoals.proteins}g</Text>
+                      </View>
+                      <View style={styles.macroProgressBar}>
+                        <View style={[styles.macroProgressFill, { 
+                          width: `${Math.min((dailyTotals.proteins / calorieGoals.proteins) * 100, 100)}%`, 
+                          backgroundColor: '#FF6B6B' 
+                        }]} />
+                      </View>
                     </View>
-                    <View style={styles.progressBar}>
-                      <View style={[styles.progressFill, { 
-                        width: `${Math.min((dailyTotals.carbohydrates / calorieGoals.carbohydrates) * 100, 100)}%`, 
-                        backgroundColor: '#4ECDC4' 
-                      }]} />
-                    </View>
-                  </View>
 
-                  {/* Lipides */}
-                  <View style={styles.macroItem}>
-                    <View style={styles.macroHeader}>
-                      <Text style={styles.macroLabel}>Lipides</Text>
-                      <Text style={styles.macroValue}>{Math.round(dailyTotals.fat)}g / {calorieGoals.fat}g</Text>
+                    {/* Glucides */}
+                    <View style={styles.macroProgressItem}>
+                      <View style={styles.macroProgressHeader}>
+                        <Text style={styles.macroProgressLabel}>Glucides</Text>
+                        <Text style={styles.macroProgressValue}>{Math.round(dailyTotals.carbohydrates)}g / {calorieGoals.carbohydrates}g</Text>
+                      </View>
+                      <View style={styles.macroProgressBar}>
+                        <View style={[styles.macroProgressFill, { 
+                          width: `${Math.min((dailyTotals.carbohydrates / calorieGoals.carbohydrates) * 100, 100)}%`, 
+                          backgroundColor: '#4ECDC4' 
+                        }]} />
+                      </View>
                     </View>
-                    <View style={styles.progressBar}>
-                      <View style={[styles.progressFill, { 
-                        width: `${Math.min((dailyTotals.fat / calorieGoals.fat) * 100, 100)}%`, 
-                        backgroundColor: '#FFE66D' 
-                      }]} />
+
+                    {/* Lipides */}
+                    <View style={styles.macroProgressItem}>
+                      <View style={styles.macroProgressHeader}>
+                        <Text style={styles.macroProgressLabel}>Lipides</Text>
+                        <Text style={styles.macroProgressValue}>{Math.round(dailyTotals.fat)}g / {calorieGoals.fat}g</Text>
+                      </View>
+                      <View style={styles.macroProgressBar}>
+                        <View style={[styles.macroProgressFill, { 
+                          width: `${Math.min((dailyTotals.fat / calorieGoals.fat) * 100, 100)}%`, 
+                          backgroundColor: '#FFE66D' 
+                        }]} />
+                      </View>
                     </View>
                   </View>
                 </View>
@@ -1201,8 +1203,6 @@ const styles = StyleSheet.create({
     padding: width < 375 ? 16 : 20,
     borderWidth: 1.5,
     borderColor: 'rgba(255, 165, 0, 0.3)',
-    flexDirection: 'column',
-    gap: width < 375 ? 16 : 20,
     shadowColor: '#FFA500',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
@@ -1210,14 +1210,18 @@ const styles = StyleSheet.create({
     elevation: 8,
     width: width - 40,
   },
-  caloriesSection: {
+  macrosLayout: {
+    flexDirection: 'row',
     alignItems: 'center',
-    width: '100%',
-    marginBottom: 16,
+    gap: 20,
+  },
+  caloriesGaugeContainer: {
+    alignItems: 'center',
+    flex: 0,
   },
   circularGauge: {
-    width: width < 375 ? 110 : 120,
-    height: width < 375 ? 110 : 120,
+    width: 120,
+    height: 120,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
@@ -1230,66 +1234,66 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   caloriesValue: {
-    fontSize: width < 375 ? 20 : 22,
+    fontSize: 22,
     fontWeight: '800',
     color: '#FFFFFF',
-    lineHeight: width < 375 ? 22 : 24,
+    lineHeight: 24,
   },
   caloriesTarget: {
-    fontSize: width < 375 ? 12 : 13,
+    fontSize: 13,
     color: '#FFA500',
-    lineHeight: width < 375 ? 14 : 15,
+    lineHeight: 15,
     fontWeight: '500',
   },
   caloriesLabel: {
-    fontSize: width < 375 ? 11 : 12,
+    fontSize: 12,
     color: '#8B949E',
     marginTop: 2,
     fontWeight: '600',
   },
   caloriesSubtext: {
-    fontSize: width < 375 ? 10 : 11,
+    fontSize: 10,
     color: '#8B949E',
     textAlign: 'center',
     fontWeight: '500',
   },
-  macrosSection: {
-    width: '100%',
-    gap: width < 375 ? 10 : 12,
+  macrosProgressContainer: {
+    flex: 1,
+    gap: 16,
   },
-  macroItem: {
+  macroProgressItem: {
     backgroundColor: 'rgba(13, 17, 23, 0.7)',
     borderRadius: 12,
-    padding: width < 375 ? 10 : 12,
+    padding: 12,
     borderWidth: 1,
     borderColor: 'rgba(255, 165, 0, 0.2)',
   },
-  macroHeader: {
+  macroProgressHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
   },
-  macroLabel: {
-    fontSize: width < 375 ? 11 : 12,
+  macroProgressLabel: {
+    fontSize: 12,
     color: '#8B949E',
     fontWeight: '600',
   },
-  macroValue: {
-    fontSize: width < 375 ? 11 : 12,
+  macroProgressValue: {
+    fontSize: 11,
     fontWeight: '700',
     color: '#FFFFFF',
   },
-  progressBar: {
-    height: width < 375 ? 4 : 5,
+  macroProgressBar: {
+    height: 4,
     backgroundColor: 'rgba(33, 38, 45, 0.8)',
-    borderRadius: width < 375 ? 2 : 2.5,
+    borderRadius: 2,
     overflow: 'hidden',
     width: '100%',
   },
-  progressFill: {
+  macroProgressFill: {
     height: '100%',
-    borderRadius: width < 375 ? 2 : 2.5,
+    borderRadius: 2,
   },
   tabsContainer: {
     flexDirection: 'row',
