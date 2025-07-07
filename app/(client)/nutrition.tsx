@@ -2029,8 +2029,8 @@ const styles = StyleSheet.create({
   microGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 4,
-    justifyContent: 'center',
+    gap: 3,
+    justifyContent: 'space-between',
   },
   microItem: {
     backgroundColor: 'rgba(13, 17, 23, 0.7)',
@@ -2038,7 +2038,7 @@ const styles = StyleSheet.create({
     padding: width < 375 ? 4 : 6,
     borderWidth: 1,
     borderColor: 'rgba(255, 165, 0, 0.15)',
-    width: (width - 120) / 4 - 3, // 4 colonnes avec espacement minimal
+    width: '24%', // 4 colonnes avec 1% d'espacement
     alignItems: 'center',
     minHeight: 42,
   },
