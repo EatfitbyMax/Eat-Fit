@@ -5,10 +5,6 @@ modules = ["nodejs-20"]
 channel = "stable-24_05"
 
 [[ports]]
-localPort = 5000
-externalPort = 5000
-
-[[ports]]
 localPort = 8081
 externalPort = 80
 
@@ -16,86 +12,45 @@ externalPort = 80
 localPort = 8082
 externalPort = 3000
 
-[[ports]]
-localPort = 8083
-externalPort = 3001
-
-[[ports]]
-localPort = 8084
-externalPort = 3002
-
-[[ports]]
-localPort = 8085
-externalPort = 3003
-
-[[ports]]
-localPort = 8086
-externalPort = 4200
-
 [workflows]
-runButton = "Expo Dev"
+runButton = "Dev Server"
 
 [[workflows.workflow]]
-name = "Expo Dev Clean"
-author = 42598128
+name = "Dev Server"
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "rm -rf node_modules/.cache"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "rm -rf .expo"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN npx expo start --clear"
+args = "EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN npx expo start"
 
 [[workflows.workflow]]
-name = "Expo Dev"
-author = 42598128
+name = "EAS Init"
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npx expo start --web --dev-client --clear"
+args = "npx eas init"
 
 [[workflows.workflow]]
-name = "Backend Server"
-author = 42598128
+name = "EAS Update"
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd server && npm install && node server.js"
+args = "npx eas update --auto"
 
 [[workflows.workflow]]
-name = "Expo Start"
-author = 42598128
+name = "EAS Publish Preview iOS"
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "rm -rf node_modules/.cache"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "rm -rf .expo"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN npx expo start --clear"
+args = "npx eas build --platform ios --profile preview"
 
 [[workflows.workflow]]
-name = "Full Stack Dev"
-author = 42598128
-mode = "parallel"
+name = "EAS Publish Preview Android"
+mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npx expo start --web --dev-client --clear"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd server && node server.js"
+args = "npx eas build --platform android --profile preview"
