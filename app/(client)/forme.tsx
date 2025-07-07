@@ -772,43 +772,78 @@ export default function FormeScreen() {
     const issues = [];
     let score = 100;
 
-    // Protéines
+    // Calculer les écarts par rapport aux fourchettes optimales
+    const proteinDeviation = proteinPercent < optimalRanges.protein.min ? 
+      optimalRanges.protein.min - proteinPercent : 
+      proteinPercent > optimalRanges.protein.max ? proteinPercent - optimalRanges.protein.max : 0;
+
+    const carbDeviation = carbPercent < optimalRanges.carb.min ? 
+      optimalRanges.carb.min - carbPercent : 
+      carbPercent > optimalRanges.carb.max ? carbPercent - optimalRanges.carb.max : 0;
+
+    const fatDeviation = fatPercent < optimalRanges.fat.min ? 
+      optimalRanges.fat.min - fatPercent : 
+      fatPercent > optimalRanges.fat.max ? fatPercent - optimalRanges.fat.max : 0;
+
+    // Protéines avec pénalités progressives
     if (proteinPercent < optimalRanges.protein.min) {
       issues.push(`Protéines insuffisantes (${Math.round(proteinPercent)}% vs ${optimalRanges.protein.min}-${optimalRanges.protein.max}%)`);
-      score -= 20;
+      if (proteinDeviation > 20) score -= 35; // Déficit extrême (< 5% si optimal 25%)
+      else if (proteinDeviation > 10) score -= 25; // Déficit sévère
+      else score -= 15; // Déficit modéré
     } else if (proteinPercent > optimalRanges.protein.max) {
       issues.push(`Protéines excessives (${Math.round(proteinPercent)}% vs ${optimalRanges.protein.min}-${optimalRanges.protein.max}%)`);
-      score -= 10;
+      if (proteinDeviation > 20) score -= 20; // Excès extrême
+      else if (proteinDeviation > 10) score -= 15; // Excès sévère
+      else score -= 10; // Excès modéré
     }
 
-    // Glucides
+    // Glucides avec pénalités progressives
     if (carbPercent < optimalRanges.carb.min) {
       issues.push(`Glucides insuffisants (${Math.round(carbPercent)}% vs ${optimalRanges.carb.min}-${optimalRanges.carb.max}%)`);
-      score -= 15;
+      if (carbDeviation > 30) score -= 30; // Déficit extrême (< 15% si optimal 45%)
+      else if (carbDeviation > 20) score -= 20; // Déficit sévère
+      else score -= 15; // Déficit modéré
     } else if (carbPercent > optimalRanges.carb.max) {
       issues.push(`Glucides excessifs (${Math.round(carbPercent)}% vs ${optimalRanges.carb.min}-${optimalRanges.carb.max}%)`);
-      score -= 10;
+      if (carbDeviation > 30) score -= 25; // Excès extrême
+      else if (carbDeviation > 20) score -= 15; // Excès sévère
+      else score -= 10; // Excès modéré
     }
 
-    // Lipides
+    // Lipides avec pénalités progressives (plus sévères car dangereux en excès)
     if (fatPercent < optimalRanges.fat.min) {
       issues.push(`Lipides insuffisants (${Math.round(fatPercent)}% vs ${optimalRanges.fat.min}-${optimalRanges.fat.max}%)`);
-      score -= 15;
+      if (fatDeviation > 15) score -= 25; // Déficit extrême
+      else if (fatDeviation > 10) score -= 20; // Déficit sévère
+      else score -= 15; // Déficit modéré
     } else if (fatPercent > optimalRanges.fat.max) {
       issues.push(`Lipides excessifs (${Math.round(fatPercent)}% vs ${optimalRanges.fat.min}-${optimalRanges.fat.max}%)`);
-      score -= 10;
+      if (fatDeviation > 50) score -= 50; // Excès extrême (> 85% si optimal 35%)
+      else if (fatDeviation > 30) score -= 35; // Excès sévère (> 65%)
+      else if (fatDeviation > 20) score -= 25; // Excès important (> 55%)
+      else score -= 15; // Excès modéré
     }
 
-    // Déterminer le statut
+    // Pénalité supplémentaire pour des déséquilibres extrêmes multiples
+    const extremeDeviations = [proteinDeviation > 20, carbDeviation > 30, fatDeviation > 50].filter(Boolean).length;
+    if (extremeDeviations >= 2) {
+      score -= 20; // Pénalité pour déséquilibres multiples extrêmes
+      issues.push('Déséquilibres multiples détectés - risque nutritionnel élevé');
+    }
+
+    // Déterminer le statut avec des seuils plus stricts
     let status;
-    if (score >= 90) {
+    if (score >= 85) {
       status = 'Équilibre optimal';
-    } else if (score >= 70) {
+    } else if (score >= 65) {
       status = 'Bon équilibre';
-    } else if (score >= 50) {
+    } else if (score >= 35) {
       status = 'Déséquilibre modéré';
-    } else {
+    } else if (score >= 15) {
       status = 'Déséquilibre important';
+    } else {
+      status = 'Déséquilibre critique';
     }
 
     if (issues.length === 0) {
