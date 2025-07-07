@@ -719,7 +719,7 @@ export default function FormeScreen() {
   };
 
   const analyzeMacroBalance = (macros: { proteins: number; carbohydrates: number; fat: number }, totalCalories: number) => {
-    if (totalCalories === 0 || (!macros.proteins && !macros.carbohydrates && !macros.fat)) {
+    if (!macros.proteins && !macros.carbohydrates && !macros.fat) {
       return {
         status: 'Aucune donnée',
         score: 50,
@@ -727,7 +727,7 @@ export default function FormeScreen() {
       };
     }
 
-    // Calculer les pourcentages d'énergie de chaque macronutriment
+    // Calculer les calories réelles de chaque macronutriment
     const proteinCalories = macros.proteins * 4;
     const carbCalories = macros.carbohydrates * 4;
     const fatCalories = macros.fat * 9;
@@ -741,6 +741,7 @@ export default function FormeScreen() {
       };
     }
 
+    // Calculer les pourcentages basés sur les calories réelles des macronutriments
     const proteinPercent = (proteinCalories / totalMacroCalories) * 100;
     const carbPercent = (carbCalories / totalMacroCalories) * 100;
     const fatPercent = (fatCalories / totalMacroCalories) * 100;
