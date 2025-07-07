@@ -1,16 +1,15 @@
 import React from 'react';
 import { Alert } from 'react-native';
 
-// Gestion globale des erreurs non capturées
-const handleUnhandledRejection = (event: any) => {
-  console.error('Promesse non capturée:', event.reason);
-  if (event.preventDefault) {
-    event.preventDefault();
-  }
-};
-
-// Ajouter le gestionnaire d'erreur si on est dans un environnement web
-if (typeof window !== 'undefined' && window.addEventListener) {
+// Gestion globale des erreurs non capturées (web uniquement)
+if (Platform.OS === 'web' && typeof window !== 'undefined' && window.addEventListener) {
+  const handleUnhandledRejection = (event: any) => {
+    console.error('Promesse non capturée:', event.reason);
+    if (event.preventDefault) {
+      event.preventDefault();
+    }
+  };
+  
   window.addEventListener('unhandledrejection', handleUnhandledRejection);
 }
 
@@ -88,6 +87,7 @@ export default function RootLayout() {
         await migrateExistingData();
       } catch (error) {
         console.warn('Migration échouée:', error);
+        // Ne pas faire échouer l'initialisation à cause de la migration
       }
 
       console.log('Vérification de l\'utilisateur connecté...');
@@ -137,21 +137,7 @@ export default function RootLayout() {
     }
   };
 
-  // Gestion des erreurs globales
-  React.useEffect(() => {
-    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      console.log('Promesse non capturée:', event.reason);
-      event.preventDefault();
-    };
-
-    if (typeof window !== 'undefined') {
-      window.addEventListener('unhandledrejection', handleUnhandledRejection);
-
-      return () => {
-        window.removeEventListener('unhandledrejection', handleUnhandledRejection);
-      };
-    }
-  }, []);
+  // Gestion des erreurs globales (supprimé car déjà géré plus haut)
 
   if (!loaded || isInitializing) {
     return <SplashScreenComponent onFinish={() => {}} />;

@@ -17,7 +17,7 @@ localPort = 8082
 externalPort = 3000
 
 [workflows]
-runButton = "Dev Server"
+runButton = "Dev Full Stack"
 
 [[workflows.workflow]]
 name = "Dev Server"
@@ -88,4 +88,4 @@ args = "EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd server && npm start"
+args = "cd server && node server.js"
