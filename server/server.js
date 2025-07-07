@@ -685,15 +685,13 @@ app.get('/api/status', (req, res) => {
 
 app.listen(PORT, '0.0.0.0', async () => {
   await initDataDir();
-  console.log(`Serveur démarré sur le port ${PORT}`);
-  console.log(`Serveur accessible sur : http://0.0.0.0:${PORT}`);
+  console.log(`🚀 Serveur EatFitByMax démarré sur le port ${PORT}`);
+  console.log(`🌐 Serveur accessible sur : https://${process.env.REPLIT_DEV_DOMAIN || 'localhost'}:${PORT}`);
+  console.log(`📱 API prête pour les applications mobiles Expo`);
+  console.log(`🔧 Mode: ${process.env.NODE_ENV || 'development'}`);
 
   // Log des différentes URLs d'accès possibles
-  if (process.env.REPL_SLUG && process.env.REPL_OWNER) {
-    console.log(`Replit URL : https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.replit.dev:${PORT}`);
+  if (process.env.REPLIT_DEV_DOMAIN) {
+    console.log(`🔗 Replit URL : https://${process.env.REPLIT_DEV_DOMAIN}`);
   }
-
-  // Pour production VPS
-  console.log(`Production VPS URL : http://51.178.29.220:${PORT}`);
-  console.log(`Local URL : http://localhost:${PORT}`);
 });
