@@ -44,6 +44,41 @@ interface FormeData {
     carbohydrates: number;
     fat: number;
   };
+  actualMicros?: {
+    // Vitamines
+    vitaminA: number;
+    vitaminC: number;
+    vitaminD: number;
+    vitaminE: number;
+    vitaminK: number;
+    vitaminB1: number;
+    vitaminB2: number;
+    vitaminB3: number;
+    vitaminB5: number;
+    vitaminB6: number;
+    vitaminB7: number;
+    vitaminB9: number;
+    vitaminB12: number;
+    // Minéraux
+    calcium: number;
+    iron: number;
+    magnesium: number;
+    potassium: number;
+    zinc: number;
+    sodium: number;
+    phosphorus: number;
+    selenium: number;
+    copper: number;
+    manganese: number;
+    iodine: number;
+    chromium: number;
+    molybdenum: number;
+    // Autres
+    caffeine: number;
+    fiber: number;
+    omega3: number;
+    omega6: number;
+  };
 }
 
 export default function FormeScreen() {
@@ -169,9 +204,44 @@ export default function FormeScreen() {
           proteins: nutritionData.proteins,
           carbohydrates: nutritionData.carbohydrates,
           fat: nutritionData.fat
+        },
+        actualMicros: {
+          // Vitamines
+          vitaminA: nutritionData.vitaminA,
+          vitaminC: nutritionData.vitaminC,
+          vitaminD: nutritionData.vitaminD,
+          vitaminE: nutritionData.vitaminE,
+          vitaminK: nutritionData.vitaminK,
+          vitaminB1: nutritionData.vitaminB1,
+          vitaminB2: nutritionData.vitaminB2,
+          vitaminB3: nutritionData.vitaminB3,
+          vitaminB5: nutritionData.vitaminB5,
+          vitaminB6: nutritionData.vitaminB6,
+          vitaminB7: nutritionData.vitaminB7,
+          vitaminB9: nutritionData.vitaminB9,
+          vitaminB12: nutritionData.vitaminB12,
+          // Minéraux
+          calcium: nutritionData.calcium,
+          iron: nutritionData.iron,
+          magnesium: nutritionData.magnesium,
+          potassium: nutritionData.potassium,
+          zinc: nutritionData.zinc,
+          sodium: nutritionData.sodium,
+          phosphorus: nutritionData.phosphorus,
+          selenium: nutritionData.selenium,
+          copper: nutritionData.copper,
+          manganese: nutritionData.manganese,
+          iodine: nutritionData.iodine,
+          chromium: nutritionData.chromium,
+          molybdenum: nutritionData.molybdenum,
+          // Autres
+          caffeine: nutritionData.caffeine,
+          fiber: nutritionData.fiber,
+          omega3: nutritionData.omega3,
+          omega6: nutritionData.omega6,
         }
       };
-      console.log(`Données nutrition du jour récupérées: ${nutritionData.calories} kcal, ${nutritionData.proteins}g protéines, ${nutritionData.carbohydrates}g glucides, ${nutritionData.fat}g lipides`);
+      console.log(`Données nutrition complètes du jour récupérées: ${nutritionData.calories} kcal, ${nutritionData.proteins}g protéines, ${nutritionData.vitaminC}mg vitamine C, ${nutritionData.calcium}mg calcium`);
 
       // Récupérer les notes RPE du jour depuis les activités
       if (isPremium) {
@@ -663,10 +733,184 @@ export default function FormeScreen() {
 
   const getTodayNutritionData = async () => {
     try {
-      if (!userData) return { calories: 0, proteins: 0, carbohydrates: 0, fat: 0 };
+      if (!userData) return { 
+        calories: 0, proteins: 0, carbohydrates: 0, fat: 0,
+        // Micronutriments - Vitamines
+        vitaminA: 0, vitaminC: 0, vitaminD: 0, vitaminE: 0, vitaminK: 0,
+        vitaminB1: 0, vitaminB2: 0, vitaminB3: 0, vitaminB5: 0, vitaminB6: 0,
+        vitaminB7: 0, vitaminB9: 0, vitaminB12: 0,
+        // Micronutriments - Minéraux
+        calcium: 0, iron: 0, magnesium: 0, potassium: 0, zinc: 0,
+        sodium: 0, phosphorus: 0, selenium: 0, copper: 0, manganese: 0,
+        iodine: 0, chromium: 0, molybdenum: 0,
+        // Autres
+        caffeine: 0, fiber: 0, omega3: 0, omega6: 0
+      };
 
       const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
       const today = new Date().toISOString().split('T')[0];
+
+      // Fonction d'estimation des micronutriments (même logique que nutrition.tsx)
+      const estimateMicronutrients = (entry: any) => {
+        const productName = entry.product?.name?.toLowerCase() || '';
+        const calories = entry.calories || 0;
+        
+        let vitaminA = 0, vitaminC = 0, vitaminD = 0, vitaminE = 0, vitaminK = 0;
+        let vitaminB1 = 0, vitaminB2 = 0, vitaminB3 = 0, vitaminB5 = 0, vitaminB6 = 0;
+        let vitaminB7 = 0, vitaminB9 = 0, vitaminB12 = 0;
+        let calcium = 0, iron = 0, magnesium = 0, potassium = 0, zinc = 0;
+        let sodium = 0, phosphorus = 0, selenium = 0, copper = 0, manganese = 0;
+        let iodine = 0, chromium = 0, molybdenum = 0;
+        let caffeine = 0, fiber = 0, omega3 = 0, omega6 = 0;
+
+        // Estimation basée sur les types d'aliments
+        if (productName.includes('café') || productName.includes('coffee') || productName.includes('expresso')) {
+          caffeine = calories * 8;
+          potassium = calories * 2;
+          magnesium = calories * 0.3;
+        } else if (productName.includes('thé') || productName.includes('tea')) {
+          caffeine = calories * 3;
+          vitaminC = calories * 0.5;
+          manganese = calories * 0.02;
+        } else if (productName.includes('chocolat') || productName.includes('cacao')) {
+          caffeine = calories * 0.8;
+          magnesium = calories * 1.5;
+          iron = calories * 0.12;
+          copper = calories * 0.008;
+          fiber = calories * 0.3;
+        } else if (productName.includes('fruit') || productName.includes('orange') || productName.includes('pomme') || productName.includes('banane')) {
+          vitaminC = calories * 0.8;
+          potassium = calories * 3;
+          vitaminA = calories * 0.1;
+          fiber = calories * 0.4;
+          vitaminB9 = calories * 0.02;
+        } else if (productName.includes('légume') || productName.includes('carotte') || productName.includes('épinard') || productName.includes('brocoli')) {
+          vitaminA = calories * 1.2;
+          vitaminC = calories * 0.6;
+          vitaminK = calories * 0.8;
+          iron = calories * 0.05;
+          magnesium = calories * 0.8;
+          fiber = calories * 0.5;
+          vitaminB9 = calories * 0.03;
+          manganese = calories * 0.01;
+        } else if (productName.includes('viande') || productName.includes('porc') || productName.includes('bœuf') || productName.includes('agneau')) {
+          vitaminB12 = calories * 0.02;
+          vitaminB6 = calories * 0.008;
+          vitaminB3 = calories * 0.06;
+          iron = calories * 0.08;
+          zinc = calories * 0.06;
+          vitaminB1 = calories * 0.004;
+          selenium = calories * 0.015;
+          phosphorus = calories * 2;
+        } else if (productName.includes('poisson') || productName.includes('saumon') || productName.includes('thon') || productName.includes('sardine')) {
+          vitaminD = calories * 0.03;
+          vitaminB12 = calories * 0.025;
+          calcium = calories * 0.5;
+          vitaminE = calories * 0.05;
+          omega3 = calories * 0.08;
+          selenium = calories * 0.02;
+          iodine = calories * 0.01;
+          phosphorus = calories * 2.5;
+        } else if (productName.includes('lait') || productName.includes('fromage') || productName.includes('yaourt') || productName.includes('dairy')) {
+          calcium = calories * 2.5;
+          vitaminD = calories * 0.01;
+          vitaminB12 = calories * 0.01;
+          vitaminA = calories * 0.08;
+          vitaminB2 = calories * 0.008;
+          phosphorus = calories * 2;
+          sodium = calories * 0.5;
+        } else if (productName.includes('céréale') || productName.includes('pain') || productName.includes('riz') || productName.includes('pâte')) {
+          vitaminB1 = calories * 0.006;
+          vitaminB6 = calories * 0.005;
+          vitaminB3 = calories * 0.04;
+          iron = calories * 0.03;
+          magnesium = calories * 0.6;
+          fiber = calories * 0.3;
+          vitaminB9 = calories * 0.025;
+          manganese = calories * 0.008;
+        } else if (productName.includes('noix') || productName.includes('amande') || productName.includes('noisette') || productName.includes('graine')) {
+          vitaminE = calories * 0.15;
+          magnesium = calories * 1.2;
+          zinc = calories * 0.04;
+          vitaminB6 = calories * 0.006;
+          copper = calories * 0.01;
+          manganese = calories * 0.01;
+          omega6 = calories * 0.12;
+          fiber = calories * 0.4;
+        } else if (productName.includes('œuf') || productName.includes('egg')) {
+          vitaminB12 = calories * 0.01;
+          vitaminA = calories * 0.1;
+          vitaminD = calories * 0.015;
+          vitaminB7 = calories * 0.002;
+          selenium = calories * 0.02;
+          phosphorus = calories * 1.5;
+          vitaminB2 = calories * 0.006;
+        } else {
+          // Valeurs par défaut
+          vitaminA = calories * 0.05;
+          vitaminC = calories * 0.3;
+          vitaminD = calories * 0.005;
+          vitaminE = calories * 0.03;
+          vitaminK = calories * 0.02;
+          vitaminB1 = calories * 0.003;
+          vitaminB2 = calories * 0.003;
+          vitaminB3 = calories * 0.02;
+          vitaminB5 = calories * 0.01;
+          vitaminB6 = calories * 0.004;
+          vitaminB7 = calories * 0.001;
+          vitaminB9 = calories * 0.015;
+          vitaminB12 = calories * 0.008;
+          calcium = calories * 0.8;
+          iron = calories * 0.04;
+          magnesium = calories * 0.5;
+          potassium = calories * 2;
+          zinc = calories * 0.03;
+          sodium = calories * 0.3;
+          phosphorus = calories * 1;
+          selenium = calories * 0.005;
+          copper = calories * 0.003;
+          manganese = calories * 0.005;
+          iodine = calories * 0.002;
+          chromium = calories * 0.001;
+          molybdenum = calories * 0.001;
+          fiber = calories * 0.2;
+          omega3 = calories * 0.01;
+          omega6 = calories * 0.03;
+        }
+
+        return {
+          vitaminA: Math.round(vitaminA * 10) / 10,
+          vitaminC: Math.round(vitaminC * 10) / 10,
+          vitaminD: Math.round(vitaminD * 10) / 10,
+          vitaminE: Math.round(vitaminE * 10) / 10,
+          vitaminK: Math.round(vitaminK * 10) / 10,
+          vitaminB1: Math.round(vitaminB1 * 100) / 100,
+          vitaminB2: Math.round(vitaminB2 * 100) / 100,
+          vitaminB3: Math.round(vitaminB3 * 10) / 10,
+          vitaminB5: Math.round(vitaminB5 * 10) / 10,
+          vitaminB6: Math.round(vitaminB6 * 100) / 100,
+          vitaminB7: Math.round(vitaminB7 * 1000) / 1000,
+          vitaminB9: Math.round(vitaminB9 * 10) / 10,
+          vitaminB12: Math.round(vitaminB12 * 100) / 100,
+          calcium: Math.round(calcium * 10) / 10,
+          iron: Math.round(iron * 100) / 100,
+          magnesium: Math.round(magnesium * 10) / 10,
+          potassium: Math.round(potassium * 10) / 10,
+          zinc: Math.round(zinc * 100) / 100,
+          sodium: Math.round(sodium * 10) / 10,
+          phosphorus: Math.round(phosphorus * 10) / 10,
+          selenium: Math.round(selenium * 100) / 100,
+          copper: Math.round(copper * 1000) / 1000,
+          manganese: Math.round(manganese * 1000) / 1000,
+          iodine: Math.round(iodine * 100) / 100,
+          chromium: Math.round(chromium * 1000) / 1000,
+          molybdenum: Math.round(molybdenum * 1000) / 1000,
+          caffeine: Math.round(caffeine * 10) / 10,
+          fiber: Math.round(fiber * 10) / 10,
+          omega3: Math.round(omega3 * 100) / 100,
+          omega6: Math.round(omega6 * 100) / 100,
+        };
+      };
 
       // Essayer d'abord de charger depuis le serveur VPS
       try {
@@ -679,14 +923,62 @@ export default function FormeScreen() {
           const nutritionEntries = await response.json();
           const todayEntries = nutritionEntries.filter((entry: any) => entry.date === today);
           
-          const totals = todayEntries.reduce((sum: any, entry: any) => ({
-            calories: sum.calories + (entry.calories || 0),
-            proteins: sum.proteins + (entry.proteins || 0),
-            carbohydrates: sum.carbohydrates + (entry.carbohydrates || 0),
-            fat: sum.fat + (entry.fat || 0)
-          }), { calories: 0, proteins: 0, carbohydrates: 0, fat: 0 });
+          const totals = todayEntries.reduce((sum: any, entry: any) => {
+            const estimatedMicros = estimateMicronutrients(entry);
+            return {
+              calories: sum.calories + (entry.calories || 0),
+              proteins: sum.proteins + (entry.proteins || 0),
+              carbohydrates: sum.carbohydrates + (entry.carbohydrates || 0),
+              fat: sum.fat + (entry.fat || 0),
+              // Vitamines
+              vitaminA: sum.vitaminA + estimatedMicros.vitaminA,
+              vitaminC: sum.vitaminC + estimatedMicros.vitaminC,
+              vitaminD: sum.vitaminD + estimatedMicros.vitaminD,
+              vitaminE: sum.vitaminE + estimatedMicros.vitaminE,
+              vitaminK: sum.vitaminK + estimatedMicros.vitaminK,
+              vitaminB1: sum.vitaminB1 + estimatedMicros.vitaminB1,
+              vitaminB2: sum.vitaminB2 + estimatedMicros.vitaminB2,
+              vitaminB3: sum.vitaminB3 + estimatedMicros.vitaminB3,
+              vitaminB5: sum.vitaminB5 + estimatedMicros.vitaminB5,
+              vitaminB6: sum.vitaminB6 + estimatedMicros.vitaminB6,
+              vitaminB7: sum.vitaminB7 + estimatedMicros.vitaminB7,
+              vitaminB9: sum.vitaminB9 + estimatedMicros.vitaminB9,
+              vitaminB12: sum.vitaminB12 + estimatedMicros.vitaminB12,
+              // Minéraux
+              calcium: sum.calcium + estimatedMicros.calcium,
+              iron: sum.iron + estimatedMicros.iron,
+              magnesium: sum.magnesium + estimatedMicros.magnesium,
+              potassium: sum.potassium + estimatedMicros.potassium,
+              zinc: sum.zinc + estimatedMicros.zinc,
+              sodium: sum.sodium + estimatedMicros.sodium,
+              phosphorus: sum.phosphorus + estimatedMicros.phosphorus,
+              selenium: sum.selenium + estimatedMicros.selenium,
+              copper: sum.copper + estimatedMicros.copper,
+              manganese: sum.manganese + estimatedMicros.manganese,
+              iodine: sum.iodine + estimatedMicros.iodine,
+              chromium: sum.chromium + estimatedMicros.chromium,
+              molybdenum: sum.molybdenum + estimatedMicros.molybdenum,
+              // Autres
+              caffeine: sum.caffeine + estimatedMicros.caffeine,
+              fiber: sum.fiber + estimatedMicros.fiber,
+              omega3: sum.omega3 + estimatedMicros.omega3,
+              omega6: sum.omega6 + estimatedMicros.omega6,
+            };
+          }, { 
+            calories: 0, proteins: 0, carbohydrates: 0, fat: 0,
+            // Vitamines
+            vitaminA: 0, vitaminC: 0, vitaminD: 0, vitaminE: 0, vitaminK: 0,
+            vitaminB1: 0, vitaminB2: 0, vitaminB3: 0, vitaminB5: 0, vitaminB6: 0,
+            vitaminB7: 0, vitaminB9: 0, vitaminB12: 0,
+            // Minéraux
+            calcium: 0, iron: 0, magnesium: 0, potassium: 0, zinc: 0,
+            sodium: 0, phosphorus: 0, selenium: 0, copper: 0, manganese: 0,
+            iodine: 0, chromium: 0, molybdenum: 0,
+            // Autres
+            caffeine: 0, fiber: 0, omega3: 0, omega6: 0
+          });
 
-          console.log(`Macros nutrition depuis serveur: ${totals.calories} kcal, ${totals.proteins}g protéines, ${totals.carbohydrates}g glucides, ${totals.fat}g lipides`);
+          console.log(`Nutrition complète depuis serveur: ${totals.calories} kcal, ${totals.proteins}g protéines, ${totals.vitaminC}mg vitC, ${totals.calcium}mg calcium`);
           return totals;
         }
       } catch (serverError) {
@@ -699,22 +991,94 @@ export default function FormeScreen() {
         const entries = JSON.parse(storedEntries);
         const todayEntries = entries.filter((entry: any) => entry.date === today);
         
-        const totals = todayEntries.reduce((sum: any, entry: any) => ({
-          calories: sum.calories + (entry.calories || 0),
-          proteins: sum.proteins + (entry.proteins || 0),
-          carbohydrates: sum.carbohydrates + (entry.carbohydrates || 0),
-          fat: sum.fat + (entry.fat || 0)
-        }), { calories: 0, proteins: 0, carbohydrates: 0, fat: 0 });
+        const totals = todayEntries.reduce((sum: any, entry: any) => {
+          const estimatedMicros = estimateMicronutrients(entry);
+          return {
+            calories: sum.calories + (entry.calories || 0),
+            proteins: sum.proteins + (entry.proteins || 0),
+            carbohydrates: sum.carbohydrates + (entry.carbohydrates || 0),
+            fat: sum.fat + (entry.fat || 0),
+            // Vitamines
+            vitaminA: sum.vitaminA + estimatedMicros.vitaminA,
+            vitaminC: sum.vitaminC + estimatedMicros.vitaminC,
+            vitaminD: sum.vitaminD + estimatedMicros.vitaminD,
+            vitaminE: sum.vitaminE + estimatedMicros.vitaminE,
+            vitaminK: sum.vitaminK + estimatedMicros.vitaminK,
+            vitaminB1: sum.vitaminB1 + estimatedMicros.vitaminB1,
+            vitaminB2: sum.vitaminB2 + estimatedMicros.vitaminB2,
+            vitaminB3: sum.vitaminB3 + estimatedMicros.vitaminB3,
+            vitaminB5: sum.vitaminB5 + estimatedMicros.vitaminB5,
+            vitaminB6: sum.vitaminB6 + estimatedMicros.vitaminB6,
+            vitaminB7: sum.vitaminB7 + estimatedMicros.vitaminB7,
+            vitaminB9: sum.vitaminB9 + estimatedMicros.vitaminB9,
+            vitaminB12: sum.vitaminB12 + estimatedMicros.vitaminB12,
+            // Minéraux
+            calcium: sum.calcium + estimatedMicros.calcium,
+            iron: sum.iron + estimatedMicros.iron,
+            magnesium: sum.magnesium + estimatedMicros.magnesium,
+            potassium: sum.potassium + estimatedMicros.potassium,
+            zinc: sum.zinc + estimatedMicros.zinc,
+            sodium: sum.sodium + estimatedMicros.sodium,
+            phosphorus: sum.phosphorus + estimatedMicros.phosphorus,
+            selenium: sum.selenium + estimatedMicros.selenium,
+            copper: sum.copper + estimatedMicros.copper,
+            manganese: sum.manganese + estimatedMicros.manganese,
+            iodine: sum.iodine + estimatedMicros.iodine,
+            chromium: sum.chromium + estimatedMicros.chromium,
+            molybdenum: sum.molybdenum + estimatedMicros.molybdenum,
+            // Autres
+            caffeine: sum.caffeine + estimatedMicros.caffeine,
+            fiber: sum.fiber + estimatedMicros.fiber,
+            omega3: sum.omega3 + estimatedMicros.omega3,
+            omega6: sum.omega6 + estimatedMicros.omega6,
+          };
+        }, { 
+          calories: 0, proteins: 0, carbohydrates: 0, fat: 0,
+          // Vitamines
+          vitaminA: 0, vitaminC: 0, vitaminD: 0, vitaminE: 0, vitaminK: 0,
+          vitaminB1: 0, vitaminB2: 0, vitaminB3: 0, vitaminB5: 0, vitaminB6: 0,
+          vitaminB7: 0, vitaminB9: 0, vitaminB12: 0,
+          // Minéraux
+          calcium: 0, iron: 0, magnesium: 0, potassium: 0, zinc: 0,
+          sodium: 0, phosphorus: 0, selenium: 0, copper: 0, manganese: 0,
+          iodine: 0, chromium: 0, molybdenum: 0,
+          // Autres
+          caffeine: 0, fiber: 0, omega3: 0, omega6: 0
+        });
 
-        console.log(`Macros nutrition depuis stockage local: ${totals.calories} kcal, ${totals.proteins}g protéines, ${totals.carbohydrates}g glucides, ${totals.fat}g lipides`);
+        console.log(`Nutrition complète depuis stockage local: ${totals.calories} kcal, ${totals.proteins}g protéines, ${totals.vitaminC}mg vitC, ${totals.calcium}mg calcium`);
         return totals;
       }
 
       console.log('Aucune donnée nutrition trouvée');
-      return { calories: 0, proteins: 0, carbohydrates: 0, fat: 0 };
+      return { 
+        calories: 0, proteins: 0, carbohydrates: 0, fat: 0,
+        // Vitamines
+        vitaminA: 0, vitaminC: 0, vitaminD: 0, vitaminE: 0, vitaminK: 0,
+        vitaminB1: 0, vitaminB2: 0, vitaminB3: 0, vitaminB5: 0, vitaminB6: 0,
+        vitaminB7: 0, vitaminB9: 0, vitaminB12: 0,
+        // Minéraux
+        calcium: 0, iron: 0, magnesium: 0, potassium: 0, zinc: 0,
+        sodium: 0, phosphorus: 0, selenium: 0, copper: 0, manganese: 0,
+        iodine: 0, chromium: 0, molybdenum: 0,
+        // Autres
+        caffeine: 0, fiber: 0, omega3: 0, omega6: 0
+      };
     } catch (error) {
       console.error('Erreur récupération données nutrition:', error);
-      return { calories: 0, proteins: 0, carbohydrates: 0, fat: 0 };
+      return { 
+        calories: 0, proteins: 0, carbohydrates: 0, fat: 0,
+        // Vitamines
+        vitaminA: 0, vitaminC: 0, vitaminD: 0, vitaminE: 0, vitaminK: 0,
+        vitaminB1: 0, vitaminB2: 0, vitaminB3: 0, vitaminB5: 0, vitaminB6: 0,
+        vitaminB7: 0, vitaminB9: 0, vitaminB12: 0,
+        // Minéraux
+        calcium: 0, iron: 0, magnesium: 0, potassium: 0, zinc: 0,
+        sodium: 0, phosphorus: 0, selenium: 0, copper: 0, manganese: 0,
+        iodine: 0, chromium: 0, molybdenum: 0,
+        // Autres
+        caffeine: 0, fiber: 0, omega3: 0, omega6: 0
+      };
     }
   };
 
@@ -1705,9 +2069,46 @@ export default function FormeScreen() {
               <TouchableOpacity 
                 style={styles.metricCard}
                 onPress={() => {
+                  const micros = formeData.actualMicros;
+                  
+                  if (!micros) {
+                    Alert.alert(
+                      'Micronutriments/Fatigue',
+                      'Aucune donnée nutritionnelle disponible pour aujourd\'hui.\n\nUtilisez la section Nutrition pour ajouter vos repas et obtenir une analyse détaillée de vos micronutriments.',
+                      [{ text: 'OK' }]
+                    );
+                    return;
+                  }
+
+                  // Analyse des carences importantes qui impactent la fatigue
+                  const deficiencies = [];
+                  
+                  // Vitamines critiques pour l'énergie
+                  if (micros.vitaminB12 < 1.5) deficiencies.push('Vitamine B12 faible');
+                  if (micros.vitaminD < 10) deficiencies.push('Vitamine D insuffisante');
+                  if (micros.vitaminC < 50) deficiencies.push('Vitamine C faible');
+                  if (micros.vitaminB6 < 1.0) deficiencies.push('Vitamine B6 insuffisante');
+                  
+                  // Minéraux critiques pour l'énergie
+                  if (micros.iron < 5) deficiencies.push('Fer faible (risque anémie)');
+                  if (micros.magnesium < 200) deficiencies.push('Magnésium insuffisant');
+                  if (micros.zinc < 6) deficiencies.push('Zinc faible');
+                  
+                  // Analyse globale
+                  let analysis = '';
+                  if (deficiencies.length === 0) {
+                    analysis = '✅ Profil micronutritionnel favorable\n\nVos apports en vitamines et minéraux semblent suffisants pour maintenir un bon niveau d\'énergie.';
+                  } else if (deficiencies.length <= 2) {
+                    analysis = `⚠️ Quelques carences détectées\n\n${deficiencies.join(', ')}\n\nCes carences peuvent contribuer à la fatigue. Considérez d'enrichir votre alimentation.`;
+                  } else {
+                    analysis = `🚨 Carences multiples détectées\n\n${deficiencies.join(', ')}\n\nCes carences importantes peuvent expliquer une fatigue persistante. Consultez un professionnel de santé.`;
+                  }
+
+                  const detailMessage = `Apports du jour:\n• Vitamine B12: ${micros.vitaminB12.toFixed(1)}μg\n• Vitamine D: ${micros.vitaminD.toFixed(1)}μg\n• Fer: ${micros.iron.toFixed(1)}mg\n• Magnésium: ${micros.magnesium.toFixed(0)}mg\n\n${analysis}`;
+
                   Alert.alert(
-                    'Relation Micronutriment/Fatigue',
-                    'Cette métrique avancée analyse l\'impact de vos micronutriments (vitamines, minéraux) sur votre niveau de fatigue.\n\nUne analyse détaillée est disponible dans votre profil nutrition.',
+                    'Analyse Micronutriments/Fatigue',
+                    detailMessage,
                     [{ text: 'OK' }]
                   );
                 }}
@@ -1718,10 +2119,37 @@ export default function FormeScreen() {
                 <View style={styles.metricInfo}>
                   <Text style={styles.metricLabel}>Micronutriments/Fatigue</Text>
                   <Text style={styles.metricValue}>
-                    Bon équilibre
+                    {(() => {
+                      const micros = formeData.actualMicros;
+                      
+                      if (!micros) {
+                        return 'Aucune donnée';
+                      }
+                      
+                      // Analyse rapide des carences critiques
+                      const criticalDeficiencies = [
+                        micros.vitaminB12 < 1.5,
+                        micros.vitaminD < 10,
+                        micros.iron < 5,
+                        micros.magnesium < 200
+                      ].filter(Boolean).length;
+                      
+                      if (criticalDeficiencies === 0) return 'Profil favorable';
+                      if (criticalDeficiencies <= 1) return 'Légères carences';
+                      if (criticalDeficiencies <= 2) return 'Carences modérées';
+                      return 'Carences importantes';
+                    })()}
                   </Text>
                   <Text style={styles.metricDetail}>
-                    Analyse détaillée disponible
+                    {(() => {
+                      const micros = formeData.actualMicros;
+                      
+                      if (!micros) {
+                        return 'Ajoutez vos repas dans Nutrition';
+                      }
+                      
+                      return `B12: ${micros.vitaminB12.toFixed(1)}μg, Fer: ${micros.iron.toFixed(1)}mg`;
+                    })()}
                   </Text>
                 </View>
                 <Text style={styles.updateHint}>Appuyez pour plus d'infos</Text>
