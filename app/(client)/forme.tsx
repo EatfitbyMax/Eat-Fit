@@ -1758,29 +1758,6 @@ export default function FormeScreen() {
           <Text style={[styles.scoreStatus, { color: getScoreColor(formeScore) }]}>
             {getScoreStatus(formeScore)}
           </Text>
-          <Text style={styles.scoreDescription}>
-            {(() => {
-              const isWoman = userData?.gender === 'Femme';
-              const planId = currentSubscription?.planId;
-
-              let metrics = ['sommeil', 'stress', 'apport calorique'];
-
-              if (!isPremium) {
-                metrics.push('entraînement programmé');
-              } else {
-                metrics.push('FC repos', 'RPE');
-                if (planId === 'gold' || planId === 'diamond') {
-                  metrics.push('macronutriments', 'micronutriments');
-                }
-              }
-
-              if (isWoman) {
-                metrics.push('cycle hormonal');
-              }
-
-              return `Basé sur votre ${metrics.join(', ')}`;
-            })()}
-          </Text>
         </View>
 
         {/* Tabs */}
