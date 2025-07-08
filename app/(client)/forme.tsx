@@ -1974,7 +1974,7 @@ export default function FormeScreen() {
                 <Text style={styles.metricDetail}>
                   {formeData.actualCalories > 0 ? 
                     'Données nutrition du jour' : 
-                    'Aucune donnée nutrition'
+                    'Aucune donnée'
                   }
                 </Text>
               </View>
