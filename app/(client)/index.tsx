@@ -76,7 +76,7 @@ export default function HomeScreen() {
     loadUserData();
     startAnimations();
     generateRandomTip();
-    calculateFormeScore();
+    loadFormeScore();
     loadWeightData();
     calculateWeeklyWorkouts();
   }, []);
@@ -95,7 +95,7 @@ export default function HomeScreen() {
 
         // Ensuite charger les autres données
         await loadTodayStats();
-        calculateFormeScore();
+        loadFormeScore();
         loadWeightData();
         calculateWeeklyWorkouts();
       };
@@ -230,7 +230,7 @@ export default function HomeScreen() {
     }
   };
 
-  const calculateFormeScore = async () => {
+  const loadFormeScore = async () => {
     try {
       const currentUser = await getCurrentUser();
       if (!currentUser) return;

@@ -325,7 +325,7 @@ export default function FormeScreen() {
     }
   };
 
-  const calculateFormeScore = () => {
+  const calculateFormeScore = async () => {
     let totalScore = 0;
     let totalWeight = 0;
 
@@ -612,6 +612,18 @@ export default function FormeScreen() {
     // S'assurer que le score est entre 0 et 100
     finalScore = Math.max(0, Math.min(100, Math.round(finalScore)));
     setFormeScore(finalScore);
+
+    // Sauvegarder le score calculé pour que l'écran accueil puisse le récupérer
+    try {
+      if (userData) {
+        const today = new Date().toISOString().split('T')[0];
+        const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+        await AsyncStorage.setItem(`forme_score_${userData.id}_${today}`, finalScore.toString());
+        console.log(`Score de forme sauvegardé pour l'accueil: ${finalScore}/100`);
+      }
+    } catch (error) {
+      console.error('Erreur sauvegarde score de forme:', error);
+    }
   };
 
   const handleSaveSleep = async () => {
