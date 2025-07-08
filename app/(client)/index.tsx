@@ -238,7 +238,16 @@ export default function HomeScreen() {
       const today = new Date().toISOString().split('T')[0];
       const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
 
-      // Essayer d'abord le stockage local
+      // D'abord, essayer de récupérer le score déjà calculé par l'écran forme
+      const savedScore = await AsyncStorage.getItem(`forme_score_${currentUser.id}_${today}`);
+      if (savedScore) {
+        const score = parseInt(savedScore);
+        setFormeScore(score);
+        console.log(`Score de forme récupéré depuis l'écran forme: ${score}/100`);
+        return;
+      }
+
+      // Si pas de score sauvegardé, calculer nous-mêmes
       let todayData = null;
       const localDataString = await AsyncStorage.getItem(`forme_data_${currentUser.id}_${today}`);
 
@@ -255,6 +264,20 @@ export default function HomeScreen() {
           setFormeScore(75); // Valeur par défaut si aucune donnée
           return;
         }
+      }
+
+      // Récupérer les données nutritionnelles réelles
+      const nutritionData = await getTodayNutritionData();
+      if (todayData) {
+        todayData = {
+          ...todayData,
+          actualCalories: nutritionData.calories,
+          actualMacros: {
+            proteins: nutritionData.proteins,
+            carbohydrates: nutritionData.carbohydrates,
+            fat: nutritionData.fat
+          }
+        };
       }
 
       // Récupérer les notes RPE du jour si premium
@@ -276,6 +299,8 @@ export default function HomeScreen() {
         // Utiliser la même logique de calcul que dans forme.tsx
         const realScore = calculateRealFormeScore(todayData, currentUser);
         setFormeScore(realScore);
+        // Sauvegarder le score pour cohérence
+        await AsyncStorage.setItem(`forme_score_${currentUser.id}_${today}`, realScore.toString());
         console.log(`Score de forme réel calculé pour l'accueil: ${realScore}/100`);
       } else {
         setFormeScore(75); // Valeur par défaut
@@ -283,6 +308,65 @@ export default function HomeScreen() {
     } catch (error) {
       console.error('Erreur calcul score de forme:', error);
       setFormeScore(75); // Valeur par défaut
+    }
+  };
+
+  // Fonction pour récupérer les données nutritionnelles du jour
+  const getTodayNutritionData = async () => {
+    try {
+      const currentUser = await getCurrentUser();
+      if (!currentUser) return { calories: 0, proteins: 0, carbohydrates: 0, fat: 0 };
+
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+      const today = new Date().toISOString().split('T')[0];
+
+      // Essayer d'abord de charger depuis le serveur VPS
+      try {
+        const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.replit.app';
+        const response = await fetch(`${VPS_URL}/api/nutrition/${currentUser.id}`, { 
+          timeout: 5000 
+        });
+
+        if (response.ok) {
+          const nutritionEntries = await response.json();
+          const todayEntries = nutritionEntries.filter((entry: any) => entry.date === today);
+          
+          const totals = todayEntries.reduce((sum: any, entry: any) => ({
+            calories: sum.calories + (entry.calories || 0),
+            proteins: sum.proteins + (entry.proteins || 0),
+            carbohydrates: sum.carbohydrates + (entry.carbohydrates || 0),
+            fat: sum.fat + (entry.fat || 0)
+          }), { calories: 0, proteins: 0, carbohydrates: 0, fat: 0 });
+
+          console.log(`Nutrition depuis serveur: ${totals.calories} kcal, ${totals.proteins}g protéines`);
+          return totals;
+        }
+      } catch (serverError) {
+        console.log('Serveur nutrition indisponible, utilisation stockage local');
+      }
+
+      // Fallback vers le stockage local
+      const storedEntries = await AsyncStorage.getItem(`food_entries_${currentUser.id}`);
+      if (storedEntries) {
+        const entries = JSON.parse(storedEntries);
+        const todayEntries = entries.filter((entry: any) => entry.date === today);
+        
+        const totals = todayEntries.reduce((sum: any, entry: any) => ({
+          calories: sum.calories + (entry.calories || 0),
+          proteins: sum.proteins + (entry.proteins || 0),
+          carbohydrates: sum.carbohydrates + (entry.carbohydrates || 0),
+          fat: sum.fat + (entry.fat || 0)
+        }), { calories: 0, proteins: 0, carbohydrates: 0, fat: 0 });
+
+        console.log(`Nutrition depuis stockage local: ${totals.calories} kcal, ${totals.proteins}g protéines`);
+        return totals;
+      }
+
+      console.log('Aucune donnée nutrition trouvée');
+      return { calories: 0, proteins: 0, carbohydrates: 0, fat: 0 };
+    } catch (error) {
+      console.error('Erreur récupération données nutrition:', error);
+      return { calories: 0, proteins: 0, carbohydrates: 0, fat: 0 };
     }
   };
 
