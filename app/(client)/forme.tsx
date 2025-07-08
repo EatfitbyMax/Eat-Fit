@@ -215,7 +215,8 @@ export default function FormeScreen() {
           vitaminB1: nutritionData.vitaminB1,
           vitaminB2: nutritionData.vitaminB2,
           vitaminB3: nutritionData.vitaminB3,
-          vitaminB5: nutritionData.vitaminB6,
+          vitaminB5: nutritionData.vitaminB5,
+          vitaminB6: nutritionData.vitaminB6,
           vitaminB7: nutritionData.vitaminB7,
           vitaminB9: nutritionData.vitaminB9,
           vitaminB12: nutritionData.vitaminB12,
@@ -765,7 +766,7 @@ export default function FormeScreen() {
       const estimateMicronutrients = (entry: any) => {
         const productName = entry.product?.name?.toLowerCase() || '';
         const calories = entry.calories || 0;
-
+        
         let vitaminA = 0, vitaminC = 0, vitaminD = 0, vitaminE = 0, vitaminK = 0;
         let vitaminB1 = 0, vitaminB2 = 0, vitaminB3 = 0, vitaminB5 = 0, vitaminB6 = 0;
         let vitaminB7 = 0, vitaminB9 = 0, vitaminB12 = 0;
@@ -933,7 +934,7 @@ export default function FormeScreen() {
         if (response.ok) {
           const nutritionEntries = await response.json();
           const todayEntries = nutritionEntries.filter((entry: any) => entry.date === today);
-
+          
           const totals = todayEntries.reduce((sum: any, entry: any) => {
             const estimatedMicros = estimateMicronutrients(entry);
             return {
@@ -1001,7 +1002,7 @@ export default function FormeScreen() {
       if (storedEntries) {
         const entries = JSON.parse(storedEntries);
         const todayEntries = entries.filter((entry: any) => entry.date === today);
-
+        
         const totals = todayEntries.reduce((sum: any, entry: any) => {
           const estimatedMicros = estimateMicronutrients(entry);
           return {
@@ -1389,7 +1390,7 @@ export default function FormeScreen() {
           'Synchronisation échouée',
           'Impossible de récupérer les données de fréquence cardiaque. Vérifiez les autorisations Apple Health.'
         );
-      }```python
+      }
     } catch (error) {
       console.error('Erreur sync données FC:', error);
       Alert.alert('Erreur', 'Erreur lors de la synchronisation des données de fréquence cardiaque');
@@ -1737,7 +1738,7 @@ export default function FormeScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-
+        
 
         {/* Score principal */}
         <View style={styles.scoreCard}>
@@ -1953,13 +1954,46 @@ export default function FormeScreen() {
               <Text style={styles.updateHint}>Appuyez pour plus d'infos</Text>
             </TouchableOpacity>
 
-            {/* Macronutriments */}
-            <TouchableOpacity 
-              style={[styles.metricCard, !isPremium && styles.premiumCard]}
-              onPress={() => {
+            {/* Entraînement Programmé - Plan Gratuit uniquement */}
+            {!isPremium && (
+              <TouchableOpacity 
+                style={styles.metricCard}
+                onPress={() => {
+                  Alert.alert(
+                    'Entraînement Programmé',
+                    'Cette métrique indique si vous avez des entraînements programmés aujourd\'hui.\n\nUtilisez la section Entraînement pour programmer vos séances.',
+                    [{ text: 'OK' }]
+                  );
+                }}
+              >
+                <View style={styles.metricIcon}>
+                  <Text style={styles.iconText}>📅</Text>
+                </View>
+                <View style={styles.metricInfo}>
+                  <Text style={styles.metricLabel}>Entraînement Programmé</Text>
+                  <Text style={styles.metricValue}>
+                    {weeklyData.some(day => 
+                      day.date === new Date().toISOString().split('T')[0] && day.rpe?.value > 0
+                    ) ? 'Oui' : 'Non'}
+                  </Text>
+                  <Text style={styles.metricDetail}>
+                    {weeklyData.some(day => 
+                      day.date === new Date().toISOString().split('T')[0] && day.rpe?.value > 0
+                    ) ? 'Séance programmée' : 'Aucune séance'}
+                  </Text>
+                </View>
+                <Text style={styles.updateHint}>Appuyez pour plus d'infos</Text>
+              </TouchableOpacity>
+            )}
+
+            {/* Relation Macronutriment/Fatigue - Plans Or et Diamant uniquement */}
+            {isPremium && (currentSubscription?.planId === 'gold' || currentSubscription?.planId === 'diamond') && (
+              <TouchableOpacity 
+                style={styles.metricCard}
+                onPress={() => {
                   const macros = formeData.actualMacros;
                   const calories = formeData.actualCalories || 0;
-
+                  
                   if (!macros || calories === 0) {
                     Alert.alert(
                       'Macronutriments/Fatigue',
@@ -1970,7 +2004,7 @@ export default function FormeScreen() {
                   }
 
                   const analysis = analyzeMacroBalance(macros, calories);
-
+                  
                   const detailMessage = `Répartition actuelle:\n• Protéines: ${macros.proteins}g (${analysis.percentages?.protein || 0}%)\n• Glucides: ${macros.carbohydrates}g (${analysis.percentages?.carb || 0}%)\n• Lipides: ${macros.fat}g (${analysis.percentages?.fat || 0}%)\n\nAnalyse: ${analysis.issues.join(', ')}`;
 
                   Alert.alert(
@@ -1979,56 +2013,54 @@ export default function FormeScreen() {
                     [{ text: 'OK' }]
                   );
                 }}
-            >
-              <View style={styles.metricIcon}>
-                <Text style={styles.iconText}>💪</Text>
-              </View>
-              <View style={styles.metricInfo}>
-                <Text style={styles.metricLabel}>
-                  Macronutriments {!isPremium && '👑'}
-                </Text>
-                <Text style={styles.metricValue}>
-                   {(() => {
+              >
+                <View style={styles.metricIcon}>
+                  <Text style={styles.iconText}>🥗</Text>
+                </View>
+                <View style={styles.metricInfo}>
+                  <Text style={styles.metricLabel}>Macronutriments</Text>
+                  <Text style={styles.metricValue}>
+                    {(() => {
                       const macros = formeData.actualMacros;
                       const calories = formeData.actualCalories || 0;
-
+                      
                       if (!macros || calories === 0) {
                         return 'Aucune donnée';
                       }
-
+                      
                       const analysis = analyzeMacroBalance(macros, calories);
                       return analysis.status;
                     })()}
-                </Text>
-                 <Text style={styles.metricDetail}>
-                  {(() => {
+                  </Text>
+                  <Text style={styles.metricDetail}>
+                    {(() => {
                       const macros = formeData.actualMacros;
                       const calories = formeData.actualCalories || 0;
-
+                      
                       if (!macros || calories === 0) {
                         return 'Ajoutez vos repas';
                       }
-
+                      
                       return `P:${macros.proteins}g C:${macros.carbohydrates}g L:${macros.fat}g`;
                     })()}
-                </Text>
-              </View>
-              <Text style={styles.updateHint}>
-                 {isPremium ? 'Appuyez pour plus d\'infos' : 'Mise à niveau requise'}
-                </Text>
-            </TouchableOpacity>
+                  </Text>
+                </View>
+                <Text style={styles.updateHint}>Appuyez pour plus d'infos</Text>
+              </TouchableOpacity>
+            )}
 
-              {/* Micronutriments */}
+            {/* Relation Micronutriment/Fatigue - Plans Or et Diamant uniquement */}
+            {isPremium && (currentSubscription?.planId === 'gold' || currentSubscription?.planId === 'diamond') && (
               <TouchableOpacity 
-              style={[styles.metricCard, !isPremium && styles.premiumCard]}
-              onPress={() => {
+                style={styles.metricCard}
+                onPress={() => {
                   const micros = formeData.actualMicros;
                   const calories = formeData.actualCalories || 0;
-
+                  
                   if (!micros || calories === 0) {
                     Alert.alert(
                       'Micronutriments/Fatigue',
-                      'Aucune donnée nutritionnelle disponible pour aujourd\'hui.\n\nUtilisez la section Nutrition pour ajouter vos repas et obtenir une analyse détaillée de l\'équilibre de vos micronutriments.',
+                      'Aucune donnée nutritionnelle disponible pour aujourd\'hui.\n\nUtilisez la section Nutrition pour ajouter vos repas et obtenir une analyse détaillée de vos micronutriments.',
                       [{ text: 'OK' }]
                     );
                     return;
@@ -2036,18 +2068,18 @@ export default function FormeScreen() {
 
                   // Analyse des carences importantes qui impactent la fatigue
                   const deficiencies = [];
-
+                  
                   // Vitamines critiques pour l'énergie
                   if (micros.vitaminB12 < 1.5) deficiencies.push('Vitamine B12 faible');
                   if (micros.vitaminD < 10) deficiencies.push('Vitamine D insuffisante');
                   if (micros.vitaminC < 50) deficiencies.push('Vitamine C faible');
                   if (micros.vitaminB6 < 1.0) deficiencies.push('Vitamine B6 insuffisante');
-
+                  
                   // Minéraux critiques pour l'énergie
                   if (micros.iron < 5) deficiencies.push('Fer faible (risque anémie)');
                   if (micros.magnesium < 200) deficiencies.push('Magnésium insuffisant');
                   if (micros.zinc < 6) deficiencies.push('Zinc faible');
-
+                  
                   // Analyse globale
                   let analysis = '';
                   if (deficiencies.length === 0) {
@@ -2066,23 +2098,21 @@ export default function FormeScreen() {
                     [{ text: 'OK' }]
                   );
                 }}
-            >
-              <View style={styles.metricIcon}>
-                <Text style={styles.iconText}>💪</Text>
-              </View>
-              <View style={styles.metricInfo}>
-                <Text style={styles.metricLabel}>
-                  Micronutriments {!isPremium && '👑'}
-                </Text>
-                <Text style={styles.metricValue}>
-                   {(() => {
+              >
+                <View style={styles.metricIcon}>
+                  <Text style={styles.iconText}>💊</Text>
+                </View>
+                <View style={styles.metricInfo}>
+                  <Text style={styles.metricLabel}>Micronutriments</Text>
+                  <Text style={styles.metricValue}>
+                    {(() => {
                       const micros = formeData.actualMicros;
                       const calories = formeData.actualCalories || 0;
-
+                      
                       if (!micros || calories === 0) {
                         return 'Aucune donnée';
                       }
-
+                      
                       // Analyse rapide des carences critiques
                       const criticalDeficiencies = [
                         micros.vitaminB12 < 1.5,
@@ -2090,33 +2120,31 @@ export default function FormeScreen() {
                         micros.iron < 5,
                         micros.magnesium < 200
                       ].filter(Boolean).length;
-
+                      
                       if (criticalDeficiencies === 0) return 'Profil favorable';
                       if (criticalDeficiencies <= 1) return 'Légères carences';
                       if (criticalDeficiencies <= 2) return 'Carences modérées';
                       return 'Carences importantes';
                     })()}
-                </Text>
-                 <Text style={styles.metricDetail}>
-                  {(() => {
+                  </Text>
+                  <Text style={styles.metricDetail}>
+                    {(() => {
                       const micros = formeData.actualMicros;
                       const calories = formeData.actualCalories || 0;
-
+                      
                       if (!micros || calories === 0) {
                         return 'Ajoutez vos repas';
                       }
-
+                      
                       return `B12: ${micros.vitaminB12.toFixed(1)}μg, Fer: ${micros.iron.toFixed(1)}mg`;
                     })()}
-                </Text>
-              </View>
-              <Text style={styles.updateHint}>
-                 {isPremium ? 'Appuyez pour plus d\'infos' : 'Mise à niveau requise'}
-                </Text>
-            </TouchableOpacity>
+                  </Text>
+                </View>
+                <Text style={styles.updateHint}>Appuyez pour plus d'infos</Text>
+              </TouchableOpacity>
+            )}
 
-            {/* Entraînement Programmé - Plan Gratuit uniquement */}
-             {/* Cycle Hormonal - Femmes uniquement */}
+            {/* Cycle Hormonal - Femmes uniquement */}
             {userData?.gender === 'Femme' && (
               <TouchableOpacity 
                 style={styles.metricCard}
@@ -2316,7 +2344,8 @@ export default function FormeScreen() {
               <TouchableOpacity 
                 style={styles.modalButtonPrimary}
                 onPress={handleSaveStress}
-              >
+              >```python
+This code incorporates calorie data from the nutrition screen into the form screen's calculations.
                 <Text style={styles.modalButtonPrimaryText}>Sauvegarder</Text>
               </TouchableOpacity>
             </View>
