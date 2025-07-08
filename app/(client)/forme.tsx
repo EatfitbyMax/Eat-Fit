@@ -1919,7 +1919,7 @@ export default function FormeScreen() {
               </View>
               <View style={styles.metricInfo}>
                 <Text style={styles.metricLabel}>
-                  RPE Post-Entraînement {!isPremium && '👑'}
+                  RPE {!isPremium && '👑'}
                 </Text>
                 <Text style={styles.metricValue}>
                   {isPremium ? 
@@ -1935,7 +1935,7 @@ export default function FormeScreen() {
                       (formeData.rpe.notes || 'Données des séances du jour') :
                       'Aucune séance aujourd\'hui'
                     ) :
-                    'Évaluation fatigue'
+                    'Post-entraînement'
                   }
                 </Text>
               </View>
