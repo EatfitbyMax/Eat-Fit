@@ -1917,10 +1917,15 @@ export default function FormeScreen() {
               </Text>
             </TouchableOpacity>
 
-            {/* Apport Calorique - Tous les plans */}
+            {/* Apport Calorique - Tous les plans avec contour orange pour gratuit */}
             <TouchableOpacity 
-              style={styles.metricCard}
+              style={[styles.metricCard, !isPremium && styles.premiumCard]}
               onPress={() => {
+                if (!isPremium) {
+                  Alert.alert('Fonctionnalité Premium', 'Le suivi détaillé de l\'apport calorique est réservé aux abonnés premium.');
+                  return;
+                }
+                
                 const targetCalories = Math.round(
                   (userData?.gender === 'Homme' ? 2200 : 1800) * 
                   (userData?.activityLevel === 'sedentaire' ? 1.2 : 
@@ -1940,18 +1945,28 @@ export default function FormeScreen() {
                 <Text style={styles.iconText}>🔥</Text>
               </View>
               <View style={styles.metricInfo}>
-                <Text style={styles.metricLabel}>Apport Calorique</Text>
+                <Text style={styles.metricLabel}>
+                  Apport Calorique {!isPremium && '👑'}
+                </Text>
                 <Text style={styles.metricValue}>
-                  {formeData.actualCalories || 0} kcal
+                  {isPremium ? 
+                    (formeData.actualCalories || 0) + ' kcal' :
+                    'Premium requis'
+                  }
                 </Text>
                 <Text style={styles.metricDetail}>
-                  {formeData.actualCalories > 0 ? 
-                    'Données nutrition du jour' : 
-                    'Aucune donnée'
+                  {isPremium ? 
+                    (formeData.actualCalories > 0 ? 
+                      'Données nutrition du jour' : 
+                      'Aucune donnée'
+                    ) :
+                    'Suivi détaillé'
                   }
                 </Text>
               </View>
-              <Text style={styles.updateHint}>Appuyez pour plus d'infos</Text>
+              <Text style={styles.updateHint}>
+                {isPremium ? 'Appuyez pour plus d\'infos' : 'Mise à niveau requise'}
+              </Text>
             </TouchableOpacity>
 
             {/* Entraînement Programmé - Plan Gratuit uniquement */}
@@ -1986,41 +2001,48 @@ export default function FormeScreen() {
               </TouchableOpacity>
             )}
 
-            {/* Relation Macronutriment/Fatigue - Plans Or et Diamant uniquement */}
-            {isPremium && (currentSubscription?.planId === 'gold' || currentSubscription?.planId === 'diamond') && (
-              <TouchableOpacity 
-                style={styles.metricCard}
-                onPress={() => {
-                  const macros = formeData.actualMacros;
-                  const calories = formeData.actualCalories || 0;
-                  
-                  if (!macros || calories === 0) {
-                    Alert.alert(
-                      'Macronutriments/Fatigue',
-                      'Aucune donnée nutritionnelle disponible pour aujourd\'hui.\n\nUtilisez la section Nutrition pour ajouter vos repas et obtenir une analyse détaillée de l\'équilibre de vos macronutriments.',
-                      [{ text: 'OK' }]
-                    );
-                    return;
-                  }
-
-                  const analysis = analyzeMacroBalance(macros, calories);
-                  
-                  const detailMessage = `Répartition actuelle:\n• Protéines: ${macros.proteins}g (${analysis.percentages?.protein || 0}%)\n• Glucides: ${macros.carbohydrates}g (${analysis.percentages?.carb || 0}%)\n• Lipides: ${macros.fat}g (${analysis.percentages?.fat || 0}%)\n\nAnalyse: ${analysis.issues.join(', ')}`;
-
+            {/* Macronutriments - Toujours visible avec contour orange pour gratuit */}
+            <TouchableOpacity 
+              style={[styles.metricCard, !isPremium && styles.premiumCard]}
+              onPress={() => {
+                if (!isPremium) {
+                  Alert.alert('Fonctionnalité Premium', 'L\'analyse des macronutriments est réservée aux abonnés premium.');
+                  return;
+                }
+                
+                const macros = formeData.actualMacros;
+                const calories = formeData.actualCalories || 0;
+                
+                if (!macros || calories === 0) {
                   Alert.alert(
-                    'Analyse Macronutriments/Fatigue',
-                    detailMessage,
+                    'Macronutriments/Fatigue',
+                    'Aucune donnée nutritionnelle disponible pour aujourd\'hui.\n\nUtilisez la section Nutrition pour ajouter vos repas et obtenir une analyse détaillée de l\'équilibre de vos macronutriments.',
                     [{ text: 'OK' }]
                   );
-                }}
-              >
-                <View style={styles.metricIcon}>
-                  <Text style={styles.iconText}>🥗</Text>
-                </View>
-                <View style={styles.metricInfo}>
-                  <Text style={styles.metricLabel}>Macronutriments</Text>
-                  <Text style={styles.metricValue}>
-                    {(() => {
+                  return;
+                }
+
+                const analysis = analyzeMacroBalance(macros, calories);
+                
+                const detailMessage = `Répartition actuelle:\n• Protéines: ${macros.proteins}g (${analysis.percentages?.protein || 0}%)\n• Glucides: ${macros.carbohydrates}g (${analysis.percentages?.carb || 0}%)\n• Lipides: ${macros.fat}g (${analysis.percentages?.fat || 0}%)\n\nAnalyse: ${analysis.issues.join(', ')}`;
+
+                Alert.alert(
+                  'Analyse Macronutriments/Fatigue',
+                  detailMessage,
+                  [{ text: 'OK' }]
+                );
+              }}
+            >
+              <View style={styles.metricIcon}>
+                <Text style={styles.iconText}>🥗</Text>
+              </View>
+              <View style={styles.metricInfo}>
+                <Text style={styles.metricLabel}>
+                  Macronutriments {!isPremium && '👑'}
+                </Text>
+                <Text style={styles.metricValue}>
+                  {isPremium ? 
+                    (() => {
                       const macros = formeData.actualMacros;
                       const calories = formeData.actualCalories || 0;
                       
@@ -2030,10 +2052,13 @@ export default function FormeScreen() {
                       
                       const analysis = analyzeMacroBalance(macros, calories);
                       return analysis.status;
-                    })()}
-                  </Text>
-                  <Text style={styles.metricDetail}>
-                    {(() => {
+                    })() :
+                    'Premium requis'
+                  }
+                </Text>
+                <Text style={styles.metricDetail}>
+                  {isPremium ? 
+                    (() => {
                       const macros = formeData.actualMacros;
                       const calories = formeData.actualCalories || 0;
                       
@@ -2042,70 +2067,80 @@ export default function FormeScreen() {
                       }
                       
                       return `P:${macros.proteins}g C:${macros.carbohydrates}g L:${macros.fat}g`;
-                    })()}
-                  </Text>
-                </View>
-                <Text style={styles.updateHint}>Appuyez pour plus d'infos</Text>
-              </TouchableOpacity>
-            )}
-
-            {/* Relation Micronutriment/Fatigue - Plans Or et Diamant uniquement */}
-            {isPremium && (currentSubscription?.planId === 'gold' || currentSubscription?.planId === 'diamond') && (
-              <TouchableOpacity 
-                style={styles.metricCard}
-                onPress={() => {
-                  const micros = formeData.actualMicros;
-                  const calories = formeData.actualCalories || 0;
-                  
-                  if (!micros || calories === 0) {
-                    Alert.alert(
-                      'Micronutriments/Fatigue',
-                      'Aucune donnée nutritionnelle disponible pour aujourd\'hui.\n\nUtilisez la section Nutrition pour ajouter vos repas et obtenir une analyse détaillée de vos micronutriments.',
-                      [{ text: 'OK' }]
-                    );
-                    return;
+                    })() :
+                    'Analyse équilibre'
                   }
+                </Text>
+              </View>
+              <Text style={styles.updateHint}>
+                {isPremium ? 'Appuyez pour plus d\'infos' : 'Mise à niveau requise'}
+              </Text>
+            </TouchableOpacity>
 
-                  // Analyse des carences importantes qui impactent la fatigue
-                  const deficiencies = [];
-                  
-                  // Vitamines critiques pour l'énergie
-                  if (micros.vitaminB12 < 1.5) deficiencies.push('Vitamine B12 faible');
-                  if (micros.vitaminD < 10) deficiencies.push('Vitamine D insuffisante');
-                  if (micros.vitaminC < 50) deficiencies.push('Vitamine C faible');
-                  if (micros.vitaminB6 < 1.0) deficiencies.push('Vitamine B6 insuffisante');
-                  
-                  // Minéraux critiques pour l'énergie
-                  if (micros.iron < 5) deficiencies.push('Fer faible (risque anémie)');
-                  if (micros.magnesium < 200) deficiencies.push('Magnésium insuffisant');
-                  if (micros.zinc < 6) deficiencies.push('Zinc faible');
-                  
-                  // Analyse globale
-                  let analysis = '';
-                  if (deficiencies.length === 0) {
-                    analysis = '✅ Profil micronutritionnel favorable\n\nVos apports en vitamines et minéraux semblent suffisants pour maintenir un bon niveau d\'énergie.';
-                  } else if (deficiencies.length <= 2) {
-                    analysis = `⚠️ Quelques carences détectées\n\n${deficiencies.join(', ')}\n\nCes carences peuvent contribuer à la fatigue. Considérez d'enrichir votre alimentation.`;
-                  } else {
-                    analysis = `🚨 Carences multiples détectées\n\n${deficiencies.join(', ')}\n\nCes carences importantes peuvent expliquer une fatigue persistante. Consultez un professionnel de santé.`;
-                  }
-
-                  const detailMessage = `Apports du jour:\n• Vitamine B12: ${micros.vitaminB12.toFixed(1)}μg\n• Vitamine D: ${micros.vitaminD.toFixed(1)}μg\n• Fer: ${micros.iron.toFixed(1)}mg\n• Magnésium: ${micros.magnesium.toFixed(0)}mg\n\n${analysis}`;
-
+            {/* Micronutriments - Toujours visible avec contour orange pour gratuit */}
+            <TouchableOpacity 
+              style={[styles.metricCard, !isPremium && styles.premiumCard]}
+              onPress={() => {
+                if (!isPremium) {
+                  Alert.alert('Fonctionnalité Premium', 'L\'analyse des micronutriments est réservée aux abonnés premium.');
+                  return;
+                }
+                
+                const micros = formeData.actualMicros;
+                const calories = formeData.actualCalories || 0;
+                
+                if (!micros || calories === 0) {
                   Alert.alert(
-                    'Analyse Micronutriments/Fatigue',
-                    detailMessage,
+                    'Micronutriments/Fatigue',
+                    'Aucune donnée nutritionnelle disponible pour aujourd\'hui.\n\nUtilisez la section Nutrition pour ajouter vos repas et obtenir une analyse détaillée de vos micronutriments.',
                     [{ text: 'OK' }]
                   );
-                }}
-              >
-                <View style={styles.metricIcon}>
-                  <Text style={styles.iconText}>💊</Text>
-                </View>
-                <View style={styles.metricInfo}>
-                  <Text style={styles.metricLabel}>Micronutriments</Text>
-                  <Text style={styles.metricValue}>
-                    {(() => {
+                  return;
+                }
+
+                // Analyse des carences importantes qui impactent la fatigue
+                const deficiencies = [];
+                
+                // Vitamines critiques pour l'énergie
+                if (micros.vitaminB12 < 1.5) deficiencies.push('Vitamine B12 faible');
+                if (micros.vitaminD < 10) deficiencies.push('Vitamine D insuffisante');
+                if (micros.vitaminC < 50) deficiencies.push('Vitamine C faible');
+                if (micros.vitaminB6 < 1.0) deficiencies.push('Vitamine B6 insuffisante');
+                
+                // Minéraux critiques pour l'énergie
+                if (micros.iron < 5) deficiencies.push('Fer faible (risque anémie)');
+                if (micros.magnesium < 200) deficiencies.push('Magnésium insuffisant');
+                if (micros.zinc < 6) deficiencies.push('Zinc faible');
+                
+                // Analyse globale
+                let analysis = '';
+                if (deficiencies.length === 0) {
+                  analysis = '✅ Profil micronutritionnel favorable\n\nVos apports en vitamines et minéraux semblent suffisants pour maintenir un bon niveau d\'énergie.';
+                } else if (deficiencies.length <= 2) {
+                  analysis = `⚠️ Quelques carences détectées\n\n${deficiencies.join(', ')}\n\nCes carences peuvent contribuer à la fatigue. Considérez d'enrichir votre alimentation.`;
+                } else {
+                  analysis = `🚨 Carences multiples détectées\n\n${deficiencies.join(', ')}\n\nCes carences importantes peuvent expliquer une fatigue persistante. Consultez un professionnel de santé.`;
+                }
+
+                const detailMessage = `Apports du jour:\n• Vitamine B12: ${micros.vitaminB12.toFixed(1)}μg\n• Vitamine D: ${micros.vitaminD.toFixed(1)}μg\n• Fer: ${micros.iron.toFixed(1)}mg\n• Magnésium: ${micros.magnesium.toFixed(0)}mg\n\n${analysis}`;
+
+                Alert.alert(
+                  'Analyse Micronutriments/Fatigue',
+                  detailMessage,
+                  [{ text: 'OK' }]
+                );
+              }}
+            >
+              <View style={styles.metricIcon}>
+                <Text style={styles.iconText}>💊</Text>
+              </View>
+              <View style={styles.metricInfo}>
+                <Text style={styles.metricLabel}>
+                  Micronutriments {!isPremium && '👑'}
+                </Text>
+                <Text style={styles.metricValue}>
+                  {isPremium ? 
+                    (() => {
                       const micros = formeData.actualMicros;
                       const calories = formeData.actualCalories || 0;
                       
@@ -2125,10 +2160,13 @@ export default function FormeScreen() {
                       if (criticalDeficiencies <= 1) return 'Légères carences';
                       if (criticalDeficiencies <= 2) return 'Carences modérées';
                       return 'Carences importantes';
-                    })()}
-                  </Text>
-                  <Text style={styles.metricDetail}>
-                    {(() => {
+                    })() :
+                    'Premium requis'
+                  }
+                </Text>
+                <Text style={styles.metricDetail}>
+                  {isPremium ? 
+                    (() => {
                       const micros = formeData.actualMicros;
                       const calories = formeData.actualCalories || 0;
                       
@@ -2137,12 +2175,15 @@ export default function FormeScreen() {
                       }
                       
                       return `B12: ${micros.vitaminB12.toFixed(1)}μg, Fer: ${micros.iron.toFixed(1)}mg`;
-                    })()}
-                  </Text>
-                </View>
-                <Text style={styles.updateHint}>Appuyez pour plus d'infos</Text>
-              </TouchableOpacity>
-            )}
+                    })() :
+                    'Analyse carences'
+                  }
+                </Text>
+              </View>
+              <Text style={styles.updateHint}>
+                {isPremium ? 'Appuyez pour plus d\'infos' : 'Mise à niveau requise'}
+              </Text>
+            </TouchableOpacity>
 
             {/* Cycle Hormonal - Femmes uniquement */}
             {userData?.gender === 'Femme' && (
