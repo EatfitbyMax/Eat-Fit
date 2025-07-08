@@ -1415,7 +1415,7 @@ export default function FormeScreen() {
     const minutes = Math.round((hours - wholeHours) * 60);
 
     if (minutes === 0) {
-      return `{wholeHours}h`;
+      return `${wholeHours}h`;
     } else {
       return `${wholeHours}h${minutes.toString().padStart(2, '0')}min`;
     }
