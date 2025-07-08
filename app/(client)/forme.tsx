@@ -2660,6 +2660,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
+    minHeight: 80,
   },
   premiumCard: {
     borderColor: '#F5A623',
@@ -2679,26 +2680,38 @@ const styles = StyleSheet.create({
   },
   metricInfo: {
     flex: 1,
+    paddingRight: 8,
+    minWidth: 0,
   },
   metricLabel: {
     fontSize: 14,
     color: '#8B949E',
     marginBottom: 4,
+    flexWrap: 'wrap',
+    lineHeight: 18,
   },
   metricValue: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 2,
+    flexWrap: 'wrap',
+    lineHeight: 22,
   },
   metricDetail: {
     fontSize: 12,
     color: '#8B949E',
+    flexWrap: 'wrap',
+    lineHeight: 16,
   },
   updateHint: {
     fontSize: 10,
     color: '#F5A623',
     fontStyle: 'italic',
+    flexWrap: 'wrap',
+    lineHeight: 14,
+    textAlign: 'right',
+    minWidth: 80,
   },
   historyContainer: {
     paddingHorizontal: 20,
