@@ -75,17 +75,7 @@ export default function ProfilScreen() {
       console.log('Données utilisateur récupérées:', currentUser);
       setUser(currentUser);
 
-      // Vérification spéciale pour m.pacullmarquie@gmail.com
-      if (currentUser?.email === 'm.pacullmarquie@gmail.com') {
-        console.log('💎 Forçage du statut DIAMANT pour m.pacullmarquie@gmail.com');
-        setIsPremium(true);
-        setCurrentSubscription({
-          planId: 'diamond',
-          status: 'active',
-          planName: 'DIAMANT'
-        });
-        return; // Sortir directement pour éviter les conflits
-      }
+      
 
       if (currentUser?.id) {
         await loadSubscriptionData(currentUser.id);

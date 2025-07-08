@@ -8,7 +8,7 @@ export const checkSubscriptionStatus = async (): Promise<{ isPremium: boolean; p
     if (!currentUser) return { isPremium: false, planId: 'free' };
 
     // Utilisateurs premium par défaut (pour les tests)
-    const premiumEmails = ['m.pacullmarquie@gmail.com'];
+    const premiumEmails: string[] = [];
     
     if (premiumEmails.includes(currentUser.email)) {
       return { isPremium: true, planId: 'diamond' };
