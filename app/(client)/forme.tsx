@@ -336,30 +336,27 @@ export default function FormeScreen() {
     let baseWeights = {
       sleep: 0.35,
       stress: 0.30,
-      calories: 0.15,
-      training: 0.00,
+      calories: 0.35,
       heartRate: 0.00,
       rpe: 0.00,
-      cycle: isWoman ? 0.20 : 0.00 // Poids plus important pour le cycle
+      cycle: isWoman ? 0.00 : 0.00 // Poids plus important pour le cycle
     };
 
     // Ajuster les poids en fonction du plan d'abonnement
     let weights = { ...baseWeights };
 
     if (!isPremium) {
-      // Plan Gratuit: sommeil, stress, calories, entraînement
+      // Plan Gratuit: sommeil, stress, calories
       weights.heartRate = 0;
       weights.rpe = 0;
-      weights.training = 0.20;
-      weights.calories = 0.15;
+      weights.calories = 0.35;
+      weights.cycle = isWoman ? 0.00 : 0.00;
     } else {
       // Plans Bronze, Argent, Or, Diamant
-      weights.training = 0;
-
-      // Ajuster les poids pour les plans premium
       weights.heartRate = 0.10; // FC repos
       weights.rpe = 0.10;       // RPE
-      weights.calories = 0.05; // Calories (moins important dans les plans avancés)
+      weights.calories = 0.15; // Calories (moins important dans les plans avancés)
+      weights.cycle = isWoman ? 0.20 : 0.00; // Cycle pour les femmes premium
 
       // Ajustements spécifiques pour les plans Or et Diamant peuvent être ajoutés ici
     }
@@ -470,22 +467,7 @@ export default function FormeScreen() {
       totalWeight += weights.calories;
     }
 
-    // Entraînement programmé - Plan gratuit uniquement
-    if (weights.training > 0) {
-      let trainingScore = 50; // Score par défaut
 
-      // Vérifier s'il y a des entraînements programmés aujourd'hui
-      const today = new Date().toISOString().split('T')[0];
-      // Simuler la présence d'entraînements (à adapter selon votre logique)
-      const hasTrainingToday = weeklyData.some(day => 
-        day.date === today && day.rpe?.value > 0
-      );
-
-      trainingScore = hasTrainingToday ? 85 : 40;
-
-      totalScore += trainingScore * weights.training;
-      totalWeight += weights.training;
-    }
 
     // FC repos - Plans Bronze et plus
     if (weights.heartRate > 0 && formeData.heartRate.resting > 0) {
@@ -766,7 +748,7 @@ export default function FormeScreen() {
       const estimateMicronutrients = (entry: any) => {
         const productName = entry.product?.name?.toLowerCase() || '';
         const calories = entry.calories || 0;
-        
+
         let vitaminA = 0, vitaminC = 0, vitaminD = 0, vitaminE = 0, vitaminK = 0;
         let vitaminB1 = 0, vitaminB2 = 0, vitaminB3 = 0, vitaminB5 = 0, vitaminB6 = 0;
         let vitaminB7 = 0, vitaminB9 = 0, vitaminB12 = 0;
@@ -785,7 +767,8 @@ export default function FormeScreen() {
           vitaminC = calories * 0.5;
           manganese = calories * 0.02;
         } else if (productName.includes('chocolat') || productName.includes('cacao')) {
-          caffeine = calories * 0.8;
+          ```typescript
+caffeine = calories * 0.8;
           magnesium = calories * 1.5;
           iron = calories * 0.12;
           copper = calories * 0.008;
@@ -934,7 +917,7 @@ export default function FormeScreen() {
         if (response.ok) {
           const nutritionEntries = await response.json();
           const todayEntries = nutritionEntries.filter((entry: any) => entry.date === today);
-          
+
           const totals = todayEntries.reduce((sum: any, entry: any) => {
             const estimatedMicros = estimateMicronutrients(entry);
             return {
@@ -1002,7 +985,7 @@ export default function FormeScreen() {
       if (storedEntries) {
         const entries = JSON.parse(storedEntries);
         const todayEntries = entries.filter((entry: any) => entry.date === today);
-        
+
         const totals = todayEntries.reduce((sum: any, entry: any) => {
           const estimatedMicros = estimateMicronutrients(entry);
           return {
@@ -1482,30 +1465,27 @@ export default function FormeScreen() {
     let baseWeights = {
       sleep: 0.35,
       stress: 0.30,
-      calories: 0.15,
-      training: 0.00,
+      calories: 0.35,
       heartRate: 0.00,
       rpe: 0.00,
-      cycle: isWoman ? 0.20 : 0.00 // Poids plus important pour le cycle
+      cycle: isWoman ? 0.00 : 0.00 // Poids plus important pour le cycle
     };
 
     // Ajuster les poids en fonction du plan d'abonnement
     let weights = { ...baseWeights };
 
     if (!isPremium) {
-      // Plan Gratuit: sommeil, stress, calories, entraînement
+      // Plan Gratuit: sommeil, stress, calories
       weights.heartRate = 0;
       weights.rpe = 0;
-      weights.training = 0.20;
-      weights.calories = 0.15;
+      weights.calories = 0.35;
+      weights.cycle = isWoman ? 0.00 : 0.00;
     } else {
       // Plans Bronze, Argent, Or, Diamant
-      weights.training = 0;
-
-      // Ajuster les poids pour les plans premium
       weights.heartRate = 0.10; // FC repos
       weights.rpe = 0.10;       // RPE
-      weights.calories = 0.05; // Calories (moins important dans les plans avancés)
+      weights.calories = 0.15; // Calories (moins important dans les plans avancés)
+      weights.cycle = isWoman ? 0.20 : 0.00; // Cycle pour les femmes premium
 
       // Ajustements spécifiques pour les plans Or et Diamant peuvent être ajoutés ici
     }
@@ -1607,22 +1587,7 @@ export default function FormeScreen() {
       totalWeight += weights.calories;
     }
 
-    // Entraînement programmé - Plan gratuit uniquement
-    if (weights.training > 0) {
-      let trainingScore = 50; // Score par défaut
 
-      // Vérifier s'il y a des entraînements programmés aujourd'hui
-      const today = new Date().toISOString().split('T')[0];
-      // Simuler la présence d'entraînements (à adapter selon votre logique)
-      const hasTrainingToday = weeklyData.some(day => 
-        day.date === today && day.rpe?.value > 0
-      );
-
-      trainingScore = hasTrainingToday ? 85 : 40;
-
-      totalScore += trainingScore * weights.training;
-      totalWeight += weights.training;
-    }
 
     // FC repos - Plans Bronze et plus
     if (weights.heartRate > 0 && dayData.heartRate.resting > 0) {
@@ -1738,7 +1703,7 @@ export default function FormeScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        
+
 
         {/* Score principal */}
         <View style={styles.scoreCard}>
@@ -1925,7 +1890,7 @@ export default function FormeScreen() {
                   Alert.alert('Fonctionnalité Premium', 'Le suivi détaillé de l\'apport calorique est réservé aux abonnés premium.');
                   return;
                 }
-                
+
                 const targetCalories = Math.round(
                   (userData?.gender === 'Homme' ? 2200 : 1800) * 
                   (userData?.activityLevel === 'sedentaire' ? 1.2 : 
@@ -1969,37 +1934,6 @@ export default function FormeScreen() {
               </Text>
             </TouchableOpacity>
 
-            {/* Entraînement Programmé - Plan Gratuit uniquement */}
-            {!isPremium && (
-              <TouchableOpacity 
-                style={styles.metricCard}
-                onPress={() => {
-                  Alert.alert(
-                    'Entraînement Programmé',
-                    'Cette métrique indique si vous avez des entraînements programmés aujourd\'hui.\n\nUtilisez la section Entraînement pour programmer vos séances.',
-                    [{ text: 'OK' }]
-                  );
-                }}
-              >
-                <View style={styles.metricIcon}>
-                  <Text style={styles.iconText}>📅</Text>
-                </View>
-                <View style={styles.metricInfo}>
-                  <Text style={styles.metricLabel}>Entraînement Programmé</Text>
-                  <Text style={styles.metricValue}>
-                    {weeklyData.some(day => 
-                      day.date === new Date().toISOString().split('T')[0] && day.rpe?.value > 0
-                    ) ? 'Oui' : 'Non'}
-                  </Text>
-                  <Text style={styles.metricDetail}>
-                    {weeklyData.some(day => 
-                      day.date === new Date().toISOString().split('T')[0] && day.rpe?.value > 0
-                    ) ? 'Séance programmée' : 'Aucune séance'}
-                  </Text>
-                </View>
-                <Text style={styles.updateHint}>Appuyez pour plus d'infos</Text>
-              </TouchableOpacity>
-            )}
 
             {/* Macronutriments - Toujours visible avec contour orange pour gratuit */}
             <TouchableOpacity 
@@ -2009,10 +1943,10 @@ export default function FormeScreen() {
                   Alert.alert('Fonctionnalité Premium', 'L\'analyse des macronutriments est réservée aux abonnés premium.');
                   return;
                 }
-                
+
                 const macros = formeData.actualMacros;
                 const calories = formeData.actualCalories || 0;
-                
+
                 if (!macros || calories === 0) {
                   Alert.alert(
                     'Macronutriments/Fatigue',
@@ -2023,7 +1957,7 @@ export default function FormeScreen() {
                 }
 
                 const analysis = analyzeMacroBalance(macros, calories);
-                
+
                 const detailMessage = `Répartition actuelle:\n• Protéines: ${macros.proteins}g (${analysis.percentages?.protein || 0}%)\n• Glucides: ${macros.carbohydrates}g (${analysis.percentages?.carb || 0}%)\n• Lipides: ${macros.fat}g (${analysis.percentages?.fat || 0}%)\n\nAnalyse: ${analysis.issues.join(', ')}`;
 
                 Alert.alert(
@@ -2045,11 +1979,11 @@ export default function FormeScreen() {
                     (() => {
                       const macros = formeData.actualMacros;
                       const calories = formeData.actualCalories || 0;
-                      
+
                       if (!macros || calories === 0) {
                         return 'Aucune donnée';
                       }
-                      
+
                       const analysis = analyzeMacroBalance(macros, calories);
                       return analysis.status;
                     })() :
@@ -2061,11 +1995,11 @@ export default function FormeScreen() {
                     (() => {
                       const macros = formeData.actualMacros;
                       const calories = formeData.actualCalories || 0;
-                      
+
                       if (!macros || calories === 0) {
                         return 'Ajoutez vos repas';
                       }
-                      
+
                       return `P:${macros.proteins}g C:${macros.carbohydrates}g L:${macros.fat}g`;
                     })() :
                     'Analyse équilibre'
@@ -2085,10 +2019,10 @@ export default function FormeScreen() {
                   Alert.alert('Fonctionnalité Premium', 'L\'analyse des micronutriments est réservée aux abonnés premium.');
                   return;
                 }
-                
+
                 const micros = formeData.actualMicros;
                 const calories = formeData.actualCalories || 0;
-                
+
                 if (!micros || calories === 0) {
                   Alert.alert(
                     'Micronutriments/Fatigue',
@@ -2100,18 +2034,18 @@ export default function FormeScreen() {
 
                 // Analyse des carences importantes qui impactent la fatigue
                 const deficiencies = [];
-                
+
                 // Vitamines critiques pour l'énergie
                 if (micros.vitaminB12 < 1.5) deficiencies.push('Vitamine B12 faible');
                 if (micros.vitaminD < 10) deficiencies.push('Vitamine D insuffisante');
                 if (micros.vitaminC < 50) deficiencies.push('Vitamine C faible');
                 if (micros.vitaminB6 < 1.0) deficiencies.push('Vitamine B6 insuffisante');
-                
+
                 // Minéraux critiques pour l'énergie
                 if (micros.iron < 5) deficiencies.push('Fer faible (risque anémie)');
                 if (micros.magnesium < 200) deficiencies.push('Magnésium insuffisant');
                 if (micros.zinc < 6) deficiencies.push('Zinc faible');
-                
+
                 // Analyse globale
                 let analysis = '';
                 if (deficiencies.length === 0) {
@@ -2143,11 +2077,11 @@ export default function FormeScreen() {
                     (() => {
                       const micros = formeData.actualMicros;
                       const calories = formeData.actualCalories || 0;
-                      
+
                       if (!micros || calories === 0) {
                         return 'Aucune donnée';
                       }
-                      
+
                       // Analyse rapide des carences critiques
                       const criticalDeficiencies = [
                         micros.vitaminB12 < 1.5,
@@ -2155,7 +2089,7 @@ export default function FormeScreen() {
                         micros.iron < 5,
                         micros.magnesium < 200
                       ].filter(Boolean).length;
-                      
+
                       if (criticalDeficiencies === 0) return 'Profil favorable';
                       if (criticalDeficiencies <= 1) return 'Légères carences';
                       if (criticalDeficiencies <= 2) return 'Carences modérées';
@@ -2169,11 +2103,11 @@ export default function FormeScreen() {
                     (() => {
                       const micros = formeData.actualMicros;
                       const calories = formeData.actualCalories || 0;
-                      
+
                       if (!micros || calories === 0) {
                         return 'Ajoutez vos repas';
                       }
-                      
+
                       return `B12: ${micros.vitaminB12.toFixed(1)}μg, Fer: ${micros.iron.toFixed(1)}mg`;
                     })() :
                     'Analyse carences'
@@ -2385,8 +2319,7 @@ export default function FormeScreen() {
               <TouchableOpacity 
                 style={styles.modalButtonPrimary}
                 onPress={handleSaveStress}
-              >```python
-This code incorporates calorie data from the nutrition screen into the form screen's calculations.
+              >
                 <Text style={styles.modalButtonPrimaryText}>Sauvegarder</Text>
               </TouchableOpacity>
             </View>
