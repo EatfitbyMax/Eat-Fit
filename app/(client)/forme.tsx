@@ -1919,7 +1919,7 @@ export default function FormeScreen() {
               </View>
               <View style={styles.metricInfo}>
                 <Text style={styles.metricLabel}>
-                  RPE {!isPremium && '👑'}
+                  RPE Post-Entraînement {!isPremium && '👑'}
                 </Text>
                 <Text style={styles.metricValue}>
                   {isPremium ? 
@@ -1935,7 +1935,7 @@ export default function FormeScreen() {
                       (formeData.rpe.notes || 'Données des séances du jour') :
                       'Aucune séance aujourd\'hui'
                     ) :
-                    'Post-entraînement'
+                    'Évaluation fatigue'
                   }
                 </Text>
               </View>
@@ -2660,7 +2660,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 80,
   },
   premiumCard: {
     borderColor: '#F5A623',
@@ -2680,40 +2679,26 @@ const styles = StyleSheet.create({
   },
   metricInfo: {
     flex: 1,
-    paddingRight: 8,
-    minWidth: 0,
-    justifyContent: 'center',
   },
   metricLabel: {
     fontSize: 14,
     color: '#8B949E',
     marginBottom: 4,
-    numberOfLines: 1,
-    lineHeight: 18,
   },
   metricValue: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 2,
-    numberOfLines: 1,
-    lineHeight: 22,
   },
   metricDetail: {
     fontSize: 12,
     color: '#8B949E',
-    numberOfLines: 1,
-    lineHeight: 16,
   },
   updateHint: {
     fontSize: 10,
     color: '#F5A623',
     fontStyle: 'italic',
-    numberOfLines: 2,
-    lineHeight: 14,
-    textAlign: 'right',
-    minWidth: 100,
-    maxWidth: 120,
   },
   historyContainer: {
     paddingHorizontal: 20,
