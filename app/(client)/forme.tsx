@@ -1969,37 +1969,7 @@ export default function FormeScreen() {
               </Text>
             </TouchableOpacity>
 
-            {/* Entraînement Programmé - Plan Gratuit uniquement */}
-            {!isPremium && (
-              <TouchableOpacity 
-                style={styles.metricCard}
-                onPress={() => {
-                  Alert.alert(
-                    'Entraînement Programmé',
-                    'Cette métrique indique si vous avez des entraînements programmés aujourd\'hui.\n\nUtilisez la section Entraînement pour programmer vos séances.',
-                    [{ text: 'OK' }]
-                  );
-                }}
-              >
-                <View style={styles.metricIcon}>
-                  <Text style={styles.iconText}>📅</Text>
-                </View>
-                <View style={styles.metricInfo}>
-                  <Text style={styles.metricLabel}>Entraînement Programmé</Text>
-                  <Text style={styles.metricValue}>
-                    {weeklyData.some(day => 
-                      day.date === new Date().toISOString().split('T')[0] && day.rpe?.value > 0
-                    ) ? 'Oui' : 'Non'}
-                  </Text>
-                  <Text style={styles.metricDetail}>
-                    {weeklyData.some(day => 
-                      day.date === new Date().toISOString().split('T')[0] && day.rpe?.value > 0
-                    ) ? 'Séance programmée' : 'Aucune séance'}
-                  </Text>
-                </View>
-                <Text style={styles.updateHint}>Appuyez pour plus d'infos</Text>
-              </TouchableOpacity>
-            )}
+            
 
             {/* Macronutriments - Toujours visible avec contour orange pour gratuit */}
             <TouchableOpacity 
