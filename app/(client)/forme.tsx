@@ -1738,11 +1738,7 @@ export default function FormeScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Ma Forme</Text>
-          <Text style={styles.subtitle}>Score: {formeScore}/100</Text>
-        </View>
+        
 
         {/* Score principal */}
         <View style={styles.scoreCard}>
