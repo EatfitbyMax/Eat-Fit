@@ -75,8 +75,6 @@ export default function ProfilScreen() {
       console.log('Données utilisateur récupérées:', currentUser);
       setUser(currentUser);
 
-      
-
       if (currentUser?.id) {
         await loadSubscriptionData(currentUser.id);
       }
@@ -467,7 +465,7 @@ export default function ProfilScreen() {
         {/* Section Abonnement */}
         <View style={styles.section}>
           {console.log('🔍 Debug Profil - isPremium:', isPremium, 'currentSubscription:', currentSubscription, 'user:', user?.email)}
-          {(isPremium && currentSubscription && currentSubscription.planName) || user?.email === 'm.pacullmarquie@gmail.com' ? (
+          {(isPremium && currentSubscription && currentSubscription.planName) ? (
             /* Affichage Premium */
             <View style={styles.premiumSubscriptionCard}>
               <LinearGradient
