@@ -2070,8 +2070,9 @@ export default function FormeScreen() {
                 style={styles.metricCard}
                 onPress={() => {
                   const micros = formeData.actualMicros;
+                  const calories = formeData.actualCalories || 0;
                   
-                  if (!micros) {
+                  if (!micros || calories === 0) {
                     Alert.alert(
                       'Micronutriments/Fatigue',
                       'Aucune donnée nutritionnelle disponible pour aujourd\'hui.\n\nUtilisez la section Nutrition pour ajouter vos repas et obtenir une analyse détaillée de vos micronutriments.',
@@ -2121,8 +2122,9 @@ export default function FormeScreen() {
                   <Text style={styles.metricValue}>
                     {(() => {
                       const micros = formeData.actualMicros;
+                      const calories = formeData.actualCalories || 0;
                       
-                      if (!micros) {
+                      if (!micros || calories === 0) {
                         return 'Aucune donnée';
                       }
                       
@@ -2143,8 +2145,9 @@ export default function FormeScreen() {
                   <Text style={styles.metricDetail}>
                     {(() => {
                       const micros = formeData.actualMicros;
+                      const calories = formeData.actualCalories || 0;
                       
-                      if (!micros) {
+                      if (!micros || calories === 0) {
                         return 'Ajoutez vos repas dans Nutrition';
                       }
                       
