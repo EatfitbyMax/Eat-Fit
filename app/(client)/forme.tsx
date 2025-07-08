@@ -2045,7 +2045,7 @@ export default function FormeScreen() {
                   <Text style={styles.iconText}>🥗</Text>
                 </View>
                 <View style={styles.metricInfo}>
-                  <Text style={styles.metricLabel}>Macronutriments/Fatigue</Text>
+                  <Text style={styles.metricLabel}>Macronutriments</Text>
                   <Text style={styles.metricValue}>
                     {(() => {
                       const macros = formeData.actualMacros;
@@ -2065,7 +2065,7 @@ export default function FormeScreen() {
                       const calories = formeData.actualCalories || 0;
                       
                       if (!macros || calories === 0) {
-                        return 'Ajoutez vos repas dans Nutrition';
+                        return 'Ajoutez vos repas';
                       }
                       
                       return `P:${macros.proteins}g C:${macros.carbohydrates}g L:${macros.fat}g`;
@@ -2130,7 +2130,7 @@ export default function FormeScreen() {
                   <Text style={styles.iconText}>💊</Text>
                 </View>
                 <View style={styles.metricInfo}>
-                  <Text style={styles.metricLabel}>Micronutriments/Fatigue</Text>
+                  <Text style={styles.metricLabel}>Micronutriments</Text>
                   <Text style={styles.metricValue}>
                     {(() => {
                       const micros = formeData.actualMicros;
@@ -2160,7 +2160,7 @@ export default function FormeScreen() {
                       const calories = formeData.actualCalories || 0;
                       
                       if (!micros || calories === 0) {
-                        return 'Ajoutez vos repas dans Nutrition';
+                        return 'Ajoutez vos repas';
                       }
                       
                       return `B12: ${micros.vitaminB12.toFixed(1)}μg, Fer: ${micros.iron.toFixed(1)}mg`;
