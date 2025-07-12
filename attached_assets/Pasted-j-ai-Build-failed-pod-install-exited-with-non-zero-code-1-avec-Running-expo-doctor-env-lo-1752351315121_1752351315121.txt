@@ -1,0 +1,180 @@
+j'ai : Build failed
+
+pod install exited with non-zero code: 1 ; avec : Running "expo doctor"
+env: load .env
+env: export EXPO_PUBLIC_STRAVA_CLIENT_ID EXPO_PUBLIC_STRAVA_CLIENT_SECRET EXPO_PUBLIC_CLARIFAI_API_KEY EXPO_PUBLIC_GOOGLE_VISION_API_KEY EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY EXPO_PUBLIC_EMAILJS_SERVICE_ID EXPO_PUBLIC_EMAILJS_TEMPLATE_ID EXPO_PUBLIC_EMAILJS_PUBLIC_KEY API_URL
+Running 15 checks on your project...
+12/15 checks passed. 3 checks failed. Possible issues detected:
+Use the --verbose flag to see more details about passed checks.
+✖ Check Expo config (app.json/ app.config.js) schema
+Errors validating fields in /Users/expo/workingdir/build/app.json:
+ should NOT have additional property 'keywords'.
+ should NOT have additional property 'privacy'.
+Advice:
+Resolve schema errors in your app config. Learn more: https://docs.expo.dev/workflow/configuration/
+✖ Check that native modules use compatible support package versions for installed Expo SDK
+Expected package @expo/config-plugins@~10.1.1
+Found invalid:
+  @expo/config-plugins@3.1.0
+  @expo/config-plugins@7.9.2
+  (for more info, run: npm why @expo/config-plugins)
+Advice:
+Upgrade dependencies that are using the invalid package versions.
+✖ Validate packages against React Native Directory package metadata
+The following issues were found when validating your dependencies against React Native Directory:
+  Untested on New Architecture: react-native-health
+  Unmaintained: expo-barcode-scanner
+  No metadata available: @emailjs/react-native, expo-payments-stripe, stripe
+Advice:
+Use libraries that are actively maintained and support the New Architecture. Find alternative libraries with https://reactnative.directory.
+Add packages to expo.doctor.reactNativeDirectoryCheck.exclude in package.json to selectively skip validations, if the warning is not relevant.
+Update React Native Directory to include metadata for unknown packages. Alternatively, set expo.doctor.reactNativeDirectoryCheck.listUnknownPackages in package.json to false to skip warnings about packages with no metadata, if the warning is not relevant.
+3 checks failed, indicating possible issues with the project.
+
+Command "expo doctor" failed.
+npx -y expo-doctor exited with non-zero code: 1 ; et : Using Expo modules
+[Expo] Enabling modular headers for pod ExpoModulesCore
+[Expo] Enabling modular headers for pod React-RCTAppDelegate
+[Expo] Enabling modular headers for pod React-RCTFabric
+[Expo] Enabling modular headers for pod ReactAppDependencyProvider
+[Expo] Enabling modular headers for pod React-Core
+[Expo] Enabling modular headers for pod RCT-Folly
+[Expo] Enabling modular headers for pod glog
+[Expo] Enabling modular headers for pod ReactCodegen
+[Expo] Enabling modular headers for pod RCTRequired
+[Expo] Enabling modular headers for pod RCTTypeSafety
+[Expo] Enabling modular headers for pod ReactCommon
+[Expo] Enabling modular headers for pod React-NativeModulesApple
+[Expo] Enabling modular headers for pod Yoga
+[Expo] Enabling modular headers for pod React-Fabric
+[Expo] Enabling modular headers for pod React-graphics
+[Expo] Enabling modular headers for pod React-utils
+[Expo] Enabling modular headers for pod React-featureflags
+[Expo] Enabling modular headers for pod React-debug
+[Expo] Enabling modular headers for pod React-ImageManager
+[Expo] Enabling modular headers for pod React-rendererdebug
+[Expo] Enabling modular headers for pod DoubleConversion
+[Expo] Enabling modular headers for pod React-jsi
+[Expo] Enabling modular headers for pod React-renderercss
+[Expo] Enabling modular headers for pod hermes-engine
+[Expo] Enabling modular headers for pod React-hermes
+[Expo] Enabling modular headers for pod EXImageLoader
+[Expo] Enabling modular headers for pod ZXingObjC
+[Expo] Enabling modular headers for pod SDWebImage
+[Expo] Enabling modular headers for pod SDWebImageAVIFCoder
+[Expo] Enabling modular headers for pod SDWebImageSVGCoder
+[Expo] Enabling modular headers for pod SDWebImageWebPCoder
+[Expo] Enabling modular headers for pod libavif
+[Expo] Enabling modular headers for pod EXStructuredHeaders
+[Expo] Enabling modular headers for pod EXUpdatesInterface
+[Expo] Enabling modular headers for pod EXManifests
+[Expo] Enabling modular headers for pod EASClient
+[Expo] Enabling modular headers for pod ReachabilitySwift
+Found 10 modules for target EatFitByMax
+link_native_modules! {:ios_packages=>[{:configurations=>[], :name=>"@react-native-async-storage/async-storage", :root=>"/Users/expo/workingdir/build/node_modules/@react-native-async-storage/async-storage", :path=>"../node_modules/@react-native-async-storage/async-storage", :podspec_path=>"/Users/expo/workingdir/build/node_modules/@react-native-async-storage/async-storage/RNCAsyncStorage.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"@stripe/stripe-react-native", :root=>"/Users/expo/workingdir/build/node_modules/@stripe/stripe-react-native", :path=>"../node_modules/@stripe/stripe-react-native", :podspec_path=>"/Users/expo/workingdir/build/node_modules/@stripe/stripe-react-native/stripe-react-native.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"expo", :root=>"/Users/expo/workingdir/build/node_modules/expo", :path=>"../node_modules/expo", :podspec_path=>"/Users/expo/workingdir/build/node_modules/expo/Expo.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"react-native-gesture-handler", :root=>"/Users/expo/workingdir/build/node_modules/react-native-gesture-handler", :path=>"../node_modules/react-native-gesture-handler", :podspec_path=>"/Users/expo/workingdir/build/node_modules/react-native-gesture-handler/RNGestureHandler.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"react-native-health", :root=>"/Users/expo/workingdir/build/node_modules/react-native-health", :path=>"../node_modules/react-native-health", :podspec_path=>"/Users/expo/workingdir/build/node_modules/react-native-health/RNAppleHealthKit.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"react-native-reanimated", :root=>"/Users/expo/workingdir/build/node_modules/react-native-reanimated", :path=>"../node_modules/react-native-reanimated", :podspec_path=>"/Users/expo/workingdir/build/node_modules/react-native-reanimated/RNReanimated.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"react-native-safe-area-context", :root=>"/Users/expo/workingdir/build/node_modules/react-native-safe-area-context", :path=>"../node_modules/react-native-safe-area-context", :podspec_path=>"/Users/expo/workingdir/build/node_modules/react-native-safe-area-context/react-native-safe-area-context.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"react-native-screens", :root=>"/Users/expo/workingdir/build/node_modules/react-native-screens", :path=>"../node_modules/react-native-screens", :podspec_path=>"/Users/expo/workingdir/build/node_modules/react-native-screens/RNScreens.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"react-native-svg", :root=>"/Users/expo/workingdir/build/node_modules/react-native-svg", :path=>"../node_modules/react-native-svg", :podspec_path=>"/Users/expo/workingdir/build/node_modules/react-native-svg/RNSVG.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"react-native-webview", :root=>"/Users/expo/workingdir/build/node_modules/react-native-webview", :path=>"../node_modules/react-native-webview", :podspec_path=>"/Users/expo/workingdir/build/node_modules/react-native-webview/react-native-webview.podspec", :script_phases=>[]}], :ios_project_root_path=>"/Users/expo/workingdir/build/ios", :react_native_path=>"../node_modules/react-native"}
+Auto-linking React Native modules for target EatFitByMax: RNAppleHealthKit, RNCAsyncStorage, RNGestureHandler, RNReanimated, RNSVG, RNScreens, react-native-safe-area-context, react-native-webview, and stripe-react-native
+Framework build type is static library
+Configuring the target with the New Architecture
+[Codegen] Analyzing /Users/expo/workingdir/build/package.json
+[Codegen] Searching for codegen-enabled libraries in the app.
+[Codegen] The "codegenConfig" field is not defined in package.json. Assuming there is nothing to generate at the app level.
+[Codegen] Searching for codegen-enabled libraries in the project dependencies.
+[Codegen] Found @react-native-async-storage/async-storage
+[Codegen] Found @stripe/stripe-react-native
+[Codegen] Found react-native
+[Codegen] Found react-native-gesture-handler
+[Codegen] Found react-native-reanimated
+[Codegen] Found react-native-safe-area-context
+[Codegen] Found react-native-screens
+[Codegen] Found react-native-svg
+[Codegen] Found react-native-webview
+[Codegen] Searching for codegen-enabled libraries in react-native.config.js
+[Codegen] Processing rnasyncstorage
+[Codegen] Searching for podspec in the project dependencies.
+[Codegen] Supported Apple platforms: ios, macos, tvos, visionos for rnasyncstorage
+[Codegen] Processing rnstripe
+[Codegen] Searching for podspec in the project dependencies.
+[Codegen] Supported Apple platforms: ios for rnstripe
+[Codegen] Processing FBReactNativeSpec
+[Codegen] Searching for podspec in the project dependencies.
+[Codegen] Processing rncore
+[Codegen] Searching for podspec in the project dependencies.
+[Codegen] Processing rngesturehandler_codegen
+[Codegen] Searching for podspec in the project dependencies.
+[Codegen] Supported Apple platforms: ios, macos, tvos, visionos for rngesturehandler_codegen
+[Codegen] Processing rnreanimated
+[Codegen] Searching for podspec in the project dependencies.
+[Codegen] Supported Apple platforms: ios, macos, tvos, visionos for rnreanimated
+[Codegen] Processing safeareacontext
+[Codegen] Searching for podspec in the project dependencies.
+[Codegen] Supported Apple platforms: ios, macos, tvos, visionos for safeareacontext
+[Codegen] Processing rnscreens
+[Codegen] Searching for podspec in the project dependencies.
+[Codegen] Supported Apple platforms: ios, tvos, visionos for rnscreens
+[Codegen] Processing rnsvg
+[Codegen] Searching for podspec in the project dependencies.
+[Codegen] Supported Apple platforms: ios, macos, tvos, visionos for rnsvg
+[Codegen] Processing RNCWebViewSpec
+[Codegen] Searching for podspec in the project dependencies.
+[Codegen] Supported Apple platforms: ios, macos, visionos for RNCWebViewSpec
+[Codegen] Generating Native Code for rnasyncstorage - ios
+[Codegen] Generated artifacts: /Users/expo/workingdir/build/ios/build/generated/ios
+[Codegen] Generating Native Code for rnstripe - ios
+[Codegen] Generated artifacts: /Users/expo/workingdir/build/ios/build/generated/ios
+[Codegen] [Codegen - FBReactNativeSpec] Skipping iOS code generation for FBReactNativeSpec as it has been generated already.
+[Codegen] [Codegen - rncore] Skipping iOS code generation for rncore as it has been generated already.
+[Codegen] Generating Native Code for rngesturehandler_codegen - ios
+[Codegen] Generated artifacts: /Users/expo/workingdir/build/ios/build/generated/ios
+[Codegen] Generating Native Code for rnreanimated - ios
+[Codegen] Generated artifacts: /Users/expo/workingdir/build/ios/build/generated/ios
+[Codegen] Generating Native Code for safeareacontext - ios
+[Codegen] Generated artifacts: /Users/expo/workingdir/build/ios/build/generated/ios
+[Codegen] Generating Native Code for rnscreens - ios
+[Codegen] Generated artifacts: /Users/expo/workingdir/build/ios/build/generated/ios
+[Codegen] Generating Native Code for rnsvg - ios
+[Codegen] Generated artifacts: /Users/expo/workingdir/build/ios/build/generated/ios
+[Codegen] Generating Native Code for RNCWebViewSpec - ios
+[Codegen] Generated artifacts: /Users/expo/workingdir/build/ios/build/generated/ios
+[Codegen] Generating RCTThirdPartyComponentsProvider.h
+[Codegen] Generated artifact: /Users/expo/workingdir/build/ios/build/generated/ios/RCTThirdPartyComponentsProvider.h
+[Codegen] Generating RCTThirdPartyComponentsProvider.mm
+[Codegen] Crawling react-native-webview library for components
+[Codegen] Match found RNCWebView -> RNCWebView
+[Codegen] [DEPRECATED] react-native-webview should add the 'ios.componentProvider' property in their codegenConfig
+[Codegen] Generated artifact: /Users/expo/workingdir/build/ios/build/generated/ios/RCTThirdPartyComponentsProvider.mm
+[Codegen] Generating RCTModulesProvider.h
+[Codegen] Generated artifact: /Users/expo/workingdir/build/ios/build/generated/ios/RCTModuleProviders.h
+[Codegen] Generating RCTModuleProviders.mm
+[Codegen] Generated artifact: /Users/expo/workingdir/build/ios/build/generated/ios/RCTModuleProviders.mm
+[Codegen] Generating RCTAppDependencyProvider
+[Codegen] Generated artifact: /Users/expo/workingdir/build/ios/build/generated/ios/RCTAppDependencyProvider.h
+[Codegen] Generated artifact: /Users/expo/workingdir/build/ios/build/generated/ios/RCTAppDependencyProvider.mm
+[Codegen] Generated podspec: /Users/expo/workingdir/build/ios/build/generated/ios/ReactAppDependencyProvider.podspec
+[Codegen] Generated podspec: /Users/expo/workingdir/build/ios/build/generated/ios/ReactCodegen.podspec
+[Codegen] Done.
+Analyzing dependencies
+Fetching podspec for DoubleConversion from ../node_modules/react-native/third-party-podspecs/DoubleConversion.podspec
+Fetching podspec for RCT-Folly from ../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec
+Fetching podspec for boost from ../node_modules/react-native/third-party-podspecs/boost.podspec
+Fetching podspec for fast_float from ../node_modules/react-native/third-party-podspecs/fast_float.podspec
+Fetching podspec for fmt from ../node_modules/react-native/third-party-podspecs/fmt.podspec
+Fetching podspec for glog from ../node_modules/react-native/third-party-podspecs/glog.podspec
+Fetching podspec for hermes-engine from ../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec
+[Hermes] Using release tarball from URL: https://repo1.maven.org/maven2/com/facebook/react/react-native-artifacts/0.79.5/react-native-artifacts-0.79.5-hermes-ios-debug.tar.gz
+% Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+100 29.0M  100 29.0M    0     0   110M      0 --:--:-- --:--:-- --:--:--
+110M
+% Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+100 20.1M  100 20.1M    0     0   110M      0 --:-
+-:-- --:--:-- --:--:--  110M
+Adding spec repo trunk with CDN https://cdn.cocoapods.org/
+[!] Unable to find a specification for UMCore depended upon by EXPaymentsStripe
+You have either:
+ * out-of-date source repos which you can update with pod repo update or with pod install --repo-update.
+ * mistyped the name or version.
+ * not added the source repo that hosts the Podspec to your Podfile.
+pod install exited with non-zero code: 1
