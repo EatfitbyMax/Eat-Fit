@@ -637,7 +637,7 @@ export default function ProgresScreen() {
       leftPercentage = marginPercentage + (labelIndex / (totalLabels - 1)) * usableWidth;
     } else {
       // Si un seul point, le placer à gauche (début du graphique)
-      leftPercentage = 10; // 10% du bord gauche
+      leftPercentage = 5; // 5% du bord gauche pour être vraiment au début
     }
 
     return {
