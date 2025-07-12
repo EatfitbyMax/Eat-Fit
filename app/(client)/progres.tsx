@@ -1005,16 +1005,28 @@ export default function ProgresScreen() {
     const processedData = getProcessedWeightData();
 
     if (selectedPeriod === 'Semaines') {
-      // Générer les labels uniquement pour les données existantes
+      // Pour les semaines, créer les labels basés sur les vraies données
+      const uniqueWeeks = new Map();
+      
       processedData.forEach(entry => {
         const weekNumber = getISOWeekNumber(entry.date);
         const weekLabel = `S${weekNumber}`;
-        if (!labels.includes(weekLabel)) {
-          labels.push(weekLabel);
+        const weekKey = `${entry.date.getFullYear()}-${weekNumber}`;
+        
+        if (!uniqueWeeks.has(weekKey)) {
+          uniqueWeeks.set(weekKey, {
+            label: weekLabel,
+            date: entry.date,
+            year: entry.date.getFullYear()
+          });
         }
       });
 
-      return labels;
+      // Trier par date et créer les labels
+      const sortedWeeks = Array.from(uniqueWeeks.values())
+        .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+      return sortedWeeks.map(week => week.label);
       
     } else if (selectedPeriod === 'Mois') {
       const processedData = getProcessedWeightData();
@@ -1080,29 +1092,37 @@ export default function ProgresScreen() {
     // Créer l'historique complet en s'assurant que le poids de départ est inclus
     let completeHistory = [...history];
 
-    // Vérifier si le poids de départ est déjà dans l'historique
-    const hasStartWeight = history.some(entry => 
-      Math.abs(entry.weight - weightData.startWeight) < 0.1 && 
-      new Date(entry.date).getTime() <= new Date(userData?.createdAt || new Date()).getTime() + 24 * 60 * 60 * 1000
-    );
+    // Toujours inclure le point de départ si on a les données utilisateur
+    if (userData?.createdAt && weightData.startWeight > 0) {
+      // Vérifier si le poids de départ est déjà dans l'historique
+      const hasStartWeight = history.some(entry => 
+        Math.abs(entry.weight - weightData.startWeight) < 0.1 && 
+        Math.abs(new Date(entry.date).getTime() - new Date(userData.createdAt).getTime()) < 24 * 60 * 60 * 1000
+      );
 
-    // Si le poids de départ n'est pas dans l'historique ET qu'on a un utilisateur créé, l'ajouter
-    if (!hasStartWeight && userData?.createdAt && weightData.startWeight > 0) {
-      completeHistory.unshift({
-        weight: weightData.startWeight,
-        date: userData.createdAt
-      });
+      // Si le poids de départ n'est pas dans l'historique, l'ajouter
+      if (!hasStartWeight) {
+        completeHistory.unshift({
+          weight: weightData.startWeight,
+          date: userData.createdAt
+        });
+      }
     }
 
-    // Ne pas ajouter automatiquement le poids actuel si c'est le même que le poids de départ
-    // et qu'il n'y a eu aucune mise à jour
-    if (completeHistory.length <= 1 && weightData.currentWeight > 0 && weightData.lastWeightUpdate) {
-      // Seulement ajouter si il y a eu une vraie mise à jour
-      const now = new Date();
-      completeHistory.push({
-        weight: weightData.currentWeight,
-        date: weightData.lastWeightUpdate
-      });
+    // Ajouter le poids actuel seulement s'il y a eu une vraie mise à jour
+    if (weightData.lastWeightUpdate && weightData.currentWeight > 0) {
+      // Vérifier si le poids actuel est déjà dans l'historique
+      const hasCurrentWeight = completeHistory.some(entry => 
+        Math.abs(entry.weight - weightData.currentWeight) < 0.1 && 
+        Math.abs(new Date(entry.date).getTime() - new Date(weightData.lastWeightUpdate).getTime()) < 24 * 60 * 60 * 1000
+      );
+
+      if (!hasCurrentWeight) {
+        completeHistory.push({
+          weight: weightData.currentWeight,
+          date: weightData.lastWeightUpdate
+        });
+      }
     }
 
     // Trier par date
@@ -1111,33 +1131,36 @@ export default function ProgresScreen() {
     const currentDate = new Date();
     let filteredHistory = [...completeHistory];
 
-    // Filtrer l'historique selon la période
+    // Filtrer l'historique selon la période MAIS toujours garder le point de départ
+    const startDate = userData?.createdAt ? new Date(userData.createdAt) : null;
+    
     if (selectedPeriod === 'Semaines') {
       const sixWeeksAgo = new Date(currentDate.getTime() - (6 * 7 * 24 * 60 * 60 * 1000));
-      filteredHistory = completeHistory.filter(entry => new Date(entry.date) >= sixWeeksAgo);
+      filteredHistory = completeHistory.filter(entry => {
+        const entryDate = new Date(entry.date);
+        // Garder le point de départ même s'il est plus ancien que 6 semaines
+        return entryDate >= sixWeeksAgo || (startDate && Math.abs(entryDate.getTime() - startDate.getTime()) < 24 * 60 * 60 * 1000);
+      });
     } else if (selectedPeriod === 'Mois') {
       const sixMonthsAgo = new Date(currentDate.getTime() - (6 * 30 * 24 * 60 * 60 * 1000));
-      filteredHistory = completeHistory.filter(entry => new Date(entry.date) >= sixMonthsAgo);
+      filteredHistory = completeHistory.filter(entry => {
+        const entryDate = new Date(entry.date);
+        return entryDate >= sixMonthsAgo || (startDate && Math.abs(entryDate.getTime() - startDate.getTime()) < 24 * 60 * 60 * 1000);
+      });
     } else { // Années
       const sixYearsAgo = new Date(currentDate.getTime() - (6 * 365 * 24 * 60 * 60 * 1000));
-      filteredHistory = completeHistory.filter(entry => new Date(entry.date) >= sixYearsAgo);
+      filteredHistory = completeHistory.filter(entry => {
+        const entryDate = new Date(entry.date);
+        return entryDate >= sixYearsAgo || (startDate && Math.abs(entryDate.getTime() - startDate.getTime()) < 24 * 60 * 60 * 1000);
+      });
     }
 
-    // S'assurer qu'on a au moins le poids de départ si la période le permet
-    if (filteredHistory.length === 0 && userData?.createdAt) {
-      const startDate = new Date(userData.createdAt);
-      const periodStart = selectedPeriod === 'Semaines' ? 
-        new Date(currentDate.getTime() - (6 * 7 * 24 * 60 * 60 * 1000)) :
-        selectedPeriod === 'Mois' ?
-        new Date(currentDate.getTime() - (6 * 30 * 24 * 60 * 60 * 1000)) :
-        new Date(currentDate.getTime() - (6 * 365 * 24 * 60 * 60 * 1000));
-
-      if (startDate >= periodStart) {
-        filteredHistory.push({
-          weight: weightData.startWeight,
-          date: userData.createdAt
-        });
-      }
+    // S'assurer qu'on a au moins le point de départ
+    if (filteredHistory.length === 0 && userData?.createdAt && weightData.startWeight > 0) {
+      filteredHistory.push({
+        weight: weightData.startWeight,
+        date: userData.createdAt
+      });
     }
 
     // Traitement selon la période sélectionnée
