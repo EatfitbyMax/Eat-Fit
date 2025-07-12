@@ -9,16 +9,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "description": "Application de coaching sportif et nutritionnel personnalisé avec suivi des performances et intégration Apple Health.",
-    "keywords": [
-      "fitness",
-      "nutrition",
-      "coaching",
-      "santé",
-      "sport",
-      "entrainement"
-    ],
     "primaryColor": "#1E1E1E",
-    "privacy": "public",
     "ios": {
       "icon": "./assets/images/crown-logo.png",
       "supportsTablet": true,
@@ -72,8 +63,7 @@
     },
     "plugins": [
       "expo-router",
-      "expo-web-browser",
-      "expo-barcode-scanner"
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
