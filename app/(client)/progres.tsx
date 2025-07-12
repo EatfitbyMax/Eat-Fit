@@ -87,6 +87,7 @@ export default function ProgresScreen() {
     weeklyHydration: []
   });
   const [selectedNutritionPeriod, setSelectedNutritionPeriod] = useState('Jours');
+  const [selectedSportPeriod, setSelectedSportPeriod] = useState('Jours');
   const [calorieGoals, setCalorieGoals] = useState({
     calories: 2200,
     proteins: 110,
@@ -1472,34 +1473,168 @@ export default function ProgresScreen() {
     }
   };
 
-  const getTrainingChartMaxValue = () => {
-    // Trouver la valeur maximale dans les données d'entraînement
-    const maxMinutesInData = Math.max(...weeklyData.map(day => day.minutes), 0);
+  const generateSportYAxisLabels = () => {
+    const processedData = getProcessedSportData();
     
-    // Valeur par défaut si aucune donnée ou données très faibles
-    if (maxMinutesInData === 0 || maxMinutesInData < 30) {
-      return 180; // Valeur par défaut
+    if (processedData.length === 0 || processedData.every(d => d.minutes === 0)) {
+      return ['180', '144', '108', '72', '36'];
     }
-    
-    // Ajouter 20% de marge au-dessus de la valeur max et arrondir au multiple de 30 supérieur
-    const marginValue = maxMinutesInData * 1.2;
-    const roundedValue = Math.ceil(marginValue / 30) * 30;
-    
-    // S'assurer que la valeur minimum est 60 et maximum raisonnable est 360
-    return Math.max(60, Math.min(360, roundedValue));
-  };
 
-  const generateTrainingYAxisLabels = () => {
-    const maxValue = getTrainingChartMaxValue();
-    const step = maxValue / 5; // 6 labels (0 inclus)
-    
+    // Déterminer la plage de minutes basée sur les données
+    const minutes = processedData.map(d => d.minutes).filter(m => m > 0);
+    const minMinutes = Math.min(...minutes);
+    const maxMinutes = Math.max(...minutes);
+
+    // Calculer une plage adaptée
+    const centerMinutes = (minMinutes + maxMinutes) / 2;
+    const minAxis = Math.max(0, Math.floor((centerMinutes - 90) / 30) * 30);
+    const maxAxis = minAxis + 120; // Plage de 120 minutes
+
+    // Générer exactement 5 labels avec 30min d'écart
     const labels = [];
-    for (let i = 5; i >= 0; i--) {
-      const value = Math.round(i * step);
+    for (let i = 0; i < 5; i++) {
+      const value = maxAxis - (i * 30);
       labels.push(value.toString());
     }
-    
+
     return labels;
+  };
+
+  const getProcessedSportData = () => {
+    // Traiter les données selon la période sélectionnée
+    if (selectedSportPeriod === 'Jours') {
+      // Retourner les données des 7 derniers jours
+      return weeklyData.map(day => ({
+        minutes: day.minutes,
+        date: new Date(day.date)
+      }));
+    } else if (selectedSportPeriod === 'Semaines') {
+      // Agrégation par semaine (simplifiée pour l'exemple)
+      const weeks = [];
+      for (let i = 5; i >= 0; i--) {
+        const weekStart = new Date();
+        weekStart.setDate(weekStart.getDate() - (i * 7));
+        
+        // Calculer la moyenne des minutes pour cette semaine
+        const weekMinutes = weeklyData.reduce((sum, day) => sum + day.minutes, 0) / 7;
+        
+        weeks.push({
+          minutes: Math.round(weekMinutes),
+          date: weekStart
+        });
+      }
+      return weeks;
+    } else { // Mois
+      // Agrégation par mois (simplifiée pour l'exemple)
+      const months = [];
+      for (let i = 5; i >= 0; i--) {
+        const monthStart = new Date();
+        monthStart.setMonth(monthStart.getMonth() - i);
+        monthStart.setDate(1);
+        
+        // Calculer la moyenne des minutes pour ce mois
+        const monthMinutes = weeklyData.reduce((sum, day) => sum + day.minutes, 0) / 7;
+        
+        months.push({
+          minutes: Math.round(monthMinutes),
+          date: monthStart
+        });
+      }
+      return months;
+    }
+  };
+
+  const generateSportPeriodLabels = () => {
+    const processedData = getProcessedSportData();
+    const monthNames = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
+    
+    if (selectedSportPeriod === 'Jours') {
+      return processedData.map(entry => 
+        entry.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'numeric' })
+      );
+    } else if (selectedSportPeriod === 'Semaines') {
+      return processedData.map((entry, index) => `S${52 - 5 + index}`);
+    } else { // Mois
+      return processedData.map(entry => monthNames[entry.date.getMonth()]);
+    }
+  };
+
+  const renderSportChart = () => {
+    const processedData = getProcessedSportData();
+    const allLabels = generateSportPeriodLabels();
+    const dataPoints = [];
+
+    const hasData = processedData.some(entry => entry.minutes > 0);
+
+    if (!hasData) {
+      return (
+        <View style={styles.noDataContainer}>
+          <Text style={styles.noDataText}>💪</Text>
+          <Text style={styles.noDataTitle}>Pas encore de données d'entraînement</Text>
+          <Text style={styles.noDataSubtitle}>Commencez à enregistrer vos séances pour voir votre évolution</Text>
+        </View>
+      );
+    }
+
+    // Générer les points de données
+    processedData.forEach((entry, index) => {
+      if (entry.minutes > 0) {
+        const position = getSportDataPointPosition(entry.minutes, index, processedData.length, allLabels);
+        const label = allLabels[index] || '';
+        
+        dataPoints.push(
+          <View 
+            key={`sport-${entry.date.toISOString()}-${index}`} 
+            style={[styles.dataPointContainer, position]}
+          >
+            <View style={[styles.dataPoint, { backgroundColor: '#28A745' }]} />
+            <Text style={styles.dataPointLabel}>{label}</Text>
+          </View>
+        );
+      }
+    });
+
+    return (
+      <>
+        <LinearGradient
+          colors={['rgba(40, 167, 69, 0.3)', 'rgba(40, 167, 69, 0.1)']}
+          style={styles.weightLineGradient}
+        />
+        <View style={styles.dataPoints}>
+          {dataPoints}
+        </View>
+      </>
+    );
+  };
+
+  const getSportDataPointPosition = (minutes: number, dataIndex: number, totalDataPoints: number, allLabels: string[]) => {
+    // Utiliser la même logique que generateSportYAxisLabels
+    const yAxisValues = generateSportYAxisLabels().map(label => parseInt(label));
+    const actualMaxMinutes = yAxisValues[0];
+    const actualMinMinutes = yAxisValues[4];
+    const actualRange = actualMaxMinutes - actualMinMinutes;
+
+    // Calculer la position Y
+    const minutesPercentage = actualRange > 0 ? 
+      Math.max(0, Math.min(1, (actualMaxMinutes - minutes) / actualRange)) : 0.5;
+
+    // Calculer la position horizontale
+    const totalLabels = allLabels.length;
+    let leftPercentage = 0;
+
+    if (totalLabels > 1) {
+      const marginPercentage = 5;
+      const usableWidth = 100 - (2 * marginPercentage);
+      const labelIndex = Math.min(dataIndex, totalLabels - 1);
+      leftPercentage = marginPercentage + (labelIndex / (totalLabels - 1)) * usableWidth;
+    } else {
+      leftPercentage = 50;
+    }
+
+    return {
+      left: `${leftPercentage}%`,
+      top: `${minutesPercentage * 80 + 10}%`
+    };
   };
 
   const loadNutritionData = async () => {
@@ -1872,80 +2007,53 @@ export default function ProgresScreen() {
               </View>
             </View>
 
-            {/* Graphique d'entraînement - Minutes par jour */}
-            <View style={styles.trainingChartContainer}>
+            {/* Graphique d'évolution des entraînements */}
+            <View style={styles.chartContainer}>
               <View style={styles.chartHeader}>
-                <Text style={styles.chartTitle}>📊 Minutes d'entraînement par jour</Text>
-                <Text style={styles.chartSubtitle}>7 derniers jours</Text>
+                <Text style={styles.chartTitle}>Évolution des entraînements</Text>
               </View>
 
-              <View style={styles.trainingChartArea}>
-                {/* Axe Y avec échelle adaptative */}
-                <View style={styles.trainingYAxis}>
-                  {generateTrainingYAxisLabels().map((label, index) => (
-                    <Text key={index} style={styles.trainingYAxisLabel}>{label}</Text>
+              {/* Onglets de période */}
+              <View style={styles.periodTabsContainer}>
+                {['Jours', 'Semaines', 'Mois'].map((period) => (
+                  <TouchableOpacity 
+                    key={period}
+                    style={[styles.periodTab, selectedSportPeriod === period && styles.activePeriodTab]}
+                    onPress={() => setSelectedSportPeriod(period)}
+                  >
+                    <Text style={[styles.periodTabText, selectedSportPeriod === period && styles.activePeriodTabText]}>
+                      {period}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Graphique avec scroll horizontal */}
+              <View style={styles.chartArea}>
+                <View style={styles.yAxis}>
+                  {generateSportYAxisLabels().map((label, index) => (
+                    <Text key={index} style={styles.yAxisLabel}>{label}</Text>
                   ))}
                 </View>
 
-                {/* Zone du graphique */}
-                <View style={styles.trainingGraphArea}>
-                  {/* Grille horizontale */}
-                  <View style={styles.trainingGridContainer}>
-                    {[...Array(6)].map((_, i) => (
-                      <View key={i} style={styles.trainingGridLine} />
-                    ))}
-                  </View>
+                <ScrollView 
+                  horizontal 
+                  showsHorizontalScrollIndicator={true}
+                  style={styles.chartScrollView}
+                  contentContainerStyle={styles.chartScrollContent}
+                >
+                  <View style={styles.chartContent}>
+                    {/* Grille */}
+                    <View style={styles.gridContainer}>
+                      {[...Array(5)].map((_, i) => (
+                        <View key={i} style={styles.gridLine} />
+                      ))}
+                    </View>
 
-                  {/* Barres d'entraînement */}
-                  <View style={styles.trainingBarsContainer}>
-                    {weeklyData.map((dayData, index) => {
-                      const maxMinutes = getTrainingChartMaxValue();
-                      const barHeight = Math.min((dayData.minutes / maxMinutes) * 100, 100);
-                      const hasWorkout = dayData.minutes > 0;
-                      
-                      return (
-                        <View key={index} style={styles.trainingBarColumn}>
-                          {/* Barre */}
-                          <View style={styles.trainingBarBackground}>
-                            <View 
-                              style={[
-                                styles.trainingBar,
-                                {
-                                  height: `${barHeight}%`,
-                                  backgroundColor: hasWorkout ? '#28A745' : '#21262D'
-                                }
-                              ]}
-                            />
-                          </View>
-                          
-                          {/* Valeur au-dessus de la barre */}
-                          {hasWorkout && (
-                            <Text style={styles.trainingBarValue}>
-                              {dayData.minutes}min
-                            </Text>
-                          )}
-                          
-                          {/* Jour de la semaine */}
-                          <Text style={styles.trainingBarLabel}>
-                            {dayData.day}
-                          </Text>
-                        </View>
-                      );
-                    })}
+                    {/* Ligne et points d'entraînements */}
+                    {renderSportChart()}
                   </View>
-                </View>
-              </View>
-
-              {/* Légende */}
-              <View style={styles.trainingLegendContainer}>
-                <View style={styles.trainingLegendItem}>
-                  <View style={[styles.trainingLegendColor, { backgroundColor: '#28A745' }]} />
-                  <Text style={styles.trainingLegendText}>Jour avec entraînement</Text>
-                </View>
-                <View style={styles.trainingLegendItem}>
-                  <View style={[styles.trainingLegendColor, { backgroundColor: '#21262D' }]} />
-                  <Text style={styles.trainingLegendText}>Jour de repos</Text>
-                </View>
+                </ScrollView>
               </View>
             </View>
 
