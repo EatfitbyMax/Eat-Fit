@@ -1778,53 +1778,80 @@ export default function ProgresScreen() {
               </View>
             </View>
 
-            {/* Graphique d'évolution calorique */}
-            <View style={styles.nutritionChartContainer}>
+            {/* Graphique d'entraînement - Minutes par jour */}
+            <View style={styles.trainingChartContainer}>
               <View style={styles.chartHeader}>
-                <Text style={styles.chartTitle}>Évolution de l'apport calorique</Text>
+                <Text style={styles.chartTitle}>📊 Minutes d'entraînement par jour</Text>
+                <Text style={styles.chartSubtitle}>7 derniers jours</Text>
               </View>
 
-              {/* Onglets de période */}
-              <View style={styles.periodTabsContainer}>
-                {['Jours', 'Semaine', 'Mois'].map((period) => (
-                  <TouchableOpacity 
-                    key={period}
-                    style={[styles.periodTab, selectedNutritionPeriod === period && styles.activePeriodTab]}
-                    onPress={() => setSelectedNutritionPeriod(period)}
-                  >
-                    <Text style={[styles.periodTabText, selectedNutritionPeriod === period && styles.activePeriodTabText]}>
-                      {period}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              {/* Graphique avec scroll horizontal */}
-              <View style={styles.chartArea}>
-                <View style={styles.nutritionYAxis}>
-                  {generateNutritionYAxisLabels().map((label, index) => (
-                    <Text key={index} style={styles.nutritionYAxisLabel}>{label}</Text>
+              <View style={styles.trainingChartArea}>
+                {/* Axe Y avec échelle 0-150 minutes */}
+                <View style={styles.trainingYAxis}>
+                  {['150', '120', '90', '60', '30', '0'].map((label, index) => (
+                    <Text key={index} style={styles.trainingYAxisLabel}>{label}</Text>
                   ))}
                 </View>
 
-                <ScrollView 
-                  horizontal 
-                  showsHorizontalScrollIndicator={true}
-                  style={styles.chartScrollView}
-                  contentContainerStyle={styles.chartScrollContent}
-                >
-                  <View style={styles.chartContent}>
-                    {/* Grille */}
-                    <View style={styles.gridContainer}>
-                      {[...Array(5)].map((_, i) => (
-                        <View key={i} style={styles.gridLine} />
-                      ))}
-                    </View>
-
-                    {/* Ligne et points de calories */}
-                    {renderNutritionChart()}
+                {/* Zone du graphique */}
+                <View style={styles.trainingGraphArea}>
+                  {/* Grille horizontale */}
+                  <View style={styles.trainingGridContainer}>
+                    {[...Array(6)].map((_, i) => (
+                      <View key={i} style={styles.trainingGridLine} />
+                    ))}
                   </View>
-                </ScrollView>
+
+                  {/* Barres d'entraînement */}
+                  <View style={styles.trainingBarsContainer}>
+                    {weeklyData.map((dayData, index) => {
+                      const maxMinutes = 150;
+                      const barHeight = Math.min((dayData.minutes / maxMinutes) * 100, 100);
+                      const hasWorkout = dayData.minutes > 0;
+                      
+                      return (
+                        <View key={index} style={styles.trainingBarColumn}>
+                          {/* Barre */}
+                          <View style={styles.trainingBarBackground}>
+                            <View 
+                              style={[
+                                styles.trainingBar,
+                                {
+                                  height: `${barHeight}%`,
+                                  backgroundColor: hasWorkout ? '#28A745' : '#21262D'
+                                }
+                              ]}
+                            />
+                          </View>
+                          
+                          {/* Valeur au-dessus de la barre */}
+                          {hasWorkout && (
+                            <Text style={styles.trainingBarValue}>
+                              {dayData.minutes}min
+                            </Text>
+                          )}
+                          
+                          {/* Jour de la semaine */}
+                          <Text style={styles.trainingBarLabel}>
+                            {dayData.day}
+                          </Text>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </View>
+              </View>
+
+              {/* Légende */}
+              <View style={styles.trainingLegendContainer}>
+                <View style={styles.trainingLegendItem}>
+                  <View style={[styles.trainingLegendColor, { backgroundColor: '#28A745' }]} />
+                  <Text style={styles.trainingLegendText}>Jour avec entraînement</Text>
+                </View>
+                <View style={styles.trainingLegendItem}>
+                  <View style={[styles.trainingLegendColor, { backgroundColor: '#21262D' }]} />
+                  <Text style={styles.trainingLegendText}>Jour de repos</Text>
+                </View>
               </View>
             </View>
 
@@ -3841,6 +3868,115 @@ flexDirection: 'row',
   },
   monthlyDayLabel: {
     fontSize: 8,
+  },
+
+  // Styles pour le graphique d'entraînement
+  trainingChartContainer: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
+    marginBottom: 25,
+  },
+  trainingChartArea: {
+    flexDirection: 'row',
+    height: 200,
+    marginBottom: 16,
+  },
+  trainingYAxis: {
+    justifyContent: 'space-between',
+    width: 50,
+    paddingRight: 12,
+    paddingTop: 8,
+    paddingBottom: 8,
+  },
+  trainingYAxisLabel: {
+    fontSize: 11,
+    color: '#8B949E',
+    textAlign: 'right',
+    fontWeight: '500',
+  },
+  trainingGraphArea: {
+    flex: 1,
+    position: 'relative',
+  },
+  trainingGridContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+  },
+  trainingGridLine: {
+    height: 1,
+    backgroundColor: '#21262D',
+    opacity: 0.5,
+  },
+  trainingBarsContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    paddingHorizontal: 8,
+    paddingBottom: 8,
+  },
+  trainingBarColumn: {
+    flex: 1,
+    alignItems: 'center',
+    maxWidth: 40,
+  },
+  trainingBarBackground: {
+    width: 28,
+    height: 150,
+    justifyContent: 'flex-end',
+    marginBottom: 8,
+  },
+  trainingBar: {
+    width: '100%',
+    borderRadius: 4,
+    minHeight: 2,
+  },
+  trainingBarValue: {
+    fontSize: 10,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    marginBottom: 6,
+    textAlign: 'center',
+    position: 'absolute',
+    top: -20,
+    width: 40,
+  },
+  trainingBarLabel: {
+    fontSize: 11,
+    color: '#8B949E',
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  trainingLegendContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 20,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#21262D',
+  },
+  trainingLegendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  trainingLegendColor: {
+    width: 12,
+    height: 12,
+    borderRadius: 2,
+  },
+  trainingLegendText: {
+    fontSize: 12,
+    color: '#8B949E',
+    fontWeight: '500',
   },
 
   // Styles pour les messages d'absence de données
