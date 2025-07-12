@@ -994,7 +994,6 @@ export default function ProgresScreen() {
     if (selectedPeriod === 'Semaines') {
       // Générer les 6 dernières semaines en partant de la semaine actuelle
       const currentDate = new Date();
-      const currentWeekNumber = getISOWeekNumber(currentDate);
       
       // Créer les labels pour les 6 dernières semaines
       for (let i = 5; i >= 0; i--) {
@@ -1081,6 +1080,15 @@ export default function ProgresScreen() {
       completeHistory.unshift({
         weight: weightData.startWeight,
         date: userData.createdAt
+      });
+    }
+
+    // Si pas assez de données, ajouter le poids actuel avec la date courante pour l'affichage
+    if (completeHistory.length <= 1 && weightData.currentWeight > 0) {
+      const now = new Date();
+      completeHistory.push({
+        weight: weightData.currentWeight,
+        date: now.toISOString()
       });
     }
 
