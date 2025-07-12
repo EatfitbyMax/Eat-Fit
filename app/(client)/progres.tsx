@@ -992,45 +992,19 @@ export default function ProgresScreen() {
     const monthNames = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
 
     if (selectedPeriod === 'Semaines') {
-      // Utiliser les vraies semaines des données de poids
-      const processedData = getProcessedWeightData();
+      // Générer les 6 dernières semaines en partant de la semaine actuelle
+      const currentDate = new Date();
+      const currentWeekNumber = getISOWeekNumber(currentDate);
       
-      // Générer les labels basés sur les vraies dates des données
-      processedData.forEach(entry => {
-        const weekNumber = getISOWeekNumber(entry.date);
+      // Créer les labels pour les 6 dernières semaines
+      for (let i = 5; i >= 0; i--) {
+        const targetDate = new Date(currentDate);
+        targetDate.setDate(currentDate.getDate() - (i * 7));
+        const weekNumber = getISOWeekNumber(targetDate);
         labels.push(`S${weekNumber}`);
-      });
-
-      // Si pas assez de données, compléter avec les semaines récentes
-      if (labels.length < 6) {
-        const currentDate = new Date();
-        const existingWeeks = new Set(labels.map(l => l.substring(1))); // Enlever le 'S'
-        
-        // Ajouter les semaines manquantes en remontant dans le temps
-        let weeksToAdd = 6 - labels.length;
-        let dateOffset = 0;
-        
-        while (weeksToAdd > 0) {
-          const targetDate = new Date(currentDate);
-          targetDate.setDate(currentDate.getDate() - (dateOffset * 7));
-          
-          const weekNumber = getISOWeekNumber(targetDate);
-          const weekLabel = `S${weekNumber}`;
-          
-          if (!existingWeeks.has(weekNumber.toString())) {
-            labels.unshift(weekLabel);
-            weeksToAdd--;
-          }
-          
-          dateOffset++;
-          
-          // Sécurité pour éviter une boucle infinie
-          if (dateOffset > 52) break;
-        }
       }
 
-      // Garder seulement les 6 derniers
-      return labels.slice(-6);
+      return labels;
       
     } else if (selectedPeriod === 'Mois') {
       const processedData = getProcessedWeightData();
