@@ -569,7 +569,7 @@ export default function ProgresScreen() {
     
     // Calculer les positions du dégradé en fonction des données réelles
     let gradientStartY = 10; // Position par défaut du haut (10%)
-    let gradientEndY = 90;   // Position par défaut du bas (90%)
+    let gradientEndY = 85;   // Position par défaut du bas (85%)
     
     if (processedData.length > 0) {
       // Trouver les poids min et max dans les données
@@ -577,11 +577,20 @@ export default function ProgresScreen() {
       const maxDataWeight = Math.max(...weights);
       const minDataWeight = Math.min(...weights);
       
-      // Calculer les positions relatives dans l'axe Y
+      // Calculer les positions relatives dans l'axe Y (80% de la hauteur utilisable)
       const yRange = maxYValue - minYValue;
       if (yRange > 0) {
-        gradientStartY = Math.max(5, ((maxYValue - maxDataWeight) / yRange) * 80 + 10);
-        gradientEndY = Math.min(95, ((maxYValue - minDataWeight) / yRange) * 80 + 10);
+        // Position du point le plus haut (plus petit pourcentage = plus haut)
+        gradientStartY = Math.max(10, ((maxYValue - maxDataWeight) / yRange) * 80 + 10);
+        // Position du point le plus bas (plus grand pourcentage = plus bas)
+        gradientEndY = Math.min(90, ((maxYValue - minDataWeight) / yRange) * 80 + 10);
+        
+        // S'assurer qu'on a une hauteur minimale pour le dégradé
+        if (gradientEndY - gradientStartY < 20) {
+          const center = (gradientStartY + gradientEndY) / 2;
+          gradientStartY = Math.max(10, center - 10);
+          gradientEndY = Math.min(90, center + 10);
+        }
       }
     }
 
@@ -607,7 +616,7 @@ export default function ProgresScreen() {
           colors={['rgba(245, 166, 35, 0.3)', 'rgba(245, 166, 35, 0.1)']}
           style={[styles.weightLineGradient, {
             top: `${gradientStartY}%`,
-            height: `${gradientEndY - gradientStartY}%`
+            height: `${Math.max(20, gradientEndY - gradientStartY)}%`
           }]}
         />
         <View style={styles.dataPoints}>
