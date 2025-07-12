@@ -1408,6 +1408,36 @@ export default function ProgresScreen() {
     }
   };
 
+  const getTrainingChartMaxValue = () => {
+    // Trouver la valeur maximale dans les données d'entraînement
+    const maxMinutesInData = Math.max(...weeklyData.map(day => day.minutes), 0);
+    
+    // Valeur par défaut si aucune donnée ou données très faibles
+    if (maxMinutesInData === 0 || maxMinutesInData < 30) {
+      return 180; // Valeur par défaut
+    }
+    
+    // Ajouter 20% de marge au-dessus de la valeur max et arrondir au multiple de 30 supérieur
+    const marginValue = maxMinutesInData * 1.2;
+    const roundedValue = Math.ceil(marginValue / 30) * 30;
+    
+    // S'assurer que la valeur minimum est 60 et maximum raisonnable est 360
+    return Math.max(60, Math.min(360, roundedValue));
+  };
+
+  const generateTrainingYAxisLabels = () => {
+    const maxValue = getTrainingChartMaxValue();
+    const step = maxValue / 5; // 6 labels (0 inclus)
+    
+    const labels = [];
+    for (let i = 5; i >= 0; i--) {
+      const value = Math.round(i * step);
+      labels.push(value.toString());
+    }
+    
+    return labels;
+  };
+
   const loadNutritionData = async () => {
     try {
       const user = await PersistentStorage.getCurrentUser();
@@ -1786,9 +1816,9 @@ export default function ProgresScreen() {
               </View>
 
               <View style={styles.trainingChartArea}>
-                {/* Axe Y avec échelle 0-150 minutes */}
+                {/* Axe Y avec échelle adaptative */}
                 <View style={styles.trainingYAxis}>
-                  {['150', '120', '90', '60', '30', '0'].map((label, index) => (
+                  {generateTrainingYAxisLabels().map((label, index) => (
                     <Text key={index} style={styles.trainingYAxisLabel}>{label}</Text>
                   ))}
                 </View>
@@ -1805,7 +1835,7 @@ export default function ProgresScreen() {
                   {/* Barres d'entraînement */}
                   <View style={styles.trainingBarsContainer}>
                     {weeklyData.map((dayData, index) => {
-                      const maxMinutes = 150;
+                      const maxMinutes = getTrainingChartMaxValue();
                       const barHeight = Math.min((dayData.minutes / maxMinutes) * 100, 100);
                       const hasWorkout = dayData.minutes > 0;
                       
