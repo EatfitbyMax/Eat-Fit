@@ -548,7 +548,15 @@ export default function ProgresScreen() {
   });
 
   const renderWeightChart = () => {
-    if (!weightData.startWeight) return null;
+    if (!weightData.startWeight) {
+      return (
+        <View style={styles.noDataContainer}>
+          <Text style={styles.noDataText}>📊</Text>
+          <Text style={styles.noDataTitle}>Pas encore de données</Text>
+          <Text style={styles.noDataSubtitle}>Commencez à enregistrer votre poids pour voir votre évolution</Text>
+        </View>
+      );
+    }
 
     const processedData = getProcessedWeightData();
     const allLabels = generatePeriodLabels();
@@ -748,17 +756,23 @@ export default function ProgresScreen() {
     const allLabels = generateNutritionPeriodLabels();
     const dataPoints = [];
 
-    console.log('=== RENDER NUTRITION CHART ===');
-    console.log('Données traitées:', processedData.map(d => ({ date: d.date.toISOString().split('T')[0], calories: d.calories })));
-    console.log('Labels générés:', allLabels);
+    const hasData = processedData.some(entry => entry.calories > 0);
+
+    if (!hasData) {
+      return (
+        <View style={styles.noDataContainer}>
+          <Text style={styles.noDataText}>🍽️</Text>
+          <Text style={styles.noDataTitle}>Pas encore de données nutritionnelles</Text>
+          <Text style={styles.noDataSubtitle}>Commencez à enregistrer vos repas pour voir votre évolution</Text>
+        </View>
+      );
+    }
 
     // Générer les points de données seulement pour les entrées avec des calories > 0
     processedData.forEach((entry, index) => {
       if (entry.calories > 0) {
         const position = getNutritionDataPointPosition(entry.calories, index, processedData.length, allLabels);
         const label = allLabels[index] || '';
-        
-        console.log(`Point ${index}: ${entry.calories} kcal à la position`, position);
         
         dataPoints.push(
           <View 
@@ -771,8 +785,6 @@ export default function ProgresScreen() {
         );
       }
     });
-
-    console.log(`Total points à afficher: ${dataPoints.length}`);
 
     return (
       <>
@@ -1274,7 +1286,7 @@ export default function ProgresScreen() {
       const user = await PersistentStorage.getCurrentUser();
       if (!user) return;
 
-      // Charger les données d'entraînement
+      // Charger les données d'entraînement réelles
       const workouts = await PersistentStorage.getWorkouts(user.id);
 
       // Calculer les statistiques des 7 derniers jours
@@ -1302,11 +1314,55 @@ export default function ProgresScreen() {
 
       setWeeklyData(last7Days);
 
-      // Calculer les records personnels (données simulées pour l'exemple)
+      // Calculer les vrais records personnels basés sur les données réelles
+      let maxWeight = { value: 0, date: '', exercise: '' };
+      let longestRun = { value: 0, date: '', unit: 'km' };
+      let bestTime5k = { value: '', date: '' };
+
+      workouts.forEach((workout: any) => {
+        if (workout.exercises) {
+          workout.exercises.forEach((exercise: any) => {
+            // Chercher le poids maximum
+            if (exercise.sets) {
+              exercise.sets.forEach((set: any) => {
+                if (set.weight && set.weight > maxWeight.value) {
+                  maxWeight = {
+                    value: set.weight,
+                    date: workout.date,
+                    exercise: exercise.name || 'Exercice'
+                  };
+                }
+              });
+            }
+          });
+        }
+
+        // Chercher les records de course (si applicable)
+        if (workout.type === 'Cardio' || workout.name?.toLowerCase().includes('course')) {
+          if (workout.distance && workout.distance > longestRun.value) {
+            longestRun = {
+              value: workout.distance,
+              date: workout.date,
+              unit: 'km'
+            };
+          }
+
+          // Calculer le temps pour 5km si applicable
+          if (workout.distance === 5 && workout.duration && !bestTime5k.value) {
+            const hours = Math.floor(workout.duration / 60);
+            const minutes = workout.duration % 60;
+            bestTime5k = {
+              value: `${hours > 0 ? hours + ':' : ''}${minutes.toString().padStart(2, '0')}:00`,
+              date: workout.date
+            };
+          }
+        }
+      });
+
       setPersonalRecords({
-        maxWeight: { value: 85, date: '2024-01-15', exercise: 'Développé couché' },
-        longestRun: { value: 12.5, date: '2024-01-20', unit: 'km' },
-        bestTime5k: { value: '22:45', date: '2024-01-18' },
+        maxWeight,
+        longestRun,
+        bestTime5k,
         totalWorkouts: workouts.length
       });
 
@@ -1791,14 +1847,29 @@ export default function ProgresScreen() {
 
               <View style={styles.recordsGrid}>
                 <View style={styles.recordItem}>
-                  <Text style={styles.recordLabel}>Séance la plus longue</Text>
+                  <Text style={styles.recordLabel}>Poids maximum</Text>
                   <Text style={styles.recordValue}>
-                    {Math.max(...weeklyData.map(d => d.minutes)) > 0 ? 
-                      `${Math.max(...weeklyData.map(d => d.minutes))} min` : 
+                    {personalRecords.maxWeight.value > 0 ? 
+                      `${personalRecords.maxWeight.value} kg` : 
+                      'Aucun'
+                    }
+                  </Text>
+                  <Text style={styles.recordDate}>
+                    {personalRecords.maxWeight.exercise || 'Pas encore de données'}
+                  </Text>
+                </View>
+
+                <View style={styles.recordItem}>
+                  <Text style={styles.recordLabel}>Distance max</Text>
+                  <Text style={styles.recordValue}>
+                    {personalRecords.longestRun.value > 0 ? 
+                      `${personalRecords.longestRun.value} ${personalRecords.longestRun.unit}` : 
                       'Aucune'
                     }
                   </Text>
-                  <Text style={styles.recordDate}>Cette semaine</Text>
+                  <Text style={styles.recordDate}>
+                    {personalRecords.longestRun.date || 'Pas encore de données'}
+                  </Text>
                 </View>
 
                 <View style={styles.recordItem}>
@@ -1808,27 +1879,10 @@ export default function ProgresScreen() {
                 </View>
 
                 <View style={styles.recordItem}>
-                  <Text style={styles.recordLabel}>Jours consécutifs</Text>
-                  <Text style={styles.recordValue}>
-                    {(() => {
-                      let streak = 0;
-                      for (let i = weeklyData.length - 1; i >= 0; i--) {
-                        if (weeklyData[i].workouts > 0) {
-                          streak++;
-                        } else {
-                          break;
-                        }
-                      }
-                      return streak;
-                    })()}
-                  </Text>
-                  <Text style={styles.recordDate}>Record actuel</Text>
-                </View>
-
-                <View style={styles.recordItem}>
                   <Text style={styles.recordLabel}>Moyenne hebdo</Text>
                   <Text style={styles.recordValue}>
-                    {Math.round(weeklyData.reduce((sum, day) => sum + day.minutes, 0) / 7)} min/j
+                    {weeklyData.length > 0 ? 
+                      Math.round(weeklyData.reduce((sum, day) => sum + day.minutes, 0) / 7) : 0} min/j
                   </Text>
                   <Text style={styles.recordDate}>Cette semaine</Text>
                 </View>
@@ -1872,14 +1926,16 @@ export default function ProgresScreen() {
                     const activeDays = weeklyData.filter(d => d.workouts > 0).length;
                     const totalMinutes = weeklyData.reduce((sum, day) => sum + day.minutes, 0);
                     
-                    if (activeDays >= 5) {
+                    if (personalRecords.totalWorkouts === 0) {
+                      return "Commencez votre parcours fitness ! Créez votre premier entraînement dans l'onglet Entraînement.";
+                    } else if (activeDays >= 5) {
                       return "Excellente semaine ! Vous maintenez un rythme exceptionnel. Continuez sur cette lancée !";
                     } else if (activeDays >= 3) {
                       return "Bonne semaine d'entraînement ! Vous êtes sur la bonne voie pour atteindre vos objectifs.";
                     } else if (activeDays >= 1) {
                       return "C'est un début ! Essayez d'ajouter une séance supplémentaire la semaine prochaine.";
                     } else {
-                      return "Il n'est jamais trop tard pour commencer ! Planifiez votre première séance dès maintenant.";
+                      return "Cette semaine a été calme. Planifiez votre prochaine séance pour reprendre le rythme !";
                     }
                   })()}
                 </Text>
@@ -2181,9 +2237,12 @@ export default function ProgresScreen() {
                   }]} />
                 </View>
                 <Text style={styles.regularityText}>
-                  {nutritionStats.daysWithData >= 5 ? 'Excellent suivi !' : 
-                   nutritionStats.daysWithData >= 3 ? 'Suivi correct, continuez !' : 
-                   'Pensez à enregistrer vos repas plus régulièrement'}
+                  {nutritionStats.daysWithData === 0 ? 
+                    'Commencez à enregistrer vos repas dans l\'onglet Nutrition pour suivre vos progrès !' :
+                    nutritionStats.daysWithData >= 5 ? 'Excellent suivi !' : 
+                    nutritionStats.daysWithData >= 3 ? 'Suivi correct, continuez !' : 
+                    'Pensez à enregistrer vos repas plus régulièrement'
+                  }
                 </Text>
               </View>
             </View>
@@ -3745,6 +3804,32 @@ flexDirection: 'row',
   },
   monthlyDayLabel: {
     fontSize: 8,
+  },
+
+  // Styles pour les messages d'absence de données
+  noDataContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 120,
+    paddingVertical: 20,
+  },
+  noDataText: {
+    fontSize: 40,
+    marginBottom: 12,
+  },
+  noDataTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  noDataSubtitle: {
+    fontSize: 12,
+    color: '#8B949E',
+    textAlign: 'center',
+    lineHeight: 16,
+    paddingHorizontal: 20,
   },
 
   // Styles spécifiques pour l'axe Y du graphique nutrition
