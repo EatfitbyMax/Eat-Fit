@@ -567,32 +567,9 @@ export default function ProgresScreen() {
     const maxYValue = parseInt(yAxisLabels[0]); // Premier label = valeur max
     const minYValue = parseInt(yAxisLabels[yAxisLabels.length - 1]); // Dernier label = valeur min
     
-    // Calculer les positions du dégradé en fonction des données réelles
-    let gradientStartY = 10; // Position par défaut du haut (10%)
-    let gradientEndY = 85;   // Position par défaut du bas (85%)
-    
-    if (processedData.length > 0) {
-      // Trouver les poids min et max dans les données
-      const weights = processedData.map(entry => entry.weight);
-      const maxDataWeight = Math.max(...weights);
-      const minDataWeight = Math.min(...weights);
-      
-      // Calculer les positions relatives dans l'axe Y (80% de la hauteur utilisable)
-      const yRange = maxYValue - minYValue;
-      if (yRange > 0) {
-        // Position du point le plus haut (plus petit pourcentage = plus haut)
-        gradientStartY = Math.max(10, ((maxYValue - maxDataWeight) / yRange) * 80 + 10);
-        // Position du point le plus bas (plus grand pourcentage = plus bas)
-        gradientEndY = Math.min(90, ((maxYValue - minDataWeight) / yRange) * 80 + 10);
-        
-        // S'assurer qu'on a une hauteur minimale pour le dégradé
-        if (gradientEndY - gradientStartY < 20) {
-          const center = (gradientStartY + gradientEndY) / 2;
-          gradientStartY = Math.max(10, center - 10);
-          gradientEndY = Math.min(90, center + 10);
-        }
-      }
-    }
+    // Le dégradé couvre maintenant toute la hauteur du graphique
+    let gradientStartY = 10; // Haut du graphique
+    let gradientEndY = 90;   // Bas du graphique
 
     // Générer les points de données basés sur les données traitées avec leurs labels
     processedData.forEach((entry, index) => {
@@ -616,7 +593,7 @@ export default function ProgresScreen() {
           colors={['rgba(245, 166, 35, 0.3)', 'rgba(245, 166, 35, 0.1)']}
           style={[styles.weightLineGradient, {
             top: `${gradientStartY}%`,
-            height: `${Math.max(20, gradientEndY - gradientStartY)}%`
+            height: `${gradientEndY - gradientStartY}%`
           }]}
         />
         <View style={styles.dataPoints}>
