@@ -2140,45 +2140,49 @@ export default function ProgresScreen() {
               <Text style={styles.chartTitle}>🏆 Performances personnelles</Text>
 
               <View style={styles.recordsGrid}>
-                <View style={styles.recordItem}>
-                  <Text style={styles.recordLabel}>Poids maximum</Text>
-                  <Text style={styles.recordValue}>
-                    {personalRecords.maxWeight.value > 0 ? 
-                      `${personalRecords.maxWeight.value} kg` : 
-                      'Aucun'
-                    }
-                  </Text>
-                  <Text style={styles.recordDate}>
-                    {personalRecords.maxWeight.exercise || 'Pas encore de données'}
-                  </Text>
+                <View style={styles.recordRow}>
+                  <View style={styles.recordItem}>
+                    <Text style={styles.recordLabel}>Poids maximum</Text>
+                    <Text style={styles.recordValue}>
+                      {personalRecords.maxWeight.value > 0 ? 
+                        `${personalRecords.maxWeight.value} kg` : 
+                        'Aucun'
+                      }
+                    </Text>
+                    <Text style={styles.recordDate}>
+                      {personalRecords.maxWeight.exercise || 'Pas encore de données'}
+                    </Text>
+                  </View>
+
+                  <View style={styles.recordItem}>
+                    <Text style={styles.recordLabel}>Distance max</Text>
+                    <Text style={styles.recordValue}>
+                      {personalRecords.longestRun.value > 0 ? 
+                        `${personalRecords.longestRun.value} ${personalRecords.longestRun.unit}` : 
+                        'Aucune'
+                      }
+                    </Text>
+                    <Text style={styles.recordDate}>
+                      {personalRecords.longestRun.date || 'Pas encore de données'}
+                    </Text>
+                  </View>
                 </View>
 
-                <View style={styles.recordItem}>
-                  <Text style={styles.recordLabel}>Distance max</Text>
-                  <Text style={styles.recordValue}>
-                    {personalRecords.longestRun.value > 0 ? 
-                      `${personalRecords.longestRun.value} ${personalRecords.longestRun.unit}` : 
-                      'Aucune'
-                    }
-                  </Text>
-                  <Text style={styles.recordDate}>
-                    {personalRecords.longestRun.date || 'Pas encore de données'}
-                  </Text>
-                </View>
+                <View style={styles.recordRow}>
+                  <View style={styles.recordItem}>
+                    <Text style={styles.recordLabel}>Total entraînements</Text>
+                    <Text style={styles.recordValue}>{personalRecords.totalWorkouts}</Text>
+                    <Text style={styles.recordDate}>Depuis le début</Text>
+                  </View>
 
-                <View style={styles.recordItem}>
-                  <Text style={styles.recordLabel}>Total entraînements</Text>
-                  <Text style={styles.recordValue}>{personalRecords.totalWorkouts}</Text>
-                  <Text style={styles.recordDate}>Depuis le début</Text>
-                </View>
-
-                <View style={styles.recordItem}>
-                  <Text style={styles.recordLabel}>Moyenne hebdo</Text>
-                  <Text style={styles.recordValue}>
-                    {weeklyData.length > 0 ? 
-                      Math.round(weeklyData.reduce((sum, day) => sum + day.minutes, 0) / 7) : 0} min/j
-                  </Text>
-                  <Text style={styles.recordDate}>Cette semaine</Text>
+                  <View style={styles.recordItem}>
+                    <Text style={styles.recordLabel}>Moyenne hebdo</Text>
+                    <Text style={styles.recordValue}>
+                      {weeklyData.length > 0 ? 
+                        Math.round(weeklyData.reduce((sum, day) => sum + day.minutes, 0) / 7) : 0} min/j
+                    </Text>
+                    <Text style={styles.recordDate}>Cette semaine</Text>
+                  </View>
                 </View>
               </View>
             </View>
@@ -3821,13 +3825,15 @@ flexDirection: 'row',
     marginBottom: 25,
   },
   recordsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
     marginTop: 16,
+    gap: 12,
+  },
+  recordRow: {
+    flexDirection: 'row',
+    gap: 12,
   },
   recordItem: {
-    width: (width - 64) / 2,
+    flex: 1,
     backgroundColor: '#0D1117',
     borderRadius: 12,
     padding: 16,
