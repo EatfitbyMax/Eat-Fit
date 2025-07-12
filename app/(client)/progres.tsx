@@ -636,7 +636,8 @@ export default function ProgresScreen() {
       const labelIndex = Math.min(dataIndex, totalLabels - 1);
       leftPercentage = marginPercentage + (labelIndex / (totalLabels - 1)) * usableWidth;
     } else {
-      leftPercentage = 50;
+      // Si un seul point, le placer à gauche (début du graphique)
+      leftPercentage = 10; // 10% du bord gauche
     }
 
     return {
