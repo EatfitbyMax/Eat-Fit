@@ -1002,18 +1002,17 @@ export default function ProgresScreen() {
   const generatePeriodLabels = () => {
     const labels = [];
     const monthNames = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
+    const processedData = getProcessedWeightData();
 
     if (selectedPeriod === 'Semaines') {
-      // Générer les 6 dernières semaines en partant de la semaine actuelle
-      const currentDate = new Date();
-      
-      // Créer les labels pour les 6 dernières semaines
-      for (let i = 5; i >= 0; i--) {
-        const targetDate = new Date(currentDate);
-        targetDate.setDate(currentDate.getDate() - (i * 7));
-        const weekNumber = getISOWeekNumber(targetDate);
-        labels.push(`S${weekNumber}`);
-      }
+      // Générer les labels uniquement pour les données existantes
+      processedData.forEach(entry => {
+        const weekNumber = getISOWeekNumber(entry.date);
+        const weekLabel = `S${weekNumber}`;
+        if (!labels.includes(weekLabel)) {
+          labels.push(weekLabel);
+        }
+      });
 
       return labels;
       
@@ -1087,20 +1086,22 @@ export default function ProgresScreen() {
       new Date(entry.date).getTime() <= new Date(userData?.createdAt || new Date()).getTime() + 24 * 60 * 60 * 1000
     );
 
-    // Si le poids de départ n'est pas dans l'historique, l'ajouter au début
-    if (!hasStartWeight && userData?.createdAt) {
+    // Si le poids de départ n'est pas dans l'historique ET qu'on a un utilisateur créé, l'ajouter
+    if (!hasStartWeight && userData?.createdAt && weightData.startWeight > 0) {
       completeHistory.unshift({
         weight: weightData.startWeight,
         date: userData.createdAt
       });
     }
 
-    // Si pas assez de données, ajouter le poids actuel avec la date courante pour l'affichage
-    if (completeHistory.length <= 1 && weightData.currentWeight > 0) {
+    // Ne pas ajouter automatiquement le poids actuel si c'est le même que le poids de départ
+    // et qu'il n'y a eu aucune mise à jour
+    if (completeHistory.length <= 1 && weightData.currentWeight > 0 && weightData.lastWeightUpdate) {
+      // Seulement ajouter si il y a eu une vraie mise à jour
       const now = new Date();
       completeHistory.push({
         weight: weightData.currentWeight,
-        date: now.toISOString()
+        date: weightData.lastWeightUpdate
       });
     }
 
