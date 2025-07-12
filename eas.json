@@ -23,12 +23,11 @@
     },
     "production": {
       "ios": {
-        "bundleIdentifier": "com.eatfitbymax.app",
         "resourceClass": "m-large",
         "autoIncrement": "buildNumber"
       },
       "android": {
-        "buildType": "aab",
+        "buildType": "app-bundle",
         "autoIncrement": "versionCode"
       }
     }
