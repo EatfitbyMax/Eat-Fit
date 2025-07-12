@@ -1,6 +1,9 @@
 
 import { OpenFoodFactsService, FoodProduct } from './openfoodfacts';
 
+// Note: Le scanner de codes-barres a été supprimé car expo-barcode-scanner est obsolète
+// Vous pouvez utiliser expo-camera avec la fonctionnalité de scan intégrée à la place
+
 interface RecognitionResult {
   name: string;
   confidence: number;
