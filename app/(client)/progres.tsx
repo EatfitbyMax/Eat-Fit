@@ -560,7 +560,30 @@ export default function ProgresScreen() {
 
     const processedData = getProcessedWeightData();
     const allLabels = generatePeriodLabels();
+    const yAxisLabels = generateYAxisLabels();
     const dataPoints = [];
+
+    // Calculer les valeurs min et max de l'axe Y
+    const maxYValue = parseInt(yAxisLabels[0]); // Premier label = valeur max
+    const minYValue = parseInt(yAxisLabels[yAxisLabels.length - 1]); // Dernier label = valeur min
+    
+    // Calculer les positions du dégradé en fonction des données réelles
+    let gradientStartY = 10; // Position par défaut du haut (10%)
+    let gradientEndY = 90;   // Position par défaut du bas (90%)
+    
+    if (processedData.length > 0) {
+      // Trouver les poids min et max dans les données
+      const weights = processedData.map(entry => entry.weight);
+      const maxDataWeight = Math.max(...weights);
+      const minDataWeight = Math.min(...weights);
+      
+      // Calculer les positions relatives dans l'axe Y
+      const yRange = maxYValue - minYValue;
+      if (yRange > 0) {
+        gradientStartY = Math.max(5, ((maxYValue - maxDataWeight) / yRange) * 80 + 10);
+        gradientEndY = Math.min(95, ((maxYValue - minDataWeight) / yRange) * 80 + 10);
+      }
+    }
 
     // Générer les points de données basés sur les données traitées avec leurs labels
     processedData.forEach((entry, index) => {
@@ -582,7 +605,10 @@ export default function ProgresScreen() {
       <>
         <LinearGradient
           colors={['rgba(245, 166, 35, 0.3)', 'rgba(245, 166, 35, 0.1)']}
-          style={styles.weightLineGradient}
+          style={[styles.weightLineGradient, {
+            top: `${gradientStartY}%`,
+            height: `${gradientEndY - gradientStartY}%`
+          }]}
         />
         <View style={styles.dataPoints}>
           {dataPoints}
