@@ -9,7 +9,14 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "description": "Application de coaching sportif et nutritionnel personnalisé avec suivi des performances et intégration Apple Health.",
-    "keywords": ["fitness", "nutrition", "coaching", "santé", "sport", "entrainement"],
+    "keywords": [
+      "fitness",
+      "nutrition",
+      "coaching",
+      "santé",
+      "sport",
+      "entrainement"
+    ],
     "primaryColor": "#1E1E1E",
     "privacy": "public",
     "ios": {
@@ -41,7 +48,10 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/crown-logo.png",
         "backgroundColor": "#1E1E1E"
-      }
+      },
+      "permissions": [
+        "android.permission.CAMERA"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -50,8 +60,9 @@
     },
     "extra": {
       "eas": {
-        "projectId": "votre-project-id-eas"
-      }
+        "projectId": "6f3f6b36-8c5b-4d71-9035-4e9757b40de5"
+      },
+      "router": {}
     },
     "updates": {
       "url": "https://u.expo.dev/votre-project-id-eas"
@@ -66,6 +77,7 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "owner": "maxandre_pm"
   }
 }
