@@ -3417,10 +3417,10 @@ flexDirection: 'row',
     flex: 1,
   },
   chartScrollContent: {
-    minWidth: width - 120, // Largeur minimale pour permettre le scroll
+    minWidth: 400, // Largeur fixe pour garantir le scroll
   },
   chartContent: {
-    width: Math.max(width - 120, 400), // Largeur minimum pour garantir le scroll
+    width: 400, // Largeur fixe du graphique
     position: 'relative',
     height: '100%',
   },
