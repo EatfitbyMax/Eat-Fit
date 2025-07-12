@@ -1,0 +1,21 @@
+
+{
+  "fr-FR": {
+    "name": "EatFit By Max",
+    "subtitle": "Coaching Sport & Nutrition",
+    "description": "EatFit By Max est votre coach personnel de fitness et nutrition. Créez des programmes d'entraînement personnalisés, suivez votre nutrition avec un scanner d'aliments intelligent, et synchronisez vos données avec Apple Health.\n\nFonctionnalités principales :\n• Programmes d'entraînement personnalisés\n• Scanner d'aliments avec base de données nutritionnelle\n• Suivi des calories et macronutriments\n• Intégration Apple Health et Strava\n• Coach virtuel avec conseils personnalisés\n• Suivi des progrès détaillé\n• Interface moderne et intuitive\n\nQue vous soyez débutant ou athlète confirmé, EatFit By Max s'adapte à vos objectifs pour vous aider à atteindre vos résultats.",
+    "keywords": "fitness,nutrition,sport,santé,coaching,entraînement,calories,musculation,cardio,régime",
+    "marketingUrl": "https://eatfitbymax.com",
+    "supportUrl": "https://eatfitbymax.com/support",
+    "privacyPolicyUrl": "https://eatfitbymax.com/privacy"
+  },
+  "en-US": {
+    "name": "EatFit By Max",
+    "subtitle": "Fitness & Nutrition Coach",
+    "description": "EatFit By Max is your personal fitness and nutrition coach. Create personalized workout programs, track your nutrition with an intelligent food scanner, and sync your data with Apple Health.\n\nKey Features:\n• Personalized workout programs\n• Food scanner with nutritional database\n• Calorie and macronutrient tracking\n• Apple Health and Strava integration\n• Virtual coach with personalized advice\n• Detailed progress tracking\n• Modern and intuitive interface\n\nWhether you're a beginner or an experienced athlete, EatFit By Max adapts to your goals to help you achieve your results.",
+    "keywords": "fitness,nutrition,sport,health,coaching,workout,calories,bodybuilding,cardio,diet",
+    "marketingUrl": "https://eatfitbymax.com",
+    "supportUrl": "https://eatfitbymax.com/support",
+    "privacyPolicyUrl": "https://eatfitbymax.com/privacy"
+  }
+}
