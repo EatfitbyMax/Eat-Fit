@@ -3417,10 +3417,10 @@ flexDirection: 'row',
     flex: 1,
   },
   chartScrollContent: {
-    minWidth: 400, // Largeur fixe pour garantir le scroll
+    minWidth: width - 120, // Largeur adaptative comme les autres graphiques
   },
   chartContent: {
-    width: 400, // Largeur fixe du graphique
+    width: width - 120, // Largeur adaptative comme les autres graphiques
     position: 'relative',
     height: '100%',
   },
