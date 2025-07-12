@@ -1053,11 +1053,36 @@ export default function ProgresScreen() {
 
   // Fonction pour calculer le numéro de semaine ISO 8601
   const getISOWeekNumber = (date: Date) => {
-    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    const dayNum = d.getUTCDay() || 7;
-    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+    try {
+      // Vérifier que la date est valide
+      if (!date || isNaN(date.getTime())) {
+        return 1; // Retourner semaine 1 par défaut
+      }
+      
+      const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+      
+      // Vérifier que la nouvelle date est valide
+      if (isNaN(d.getTime())) {
+        return 1;
+      }
+      
+      const dayNum = d.getUTCDay() || 7;
+      d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+      
+      // Vérifier que la date ajustée est valide
+      if (isNaN(d.getTime())) {
+        return 1;
+      }
+      
+      const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+      const weekNumber = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+      
+      // S'assurer que le numéro de semaine est valide
+      return Math.max(1, Math.min(53, weekNumber));
+    } catch (error) {
+      console.warn('Erreur calcul numéro de semaine:', error);
+      return 1; // Retourner semaine 1 par défaut en cas d'erreur
+    }
   };
 
   const generatePeriodLabels = () => {
@@ -1387,15 +1412,23 @@ export default function ProgresScreen() {
 
       // Calculer les statistiques des 7 derniers jours
       const last7Days = [];
+      const currentDate = new Date();
+      
       for (let i = 6; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
+        const date = new Date(currentDate.getTime() - (i * 24 * 60 * 60 * 1000));
         const dateString = date.toISOString().split('T')[0];
 
         // 1. PRIORITÉ : Entraînements terminés (Strava)
         const dayStravaActivities = stravaActivities.filter((activity: any) => {
-          const activityDate = new Date(activity.start_date).toISOString().split('T')[0];
-          return activityDate === dateString;
+          try {
+            if (!activity.start_date) return false;
+            const activityDate = new Date(activity.start_date);
+            if (isNaN(activityDate.getTime())) return false;
+            return activityDate.toISOString().split('T')[0] === dateString;
+          } catch (error) {
+            console.warn('Date Strava invalide:', activity.start_date);
+            return false;
+          }
         });
 
         let totalMinutes = 0;
@@ -1403,9 +1436,15 @@ export default function ProgresScreen() {
 
         // Convertir les activités Strava en minutes
         dayStravaActivities.forEach((activity: any) => {
-          const durationMinutes = Math.round(activity.moving_time / 60);
-          totalMinutes += durationMinutes;
-          totalWorkouts += 1;
+          try {
+            const durationMinutes = Math.round((activity.moving_time || 0) / 60);
+            if (durationMinutes > 0) {
+              totalMinutes += durationMinutes;
+              totalWorkouts += 1;
+            }
+          } catch (error) {
+            console.warn('Erreur traitement activité Strava:', error);
+          }
         });
 
         // 2. COMPLÉMENT : Entraînements créés localement (seulement si pas de Strava ce jour-là)
@@ -1440,68 +1479,83 @@ export default function ProgresScreen() {
 
       // PRIORITÉ 1 : Records depuis Strava (entraînements terminés)
       stravaActivities.forEach((activity: any) => {
-        // Distance la plus longue depuis Strava
-        if (activity.distance && activity.distance > longestRun.value * 1000) { // Strava en mètres
-          longestRun = {
-            value: Math.round(activity.distance / 1000 * 100) / 100, // Conversion en km avec 2 décimales
-            date: new Date(activity.start_date).toISOString().split('T')[0],
-            unit: 'km'
-          };
-        }
-
-        // Meilleur temps 5km depuis Strava
-        if (activity.distance && Math.abs(activity.distance - 5000) < 100 && activity.moving_time) { // ~5km
-          const hours = Math.floor(activity.moving_time / 3600);
-          const minutes = Math.floor((activity.moving_time % 3600) / 60);
-          const seconds = activity.moving_time % 60;
+        try {
+          // Valider la date
+          if (!activity.start_date) return;
+          const activityDate = new Date(activity.start_date);
+          if (isNaN(activityDate.getTime())) return;
           
-          if (!bestTime5k.value) {
-            bestTime5k = {
-              value: `${hours > 0 ? hours + ':' : ''}${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`,
-              date: new Date(activity.start_date).toISOString().split('T')[0]
+          const validDateString = activityDate.toISOString().split('T')[0];
+
+          // Distance la plus longue depuis Strava
+          if (activity.distance && activity.distance > longestRun.value * 1000) { // Strava en mètres
+            longestRun = {
+              value: Math.round(activity.distance / 1000 * 100) / 100, // Conversion en km avec 2 décimales
+              date: validDateString,
+              unit: 'km'
             };
           }
+
+          // Meilleur temps 5km depuis Strava
+          if (activity.distance && Math.abs(activity.distance - 5000) < 100 && activity.moving_time) { // ~5km
+            const hours = Math.floor(activity.moving_time / 3600);
+            const minutes = Math.floor((activity.moving_time % 3600) / 60);
+            const seconds = activity.moving_time % 60;
+            
+            if (!bestTime5k.value) {
+              bestTime5k = {
+                value: `${hours > 0 ? hours + ':' : ''}${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`,
+                date: validDateString
+              };
+            }
+          }
+        } catch (error) {
+          console.warn('Erreur traitement record Strava:', error);
         }
       });
 
       // PRIORITÉ 2 : Records depuis les entraînements locaux (complément)
       localWorkouts.forEach((workout: any) => {
-        if (workout.exercises) {
-          workout.exercises.forEach((exercise: any) => {
-            // Chercher le poids maximum
-            if (exercise.sets) {
-              exercise.sets.forEach((set: any) => {
-                if (set.weight && set.weight > maxWeight.value) {
-                  maxWeight = {
-                    value: set.weight,
-                    date: workout.date,
-                    exercise: exercise.name || 'Exercice'
-                  };
-                }
-              });
+        try {
+          if (workout.exercises) {
+            workout.exercises.forEach((exercise: any) => {
+              // Chercher le poids maximum
+              if (exercise.sets) {
+                exercise.sets.forEach((set: any) => {
+                  if (set.weight && set.weight > maxWeight.value) {
+                    maxWeight = {
+                      value: set.weight,
+                      date: workout.date,
+                      exercise: exercise.name || 'Exercice'
+                    };
+                  }
+                });
+              }
+            });
+          }
+
+          // Chercher les records de course locaux (seulement si pas de Strava)
+          if ((workout.type === 'Cardio' || workout.name?.toLowerCase().includes('course')) && longestRun.value === 0) {
+            if (workout.distance && workout.distance > longestRun.value) {
+              longestRun = {
+                value: workout.distance,
+                date: workout.date,
+                unit: 'km'
+              };
             }
-          });
-        }
 
-        // Chercher les records de course locaux (seulement si pas de Strava)
-        if ((workout.type === 'Cardio' || workout.name?.toLowerCase().includes('course')) && longestRun.value === 0) {
-          if (workout.distance && workout.distance > longestRun.value) {
-            longestRun = {
-              value: workout.distance,
-              date: workout.date,
-              unit: 'km'
-            };
+            // Calculer le temps pour 5km si applicable et pas de donnée Strava
+            if (workout.distance === 5 && workout.duration && !bestTime5k.value) {
+              const hours = Math.floor(workout.duration / 60);
+              const minutes = workout.duration % 60;
+              bestTime5k = {
+                value: `${hours > 0 ? hours + ':' : ''}${minutes.toString().padStart(2, '0')}:00`,
+                date: workout.date
+              };
+            }
           }
-
-          // Calculer le temps pour 5km si applicable et pas de donnée Strava
-          if (workout.distance === 5 && workout.duration && !bestTime5k.value) {
-            const hours = Math.floor(workout.duration / 60);
-            const minutes = workout.duration % 60;
-            bestTime5k = {
-              value: `${hours > 0 ? hours + ':' : ''}${minutes.toString().padStart(2, '0')}:00`,
-              date: workout.date
-            };
-          }
+        } catch (error) {
+          console.warn('Erreur traitement workout local:', error);
         }
       });
 
