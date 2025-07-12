@@ -568,8 +568,8 @@ export default function ProgresScreen() {
     const minYValue = parseInt(yAxisLabels[yAxisLabels.length - 1]); // Dernier label = valeur min
     
     // Le dégradé couvre maintenant toute la hauteur du graphique
-    let gradientStartY = 10; // Haut du graphique
-    let gradientEndY = 90;   // Bas du graphique
+    let gradientStartY = 1; // Haut du graphique
+    let gradientEndY = 100;   // Bas du graphique
 
     // Générer les points de données basés sur les données traitées avec leurs labels
     processedData.forEach((entry, index) => {
