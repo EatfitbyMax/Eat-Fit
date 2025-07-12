@@ -21,11 +21,17 @@ const { width } = Dimensions.get('window');
 
 // Import conditionnel du BarCodeScanner seulement sur mobile
 let BarCodeScanner: any = null;
+let Camera: any = null;
 if (Platform.OS !== 'web') {
   try {
     BarCodeScanner = require('expo-barcode-scanner').BarCodeScanner;
   } catch (error) {
     console.log('BarCodeScanner non disponible:', error);
+  }
+  try {
+    Camera = require('expo-camera').Camera;
+  } catch (error) {
+    console.log('Camera non disponible:', error);
   }
 }
 
@@ -134,7 +140,7 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
     }
   };
 
-  const handleScannerPress = () => {
+  const handleScannerPress = async () => {
     if (Platform.OS === 'web') {
       Alert.alert(
         'Saisie manuelle de code-barres', 
@@ -147,7 +153,7 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
       return;
     }
 
-    if (!BarCodeScanner) {
+    if (!Camera || !BarCodeScanner) {
       Alert.alert(
         'Scanner non disponible',
         'Le scanner automatique n\'est pas disponible. Voulez-vous saisir manuellement un code-barres ?',
@@ -158,6 +164,9 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
       );
       return;
     }
+
+    const { status } = await Camera.requestCameraPermissionsAsync();
+    const hasPermission = status === 'granted';
 
     if (hasPermission === false) {
       Alert.alert(
@@ -221,7 +230,7 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
         const recognizedFoods = await ImageRecognitionService.recognizeFood(
           result.assets[0].base64 || ''
         );
-        
+
         if (recognizedFoods.length > 0) {
           setSearchResults(recognizedFoods);
           setSearchQuery(''); // Clear search query to show photo results
@@ -280,7 +289,7 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
 
     // Fermer la modal de quantité d'abord
     setShowQuantityModal(false);
-    
+
     // Appeler la fonction parent avec le produit et la quantité
     onAddFood(selectedProduct, quantityNum);
   };
