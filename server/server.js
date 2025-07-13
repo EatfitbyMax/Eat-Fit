@@ -9,8 +9,19 @@ const PORT = process.env.PORT || 5000;
 const DATA_DIR = path.join(__dirname, 'data');
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://eatfitbymax.com', 'https://api.eatfitbymax.com']
+    : true,
+  credentials: true
+}));
 app.use(express.json({ limit: '50mb' }));
+
+// Middleware de gestion d'erreurs globales
+app.use((err, req, res, next) => {
+  console.error('Erreur serveur:', err.stack);
+  res.status(500).json({ error: 'Erreur interne du serveur' });
+});
 
 // Créer le dossier data s'il n'existe pas
 async function initDataDir() {
@@ -392,6 +403,11 @@ app.post('/api/stripe/create-payment-intent', async (req, res) => {
     } catch (error) {
       console.error('Erreur création client:', error);
       return res.status(500).json({ error: 'Erreur création client' });
+    }
+
+    // Validation du montant
+    if (amount <= 0 || amount > 999999) {
+      return res.status(400).json({ error: 'Montant invalide' });
     }
 
     // Créer le PaymentIntent
