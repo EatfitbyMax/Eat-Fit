@@ -1,12 +1,20 @@
+import { OpenFoodFactsService } from './openfoodfacts';
 
-import { OpenFoodFactsService, FoodProduct } from './openfoodfacts';
-
-// Note: Le scanner de codes-barres a été supprimé car expo-barcode-scanner est obsolète
-// Vous pouvez utiliser expo-camera avec la fonctionnalité de scan intégrée à la place
-
+// Interfaces pour la reconnaissance d'image
 interface RecognitionResult {
   name: string;
   confidence: number;
+}
+
+interface FoodProduct {
+  id: string;
+  name: string;
+  nutriments: {
+    energy_kcal: number;
+    proteins: number;
+    carbohydrates: number;
+    fat: number;
+  };
 }
 
 export class ImageRecognitionService {
@@ -17,7 +25,7 @@ export class ImageRecognitionService {
   static async recognizeFood(base64Image: string): Promise<FoodProduct[]> {
     try {
       console.log('Début reconnaissance d\'image...');
-      
+
       // Essayer d'abord avec l'API locale simple (pattern matching)
       const localResults = await this.recognizeWithLocalPatterns(base64Image);
       if (localResults.length > 0) {
@@ -28,14 +36,14 @@ export class ImageRecognitionService {
       if (this.CLARIFAI_API_KEY) {
         return await this.recognizeWithClarifai(base64Image);
       }
-      
+
       if (this.GOOGLE_VISION_API_KEY) {
         return await this.recognizeWithGoogleVision(base64Image);
       }
 
       // Fallback: suggestions génériques
       return this.createGenericSuggestions();
-      
+
     } catch (error) {
       console.error('Erreur reconnaissance:', error);
       return this.createGenericSuggestions();
@@ -46,13 +54,13 @@ export class ImageRecognitionService {
     try {
       // Analyse simple basée sur la taille et les caractéristiques de base de l'image
       // Cette méthode ne nécessite pas d'API externe
-      
+
       const imageSize = base64Image.length;
       const hasGreenTones = base64Image.includes('green') || base64Image.includes('vert');
       const hasRedTones = base64Image.includes('red') || base64Image.includes('rouge');
-      
+
       const suggestions: FoodProduct[] = [];
-      
+
       // Suggestions basées sur des patterns simples
       if (hasGreenTones) {
         const greenFoods = await OpenFoodFactsService.searchFood('légume vert');
@@ -64,7 +72,7 @@ export class ImageRecognitionService {
           });
         }
       }
-      
+
       if (hasRedTones) {
         const redFoods = await OpenFoodFactsService.searchFood('tomate fruit rouge');
         if (redFoods.length > 0) {
@@ -75,7 +83,7 @@ export class ImageRecognitionService {
           });
         }
       }
-      
+
       return suggestions.slice(0, 3);
     } catch (error) {
       console.error('Erreur reconnaissance locale:', error);
@@ -106,7 +114,7 @@ export class ImageRecognitionService {
 
       const data = await response.json();
       const concepts = data.outputs[0]?.data?.concepts || [];
-      
+
       return await this.convertConceptsToFoodProducts(concepts, 'clarifai');
     } catch (error) {
       console.error('Erreur Clarifai:', error);
@@ -135,7 +143,7 @@ export class ImageRecognitionService {
 
       const data = await response.json();
       const labels = data.responses[0]?.labelAnnotations || [];
-      
+
       const foodLabels = labels.filter((label: any) => 
         label.score > 0.7 && this.isFoodRelated(label.description)
       );
@@ -155,7 +163,7 @@ export class ImageRecognitionService {
       'food', 'fruit', 'vegetable', 'meat', 'bread', 'drink', 'snack',
       'aliment', 'nourriture', 'légume', 'viande', 'pain', 'boisson'
     ];
-    
+
     return foodKeywords.some(keyword => 
       label.toLowerCase().includes(keyword.toLowerCase())
     );
@@ -166,7 +174,7 @@ export class ImageRecognitionService {
     source: string
   ): Promise<FoodProduct[]> {
     const foodProducts: FoodProduct[] = [];
-    
+
     const validConcepts = concepts
       .filter(concept => concept.value > 0.6)
       .slice(0, 5);
@@ -202,7 +210,7 @@ export class ImageRecognitionService {
     };
 
     const lowerName = name.toLowerCase();
-    
+
     if (lowerName.includes('fruit')) {
       nutrition = { energy_kcal: 60, proteins: 1, carbohydrates: 14, fat: 0.2 };
     } else if (lowerName.includes('vegetable') || lowerName.includes('légume')) {

@@ -1,16 +1,19 @@
 import React from 'react';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 
 // Gestion globale des erreurs non capturées (web uniquement)
 if (Platform.OS === 'web' && typeof window !== 'undefined' && window.addEventListener) {
-  const handleUnhandledRejection = (event: any) => {
+  const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
     console.error('Promesse non capturée:', event.reason);
-    if (event.preventDefault) {
-      event.preventDefault();
-    }
+    event.preventDefault();
+  };
+  
+  const handleError = (event: ErrorEvent) => {
+    console.error('Erreur globale:', event.error);
   };
   
   window.addEventListener('unhandledrejection', handleUnhandledRejection);
+  window.addEventListener('error', handleError);
 }
 
 import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
@@ -157,9 +160,9 @@ export default function RootLayout() {
     <LanguageProvider>
       <ThemeProvider>
         <NavigationThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          {Platform.OS !== 'web' && StripeProvider ? (
+          {Platform.OS !== 'web' && StripeProvider && process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ? (
             <StripeProvider
-              publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_default'}
+              publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}
               merchantIdentifier="merchant.com.eatfitbymax"
             >
               <StackContent />

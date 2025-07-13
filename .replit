@@ -108,5 +108,18 @@ mode = "sequential"
 task = "shell.exec"
 args = "npx eas submit --platform ios --profile production --non-interactive"
 
+[[workflows.workflow]]
+name = "Déploiement Production"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd server && npm install --production"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd server && npm start"
+
 [deployment]
 run = ["sh", "-c", "cd server && npm start"]
