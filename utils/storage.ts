@@ -885,7 +885,7 @@ export class PersistentStorage {
       const localData = await AsyncStorage.getItem(`forme_data_${userId}_${date}`);
       return localData ? JSON.parse(localData) : {
         sleep: { hours: 0, quality: 'Moyen', bedTime: '', wakeTime: '' },
-        The code changes improve the connection testing by adding a timeout.        stress: { level: 5, factors: [], notes: '' },
+        stress: { level: 5, factors: [], notes: '' },
         heartRate: { resting: 0, variability: 0 },
         rpe: { value: 5, notes: '' },
         cycle: { phase: 'Menstruel', dayOfCycle: 1, symptoms: [], notes: '' },
