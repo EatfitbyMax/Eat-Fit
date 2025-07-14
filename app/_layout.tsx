@@ -38,7 +38,6 @@ import { useFonts } from 'expo-font';
 import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
-import { Platform } from 'react-native';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { initializeAdminAccount, getCurrentUser } from '@/utils/auth';
