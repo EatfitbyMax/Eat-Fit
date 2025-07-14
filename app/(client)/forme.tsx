@@ -766,14 +766,15 @@ export default function FormeScreen() {
       const estimateMicronutrients = (entry: any) => {
         const productName = entry.product?.name?.toLowerCase() || '';
         const calories = entry.calories || 0;
-        
+
         let vitaminA = 0, vitaminC = 0, vitaminD = 0, vitaminE = 0, vitaminK = 0;
         let vitaminB1 = 0, vitaminB2 = 0, vitaminB3 = 0, vitaminB5 = 0, vitaminB6 = 0;
         let vitaminB7 = 0, vitaminB9 = 0, vitaminB12 = 0;
         let calcium = 0, iron = 0, magnesium = 0, potassium = 0, zinc = 0;
         let sodium = 0, phosphorus = 0, selenium = 0, copper = 0, manganese = 0;
         let iodine = 0, chromium = 0, molybdenum = 0;
-        let caffeine = 0, fiber = 0, omega3 = 0, omega6 = 0;
+        let caffeine = 0, fiber = 0, omega3 = 0, omega6</previous_generation>
+ = 0;
 
         // Estimation basée sur les types d'aliments
         if (productName.includes('café') || productName.includes('coffee') || productName.includes('expresso')) {
@@ -934,7 +935,7 @@ export default function FormeScreen() {
         if (response.ok) {
           const nutritionEntries = await response.json();
           const todayEntries = nutritionEntries.filter((entry: any) => entry.date === today);
-          
+
           const totals = todayEntries.reduce((sum: any, entry: any) => {
             const estimatedMicros = estimateMicronutrients(entry);
             return {
@@ -1002,7 +1003,7 @@ export default function FormeScreen() {
       if (storedEntries) {
         const entries = JSON.parse(storedEntries);
         const todayEntries = entries.filter((entry: any) => entry.date === today);
-        
+
         const totals = todayEntries.reduce((sum: any, entry: any) => {
           const estimatedMicros = estimateMicronutrients(entry);
           return {
@@ -1142,26 +1143,6 @@ export default function FormeScreen() {
         carb: { min: 50, max: 65 },
         fat: { min: 15, max: 25 }
       };
-    }tes optimales selon les objectifs
-    const goals = userData?.goals || [];
-    let optimalRanges = {
-      protein: { min: 15, max: 25 },
-      carb: { min: 45, max: 60 },
-      fat: { min: 20, max: 35 }
-    };
-
-    if (goals.includes('Me muscler')) {
-      optimalRanges = {
-        protein: { min: 25, max: 35 },
-        carb: { min: 40, max: 50 },
-        fat: { min: 20, max: 30 }
-      };
-    } else if (goals.includes('Gagner en performance')) {
-      optimalRanges = {
-        protein: { min: 20, max: 30 },
-        carb: { min: 50, max: 65 },
-        fat: { min: 15, max: 25 }
-      };
     }
 
     // Analyser chaque macronutriment
@@ -1240,39 +1221,6 @@ export default function FormeScreen() {
       status,
       score: Math.round(score),
       issues: issues.length > 0 ? issues : ['Équilibre optimal atteint']
-    }; [proteinDeviation > 20, carbDeviation > 30, fatDeviation > 50].filter(Boolean).length;
-    if (extremeDeviations >= 2) {
-      score -= 20; // Pénalité pour déséquilibres multiples extrêmes
-      issues.push('Déséquilibres multiples détectés - risque nutritionnel élevé');
-    }
-
-    // Déterminer le statut avec des seuils plus stricts
-    let status;
-    if (score >= 85) {
-      status = 'Équilibre optimal';
-    } else if (score >= 65) {
-      status = 'Bon équilibre';
-    } else if (score >= 35) {
-      status = 'Déséquilibre modéré';
-    } else if (score >= 15) {
-      status = 'Déséquilibre important';
-    } else {
-      status = 'Déséquilibre critique';
-    }
-
-    if (issues.length === 0) {
-      issues.push('Répartition équilibrée selon vos objectifs');
-    }
-
-    return {
-      status,
-      score: Math.max(0, score),
-      issues,
-      percentages: {
-        protein: Math.round(proteinPercent),
-        carb: Math.round(carbPercent),
-        fat: Math.round(fatPercent)
-      }
     };
   };
 
@@ -1776,7 +1724,7 @@ export default function FormeScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        
+
 
         {/* Score principal */}
         <View style={styles.scoreCard}>
@@ -1963,7 +1911,7 @@ export default function FormeScreen() {
                   Alert.alert('Fonctionnalité Premium', 'Le suivi détaillé de l\'apport calorique est réservé aux abonnés premium.');
                   return;
                 }
-                
+
                 const targetCalories = Math.round(
                   (userData?.gender === 'Homme' ? 2200 : 1800) * 
                   (userData?.activityLevel === 'sedentaire' ? 1.2 : 
@@ -2007,7 +1955,7 @@ export default function FormeScreen() {
               </Text>
             </TouchableOpacity>
 
-            
+
 
             {/* Macronutriments - Toujours visible avec contour orange pour gratuit */}
             <TouchableOpacity 
@@ -2017,10 +1965,10 @@ export default function FormeScreen() {
                   Alert.alert('Fonctionnalité Premium', 'L\'analyse des macronutriments est réservée aux abonnés premium.');
                   return;
                 }
-                
+
                 const macros = formeData.actualMacros;
                 const calories = formeData.actualCalories || 0;
-                
+
                 if (!macros || calories === 0) {
                   Alert.alert(
                     'Macronutriments/Fatigue',
@@ -2031,7 +1979,7 @@ export default function FormeScreen() {
                 }
 
                 const analysis = analyzeMacroBalance(macros, calories);
-                
+
                 const detailMessage = `Répartition actuelle:\n• Protéines: ${macros.proteins}g (${analysis.percentages?.protein || 0}%)\n• Glucides: ${macros.carbohydrates}g (${analysis.percentages?.carb || 0}%)\n• Lipides: ${macros.fat}g (${analysis.percentages?.fat || 0}%)\n\nAnalyse: ${analysis.issues.join(', ')}`;
 
                 Alert.alert(
@@ -2053,11 +2001,11 @@ export default function FormeScreen() {
                     (() => {
                       const macros = formeData.actualMacros;
                       const calories = formeData.actualCalories || 0;
-                      
+
                       if (!macros || calories === 0) {
                         return 'Aucune donnée';
                       }
-                      
+
                       const analysis = analyzeMacroBalance(macros, calories);
                       return analysis.status;
                     })() :
@@ -2069,11 +2017,11 @@ export default function FormeScreen() {
                     (() => {
                       const macros = formeData.actualMacros;
                       const calories = formeData.actualCalories || 0;
-                      
+
                       if (!macros || calories === 0) {
                         return 'Ajoutez vos repas';
                       }
-                      
+
                       return `P:${macros.proteins}g C:${macros.carbohydrates}g L:${macros.fat}g`;
                     })() :
                     'Analyse équilibre'
@@ -2093,10 +2041,10 @@ export default function FormeScreen() {
                   Alert.alert('Fonctionnalité Premium', 'L\'analyse des micronutriments est réservée aux abonnés premium.');
                   return;
                 }
-                
+
                 const micros = formeData.actualMicros;
                 const calories = formeData.actualCalories || 0;
-                
+
                 if (!micros || calories === 0) {
                   Alert.alert(
                     'Micronutriments/Fatigue',
@@ -2108,18 +2056,18 @@ export default function FormeScreen() {
 
                 // Analyse des carences importantes qui impactent la fatigue
                 const deficiencies = [];
-                
+
                 // Vitamines critiques pour l'énergie
                 if (micros.vitaminB12 < 1.5) deficiencies.push('Vitamine B12 faible');
                 if (micros.vitaminD < 10) deficiencies.push('Vitamine D insuffisante');
                 if (micros.vitaminC < 50) deficiencies.push('Vitamine C faible');
                 if (micros.vitaminB6 < 1.0) deficiencies.push('Vitamine B6 insuffisante');
-                
+
                 // Minéraux critiques pour l'énergie
                 if (micros.iron < 5) deficiencies.push('Fer faible (risque anémie)');
                 if (micros.magnesium < 200) deficiencies.push('Magnésium insuffisant');
                 if (micros.zinc < 6) deficiencies.push('Zinc faible');
-                
+
                 // Analyse globale
                 let analysis = '';
                 if (deficiencies.length === 0) {
@@ -2151,11 +2099,11 @@ export default function FormeScreen() {
                     (() => {
                       const micros = formeData.actualMicros;
                       const calories = formeData.actualCalories || 0;
-                      
+
                       if (!micros || calories === 0) {
                         return 'Aucune donnée';
                       }
-                      
+
                       // Analyse rapide des carences critiques
                       const criticalDeficiencies = [
                         micros.vitaminB12 < 1.5,
@@ -2163,7 +2111,7 @@ export default function FormeScreen() {
                         micros.iron < 5,
                         micros.magnesium < 200
                       ].filter(Boolean).length;
-                      
+
                       if (criticalDeficiencies === 0) return 'Profil favorable';
                       if (criticalDeficiencies <= 1) return 'Légères carences';
                       if (criticalDeficiencies <= 2) return 'Carences modérées';
@@ -2177,11 +2125,11 @@ export default function FormeScreen() {
                     (() => {
                       const micros = formeData.actualMicros;
                       const calories = formeData.actualCalories || 0;
-                      
+
                       if (!micros || calories === 0) {
                         return 'Ajoutez vos repas';
                       }
-                      
+
                       return `B12: ${micros.vitaminB12.toFixed(1)}μg, Fer: ${micros.iron.toFixed(1)}mg`;
                     })() :
                     'Analyse carences'
@@ -2393,8 +2341,7 @@ export default function FormeScreen() {
               <TouchableOpacity 
                 style={styles.modalButtonPrimary}
                 onPress={handleSaveStress}
-              >```python
-This code incorporates calorie data from the nutrition screen into the form screen's calculations.
+              >
                 <Text style={styles.modalButtonPrimaryText}>Sauvegarder</Text>
               </TouchableOpacity>
             </View>
