@@ -12,6 +12,14 @@ import AnimatedCrown from './AnimatedCrown';
 
 const { width, height } = Dimensions.get('window');
 
+// Précalculer les tailles pour éviter les recalculs
+const FONT_SIZES = {
+  title: Math.min(width * 0.15, 60),
+  byMax: Math.min(width * 0.04, 16),
+  motto: Math.min(width * 0.045, 18),
+  mottoLineHeight: Math.min(width * 0.065, 26),
+};
+
 interface SplashScreenProps {
   onFinish: () => void;
 }
@@ -110,7 +118,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   appTitle: {
-    fontSize: Math.min(width * 0.15, 60),
+    fontSize: FONT_SIZES.title,
     fontWeight: '900',
     color: '#FFFFFF',
     textAlign: 'center',
@@ -118,7 +126,7 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
   },
   byMax: {
-    fontSize: Math.min(width * 0.04, 16),
+    fontSize: FONT_SIZES.byMax,
     fontWeight: '900',
     color: '#FFFFFF',
     textAlign: 'center',
@@ -132,11 +140,11 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   motto: {
-    fontSize: Math.min(width * 0.045, 18),
+    fontSize: FONT_SIZES.motto,
     fontWeight: '500',
     color: '#CCCCCC',
     textAlign: 'center',
-    lineHeight: Math.min(width * 0.065, 26),
+    lineHeight: FONT_SIZES.mottoLineHeight,
     fontStyle: 'italic',
     opacity: 0.9,
   },
