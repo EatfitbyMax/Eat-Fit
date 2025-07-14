@@ -17,7 +17,7 @@ localPort = 8082
 externalPort = 3000
 
 [workflows]
-runButton = "EAS Init"
+runButton = "Dev Server"
 
 [[workflows.workflow]]
 name = "Dev Server"
@@ -122,4 +122,4 @@ task = "shell.exec"
 args = "cd server && npm start"
 
 [deployment]
-run = ["sh", "-c", "cd server && npm start"]
+run = ["sh", "-c", "cd server && npm install --production && node server.js"]
