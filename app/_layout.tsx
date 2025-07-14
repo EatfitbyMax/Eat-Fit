@@ -1,20 +1,37 @@
 import React from 'react';
 import { Alert, Platform } from 'react-native';
 
-// Gestion globale des erreurs non capturées (web uniquement)
-if (Platform.OS === 'web' && typeof window !== 'undefined' && window.addEventListener) {
-  const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-    console.error('Promesse non capturée:', event.reason);
-    event.preventDefault();
-  };
-  
-  const handleError = (event: ErrorEvent) => {
-    console.error('Erreur globale:', event.error);
-  };
-  
-  window.addEventListener('unhandledrejection', handleUnhandledRejection);
-  window.addEventListener('error', handleError);
-}
+// Gestion globale des erreurs non capturées
+const setupErrorHandling = () => {
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      console.error('Promesse non capturée:', event.reason);
+      // En production, on peut envoyer l'erreur à un service de monitoring
+      if (__DEV__) {
+        Alert.alert('Erreur', 'Une erreur inattendue s\'est produite');
+      }
+      event.preventDefault();
+    };
+    
+    const handleError = (event: ErrorEvent) => {
+      console.error('Erreur globale:', event.error);
+      if (__DEV__) {
+        Alert.alert('Erreur', `Erreur: ${event.error?.message || 'Inconnue'}`);
+      }
+    };
+    
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    window.addEventListener('error', handleError);
+    
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      window.removeEventListener('error', handleError);
+    };
+  }
+  return () => {};
+};
+
+setupErrorHandling();
 
 import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
@@ -65,78 +82,73 @@ export default function RootLayout() {
     try {
       console.log('=== DÉBUT INITIALISATION ===');
 
-      // Toute l'initialisation se fait pendant que le splash screen s'affiche
-      console.log('Synchronisation avec le serveur VPS...');
-      try {
-        const isConnected = await PersistentStorage.testConnection();
-        if (isConnected) {
-          console.log('Serveur VPS opérationnel - toutes les données sont sur le serveur');
-        } else {
-          console.warn('Serveur VPS non disponible, utilisation du stockage local uniquement');
-        }
-      } catch (error) {
-        console.warn('Serveur VPS non disponible, utilisation du stockage local uniquement');
-      }
+      // Initialisation en parallèle pour optimiser le temps de chargement
+      const initPromises = [
+        // Test de connexion avec timeout
+        Promise.race([
+          PersistentStorage.testConnection(),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout')), 3000)
+          )
+        ]).catch(() => {
+          console.warn('Serveur VPS non disponible, utilisation du stockage local');
+          return false;
+        }),
+        
+        // Initialisation admin avec gestion d'erreur
+        initializeAdminAccount().catch(error => {
+          console.warn('Initialisation admin échouée:', error);
+          return null;
+        }),
+        
+        // Migration avec gestion d'erreur
+        migrateExistingData().catch(error => {
+          console.warn('Migration échouée:', error);
+          return null;
+        })
+      ];
 
-      console.log('Initialisation du compte admin...');
-      try {
-        await initializeAdminAccount();
-      } catch (error) {
-        console.warn('Initialisation admin échouée:', error);
-      }
-
-      console.log('Migration des données existantes...');
-      try {
-        await migrateExistingData();
-      } catch (error) {
-        console.warn('Migration échouée:', error);
-        // Ne pas faire échouer l'initialisation à cause de la migration
-      }
+      // Attendre toutes les initialisations en parallèle
+      await Promise.allSettled(initPromises);
 
       console.log('Vérification de l\'utilisateur connecté...');
       const user = await getCurrentUser();
 
       console.log('=== FIN INITIALISATION ===');
 
-      // Attendre que le splash screen termine son animation (6 secondes)
+      // Réduire le délai pour une meilleure UX (3 secondes au lieu de 6)
+      const minSplashTime = 3000;
       setTimeout(() => {
         setIsInitializing(false);
 
-        // Navigation directe après le splash
+        // Navigation immédiate après le splash
         setTimeout(() => {
           try {
-            if (user) {
-              console.log('Redirection utilisateur connecté:', user.userType);
-              if (user.userType === 'coach') {
-                router.replace('/(coach)/programmes');
-              } else {
-                router.replace('/(client)');
-              }
+            if (user?.userType === 'coach') {
+              console.log('Redirection coach:', user.userType);
+              router.replace('/(coach)/programmes');
+            } else if (user?.userType === 'client') {
+              console.log('Redirection client:', user.userType);
+              router.replace('/(client)');
             } else {
-              console.log('Aucun utilisateur, redirection vers login');
+              console.log('Aucun utilisateur valide, redirection vers login');
               router.replace('/auth/login');
             }
           } catch (error) {
             console.error('Erreur navigation:', error);
-            // Fallback
-            setTimeout(() => {
-              if (user) {
-                router.push('/(client)');
-              } else {
-                router.push('/auth/login');
-              }
-            }, 500);
+            // Fallback robuste
+            router.replace('/auth/login');
           }
-        }, 100);
-      }, 6000);
+        }, 50);
+      }, minSplashTime);
 
     } catch (error) {
-      console.error('Erreur vérification auth:', error);
-      // En cas d'erreur, terminer le splash et aller vers login
+      console.error('Erreur critique lors de l\'initialisation:', error);
+      // En cas d'erreur critique, aller directement vers login
       setTimeout(() => {
         setIsInitializing(false);
-        setTimeout(() => router.replace('/auth/login'), 100);
-      }, 6000);
+        setTimeout(() => router.replace('/auth/login'), 50);
+      }, 2000);
     }
   };
 
