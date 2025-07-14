@@ -1142,6 +1142,26 @@ export default function FormeScreen() {
         carb: { min: 50, max: 65 },
         fat: { min: 15, max: 25 }
       };
+    }tes optimales selon les objectifs
+    const goals = userData?.goals || [];
+    let optimalRanges = {
+      protein: { min: 15, max: 25 },
+      carb: { min: 45, max: 60 },
+      fat: { min: 20, max: 35 }
+    };
+
+    if (goals.includes('Me muscler')) {
+      optimalRanges = {
+        protein: { min: 25, max: 35 },
+        carb: { min: 40, max: 50 },
+        fat: { min: 20, max: 30 }
+      };
+    } else if (goals.includes('Gagner en performance')) {
+      optimalRanges = {
+        protein: { min: 20, max: 30 },
+        carb: { min: 50, max: 65 },
+        fat: { min: 15, max: 25 }
+      };
     }
 
     // Analyser chaque macronutriment
@@ -1202,7 +1222,25 @@ export default function FormeScreen() {
     }
 
     // Pénalité supplémentaire pour des déséquilibres extrêmes multiples
-    const extremeDeviations = [proteinDeviation > 20, carbDeviation > 30, fatDeviation > 50].filter(Boolean).length;
+    const extremeDeviations = [proteinDeviation, carbDeviation, fatDeviation].filter(d => d > 25);
+    if (extremeDeviations.length >= 2) {
+      score -= 20; // Pénalité pour multiples déséquilibres extrêmes
+    }
+
+    // Score minimum de 0
+    score = Math.max(0, score);
+
+    let status = 'Excellent';
+    if (score < 30) status = 'Critique';
+    else if (score < 50) status = 'Médiocre';
+    else if (score < 70) status = 'Moyen';
+    else if (score < 85) status = 'Bon';
+
+    return {
+      status,
+      score: Math.round(score),
+      issues: issues.length > 0 ? issues : ['Équilibre optimal atteint']
+    }; [proteinDeviation > 20, carbDeviation > 30, fatDeviation > 50].filter(Boolean).length;
     if (extremeDeviations >= 2) {
       score -= 20; // Pénalité pour déséquilibres multiples extrêmes
       issues.push('Déséquilibres multiples détectés - risque nutritionnel élevé');

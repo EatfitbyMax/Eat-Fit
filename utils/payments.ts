@@ -208,38 +208,57 @@ export class PaymentService {
   }
 
   private static async callServerAPI(plan: SubscriptionPlan, userId: string): Promise<{ clientSecret: string; ephemeralKey: string; customer: string }> {
-    try {
-      const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://workspace.eatfitbymax.replit.dev:5000';
-      
-      const response = await fetch(`${serverUrl}/api/stripe/create-payment-intent`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          planId: plan.id,
-          planName: plan.name,
-          userId: userId,
-          amount: plan.price,
-          currency: plan.currency.toLowerCase()
-        }),
-      });
+    const maxRetries = 3;
+    let lastError: Error;
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Erreur serveur: ${errorData.error || 'Erreur inconnue'}`);
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://workspace.eatfitbymax.replit.dev:5000';
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
+        const response = await fetch(`${serverUrl}/api/stripe/create-payment-intent`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            planId: plan.id,
+            planName: plan.name,
+            userId: userId,
+            amount: plan.price,
+            currency: plan.currency.toLowerCase()
+          }),
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(`Erreur serveur: ${errorData.error || 'Erreur inconnue'}`);
+        }
+
+        const data = await response.json();
+        return {
+          clientSecret: data.clientSecret,
+          ephemeralKey: data.ephemeralKey,
+          customer: data.customer
+        };
+      } catch (error) {
+        lastError = error as Error;
+        console.warn(`Tentative ${attempt}/${maxRetries} échouée:`, error);
+        
+        if (attempt < maxRetries) {
+          // Délai exponentiel avant retry
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+        }
       }
-
-      const data = await response.json();
-      return {
-        clientSecret: data.clientSecret,
-        ephemeralKey: data.ephemeralKey,
-        customer: data.customer
-      };
-    } catch (error) {
-      console.error('Erreur appel serveur:', error);
-      throw new Error('Impossible de créer le paiement. Vérifiez votre connexion.');
     }
+
+    console.error('Toutes les tentatives ont échoué:', lastError);
+    throw new Error('Impossible de créer le paiement après plusieurs tentatives. Vérifiez votre connexion.');
   }
 
   static async presentApplePayPayment(plan: SubscriptionPlan, userId: string): Promise<boolean> {
