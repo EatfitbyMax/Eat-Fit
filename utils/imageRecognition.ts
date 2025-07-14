@@ -26,6 +26,18 @@ export class ImageRecognitionService {
     try {
       console.log('Début reconnaissance d\'image...');
 
+      // Validation de l'image
+      if (!base64Image || base64Image.length < 100) {
+        throw new Error('Image invalide ou trop petite');
+      }
+
+      // Vérification du format base64
+      const base64Pattern = /^data:image\/(jpeg|jpg|png|gif);base64,/;
+      if (!base64Pattern.test(base64Image)) {
+        console.warn('Format base64 non standard, tentative de correction...');
+        base64Image = base64Image.replace(/^data:image\/[^;]+;base64,/, '');
+      }
+
       // Essayer d'abord avec l'API locale simple (pattern matching)
       const localResults = await this.recognizeWithLocalPatterns(base64Image);
       if (localResults.length > 0) {

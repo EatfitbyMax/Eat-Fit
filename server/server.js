@@ -8,7 +8,47 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const DATA_DIR = path.join(__dirname, 'data');
 
-// Middleware
+// Middleware de sécurité et logging
+const requestLogger = (req, res, next) => {
+  const start = Date.now();
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    console.log(`${req.method} ${req.path} - ${res.statusCode} (${duration}ms)`);
+  });
+  
+  next();
+};
+
+// Rate limiting simple
+const requestCounts = new Map();
+const rateLimit = (req, res, next) => {
+  const ip = req.ip || req.connection.remoteAddress;
+  const now = Date.now();
+  const windowMs = 60000; // 1 minute
+  const maxRequests = 100;
+
+  if (!requestCounts.has(ip)) {
+    requestCounts.set(ip, { count: 1, resetTime: now + windowMs });
+  } else {
+    const data = requestCounts.get(ip);
+    if (now > data.resetTime) {
+      data.count = 1;
+      data.resetTime = now + windowMs;
+    } else {
+      data.count++;
+      if (data.count > maxRequests) {
+        return res.status(429).json({ error: 'Trop de requêtes' });
+      }
+    }
+  }
+  
+  next();
+};
+
+app.use(requestLogger);
+app.use(rateLimit);
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? ['https://eatfitbymax.com', 'https://api.eatfitbymax.com']

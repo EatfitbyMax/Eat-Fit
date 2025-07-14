@@ -885,7 +885,7 @@ export class PersistentStorage {
       const localData = await AsyncStorage.getItem(`forme_data_${userId}_${date}`);
       return localData ? JSON.parse(localData) : {
         sleep: { hours: 0, quality: 'Moyen', bedTime: '', wakeTime: '' },
-        stress: { level: 5, factors: [], notes: '' },
+        The code changes improve the connection testing by adding a timeout.        stress: { level: 5, factors: [], notes: '' },
         heartRate: { resting: 0, variability: 0 },
         rpe: { value: 5, notes: '' },
         cycle: { phase: 'Menstruel', dayOfCycle: 1, symptoms: [], notes: '' },
@@ -1392,17 +1392,17 @@ export const saveMessages = async (userId: string, messages: any[]): Promise<boo
 };
 
 export const testServerConnection = async (): Promise<boolean> => {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 secondes timeout
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 secondes timeout
 
-    const response = await fetch(`${SERVER_URL}/api/health-check`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      signal: controller.signal,
-    });
+      const response = await fetch(`${SERVER_URL}/api/health-check`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal,
+      });
 
     clearTimeout(timeoutId);
 
