@@ -773,8 +773,7 @@ export default function FormeScreen() {
         let calcium = 0, iron = 0, magnesium = 0, potassium = 0, zinc = 0;
         let sodium = 0, phosphorus = 0, selenium = 0, copper = 0, manganese = 0;
         let iodine = 0, chromium = 0, molybdenum = 0;
-        let caffeine = 0, fiber = 0, omega3 = 0, omega6</previous_generation>
- = 0;
+        let caffeine = 0, fiber = 0, omega3 = 0, omega6 = 0;
 
         // Estimation basée sur les types d'aliments
         if (productName.includes('café') || productName.includes('coffee') || productName.includes('expresso')) {
