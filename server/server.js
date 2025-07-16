@@ -52,7 +52,14 @@ app.use(rateLimit);
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? ['https://eatfitbymax.com', 'https://api.eatfitbymax.com']
-    : true,
+    : [
+        'http://localhost:8081',
+        'http://localhost:19006',
+        /\.replit\.dev$/,
+        /\.replit\.co$/,
+        'http://51.178.29.220:5000',
+        true
+      ],
   credentials: true
 }));
 app.use(express.json({ limit: '50mb' }));
