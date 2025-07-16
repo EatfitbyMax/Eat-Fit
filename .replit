@@ -17,7 +17,23 @@ localPort = 8082
 externalPort = 3000
 
 [workflows]
-runButton = "Deploy to VPS Only"
+runButton = "Dev Hybride"
+
+[[workflows.workflow]]
+name = "Dev Server"
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN npx expo start"
+
+[[workflows.workflow]]
+name = "EAS Init"
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx eas init"
 
 [[workflows.workflow]]
 name = "EAS Update"
@@ -44,6 +60,37 @@ task = "shell.exec"
 args = "npx eas build --platform android --profile preview"
 
 [[workflows.workflow]]
+name = "Serveur API"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd server && npm install && node server.js"
+
+[[workflows.workflow]]
+name = "Serveur OVH Local"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd server && npm start"
+
+[[workflows.workflow]]
+name = "Dev Full Stack"
+author = 42598128
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN npx expo start"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd server && node server.js"
+
+[[workflows.workflow]]
 name = "EAS Build Production iOS"
 author = 42598128
 mode = "sequential"
@@ -62,13 +109,39 @@ task = "shell.exec"
 args = "npx eas submit --platform ios --profile production --non-interactive"
 
 [[workflows.workflow]]
-name = "Deploy to VPS Only"
+name = "Déploiement Production"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd server && npm install --production"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd server && npm start"
+
+[[workflows.workflow]]
+name = "Deploy to VPS"
 author = 42598128
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "node scripts/deploy-to-vps.js"
+
+[[workflows.workflow]]
+name = "Dev avec VPS"
+author = 42598128
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "EXPO_PUBLIC_API_URL=http://51.178.29.220:5000 EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN npx expo start"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "ssh ubuntu@51.178.29.220 \"cd /home/ubuntu/eatfitbymax-server && pm2 logs eatfitbymax-server --lines 50\""
 
 [deployment]
 run = ["sh", "-c", "cd server && npm install --production && node server.js"]
