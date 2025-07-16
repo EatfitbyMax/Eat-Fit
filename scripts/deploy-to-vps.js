@@ -35,8 +35,17 @@ async function deployToVPS() {
     // 2. Synchroniser avec le VPS
     console.log('🔄 Synchronisation avec le VPS...');
     
-    const rsyncCommand = `rsync -avz --delete ${deployDir}/ ${VPS_CONFIG.user}@${VPS_CONFIG.host}:${VPS_CONFIG.appPath}/`;
-    await execCommand(rsyncCommand);
+    // Créer une archive pour le transfert
+    const archivePath = path.join(__dirname, '../deploy.tar.gz');
+    await execCommand(`tar -czf ${archivePath} -C ${deployDir} .`);
+    
+    // Transférer l'archive vers le VPS
+    const scpCommand = `scp ${archivePath} ${VPS_CONFIG.user}@${VPS_CONFIG.host}:/tmp/eatfitbymax-deploy.tar.gz`;
+    await execCommand(scpCommand);
+    
+    // Extraire l'archive sur le VPS
+    const extractCommand = `ssh ${VPS_CONFIG.user}@${VPS_CONFIG.host} "mkdir -p ${VPS_CONFIG.appPath} && cd ${VPS_CONFIG.appPath} && tar -xzf /tmp/eatfitbymax-deploy.tar.gz && rm /tmp/eatfitbymax-deploy.tar.gz"`;
+    await execCommand(extractCommand);
     
     console.log('✅ Fichiers synchronisés');
     
@@ -59,6 +68,10 @@ async function deployToVPS() {
     
     // 4. Nettoyer les fichiers temporaires
     await execCommand(`rm -rf ${deployDir}`);
+    const archivePath = path.join(__dirname, '../deploy.tar.gz');
+    if (fs.existsSync(archivePath)) {
+      await execCommand(`rm ${archivePath}`);
+    }
     
     console.log('🎉 Déploiement terminé avec succès !');
     console.log(`🌐 Application accessible sur : http://${VPS_CONFIG.host}:5000`);
