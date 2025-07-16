@@ -68,7 +68,6 @@ async function deployToVPS() {
     
     // 4. Nettoyer les fichiers temporaires
     await execCommand(`rm -rf ${deployDir}`);
-    const archivePath = path.join(__dirname, '../deploy.tar.gz');
     if (fs.existsSync(archivePath)) {
       await execCommand(`rm ${archivePath}`);
     }
