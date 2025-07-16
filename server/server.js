@@ -2,7 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs').promises;
 const path = require('path');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+// Stripe sera chargé seulement si la clé est définie
+const stripe = process.env.STRIPE_SECRET_KEY ? require('stripe')(process.env.STRIPE_SECRET_KEY) : null;
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -415,6 +416,10 @@ app.post('/api/integrations/:userId', async (req, res) => {
 // Routes Stripe pour les paiements
 app.post('/api/stripe/create-payment-intent', async (req, res) => {
   try {
+    if (!stripe) {
+      return res.status(503).json({ error: 'Service de paiement non configuré' });
+    }
+
     const { planId, userId, amount, currency } = req.body;
 
     if (!planId || !userId || !amount) {
