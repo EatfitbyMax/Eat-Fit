@@ -464,8 +464,23 @@ export default function CoachScreen() {
   useEffect(() => {
     initUser();
     loadCoachInfo();
-	  loadAppointments();
+    loadAppointments();
+    testConnection();
   }, []);
+
+  const testConnection = async () => {
+    try {
+      const { testApiConnection } = await import('../../utils/storage');
+      const result = await testApiConnection();
+      console.log('[DEBUG] Test connexion résultat:', result);
+      
+      if (!result.success) {
+        console.warn('[WARNING] Problème de connexion API:', result.message);
+      }
+    } catch (error) {
+      console.error('[ERROR] Erreur test connexion:', error);
+    }
+  };
 
   useEffect(() => {
     if (currentUser) {
@@ -547,13 +562,20 @@ export default function CoachScreen() {
   };
 
   const loadMessages = async () => {
-    if (!currentUser?.id) return;
+    if (!currentUser?.id) {
+      console.log('[DEBUG] Pas d\'utilisateur connecté pour charger les messages');
+      return;
+    }
 
     try {
+      console.log('[DEBUG] Chargement messages pour:', currentUser.id);
       const messagesData = await getMessages(currentUser.id);
       setMessages(messagesData);
+      console.log('[DEBUG] Messages chargés avec succès:', messagesData.length);
     } catch (error) {
-      console.error('Erreur chargement messages:', error);
+      console.error('[ERROR] Erreur chargement messages dans coach.tsx:', error);
+      // Ne pas faire planter l'app, juste afficher un message d'erreur discret
+      setMessages([]);
     }
   };
 
