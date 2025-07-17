@@ -572,10 +572,20 @@ export default function CoachScreen() {
       const messagesData = await getMessages(currentUser.id);
       setMessages(messagesData);
       console.log('[DEBUG] Messages chargés avec succès:', messagesData.length);
+      
+      // Ajouter un message informatif si pas de connexion serveur
+      if (messagesData.length === 0) {
+        const connectionTest = await testApiConnection();
+        if (!connectionTest.success) {
+          console.log('[INFO] Mode hors ligne - les nouveaux messages seront synchronisés plus tard');
+        }
+      }
     } catch (error) {
       console.error('[ERROR] Erreur chargement messages dans coach.tsx:', error);
-      // Ne pas faire planter l'app, juste afficher un message d'erreur discret
       setMessages([]);
+      
+      // Optionnel: ajouter un message d'état pour l'utilisateur
+      console.log('[INFO] Messages indisponibles - vérification de la connexion...');
     }
   };
 
