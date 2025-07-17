@@ -747,7 +747,8 @@ app.get('/api/status', (req, res) => {
 app.listen(PORT, '0.0.0.0', async () => {
   await initDataDir();
   console.log(`🚀 Serveur EatFitByMax démarré sur le port ${PORT}`);
-  console.log(`🌐 Serveur accessible sur : https://${process.env.REPLIT_DEV_DOMAIN || 'localhost'}:${PORT}`);
+  console.log(`🌐 Serveur accessible sur : http://0.0.0.0:${PORT}`);
+  console.log(`🌐 Serveur externe accessible sur : http://51.178.29.220:${PORT}`);
   console.log(`📱 API prête pour les applications mobiles Expo`);
   console.log(`🔧 Mode: ${process.env.NODE_ENV || 'development'}`);
 
