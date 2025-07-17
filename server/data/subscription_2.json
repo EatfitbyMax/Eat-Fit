@@ -1,0 +1,12 @@
+
+{
+  "userId": "2",
+  "planId": "bronze",
+  "planName": "Abonnement Bronze",
+  "price": 9.99,
+  "currency": "EUR",
+  "status": "active",
+  "startDate": "2024-01-02T00:00:00.000Z",
+  "endDate": "2025-12-31T23:59:59.999Z",
+  "paymentMethod": "manual_setup"
+}
