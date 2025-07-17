@@ -1356,23 +1356,86 @@ export const getUserData = async (): Promise<any | null> => {
 };
 
 // Adding message management functions here
+// Configuration de l'URL API avec fallback et validation
+const getApiUrl = () => {
+  const envUrl = process.env.EXPO_PUBLIC_API_URL;
+
+  if (envUrl) {
+    console.log(`[DEBUG] URL API depuis env: ${envUrl}`);
+    return envUrl;
+  }
+
+  // Fallback pour le développement
+  const fallbackUrl = 'http://51.178.29.220:5000';
+  console.log(`[DEBUG] URL API fallback: ${fallbackUrl}`);
+  return fallbackUrl;
+};
+
+const API_URL = getApiUrl();
+
+// Test de connexion à l'API
+export const testApiConnection = async (): Promise<{ success: boolean; message: string }> => {
+  try {
+    console.log(`[DEBUG] Test de connexion API: ${API_URL}/api/health-check`);
+
+    const response = await fetch(`${API_URL}/api/health-check`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log('[DEBUG] API connectée:', data);
+      return { success: true, message: 'Connexion API réussie' };
+    } else {
+      return { success: false, message: `Erreur HTTP: ${response.status}` };
+    }
+  } catch (error) {
+    console.error('[ERROR] Test connexion API échoué:', error);
+    return { success: false, message: `Erreur réseau: ${error}` };
+  }
+};
+
 export const getMessages = async (userId: string): Promise<any[]> => {
   try {
-    const response = await fetch(`${SERVER_URL}/api/messages/${userId}`);
+    console.log(`[DEBUG] Récupération messages pour userId: ${userId}`);
+    console.log(`[DEBUG] URL API: ${API_URL}/api/messages/${userId}`);
+
+    const response = await fetch(`${API_URL}/api/messages/${userId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    console.log(`[DEBUG] Response status: ${response.status}`);
+
     if (!response.ok) {
-      throw new Error(`Erreur HTTP: ${response.status}`);
+      throw new Error(`Erreur HTTP: ${response.status} - ${response.statusText}`);
     }
-    const messages = await response.json();
-    return messages || [];
+
+    const data = await response.json();
+    console.log(`[DEBUG] Messages récupérés:`, data);
+
+    return data.map((message: any) => ({
+      ...message,
+      timestamp: new Date(message.timestamp)
+    }));
   } catch (error) {
-    console.error('Erreur lors de la récupération des messages:', error);
+    console.error('[ERROR] Erreur récupération messages:', error);
+    // Retourner un tableau vide au lieu de faire planter l'app
     return [];
   }
 };
 
-export const saveMessages = async (userId: string, messages: any[]): Promise<boolean> => {
+export const saveMessages = async (userId: string, messages: any[]): Promise<void> => {
   try {
-    const response = await fetch(`${SERVER_URL}/api/messages/${userId}`, {
+    console.log(`[DEBUG] Sauvegarde messages pour userId: ${userId}`);
+    console.log(`[DEBUG] Nombre de messages à sauvegarder: ${messages.length}`);
+
+    const response = await fetch(`${API_URL}/api/messages/${userId}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1380,14 +1443,16 @@ export const saveMessages = async (userId: string, messages: any[]): Promise<boo
       body: JSON.stringify(messages),
     });
 
+    console.log(`[DEBUG] Sauvegarde response status: ${response.status}`);
+
     if (!response.ok) {
-      throw new Error(`Erreur HTTP: ${response.status}`);
+      throw new Error(`Erreur HTTP: ${response.status} - ${response.statusText}`);
     }
 
-    return true;
+    console.log(`[DEBUG] Messages sauvegardés avec succès`);
   } catch (error) {
-    console.error('Erreur lors de la sauvegarde des messages:', error);
-    return false;
+    console.error('[ERROR] Erreur sauvegarde messages:', error);
+    throw error;
   }
 };
 
