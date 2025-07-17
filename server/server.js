@@ -6,7 +6,7 @@ const path = require('path');
 const stripe = process.env.STRIPE_SECRET_KEY ? require('stripe')(process.env.STRIPE_SECRET_KEY) : null;
 
 const app = express();
-const PORT = process.env.PORT || 8081;
+const PORT = process.env.PORT || 5000;
 const DATA_DIR = path.join(__dirname, 'data');
 
 // Middleware de sécurité et logging
@@ -706,9 +706,13 @@ app.post('/api/app-preferences/:userId', async (req, res) => {
   }
 });
 
-// Route racine - optimisée pour les health checks
+// Route racine - optimisée pour les health checks Autoscale
 app.get('/', (req, res) => {
-  res.status(200).json({ status: 'OK' });
+  res.status(200).json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    service: 'eatfitbymax-api'
+  });
 });
 
 // Route de santé
@@ -752,4 +756,5 @@ app.listen(PORT, '0.0.0.0', (err) => {
   
   console.log(`🚀 Serveur EatFitByMax démarré sur le port ${PORT}`);
   console.log(`🔧 Mode: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🌐 Health check disponible sur: http://0.0.0.0:${PORT}/`);
 });
