@@ -6,7 +6,7 @@ const path = require('path');
 const stripe = process.env.STRIPE_SECRET_KEY ? require('stripe')(process.env.STRIPE_SECRET_KEY) : null;
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 80;
 const DATA_DIR = path.join(__dirname, 'data');
 
 // Middleware de sécurité et logging
