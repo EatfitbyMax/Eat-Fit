@@ -1,0 +1,10 @@
+
+{
+  "userId": "3",
+  "planId": "free",
+  "planName": "Version Gratuite",
+  "price": 0,
+  "currency": "EUR",
+  "status": "active",
+  "paymentMethod": "none"
+}
