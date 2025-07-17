@@ -1,0 +1,44 @@
+/home/ubuntu/.pm2/logs/eatfitbymax-server-error.log last 50 lines:
+/home/ubuntu/.pm2/logs/eatfitbymax-server-out.log last 50 lines:
+0|eatfitby | 🚀 Serveur EatFitByMax démarré sur le port 5000
+0|eatfitby | 🌐 Serveur accessible sur : https://localhost:5000
+0|eatfitby | 📱 API prête pour les applications mobiles Expo
+0|eatfitby | 🔧 Mode: development
+0|eatfitby | 2025-07-16T19:09:36.712Z - GET /api
+0|eatfitby | GET /api - 404 (16ms)
+0|eatfitby | 🚀 Serveur EatFitByMax démarré sur le port 5000
+0|eatfitby | 🌐 Serveur accessible sur : https://localhost:5000
+0|eatfitby | 📱 API prête pour les applications mobiles Expo
+0|eatfitby | 🔧 Mode: development
+0|eatfitby | 2025-07-16T19:35:37.226Z - GET /
+0|eatfitby | GET / - 200 (16ms)
+0|eatfitby | 2025-07-16T19:35:37.481Z - GET /favicon.ico
+0|eatfitby | GET /favicon.ico - 404 (11ms)
+0|eatfitby | 🚀 Serveur EatFitByMax démarré sur le port 5000
+0|eatfitby | 🌐 Serveur accessible sur : https://localhost:5000
+0|eatfitby | 📱 API prête pour les applications mobiles Expo
+0|eatfitby | 🔧 Mode: development
+0|eatfitby | 2025-07-16T21:08:58.484Z - GET /
+0|eatfitby | GET / - 200 (80ms)
+0|eatfitby | 2025-07-16T22:09:03.330Z - GET /
+0|eatfitby | GET / - 200 (7ms)
+0|eatfitby | 2025-07-16T22:17:29.961Z - GET /favicon.ico
+0|eatfitby | GET /favicon.ico - 404 (15ms)
+0|eatfitby | 2025-07-17T00:05:20.002Z - GET /
+0|eatfitby | GET / - 200 (11ms)
+0|eatfitby | 2025-07-17T00:05:20.061Z - GET /
+0|eatfitby | GET / - 200 (9ms)
+0|eatfitby | 2025-07-17T00:05:20.262Z - GET /favicon.ico
+0|eatfitby | GET /favicon.ico - 404 (14ms)
+0|eatfitby | 2025-07-17T00:05:30.092Z - GET /
+0|eatfitby | GET / - 200 (6ms)
+0|eatfitby | 2025-07-17T00:05:30.122Z - GET /
+0|eatfitby | GET / - 200 (5ms)
+0|eatfitby | 2025-07-17T00:29:59.004Z - GET /
+0|eatfitby | GET / - 200 (13ms)
+0|eatfitby | 2025-07-17T03:26:10.356Z - GET /
+0|eatfitby | GET / - 200 (6ms)
+0|eatfitby | 2025-07-17T03:26:30.457Z - GET /favicon.ico
+0|eatfitby | GET /favicon.ico - 404 (2ms)
+0|eatfitby | 2025-07-17T04:48:52.501Z - GET /
+0|eatfitby | GET / - 200 (12ms)
