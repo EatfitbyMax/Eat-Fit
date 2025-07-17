@@ -6,7 +6,7 @@ const path = require('path');
 const stripe = process.env.STRIPE_SECRET_KEY ? require('stripe')(process.env.STRIPE_SECRET_KEY) : null;
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8081;
 const DATA_DIR = path.join(__dirname, 'data');
 
 // Middleware de sécurité et logging
@@ -753,11 +753,16 @@ app.get('/api/status', (req, res) => {
   });
 });
 
-app.listen(PORT, '0.0.0.0', async () => {
+app.listen(PORT, '0.0.0.0', async (err) => {
+  if (err) {
+    console.error('❌ Erreur démarrage serveur:', err);
+    process.exit(1);
+  }
+  
   await initDataDir();
   console.log(`🚀 Serveur EatFitByMax démarré sur le port ${PORT}`);
-  console.log(`🌐 Serveur accessible sur : http://0.0.0.0:${PORT}`);
   console.log(`📱 API prête pour les applications mobiles iOS`);
+  console.log(`🌐 Serveur accessible sur : http://0.0.0.0:${PORT}`);
   console.log(`🔧 Mode: ${process.env.NODE_ENV || 'development'}`);
 
   // Configuration spécifique pour le déploiement Replit
