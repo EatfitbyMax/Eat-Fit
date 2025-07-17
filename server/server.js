@@ -53,8 +53,17 @@ app.use(rateLimit);
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? ['https://eatfitbymax.com', 'https://api.eatfitbymax.com']
-    : true,
-  credentials: true
+    : [
+        'http://localhost:8081',
+        'http://localhost:8082', 
+        'https://workspace-eatfitbymax.replit.dev',
+        /^https:\/\/.*\.replit\.dev$/,
+        /^https:\/\/.*\.replit\.app$/,
+        true
+      ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 app.use(express.json({ limit: '50mb' }));
 
@@ -747,13 +756,16 @@ app.get('/api/status', (req, res) => {
 app.listen(PORT, '0.0.0.0', async () => {
   await initDataDir();
   console.log(`🚀 Serveur EatFitByMax démarré sur le port ${PORT}`);
-  console.log(`🌐 Serveur accessible sur : http://0.0.0.0:${PORT}`);
-  console.log(`🌐 Serveur externe accessible sur : http://51.178.29.220:${PORT}`);
+  console.log(`🌐 Serveur local accessible sur : http://0.0.0.0:${PORT}`);
+  console.log(`🌐 Serveur VPS accessible sur : http://51.178.29.220:${PORT}`);
   console.log(`📱 API prête pour les applications mobiles Expo`);
   console.log(`🔧 Mode: ${process.env.NODE_ENV || 'development'}`);
 
   // Log des différentes URLs d'accès possibles
   if (process.env.REPLIT_DEV_DOMAIN) {
     console.log(`🔗 Replit URL : https://${process.env.REPLIT_DEV_DOMAIN}`);
+    console.log(`🔗 Replit API : https://${process.env.REPLIT_DEV_DOMAIN}/api/health-check`);
   }
+  
+  console.log(`✅ Serveur prêt avec fallback automatique`);
 });
