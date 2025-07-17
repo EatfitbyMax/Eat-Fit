@@ -74,12 +74,11 @@ app.use((err, req, res, next) => {
 });
 
 // Créer le dossier data s'il n'existe pas
-async function initDataDir() {
-  try {
-    await fs.access(DATA_DIR);
-  } catch {
-    await fs.mkdir(DATA_DIR, { recursive: true });
-    console.log('Dossier data créé');
+function initDataDir() {
+  const fs = require('fs');
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+    console.log('📁 Répertoire data créé');
   }
 }
 
@@ -707,20 +706,9 @@ app.post('/api/app-preferences/:userId', async (req, res) => {
   }
 });
 
-// Route racine
+// Route racine - optimisée pour les health checks
 app.get('/', (req, res) => {
-  res.status(200).json({
-    message: 'Serveur EatFitByMax API',
-    version: '1.0.0',
-    status: 'Opérationnel',
-    timestamp: new Date().toISOString(),
-    endpoints: {
-      health: '/api/health-check',
-      status: '/api/status',
-      users: '/api/users',
-      programmes: '/api/programmes'
-    }
-  });
+  res.status(200).json({ status: 'OK' });
 });
 
 // Route de santé
@@ -753,23 +741,15 @@ app.get('/api/status', (req, res) => {
   });
 });
 
-app.listen(PORT, '0.0.0.0', async (err) => {
+// Initialiser le répertoire de données au démarrage
+initDataDir();
+
+app.listen(PORT, '0.0.0.0', (err) => {
   if (err) {
     console.error('❌ Erreur démarrage serveur:', err);
     process.exit(1);
   }
   
-  await initDataDir();
   console.log(`🚀 Serveur EatFitByMax démarré sur le port ${PORT}`);
-  console.log(`📱 API prête pour les applications mobiles iOS`);
-  console.log(`🌐 Serveur accessible sur : http://0.0.0.0:${PORT}`);
   console.log(`🔧 Mode: ${process.env.NODE_ENV || 'development'}`);
-
-  // Configuration spécifique pour le déploiement Replit
-  if (process.env.REPLIT_DEV_DOMAIN) {
-    console.log(`🔗 Replit Deployment URL : https://${process.env.REPLIT_DEV_DOMAIN}`);
-    console.log(`🔗 API Health Check : https://${process.env.REPLIT_DEV_DOMAIN}/api/health-check`);
-  }
-  
-  console.log(`✅ Serveur Replit prêt - Base de données VPS 51.178.29.220:5000`);
 });
