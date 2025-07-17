@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const SERVER_URL = process.env.EXPO_PUBLIC_API_URL || 'http://51.178.29.220:5000';
+const SERVER_URL = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
+const REPLIT_URL = process.env.EXPO_PUBLIC_REPLIT_URL || 'https://workspace-eatfitbymax.replit.dev';
 
 export class PersistentStorage {
   // Test de connexion au serveur avec cache temporaire
