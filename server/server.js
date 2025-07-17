@@ -48,6 +48,13 @@ const rateLimit = (req, res, next) => {
   next();
 };
 
+// Route racine - doit être en premier pour les health checks
+app.get('/', (req, res) => {
+  res.status(200).json({ 
+    status: 'healthy'
+  });
+});
+
 app.use(requestLogger);
 app.use(rateLimit);
 app.use(cors({
@@ -706,15 +713,6 @@ app.post('/api/app-preferences/:userId', async (req, res) => {
   }
 });
 
-// Route racine - optimisée pour les health checks Autoscale
-app.get('/', (req, res) => {
-  res.status(200).json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
-    service: 'eatfitbymax-api'
-  });
-});
-
 // Route de santé
 app.get('/api/health', (req, res) => {
   res.status(200).json({ 
@@ -748,12 +746,7 @@ app.get('/api/status', (req, res) => {
 // Initialiser le répertoire de données au démarrage
 initDataDir();
 
-app.listen(PORT, '0.0.0.0', (err) => {
-  if (err) {
-    console.error('❌ Erreur démarrage serveur:', err);
-    process.exit(1);
-  }
-  
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Serveur EatFitByMax démarré sur le port ${PORT}`);
   console.log(`🔧 Mode: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🌐 Health check disponible sur: http://0.0.0.0:${PORT}/`);
