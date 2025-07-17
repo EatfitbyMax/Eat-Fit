@@ -165,5 +165,23 @@ mode = "sequential"
 task = "shell.exec"
 args = "cd server && node server.js"
 
+[[workflows.workflow]]
+name = "Build iOS Production"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx eas build --platform ios --profile production --non-interactive"
+
+[[workflows.workflow]]
+name = "Submit to App Store"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx eas submit --platform ios --profile production --non-interactive"
+
 [deployment]
 run = ["sh", "-c", "cd server && node server.js"]
