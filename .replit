@@ -156,5 +156,14 @@ args = "EXPO_PUBLIC_API_URL=http://51.178.29.220:5000 EXPO_PUBLIC_REPLIT_URL=htt
 task = "shell.exec"
 args = "cd server && npm install && node server.js"
 
+[[workflows.workflow]]
+name = "Test Deployment"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd server && node server.js"
+
 [deployment]
-run = ["sh", "-c", "cd server && npm install --production && node server.js"]
+run = ["sh", "-c", "cd server && node server.js"]
