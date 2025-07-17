@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const SERVER_URL = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
-const REPLIT_URL = process.env.EXPO_PUBLIC_REPLIT_URL || 'https://workspace-eatfitbymax.replit.dev';
+const SERVER_URL = process.env.EXPO_PUBLIC_API_URL || 'https://workspace-eatfitbymax.replit.dev';
+const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
 
 export class PersistentStorage {
   // Test de connexion au serveur avec cache temporaire
@@ -10,7 +10,7 @@ export class PersistentStorage {
 
   static async testConnection(): Promise<boolean> {
     try {
-      console.log(`Test de connexion au serveur VPS: ${SERVER_URL}`);
+      console.log(`Test de connexion au serveur Replit: ${SERVER_URL}`);
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
@@ -27,15 +27,15 @@ export class PersistentStorage {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Serveur VPS opérationnel -', data.message);
+        console.log('✅ Serveur Replit opérationnel -', data.message);
         return true;
       } else {
-        console.warn(`⚠️ Serveur indisponible (status: ${response.status})`);
+        console.warn(`⚠️ Serveur Replit indisponible (status: ${response.status})`);
         return false;
       }
     } catch (error: any) {
       if (error.name === 'AbortError') {
-        console.warn('⚠️ Timeout de connexion au serveur VPS');
+        console.warn('⚠️ Timeout de connexion au serveur Replit');
       } else {
         console.warn(`⚠️ Erreur de connexion au serveur ${SERVER_URL}:`, error.message);
       }
