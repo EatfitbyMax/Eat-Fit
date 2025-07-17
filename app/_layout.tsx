@@ -83,14 +83,9 @@ export default function RootLayout() {
 
       // Initialisation en parallèle pour optimiser le temps de chargement
       const initPromises = [
-        // Test de connexion avec timeout
-        Promise.race([
-          PersistentStorage.testConnection(),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Timeout')), 3000)
-          )
-        ]).catch(() => {
-          console.warn('Serveur VPS non disponible, utilisation du stockage local');
+        // Test de connexion avec multiple fallbacks
+        PersistentStorage.testConnection().catch(() => {
+          console.warn('Serveurs distants non disponibles, mode hors ligne activé');
           return false;
         }),
         
