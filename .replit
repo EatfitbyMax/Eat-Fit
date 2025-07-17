@@ -184,4 +184,4 @@ task = "shell.exec"
 args = "npx eas submit --platform ios --profile production --non-interactive"
 
 [deployment]
-run = ["sh", "-c", "cd server && node server.js"]
+run = ["sh", "-c", "cd server && PORT=8081 node server.js"]
