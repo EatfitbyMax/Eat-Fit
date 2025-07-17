@@ -1378,12 +1378,18 @@ export const testApiConnection = async (): Promise<{ success: boolean; message: 
   try {
     console.log(`[DEBUG] Test de connexion API: ${API_URL}/api/health-check`);
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 secondes
+
     const response = await fetch(`${API_URL}/api/health-check`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
+      signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
 
     if (response.ok) {
       const data = await response.json();
@@ -1392,9 +1398,14 @@ export const testApiConnection = async (): Promise<{ success: boolean; message: 
     } else {
       return { success: false, message: `Erreur HTTP: ${response.status}` };
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      console.error('[ERROR] Timeout connexion API');
+      return { success: false, message: 'Timeout de connexion (5s)' };
+    }
+    
     console.error('[ERROR] Test connexion API échoué:', error);
-    return { success: false, message: `Erreur réseau: ${error}` };
+    return { success: false, message: `Erreur réseau: ${error.message || error}` };
   }
 };
 
@@ -1403,13 +1414,19 @@ export const getMessages = async (userId: string): Promise<any[]> => {
     console.log(`[DEBUG] Récupération messages pour userId: ${userId}`);
     console.log(`[DEBUG] URL API: ${API_URL}/api/messages/${userId}`);
 
+    // Test de connexion avec timeout court
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 secondes
+
     const response = await fetch(`${API_URL}/api/messages/${userId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
+      signal: controller.signal
     });
 
+    clearTimeout(timeoutId);
     console.log(`[DEBUG] Response status: ${response.status}`);
 
     if (!response.ok) {
@@ -1417,15 +1434,35 @@ export const getMessages = async (userId: string): Promise<any[]> => {
     }
 
     const data = await response.json();
-    console.log(`[DEBUG] Messages récupérés:`, data);
+    console.log(`[DEBUG] Messages récupérés depuis VPS:`, data.length);
+
+    // Sauvegarder en cache local
+    await AsyncStorage.setItem(`messages_cache_${userId}`, JSON.stringify(data));
 
     return data.map((message: any) => ({
       ...message,
       timestamp: new Date(message.timestamp)
     }));
   } catch (error) {
-    console.error('[ERROR] Erreur récupération messages:', error);
-    // Retourner un tableau vide au lieu de faire planter l'app
+    console.warn('[WARNING] Erreur récupération messages VPS:', error);
+    
+    // FALLBACK: Essayer le cache local
+    try {
+      const cachedData = await AsyncStorage.getItem(`messages_cache_${userId}`);
+      if (cachedData) {
+        const messages = JSON.parse(cachedData);
+        console.log(`[DEBUG] Messages récupérés depuis cache local:`, messages.length);
+        return messages.map((message: any) => ({
+          ...message,
+          timestamp: new Date(message.timestamp)
+        }));
+      }
+    } catch (cacheError) {
+      console.error('[ERROR] Erreur cache local messages:', cacheError);
+    }
+
+    // Dernier recours: tableau vide
+    console.log('[DEBUG] Aucun message trouvé, retour tableau vide');
     return [];
   }
 };
