@@ -30,8 +30,7 @@
       "channel": "production",
       "ios": {
         "resourceClass": "m-medium",
-        "autoIncrement": true,
-        "bundleIdentifier": "com.eatfitbymax.app"
+        "autoIncrement": true
       },
       "android": {
         "buildType": "app-bundle",
@@ -44,8 +43,7 @@
       "channel": "production",
       "ios": {
         "resourceClass": "m-medium",
-        "autoIncrement": true,
-        "bundleIdentifier": "com.eatfitbymax.app"
+        "autoIncrement": true
       }
     }
   },
