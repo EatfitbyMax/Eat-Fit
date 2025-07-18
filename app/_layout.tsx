@@ -81,68 +81,64 @@ export default function RootLayout() {
     try {
       console.log('=== DÉBUT INITIALISATION ===');
 
-      // Initialisation en parallèle pour optimiser le temps de chargement
-      const initPromises = [
-        // Test de connexion avec multiple fallbacks
-        PersistentStorage.testConnection().catch(() => {
-          console.warn('Serveurs distants non disponibles, mode hors ligne activé');
-          return false;
-        }),
-        
-        // Initialisation admin avec gestion d'erreur
-        initializeAdminAccount().catch(error => {
-          console.warn('Initialisation admin échouée:', error);
-          return null;
-        }),
-        
-        // Migration avec gestion d'erreur
-        migrateExistingData().catch(error => {
-          console.warn('Migration échouée:', error);
-          return null;
-        })
-      ];
+      // Initialisation simplifiée et plus robuste
+      try {
+        await PersistentStorage.testConnection();
+        console.log('Connexion serveur OK');
+      } catch (error) {
+        console.warn('Mode hors ligne activé');
+      }
 
-      // Attendre toutes les initialisations en parallèle
-      await Promise.allSettled(initPromises);
+      try {
+        await initializeAdminAccount();
+        console.log('Admin initialisé');
+      } catch (error) {
+        console.warn('Admin non initialisé:', error.message);
+      }
 
-      console.log('Vérification de l\'utilisateur connecté...');
-      const user = await getCurrentUser();
+      try {
+        await migrateExistingData();
+        console.log('Migration terminée');
+      } catch (error) {
+        console.warn('Migration échouée:', error.message);
+      }
+
+      let user = null;
+      try {
+        user = await getCurrentUser();
+        console.log('Utilisateur trouvé:', user?.userType);
+      } catch (error) {
+        console.warn('Aucun utilisateur connecté');
+      }
 
       console.log('=== FIN INITIALISATION ===');
 
-      // Réduire le délai pour une meilleure UX (3 secondes au lieu de 6)
-      const minSplashTime = 3000;
+      // Délai réduit et navigation sécurisée
       setTimeout(() => {
         setIsInitializing(false);
-
-        // Navigation immédiate après le splash
+        
         setTimeout(() => {
           try {
             if (user?.userType === 'coach') {
-              console.log('Redirection coach:', user.userType);
               router.replace('/(coach)/programmes');
             } else if (user?.userType === 'client') {
-              console.log('Redirection client:', user.userType);
               router.replace('/(client)');
             } else {
-              console.log('Aucun utilisateur valide, redirection vers login');
               router.replace('/auth/login');
             }
-          } catch (error) {
-            console.error('Erreur navigation:', error);
-            // Fallback robuste
+          } catch (navError) {
+            console.error('Erreur navigation, fallback vers login');
             router.replace('/auth/login');
           }
-        }, 50);
-      }, minSplashTime);
-
-    } catch (error) {
-      console.error('Erreur critique lors de l\'initialisation:', error);
-      // En cas d'erreur critique, aller directement vers login
-      setTimeout(() => {
-        setIsInitializing(false);
-        setTimeout(() => router.replace('/auth/login'), 50);
+        }, 100);
       }, 2000);
+
+    } catch (criticalError) {
+      console.error('Erreur critique:', criticalError);
+      setIsInitializing(false);
+      setTimeout(() => {
+        router.replace('/auth/login');
+      }, 1000);
     }
   };
 
