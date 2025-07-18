@@ -47,7 +47,10 @@
       "output": "static",
       "favicon": "./assets/images/crown-logo.png"
     },
-    "expo-router": {
+    "extra": {
+      "eas": {
+        "projectId": "6f3f6b36-8c5b-4d71-9035-4e9757b40de5"
+      },
       "router": {}
     },
     "updates": {

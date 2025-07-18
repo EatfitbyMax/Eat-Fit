@@ -1,0 +1,105 @@
+ Environment updated. Reloading shell...
+[expo-cli] env: load .env
+[expo-cli] env: export EXPO_PUBLIC_STRAVA_CLIENT_ID EXPO_PUBLIC_STRAVA_CLIENT_SECRET EXPO_PUBLIC_CLARIFAI_API_KEY EXPO_PUBLIC_GOOGLE_VISION_API_KEY EXPO_PUBLIC_EMAILJS_SERVICE_ID EXPO_PUBLIC_EMAILJS_TEMPLATE_ID EXPO_PUBLIC_EMAILJS_PUBLIC_KEY EXPO_PUBLIC_VPS_URL EXPO_PUBLIC_API_URL EXPO_PUBLIC_REPLIT_URL API_URL EXPO_PUBLIC_PRIMARY_SERVER
+[expo-cli] Starting Metro Bundler
+[expo-cli] iOS node_modules/expo-router/entry.js ▓▓▓▓░░░░░░░░░░░░ 27.7% (14/50)
+[expo-cli] Android node_modules/expo-router/entry.js ▓▓▓▓▓░░░░░░░░░░░ 36.0% (24/76)
+[expo-cli] iOS node_modules/expo-router/entry.js ▓▓▓▓░░░░░░░░░░░░ 27.7% ( 57/232)
+[expo-cli] Android node_modules/expo-router/entry.js ▓▓▓▓▓░░░░░░░░░░░ 36.0% (131/296)
+[expo-cli] iOS node_modules/expo-router/entry.js ▓▓▓▓░░░░░░░░░░░░ 27.7% ( 99/276)
+[expo-cli] Android node_modules/expo-router/entry.js ▓▓▓▓▓░░░░░░░░░░░ 36.0% (219/426)
+[expo-cli] iOS node_modules/expo-router/entry.js ▓▓▓▓░░░░░░░░░░░░ 27.7% (218/453)
+[expo-cli] Android node_modules/expo-router/entry.js ▓▓▓▓▓░░░░░░░░░░░ 36.0% (252/468)
+[expo-cli] iOS node_modules/expo-router/entry.js ▓▓▓▓░░░░░░░░░░░░ 30.6% (267/489)
+[expo-cli] Android node_modules/expo-router/entry.js ▓▓▓▓▓▓░░░░░░░░░░ 40.3% (382/606)
+[expo-cli] iOS node_modules/expo-router/entry.js ▓▓▓▓▓░░░░░░░░░░░ 31.6% (279/496)
+[expo-cli] Android node_modules/expo-router/entry.js ▓▓▓▓▓▓░░░░░░░░░░ 40.3% (398/629)
+[expo-cli] iOS node_modules/expo-router/entry.js ▓▓▓▓▓░░░░░░░░░░░ 36.7% (338/586)
+[expo-cli] Android node_modules/expo-router/entry.js ▓▓▓▓▓▓▓░░░░░░░░░ 44.2% (465/715)
+[expo-cli] iOS node_modules/expo-router/entry.js ▓▓▓▓▓▓░░░░░░░░░░ 41.7% (461/714)
+[expo-cli] Android node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 64.2% (597/745)
+[expo-cli] iOS node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 54.8% (666/911)
+[expo-cli] Android node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 67.5% (700/881)
+[expo-cli] iOS node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 57.7% (698/919)
+[expo-cli] Android node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 67.5% ( 900/1151)
+[expo-cli] iOS node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 69.9% ( 924/1171)
+[expo-cli] Android node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 67.5% ( 975/1191)
+[expo-cli] iOS node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 72.2% (1129/1349)
+[expo-cli] Android node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 73.9% (1149/1337)
+[expo-cli] iOS node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 78.3% (1230/1390)
+[expo-cli] Android node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 90.1% (1348/1420)
+[expo-cli] iOS node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (1524/1524)
+[expo-cli] Android node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (1521/1521)
+[expo-cli] Android Bundled 57122ms node_modules/expo-router/entry.js (1521 modules)
+[expo-cli] iOS node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (1524/1524)
+[expo-cli] Android node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (1521/1521)
+[expo-cli] iOS node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (1524/1524)
+[expo-cli] iOS Bundled 63757ms node_modules/expo-router/entry.js (1524 modules)
+[expo-cli] iOS node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (1524/1524)
+[expo-cli] Creating asset map
+[expo-cli] 
+[expo-cli] › Assets (36):
+[expo-cli] assets/fonts/SpaceMono-Regular.ttf (93.3 kB)
+[expo-cli] assets/images/react-logo.png (3 variations | 13.9 kB)
+[expo-cli] node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialIcons.ttf (357 kB)
+[expo-cli] node_modules/@react-navigation/elements/lib/module/assets/back-icon-mask.png (653 B)
+[expo-cli] node_modules/@react-navigation/elements/lib/module/assets/back-icon.png (8 variations | 359 B)
+[expo-cli] node_modules/@react-navigation/elements/lib/module/assets/clear-icon.png (4 variations | 425 B)
+[expo-cli] node_modules/@react-navigation/elements/lib/module/assets/close-icon.png (4 variations | 235 B)
+[expo-cli] node_modules/@react-navigation/elements/lib/module/assets/search-icon.png (7 variations | 592 B)
+[expo-cli] node_modules/expo-router/assets/arrow_down.png (9.46 kB)
+[expo-cli] node_modules/expo-router/assets/error.png (469 B)
+[expo-cli] node_modules/expo-router/assets/file.png (138 B)
+[expo-cli] node_modules/expo-router/assets/forward.png (188 B)
+[expo-cli] node_modules/expo-router/assets/pkg.png (364 B)
+[expo-cli] node_modules/expo-router/assets/sitemap.png (465 B)
+[expo-cli] node_modules/expo-router/assets/unmatched.png (4.75 kB)
+[expo-cli] 
+[expo-cli] › android bundles (2):
+[expo-cli] _expo/static/js/android/entry-3f59e15a6470f417b4b554eaece14cf4.hbc (3.11 MB)
+[expo-cli] _expo/static/js/android/entry-3f59e15a6470f417b4b554eaece14cf4.hbc.map (10.2 MB)
+[expo-cli] 
+[expo-cli] › ios bundles (2):
+[expo-cli] _expo/static/js/ios/entry-ccd2b7c6b7125b9407d9218dc417e5ad.hbc (3.07 MB)
+[expo-cli] _expo/static/js/ios/entry-ccd2b7c6b7125b9407d9218dc417e5ad.hbc.map (10.2 MB)
+[expo-cli] 
+[expo-cli] › Files (2):
+[expo-cli] assetmap.json (11.1 kB)
+[expo-cli] metadata.json (4.08 kB)
+[expo-cli] 
+[expo-cli] Exported: dist
+✔ Exported bundle(s)
+✔ Uploaded assetmap.json 
+✔ Uploaded 2 app bundles
+✔ Uploading assets skipped - no new assets found
+ℹ 31 iOS assets, 32 Android assets (maximum: 2000 total per update). Learn more about asset limits: https://expo.fyi/eas-update-asset-limits
+⌛️ Computing the project fingerprints is taking longer than expected...
+⏩ To skip this step, set the environment variable: EAS_SKIP_AUTO_FINGERPRINT=1
+✔ Computed project fingerprints
+✔ Published!
+
+Branch             main
+Runtime version    exposdk:53.0.0
+Platform           android, ios
+Update group ID    e319bf15-20a0-4ed2-8fe4-97ff0cf4e569
+Android update ID  44b8db14-efe0-4f2d-8257-faab929df42c
+iOS update ID      b82aee28-4600-4686-9aa8-0dd9185268f1
+Message            Assistant checkpoint: Correction de la syntaxe JSON dans app.json
+
+Assistant generated file changes:
+- app.json: Corriger la syntaxe JSON dans app.json
+
+---
+
+User prompt:
+
+corrige
+
+Replit-Commit-Author: Assistant
+Replit-Commit-Session-Id: 4e67b8df-3e5b-4b91-8e65-035666a5f13f
+Commit             2d15b262f0a4ec451bfc29febb8a69ed3ac98358*
+EAS Dashboard      https://expo.dev/accounts/maxandre_pm/projects/eatfitbymax/updates/e319bf15-20a0-4ed2-8fe4-97ff0cf4e569
+
+No compatible builds found for the following fingerprints:
+    Android fingerprint:  c4f14eba3da3caa87fef3fe91ea10ee23ff201a2
+    URL                :  https://expo.dev/accounts/maxandre_pm/projects/eatfitbymax/fingerprints/c4f14eba3da3caa87fef3fe91ea10ee23ff201a2
