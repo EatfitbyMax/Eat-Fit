@@ -32,20 +32,23 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
 
   useEffect(() => {
     const startAnimation = () => {
-      // 1. Animation de la couronne (plus rapide)
-      crownOpacity.value = withTiming(1, { duration: 600 });
-      crownScale.value = withTiming(1, { duration: 600 });
+      // 1. Animation de la couronne
+      crownOpacity.value = withTiming(1, { duration: 800 });
+      crownScale.value = withSequence(
+        withTiming(1.1, { duration: 800 }),
+        withTiming(1, { duration: 200 })
+      );
       
-      // 2. Titre apparaît plus rapidement
-      titleOpacity.value = withDelay(800, withTiming(1, { duration: 600 }));
+      // 2. Titre apparaît après l'animation de la couronne (3 secondes)
+      titleOpacity.value = withDelay(3000, withTiming(1, { duration: 800 }));
       
       // 3. Sous-titre apparaît après le titre
-      subtitleOpacity.value = withDelay(1400, withTiming(1, { duration: 600 }));
+      subtitleOpacity.value = withDelay(3800, withTiming(1, { duration: 800 }));
       
-      // 4. Terminer plus rapidement
+      // 4. Terminer le splash screen après toutes les animations
       setTimeout(() => {
         onFinish();
-      }, 2500);
+      }, 6000);
     };
 
     startAnimation();
