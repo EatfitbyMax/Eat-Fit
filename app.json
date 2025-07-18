@@ -20,7 +20,9 @@
       },
       "entitlements": {
         "com.apple.developer.healthkit": true,
-        "com.apple.developer.healthkit.access": []
+        "com.apple.developer.healthkit.access": [
+          "health-records"
+        ]
       },
       "infoPlist": {
         "NSHealthShareUsageDescription": "EatFitByMax utilise Apple Health pour synchroniser vos données de santé et fitness afin de vous fournir un suivi personnalisé de votre progression.",

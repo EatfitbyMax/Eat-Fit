@@ -75,19 +75,14 @@ export class IntegrationsManager {
         return false;
       }
 
-      // Configuration des permissions Apple Health
+      // Configuration simplifiée des permissions Apple Health
       const permissions = {
         permissions: {
           read: [
             AppleHealthKit.Constants.Permissions.Steps,
-            AppleHealthKit.Constants.Permissions.StepCount,
             AppleHealthKit.Constants.Permissions.ActiveEnergyBurned,
-            AppleHealthKit.Constants.Permissions.BasalEnergyBurned,
             AppleHealthKit.Constants.Permissions.HeartRate,
             AppleHealthKit.Constants.Permissions.BodyMass,
-            AppleHealthKit.Constants.Permissions.SleepAnalysis,
-            AppleHealthKit.Constants.Permissions.DistanceWalkingRunning,
-            AppleHealthKit.Constants.Permissions.Workout,
           ],
           write: []
         }
@@ -175,16 +170,17 @@ export class IntegrationsManager {
       // Sauvegarder les données localement d'abord
       await AsyncStorage.setItem(`${HEALTH_DATA_KEY}_${userId}`, JSON.stringify(healthDataArray));
       
+      // Tentative de synchronisation avec le serveur VPS avec timeout
       try {
-        // Tentative de synchronisation avec le serveur VPS
-        try {
-          await PersistentStorage.saveHealthData(userId, healthDataArray);
-          console.log('Données Apple Health sauvegardées sur le serveur VPS');
-        } catch (vpsError) {
-          console.warn('Serveur VPS non accessible, données conservées localement uniquement');
-        }
-      } catch (serverError) {
-        console.warn('Impossible de sauvegarder sur le serveur, données conservées localement:', serverError);
+        const savePromise = PersistentStorage.saveHealthData(userId, healthDataArray);
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Timeout')), 5000);
+        });
+        
+        await Promise.race([savePromise, timeoutPromise]);
+        console.log('Données Apple Health sauvegardées sur le serveur VPS');
+      } catch (error) {
+        console.warn('Serveur VPS non accessible, données conservées localement uniquement');
       }
 
       // Mettre à jour la date de dernière sync
