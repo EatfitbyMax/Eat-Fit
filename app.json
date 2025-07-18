@@ -47,7 +47,7 @@
       "output": "static",
       "favicon": "./assets/images/crown-logo.png"
     },
-      },
+    "expo-router": {
       "router": {}
     },
     "updates": {
