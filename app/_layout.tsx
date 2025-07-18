@@ -81,39 +81,53 @@ export default function RootLayout() {
     try {
       console.log('=== DÉBUT INITIALISATION ===');
 
-      // Initialisation en parallèle pour optimiser le temps de chargement
-      const initPromises = [
-        // Test de connexion avec multiple fallbacks
-        PersistentStorage.testConnection().catch(() => {
-          console.warn('Serveurs distants non disponibles, mode hors ligne activé');
+      // Initialisation avec timeout pour éviter les crashes
+      try {
+        // Test de connexion avec timeout
+        const connectionPromise = PersistentStorage.testConnection().catch(() => {
+          console.warn('Serveur VPS non disponible, mode hors ligne activé');
           return false;
-        }),
-        
+        });
+
+        // Timeout de 10 secondes pour éviter les blocages
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Timeout')), 10000);
+        });
+
+        await Promise.race([connectionPromise, timeoutPromise]).catch(() => {
+          console.warn('Connexion VPS échouée, continuons en mode hors ligne');
+        });
+
         // Initialisation admin avec gestion d'erreur
-        initializeAdminAccount().catch(error => {
+        await initializeAdminAccount().catch(error => {
           console.warn('Initialisation admin échouée:', error);
           return null;
-        }),
-        
+        });
+
         // Migration avec gestion d'erreur
-        migrateExistingData().catch(error => {
+        await migrateExistingData().catch(error => {
           console.warn('Migration échouée:', error);
           return null;
-        })
-      ];
+        });
 
-      // Attendre toutes les initialisations en parallèle
-      await Promise.allSettled(initPromises);
+        console.log('Vérification de l\'utilisateur connecté...');
+        const user = await getCurrentUser();
 
-      console.log('Vérification de l\'utilisateur connecté...');
-      const user = await getCurrentUser();
+        console.log('=== FIN INITIALISATION ===');
 
-      console.log('=== FIN INITIALISATION ===');
+        // Réduire le délai pour une meilleure UX (2 secondes)
+        const minSplashTime = 2000;
+        setTimeout(() => {
+          setIsInitialized(true);
+        }, minSplashTime);
 
-      // Réduire le délai pour une meilleure UX (3 secondes au lieu de 6)
-      const minSplashTime = 3000;
-      setTimeout(() => {
-        setIsInitializing(false);
+      } catch (error) {
+        console.error('Erreur lors de l\'initialisation:', error);
+        // Continuer même en cas d'erreur pour éviter le crash
+        setTimeout(() => {
+          setIsInitialized(true);
+        }, 1000);
+      }alizing(false);
 
         // Navigation immédiate après le splash
         setTimeout(() => {
