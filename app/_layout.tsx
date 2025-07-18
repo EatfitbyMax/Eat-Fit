@@ -118,37 +118,37 @@ export default function RootLayout() {
         // Réduire le délai pour une meilleure UX (2 secondes)
         const minSplashTime = 2000;
         setTimeout(() => {
-          setIsInitialized(true);
+          setIsInitializing(false);
+
+          // Navigation immédiate après le splash
+          setTimeout(() => {
+            try {
+              if (user?.userType === 'coach') {
+                console.log('Redirection coach:', user.userType);
+                router.replace('/(coach)/programmes');
+              } else if (user?.userType === 'client') {
+                console.log('Redirection client:', user.userType);
+                router.replace('/(client)');
+              } else {
+                console.log('Aucun utilisateur valide, redirection vers login');
+                router.replace('/auth/login');
+              }
+            } catch (error) {
+              console.error('Erreur navigation:', error);
+              // Fallback robuste
+              router.replace('/auth/login');
+            }
+          }, 50);
         }, minSplashTime);
 
       } catch (error) {
         console.error('Erreur lors de l\'initialisation:', error);
         // Continuer même en cas d'erreur pour éviter le crash
         setTimeout(() => {
-          setIsInitialized(true);
+          setIsInitializing(false);
+          setTimeout(() => router.replace('/auth/login'), 50);
         }, 1000);
-      }alizing(false);
-
-        // Navigation immédiate après le splash
-        setTimeout(() => {
-          try {
-            if (user?.userType === 'coach') {
-              console.log('Redirection coach:', user.userType);
-              router.replace('/(coach)/programmes');
-            } else if (user?.userType === 'client') {
-              console.log('Redirection client:', user.userType);
-              router.replace('/(client)');
-            } else {
-              console.log('Aucun utilisateur valide, redirection vers login');
-              router.replace('/auth/login');
-            }
-          } catch (error) {
-            console.error('Erreur navigation:', error);
-            // Fallback robuste
-            router.replace('/auth/login');
-          }
-        }, 50);
-      }, minSplashTime);
+      }
 
     } catch (error) {
       console.error('Erreur critique lors de l\'initialisation:', error);
