@@ -1,4 +1,3 @@
-
 {
   "cli": {
     "version": ">= 3.0.0",
@@ -26,14 +25,27 @@
       }
     },
     "production": {
+      "developmentClient": false,
+      "distribution": "store",
       "channel": "production",
       "ios": {
-        "resourceClass": "m-large",
-        "autoIncrement": "buildNumber"
+        "resourceClass": "m-medium",
+        "autoIncrement": true,
+        "bundleIdentifier": "com.eatfitbymax.app"
       },
       "android": {
         "buildType": "app-bundle",
         "autoIncrement": "versionCode"
+      }
+    },
+    "standalone": {
+      "developmentClient": false,
+      "distribution": "store",
+      "channel": "production",
+      "ios": {
+        "resourceClass": "m-medium",
+        "autoIncrement": true,
+        "bundleIdentifier": "com.eatfitbymax.app"
       }
     }
   },
