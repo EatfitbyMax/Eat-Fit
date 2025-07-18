@@ -1,4 +1,6 @@
-{
+Failed to read the app config from the project using "npx expo config" command: npx expo config --json exited with non-zero code: 1.
+Falling back to the version of "@expo/config" shipped with the EAS CLI.
+Error parsing JSON: {
   "expo": {
     "name": "EatFit By Max",
     "slug": "eatfitbymax",
@@ -74,3 +76,14 @@
     "owner": "maxandre_pm"
   }
 }
+
+├─ File: /home/runner/workspace/app.json
+└─ Cause: SyntaxError: JSON5: invalid character ',' at 52:6
+  50 |       },
+  51 |       "router": {}
+> 52 |     },
+     |      ^
+  53 |     "updates": {
+  54 |       "url": "https://u.expo.dev/6f3f6b36-8c5b-4d71-9035-4e9757b40de5"
+  55 |     },
+    Error: project:init command failed.
