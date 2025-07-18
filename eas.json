@@ -1,3 +1,4 @@
+
 {
   "cli": {
     "version": ">= 3.0.0",
@@ -27,8 +28,8 @@
     "production": {
       "channel": "production",
       "ios": {
-        "resourceClass": "m-medium",
-        "autoIncrement": true
+        "resourceClass": "m-large",
+        "autoIncrement": "buildNumber"
       },
       "android": {
         "buildType": "app-bundle",
