@@ -18,7 +18,8 @@
       "ios": {
         "simulator": false,
         "resourceClass": "m-medium",
-        "buildConfiguration": "Debug"
+        "buildConfiguration": "Release",
+        "enterpriseProvisioning": "adhoc"
       },
       "android": {
         "buildType": "apk"
