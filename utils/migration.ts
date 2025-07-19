@@ -56,24 +56,3 @@ export class DataMigration {
 
 // Exporter la fonction pour l'utiliser dans _layout.tsx
 export const migrateExistingData = DataMigration.migrateToNewStorage;
-
-const migrateToVPS = async (): Promise<void> => {
-  try {
-    console.log('Début de la migration des données...');
-
-    const vpsUrl = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
-    const isVPSAvailable = await testServerConnection(vpsUrl);
-
-    if (!isVPSAvailable) {
-      console.log('⚠️ Serveur VPS indisponible, migration différée');
-      return;
-    }
-
-    // Migration logic here...
-
-  } catch (error) {
-    console.error('Erreur lors de la migration:', error);
-    // Ne pas faire planter l'app pour une erreur de migration
-    return;
-  }
-};
