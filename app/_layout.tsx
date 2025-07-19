@@ -8,73 +8,54 @@ if (typeof window !== 'undefined') {
     // Empêcher l'affichage dans la console
     event.preventDefault();
   });
-}s
+}
 const setupErrorHandling = () => {
-  // Gestion des erreurs React Native
-  const defaultHandler = ErrorUtils.getGlobalHandler && ErrorUtils.getGlobalHandler();
+  try {
+    // Gestion des erreurs React Native
+    const defaultHandler = ErrorUtils.getGlobalHandler && ErrorUtils.getGlobalHandler();
 
-  ErrorUtils.setGlobalHandler((error, isFatal) => {
-    const errorMessage = error?.message || error?.toString() || '';
+    ErrorUtils.setGlobalHandler((error, isFatal) => {
+      try {
+        const errorMessage = error?.message || error?.toString() || '';
 
-    console.warn('🚨 Erreur interceptée:', {
-      message: errorMessage,
-      fatal: isFatal,
-      stack: error?.stack?.substring(0, 200)
+        console.warn('🚨 Erreur interceptée:', {
+          message: errorMessage.substring(0, 100),
+          fatal: isFatal
+        });
+
+        // Toujours ignorer les erreurs pour éviter les crashes
+        console.warn('⚠️ Erreur ignorée pour stabilité:', errorMessage.substring(0, 50));
+        return;
+
+      } catch (handlerError) {
+        console.warn('Erreur dans le gestionnaire d\'erreurs:', handlerError);
+        return;
+      }
     });
 
-    // Filtrer les erreurs connues qui ne doivent pas faire crash
-    const ignoredErrors = [
-      'react-native-health',
-      'Apple Health',
-      'HealthKit',
-      'RNHealth',
-      'expo.controller.errorRecoveryQueue',
-      'Network request failed',
-      'Load failed',
-      'Request timeout'
-    ];
+    // Gestion simplifiée des promesses rejetées
+    const handleUnhandledRejection = (event: any) => {
+      try {
+        console.warn('🔄 Promesse rejetée (ignorée)');
+        if (event?.preventDefault) {
+          event.preventDefault();
+        }
+        return false;
+      } catch (e) {
+        return false;
+      }
+    };
 
-    if (ignoredErrors.some(ignored => errorMessage.includes(ignored))) {
-      console.warn('🍎 Erreur ignorée pour éviter le crash:', errorMessage);
-      return;
+    // Configuration simplifiée
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.addEventListener('unhandledrejection', handleUnhandledRejection);
+      window.addEventListener('error', (event) => {
+        console.warn('🌐 Erreur web (ignorée)');
+        event.preventDefault();
+      });
     }
-
-    // Ne pas faire crash pour les erreurs non fatales
-    if (!isFatal) {
-      console.warn('⚠️ Erreur non fatale ignorée:', errorMessage);
-      return;
-    }
-
-    // Fallback seulement pour les erreurs vraiment critiques
-    console.error('💥 Erreur fatale:', error);
-    if (defaultHandler && __DEV__) {
-      defaultHandler(error, isFatal);
-    }
-  });
-
-  // Gestion améliorée des promesses rejetées
-  const handleUnhandledRejection = (event: any) => {
-    const reason = event?.reason || event;
-    const reasonStr = reason?.message || reason?.toString() || 'Unknown';
-
-    console.warn('🔄 Promesse rejetée interceptée:', reasonStr);
-
-    // Ne jamais faire crash en production
-    if (!__DEV__) {
-      event?.preventDefault?.();
-      return false;
-    }
-  };
-
-  // Configuration cross-platform
-  if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    window.addEventListener('unhandledrejection', handleUnhandledRejection);
-    window.addEventListener('error', (event) => {
-      console.warn('🌐 Erreur web interceptée:', event.error?.message);
-      if (!__DEV__) event.preventDefault();
-    });
-  } else if (typeof global !== 'undefined') {
-    global.addEventListener?.('unhandledrejection', handleUnhandledRejection);
+  } catch (setupError) {
+    console.warn('Erreur setup gestionnaire:', setupError);
   }
 };
 
