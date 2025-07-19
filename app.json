@@ -21,6 +21,7 @@
       "entitlements": {
         "com.apple.developer.healthkit": true,
         "com.apple.developer.healthkit.access": [
+          "health-records",
           "health-records"
         ]
       },
@@ -41,6 +42,8 @@
         "backgroundColor": "#1E1E1E"
       },
       "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
       ]
@@ -67,6 +70,9 @@
     "experiments": {
       "typedRoutes": true
     },
-    "owner": "eatfit"
+    "owner": "eatfit",
+    "updates": {
+      "url": "https://u.expo.dev/816e280b-c76c-4f13-8d77-1ef1898b8ceb"
+    }
   }
 }
