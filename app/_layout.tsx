@@ -7,66 +7,68 @@ const setupErrorHandling = () => {
   const defaultHandler = ErrorUtils.getGlobalHandler && ErrorUtils.getGlobalHandler();
   
   ErrorUtils.setGlobalHandler((error, isFatal) => {
-    console.error('Erreur globale React Native:', error, 'Fatal:', isFatal);
-    
-    // Protection spéciale pour react-native-health
     const errorMessage = error?.message || error?.toString() || '';
-    if (errorMessage.includes('react-native-health') || 
-        errorMessage.includes('Apple Health') ||
-        errorMessage.includes('HealthKit')) {
-      console.warn('🍎 Erreur Apple Health interceptée et ignorée:', errorMessage);
-      return; // Ignorer complètement cette erreur
-    }
     
-    // En mode développement, afficher l'erreur
-    if (__DEV__) {
-      console.error('Stack trace:', error.stack);
-    }
+    console.warn('🚨 Erreur interceptée:', {
+      message: errorMessage,
+      fatal: isFatal,
+      stack: error?.stack?.substring(0, 200)
+    });
     
-    // Ne pas faire planter l'app en production pour les erreurs non fatales
-    if (!isFatal) {
+    // Filtrer les erreurs connues qui ne doivent pas faire crash
+    const ignoredErrors = [
+      'react-native-health',
+      'Apple Health',
+      'HealthKit',
+      'RNHealth',
+      'expo.controller.errorRecoveryQueue',
+      'Network request failed',
+      'Load failed',
+      'Request timeout'
+    ];
+    
+    if (ignoredErrors.some(ignored => errorMessage.includes(ignored))) {
+      console.warn('🍎 Erreur ignorée pour éviter le crash:', errorMessage);
       return;
     }
     
-    // Appeler le handler par défaut pour les erreurs fatales
-    if (defaultHandler) {
+    // Ne pas faire crash pour les erreurs non fatales
+    if (!isFatal) {
+      console.warn('⚠️ Erreur non fatale ignorée:', errorMessage);
+      return;
+    }
+    
+    // Fallback seulement pour les erreurs vraiment critiques
+    console.error('💥 Erreur fatale:', error);
+    if (defaultHandler && __DEV__) {
       defaultHandler(error, isFatal);
     }
   });
 
-  // Gestion des promesses rejetées (toutes plateformes)
+  // Gestion améliorée des promesses rejetées
   const handleUnhandledRejection = (event: any) => {
-    console.error('Promesse non capturée:', event?.reason || event);
-    // En production, ne pas faire planter l'app
+    const reason = event?.reason || event;
+    const reasonStr = reason?.message || reason?.toString() || 'Unknown';
+    
+    console.warn('🔄 Promesse rejetée interceptée:', reasonStr);
+    
+    // Ne jamais faire crash en production
     if (!__DEV__) {
-      return false; // Empêche le crash
+      event?.preventDefault?.();
+      return false;
     }
   };
 
-  // Pour React Native
-  if (typeof global !== 'undefined' && global.HermesInternal) {
+  // Configuration cross-platform
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    window.addEventListener('error', (event) => {
+      console.warn('🌐 Erreur web interceptée:', event.error?.message);
+      if (!__DEV__) event.preventDefault();
+    });
+  } else if (typeof global !== 'undefined') {
     global.addEventListener?.('unhandledrejection', handleUnhandledRejection);
   }
-
-  // Pour le web
-  if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    const handleError = (event: ErrorEvent) => {
-      console.error('Erreur globale web:', event.error);
-      if (__DEV__) {
-        Alert.alert('Erreur', `Erreur: ${event.error?.message || 'Inconnue'}`);
-      }
-    };
-    
-    window.addEventListener('unhandledrejection', handleUnhandledRejection);
-    window.addEventListener('error', handleError);
-    
-    return () => {
-      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
-      window.removeEventListener('error', handleError);
-    };
-  }
-  
-  return () => {};
 };
 
 setupErrorHandling();
@@ -85,14 +87,18 @@ import SplashScreenComponent from '@/components/SplashScreen';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { LanguageProvider } from '@/context/LanguageContext';
 
-// Import conditionnel de Stripe uniquement sur mobile
+// Import conditionnel sécurisé de Stripe
 let StripeProvider: any = null;
-if (Platform.OS !== 'web') {
+const STRIPE_ENABLED = Platform.OS !== 'web' && process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+
+if (STRIPE_ENABLED) {
   try {
     const stripe = require('@stripe/stripe-react-native');
     StripeProvider = stripe.StripeProvider;
+    console.log('✅ Stripe chargé');
   } catch (error) {
-    console.warn('Stripe non disponible:', error);
+    console.warn('⚠️ Stripe non disponible:', error);
+    StripeProvider = null;
   }
 }
 
@@ -116,85 +122,65 @@ export default function RootLayout() {
   }, [loaded]);
 
   const handleAuthCheck = async () => {
+    let initializationComplete = false;
+    
     try {
-      console.log('=== DÉBUT INITIALISATION ===');
+      console.log('🚀 Initialisation sécurisée...');
 
-      // Initialisation avec timeout pour éviter les crashes
-      try {
-        // Test de connexion avec timeout
-        const connectionPromise = PersistentStorage.testConnection().catch(() => {
-          console.warn('Serveur VPS non disponible, mode hors ligne activé');
-          return false;
-        });
-
-        // Timeout de 10 secondes pour éviter les blocages
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Timeout')), 10000);
-        });
-
-        await Promise.race([connectionPromise, timeoutPromise]).catch(() => {
-          console.warn('Connexion VPS échouée, continuons en mode hors ligne');
-        });
-
-        // Initialisation admin avec gestion d'erreur
-        await initializeAdminAccount().catch(error => {
-          console.warn('Initialisation admin échouée:', error);
-          return null;
-        });
-
-        // Migration avec gestion d'erreur
-        await migrateExistingData().catch(error => {
-          console.warn('Migration échouée:', error);
-          return null;
-        });
-
-        console.log('Vérification de l\'utilisateur connecté...');
-        const user = await getCurrentUser();
-
-        console.log('=== FIN INITIALISATION ===');
-
-        // Réduire le délai pour une meilleure UX (2 secondes)
-        const minSplashTime = 2000;
-        setTimeout(() => {
+      // Timeout global pour éviter les blocages
+      const initTimeout = setTimeout(() => {
+        if (!initializationComplete) {
+          console.warn('⏰ Timeout initialisation - redirection forcée');
           setIsInitializing(false);
+          setTimeout(() => router.replace('/auth/login'), 100);
+        }
+      }, 8000);
 
-          // Navigation immédiate après le splash
-          setTimeout(() => {
-            try {
-              if (user?.userType === 'coach') {
-                console.log('Redirection coach:', user.userType);
-                router.replace('/(coach)/programmes');
-              } else if (user?.userType === 'client') {
-                console.log('Redirection client:', user.userType);
-                router.replace('/(client)');
-              } else {
-                console.log('Aucun utilisateur valide, redirection vers login');
-                router.replace('/auth/login');
-              }
-            } catch (error) {
-              console.error('Erreur navigation:', error);
-              // Fallback robuste
-              router.replace('/auth/login');
-            }
-          }, 50);
-        }, minSplashTime);
+      // Initialisation en mode sécurisé
+      const initPromises = [
+        PersistentStorage.testConnection().catch(() => false),
+        initializeAdminAccount().catch(() => null),
+        migrateExistingData().catch(() => null),
+        getCurrentUser().catch(() => null)
+      ];
 
-      } catch (error) {
-        console.error('Erreur lors de l\'initialisation:', error);
-        // Continuer même en cas d'erreur pour éviter le crash
-        setTimeout(() => {
-          setIsInitializing(false);
-          setTimeout(() => router.replace('/auth/login'), 50);
-        }, 1000);
-      }
+      const [, , , user] = await Promise.allSettled(initPromises);
+      const currentUser = user.status === 'fulfilled' ? user.value : null;
 
-    } catch (error) {
-      console.error('Erreur critique lors de l\'initialisation:', error);
-      // En cas d'erreur critique, aller directement vers login
+      initializationComplete = true;
+      clearTimeout(initTimeout);
+
+      console.log('✅ Initialisation terminée');
+
+      // Navigation sécurisée
       setTimeout(() => {
         setIsInitializing(false);
-        setTimeout(() => router.replace('/auth/login'), 50);
-      }, 2000);
+        
+        setTimeout(() => {
+          try {
+            if (currentUser?.userType === 'coach') {
+              router.replace('/(coach)/programmes');
+            } else if (currentUser?.userType === 'client') {
+              router.replace('/(client)');
+            } else {
+              router.replace('/auth/login');
+            }
+          } catch (navError) {
+            console.warn('Erreur navigation:', navError);
+            router.replace('/auth/login');
+          }
+        }, 100);
+      }, 1500);
+
+    } catch (error) {
+      console.warn('🚨 Erreur initialisation:', error);
+      initializationComplete = true;
+      
+      // Fallback sécurisé
+      setTimeout(() => {
+        setIsInitializing(false);
+        setTimeout(() => router.replace('/auth/login'), 100);
+      }, 1000);
     }
   };
 
@@ -214,20 +200,25 @@ export default function RootLayout() {
     </Stack>
   );
 
+  const AppWrapper = () => {
+    if (StripeProvider && STRIPE_ENABLED) {
+      return (
+        <StripeProvider
+          publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY!}
+          merchantIdentifier="merchant.com.eatfitbymax"
+        >
+          <StackContent />
+        </StripeProvider>
+      );
+    }
+    return <StackContent />;
+  };
+
   return (
     <LanguageProvider>
       <ThemeProvider>
         <NavigationThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          {Platform.OS !== 'web' && StripeProvider && process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ? (
-            <StripeProvider
-              publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}
-              merchantIdentifier="merchant.com.eatfitbymax"
-            >
-              <StackContent />
-            </StripeProvider>
-          ) : (
-            <StackContent />
-          )}
+          <AppWrapper />
         </NavigationThemeProvider>
       </ThemeProvider>
     </LanguageProvider>

@@ -4,14 +4,9 @@ import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
 import { Platform } from 'react-native';
 
-// Import conditionnel pour Apple Health - COMPLÈTEMENT DÉSACTIVÉ
-let AppleHealthKit: any = null;
-
-// DÉSACTIVER COMPLÈTEMENT react-native-health pour éviter les crashes
-console.log('⚠️ Apple Health complètement désactivé - mode simulation activé');
-
-// Ne jamais importer le module natif
-const FORCE_SIMULATION_MODE = true;
+// Apple Health complètement désactivé pour éviter les crashes iOS
+const APPLE_HEALTH_DISABLED = true;
+console.log('🍎 Apple Health désactivé - mode simulation uniquement');
 
 export interface HealthData {
   steps: number;
@@ -68,13 +63,9 @@ export class IntegrationsManager {
   // Apple Health Integration
   static async connectAppleHealth(userId: string): Promise<boolean> {
     try {
-      console.log('🍎 Apple Health - Mode simulation forcé pour éviter les crashes');
-      
-      // TOUJOURS FORCER LA SIMULATION - ne jamais utiliser le module natif
-      if (FORCE_SIMULATION_MODE || Platform.OS !== 'ios' || !AppleHealthKit) {
-        console.log('Apple Health - Mode simulation activé (sécurisé)');
+      if (APPLE_HEALTH_DISABLED || Platform.OS !== 'ios') {
+        console.log('🍎 Apple Health - Mode simulation activé');
         
-        // Simuler une connexion réussie
         const integrationStatus = await this.getIntegrationStatus(userId);
         integrationStatus.appleHealth = {
           connected: true,
@@ -83,64 +74,14 @@ export class IntegrationsManager {
         };
         
         await this.saveIntegrationStatus(userId, integrationStatus);
-        console.log('✅ Apple Health connecté en mode simulation (sécurisé)');
+        console.log('✅ Apple Health connecté en mode simulation');
         return true;
       }
 
-      const permissions = {
-        permissions: {
-          read: [
-            AppleHealthKit.Constants.Permissions.Steps,
-            AppleHealthKit.Constants.Permissions.ActiveEnergyBurned,
-            AppleHealthKit.Constants.Permissions.HeartRate,
-            AppleHealthKit.Constants.Permissions.BodyMass,
-          ],
-          write: []
-        }
-      };
-
-      return new Promise((resolve) => {
-        try {
-          AppleHealthKit.initHealthKit(permissions, (error: any) => {
-            try {
-              if (error) {
-                console.error('Erreur initialisation Apple Health:', error);
-                resolve(false);
-                return;
-              }
-
-              // Succès de l'initialisation
-              this.getIntegrationStatus(userId).then(async (integrationStatus) => {
-                try {
-                  integrationStatus.appleHealth = {
-                    connected: true,
-                    lastSync: new Date().toISOString(),
-                    permissions: permissions.permissions.read.map(p => p.toString())
-                  };
-
-                  await this.saveIntegrationStatus(userId, integrationStatus);
-                  console.log('✅ Apple Health connecté avec succès pour utilisateur:', userId);
-                  resolve(true);
-                } catch (statusError) {
-                  console.error('Erreur sauvegarde statut:', statusError);
-                  resolve(false);
-                }
-              }).catch((statusError) => {
-                console.error('Erreur récupération/sauvegarde statut:', statusError);
-                resolve(false);
-              });
-            } catch (callbackError) {
-              console.error('Erreur dans callback Apple Health:', callbackError);
-              resolve(false);
-            }
-          });
-        } catch (initError) {
-          console.error('Erreur lors de l\'initialisation Apple Health:', initError);
-          resolve(false);
-        }
-      });
+      // Ne jamais essayer d'utiliser le module natif pour éviter les crashes
+      return false;
     } catch (error) {
-      console.error('Erreur connexion Apple Health (catch principal):', error);
+      console.error('Erreur connexion Apple Health:', error);
       return false;
     }
   }
@@ -152,188 +93,16 @@ export class IntegrationsManager {
         throw new Error('Apple Health non connecté');
       }
 
-      // TOUJOURS FORCER LA SIMULATION pour éviter les crashes du module natif
-      console.log('🍎 Mode simulation forcé - Apple Health (sécurisé)');
-      return this.syncAppleHealthDataSimulated(userId);
-
-      console.log('🍎 Synchronisation réelle des données Apple Health...');
-
-      const healthData: HealthData = {
-        steps: 0,
-        calories: 0,
-        heartRate: 0,
-        weight: 0,
-        sleep: { duration: 0, quality: 'average' },
-        date: new Date().toISOString().split('T')[0]
-      };
-
-      // Récupération des données réelles en parallèle
-      const promises = [
-        this.getStepsFromAppleHealth(),
-        this.getCaloriesFromAppleHealth(), 
-        this.getHeartRateFromAppleHealth(),
-        this.getWeightFromAppleHealth(),
-        this.getSleepFromAppleHealth()
-      ];
-
-      try {
-        const [steps, calories, heartRate, weight, sleep] = await Promise.all(promises);
-
-        healthData.steps = steps || 0;
-        healthData.calories = calories || 0;
-        healthData.heartRate = heartRate || 0;
-        healthData.weight = weight || 0;
-        healthData.sleep = sleep || { duration: 0, quality: 'average' };
-
-        console.log('✅ Données Apple Health récupérées:', healthData);
-      } catch (dataError) {
-        console.warn('Erreur récupération données Apple Health, utilisation valeurs par défaut:', dataError);
-      }
-
-      const healthDataArray = [healthData];
-
-      // Sauvegarder les données localement d'abord
-      await AsyncStorage.setItem(`${HEALTH_DATA_KEY}_${userId}`, JSON.stringify(healthDataArray));
-
-      // Tentative de synchronisation avec le serveur VPS avec timeout
-      try {
-        const savePromise = PersistentStorage.saveHealthData(userId, healthDataArray);
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Timeout')), 5000);
-        });
-
-        await Promise.race([savePromise, timeoutPromise]);
-        console.log('Données Apple Health sauvegardées sur le serveur VPS');
-      } catch (error) {
-        console.warn('Serveur VPS non accessible, données conservées localement uniquement');
-      }
-
-      // Mettre à jour la date de dernière sync
-      integrationStatus.appleHealth.lastSync = new Date().toISOString();
-      await this.saveIntegrationStatus(userId, integrationStatus);
-
-      console.log('✅ Synchronisation Apple Health terminée');
-      return healthDataArray;
+      console.log('🍎 Synchronisation Apple Health - mode simulation');
+      return await this.syncAppleHealthDataSimulated(userId);
     } catch (error) {
       console.error('Erreur sync Apple Health:', error);
-      throw error;
+      // Retourner des données vides plutôt que de faire planter l'app
+      return [];
     }
   }
 
-  // Méthodes privées pour récupérer les données spécifiques
-  private static async getStepsFromAppleHealth(): Promise<number> {
-    return new Promise((resolve) => {
-      const options = {
-        startDate: new Date(new Date().setHours(0,0,0,0)).toISOString(),
-        endDate: new Date().toISOString(),
-      };
-
-      AppleHealthKit.getStepCount(options, (error: any, results: any) => {
-        if (error) {
-          console.error('Erreur récupération steps:', error);
-          resolve(0);
-          return;
-        }
-        resolve(results?.value || 0);
-      });
-    });
-  }
-
-  private static async getCaloriesFromAppleHealth(): Promise<number> {
-    return new Promise((resolve) => {
-      const options = {
-        startDate: new Date(new Date().setHours(0,0,0,0)).toISOString(),
-        endDate: new Date().toISOString(),
-      };
-
-      AppleHealthKit.getActiveEnergyBurned(options, (error: any, results: any) => {
-        if (error) {
-          console.error('Erreur récupération calories:', error);
-          resolve(0);
-          return;
-        }
-        const totalCalories = results?.reduce((sum: number, item: any) => sum + (item.value || 0), 0) || 0;
-        resolve(totalCalories);
-      });
-    });
-  }
-
-  private static async getHeartRateFromAppleHealth(): Promise<number> {
-    return new Promise((resolve) => {
-      const options = {
-        startDate: new Date(new Date().setHours(0,0,0,0)).toISOString(),
-        endDate: new Date().toISOString(),
-      };
-
-      AppleHealthKit.getHeartRateSamples(options, (error: any, results: any) => {
-        if (error) {
-          console.error('Erreur récupération heart rate:', error);
-          resolve(0);
-          return;
-        }
-        if (results && results.length > 0) {
-          const avgHeartRate = results.reduce((sum: number, item: any) => sum + item.value, 0) / results.length;
-          resolve(Math.round(avgHeartRate));
-        } else {
-          resolve(0);
-        }
-      });
-    });
-  }
-
-  private static async getWeightFromAppleHealth(): Promise<number> {
-    return new Promise((resolve) => {
-      const options = {
-        unit: 'kg',
-        startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 derniers jours
-        endDate: new Date().toISOString(),
-      };
-
-      AppleHealthKit.getLatestWeight(options, (error: any, results: any) => {
-        if (error) {
-          console.error('Erreur récupération weight:', error);
-          resolve(0);
-          return;
-        }
-        resolve(results?.value || 0);
-      });
-    });
-  }
-
-  private static async getSleepFromAppleHealth(): Promise<{ duration: number; quality: 'good' | 'average' | 'poor' }> {
-    return new Promise((resolve) => {
-      const options = {
-        startDate: new Date(new Date().setHours(0,0,0,0)).toISOString(),
-        endDate: new Date().toISOString(),
-      };
-
-      AppleHealthKit.getSleepSamples(options, (error: any, results: any) => {
-        if (error) {
-          console.error('Erreur récupération sleep:', error);
-          resolve({ duration: 0, quality: 'average' });
-          return;
-        }
-
-        if (results && results.length > 0) {
-          // Calculer la durée totale de sommeil en minutes
-          const totalSleep = results.reduce((sum: number, sleep: any) => {
-            const start = new Date(sleep.startDate).getTime();
-            const end = new Date(sleep.endDate).getTime();
-            return sum + ((end - start) / (1000 * 60)); // Convertir en minutes
-          }, 0);
-
-          // Déterminer la qualité basée sur la durée
-          let quality: 'good' | 'average' | 'poor' = 'average';
-          if (totalSleep >= 7 * 60) quality = 'good'; // 7h+
-          else if (totalSleep < 5 * 60) quality = 'poor'; // moins de 5h
-
-          resolve({ duration: Math.round(totalSleep), quality });
-        } else {
-          resolve({ duration: 0, quality: 'average' });
-        }
-      });
-    });
-  }
+  
 
   // Fallback pour la simulation (Android/Web ou Apple Health non disponible)
   private static async syncAppleHealthDataSimulated(userId: string): Promise<HealthData[]> {
