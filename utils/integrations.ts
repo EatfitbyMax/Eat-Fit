@@ -1,4 +1,3 @@
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PersistentStorage } from './storage';
 import * as WebBrowser from 'expo-web-browser';
@@ -71,11 +70,10 @@ export class IntegrationsManager {
   static async connectAppleHealth(userId: string): Promise<boolean> {
     try {
       if (Platform.OS !== 'ios' || !AppleHealthKit) {
-        console.log('Apple Health uniquement disponible sur iOS');
+        console.log('Apple Health non disponible sur cette plateforme');
         return false;
       }
 
-      // Configuration simplifiée des permissions Apple Health
       const permissions = {
         permissions: {
           read: [
@@ -89,32 +87,47 @@ export class IntegrationsManager {
       };
 
       return new Promise((resolve) => {
-        AppleHealthKit.initHealthKit(permissions, (error: any) => {
-          if (error) {
-            console.error('Erreur initialisation Apple Health:', error);
-            resolve(false);
-            return;
-          }
+        try {
+          AppleHealthKit.initHealthKit(permissions, (error: any) => {
+            try {
+              if (error) {
+                console.error('Erreur initialisation Apple Health:', error);
+                resolve(false);
+                return;
+              }
 
-          // Succès de l'initialisation
-          this.getIntegrationStatus(userId).then(async (integrationStatus) => {
-            integrationStatus.appleHealth = {
-              connected: true,
-              lastSync: new Date().toISOString(),
-              permissions: permissions.permissions.read.map(p => p.toString())
-            };
+              // Succès de l'initialisation
+              this.getIntegrationStatus(userId).then(async (integrationStatus) => {
+                try {
+                  integrationStatus.appleHealth = {
+                    connected: true,
+                    lastSync: new Date().toISOString(),
+                    permissions: permissions.permissions.read.map(p => p.toString())
+                  };
 
-            await this.saveIntegrationStatus(userId, integrationStatus);
-            console.log('✅ Apple Health connecté avec succès pour utilisateur:', userId);
-            resolve(true);
-          }).catch((statusError) => {
-            console.error('Erreur sauvegarde statut:', statusError);
-            resolve(false);
+                  await this.saveIntegrationStatus(userId, integrationStatus);
+                  console.log('✅ Apple Health connecté avec succès pour utilisateur:', userId);
+                  resolve(true);
+                } catch (statusError) {
+                  console.error('Erreur sauvegarde statut:', statusError);
+                  resolve(false);
+                }
+              }).catch((statusError) => {
+                console.error('Erreur récupération/sauvegarde statut:', statusError);
+                resolve(false);
+              });
+            } catch (callbackError) {
+              console.error('Erreur dans callback Apple Health:', callbackError);
+              resolve(false);
+            }
           });
-        });
+        } catch (initError) {
+          console.error('Erreur lors de l\'initialisation Apple Health:', initError);
+          resolve(false);
+        }
       });
     } catch (error) {
-      console.error('Erreur connexion Apple Health:', error);
+      console.error('Erreur connexion Apple Health (catch principal):', error);
       return false;
     }
   }
@@ -153,7 +166,7 @@ export class IntegrationsManager {
 
       try {
         const [steps, calories, heartRate, weight, sleep] = await Promise.all(promises);
-        
+
         healthData.steps = steps || 0;
         healthData.calories = calories || 0;
         healthData.heartRate = heartRate || 0;
@@ -169,14 +182,14 @@ export class IntegrationsManager {
 
       // Sauvegarder les données localement d'abord
       await AsyncStorage.setItem(`${HEALTH_DATA_KEY}_${userId}`, JSON.stringify(healthDataArray));
-      
+
       // Tentative de synchronisation avec le serveur VPS avec timeout
       try {
         const savePromise = PersistentStorage.saveHealthData(userId, healthDataArray);
         const timeoutPromise = new Promise((_, reject) => {
           setTimeout(() => reject(new Error('Timeout')), 5000);
         });
-        
+
         await Promise.race([savePromise, timeoutPromise]);
         console.log('Données Apple Health sauvegardées sur le serveur VPS');
       } catch (error) {
@@ -288,7 +301,7 @@ export class IntegrationsManager {
           resolve({ duration: 0, quality: 'average' });
           return;
         }
-        
+
         if (results && results.length > 0) {
           // Calculer la durée totale de sommeil en minutes
           const totalSleep = results.reduce((sum: number, sleep: any) => {
@@ -334,33 +347,33 @@ export class IntegrationsManager {
   static async connectStrava(userId: string): Promise<boolean> {
     try {
       console.log('🚀 Lancement de l\'authentification Strava...');
-      
+
       // Configuration de la redirection pour Expo
       const redirectUri = AuthSession.makeRedirectUri({
         scheme: 'myapp', // Doit correspondre au scheme dans app.json
         path: 'auth'
       });
-      
+
       console.log('Redirect URI:', redirectUri);
-      
+
       // URL d'autorisation Strava
       const authUrl = `https://www.strava.com/oauth/authorize?client_id=${STRAVA_CONFIG.CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${STRAVA_CONFIG.SCOPE}&approval_prompt=force`;
-      
+
       console.log('URL d\'autorisation Strava:', authUrl);
-      
+
       // Ouvrir le navigateur pour l'authentification
       const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
-      
+
       console.log('Résultat authentification:', result);
-      
+
       if (result.type === 'success' && result.url) {
         // Extraire le code d'autorisation de l'URL de retour
         const url = new URL(result.url);
         const code = url.searchParams.get('code');
-        
+
         if (code) {
           console.log('Code d\'autorisation reçu:', code);
-          
+
           // Échanger le code contre un token d'accès
           const success = await this.exchangeStravaCode(code, userId);
           if (success) {
@@ -391,7 +404,7 @@ export class IntegrationsManager {
   static async exchangeStravaCode(code: string, userId: string): Promise<boolean> {
     try {
       console.log('🔄 Échange du code d\'autorisation contre un token...');
-      
+
       const response = await fetch('https://www.strava.com/oauth/token', {
         method: 'POST',
         headers: {
@@ -407,7 +420,7 @@ export class IntegrationsManager {
 
       const data = await response.json();
       console.log('Réponse Strava OAuth:', data);
-      
+
       if (data.access_token) {
         const integrationStatus = await this.getIntegrationStatus(userId);
         integrationStatus.strava = {
@@ -439,7 +452,7 @@ export class IntegrationsManager {
 
       // Tentative de récupération des vraies données Strava
       let activities: StravaActivity[] = [];
-      
+
       if (integrationStatus.strava.accessToken && !integrationStatus.strava.accessToken.includes('mock')) {
         try {
           const response = await fetch(`${STRAVA_CONFIG.API_BASE_URL}/athlete/activities?per_page=10`, {
@@ -447,7 +460,7 @@ export class IntegrationsManager {
               'Authorization': `Bearer ${integrationStatus.strava.accessToken}`
             }
           });
-          
+
           if (response.ok) {
             const stravaData = await response.json();
             activities = stravaData.map((activity: any) => ({
@@ -467,7 +480,7 @@ export class IntegrationsManager {
           console.warn('Impossible de récupérer les données Strava réelles, utilisation des données simulées');
         }
       }
-      
+
       // Si pas de données réelles, utiliser les données simulées
       if (activities.length === 0) {
         console.log('🔄 Mode simulation - génération d\'activités Strava factices');
@@ -499,7 +512,7 @@ export class IntegrationsManager {
 
       // Sauvegarder les données localement d'abord
       await AsyncStorage.setItem(`${STRAVA_DATA_KEY}_${userId}`, JSON.stringify(activities));
-      
+
       try {
         // Tentative de synchronisation avec le serveur VPS
         try {
@@ -551,7 +564,7 @@ export class IntegrationsManager {
       const integrationStatus = await this.getIntegrationStatus(userId);
       integrationStatus.appleHealth = { connected: false, permissions: [] };
       await this.saveIntegrationStatus(userId, integrationStatus);
-      
+
       // Supprimer les données locales
       await AsyncStorage.removeItem(`${HEALTH_DATA_KEY}_${userId}`);
       console.log('Apple Health déconnecté pour utilisateur:', userId);
@@ -565,7 +578,7 @@ export class IntegrationsManager {
       const integrationStatus = await this.getIntegrationStatus(userId);
       integrationStatus.strava = { connected: false };
       await this.saveIntegrationStatus(userId, integrationStatus);
-      
+
       // Supprimer les données locales
       await AsyncStorage.removeItem(`${STRAVA_DATA_KEY}_${userId}`);
       console.log('Strava déconnecté pour utilisateur:', userId);
@@ -598,7 +611,7 @@ export class IntegrationsManager {
     try {
       const integrationStatus = await this.getIntegrationStatus(userId);
       const results = { appleHealth: false, strava: false };
-      
+
       if (integrationStatus.appleHealth.connected) {
         try {
           await this.syncAppleHealthData(userId);
@@ -608,7 +621,7 @@ export class IntegrationsManager {
           console.error('❌ Erreur sync Apple Health:', error);
         }
       }
-      
+
       if (integrationStatus.strava.connected) {
         try {
           await this.syncStravaActivities(userId);
@@ -618,9 +631,9 @@ export class IntegrationsManager {
           console.error('❌ Erreur sync Strava:', error);
         }
       }
-      
+
       console.log('Synchronisation complète terminée pour utilisateur:', userId, results);
-      
+
       if (!results.appleHealth && integrationStatus.appleHealth.connected) {
         console.warn('Apple Health connecté mais synchronisation échouée');
       }

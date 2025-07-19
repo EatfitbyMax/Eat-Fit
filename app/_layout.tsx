@@ -3,18 +3,46 @@ import { Alert, Platform } from 'react-native';
 
 // Gestion globale des erreurs non capturées
 const setupErrorHandling = () => {
-  if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      console.error('Promesse non capturée:', event.reason);
-      // En production, on peut envoyer l'erreur à un service de monitoring
-      if (__DEV__) {
-        Alert.alert('Erreur', 'Une erreur inattendue s\'est produite');
-      }
-      event.preventDefault();
-    };
+  // Gestion des erreurs React Native
+  const defaultHandler = ErrorUtils.getGlobalHandler && ErrorUtils.getGlobalHandler();
+  
+  ErrorUtils.setGlobalHandler((error, isFatal) => {
+    console.error('Erreur globale React Native:', error, 'Fatal:', isFatal);
     
+    // En mode développement, afficher l'erreur
+    if (__DEV__) {
+      console.error('Stack trace:', error.stack);
+    }
+    
+    // Ne pas faire planter l'app en production pour les erreurs non fatales
+    if (!isFatal) {
+      return;
+    }
+    
+    // Appeler le handler par défaut pour les erreurs fatales
+    if (defaultHandler) {
+      defaultHandler(error, isFatal);
+    }
+  });
+
+  // Gestion des promesses rejetées (toutes plateformes)
+  const handleUnhandledRejection = (event: any) => {
+    console.error('Promesse non capturée:', event?.reason || event);
+    // En production, ne pas faire planter l'app
+    if (!__DEV__) {
+      return false; // Empêche le crash
+    }
+  };
+
+  // Pour React Native
+  if (typeof global !== 'undefined' && global.HermesInternal) {
+    global.addEventListener?.('unhandledrejection', handleUnhandledRejection);
+  }
+
+  // Pour le web
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
     const handleError = (event: ErrorEvent) => {
-      console.error('Erreur globale:', event.error);
+      console.error('Erreur globale web:', event.error);
       if (__DEV__) {
         Alert.alert('Erreur', `Erreur: ${event.error?.message || 'Inconnue'}`);
       }
@@ -28,6 +56,7 @@ const setupErrorHandling = () => {
       window.removeEventListener('error', handleError);
     };
   }
+  
   return () => {};
 };
 
