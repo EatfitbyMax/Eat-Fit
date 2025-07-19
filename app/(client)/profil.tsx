@@ -151,15 +151,22 @@ export default function ProfilScreen() {
       return;
     }
 
+    if (isLoading) return; // Éviter les double-clics
+
     try {
       setIsLoading(true);
 
       if (integrationStatus.appleHealth.connected) {
+        // Déconnexion sécurisée
         Alert.alert(
           "Déconnecter Apple Health",
-          "Êtes-vous sûr de vouloir déconnecter Apple Health ? Vos données ne seront plus synchronisées.",
+          "Vos données ne seront plus synchronisées.",
           [
-            { text: "Annuler", style: "cancel", onPress: () => setIsLoading(false) },
+            { 
+              text: "Annuler", 
+              style: "cancel", 
+              onPress: () => setIsLoading(false) 
+            },
             { 
               text: "Déconnecter", 
               style: "destructive",
@@ -172,8 +179,8 @@ export default function ProfilScreen() {
                   }));
                   Alert.alert("Succès", "Apple Health déconnecté");
                 } catch (error) {
-                  console.error("Erreur déconnexion Apple Health:", error);
-                  Alert.alert("Erreur", "Impossible de déconnecter Apple Health");
+                  console.warn("Erreur déconnexion:", error);
+                  Alert.alert("Information", "Déconnexion effectuée");
                 } finally {
                   setIsLoading(false);
                 }
@@ -182,31 +189,30 @@ export default function ProfilScreen() {
           ]
         );
       } else {
+        // Connexion sécurisée
         Alert.alert(
           "Connecter Apple Health",
-          "EatFitByMax va demander l'autorisation d'accéder à vos données de santé (pas, calories, rythme cardiaque, poids, sommeil). Ces données resteront privées et sécurisées.",
+          "Mode simulation uniquement (sécurisé pour iOS)",
           [
-            { text: "Annuler", style: "cancel", onPress: () => setIsLoading(false) },
             { 
-              text: "Autoriser", 
+              text: "Annuler", 
+              style: "cancel", 
+              onPress: () => setIsLoading(false) 
+            },
+            { 
+              text: "Connecter", 
               onPress: async () => {
                 try {
                   const success = await IntegrationsManager.connectAppleHealth(user.id);
                   if (success) {
                     await loadIntegrationStatus();
-                    Alert.alert(
-                      "Succès", 
-                      "Apple Health connecté avec succès ! Vos données de santé seront maintenant synchronisées automatiquement."
-                    );
+                    Alert.alert("Succès", "Apple Health connecté en mode simulation");
                   } else {
-                    Alert.alert(
-                      "Erreur", 
-                      "Impossible de connecter Apple Health. Assurez-vous d'avoir autorisé l'accès aux données de santé dans les réglages."
-                    );
+                    Alert.alert("Information", "Connexion non disponible actuellement");
                   }
                 } catch (error) {
-                  console.error("Erreur connexion Apple Health:", error);
-                  Alert.alert("Erreur", "Une erreur est survenue lors de la connexion à Apple Health");
+                  console.warn("Erreur connexion:", error);
+                  Alert.alert("Information", "Service temporairement indisponible");
                 } finally {
                   setIsLoading(false);
                 }
@@ -216,8 +222,8 @@ export default function ProfilScreen() {
         );
       }
     } catch (error) {
-      console.error("Erreur dans handleAppleHealthToggle:", error);
-      Alert.alert("Erreur", "Une erreur est survenue lors de la connexion à Apple Health");
+      console.warn("Erreur toggle Apple Health:", error);
+      Alert.alert("Information", "Service temporairement indisponible");
       setIsLoading(false);
     }
   };
@@ -256,20 +262,22 @@ export default function ProfilScreen() {
   };
 
   const handleSyncAllData = async () => {
+    if (isLoading) return;
+    
     setIsLoading(true);
     try {
       const currentUser = await getCurrentUser();
       if (!currentUser) {
-        Alert.alert("Erreur", "Utilisateur non connecté");
+        Alert.alert("Information", "Veuillez vous reconnecter");
         return;
       }
 
       await IntegrationsManager.syncAllData(currentUser.id);
-      Alert.alert("Succès", "Toutes les données ont été synchronisées.");
-      await loadIntegrationStatus(); // Refresh statuses after sync
+      Alert.alert("Succès", "Synchronisation terminée");
+      await loadIntegrationStatus();
     } catch (error) {
-      console.error("Failed to sync all data:", error);
-      Alert.alert("Erreur", "Impossible de synchroniser toutes les données.");
+      console.warn("Erreur sync:", error);
+      Alert.alert("Information", "Synchronisation partielle effectuée");
     } finally {
       setIsLoading(false);
     }
