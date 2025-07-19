@@ -31,7 +31,7 @@ export default function ProfilScreen() {
   });
   const [editingObjectifs, setEditingObjectifs] = useState(false);
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
-  const [isPremium, setIsPremium = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [currentSubscription, setCurrentSubscription] = useState<any>(null);
   const [subscriptionModalVisible, setSubscriptionModalVisible] = useState(false);
