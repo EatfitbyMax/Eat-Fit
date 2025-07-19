@@ -1,65 +1,40 @@
 import React from 'react';
-import { Alert, Platform } from 'react-native';
+import { Platform } from 'react-native';
 
-// Gestion globale des erreurs non capturée
-if (typeof window !== 'undefined') {
-  window.addEventListener('unhandledrejection', (event) => {
-    console.warn('Promesse non capturée:', event.reason);
-    // Empêcher l'affichage dans la console
-    event.preventDefault();
-  });
-}
+// Configuration sécurisée pour iOS
 const setupErrorHandling = () => {
   try {
-    // Gestion des erreurs React Native
-    const defaultHandler = ErrorUtils.getGlobalHandler && ErrorUtils.getGlobalHandler();
+    // Désactiver complètement les gestionnaires d'erreurs personnalisés sur iOS
+    if (Platform.OS === 'ios') {
+      console.log('🍎 Gestionnaires d\'erreurs désactivés sur iOS pour stabilité');
+      return;
+    }
 
-    ErrorUtils.setGlobalHandler((error, isFatal) => {
-      try {
-        const errorMessage = error?.message || error?.toString() || '';
-
-        console.warn('🚨 Erreur interceptée:', {
-          message: errorMessage.substring(0, 100),
-          fatal: isFatal
-        });
-
-        // Toujours ignorer les erreurs pour éviter les crashes
-        console.warn('⚠️ Erreur ignorée pour stabilité:', errorMessage.substring(0, 50));
+    // Gestionnaire minimal pour les autres plateformes
+    if (typeof ErrorUtils !== 'undefined' && ErrorUtils.setGlobalHandler) {
+      ErrorUtils.setGlobalHandler((error, isFatal) => {
+        console.warn('⚠️ Erreur silencieuse:', error?.message?.substring(0, 50) || 'Inconnue');
+        // Ne jamais faire crash l'application
         return;
+      });
+    }
 
-      } catch (handlerError) {
-        console.warn('Erreur dans le gestionnaire d\'erreurs:', handlerError);
-        return;
-      }
-    });
-
-    // Gestion simplifiée des promesses rejetées
-    const handleUnhandledRejection = (event: any) => {
-      try {
-        console.warn('🔄 Promesse rejetée (ignorée)');
-        if (event?.preventDefault) {
-          event.preventDefault();
-        }
-        return false;
-      } catch (e) {
-        return false;
-      }
-    };
-
-    // Configuration simplifiée
+    // Gestion des promesses uniquement sur web
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      window.addEventListener('unhandledrejection', handleUnhandledRejection);
-      window.addEventListener('error', (event) => {
-        console.warn('🌐 Erreur web (ignorée)');
+      window.addEventListener('unhandledrejection', (event) => {
+        console.warn('🔄 Promesse rejetée (web)');
         event.preventDefault();
       });
     }
   } catch (setupError) {
-    console.warn('Erreur setup gestionnaire:', setupError);
+    console.warn('Erreur setup minimal:', setupError);
   }
 };
 
-setupErrorHandling();
+// Exécuter le setup seulement si nécessaire
+if (Platform.OS !== 'ios') {
+  setupErrorHandling();
+}
 
 import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
@@ -115,32 +90,53 @@ export default function RootLayout() {
     try {
       console.log('🚀 Initialisation sécurisée...');
 
-      // Timeout global pour éviter les blocages
+      // Timeout plus court sur iOS pour éviter les blocages
+      const timeoutDuration = Platform.OS === 'ios' ? 5000 : 8000;
       const initTimeout = setTimeout(() => {
         if (!initializationComplete) {
           console.warn('⏰ Timeout initialisation - redirection forcée');
+          initializationComplete = true;
           setIsInitializing(false);
-          setTimeout(() => router.replace('/auth/login'), 100);
+          setTimeout(() => {
+            try {
+              router.replace('/auth/login');
+            } catch (e) {
+              console.warn('Erreur navigation de secours');
+            }
+          }, 100);
         }
-      }, 8000);
+      }, timeoutDuration);
 
-      // Initialisation en mode sécurisé
-      const initPromises = [
-        PersistentStorage.testConnection().catch(() => false),
-        initializeAdminAccount().catch(() => null),
-        migrateExistingData().catch(() => null),
-        getCurrentUser().catch(() => null)
-      ];
+      // Initialisation ultra-sécurisée pour iOS
+      let currentUser = null;
+      try {
+        if (Platform.OS === 'ios') {
+          // Mode minimal pour iOS
+          console.log('🍎 Initialisation iOS minimale');
+          currentUser = await getCurrentUser().catch(() => null);
+        } else {
+          // Initialisation complète pour les autres plateformes
+          const initPromises = [
+            PersistentStorage.testConnection().catch(() => false),
+            initializeAdminAccount().catch(() => null),
+            migrateExistingData().catch(() => null),
+            getCurrentUser().catch(() => null)
+          ];
 
-      const [, , , user] = await Promise.allSettled(initPromises);
-      const currentUser = user.status === 'fulfilled' ? user.value : null;
+          const results = await Promise.allSettled(initPromises);
+          currentUser = results[3].status === 'fulfilled' ? results[3].value : null;
+        }
+      } catch (initError) {
+        console.warn('Erreur initialisation critique:', initError);
+        currentUser = null;
+      }
 
       initializationComplete = true;
       clearTimeout(initTimeout);
 
       console.log('✅ Initialisation terminée');
 
-      // Navigation sécurisée
+      // Navigation ultra-sécurisée
       setTimeout(() => {
         setIsInitializing(false);
 
@@ -155,20 +151,30 @@ export default function RootLayout() {
             }
           } catch (navError) {
             console.warn('Erreur navigation:', navError);
-            router.replace('/auth/login');
+            try {
+              router.replace('/auth/login');
+            } catch (fallbackError) {
+              console.warn('Erreur navigation de secours');
+            }
           }
-        }, 100);
-      }, 1500);
+        }, Platform.OS === 'ios' ? 200 : 100);
+      }, Platform.OS === 'ios' ? 1000 : 1500);
 
     } catch (error) {
       console.warn('🚨 Erreur initialisation:', error);
       initializationComplete = true;
 
-      // Fallback sécurisé
+      // Fallback ultra-sécurisé
       setTimeout(() => {
         setIsInitializing(false);
-        setTimeout(() => router.replace('/auth/login'), 100);
-      }, 1000);
+        setTimeout(() => {
+          try {
+            router.replace('/auth/login');
+          } catch (e) {
+            console.warn('Erreur fallback navigation');
+          }
+        }, 100);
+      }, 500);
     }
   };
 
