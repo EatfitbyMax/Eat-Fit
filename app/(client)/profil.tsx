@@ -146,7 +146,7 @@ export default function ProfilScreen() {
   };
 
   const handleAppleHealthToggle = async () => {
-    if (!currentUser) {
+    if (!user) {
       Alert.alert("Erreur", "Utilisateur non connecté");
       return;
     }
@@ -165,10 +165,10 @@ export default function ProfilScreen() {
               style: "destructive",
               onPress: async () => {
                 try {
-                  await IntegrationsManager.disconnectAppleHealth(currentUser.id);
+                  await IntegrationsManager.disconnectAppleHealth(user.id);
                   setIntegrationStatus(prev => ({
                     ...prev,
-                    appleHealth: { connected: false, lastSync: null }
+                    appleHealth: { connected: false, lastSync: null, permissions: [] }
                   }));
                   Alert.alert("Succès", "Apple Health déconnecté");
                 } catch (error) {
@@ -191,7 +191,7 @@ export default function ProfilScreen() {
               text: "Autoriser", 
               onPress: async () => {
                 try {
-                  const success = await IntegrationsManager.connectAppleHealth(currentUser.id);
+                  const success = await IntegrationsManager.connectAppleHealth(user.id);
                   if (success) {
                     await loadIntegrationStatus();
                     Alert.alert(
