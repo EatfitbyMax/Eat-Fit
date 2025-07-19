@@ -1351,8 +1351,19 @@ export const getUserData = async (): Promise<any | null> => {
     const userData = await AsyncStorage.getItem('current_user');
     return userData ? JSON.parse(userData) : null;
   } catch (error) {
-    console.error('Erreur récupération données utilisateur:', error);
+    console.error('Erreur lors de la récupération:', error);
     return null;
+  }
+};
+
+// Fonction pour sauvegarder les données utilisateur
+export const saveUserData = async (userData: any): Promise<void> => {
+  try {
+    const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+    await AsyncStorage.setItem('current_user', JSON.stringify(userData));
+  } catch (error) {
+    console.error('Erreur lors de la sauvegarde:', error);
+    throw error; // Propager l'erreur pour gestion appropriée
   }
 };
 
@@ -1404,7 +1415,7 @@ export const testApiConnection = async (): Promise<{ success: boolean; message: 
       console.error('[ERROR] Timeout connexion API');
       return { success: false, message: 'Timeout de connexion (5s)' };
     }
-    
+
     console.error('[ERROR] Test connexion API échoué:', error);
     return { success: false, message: `Erreur réseau: ${error.message || error}` };
   }
@@ -1446,7 +1457,7 @@ export const getMessages = async (userId: string): Promise<any[]> => {
     }));
   } catch (error) {
     console.warn('[WARNING] Erreur récupération messages VPS:', error);
-    
+
     // FALLBACK: Essayer le cache local
     try {
       const cachedData = await AsyncStorage.getItem(`messages_cache_${userId}`);
