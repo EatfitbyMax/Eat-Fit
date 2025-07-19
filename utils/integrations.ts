@@ -65,14 +65,14 @@ export class IntegrationsManager {
     try {
       if (APPLE_HEALTH_DISABLED || Platform.OS !== 'ios') {
         console.log('🍎 Apple Health - Mode simulation activé');
-        
+
         const integrationStatus = await this.getIntegrationStatus(userId);
         integrationStatus.appleHealth = {
           connected: true,
           lastSync: new Date().toISOString(),
           permissions: ['steps', 'calories', 'heartRate', 'weight', 'sleep']
         };
-        
+
         await this.saveIntegrationStatus(userId, integrationStatus);
         console.log('✅ Apple Health connecté en mode simulation');
         return true;
@@ -102,7 +102,7 @@ export class IntegrationsManager {
     }
   }
 
-  
+
 
   // Fallback pour la simulation (Android/Web ou Apple Health non disponible)
   private static async syncAppleHealthDataSimulated(userId: string): Promise<HealthData[]> {
@@ -427,3 +427,36 @@ export class IntegrationsManager {
     }
   }
 }
+
+export const testServerConnection = async (serverUrl: string): Promise<boolean> => {
+  try {
+    console.log(`Test de connexion au serveur Replit: ${serverUrl}`);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch(`${serverUrl}/health`, {
+      method: 'GET',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    clearTimeout(timeoutId);
+    return response.ok;
+  } catch (error) {
+    console.log(`⚠️ Erreur de connexion au serveur ${serverUrl}:`, error);
+    return false;
+  }
+};
+
+// Fonction pour gérer les promesses rejetées globalement
+export const setupGlobalErrorHandling = () => {
+  if (typeof window !== 'undefined') {
+    window.addEventListener('unhandledrejection', (event) => {
+      console.warn('Promesse non capturée:', event.reason);
+      event.preventDefault(); // Empêche le crash de l'app
+    });
+  }
+};
