@@ -31,7 +31,7 @@ export default function ProfilScreen() {
   });
   const [editingObjectifs, setEditingObjectifs] = useState(false);
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
-  const [isPremium, setIsPremium] = useState(false);
+  const [isPremium, setIsPremium = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [currentSubscription, setCurrentSubscription] = useState<any>(null);
   const [subscriptionModalVisible, setSubscriptionModalVisible] = useState(false);
@@ -263,7 +263,7 @@ export default function ProfilScreen() {
 
   const handleSyncAllData = async () => {
     if (isLoading) return;
-    
+
     setIsLoading(true);
     try {
       const currentUser = await getCurrentUser();
@@ -787,6 +787,22 @@ export default function ProfilScreen() {
   );
 }
 
+const fetchUserProfile = async () => {
+    try {
+      setLoading(true);
+      const userData = await getUserData();
+      if (userData) {
+        setUser(userData);
+      }
+    } catch (error) {
+      console.error('Erreur lors de la récupération du profil:', error);
+      // Gestion d'erreur gracieuse - ne pas faire planter l'app
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -927,7 +943,7 @@ const styles = StyleSheet.create({
   connectedButton: {
     backgroundColor: '#6C757D',
   },
-  connectedButtonText: {
+  connectedButtonText: {```text
     color: '#FFFFFF',
   },
   stravaConnection: {
