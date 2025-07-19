@@ -5,16 +5,16 @@ import { Alert, Platform } from 'react-native';
 const setupErrorHandling = () => {
   // Gestion des erreurs React Native
   const defaultHandler = ErrorUtils.getGlobalHandler && ErrorUtils.getGlobalHandler();
-
+  
   ErrorUtils.setGlobalHandler((error, isFatal) => {
     const errorMessage = error?.message || error?.toString() || '';
-
+    
     console.warn('🚨 Erreur interceptée:', {
       message: errorMessage,
       fatal: isFatal,
       stack: error?.stack?.substring(0, 200)
     });
-
+    
     // Filtrer les erreurs connues qui ne doivent pas faire crash
     const ignoredErrors = [
       'react-native-health',
@@ -26,18 +26,18 @@ const setupErrorHandling = () => {
       'Load failed',
       'Request timeout'
     ];
-
+    
     if (ignoredErrors.some(ignored => errorMessage.includes(ignored))) {
       console.warn('🍎 Erreur ignorée pour éviter le crash:', errorMessage);
       return;
     }
-
+    
     // Ne pas faire crash pour les erreurs non fatales
     if (!isFatal) {
       console.warn('⚠️ Erreur non fatale ignorée:', errorMessage);
       return;
     }
-
+    
     // Fallback seulement pour les erreurs vraiment critiques
     console.error('💥 Erreur fatale:', error);
     if (defaultHandler && __DEV__) {
@@ -49,9 +49,9 @@ const setupErrorHandling = () => {
   const handleUnhandledRejection = (event: any) => {
     const reason = event?.reason || event;
     const reasonStr = reason?.message || reason?.toString() || 'Unknown';
-
+    
     console.warn('🔄 Promesse rejetée interceptée:', reasonStr);
-
+    
     // Ne jamais faire crash en production
     if (!__DEV__) {
       event?.preventDefault?.();
@@ -123,7 +123,7 @@ export default function RootLayout() {
 
   const handleAuthCheck = async () => {
     let initializationComplete = false;
-
+    
     try {
       console.log('🚀 Initialisation sécurisée...');
 
@@ -155,7 +155,7 @@ export default function RootLayout() {
       // Navigation sécurisée
       setTimeout(() => {
         setIsInitializing(false);
-
+        
         setTimeout(() => {
           try {
             if (currentUser?.userType === 'coach') {
@@ -175,7 +175,7 @@ export default function RootLayout() {
     } catch (error) {
       console.warn('🚨 Erreur initialisation:', error);
       initializationComplete = true;
-
+      
       // Fallback sécurisé
       setTimeout(() => {
         setIsInitializing(false);
