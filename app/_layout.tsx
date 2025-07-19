@@ -1,7 +1,14 @@
 import React from 'react';
 import { Alert, Platform } from 'react-native';
 
-// Gestion globale des erreurs non capturées
+// Gestion globale des erreurs non capturée
+if (typeof window !== 'undefined') {
+  window.addEventListener('unhandledrejection', (event) => {
+    console.warn('Promesse non capturée:', event.reason);
+    // Empêcher l'affichage dans la console
+    event.preventDefault();
+  });
+}s
 const setupErrorHandling = () => {
   // Gestion des erreurs React Native
   const defaultHandler = ErrorUtils.getGlobalHandler && ErrorUtils.getGlobalHandler();
