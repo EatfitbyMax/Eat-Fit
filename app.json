@@ -41,7 +41,8 @@
         "backgroundColor": "#1E1E1E"
       },
       "permissions": [
-        "android.permission.CAMERA"
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -50,13 +51,10 @@
       "favicon": "./assets/images/crown-logo.png"
     },
     "extra": {
+      "router": {},
       "eas": {
-        "projectId": "6f3f6b36-8c5b-4d71-9035-4e9757b40de5"
-      },
-      "router": {}
-    },
-    "updates": {
-      "url": "https://u.expo.dev/6f3f6b36-8c5b-4d71-9035-4e9757b40de5"
+        "projectId": "816e280b-c76c-4f13-8d77-1ef1898b8ceb"
+      }
     },
     "runtimeVersion": {
       "policy": "sdkVersion"
@@ -69,6 +67,6 @@
     "experiments": {
       "typedRoutes": true
     },
-    "owner": "NOUVEAU_NOM_UTILISATEUR"
+    "owner": "eatfit"
   }
 }
