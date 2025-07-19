@@ -884,7 +884,6 @@ export class PersistentStorage {
 
       // Fallback vers le stockage local
       console.log('Fallback vers le stockage local pour les données de forme');
-      Applying iOS-specific storage safety to getUserIntegrationStatus function for improved reliability.```text
       const localData = await AsyncStorage.getItem(`forme_data_${userId}_${date}`);
       return localData ? JSON.parse(localData) : {
         sleep: { hours: 0, quality: 'Moyen', bedTime: '', wakeTime: '' },
