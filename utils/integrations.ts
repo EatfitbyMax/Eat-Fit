@@ -4,17 +4,14 @@ import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
 import { Platform } from 'react-native';
 
-// Import conditionnel pour Apple Health - TEMPORAIREMENT DÉSACTIVÉ
+// Import conditionnel pour Apple Health - COMPLÈTEMENT DÉSACTIVÉ
 let AppleHealthKit: any = null;
-// DÉSACTIVÉ TEMPORAIREMENT pour éviter les crashes
-// if (Platform.OS === 'ios') {
-//   try {
-//     AppleHealthKit = require('react-native-health').default;
-//   } catch (e) {
-//     console.log('Apple Health non disponible sur cette plateforme');
-//   }
-// }
-console.log('⚠️ Apple Health temporairement désactivé - mode simulation activé');
+
+// DÉSACTIVER COMPLÈTEMENT react-native-health pour éviter les crashes
+console.log('⚠️ Apple Health complètement désactivé - mode simulation activé');
+
+// Ne jamais importer le module natif
+const FORCE_SIMULATION_MODE = true;
 
 export interface HealthData {
   steps: number;
@@ -71,11 +68,11 @@ export class IntegrationsManager {
   // Apple Health Integration
   static async connectAppleHealth(userId: string): Promise<boolean> {
     try {
-      console.log('🍎 Tentative de connexion Apple Health en mode simulation');
+      console.log('🍎 Apple Health - Mode simulation forcé pour éviter les crashes');
       
-      // FORCER LA SIMULATION - éviter le module natif qui crash
-      if (Platform.OS !== 'ios' || !AppleHealthKit) {
-        console.log('Apple Health - Mode simulation activé');
+      // TOUJOURS FORCER LA SIMULATION - ne jamais utiliser le module natif
+      if (FORCE_SIMULATION_MODE || Platform.OS !== 'ios' || !AppleHealthKit) {
+        console.log('Apple Health - Mode simulation activé (sécurisé)');
         
         // Simuler une connexion réussie
         const integrationStatus = await this.getIntegrationStatus(userId);
@@ -86,7 +83,7 @@ export class IntegrationsManager {
         };
         
         await this.saveIntegrationStatus(userId, integrationStatus);
-        console.log('✅ Apple Health connecté en mode simulation');
+        console.log('✅ Apple Health connecté en mode simulation (sécurisé)');
         return true;
       }
 
@@ -155,8 +152,8 @@ export class IntegrationsManager {
         throw new Error('Apple Health non connecté');
       }
 
-      // FORCER LA SIMULATION pour éviter les crashes du module natif
-      console.log('🍎 Mode simulation forcé - Apple Health');
+      // TOUJOURS FORCER LA SIMULATION pour éviter les crashes du module natif
+      console.log('🍎 Mode simulation forcé - Apple Health (sécurisé)');
       return this.syncAppleHealthDataSimulated(userId);
 
       console.log('🍎 Synchronisation réelle des données Apple Health...');
