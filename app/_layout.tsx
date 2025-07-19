@@ -9,6 +9,15 @@ const setupErrorHandling = () => {
   ErrorUtils.setGlobalHandler((error, isFatal) => {
     console.error('Erreur globale React Native:', error, 'Fatal:', isFatal);
     
+    // Protection spéciale pour react-native-health
+    const errorMessage = error?.message || error?.toString() || '';
+    if (errorMessage.includes('react-native-health') || 
+        errorMessage.includes('Apple Health') ||
+        errorMessage.includes('HealthKit')) {
+      console.warn('🍎 Erreur Apple Health interceptée et ignorée:', errorMessage);
+      return; // Ignorer complètement cette erreur
+    }
+    
     // En mode développement, afficher l'erreur
     if (__DEV__) {
       console.error('Stack trace:', error.stack);

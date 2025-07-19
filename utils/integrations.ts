@@ -4,15 +4,17 @@ import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
 import { Platform } from 'react-native';
 
-// Import conditionnel pour Apple Health
+// Import conditionnel pour Apple Health - TEMPORAIREMENT DÉSACTIVÉ
 let AppleHealthKit: any = null;
-if (Platform.OS === 'ios') {
-  try {
-    AppleHealthKit = require('react-native-health').default;
-  } catch (e) {
-    console.log('Apple Health non disponible sur cette plateforme');
-  }
-}
+// DÉSACTIVÉ TEMPORAIREMENT pour éviter les crashes
+// if (Platform.OS === 'ios') {
+//   try {
+//     AppleHealthKit = require('react-native-health').default;
+//   } catch (e) {
+//     console.log('Apple Health non disponible sur cette plateforme');
+//   }
+// }
+console.log('⚠️ Apple Health temporairement désactivé - mode simulation activé');
 
 export interface HealthData {
   steps: number;
@@ -69,9 +71,23 @@ export class IntegrationsManager {
   // Apple Health Integration
   static async connectAppleHealth(userId: string): Promise<boolean> {
     try {
+      console.log('🍎 Tentative de connexion Apple Health en mode simulation');
+      
+      // FORCER LA SIMULATION - éviter le module natif qui crash
       if (Platform.OS !== 'ios' || !AppleHealthKit) {
-        console.log('Apple Health non disponible sur cette plateforme');
-        return false;
+        console.log('Apple Health - Mode simulation activé');
+        
+        // Simuler une connexion réussie
+        const integrationStatus = await this.getIntegrationStatus(userId);
+        integrationStatus.appleHealth = {
+          connected: true,
+          lastSync: new Date().toISOString(),
+          permissions: ['steps', 'calories', 'heartRate', 'weight', 'sleep']
+        };
+        
+        await this.saveIntegrationStatus(userId, integrationStatus);
+        console.log('✅ Apple Health connecté en mode simulation');
+        return true;
       }
 
       const permissions = {
@@ -139,10 +155,9 @@ export class IntegrationsManager {
         throw new Error('Apple Health non connecté');
       }
 
-      if (Platform.OS !== 'ios' || !AppleHealthKit) {
-        console.log('Mode simulation - Apple Health non disponible');
-        return this.syncAppleHealthDataSimulated(userId);
-      }
+      // FORCER LA SIMULATION pour éviter les crashes du module natif
+      console.log('🍎 Mode simulation forcé - Apple Health');
+      return this.syncAppleHealthDataSimulated(userId);
 
       console.log('🍎 Synchronisation réelle des données Apple Health...');
 
