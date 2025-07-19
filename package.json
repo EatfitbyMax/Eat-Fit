@@ -20,7 +20,8 @@
         "exclude": [
           "@emailjs/react-native",
           "expo-camera",
-          "react-native-health"
+          "react-native-health",
+          "react-native-health/RNHealth"
         ],
         "listUnknownPackages": false
       }
