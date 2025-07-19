@@ -19,15 +19,9 @@
         "usesNonExemptEncryption": false
       },
       "entitlements": {
-        "com.apple.developer.healthkit": true,
-        "com.apple.developer.healthkit.access": [
-          "health-records",
-          "health-records"
-        ]
       },
       "infoPlist": {
-        "NSHealthShareUsageDescription": "EatFitByMax utilise Apple Health pour synchroniser vos données de santé et fitness afin de vous fournir un suivi personnalisé de votre progression.",
-        "NSHealthUpdateUsageDescription": "EatFitByMax peut écrire des données dans Apple Health pour garder vos informations de santé à jour.",
+        
         "NSCameraUsageDescription": "EatFitByMax utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas.",
         "NSPhotoLibraryUsageDescription": "EatFitByMax accède à votre galerie photo pour vous permettre de sélectionner des images de vos repas.",
         "NSMotionUsageDescription": "EatFitByMax utilise les capteurs de mouvement pour suivre votre activité physique.",

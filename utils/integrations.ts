@@ -6,7 +6,12 @@ import { Platform } from 'react-native';
 
 // Apple Health complètement désactivé pour éviter les crashes iOS
 const APPLE_HEALTH_DISABLED = true;
-console.log('🍎 Apple Health désactivé - mode simulation uniquement');
+const FORCE_SIMULATION_MODE = true;
+
+// Désactiver toutes les intégrations natives sur iOS
+if (Platform.OS === 'ios') {
+  console.log('🍎 Toutes les intégrations natives désactivées sur iOS');
+}
 
 export interface HealthData {
   steps: number;
@@ -63,25 +68,21 @@ export class IntegrationsManager {
   // Apple Health Integration
   static async connectAppleHealth(userId: string): Promise<boolean> {
     try {
-      if (APPLE_HEALTH_DISABLED || Platform.OS !== 'ios') {
-        console.log('🍎 Apple Health - Mode simulation activé');
+      // TOUJOURS utiliser le mode simulation pour éviter les crashes
+      console.log('🍎 Apple Health - Mode simulation forcé');
 
-        const integrationStatus = await this.getIntegrationStatus(userId);
-        integrationStatus.appleHealth = {
-          connected: true,
-          lastSync: new Date().toISOString(),
-          permissions: ['steps', 'calories', 'heartRate', 'weight', 'sleep']
-        };
+      const integrationStatus = await this.getIntegrationStatus(userId);
+      integrationStatus.appleHealth = {
+        connected: true,
+        lastSync: new Date().toISOString(),
+        permissions: ['steps', 'calories', 'heartRate', 'weight', 'sleep']
+      };
 
-        await this.saveIntegrationStatus(userId, integrationStatus);
-        console.log('✅ Apple Health connecté en mode simulation');
-        return true;
-      }
-
-      // Ne jamais essayer d'utiliser le module natif pour éviter les crashes
-      return false;
+      await this.saveIntegrationStatus(userId, integrationStatus);
+      console.log('✅ Apple Health connecté en mode simulation');
+      return true;
     } catch (error) {
-      console.error('Erreur connexion Apple Health:', error);
+      console.warn('Erreur connexion Apple Health (ignorée):', error);
       return false;
     }
   }

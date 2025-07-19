@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 const SERVER_URL = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
 const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
@@ -883,6 +884,7 @@ export class PersistentStorage {
 
       // Fallback vers le stockage local
       console.log('Fallback vers le stockage local pour les données de forme');
+      Applying iOS-specific storage safety to getUserIntegrationStatus function for improved reliability.```text
       const localData = await AsyncStorage.getItem(`forme_data_${userId}_${date}`);
       return localData ? JSON.parse(localData) : {
         sleep: { hours: 0, quality: 'Moyen', bedTime: '', wakeTime: '' },
@@ -1222,8 +1224,26 @@ export class PersistentStorage {
   }
 
   // Méthodes pour les statuts d'intégrations
-  static async getIntegrationStatus(userId: string): Promise<any> {
+  static async getUserIntegrationStatus(userId: string): Promise<any> {
+    const defaultStatus = {
+      appleHealth: { connected: false, permissions: [] },
+      strava: { connected: false }
+    };
+
     try {
+      // Sur iOS, éviter les requêtes réseau complexes au démarrage
+      if (Platform.OS === 'ios') {
+        console.log('🍎 Récupération intégrations locale sur iOS');
+        try {
+          const localData = await AsyncStorage.getItem(`user_integrations_${userId}`);
+          return localData ? JSON.parse(localData) : defaultStatus;
+        } catch (localError) {
+          console.warn('Erreur stockage local iOS:', localError);
+          return defaultStatus;
+        }
+      }
+
+      // Pour les autres plateformes, tentative serveur puis fallback local
       const isConnected = await this.testConnection();
       if (isConnected) {
         const response = await fetch(`${SERVER_URL}/api/integrations/${userId}`);
@@ -1239,24 +1259,15 @@ export class PersistentStorage {
       // Fallback vers le stockage local
       console.log('Fallback vers le stockage local pour les statuts intégrations');
       const localData = await AsyncStorage.getItem(`user_integrations_${userId}`);
-      return localData ? JSON.parse(localData) : {
-        appleHealth: { connected: false, permissions: [] },
-        strava: { connected: false }
-      };
+      return localData ? JSON.parse(localData) : defaultStatus;
     } catch (error) {
-      console.error('Erreur récupération statuts intégrations:', error);
+      console.warn('Erreur récupération statuts intégrations:', error);
       try {
         const localData = await AsyncStorage.getItem(`user_integrations_${userId}`);
-        return localData ? JSON.parse(localData) : {
-          appleHealth: { connected: false, permissions: [] },
-          strava: { connected: false }
-        };
+        return localData ? JSON.parse(localData) : defaultStatus;
       } catch (localError) {
-        console.error('Erreur stockage local intégrations:', localError);
-        return {
-          appleHealth: { connected: false, permissions: [] },
-          strava: { connected: false }
-        };
+        console.warn('Erreur stockage local intégrations:', localError);
+        return defaultStatus;
       }
     }
   }
