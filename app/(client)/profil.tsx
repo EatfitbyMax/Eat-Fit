@@ -146,30 +146,37 @@ export default function ProfilScreen() {
   };
 
   const handleAppleHealthToggle = async () => {
-    setIsLoading(true);
+    if (!currentUser) {
+      Alert.alert("Erreur", "Utilisateur non connecté");
+      return;
+    }
+
     try {
-      const currentUser = await getCurrentUser();
-      if (!currentUser) {
-        Alert.alert("Erreur", "Utilisateur non connecté");
-        return;
-      }
+      setIsLoading(true);
 
       if (integrationStatus.appleHealth.connected) {
         Alert.alert(
           "Déconnecter Apple Health",
           "Êtes-vous sûr de vouloir déconnecter Apple Health ? Vos données ne seront plus synchronisées.",
           [
-            { text: "Annuler", style: "cancel" },
+            { text: "Annuler", style: "cancel", onPress: () => setIsLoading(false) },
             { 
               text: "Déconnecter", 
               style: "destructive",
               onPress: async () => {
-                await IntegrationsManager.disconnectAppleHealth(currentUser.id);
-                setIntegrationStatus(prev => ({
-                  ...prev,
-                  appleHealth: { connected: false, lastSync: null }
-                }));
-                Alert.alert("Succès", "Apple Health déconnecté");
+                try {
+                  await IntegrationsManager.disconnectAppleHealth(currentUser.id);
+                  setIntegrationStatus(prev => ({
+                    ...prev,
+                    appleHealth: { connected: false, lastSync: null }
+                  }));
+                  Alert.alert("Succès", "Apple Health déconnecté");
+                } catch (error) {
+                  console.error("Erreur déconnexion Apple Health:", error);
+                  Alert.alert("Erreur", "Impossible de déconnecter Apple Health");
+                } finally {
+                  setIsLoading(false);
+                }
               }
             }
           ]
@@ -179,22 +186,29 @@ export default function ProfilScreen() {
           "Connecter Apple Health",
           "EatFitByMax va demander l'autorisation d'accéder à vos données de santé (pas, calories, rythme cardiaque, poids, sommeil). Ces données resteront privées et sécurisées.",
           [
-            { text: "Annuler", style: "cancel" },
+            { text: "Annuler", style: "cancel", onPress: () => setIsLoading(false) },
             { 
               text: "Autoriser", 
               onPress: async () => {
-                const success = await IntegrationsManager.connectAppleHealth(currentUser.id);
-                if (success) {
-                  await loadIntegrationStatus();
-                  Alert.alert(
-                    "Succès", 
-                    "Apple Health connecté avec succès ! Vos données de santé seront maintenant synchronisées automatiquement."
-                  );
-                } else {
-                  Alert.alert(
-                    "Erreur", 
-                    "Impossible de connecter Apple Health. Assurez-vous d'avoir autorisé l'accès aux données de santé dans les réglages."
-                  );
+                try {
+                  const success = await IntegrationsManager.connectAppleHealth(currentUser.id);
+                  if (success) {
+                    await loadIntegrationStatus();
+                    Alert.alert(
+                      "Succès", 
+                      "Apple Health connecté avec succès ! Vos données de santé seront maintenant synchronisées automatiquement."
+                    );
+                  } else {
+                    Alert.alert(
+                      "Erreur", 
+                      "Impossible de connecter Apple Health. Assurez-vous d'avoir autorisé l'accès aux données de santé dans les réglages."
+                    );
+                  }
+                } catch (error) {
+                  console.error("Erreur connexion Apple Health:", error);
+                  Alert.alert("Erreur", "Une erreur est survenue lors de la connexion à Apple Health");
+                } finally {
+                  setIsLoading(false);
                 }
               }
             }
@@ -202,9 +216,8 @@ export default function ProfilScreen() {
         );
       }
     } catch (error) {
-      console.error("Failed to toggle Apple Health:", error);
-      Alert.alert("Erreur", "Une erreur est survenue lors de la connexion à Apple Health.");
-    } finally {
+      console.error("Erreur dans handleAppleHealthToggle:", error);
+      Alert.alert("Erreur", "Une erreur est survenue lors de la connexion à Apple Health");
       setIsLoading(false);
     }
   };
