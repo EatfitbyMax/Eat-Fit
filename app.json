@@ -12,7 +12,6 @@
       "icon": "./assets/images/crown-logo.png",
       "supportsTablet": true,
       "bundleIdentifier": "com.eatfitbymax.app",
-      "buildNumber": "1",
       "requireFullScreen": false,
       "userInterfaceStyle": "automatic",
       "config": {

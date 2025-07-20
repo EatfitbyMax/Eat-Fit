@@ -56,19 +56,8 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
   }, [visible]);
 
   useEffect(() => {
-    (async () => {
-      if (BarCodeScanner && Platform.OS !== 'web') {
-        try {
-          const { status } = await BarCodeScanner.requestPermissionsAsync();
-          setHasPermission(status === 'granted');
-        } catch (error) {
-          console.log('Erreur permissions scanner:', error);
-          setHasPermission(false);
-        }
-      } else {
-        setHasPermission(false);
-      }
-    })();
+    // Scanner automatique désactivé - pas besoin de permissions
+    setHasPermission(false);
   }, []);
 
   const loadFavoriteFoods = async () => {
