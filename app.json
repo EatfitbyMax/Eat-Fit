@@ -14,7 +14,10 @@
       "bundleIdentifier": "com.eatfitbymax.app",
       "buildNumber": "1",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "Cette app utilise la caméra pour scanner les codes-barres des aliments.",
+        "NSHealthShareUsageDescription": "Cette app accède à vos données de santé pour suivre votre activité physique.",
+        "NSHealthUpdateUsageDescription": "Cette app met à jour vos données de santé avec vos séances d'entraînement."
       }
     },
     "android": {
