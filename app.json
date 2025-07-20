@@ -57,7 +57,12 @@
     "plugins": [
       "expo-router",
       "expo-web-browser",
-      "expo-camera"
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "EatFitByMax utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
