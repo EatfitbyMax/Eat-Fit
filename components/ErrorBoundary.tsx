@@ -45,7 +45,21 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       errorInfo: errorInfo
     });
 
-    // Tentative de récupération avec expo-error-recovery
+    // Vérifier si c'est une boucle d'erreurs
+    const errorKey = error.message + error.stack?.substring(0, 100);
+    const now = Date.now();
+    const lastErrorTime = (global as any).__lastErrorTime || 0;
+    const lastErrorKey = (global as any).__lastErrorKey || '';
+    
+    if (errorKey === lastErrorKey && (now - lastErrorTime) < 5000) {
+      console.error('🚫 BOUCLE D\'ERREURS DÉTECTÉE - Arrêt récupération automatique');
+      return;
+    }
+    
+    (global as any).__lastErrorTime = now;
+    (global as any).__lastErrorKey = errorKey;
+
+    // Tentative de récupération avec expo-error-recovery (avec protection)
     if (ErrorRecovery && (error.message?.includes('Native module') || 
                          error.message?.includes('RCT'))) {
       console.log('🔄 Tentative de récupération d\'erreur native');
@@ -55,7 +69,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
         } catch (recoveryError) {
           console.error('❌ Échec récupération:', recoveryError);
         }
-      }, 1000);
+      }, 2000); // Délai plus long
     }
   }
 

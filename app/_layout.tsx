@@ -72,87 +72,81 @@ export default function RootLayout() {
   useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
-      handleAuthCheck();
+      
+      // Délai pour éviter les conflits au démarrage
+      const initTimer = setTimeout(() => {
+        handleAuthCheck();
+      }, 200);
+      
+      return () => clearTimeout(initTimer);
     }
   }, [loaded]);
 
   const handleAuthCheck = async () => {
-    let initializationComplete = false;
-
     try {
-      console.log('🚀 Initialisation ultra-sécurisée...');
+      console.log('🚀 Initialisation stabilisée...');
 
-      // Timeout très court pour éviter les blocages
-      const timeoutDuration = 3000; // 3 secondes seulement
-      const initTimeout = setTimeout(() => {
-        if (!initializationComplete) {
-          console.warn('⏰ Timeout - redirection forcée');
-          initializationComplete = true;
+      // Délai initial pour éviter les conflicts de navigation
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Protection contre les boucles infinies
+      const MAX_RETRIES = 1;
+      let retryCount = 0;
+
+      const performInit = async () => {
+        try {
+          // Vérification utilisateur avec timeout court
+          const userPromise = getCurrentUser();
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('User check timeout')), 2000)
+          );
+
+          const currentUser = await Promise.race([userPromise, timeoutPromise]).catch(() => null);
+          
+          console.log('✅ Vérification utilisateur terminée');
+          
+          // Terminer l'initialisation AVANT la navigation
           setIsInitializing(false);
-          setTimeout(() => {
-            try {
-              router.replace('/auth/login');
-            } catch (e) {
-              console.warn('Erreur navigation de secours');
-            }
-          }, 100);
-        }
-      }, timeoutDuration);
-
-      // Initialisation minimale
-      let currentUser = null;
-      try {
-        console.log('🔄 Mode minimal absolu');
-        currentUser = await getCurrentUser().catch(() => null);
-      } catch (initError) {
-        console.warn('Erreur initialisation:', initError);
-        currentUser = null;
-      }
-
-      initializationComplete = true;
-      clearTimeout(initTimeout);
-
-      console.log('✅ Initialisation terminée');
-
-      // Navigation ultra-sécurisée
-      setTimeout(() => {
-        setIsInitializing(false);
-
-        setTimeout(() => {
-          try {
-            if (currentUser?.userType === 'coach') {
-              router.replace('/(coach)/programmes');
-            } else if (currentUser?.userType === 'client') {
-              router.replace('/(client)');
-            } else {
-              router.replace('/auth/login');
-            }
-          } catch (navError) {
-            console.warn('Erreur navigation:', navError);
-            try {
-              router.replace('/auth/login');
-            } catch (fallbackError) {
-              console.warn('Erreur navigation de secours');
-            }
+          
+          // Navigation différée pour éviter les conflits
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // Navigation unique et sécurisée
+          if (currentUser?.userType === 'coach') {
+            router.replace('/(coach)/programmes');
+          } else if (currentUser?.userType === 'client') {
+            router.replace('/(client)');
+          } else {
+            router.replace('/auth/login');
           }
-        }, 300);
-      }, 500);
+          
+        } catch (initError) {
+          console.warn('Erreur initialisation:', initError);
+          
+          if (retryCount < MAX_RETRIES) {
+            retryCount++;
+            console.log(`🔄 Tentative ${retryCount}/${MAX_RETRIES}`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            return performInit();
+          } else {
+            // Dernière chance - navigation de secours
+            setIsInitializing(false);
+            await new Promise(resolve => setTimeout(resolve, 100));
+            router.replace('/auth/login');
+          }
+        }
+      };
+
+      await performInit();
 
     } catch (error) {
-      console.warn('🚨 Erreur initialisation:', error);
-      initializationComplete = true;
-
-      // Fallback ultra-sécurisé
+      console.error('🚨 Erreur critique initialisation:', error);
+      
+      // Dernière ligne de défense
+      setIsInitializing(false);
       setTimeout(() => {
-        setIsInitializing(false);
-        setTimeout(() => {
-          try {
-            router.replace('/auth/login');
-          } catch (e) {
-            console.warn('Erreur fallback navigation');
-          }
-        }, 100);
-      }, 500);
+        router.replace('/auth/login');
+      }, 200);
     }
   };
 
