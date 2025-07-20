@@ -26,6 +26,7 @@
         "backgroundColor": "#1E1E1E"
       },
       "permissions": [
+        "android.permission.CAMERA",
         "android.permission.CAMERA"
       ]
     },
@@ -45,6 +46,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/816e280b-c76c-4f13-8d77-1ef1898b8ceb"
     }
   }
 }
