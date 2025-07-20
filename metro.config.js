@@ -1,5 +1,5 @@
+
 const { getDefaultConfig } = require('expo/metro-config');
-const { withNativeWind } = require('nativewind/metro');
 
 const config = getDefaultConfig(__dirname);
 
@@ -15,4 +15,11 @@ config.transformer.minifierConfig = {
   },
 };
 
-module.exports = withNativeWind(config, { input: './global.css' });
+// Configuration NativeWind avec gestion d'erreur
+try {
+  const { withNativeWind } = require('nativewind/metro');
+  module.exports = withNativeWind(config, { input: './global.css' });
+} catch (error) {
+  console.warn('NativeWind non disponible, utilisation de la configuration Metro standard');
+  module.exports = config;
+}

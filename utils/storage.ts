@@ -4,6 +4,24 @@ import { Platform } from 'react-native';
 const SERVER_URL = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
 const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
 
+// Fonction utilitaire pour les requêtes avec timeout
+const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeoutMs: number = 5000): Promise<Response> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
+};
+
 export class PersistentStorage {
   // Test de connexion au serveur avec cache temporaire
   private static connectionCache: { isConnected: boolean; timestamp: number } | null = null;
@@ -13,18 +31,12 @@ export class PersistentStorage {
     try {
       console.log(`Test de connexion au serveur Replit: ${SERVER_URL}`);
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-      const response = await fetch(`${SERVER_URL}/api/health-check`, {
+      const response = await fetchWithTimeout(`${SERVER_URL}/api/health-check`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-        },
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
+        }
+      }, 5000);
 
       if (response.ok) {
         const data = await response.json();
@@ -555,20 +567,12 @@ export class PersistentStorage {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await Promise.race([
-        fetch(`${SERVER_URL}/api/users`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          signal: controller.signal
-        }),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Timeout')), 5000)
-        )
-      ]) as Response;
-
-      clearTimeout(timeoutId);
+      const response = await fetchWithTimeout(`${SERVER_URL}/api/users`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      }, 5000);
 
       if (response.ok) {
         const data = await response.json();
