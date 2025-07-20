@@ -1,25 +1,14 @@
-
 const { getDefaultConfig } = require('expo/metro-config');
 
-const config = getDefaultConfig(__dirname);
+/** @type {import('expo/metro-config').MetroConfig} */
+const config = getDefaultConfig(__dirname, {
+  // [Web-only]: Enables CSS support in Metro.
+  isCSSEnabled: true,
+});
 
-// Réduire les avertissements de dépréciation
-config.resolver.resolverMainFields = ['react-native', 'browser', 'main'];
-config.resolver.platforms = ['ios', 'android', 'native', 'web'];
+// Résolution des conflits de modules
+config.resolver.blockList = [
+  /.*\/node_modules\/.*\/node_modules\/react-native\/.*/
+];
 
-// Gestion d'erreur améliorée
-config.transformer.minifierConfig = {
-  keep_fnames: true,
-  mangle: {
-    keep_fnames: true,
-  },
-};
-
-// Configuration NativeWind avec gestion d'erreur
-try {
-  const { withNativeWind } = require('nativewind/metro');
-  module.exports = withNativeWind(config, { input: './global.css' });
-} catch (error) {
-  console.warn('NativeWind non disponible, utilisation de la configuration Metro standard');
-  module.exports = config;
-}
+module.exports = config;
