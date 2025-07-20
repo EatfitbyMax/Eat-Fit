@@ -12,12 +12,9 @@
       "icon": "./assets/images/crown-logo.png",
       "supportsTablet": true,
       "bundleIdentifier": "com.eatfitbymax.app",
-      "buildNumber": "1",
       "requireFullScreen": false,
       "userInterfaceStyle": "automatic",
-      "config": {
-        "usesNonExemptEncryption": false
-      },
+      
       "entitlements": {},
       "infoPlist": {
         "NSCameraUsageDescription": "EatFitByMax utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas.",

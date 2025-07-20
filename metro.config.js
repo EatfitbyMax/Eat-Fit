@@ -30,4 +30,8 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   return context.resolveRequest(context, moduleName, platform);
 };
 
+// Configuration pour éviter les erreurs de modules manquants
+config.resolver.resolverMainFields = ['react-native', 'browser', 'main'];
+config.resolver.sourceExts = [...config.resolver.sourceExts, 'mjs'];
+
 module.exports = config;
