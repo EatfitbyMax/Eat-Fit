@@ -7,16 +7,24 @@
     "icon": "./assets/images/crown-logo.png",
     "scheme": "eatfitbymax",
     "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
     "ios": {
       "icon": "./assets/images/crown-logo.png",
       "supportsTablet": true,
       "bundleIdentifier": "com.eatfitbymax.app",
       "buildNumber": "1",
+      "requireFullScreen": false,
+      "userInterfaceStyle": "automatic",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "entitlements": {},
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false,
-        "NSCameraUsageDescription": "Cette app utilise la caméra pour scanner les codes-barres des aliments.",
-        "NSHealthShareUsageDescription": "Cette app accède à vos données de santé pour suivre votre activité physique.",
-        "NSHealthUpdateUsageDescription": "Cette app met à jour vos données de santé avec vos séances d'entraînement."
+        "NSCameraUsageDescription": "EatFitByMax utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas.",
+        "NSPhotoLibraryUsageDescription": "EatFitByMax accède à votre galerie photo pour vous permettre de sélectionner des images de vos repas.",
+        "NSMotionUsageDescription": "EatFitByMax utilise les capteurs de mouvement pour suivre votre activité physique.",
+        "NSLocationWhenInUseUsageDescription": "EatFitByMax utilise votre localisation pour trouver des salles de sport et des restaurants sains près de chez vous.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -27,7 +35,9 @@
       },
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.CAMERA"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -41,15 +51,18 @@
         "projectId": "816e280b-c76c-4f13-8d77-1ef1898b8ceb"
       }
     },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-web-browser",
+      "expo-camera"
     ],
     "experiments": {
       "typedRoutes": true
     },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "owner": "eatfit",
     "updates": {
       "url": "https://u.expo.dev/816e280b-c76c-4f13-8d77-1ef1898b8ceb"
     }
