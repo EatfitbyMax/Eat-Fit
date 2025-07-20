@@ -13,19 +13,13 @@
       }
     },
     "preview": {
-      "developmentClient": false,
       "distribution": "internal",
       "channel": "preview",
-      "env": {
-        "NODE_ENV": "production"
-      },
       "ios": {
         "simulator": false,
         "resourceClass": "m-medium",
         "buildConfiguration": "Release",
-        "cache": {
-          "disabled": true
-        }
+        "enterpriseProvisioning": "adhoc"
       },
       "android": {
         "buildType": "apk"

@@ -1,33 +1,24 @@
-
 const { getDefaultConfig } = require('expo/metro-config');
 
+/** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
 
-// Configuration pour l'export iOS
-config.transformer.enableBabelRCLookup = false;
-config.transformer.hermesParser = true;
-config.transformer.minifierPath = 'metro-minify-terser';
-config.transformer.minifierConfig = {
-  ecma: 8,
-  keep_fnames: true,
-  mangle: {
-    keep_fnames: true,
-  },
+// Exclure Stripe sur web pour éviter les erreurs d'import
+config.resolver.platforms = ['ios', 'android', 'native', 'web'];
+config.resolver.resolverMainFields = ['react-native', 'browser', 'main'];
+
+// Résolution conditionnelle pour exclure Stripe sur web
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  // Si on est sur web et qu'on essaie d'importer Stripe, retourner un module vide
+  if (platform === 'web' && moduleName.includes('@stripe/stripe-react-native')) {
+    return {
+      filePath: require.resolve('./utils/stripe-web-mock.js'),
+      type: 'sourceFile',
+    };
+  }
+
+  // Utiliser la résolution par défaut pour les autres cas
+  return context.resolveRequest(context, moduleName, platform);
 };
-
-// Résolution des extensions
-config.resolver.sourceExts.push('cjs');
-
-// Optimiser la sérialisation
-config.serializer.getModulesRunBeforeMainModule = () => [];
-
-// Exclure les fichiers volumineux du bundle
-config.resolver.blockList = [
-  /attached_assets\/.*/,
-  /backup-.*\/.*/,
-  /deploy-temp\/.*/,
-  /logs\/.*/,
-  /server\/logs\/.*/,
-];
 
 module.exports = config;

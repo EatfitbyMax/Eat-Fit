@@ -4,24 +4,6 @@ import { Platform } from 'react-native';
 const SERVER_URL = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
 const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
 
-// Fonction utilitaire pour les requêtes avec timeout
-const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeoutMs: number = 5000): Promise<Response> => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetch(url, {
-      ...options,
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-    return response;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    throw error;
-  }
-};
-
 export class PersistentStorage {
   // Test de connexion au serveur avec cache temporaire
   private static connectionCache: { isConnected: boolean; timestamp: number } | null = null;
@@ -31,12 +13,18 @@ export class PersistentStorage {
     try {
       console.log(`Test de connexion au serveur Replit: ${SERVER_URL}`);
 
-      const response = await fetchWithTimeout(`${SERVER_URL}/api/health-check`, {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      const response = await fetch(`${SERVER_URL}/api/health-check`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-        }
-      }, 5000);
+        },
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
@@ -65,16 +53,11 @@ export class PersistentStorage {
         return [];
       }
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-
       const response = await fetch(`${SERVER_URL}/api/programmes`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal
+        signal: AbortSignal.timeout(5000)
       });
-
-      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
@@ -178,16 +161,11 @@ export class PersistentStorage {
       const isConnected = await this.testConnection();
       if (isConnected) {
         try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 5000);
-
           const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
-            signal: controller.signal
+            signal: AbortSignal.timeout(5000)
           });
-
-          clearTimeout(timeoutId);
 
           if (response.ok) {
             const data = await response.json();
@@ -229,17 +207,12 @@ export class PersistentStorage {
       const isConnected = await this.testConnection();
       if (isConnected) {
         try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 8000);
-
           const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(nutrition),
-            signal: controller.signal
+            signal: AbortSignal.timeout(8000)
           });
-
-          clearTimeout(timeoutId);
 
           if (response.ok) {
             vpsSaved = true;
@@ -282,16 +255,11 @@ export class PersistentStorage {
       const isConnected = await this.testConnection();
       if (isConnected) {
         try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 5000);
-
           const response = await fetch(`${SERVER_URL}/api/weight/${userId}`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
-            signal: controller.signal
+            signal: AbortSignal.timeout(5000)
           });
-
-          clearTimeout(timeoutId);
 
           if (response.ok) {
             const data = await response.json();
@@ -345,17 +313,12 @@ export class PersistentStorage {
       const isConnected = await this.testConnection();
       if (isConnected) {
         try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 8000);
-
           const response = await fetch(`${SERVER_URL}/api/weight/${userId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(weightData),
-            signal: controller.signal
+            signal: AbortSignal.timeout(8000)
           });
-
-          clearTimeout(timeoutId);
 
           if (response.ok) {
             vpsSaved = true;
@@ -398,16 +361,11 @@ export class PersistentStorage {
       const isConnected = await this.testConnection();
       if (isConnected) {
         try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 5000);
-
           const response = await fetch(`${SERVER_URL}/api/mensurations/${userId}`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
-            signal: controller.signal
+            signal: AbortSignal.timeout(5000)
           });
-
-          clearTimeout(timeoutId);
 
           if (response.ok) {
             const data = await response.json();
@@ -477,17 +435,12 @@ export class PersistentStorage {
       const isConnected = await this.testConnection();
       if (isConnected) {
         try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 8000);
-
           const response = await fetch(`${SERVER_URL}/api/mensurations/${userId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(mensurations),
-            signal: controller.signal
+            signal: AbortSignal.timeout(8000)
           });
-
-          clearTimeout(timeoutId);
 
           if (response.ok) {
             vpsSaved = true;
@@ -562,17 +515,17 @@ export class PersistentStorage {
   // Users storage
   static async getUsers(): Promise<any[]> {
     try {
-      console.log(`[DEBUG] Récupération utilisateurs depuis VPS: ${SERVER_URL}/api/users`);
+      const isConnected = await this.testConnection();
+      if (!isConnected) {
+        console.log('📱 Serveur VPS indisponible, retour liste vide');
+        return [];
+      }
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-      const response = await fetchWithTimeout(`${SERVER_URL}/api/users`, {
+      const response = await fetch(`${SERVER_URL}/api/users`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      }, 5000);
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(5000)
+      });
 
       if (response.ok) {
         const data = await response.json();
@@ -588,21 +541,14 @@ export class PersistentStorage {
 
   static async saveUsers(users: any[]): Promise<void> {
     try {
-      console.log(`[DEBUG] Sauvegarde utilisateurs sur VPS: ${users.length} utilisateurs`);
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 secondes timeout
-
+      await this.testConnection();
       const response = await fetch(`${SERVER_URL}/api/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(users),
-        signal: controller.signal
       });
-
-      clearTimeout(timeoutId);
 
       if (response.ok) {
         console.log('Utilisateurs sauvegardés sur le serveur VPS');
@@ -726,16 +672,11 @@ export class PersistentStorage {
       const isConnected = await this.testConnection();
       if (isConnected) {
         try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 5000);
-
           const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
-            signal: controller.signal
+            signal: AbortSignal.timeout(5000)
           });
-
-          clearTimeout(timeoutId);
 
           if (response.ok) {
             const data = await response.json();
@@ -779,17 +720,12 @@ export class PersistentStorage {
       const isConnected = await this.testConnection();
       if (isConnected) {
         try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 8000);
-
           const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(nutritionData),
-            signal: controller.signal
+            signal: AbortSignal.timeout(8000)
           });
-
-          clearTimeout(timeoutId);
 
           if (response.ok) {
             vpsSaved = true;
@@ -834,16 +770,11 @@ export class PersistentStorage {
       const isConnected = await this.testConnection();
       if (isConnected) {
         try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout de 5 secondes
-
           const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
-            signal: controller.signal
+            signal: AbortSignal.timeout(5000) // Timeout de 5 secondes
           });
-
-          clearTimeout(timeoutId);
 
           if (response.ok) {
             const data = await response.json();
@@ -891,17 +822,12 @@ export class PersistentStorage {
       const isConnected = await this.testConnection();
       if (isConnected) {
         try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 8000); // Timeout de 8 secondes pour la sauvegarde
-
           const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(workouts),
-            signal: controller.signal
+            signal: AbortSignal.timeout(8000) // Timeout de 8 secondes pour la sauvegarde
           });
-
-          clearTimeout(timeoutId);
 
           if (response.ok) {
             vpsSaved = true;
@@ -1297,7 +1223,7 @@ export class PersistentStorage {
   }
 
   // Méthodes pour les statuts d'intégrations
-  static async getIntegrationStatus(userId: string): Promise<any> {
+  static async getUserIntegrationStatus(userId: string): Promise<any> {
     const defaultStatus = {
       appleHealth: { connected: false, permissions: [] },
       strava: { connected: false }
@@ -1308,8 +1234,25 @@ export class PersistentStorage {
       if (Platform.OS === 'ios') {
         console.log('🍎 Mode iOS - stockage local sécurisé');
         try {
-          const localData = await AsyncStorage.getItem(`user_integrations_${userId}`);
-          return localData ? JSON.parse(localData) : defaultStatus;
+          // Protection contre les erreurs natives AsyncStorage
+          const localData = await new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+              reject(new Error('AsyncStorage timeout'));
+            }, 3000);
+
+            AsyncStorage.getItem(`user_integrations_${userId}`)
+              .then(data => {
+                clearTimeout(timeout);
+                resolve(data);
+              })
+              .catch(error => {
+                clearTimeout(timeout);
+                console.error('🚨 Erreur native AsyncStorage:', error);
+                reject(error);
+              });
+          });
+
+          return localData ? JSON.parse(localData as string) : defaultStatus;
         } catch (localError) {
           console.warn('⚠️ Erreur stockage local iOS sécurisé:', localError);
           return defaultStatus;
@@ -1323,6 +1266,7 @@ export class PersistentStorage {
         if (response.ok) {
           const data = await response.json();
           console.log('Statuts intégrations récupérés depuis le serveur VPS');
+          // Sauvegarder en local comme backup
           await AsyncStorage.setItem(`user_integrations_${userId}`, JSON.stringify(data));
           return data;
         }
@@ -1344,48 +1288,33 @@ export class PersistentStorage {
     }
   }
 
-  static async getUserIntegrationStatus(userId: string): Promise<any> {
-    // Rediriger vers getIntegrationStatus pour éviter la duplication
-    return await this.getIntegrationStatus(userId);
-  }
-
   static async saveIntegrationStatus(userId: string, status: any): Promise<void> {
     try {
       // Toujours sauvegarder en local d'abord
       await AsyncStorage.setItem(`user_integrations_${userId}`, JSON.stringify(status));
-      console.log('✅ Statuts intégrations sauvegardés en local');
 
       const isConnected = await this.testConnection();
       if (isConnected) {
-        try {
-          const response = await fetch(`${SERVER_URL}/api/integrations/${userId}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(status),
-          });
+        const response = await fetch(`${SERVER_URL}/api/integrations/${userId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(status),
+        });
 
-          if (response.ok) {
-            console.log('🚀 Statuts intégrations sauvegardés sur le serveur VPS');
-          } else {
-            console.warn('⚠️ Serveur VPS indisponible pour la sauvegarde');
-          }
-        } catch (serverError) {
-          console.warn('⚠️ Erreur serveur VPS:', serverError);
+        if (response.ok) {
+          console.log('Statuts intégrations sauvegardés sur le serveur VPS');
+        } else {
+          console.log('Statuts intégrations sauvegardés localement (serveur indisponible)');
         }
       } else {
-        console.log('📱 Statuts intégrations sauvegardés localement uniquement');
+        console.log('Statuts intégrations sauvegardés localement (serveur indisponible)');
       }
     } catch (error) {
-      console.error('❌ Erreur critique sauvegarde statuts intégrations:', error);
-      // Dernière tentative de sauvegarde locale
-      try {
-        await AsyncStorage.setItem(`user_integrations_${userId}`, JSON.stringify(status));
-      } catch (localError) {
-        console.error('🔥 Impossible de sauvegarder même localement:', localError);
-        throw localError;
-      }
+      console.error('Erreur sauvegarde statuts intégrations:', error);
+      // Au moins garder la sauvegarde locale
+      await AsyncStorage.setItem(`user_integrations_${userId}`, JSON.stringify(status));
     }
   }
 
@@ -1522,10 +1451,11 @@ export const testApiConnection = async (): Promise<{ success: boolean; message: 
 export const getMessages = async (userId: string): Promise<any[]> => {
   try {
     console.log(`[DEBUG] Récupération messages pour userId: ${userId}`);
-    console.log(`[DEBUG] URL: ${API_URL}/api/messages/${userId}`);
+    console.log(`[DEBUG] URL API: ${API_URL}/api/messages/${userId}`);
 
+    // Test de connexion avec timeout court
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 secondes timeout
+    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 secondes
 
     const response = await fetch(`${API_URL}/api/messages/${userId}`, {
       method: 'GET',
@@ -1612,7 +1542,7 @@ export const testServerConnection = async (): Promise<boolean> => {
         headers: {
           'Content-Type': 'application/json',
         },
-        signal: controller.signal
+        signal: controller.signal,
       });
 
     clearTimeout(timeoutId);
@@ -1628,7 +1558,7 @@ export const testServerConnection = async (): Promise<boolean> => {
     if (error.name === 'AbortError') {
       console.log('⚠️ Timeout de connexion au serveur VPS');
     } else {
-      console.log('⚠️ Erreur de connexion au serveur VPS:', error);
+      console.log('⚠️ Erreur de connexion au serveur VPS:', error.message);
     }
     return false;
   }
