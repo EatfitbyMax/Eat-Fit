@@ -1,14 +1,16 @@
+
 const { getDefaultConfig } = require('expo/metro-config');
 
-/** @type {import('expo/metro-config').MetroConfig} */
-const config = getDefaultConfig(__dirname, {
-  // [Web-only]: Enables CSS support in Metro.
-  isCSSEnabled: true,
-});
+const config = getDefaultConfig(__dirname);
 
-// Résolution des conflits de modules
-config.resolver.blockList = [
-  /.*\/node_modules\/.*\/node_modules\/react-native\/.*/
-];
+// Configuration pour supporter les extensions TypeScript et JavaScript
+config.resolver.sourceExts.push('cjs');
+
+// Assurer que les transformations sont correctes pour l'export
+config.transformer.enableBabelRCLookup = false;
+config.transformer.hermesParser = true;
+
+// Configuration pour l'export embed
+config.serializer.getModulesRunBeforeMainModule = () => [];
 
 module.exports = config;

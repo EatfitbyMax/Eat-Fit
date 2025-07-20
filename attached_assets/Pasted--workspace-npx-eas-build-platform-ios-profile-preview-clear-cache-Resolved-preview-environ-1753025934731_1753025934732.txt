@@ -1,0 +1,66 @@
+~/workspace$ npx eas build --platform ios --profile preview --clear-cache
+Resolved "preview" environment for the build. Learn more: https://docs.expo.dev/eas/environment-variables/#setting-the-environment-for-your-builds
+No environment variables with visibility "Plain text" and "Sensitive" found for the "preview" environment on EAS.
+Environment variables loaded from the "preview" build profile "env" configuration: NODE_ENV.
+
+You set NODE_ENV=production in the build profile or environment variables. Remember that it will be available during the entire build process. In particular, it will make yarn/npm install only production packages.
+
+ios.buildNumber field in app config is ignored when version source is set to remote, but this value will still be in the manifest available via expo-constants. It's recommended to remove this value from app config.
+✔ Using remote iOS credentials (Expo server)
+
+If you provide your Apple account credentials we will be able to generate all necessary build credentials and fully validate them.
+This is optional, but without Apple account access you will need to provide all the missing values manually and we can only run minimal validation on them.
+✔ Do you want to log in to your Apple account? … yes
+
+› Log in to your Apple Developer account to continue
+✔ Apple ID: … m.pacullmarquie@gmail.com
+› Restoring session /home/runner/.app-store/auth/m.pacullmarquie@gmail.com/cookie
+› Team MAXANDRE MARIUS PACULL--MAROUIÉ (U52ZR3HQFP)
+› Provider MAXANDRE MARIUS PACULL--MAROUIE (127886919)
+✔ Logged in Local session
+✔ Bundle identifier registered com.eatfitbymax.app
+✔ Synced capabilities: No updates
+✔ Synced capability identifiers: No updates
+✔ Fetched Apple distribution certificates
+✔ Fetched Apple provisioning profiles
+✔ All your registered devices are present in the Provisioning Profile. Would you like to reuse the profile? › Yes
+
+Project Credentials Configuration
+
+Project                   @eatfit/eatfitbymax
+Bundle Identifier         com.eatfitbymax.app
+                          
+Ad Hoc Configuration      
+                          
+Distribution Certificate  
+Serial Number             45E48441AF4E872DDAACD99F2C535A29
+Expiration Date           Sun, 19 Jul 2026 16:55:40 UTC
+Apple Team                U52ZR3HQFP (MAXANDRE MARIUS PACULL--MAROUIÉ (Individual))
+Updated                   22 hours ago
+                          
+Provisioning Profile      
+Developer Portal ID       8AA53ZDMYT
+Status                    active
+Expiration                Sun, 19 Jul 2026 16:55:40 UTC
+Apple Team                U52ZR3HQFP (MAXANDRE MARIUS PACULL--MAROUIÉ (Individual))
+Provisioned devices       - iPhone de maxandre (2) - iPhone (UDID: 00008110-000661E62146801E)
+Updated                   22 hours ago
+                          
+All credentials are ready to build @eatfit/eatfitbymax (com.eatfitbymax.app)
+
+
+Compressing project files and uploading to EAS Build. Learn more: https://expo.fyi/eas-build-archive
+✔ Compressed project files 22s (241 MB)
+Your project archive is 241 MB. You can reduce its size and the time it takes to upload by excluding files that are unnecessary for the build process in .easignore file. Learn more: https://expo.fyi/eas-build-archive
+✔ Uploaded to EAS 42s
+⌛️ Computing the project fingerprint is taking longer than expected...
+⏩ To skip this step, set the environment variable: EAS_SKIP_AUTO_FINGERPRINT=1
+✔ Computed project fingerprint
+
+See logs: https://expo.dev/accounts/eatfit/projects/eatfitbymax/builds/e493799f-07f9-4373-83d2-5d6f8279966a
+
+Waiting for build to complete. You can press Ctrl+C to exit.
+✖ Build failed
+
+🍏 iOS build failed:
+Unknown error. See logs of the Bundle JavaScript build phase for more information.
