@@ -1,8 +1,20 @@
 import React from 'react';
 import { Platform } from 'react-native';
+import * as ErrorRecovery from 'expo-error-recovery';
 
-// AUCUN gestionnaire d'erreurs personnalisé pour éviter les crashes
-console.log('🍎 App démarré sans gestionnaires d\'erreurs personnalisés');
+// Gestionnaire d'erreurs natives avec expo-error-recovery
+console.log('🍎 App démarré avec gestionnaires d\'erreurs sécurisés');
+
+// Gestion des erreurs natives non gérées
+if (ErrorRecovery) {
+  ErrorRecovery.setRecoveryProps({
+    recoveryText: 'Redémarrer l\'application',
+    onRecover: () => {
+      console.log('🔄 Récupération d\'erreur native');
+      ErrorRecovery.recover();
+    }
+  });
+}
 
 import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
@@ -18,6 +30,7 @@ import SplashScreenComponent from '@/components/SplashScreen';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { LanguageProvider } from '@/context/LanguageContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { setupGlobalErrorHandlers } from '@/utils/errorHandlers';
 
 // Import conditionnel sécurisé de Stripe
 let StripeProvider: any = null;
@@ -45,6 +58,16 @@ export default function RootLayout() {
   });
 
   const [isInitializing, setIsInitializing] = useState(true);
+
+  // Configurer les gestionnaires d'erreurs au démarrage
+  useEffect(() => {
+    try {
+      setupGlobalErrorHandlers();
+      console.log('✅ Gestionnaires d\'erreurs initialisés');
+    } catch (error) {
+      console.warn('⚠️ Erreur initialisation gestionnaires:', error);
+    }
+  }, []);
 
   useEffect(() => {
     if (loaded) {

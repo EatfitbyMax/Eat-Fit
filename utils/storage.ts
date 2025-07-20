@@ -1230,14 +1230,31 @@ export class PersistentStorage {
     };
 
     try {
-      // Sur iOS, TOUJOURS utiliser le stockage local uniquement
+      // Sur iOS, TOUJOURS utiliser le stockage local uniquement avec protection native
       if (Platform.OS === 'ios') {
-        console.log('🍎 Mode iOS - stockage local uniquement');
+        console.log('🍎 Mode iOS - stockage local sécurisé');
         try {
-          const localData = await AsyncStorage.getItem(`user_integrations_${userId}`);
-          return localData ? JSON.parse(localData) : defaultStatus;
+          // Protection contre les erreurs natives AsyncStorage
+          const localData = await new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+              reject(new Error('AsyncStorage timeout'));
+            }, 3000);
+
+            AsyncStorage.getItem(`user_integrations_${userId}`)
+              .then(data => {
+                clearTimeout(timeout);
+                resolve(data);
+              })
+              .catch(error => {
+                clearTimeout(timeout);
+                console.error('🚨 Erreur native AsyncStorage:', error);
+                reject(error);
+              });
+          });
+
+          return localData ? JSON.parse(localData as string) : defaultStatus;
         } catch (localError) {
-          console.warn('Erreur stockage local iOS:', localError);
+          console.warn('⚠️ Erreur stockage local iOS sécurisé:', localError);
           return defaultStatus;
         }
       }
