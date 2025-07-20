@@ -906,7 +906,7 @@ export class PersistentStorage {
             console.warn(`⚠️ Échec sauvegarde VPS (HTTP ${response.status})`);
           }
         } catch (vpsError) {
-          console.warn('⚠️ Erreur sauvegarde VPS:`, vpsError);
+          console.warn('⚠️ Erreur sauvegarde VPS:', vpsError);
         }
       } else {
         console.log('📶 Serveur VPS indisponible - sauvegarde locale uniquement');
