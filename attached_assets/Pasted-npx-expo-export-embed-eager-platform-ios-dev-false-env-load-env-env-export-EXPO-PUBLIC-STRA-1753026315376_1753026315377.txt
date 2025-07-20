@@ -1,0 +1,35 @@
+npx expo export:embed --eager --platform ios --dev false
+env: load .env
+env: export EXPO_PUBLIC_STRAVA_CLIENT_ID EXPO_PUBLIC_STRAVA_CLIENT_SECRET EXPO_PUBLIC_VPS_URL EXPO_PUBLIC_API_URL EXPO_PUBLIC_REPLIT_URL API_URL EXPO_PUBLIC_PRIMARY_SERVER
+Starting Metro Bundler
+Unable to resolve module nativewind/jsx-runtime from /home/runner/workspace/node_modules/expo-router/build/renderRootComponent.js: nativewind/jsx-runtime could not be found within the project or in these directories:
+  node_modules/expo-router/node_modules
+  node_modules
+> 1 | "use strict";
+  2 | var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+  3 |     if (k2 === undefined) k2 = k;
+  4 |     var desc = Object.getOwnPropertyDescriptor(m, k);
+Error: Unable to resolve module nativewind/jsx-runtime from /home/runner/workspace/node_modules/expo-router/build/renderRootComponent.js: nativewind/jsx-runtime could not be found within the project or in these directories:
+  node_modules/expo-router/node_modules
+  node_modules
+> 1 | "use strict";
+  2 | var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+  3 |     if (k2 === undefined) k2 = k;
+  4 |     var desc = Object.getOwnPropertyDescriptor(m, k);
+Error: Unable to resolve module nativewind/jsx-runtime from /home/runner/workspace/node_modules/expo-router/build/renderRootComponent.js: nativewind/jsx-runtime could not be found within the project or in these directories:
+  node_modules/expo-router/node_modules
+  node_modules
+> 1 | "use strict";
+  2 | var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+  3 |     if (k2 === undefined) k2 = k;
+  4 |     var desc = Object.getOwnPropertyDescriptor(m, k);
+    at ModuleResolver.resolveDependency (/home/runner/workspace/node_modules/metro/src/node-haste/DependencyGraph/ModuleResolution.js:150:15)
+    at DependencyGraph.resolveDependency (/home/runner/workspace/node_modules/metro/src/node-haste/DependencyGraph.js:239:43)
+    at /home/runner/workspace/node_modules/metro/src/lib/transformHelpers.js:161:21
+    at resolveDependencies (/home/runner/workspace/node_modules/metro/src/DeltaBundler/buildSubgraph.js:43:25)
+    at visit (/home/runner/workspace/node_modules/metro/src/DeltaBundler/buildSubgraph.js:81:30)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async Promise.all (index 2)
+    at visit (/home/runner/workspace/node_modules/metro/src/DeltaBundler/buildSubgraph.js:90:5)
+    at async Promise.all (index 0)
+    at visit (/home/runner/workspace/node_modules/metro/src/DeltaBundler/buildSubgraph.js:90:5)
