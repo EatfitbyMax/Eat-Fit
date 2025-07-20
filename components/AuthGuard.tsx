@@ -14,32 +14,23 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     const inAuthGroup = segments[0] === 'auth';
     const inClientGroup = segments[0] === '(client)';
     const inCoachGroup = segments[0] === '(coach)';
+    const currentRoute = segments.join('/');
 
-    console.log('🛡️ AuthGuard - État:', {
-      user: user?.email || 'Aucun',
-      userType: user?.userType,
-      segments,
-      inAuthGroup,
-      inClientGroup,
-      inCoachGroup
-    });
+    // Log uniquement lors des changements d'état significatifs
+    console.log('🛡️ AuthGuard - Route:', currentRoute, '| Utilisateur:', user?.email || 'Non connecté');
 
     if (!user) {
       // Utilisateur non connecté - rediriger vers l'authentification
       if (!inAuthGroup) {
-        console.log('🔄 Redirection vers login (non connecté)');
+        console.log('🔄 Redirection vers login');
         router.replace('/auth/login');
       }
     } else {
       // Utilisateur connecté - rediriger vers la bonne section
       if (inAuthGroup) {
-        if (user.userType === 'coach') {
-          console.log('🔄 Redirection coach vers programmes');
-          router.replace('/(coach)/programmes');
-        } else {
-          console.log('🔄 Redirection client vers accueil');
-          router.replace('/(client)');
-        }
+        const targetRoute = user.userType === 'coach' ? '/(coach)/programmes' : '/(client)';
+        console.log('🔄 Redirection utilisateur connecté vers:', targetRoute);
+        router.replace(targetRoute);
       } else if (user.userType === 'coach' && !inCoachGroup) {
         console.log('🔄 Redirection coach vers sa section');
         router.replace('/(coach)/programmes');
