@@ -18,10 +18,8 @@
       "config": {
         "usesNonExemptEncryption": false
       },
-      "entitlements": {
-      },
+      "entitlements": {},
       "infoPlist": {
-        
         "NSCameraUsageDescription": "EatFitByMax utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas.",
         "NSPhotoLibraryUsageDescription": "EatFitByMax accède à votre galerie photo pour vous permettre de sélectionner des images de vos repas.",
         "NSMotionUsageDescription": "EatFitByMax utilise les capteurs de mouvement pour suivre votre activité physique.",
@@ -59,7 +57,8 @@
     "plugins": [
       "expo-router",
       "expo-web-browser",
-      "expo-camera"
+      "expo-camera",
+      "expo-barcode-scanner"
     ],
     "experiments": {
       "typedRoutes": true
