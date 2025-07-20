@@ -1,40 +1,8 @@
 import React from 'react';
 import { Platform } from 'react-native';
 
-// Configuration sécurisée pour iOS
-const setupErrorHandling = () => {
-  try {
-    // Désactiver complètement les gestionnaires d'erreurs personnalisés sur iOS
-    if (Platform.OS === 'ios') {
-      console.log('🍎 Gestionnaires d\'erreurs désactivés sur iOS pour stabilité');
-      return;
-    }
-
-    // Gestionnaire minimal pour les autres plateformes
-    if (typeof ErrorUtils !== 'undefined' && ErrorUtils.setGlobalHandler) {
-      ErrorUtils.setGlobalHandler((error, isFatal) => {
-        console.warn('⚠️ Erreur silencieuse:', error?.message?.substring(0, 50) || 'Inconnue');
-        // Ne jamais faire crash l'application
-        return;
-      });
-    }
-
-    // Gestion des promesses uniquement sur web
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      window.addEventListener('unhandledrejection', (event) => {
-        console.warn('🔄 Promesse rejetée (web)');
-        event.preventDefault();
-      });
-    }
-  } catch (setupError) {
-    console.warn('Erreur setup minimal:', setupError);
-  }
-};
-
-// Exécuter le setup seulement si nécessaire
-if (Platform.OS !== 'ios') {
-  setupErrorHandling();
-}
+// AUCUN gestionnaire d'erreurs personnalisé pour éviter les crashes
+console.log('🍎 App démarré sans gestionnaires d\'erreurs personnalisés');
 
 import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
@@ -49,6 +17,7 @@ import { PersistentStorage } from '../utils/storage';
 import SplashScreenComponent from '@/components/SplashScreen';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { LanguageProvider } from '@/context/LanguageContext';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 // Import conditionnel sécurisé de Stripe
 let StripeProvider: any = null;
@@ -88,13 +57,13 @@ export default function RootLayout() {
     let initializationComplete = false;
 
     try {
-      console.log('🚀 Initialisation sécurisée...');
+      console.log('🚀 Initialisation ultra-sécurisée...');
 
-      // Timeout plus court sur iOS pour éviter les blocages
-      const timeoutDuration = Platform.OS === 'ios' ? 5000 : 8000;
+      // Timeout très court pour éviter les blocages
+      const timeoutDuration = 3000; // 3 secondes seulement
       const initTimeout = setTimeout(() => {
         if (!initializationComplete) {
-          console.warn('⏰ Timeout initialisation - redirection forcée');
+          console.warn('⏰ Timeout - redirection forcée');
           initializationComplete = true;
           setIsInitializing(false);
           setTimeout(() => {
@@ -107,27 +76,13 @@ export default function RootLayout() {
         }
       }, timeoutDuration);
 
-      // Initialisation ultra-sécurisée pour iOS
+      // Initialisation minimale
       let currentUser = null;
       try {
-        if (Platform.OS === 'ios') {
-          // Mode minimal pour iOS
-          console.log('🍎 Initialisation iOS minimale');
-          currentUser = await getCurrentUser().catch(() => null);
-        } else {
-          // Initialisation complète pour les autres plateformes
-          const initPromises = [
-            PersistentStorage.testConnection().catch(() => false),
-            initializeAdminAccount().catch(() => null),
-            migrateExistingData().catch(() => null),
-            getCurrentUser().catch(() => null)
-          ];
-
-          const results = await Promise.allSettled(initPromises);
-          currentUser = results[3].status === 'fulfilled' ? results[3].value : null;
-        }
+        console.log('🔄 Mode minimal absolu');
+        currentUser = await getCurrentUser().catch(() => null);
       } catch (initError) {
-        console.warn('Erreur initialisation critique:', initError);
+        console.warn('Erreur initialisation:', initError);
         currentUser = null;
       }
 
@@ -157,8 +112,8 @@ export default function RootLayout() {
               console.warn('Erreur navigation de secours');
             }
           }
-        }, Platform.OS === 'ios' ? 200 : 100);
-      }, Platform.OS === 'ios' ? 1000 : 1500);
+        }, 300);
+      }, 500);
 
     } catch (error) {
       console.warn('🚨 Erreur initialisation:', error);
@@ -177,8 +132,6 @@ export default function RootLayout() {
       }, 500);
     }
   };
-
-  // Gestion des erreurs globales (supprimé car déjà géré plus haut)
 
   if (!loaded || isInitializing) {
     return <SplashScreenComponent onFinish={() => {}} />;
@@ -209,12 +162,14 @@ export default function RootLayout() {
   };
 
   return (
-    <LanguageProvider>
-      <ThemeProvider>
-        <NavigationThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <AppWrapper />
-        </NavigationThemeProvider>
-      </ThemeProvider>
-    </LanguageProvider>
+    <ErrorBoundary>
+      <LanguageProvider>
+        <ThemeProvider>
+          <NavigationThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <AppWrapper />
+          </NavigationThemeProvider>
+        </ThemeProvider>
+      </LanguageProvider>
+    </ErrorBoundary>
   );
 }

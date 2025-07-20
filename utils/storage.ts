@@ -1230,9 +1230,9 @@ export class PersistentStorage {
     };
 
     try {
-      // Sur iOS, éviter les requêtes réseau complexes au démarrage
+      // Sur iOS, TOUJOURS utiliser le stockage local uniquement
       if (Platform.OS === 'ios') {
-        console.log('🍎 Récupération intégrations locale sur iOS');
+        console.log('🍎 Mode iOS - stockage local uniquement');
         try {
           const localData = await AsyncStorage.getItem(`user_integrations_${userId}`);
           return localData ? JSON.parse(localData) : defaultStatus;
