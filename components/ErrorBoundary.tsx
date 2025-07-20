@@ -2,6 +2,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as ErrorRecovery from 'expo-error-recovery';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -21,14 +22,41 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     console.log('🛡️ ErrorBoundary a capturé une erreur:', error.message);
+    
+    // Log des erreurs natives spécifiques
+    if (error.message?.includes('Native module') || 
+        error.message?.includes('RCT') ||
+        error.message?.includes('NSException') ||
+        error.message?.includes('abort()')) {
+      console.error('🚨 ERREUR NATIVE DÉTECTÉE:', {
+        message: error.message,
+        stack: error.stack?.substring(0, 500),
+        name: error.name
+      });
+    }
+    
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.warn('🚨 Erreur capturée par ErrorBoundary:', {
       error: error.message,
-      componentStack: errorInfo.componentStack?.substring(0, 200)
+      componentStack: errorInfo.componentStack?.substring(0, 200),
+      errorInfo: errorInfo
     });
+
+    // Tentative de récupération avec expo-error-recovery
+    if (ErrorRecovery && (error.message?.includes('Native module') || 
+                         error.message?.includes('RCT'))) {
+      console.log('🔄 Tentative de récupération d\'erreur native');
+      setTimeout(() => {
+        try {
+          ErrorRecovery.recover();
+        } catch (recoveryError) {
+          console.error('❌ Échec récupération:', recoveryError);
+        }
+      }, 1000);
+    }
   }
 
   resetError = () => {
