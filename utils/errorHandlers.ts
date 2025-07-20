@@ -24,7 +24,7 @@ export const setupGlobalErrorHandlers = () => {
     if (originalHandler) {
       originalHandler(error, isFatal);
     }
-  });es b// Gestionnaire pour les rejets de promesses non gérés (simplifié)
+  }); // Gestionnaire pour les rejets de promesses non gérés (simplifié)
   const handleUnhandledRejection = (event: any) => {
     console.error('🚨 PROMESSE REJETÉE:', event.reason);
     if (event.preventDefault) {
