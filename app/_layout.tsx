@@ -18,17 +18,19 @@ if (ErrorRecovery) {
 
 import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack, useRouter } from 'expo-router';
+import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { initializeAdminAccount, getCurrentUser } from '@/utils/auth';
+import { initializeAdminAccount } from '@/utils/auth';
 import { migrateExistingData } from '@/utils/migration';
 import { PersistentStorage } from '../utils/storage';
 import SplashScreenComponent from '@/components/SplashScreen';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { LanguageProvider } from '@/context/LanguageContext';
+import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { AuthGuard } from '@/components/AuthGuard';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { setupGlobalErrorHandlers } from '@/utils/errorHandlers';
 
@@ -50,14 +52,31 @@ if (STRIPE_ENABLED) {
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
+function AppNavigator() {
+  const { isLoading } = useAuth();
+
+  if (isLoading) {
+    return <SplashScreenComponent onFinish={() => {}} />;
+  }
+
+  return (
+    <AuthGuard>
+      <Stack>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(client)" options={{ headerShown: false }} />
+        <Stack.Screen name="(coach)" options={{ headerShown: false }} />
+        <Stack.Screen name="auth" options={{ headerShown: false }} />
+        <Stack.Screen name="+not-found" />
+      </Stack>
+    </AuthGuard>
+  );
+}
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const router = useRouter();
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
-
-  const [isInitializing, setIsInitializing] = useState(true);
 
   // Configurer les gestionnaires d'erreurs au démarrage
   useEffect(() => {
@@ -72,97 +91,12 @@ export default function RootLayout() {
   useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
-      
-      // Délai pour éviter les conflits au démarrage
-      const initTimer = setTimeout(() => {
-        handleAuthCheck();
-      }, 200);
-      
-      return () => clearTimeout(initTimer);
     }
   }, [loaded]);
 
-  const handleAuthCheck = async () => {
-    try {
-      console.log('🚀 Initialisation stabilisée...');
-
-      // Délai initial pour éviter les conflicts de navigation
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Protection contre les boucles infinies
-      const MAX_RETRIES = 1;
-      let retryCount = 0;
-
-      const performInit = async () => {
-        try {
-          // Vérification utilisateur avec timeout court
-          const userPromise = getCurrentUser();
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('User check timeout')), 2000)
-          );
-
-          const currentUser = await Promise.race([userPromise, timeoutPromise]).catch(() => null);
-          
-          console.log('✅ Vérification utilisateur terminée');
-          
-          // Terminer l'initialisation AVANT la navigation
-          setIsInitializing(false);
-          
-          // Navigation différée pour éviter les conflits
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-          // Navigation unique et sécurisée
-          if (currentUser?.userType === 'coach') {
-            router.replace('/(coach)/programmes');
-          } else if (currentUser?.userType === 'client') {
-            router.replace('/(client)');
-          } else {
-            router.replace('/auth/login');
-          }
-          
-        } catch (initError) {
-          console.warn('Erreur initialisation:', initError);
-          
-          if (retryCount < MAX_RETRIES) {
-            retryCount++;
-            console.log(`🔄 Tentative ${retryCount}/${MAX_RETRIES}`);
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            return performInit();
-          } else {
-            // Dernière chance - navigation de secours
-            setIsInitializing(false);
-            await new Promise(resolve => setTimeout(resolve, 100));
-            router.replace('/auth/login');
-          }
-        }
-      };
-
-      await performInit();
-
-    } catch (error) {
-      console.error('🚨 Erreur critique initialisation:', error);
-      
-      // Dernière ligne de défense
-      setIsInitializing(false);
-      setTimeout(() => {
-        router.replace('/auth/login');
-      }, 200);
-    }
-  };
-
-  if (!loaded || isInitializing) {
+  if (!loaded) {
     return <SplashScreenComponent onFinish={() => {}} />;
   }
-
-  const StackContent = () => (
-    <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="(client)" options={{ headerShown: false }} />
-      <Stack.Screen name="(coach)" options={{ headerShown: false }} />
-      <Stack.Screen name="auth" options={{ headerShown: false }} />
-      <Stack.Screen name="+not-found" />
-    </Stack>
-  );
 
   const AppWrapper = () => {
     if (StripeProvider && STRIPE_ENABLED) {
@@ -171,20 +105,22 @@ export default function RootLayout() {
           publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY!}
           merchantIdentifier="merchant.com.eatfitbymax"
         >
-          <StackContent />
+          <AppNavigator />
         </StripeProvider>
       );
     }
-    return <StackContent />;
+    return <AppNavigator />;
   };
 
   return (
     <ErrorBoundary>
       <LanguageProvider>
         <ThemeProvider>
-          <NavigationThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-            <AppWrapper />
-          </NavigationThemeProvider>
+          <AuthProvider>
+            <NavigationThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+              <AppWrapper />
+            </NavigationThemeProvider>
+          </AuthProvider>
         </ThemeProvider>
       </LanguageProvider>
     </ErrorBoundary>
