@@ -19,7 +19,10 @@
         "simulator": false,
         "resourceClass": "m-medium",
         "buildConfiguration": "Release",
-        "bundler": "metro"
+        "bundler": "metro",
+        "cache": {
+          "disabled": true
+        }
       },
       "android": {
         "buildType": "apk"

@@ -39,7 +39,7 @@
     "@stripe/stripe-react-native": "0.45.0",
     "expo": "53.0.20",
     "expo-auth-session": "~6.2.1",
-    "expo-barcode-scanner": "^13.0.1",
+    "expo-barcode-scanner": "~13.0.1",
     "expo-blur": "~14.1.5",
     "expo-camera": "~16.1.11",
     "expo-constants": "~17.1.6",
@@ -86,6 +86,10 @@
     "typescript": "~5.8.3"
   },
   "overrides": {
+    "@expo/config-plugins": "~10.1.1"
+  },
+  "resolutions": {
+    "expo-barcode-scanner": "~13.0.1",
     "@expo/config-plugins": "~10.1.1"
   },
   "private": true

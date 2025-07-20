@@ -31,7 +31,7 @@ if (Platform.OS !== 'web') {
   } catch (error) {
     console.log('⚠️ BarCodeScanner non disponible:', error);
   }
-  
+
   try {
     const cameraModule = require('expo-camera');
     Camera = cameraModule.Camera;
