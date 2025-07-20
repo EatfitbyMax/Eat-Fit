@@ -12,17 +12,7 @@
       "icon": "./assets/images/crown-logo.png",
       "supportsTablet": true,
       "bundleIdentifier": "com.eatfitbymax.app",
-      "requireFullScreen": false,
-      "userInterfaceStyle": "automatic",
-      "config": {
-        "usesNonExemptEncryption": false
-      },
-      "infoPlist": {
-        "NSCameraUsageDescription": "EatFitByMax utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas.",
-        "NSPhotoLibraryUsageDescription": "EatFitByMax accède à votre galerie photo pour vous permettre de sélectionner des images de vos repas.",
-        "NSMotionUsageDescription": "EatFitByMax utilise les capteurs de mouvement pour suivre votre activité physique.",
-        "NSLocationWhenInUseUsageDescription": "EatFitByMax utilise votre localisation pour trouver des salles de sport et des restaurants sains près de chez vous."
-      }
+      "buildNumber": "1"
     },
     "android": {
       "icon": "./assets/images/crown-logo.png",
@@ -31,10 +21,7 @@
         "backgroundColor": "#1E1E1E"
       },
       "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO",
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.CAMERA"
       ]
     },
     "web": {
@@ -52,15 +39,7 @@
       "policy": "sdkVersion"
     },
     "plugins": [
-      "expo-router",
-      "expo-web-browser",
-      "expo-camera",
-      [
-        "expo-barcode-scanner",
-        {
-          "cameraPermission": "EatFitByMax utilise l'appareil photo pour scanner les codes-barres des aliments."
-        }
-      ]
+      "expo-router"
     ],
     "experiments": {
       "typedRoutes": true
