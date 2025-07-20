@@ -45,13 +45,7 @@
       "policy": "sdkVersion"
     },
     "plugins": [
-      "expo-router",
-      [
-        "expo-barcode-scanner",
-        {
-          "cameraPermission": "Cette app utilise la caméra pour scanner les codes-barres des aliments."
-        }
-      ]
+      "expo-router"
     ],
     "experiments": {
       "typedRoutes": true
