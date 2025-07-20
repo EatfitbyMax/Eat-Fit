@@ -14,14 +14,14 @@
       "bundleIdentifier": "com.eatfitbymax.app",
       "requireFullScreen": false,
       "userInterfaceStyle": "automatic",
-      
-      "entitlements": {},
+      "config": {
+        "usesNonExemptEncryption": false
+      },
       "infoPlist": {
         "NSCameraUsageDescription": "EatFitByMax utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas.",
         "NSPhotoLibraryUsageDescription": "EatFitByMax accède à votre galerie photo pour vous permettre de sélectionner des images de vos repas.",
         "NSMotionUsageDescription": "EatFitByMax utilise les capteurs de mouvement pour suivre votre activité physique.",
-        "NSLocationWhenInUseUsageDescription": "EatFitByMax utilise votre localisation pour trouver des salles de sport et des restaurants sains près de chez vous.",
-        "ITSAppUsesNonExemptEncryption": false
+        "NSLocationWhenInUseUsageDescription": "EatFitByMax utilise votre localisation pour trouver des salles de sport et des restaurants sains près de chez vous."
       }
     },
     "android": {
