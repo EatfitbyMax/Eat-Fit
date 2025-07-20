@@ -57,8 +57,7 @@
     "plugins": [
       "expo-router",
       "expo-web-browser",
-      "expo-camera",
-      "expo-barcode-scanner"
+      "expo-camera"
     ],
     "experiments": {
       "typedRoutes": true

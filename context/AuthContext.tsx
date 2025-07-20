@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getCurrentUser, User } from '@/utils/auth';
 
@@ -17,25 +16,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadInitialUser();
+    loadUser();
   }, []);
 
-  const loadInitialUser = async () => {
+  const loadUser = async () => {
     try {
-      console.log('🔄 Chargement utilisateur initial...');
       const currentUser = await getCurrentUser();
       setUser(currentUser);
       if (currentUser) {
-        console.log('✅ Utilisateur chargé:', currentUser.email);
-      } else {
-        console.log('ℹ️ Aucun utilisateur connecté');
+        console.log('✅ Utilisateur connecté:', currentUser.email);
       }
     } catch (error) {
       console.error('❌ Erreur chargement utilisateur:', error);
       setUser(null);
     } finally {
       setIsLoading(false);
-      console.log('✅ Authentification initialisée');
     }
   };
 
