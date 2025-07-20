@@ -25,7 +25,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('🔄 Chargement utilisateur initial...');
       const currentUser = await getCurrentUser();
       setUser(currentUser);
-      console.log('✅ Utilisateur chargé:', currentUser?.email || 'Aucun');
+      if (currentUser) {
+        console.log('✅ Utilisateur chargé:', currentUser.email);
+      } else {
+        console.log('ℹ️ Aucun utilisateur connecté');
+      }
     } catch (error) {
       console.error('❌ Erreur chargement utilisateur:', error);
       setUser(null);

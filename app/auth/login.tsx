@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { login } from '@/utils/auth';
+import { useAuth } from '@/context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { login: contextLogin } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,18 +21,18 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      const { login: authLogin } = await import('@/utils/auth');
-      const user = await authLogin(email, password);
+      const user = await login(email, password);
       if (user) {
-        // Utiliser le contexte d'authentification
-        const { useAuth } = await import('@/context/AuthContext');
-        console.log('Connexion réussie via contexte');
+        console.log('✅ Connexion réussie pour:', user.email);
+        // Mettre à jour le contexte d'authentification
+        contextLogin(user);
+        console.log('✅ Contexte mis à jour');
         // La redirection sera gérée automatiquement par AuthGuard
       } else {
         Alert.alert('Erreur', 'Email ou mot de passe incorrect');
       }
     } catch (error) {
-      console.error('Erreur connexion:', error);
+      console.error('❌ Erreur connexion:', error);
       Alert.alert('Erreur', 'Une erreur est survenue lors de la connexion');
     } finally {
       setLoading(false);

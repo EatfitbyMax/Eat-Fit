@@ -64,13 +64,11 @@ export async function getCurrentUser(): Promise<User | null> {
     const currentUserData = await AsyncStorage.getItem(CURRENT_USER_KEY);
     if (currentUserData) {
       const user = JSON.parse(currentUserData);
-      console.log('Utilisateur connecté trouvé:', user.email);
       return user;
     }
-    console.log('Aucun utilisateur connecté');
     return null;
   } catch (error) {
-    console.error('Erreur récupération utilisateur:', error);
+    console.error('❌ Erreur récupération utilisateur:', error);
     return null;
   }
 }
