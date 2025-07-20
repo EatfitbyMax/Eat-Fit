@@ -1,0 +1,39 @@
+
+# Fichiers de développement
+node_modules
+.expo
+.git
+.vscode
+.idea
+
+# Logs et fichiers temporaires
+*.log
+logs/
+deploy-temp/
+server/logs/
+
+# Assets attachés (très volumineux)
+attached_assets/
+
+# Fichiers de sauvegarde et scripts
+scripts/
+*.backup
+backup-*/
+
+# Fichiers de configuration locale
+.env.local
+.env.development
+server/.env
+
+# Fichiers temporaires
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# Documentation
+*.md
+email-setup-guide.md
+ios-health-config.md
+privacy-policy.md
+vps-setup.md
