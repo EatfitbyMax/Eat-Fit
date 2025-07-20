@@ -19,9 +19,15 @@ import * as ImagePicker from 'expo-image-picker';
 
 const { width } = Dimensions.get('window');
 
-// Utiliser seulement expo-camera pour les permissions
+// Import conditionnel du BarCodeScanner seulement sur mobile
+let BarCodeScanner: any = null;
 let Camera: any = null;
 if (Platform.OS !== 'web') {
+  try {
+    BarCodeScanner = require('expo-barcode-scanner').BarCodeScanner;
+  } catch (error) {
+    console.log('BarCodeScanner non disponible:', error);
+  }
   try {
     Camera = require('expo-camera').Camera;
   } catch (error) {
@@ -56,8 +62,19 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
   }, [visible]);
 
   useEffect(() => {
-    // Scanner automatique désactivé - pas besoin de permissions
-    setHasPermission(false);
+    (async () => {
+      if (BarCodeScanner && Platform.OS !== 'web') {
+        try {
+          const { status } = await BarCodeScanner.requestPermissionsAsync();
+          setHasPermission(status === 'granted');
+        } catch (error) {
+          console.log('Erreur permissions scanner:', error);
+          setHasPermission(false);
+        }
+      } else {
+        setHasPermission(false);
+      }
+    })();
   }, []);
 
   const loadFavoriteFoods = async () => {
@@ -124,15 +141,46 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
   };
 
   const handleScannerPress = async () => {
-    // Scanner automatique désactivé - proposer saisie manuelle
-    Alert.alert(
-      'Saisie manuelle de code-barres', 
-      'Veuillez saisir manuellement le code-barres du produit',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Saisir', onPress: () => setShowManualBarcode(true) }
-      ]
-    );
+    if (Platform.OS === 'web') {
+      Alert.alert(
+        'Saisie manuelle de code-barres', 
+        'Le scanner automatique n\'est pas disponible sur web. Voulez-vous saisir manuellement un code-barres ?',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          { text: 'Saisir', onPress: () => setShowManualBarcode(true) }
+        ]
+      );
+      return;
+    }
+
+    if (!Camera || !BarCodeScanner) {
+      Alert.alert(
+        'Scanner non disponible',
+        'Le scanner automatique n\'est pas disponible. Voulez-vous saisir manuellement un code-barres ?',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          { text: 'Saisir', onPress: () => setShowManualBarcode(true) }
+        ]
+      );
+      return;
+    }
+
+    const { status } = await Camera.requestCameraPermissionsAsync();
+    const hasPermission = status === 'granted';
+
+    if (hasPermission === false) {
+      Alert.alert(
+        'Permission requise',
+        'L\'accès à la caméra est nécessaire pour scanner les codes-barres. Voulez-vous saisir manuellement un code-barres ?',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          { text: 'Saisir', onPress: () => setShowManualBarcode(true) }
+        ]
+      );
+      return;
+    }
+
+    setShowScanner(true);
   };
 
   const handleManualBarcodeSubmit = async () => {
@@ -286,7 +334,27 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
     }
   };
 
-  
+  if (showScanner && BarCodeScanner && Platform.OS !== 'web') {
+    return (
+      <Modal visible={visible} animationType="slide">
+        <View style={styles.scannerContainer}>
+          <BarCodeScanner
+            onBarCodeScanned={handleBarCodeScanned}
+            style={StyleSheet.absoluteFillObject}
+          />
+          <View style={styles.scannerOverlay}>
+            <Text style={styles.scannerText}>Scannez le code-barres du produit</Text>
+            <TouchableOpacity
+              style={styles.cancelScanButton}
+              onPress={() => setShowScanner(false)}
+            >
+              <Text style={styles.cancelScanText}>Annuler</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    );
+  }
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
