@@ -19,9 +19,7 @@ import * as ImagePicker from 'expo-image-picker';
 
 const { width } = Dimensions.get('window');
 
-// Import direct pour iOS/Android
-import { BarCodeScanner } from 'expo-barcode-scanner';
-import { Camera } from 'expo-camera';
+// Pas d'import de scanner pour éviter les erreurs de build iOS
 
 interface FoodSearchModalProps {
   visible: boolean;
@@ -50,19 +48,8 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
   }, [visible]);
 
   useEffect(() => {
-    (async () => {
-      if (BarCodeScanner && Platform.OS !== 'web') {
-        try {
-          const { status } = await BarCodeScanner.requestPermissionsAsync();
-          setHasPermission(status === 'granted');
-        } catch (error) {
-          console.log('Erreur permissions scanner:', error);
-          setHasPermission(false);
-        }
-      } else {
-        setHasPermission(false);
-      }
-    })();
+    // Scanner désactivé temporairement pour éviter les erreurs de build
+    setHasPermission(false);
   }, []);
 
   const loadFavoriteFoods = async () => {
@@ -129,34 +116,14 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
   };
 
   const handleScannerPress = async () => {
-    if (Platform.OS === 'web') {
-      Alert.alert(
-        'Saisie manuelle de code-barres', 
-        'Le scanner automatique n\'est pas disponible sur web. Voulez-vous saisir manuellement un code-barres ?',
-        [
-          { text: 'Annuler', style: 'cancel' },
-          { text: 'Saisir', onPress: () => setShowManualBarcode(true) }
-        ]
-      );
-      return;
-    }
-
-    const { status } = await BarCodeScanner.requestPermissionsAsync();
-    const hasPermission = status === 'granted';
-
-    if (hasPermission === false) {
-      Alert.alert(
-        'Permission requise',
-        'L\'accès à la caméra est nécessaire pour scanner les codes-barres. Voulez-vous saisir manuellement un code-barres ?',
-        [
-          { text: 'Annuler', style: 'cancel' },
-          { text: 'Saisir', onPress: () => setShowManualBarcode(true) }
-        ]
-      );
-      return;
-    }
-
-    setShowScanner(true);
+    Alert.alert(
+      'Scanner temporairement indisponible',
+      'Le scanner automatique est temporairement désactivé. Voulez-vous saisir manuellement un code-barres ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Saisir', onPress: () => setShowManualBarcode(true) }
+      ]
+    );
   };
 
   const handleManualBarcodeSubmit = async () => {
@@ -310,27 +277,7 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
     }
   };
 
-  if (showScanner && Platform.OS !== 'web') {
-    return (
-      <Modal visible={visible} animationType="slide">
-        <View style={styles.scannerContainer}>
-          <BarCodeScanner
-            onBarCodeScanned={handleBarCodeScanned}
-            style={StyleSheet.absoluteFillObject}
-          />
-          <View style={styles.scannerOverlay}>
-            <Text style={styles.scannerText}>Scannez le code-barres du produit</Text>
-            <TouchableOpacity
-              style={styles.cancelScanButton}
-              onPress={() => setShowScanner(false)}
-            >
-              <Text style={styles.cancelScanText}>Annuler</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-    );
-  }
+  // Scanner désactivé temporairement
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
@@ -363,11 +310,11 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
             <TouchableOpacity
-              style={[styles.actionButton, Platform.OS === 'web' && styles.disabledButton]}
+              style={styles.actionButton}
               onPress={handleScannerPress}
             >
-              <Text style={[styles.actionButtonText, Platform.OS === 'web' && styles.disabledButtonText]}>
-                📷 Scanner{Platform.OS === 'web' ? ' (Mobile seulement)' : ''}
+              <Text style={styles.actionButtonText}>
+                📷 Code-barres manuel
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
