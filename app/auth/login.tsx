@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -20,15 +19,13 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      const user = await login(email, password);
-      
+      const { login: authLogin } = await import('@/utils/auth');
+      const user = await authLogin(email, password);
       if (user) {
-        console.log('Connexion réussie, redirection...');
-        if (user.userType === 'coach') {
-          router.replace('/(coach)/programmes');
-        } else {
-          router.replace('/(client)');
-        }
+        // Utiliser le contexte d'authentification
+        const { useAuth } = await import('@/context/AuthContext');
+        console.log('Connexion réussie via contexte');
+        // La redirection sera gérée automatiquement par AuthGuard
       } else {
         Alert.alert('Erreur', 'Email ou mot de passe incorrect');
       }
@@ -55,7 +52,7 @@ export default function LoginScreen() {
       <View style={styles.content}>
         <Text style={styles.title}>Connexion</Text>
         <Text style={styles.subtitle}>Connectez-vous à votre compte</Text>
-        
+
         <View style={styles.form}>
           <TextInput
             style={styles.input}
@@ -66,7 +63,7 @@ export default function LoginScreen() {
             keyboardType="email-address"
             autoCapitalize="none"
           />
-          
+
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.input}
@@ -83,7 +80,7 @@ export default function LoginScreen() {
               <Text style={styles.eyeIcon}>{showPassword ? '🙈' : '👁'}</Text>
             </TouchableOpacity>
           </View>
-          
+
           <TouchableOpacity 
             style={[styles.button, loading && styles.buttonDisabled]} 
             onPress={handleLogin}
