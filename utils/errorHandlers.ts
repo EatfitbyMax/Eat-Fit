@@ -1,4 +1,3 @@
-
 import { Platform } from 'react-native';
 import * as ErrorRecovery from 'expo-error-recovery';
 
@@ -12,7 +11,7 @@ let lastRestartTime = 0;
 export const setupGlobalErrorHandlers = () => {
   // Version simplifiée pour build standalone
   const originalHandler = global.ErrorUtils?.getGlobalHandler?.();
-  
+
   global.ErrorUtils?.setGlobalHandler?.((error, isFatal) => {
     console.error('🚨 ERREUR GLOBALE:', {
       error: error?.message || error,
@@ -24,7 +23,9 @@ export const setupGlobalErrorHandlers = () => {
     if (originalHandler) {
       originalHandler(error, isFatal);
     }
-  }); // Gestionnaire pour les rejets de promesses non gérés (simplifié)
+  });
+
+  // Gestionnaire pour les rejets de promesses non gérés (simplifié)
   const handleUnhandledRejection = (event: any) => {
     console.error('🚨 PROMESSE REJETÉE:', event.reason);
     if (event.preventDefault) {
