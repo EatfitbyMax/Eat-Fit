@@ -553,15 +553,20 @@ export class PersistentStorage {
       console.log(`[DEBUG] Récupération utilisateurs depuis VPS: ${SERVER_URL}/api/users`);
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 secondes timeout
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`${SERVER_URL}/api/users`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        signal: controller.signal
-      });
+      const response = await Promise.race([
+        fetch(`${SERVER_URL}/api/users`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          signal: controller.signal
+        }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout')), 5000)
+        )
+      ]) as Response;
 
       clearTimeout(timeoutId);
 
@@ -901,7 +906,7 @@ export class PersistentStorage {
             console.warn(`⚠️ Échec sauvegarde VPS (HTTP ${response.status})`);
           }
         } catch (vpsError) {
-          console.warn('⚠️ Erreur sauvegarde VPS:', vpsError);
+          console.warn('⚠️ Erreur sauvegarde VPS:`, vpsError);
         }
       } else {
         console.log('📶 Serveur VPS indisponible - sauvegarde locale uniquement');
