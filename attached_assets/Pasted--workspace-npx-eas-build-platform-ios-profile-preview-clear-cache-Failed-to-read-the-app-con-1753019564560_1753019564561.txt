@@ -1,0 +1,45 @@
+~/workspace$ npx eas build --platform ios --profile preview --clear-cache
+Failed to read the app config from the project using "npx expo config" command: npx expo config --json exited with non-zero code: 7.
+Falling back to the version of "@expo/config" shipped with the EAS CLI.
+Resolved "preview" environment for the build. Learn more: https://docs.expo.dev/eas/environment-variables/#setting-the-environment-for-your-builds
+No environment variables with visibility "Plain text" and "Sensitive" found for the "preview" environment on EAS.
+
+Failed to read the app config from the project using "npx expo config" command: npx expo config --json --type introspect exited with non-zero code: 7.
+Falling back to the version of "@expo/config" shipped with the EAS CLI.
+» ios: ios.config.usesNonExemptEncryption: "ios.infoPlist.ITSAppUsesNonExemptEncryption" is set in the config. Ignoring abstract property "ios.config.usesNonExemptEncryption": false
+ios.buildNumber field in app config is ignored when version source is set to remote, but this value will still be in the manifest available via expo-constants. It's recommended to remove this value from app config.
+Cannot find module './flow.js'
+Require stack:
+- /home/runner/workspace/node_modules/@babel/generator/lib/generators/index.js
+- /home/runner/workspace/node_modules/@babel/generator/lib/printer.js
+- /home/runner/workspace/node_modules/@babel/generator/lib/index.js
+- /home/runner/workspace/node_modules/@babel/traverse--for-generate-function-map/lib/path/index.js
+- /home/runner/workspace/node_modules/@babel/traverse--for-generate-function-map/lib/context.js
+- /home/runner/workspace/node_modules/@babel/traverse--for-generate-function-map/lib/traverse-node.js
+- /home/runner/workspace/node_modules/@babel/traverse--for-generate-function-map/lib/path/context.js
+- /home/runner/workspace/node_modules/@babel/traverse--for-generate-function-map/lib/index.js
+- /home/runner/workspace/node_modules/metro-source-map/src/generateFunctionMap.js
+- /home/runner/workspace/node_modules/metro-source-map/src/source-map.js
+- /home/runner/workspace/node_modules/metro/src/DeltaBundler/Serializers/sourceMapGenerator.js
+- /home/runner/workspace/node_modules/metro/src/DeltaBundler/Serializers/sourceMapString.js
+- /home/runner/workspace/node_modules/@expo/metro-config/build/serializer/withExpoSerializers.js
+- /home/runner/workspace/node_modules/@expo/metro-config/build/ExpoMetroConfig.js
+- /home/runner/workspace/node_modules/expo/metro-config.js
+- /home/runner/workspace/metro.config.js
+- /home/runner/workspace/node_modules/cosmiconfig/node_modules/import-fresh/index.js
+- /home/runner/workspace/node_modules/cosmiconfig/dist/loaders.js
+- /home/runner/workspace/node_modules/cosmiconfig/dist/createExplorer.js
+- /home/runner/workspace/node_modules/cosmiconfig/dist/index.js
+- /home/runner/workspace/node_modules/metro-config/src/loadConfig.js
+- /home/runner/workspace/node_modules/metro-config/src/index.js
+- /home/runner/workspace/.config/npm/node_global/lib/node_modules/eas-cli/build/project/metroConfig.js
+- /home/runner/workspace/.config/npm/node_global/lib/node_modules/eas-cli/build/build/runBuildAndSubmit.js
+- /home/runner/workspace/.config/npm/node_global/lib/node_modules/eas-cli/build/commands/build/index.js
+- /home/runner/workspace/.config/npm/node_global/lib/node_modules/eas-cli/node_modules/@oclif/core/lib/module-loader.js
+- /home/runner/workspace/.config/npm/node_global/lib/node_modules/eas-cli/node_modules/@oclif/core/lib/config/plugin.js
+- /home/runner/workspace/.config/npm/node_global/lib/node_modules/eas-cli/node_modules/@oclif/core/lib/config/config.js
+- /home/runner/workspace/.config/npm/node_global/lib/node_modules/eas-cli/node_modules/@oclif/core/lib/config/index.js
+- /home/runner/workspace/.config/npm/node_global/lib/node_modules/eas-cli/node_modules/@oclif/core/lib/command.js
+- /home/runner/workspace/.config/npm/node_global/lib/node_modules/eas-cli/node_modules/@oclif/core/lib/index.js
+- /home/runner/workspace/.config/npm/node_global/lib/node_modules/eas-cli/bin/run
+    Error: build command failed.
