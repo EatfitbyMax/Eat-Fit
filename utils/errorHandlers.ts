@@ -8,76 +8,35 @@ const MAX_RESTARTS = 3;
 const RESTART_WINDOW = 30000; // 30 secondes
 let lastRestartTime = 0;
 
-// Gestionnaire d'erreurs JavaScript non gérées
+// Gestionnaire d'erreurs JavaScript simplifié
 export const setupGlobalErrorHandlers = () => {
-  // Erreurs JavaScript non gérées
+  // Version simplifiée pour build standalone
   const originalHandler = global.ErrorUtils?.getGlobalHandler?.();
   
   global.ErrorUtils?.setGlobalHandler?.((error, isFatal) => {
-    console.error('🚨 ERREUR GLOBALE JS:', {
+    console.error('🚨 ERREUR GLOBALE:', {
       error: error?.message || error,
-      isFatal,
-      stack: error?.stack?.substring(0, 500)
+      isFatal: !!isFatal,
+      platform: Platform.OS
     });
-
-    // Protection contre les boucles de redémarrage
-    const now = Date.now();
-    if (now - lastRestartTime > RESTART_WINDOW) {
-      restartCount = 0;
-    }
-    
-    if (restartCount >= MAX_RESTARTS) {
-      console.error('🚫 TROP DE REDÉMARRAGES - Arrêt des tentatives de récupération');
-      return;
-    }
 
     // Appeler le gestionnaire original s'il existe
     if (originalHandler) {
       originalHandler(error, isFatal);
     }
-
-    // Tentative de récupération pour les erreurs non fatales
-    if (!isFatal && ErrorRecovery && restartCount < MAX_RESTARTS) {
-      restartCount++;
-      lastRestartTime = now;
-      
-      setTimeout(() => {
-        try {
-          console.log(`🔄 Tentative récupération ${restartCount}/${MAX_RESTARTS}`);
-          ErrorRecovery.recover();
-        } catch (recoveryError) {
-          console.error('❌ Échec récupération JS:', recoveryError);
-        }
-      }, 1000); // Délai plus long pour éviter les boucles rapides
+  });es b// Gestionnaire pour les rejets de promesses non gérés (simplifié)
+  const handleUnhandledRejection = (event: any) => {
+    console.error('🚨 PROMESSE REJETÉE:', event.reason);
+    if (event.preventDefault) {
+      event.preventDefault();
     }
-  });
-
-  // Gestionnaire pour les promesses rejetées
-  if (global.HermesInternal?.setExceptionHandler) {
-    global.HermesInternal.setExceptionHandler((error) => {
-      console.error('🚨 EXCEPTION HERMES:', {
-        error: error?.message || error,
-        stack: error?.stack?.substring(0, 500)
-      });
-    });
-  }
-
-  // Gestionnaire pour les rejets de promesses non gérés
-  const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-    console.error('🚨 PROMESSE REJETÉE NON GÉRÉE:', {
-      reason: event.reason,
-      promise: event.promise
-    });
-    
-    // Empêcher le crash de l'app
-    event.preventDefault();
   };
 
   if (global.addEventListener) {
     global.addEventListener('unhandledrejection', handleUnhandledRejection);
   }
 
-  console.log('✅ Gestionnaires d\'erreurs globaux configurés');
+  console.log('✅ Gestionnaires d\'erreurs configurés pour', Platform.OS);
 };
 
 // Fonction pour logger les erreurs natives spécifiquement

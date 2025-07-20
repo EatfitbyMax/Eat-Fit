@@ -132,3 +132,16 @@ args = "npx expo install --fix"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npx eas build --platform ios --profile preview --clear-cache --non-interactive"
+
+[[workflows.workflow]]
+name = "EAS Build iOS Standalone"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx expo install --fix"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx eas build --platform ios --profile preview --clear-cache --non-interactive"

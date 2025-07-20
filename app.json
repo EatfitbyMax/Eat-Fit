@@ -40,18 +40,11 @@
         "projectId": "816e280b-c76c-4f13-8d77-1ef1898b8ceb"
       }
     },
-    "runtimeVersion": {
-      "policy": "sdkVersion"
-    },
     "plugins": [
       "expo-router"
     ],
     "experiments": {
       "typedRoutes": true
-    },
-    "owner": "eatfit",
-    "updates": {
-      "url": "https://u.expo.dev/816e280b-c76c-4f13-8d77-1ef1898b8ceb"
     }
   }
 }

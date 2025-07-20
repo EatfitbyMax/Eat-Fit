@@ -1,20 +1,7 @@
 import React from 'react';
 import { Platform } from 'react-native';
-import * as ErrorRecovery from 'expo-error-recovery';
 
-// Gestionnaire d'erreurs natives avec expo-error-recovery
-console.log('🍎 App démarré avec gestionnaires d\'erreurs sécurisés');
-
-// Gestion des erreurs natives non gérées
-if (ErrorRecovery) {
-  ErrorRecovery.setRecoveryProps({
-    recoveryText: 'Redémarrer l\'application',
-    onRecover: () => {
-      console.log('🔄 Récupération d\'erreur native');
-      ErrorRecovery.recover();
-    }
-  });
-}
+console.log('🍎 App démarré en mode standalone');
 
 import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
@@ -34,17 +21,17 @@ import { AuthGuard } from '@/components/AuthGuard';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { setupGlobalErrorHandlers } from '@/utils/errorHandlers';
 
-// Import conditionnel sécurisé de Stripe
+// Import conditionnel de Stripe pour iOS/Android uniquement
 let StripeProvider: any = null;
-const STRIPE_ENABLED = Platform.OS !== 'web' && process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+const STRIPE_ENABLED = Platform.OS !== 'web' && Platform.OS !== 'macos';
 
 if (STRIPE_ENABLED) {
   try {
     const stripe = require('@stripe/stripe-react-native');
     StripeProvider = stripe.StripeProvider;
-    console.log('✅ Stripe chargé');
+    console.log('✅ Stripe chargé pour', Platform.OS);
   } catch (error) {
-    console.warn('⚠️ Stripe non disponible:', error);
+    console.warn('⚠️ Stripe non disponible pour', Platform.OS, ':', error?.message);
     StripeProvider = null;
   }
 }
@@ -78,13 +65,16 @@ export default function RootLayout() {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
-  // Configurer les gestionnaires d'erreurs au démarrage
+  // Configurer les gestionnaires d'erreurs au démarrage (mode simplifié)
   useEffect(() => {
     try {
-      setupGlobalErrorHandlers();
-      console.log('✅ Gestionnaires d\'erreurs initialisés');
+      // Configuration minimale pour éviter les conflits
+      if (Platform.OS === 'ios' || Platform.OS === 'android') {
+        setupGlobalErrorHandlers();
+        console.log('✅ Gestionnaires d\'erreurs initialisés');
+      }
     } catch (error) {
-      console.warn('⚠️ Erreur initialisation gestionnaires:', error);
+      console.warn('⚠️ Erreur initialisation gestionnaires:', error?.message);
     }
   }, []);
 
@@ -99,10 +89,10 @@ export default function RootLayout() {
   }
 
   const AppWrapper = () => {
-    if (StripeProvider && STRIPE_ENABLED) {
+    if (StripeProvider && STRIPE_ENABLED && process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
       return (
         <StripeProvider
-          publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY!}
+          publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}
           merchantIdentifier="merchant.com.eatfitbymax"
         >
           <AppNavigator />
