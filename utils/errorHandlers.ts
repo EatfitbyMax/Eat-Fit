@@ -2,6 +2,12 @@
 import { Platform } from 'react-native';
 import * as ErrorRecovery from 'expo-error-recovery';
 
+// Protection contre les boucles de redémarrage
+let restartCount = 0;
+const MAX_RESTARTS = 3;
+const RESTART_WINDOW = 30000; // 30 secondes
+let lastRestartTime = 0;
+
 // Gestionnaire d'erreurs JavaScript non gérées
 export const setupGlobalErrorHandlers = () => {
   // Erreurs JavaScript non gérées
@@ -14,21 +20,35 @@ export const setupGlobalErrorHandlers = () => {
       stack: error?.stack?.substring(0, 500)
     });
 
+    // Protection contre les boucles de redémarrage
+    const now = Date.now();
+    if (now - lastRestartTime > RESTART_WINDOW) {
+      restartCount = 0;
+    }
+    
+    if (restartCount >= MAX_RESTARTS) {
+      console.error('🚫 TROP DE REDÉMARRAGES - Arrêt des tentatives de récupération');
+      return;
+    }
+
     // Appeler le gestionnaire original s'il existe
     if (originalHandler) {
       originalHandler(error, isFatal);
     }
 
     // Tentative de récupération pour les erreurs non fatales
-    if (!isFatal && ErrorRecovery) {
+    if (!isFatal && ErrorRecovery && restartCount < MAX_RESTARTS) {
+      restartCount++;
+      lastRestartTime = now;
+      
       setTimeout(() => {
         try {
-          console.log('🔄 Tentative récupération erreur JS');
+          console.log(`🔄 Tentative récupération ${restartCount}/${MAX_RESTARTS}`);
           ErrorRecovery.recover();
         } catch (recoveryError) {
           console.error('❌ Échec récupération JS:', recoveryError);
         }
-      }, 500);
+      }, 1000); // Délai plus long pour éviter les boucles rapides
     }
   });
 
