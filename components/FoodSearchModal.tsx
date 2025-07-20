@@ -22,16 +22,22 @@ const { width } = Dimensions.get('window');
 // Import conditionnel du BarCodeScanner seulement sur mobile
 let BarCodeScanner: any = null;
 let Camera: any = null;
+
 if (Platform.OS !== 'web') {
   try {
-    BarCodeScanner = require('expo-barcode-scanner').BarCodeScanner;
+    const barcodeModule = require('expo-barcode-scanner');
+    BarCodeScanner = barcodeModule.BarCodeScanner;
+    console.log('✅ BarCodeScanner chargé');
   } catch (error) {
-    console.log('BarCodeScanner non disponible:', error);
+    console.log('⚠️ BarCodeScanner non disponible:', error);
   }
+  
   try {
-    Camera = require('expo-camera').Camera;
+    const cameraModule = require('expo-camera');
+    Camera = cameraModule.Camera;
+    console.log('✅ Camera chargé');
   } catch (error) {
-    console.log('Camera non disponible:', error);
+    console.log('⚠️ Camera non disponible:', error);
   }
 }
 

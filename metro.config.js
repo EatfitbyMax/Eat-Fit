@@ -1,18 +1,27 @@
+
 const { getDefaultConfig } = require('expo/metro-config');
 
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
 
-// Exclure Stripe sur web pour éviter les erreurs d'import
+// Configuration pour supporter tous les packages Expo
 config.resolver.platforms = ['ios', 'android', 'native', 'web'];
 config.resolver.resolverMainFields = ['react-native', 'browser', 'main'];
 
-// Résolution conditionnelle pour exclure Stripe sur web
+// Résolution conditionnelle pour exclure certains modules sur web
 config.resolver.resolveRequest = (context, moduleName, platform) => {
-  // Si on est sur web et qu'on essaie d'importer Stripe, retourner un module vide
+  // Exclure Stripe sur web
   if (platform === 'web' && moduleName.includes('@stripe/stripe-react-native')) {
     return {
       filePath: require.resolve('./utils/stripe-web-mock.js'),
+      type: 'sourceFile',
+    };
+  }
+
+  // Exclure expo-barcode-scanner sur web mais permettre sur mobile
+  if (platform === 'web' && moduleName.includes('expo-barcode-scanner')) {
+    return {
+      filePath: require.resolve('./utils/barcode-scanner-web-mock.js'),
       type: 'sourceFile',
     };
   }
