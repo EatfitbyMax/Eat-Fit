@@ -19,27 +19,9 @@ import * as ImagePicker from 'expo-image-picker';
 
 const { width } = Dimensions.get('window');
 
-// Import conditionnel du BarCodeScanner seulement sur mobile
-let BarCodeScanner: any = null;
-let Camera: any = null;
-
-if (Platform.OS !== 'web') {
-  try {
-    const barcodeModule = require('expo-barcode-scanner');
-    BarCodeScanner = barcodeModule.BarCodeScanner;
-    console.log('✅ BarCodeScanner chargé');
-  } catch (error) {
-    console.log('⚠️ BarCodeScanner non disponible:', error);
-  }
-
-  try {
-    const cameraModule = require('expo-camera');
-    Camera = cameraModule.Camera;
-    console.log('✅ Camera chargé');
-  } catch (error) {
-    console.log('⚠️ Camera non disponible:', error);
-  }
-}
+// Import direct pour iOS/Android
+import { BarCodeScanner } from 'expo-barcode-scanner';
+import { Camera } from 'expo-camera';
 
 interface FoodSearchModalProps {
   visible: boolean;
@@ -159,19 +141,7 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
       return;
     }
 
-    if (!Camera || !BarCodeScanner) {
-      Alert.alert(
-        'Scanner non disponible',
-        'Le scanner automatique n\'est pas disponible. Voulez-vous saisir manuellement un code-barres ?',
-        [
-          { text: 'Annuler', style: 'cancel' },
-          { text: 'Saisir', onPress: () => setShowManualBarcode(true) }
-        ]
-      );
-      return;
-    }
-
-    const { status } = await Camera.requestCameraPermissionsAsync();
+    const { status } = await BarCodeScanner.requestPermissionsAsync();
     const hasPermission = status === 'granted';
 
     if (hasPermission === false) {
@@ -340,7 +310,7 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
     }
   };
 
-  if (showScanner && BarCodeScanner && Platform.OS !== 'web') {
+  if (showScanner && Platform.OS !== 'web') {
     return (
       <Modal visible={visible} animationType="slide">
         <View style={styles.scannerContainer}>
