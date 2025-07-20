@@ -53,11 +53,16 @@ export class PersistentStorage {
         return [];
       }
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
       const response = await fetch(`${SERVER_URL}/api/programmes`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(5000)
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
@@ -161,11 +166,16 @@ export class PersistentStorage {
       const isConnected = await this.testConnection();
       if (isConnected) {
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
+
           const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
-            signal: AbortSignal.timeout(5000)
+            signal: controller.signal
           });
+
+          clearTimeout(timeoutId);
 
           if (response.ok) {
             const data = await response.json();
@@ -207,12 +217,17 @@ export class PersistentStorage {
       const isConnected = await this.testConnection();
       if (isConnected) {
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
+
           const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(nutrition),
-            signal: AbortSignal.timeout(8000)
+            signal: controller.signal
           });
+
+          clearTimeout(timeoutId);
 
           if (response.ok) {
             vpsSaved = true;
@@ -255,11 +270,16 @@ export class PersistentStorage {
       const isConnected = await this.testConnection();
       if (isConnected) {
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
+
           const response = await fetch(`${SERVER_URL}/api/weight/${userId}`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
-            signal: AbortSignal.timeout(5000)
+            signal: controller.signal
           });
+
+          clearTimeout(timeoutId);
 
           if (response.ok) {
             const data = await response.json();
@@ -313,12 +333,17 @@ export class PersistentStorage {
       const isConnected = await this.testConnection();
       if (isConnected) {
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
+
           const response = await fetch(`${SERVER_URL}/api/weight/${userId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(weightData),
-            signal: AbortSignal.timeout(8000)
+            signal: controller.signal
           });
+
+          clearTimeout(timeoutId);
 
           if (response.ok) {
             vpsSaved = true;
@@ -361,11 +386,16 @@ export class PersistentStorage {
       const isConnected = await this.testConnection();
       if (isConnected) {
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
+
           const response = await fetch(`${SERVER_URL}/api/mensurations/${userId}`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
-            signal: AbortSignal.timeout(5000)
+            signal: controller.signal
           });
+
+          clearTimeout(timeoutId);
 
           if (response.ok) {
             const data = await response.json();
@@ -435,12 +465,17 @@ export class PersistentStorage {
       const isConnected = await this.testConnection();
       if (isConnected) {
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
+
           const response = await fetch(`${SERVER_URL}/api/mensurations/${userId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(mensurations),
-            signal: AbortSignal.timeout(8000)
+            signal: controller.signal
           });
+
+          clearTimeout(timeoutId);
 
           if (response.ok) {
             vpsSaved = true;
@@ -515,17 +550,20 @@ export class PersistentStorage {
   // Users storage
   static async getUsers(): Promise<any[]> {
     try {
-      const isConnected = await this.testConnection();
-      if (!isConnected) {
-        console.log('📱 Serveur VPS indisponible, retour liste vide');
-        return [];
-      }
+      console.log(`[DEBUG] Récupération utilisateurs depuis VPS: ${SERVER_URL}/api/users`);
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 secondes timeout
 
       const response = await fetch(`${SERVER_URL}/api/users`, {
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(5000)
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
@@ -541,14 +579,21 @@ export class PersistentStorage {
 
   static async saveUsers(users: any[]): Promise<void> {
     try {
-      await this.testConnection();
+      console.log(`[DEBUG] Sauvegarde utilisateurs sur VPS: ${users.length} utilisateurs`);
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 secondes timeout
+
       const response = await fetch(`${SERVER_URL}/api/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(users),
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         console.log('Utilisateurs sauvegardés sur le serveur VPS');
@@ -672,11 +717,16 @@ export class PersistentStorage {
       const isConnected = await this.testConnection();
       if (isConnected) {
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
+
           const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
-            signal: AbortSignal.timeout(5000)
+            signal: controller.signal
           });
+
+          clearTimeout(timeoutId);
 
           if (response.ok) {
             const data = await response.json();
@@ -720,12 +770,17 @@ export class PersistentStorage {
       const isConnected = await this.testConnection();
       if (isConnected) {
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
+
           const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(nutritionData),
-            signal: AbortSignal.timeout(8000)
+            signal: controller.signal
           });
+
+          clearTimeout(timeoutId);
 
           if (response.ok) {
             vpsSaved = true;
@@ -770,11 +825,16 @@ export class PersistentStorage {
       const isConnected = await this.testConnection();
       if (isConnected) {
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout de 5 secondes
+
           const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
-            signal: AbortSignal.timeout(5000) // Timeout de 5 secondes
+            signal: controller.signal
           });
+
+          clearTimeout(timeoutId);
 
           if (response.ok) {
             const data = await response.json();
@@ -822,12 +882,17 @@ export class PersistentStorage {
       const isConnected = await this.testConnection();
       if (isConnected) {
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000); // Timeout de 8 secondes pour la sauvegarde
+
           const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(workouts),
-            signal: AbortSignal.timeout(8000) // Timeout de 8 secondes pour la sauvegarde
+            signal: controller.signal
           });
+
+          clearTimeout(timeoutId);
 
           if (response.ok) {
             vpsSaved = true;
@@ -1451,11 +1516,10 @@ export const testApiConnection = async (): Promise<{ success: boolean; message: 
 export const getMessages = async (userId: string): Promise<any[]> => {
   try {
     console.log(`[DEBUG] Récupération messages pour userId: ${userId}`);
-    console.log(`[DEBUG] URL API: ${API_URL}/api/messages/${userId}`);
+    console.log(`[DEBUG] URL: ${API_URL}/api/messages/${userId}`);
 
-    // Test de connexion avec timeout court
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 secondes
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 secondes timeout
 
     const response = await fetch(`${API_URL}/api/messages/${userId}`, {
       method: 'GET',
@@ -1542,7 +1606,7 @@ export const testServerConnection = async (): Promise<boolean> => {
         headers: {
           'Content-Type': 'application/json',
         },
-        signal: controller.signal,
+        signal: controller.signal
       });
 
     clearTimeout(timeoutId);
@@ -1558,7 +1622,7 @@ export const testServerConnection = async (): Promise<boolean> => {
     if (error.name === 'AbortError') {
       console.log('⚠️ Timeout de connexion au serveur VPS');
     } else {
-      console.log('⚠️ Erreur de connexion au serveur VPS:', error.message);
+      console.log('⚠️ Erreur de connexion au serveur VPS:', error);
     }
     return false;
   }
