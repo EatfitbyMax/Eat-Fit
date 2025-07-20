@@ -18,7 +18,8 @@
       "ios": {
         "simulator": false,
         "resourceClass": "m-medium",
-        "buildConfiguration": "Release"
+        "buildConfiguration": "Release",
+        "bundler": "metro"
       },
       "android": {
         "buildType": "apk"
