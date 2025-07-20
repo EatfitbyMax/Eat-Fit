@@ -64,6 +64,31 @@ const STRAVA_CONFIG = {
   API_BASE_URL: 'https://www.strava.com/api/v3'
 };
 
+// Import conditionnel sécurisé pour éviter les erreurs
+let BarCodeScanner: any = null;
+try {
+  // Utiliser expo-camera pour le scan de codes-barres
+  const cameraModule = require('expo-camera');
+  if (cameraModule.Camera) {
+    console.log('✅ Camera disponible pour le scan de codes-barres');
+  }
+} catch (error) {
+  console.log('ℹ️ Module caméra non disponible:', error.message);
+}
+
+export const scanBarcode = async (): Promise<string | null> => {
+  try {
+    console.log('📱 Fonction scan de code-barres appelée');
+    // Simulation pour développement - à remplacer par expo-camera
+    const simulatedBarcode = 'SCAN_SIMULATION_' + Date.now();
+    console.log('✅ Code-barres simulé:', simulatedBarcode);
+    return simulatedBarcode;
+  } catch (error) {
+    console.error('❌ Erreur scan code-barres:', error);
+    return null;
+  }
+};
+
 export class IntegrationsManager {
   // Apple Health Integration
   static async connectAppleHealth(userId: string): Promise<boolean> {
