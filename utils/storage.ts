@@ -1293,7 +1293,7 @@ export class PersistentStorage {
   }
 
   // Méthodes pour les statuts d'intégrations
-  static async getUserIntegrationStatus(userId: string): Promise<any> {
+  static async getIntegrationStatus(userId: string): Promise<any> {
     const defaultStatus = {
       appleHealth: { connected: false, permissions: [] },
       strava: { connected: false }
@@ -1304,25 +1304,8 @@ export class PersistentStorage {
       if (Platform.OS === 'ios') {
         console.log('🍎 Mode iOS - stockage local sécurisé');
         try {
-          // Protection contre les erreurs natives AsyncStorage
-          const localData = await new Promise((resolve, reject) => {
-            const timeout = setTimeout(() => {
-              reject(new Error('AsyncStorage timeout'));
-            }, 3000);
-
-            AsyncStorage.getItem(`user_integrations_${userId}`)
-              .then(data => {
-                clearTimeout(timeout);
-                resolve(data);
-              })
-              .catch(error => {
-                clearTimeout(timeout);
-                console.error('🚨 Erreur native AsyncStorage:', error);
-                reject(error);
-              });
-          });
-
-          return localData ? JSON.parse(localData as string) : defaultStatus;
+          const localData = await AsyncStorage.getItem(`user_integrations_${userId}`);
+          return localData ? JSON.parse(localData) : defaultStatus;
         } catch (localError) {
           console.warn('⚠️ Erreur stockage local iOS sécurisé:', localError);
           return defaultStatus;
@@ -1336,7 +1319,6 @@ export class PersistentStorage {
         if (response.ok) {
           const data = await response.json();
           console.log('Statuts intégrations récupérés depuis le serveur VPS');
-          // Sauvegarder en local comme backup
           await AsyncStorage.setItem(`user_integrations_${userId}`, JSON.stringify(data));
           return data;
         }
@@ -1358,33 +1340,48 @@ export class PersistentStorage {
     }
   }
 
+  static async getUserIntegrationStatus(userId: string): Promise<any> {
+    // Rediriger vers getIntegrationStatus pour éviter la duplication
+    return await this.getIntegrationStatus(userId);
+  }
+
   static async saveIntegrationStatus(userId: string, status: any): Promise<void> {
     try {
       // Toujours sauvegarder en local d'abord
       await AsyncStorage.setItem(`user_integrations_${userId}`, JSON.stringify(status));
+      console.log('✅ Statuts intégrations sauvegardés en local');
 
       const isConnected = await this.testConnection();
       if (isConnected) {
-        const response = await fetch(`${SERVER_URL}/api/integrations/${userId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(status),
-        });
+        try {
+          const response = await fetch(`${SERVER_URL}/api/integrations/${userId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(status),
+          });
 
-        if (response.ok) {
-          console.log('Statuts intégrations sauvegardés sur le serveur VPS');
-        } else {
-          console.log('Statuts intégrations sauvegardés localement (serveur indisponible)');
+          if (response.ok) {
+            console.log('🚀 Statuts intégrations sauvegardés sur le serveur VPS');
+          } else {
+            console.warn('⚠️ Serveur VPS indisponible pour la sauvegarde');
+          }
+        } catch (serverError) {
+          console.warn('⚠️ Erreur serveur VPS:', serverError);
         }
       } else {
-        console.log('Statuts intégrations sauvegardés localement (serveur indisponible)');
+        console.log('📱 Statuts intégrations sauvegardés localement uniquement');
       }
     } catch (error) {
-      console.error('Erreur sauvegarde statuts intégrations:', error);
-      // Au moins garder la sauvegarde locale
-      await AsyncStorage.setItem(`user_integrations_${userId}`, JSON.stringify(status));
+      console.error('❌ Erreur critique sauvegarde statuts intégrations:', error);
+      // Dernière tentative de sauvegarde locale
+      try {
+        await AsyncStorage.setItem(`user_integrations_${userId}`, JSON.stringify(status));
+      } catch (localError) {
+        console.error('🔥 Impossible de sauvegarder même localement:', localError);
+        throw localError;
+      }
     }
   }
 
