@@ -20,7 +20,7 @@ externalPort = 80
 localPort = 8082
 externalPort = 3000
 
-[workflows]
+[[workflows]]
 runButton = "Dev Full Stack"
 
 [[workflows.workflow]]
@@ -124,6 +124,10 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd server && node server.js"
+
+[[ports]]
+internalPort = 5000
+externalPort = 80
 
 [deployment]
 run = ["sh", "-c", "cd server && node server.js"]
