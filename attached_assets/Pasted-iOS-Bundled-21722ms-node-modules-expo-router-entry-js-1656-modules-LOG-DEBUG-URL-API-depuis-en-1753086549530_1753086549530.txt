@@ -1,0 +1,53 @@
+iOS Bundled 21722ms node_modules/expo-router/entry.js (1656 modules)
+ LOG  [DEBUG] URL API depuis env: http://51.178.29.220:5000
+ LOG  🍎 Toutes les intégrations natives désactivées sur iOS
+ LOG  ✅ Camera disponible pour le scan de codes-barres
+ LOG  BarCodeScanner non disponible: [Error: Cannot find native module 'ExpoBarCodeScanner']
+ LOG  🍎 App démarré avec gestionnaires d'erreurs sécurisés
+ LOG  ✅ Stripe chargé
+ LOG  🔧 Configuration EmailJS: {"PUBLIC_KEY": "your_publi...", "SERVICE_ID": "your_service_id", "TEMPLATE_ID": "your_template_id"}
+ LOG  ✅ Gestionnaires d'erreurs globaux configurés
+ LOG  ✅ Gestionnaires d'erreurs initialisés
+ LOG  ✅ Utilisateur connecté: m.pacullmarquie@gmail.com
+ LOG  🛡️ AuthGuard - Route: (client) | Utilisateur: m.pacullmarquie@gmail.com
+ LOG  Données utilisateur rechargées:  
+ LOG  Fallback vers le stockage local pour les données de poids (index)
+ LOG  Calcul séances semaine du 2025-07-20 au 2025-07-27
+ LOG  🔍 Récupération des entraînements...
+ LOG  Test de connexion au serveur Replit: http://51.178.29.220:5000
+ LOG  Données utilisateur rechargées:  
+ LOG  ✅ Serveur Replit opérationnel - Serveur VPS opérationnel
+ WARN  ⚠️ Erreur lors de la récupération VPS: [TypeError: AbortSignal.timeout is not a function (it is undefined)]
+ LOG  📱 Utilisation du stockage local (fallback)
+iOS Bundled 368ms utils/subscription.ts (600 modules)
+ LOG  💾 0 entraînements trouvés en local
+ LOG  ℹ️ Aucun entraînement trouvé (ni serveur, ni local)
+ LOG  Total entraînements trouvés: 0
+ LOG  Séances planifiées cette semaine: 0
+iOS Bundled 436ms node_modules/@react-native-async-storage/async-storage/src/index.ts (490 modules)
+ LOG  Statut Premium Accueil: OUI (Plan: bronze)
+ LOG  Statut Premium Accueil: OUI (Plan: bronze)
+ LOG  Séances terminées aujourd'hui (Strava): 0
+ LOG  Séances terminées aujourd'hui (Strava): 0
+ ERROR  Erreur récupération statut intégrations: [TypeError: _storage.PersistentStorage.getIntegrationStatus is not a function (it is undefined)]
+ LOG  Statistiques du jour chargées: 0 calories, 0 séances, 0 pas
+ ERROR  Erreur récupération statut intégrations: [TypeError: _storage.PersistentStorage.getIntegrationStatus is not a function (it is undefined)]
+ LOG  Statistiques du jour chargées: 0 calories, 0 séances, 0 pas
+ LOG  Séances terminées aujourd'hui (Strava): 0
+ ERROR  Erreur récupération statut intégrations: [TypeError: _storage.PersistentStorage.getIntegrationStatus is not a function (it is undefined)]
+ LOG  Statistiques du jour chargées: 0 calories, 0 séances, 0 pas
+ LOG  Fallback vers le stockage local pour les données de poids (index)
+ LOG  Calcul séances semaine du 2025-07-20 au 2025-07-27
+ LOG  🔍 Récupération des entraînements...
+ LOG  Test de connexion au serveur Replit: http://51.178.29.220:5000
+ LOG  ✅ Serveur Replit opérationnel - Serveur VPS opérationnel
+ WARN  ⚠️ Erreur lors de la récupération VPS: [TypeError: AbortSignal.timeout is not a function (it is undefined)]
+ LOG  📱 Utilisation du stockage local (fallback)
+ LOG  💾 0 entraînements trouvés en local
+ LOG  ℹ️ Aucun entraînement trouvé (ni serveur, ni local)
+ LOG  Total entraînements trouvés: 0
+ LOG  Séances planifiées cette semaine: 0
+ LOG  Test de connexion au serveur Replit: http://51.178.29.220:5000
+ LOG  Test de connexion au serveur Replit: http://51.178.29.220:5000
+ LOG  ✅ Serveur Replit opérationnel - Serveur VPS opérationnel
+ LOG  ✅ Serveur Replit opérationnel - Serveur VPS opérationnel
