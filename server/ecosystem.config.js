@@ -13,6 +13,8 @@ module.exports = {
       PORT: 5000,
       HOST: '0.0.0.0'
     },
+    listen_timeout: 10000,
+    kill_timeout: 5000,
     error_file: '/home/runner/workspace/logs/err.log',
     out_file: '/home/runner/workspace/logs/out.log',
     log_file: '/home/runner/workspace/logs/combined.log',
