@@ -1,4 +1,3 @@
-
 const { getDefaultConfig } = require('expo/metro-config');
 const path = require('path');
 
@@ -7,9 +6,6 @@ const config = getDefaultConfig(__dirname);
 
 // Configuration pour iOS et web avec résolution Stripe
 config.resolver.platforms = ['ios', 'native', 'web', 'android'];
-
-// Configuration du resolver pour éviter les erreurs de chemins
-config.resolver.sourceExts.push('js', 'jsx', 'ts', 'tsx', 'json');
 
 // Résolution personnalisée pour gérer Stripe et autres modules natifs
 config.resolver.resolveRequest = (context, moduleName, platform) => {
@@ -36,23 +32,5 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     }
   }
 };
-
-// Configuration du serializer pour éviter les erreurs de chemins
-config.serializer = {
-  ...config.serializer,
-  getModulesRunBeforeMainModule: () => [
-    require.resolve('react-native/Libraries/Core/InitializeCore'),
-  ],
-};
-
-// Configuration du transformer pour gérer les erreurs
-config.transformer = {
-  ...config.transformer,
-  babelTransformerPath: require.resolve('metro-react-native-babel-transformer'),
-  assetPlugins: ['expo-asset/tools/hashAssetFiles'],
-};
-
-// Configuration pour éviter les erreurs de cache
-config.resetCache = true;
 
 module.exports = config;
