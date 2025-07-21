@@ -23,7 +23,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { initializeAdminAccount } from '@/utils/auth';
 import { migrateExistingData } from '@/utils/migration';
 import { PersistentStorage } from '../utils/storage';
-import { SplashScreenComponent } from '@/components/SplashScreen';
+import SplashScreenComponent from '@/components/SplashScreen';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { LanguageProvider } from '@/context/LanguageContext';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
