@@ -94,5 +94,14 @@ mode = "sequential"
 task = "shell.exec"
 args = "cd server && node server.js"
 
+[[workflows.workflow]]
+name = "Dev Client Build"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN npx expo start --dev-client"
+
 [deployment]
 run = ["sh", "-c", "cd server && node server.js"]
