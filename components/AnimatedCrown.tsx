@@ -8,7 +8,7 @@ import Animated, {
   withSequence,
   Easing,
 } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 
 interface AnimatedCrownProps {
   size?: number;
@@ -65,7 +65,17 @@ export default function AnimatedCrown({ size = 80, color = '#FFD700' }: Animated
   return (
     <View style={styles.container}>
       <Animated.View style={[styles.crownContainer, animatedStyle]}>
-        <Ionicons name="medal-outline" size={size} color={color} />
+        <Image
+          source={require('../assets/images/crown-logo.png')}
+          style={[
+            {
+              width: size,
+              height: size,
+            },
+            color && { tintColor: color }
+          ]}
+          contentFit="contain"
+        />
       </Animated.View>
     </View>
   );
