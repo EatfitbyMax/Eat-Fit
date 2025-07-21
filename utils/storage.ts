@@ -37,7 +37,7 @@ export class PersistentStorage {
       console.log(`🔍 Test de connexion au serveur Replit: ${SERVER_URL}`);
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // Augmenter le timeout
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 secondes pour Replit
 
       const response = await fetch(`${SERVER_URL}/api/health`, {
         method: 'GET',
@@ -59,7 +59,7 @@ export class PersistentStorage {
       }
     } catch (error: any) {
       if (error.name === 'AbortError') {
-        console.warn('⚠️ Timeout de connexion au serveur Replit');
+        console.warn('⚠️ Timeout de connexion au serveur Replit (10s)');
       } else {
         console.warn(`⚠️ Erreur de connexion au serveur ${SERVER_URL}:`, error.message);
       }
@@ -1537,8 +1537,10 @@ export const getMessages = async (userId: string): Promise<any[]> => {
 
 export const testServerConnection = async (): Promise<boolean> => {
     try {
+      console.log(`🔍 Test connexion détaillé vers: ${SERVER_URL}/api/health-check`);
+      
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 secondes timeout
+      const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 secondes pour Replit
 
       const response = await fetch(`${SERVER_URL}/api/health-check`, {
         method: 'GET',
