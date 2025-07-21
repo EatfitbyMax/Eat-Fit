@@ -9,6 +9,10 @@ localPort = 80
 externalPort = 3001
 
 [[ports]]
+localPort = 5000
+externalPort = 5000
+
+[[ports]]
 localPort = 8081
 externalPort = 80
 
@@ -17,7 +21,7 @@ localPort = 8082
 externalPort = 3000
 
 [workflows]
-runButton = "Dev Full Stack"
+runButton = "Expo Go Dev"
 
 [[workflows.workflow]]
 name = "Dev Server"
@@ -89,6 +93,37 @@ args = "EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd server && npm start"
+
+[[workflows.workflow]]
+name = "Expo Go Dev"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN npx expo start --go"
+
+[[workflows.workflow]]
+name = "Dev Full Stack Clean"
+author = 42598128
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN npx expo start --dev-client --clear"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd server && npm start"
+
+[[workflows.workflow]]
+name = "Production Server Only"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd server && node server.js"
 
 [deployment]
 run = ["sh", "-c", "cd server && node server.js"]
