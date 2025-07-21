@@ -4,6 +4,29 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const SERVER_URL = process.env.EXPO_PUBLIC_API_URL || 'https://workspace-eatfitbymax.replit.dev';
 
 export class PersistentStorage {
+  // Fonction pour nettoyer toutes les données utilisateurs
+  static async clearAllUserData(): Promise<void> {
+    try {
+      const keysToRemove = [
+        'users',
+        'currentUser', 
+        'user_preferences',
+        'training_history',
+        'nutrition_history',
+        'health_data',
+        'app_settings',
+        'programmes_coach',
+        'programmes_sport',
+        'programmes_nutrition'
+      ];
+      
+      await AsyncStorage.multiRemove(keysToRemove);
+      console.log('🧹 Toutes les données utilisateurs supprimées');
+    } catch (error) {
+      console.error('❌ Erreur nettoyage données:', error);
+      throw error;
+    }
+  }
   // Test de connexion au serveur avec cache temporaire
   private static connectionCache: { isConnected: boolean; timestamp: number } | null = null;
   private static readonly CACHE_DURATION = 30000; // 30 secondes
