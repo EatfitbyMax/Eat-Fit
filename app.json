@@ -64,12 +64,7 @@
           "cameraPermission": "EatFitByMax utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas."
         }
       ],
-      [
-        "expo-dev-client",
-        {
-          "addGeneratedScheme": false
-        }
-      ]
+      
     ],
     "experiments": {
       "typedRoutes": true
