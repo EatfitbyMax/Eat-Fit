@@ -1,0 +1,614 @@
+[expo-cli] env: load .env
+[expo-cli] env: export EXPO_PUBLIC_STRAVA_CLIENT_ID EXPO_PUBLIC_STRAVA_CLIENT_SECRET EXPO_PUBLIC_API_URL EXPO_PUBLIC_REPLIT_URL
+[expo-cli] Starting Metro Bundler
+[expo-cli] iOS node_modules/expo-router/entry.js ▓▓▓▓░░░░░░░░░░░░ 27.7% ( 82/259)
+[expo-cli] Android node_modules/expo-router/entry.js ▓▓▓▓▓░░░░░░░░░░░ 36.0% ( 53/147)
+[expo-cli] iOS node_modules/expo-router/entry.js ▓▓▓▓▓░░░░░░░░░░░ 31.6% (233/460)
+[expo-cli] Android node_modules/expo-router/entry.js ▓▓▓▓▓░░░░░░░░░░░ 36.0% (179/385)
+[expo-cli] iOS node_modules/expo-router/entry.js ▓▓▓▓▓▓░░░░░░░░░░ 39.5% (398/633)
+[expo-cli] Android node_modules/expo-router/entry.js ▓▓▓▓▓░░░░░░░░░░░ 36.0% (278/490)
+[expo-cli] iOS node_modules/expo-router/entry.js ▓▓▓▓▓▓▓░░░░░░░░░ 44.3% (469/722)
+[expo-cli] Android node_modules/expo-router/entry.js ▓▓▓▓▓░░░░░░░░░░░ 36.0% (313/532)
+[expo-cli] iOS node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 66.6% (621/761)
+[expo-cli] Android node_modules/expo-router/entry.js ▓▓▓▓▓▓▓░░░░░░░░░ 44.5% (481/721)
+[expo-cli] iOS node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 67.3% (717/933)
+[expo-cli] Android node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 62.5% (716/930)
+[expo-cli] iOS node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 67.3% ( 935/1174)
+[expo-cli] Android node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 62.5% (731/938)
+[expo-cli] iOS node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 70.3% (1121/1363)
+[expo-cli] Android node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 62.5% ( 911/1155)
+[expo-cli] Erreur de résolution pour module: fs sur plateforme: ios
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/utils/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: fs sur plateforme: ios
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: assert sur plateforme: ios
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: assert sur plateforme: ios
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: fs sur plateforme: ios
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/utils/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: assert sur plateforme: ios
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: path sur plateforme: ios
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] iOS node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 78.5% (1285/1463)
+[expo-cli] Android node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 71.3% (1136/1351)
+[expo-cli] Erreur de résolution pour module: fs sur plateforme: android
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/utils/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: fs sur plateforme: android
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: assert sur plateforme: android
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: fs sur plateforme: android
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/utils/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: assert sur plateforme: android
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: assert sur plateforme: android
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: path sur plateforme: android
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: fs sur plateforme: ios
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/android/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: path sur plateforme: ios
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/android/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: path sur plateforme: ios
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/android/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: assert sur plateforme: ios
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/android/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: assert sur plateforme: ios
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/android/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: fs sur plateforme: ios
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/android/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: assert sur plateforme: ios
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/android/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: node:fs sur plateforme: ios
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/ios/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: assert sur plateforme: ios
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/ios/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: fs sur plateforme: ios
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/ios/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: fs sur plateforme: ios
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/ios/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: path sur plateforme: ios
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/ios/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: assert sur plateforme: ios
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/ios/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: fs sur plateforme: ios
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/ios/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: fs sur plateforme: ios
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/ios/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: fs sur plateforme: ios
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/ios/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: fs sur plateforme: ios
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/ios/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: url sur plateforme: ios
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/getenv/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: assert sur plateforme: ios
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/ios/utils/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/ios/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] iOS node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 92.4% (1471/1541)
+[expo-cli] Android node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 83.3% (1360/1490)
+[expo-cli] Erreur de résolution pour module: fs sur plateforme: android
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/android/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: path sur plateforme: android
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/android/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: path sur plateforme: android
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/android/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: assert sur plateforme: android
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/android/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: assert sur plateforme: android
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/android/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: fs sur plateforme: android
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/android/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: assert sur plateforme: android
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/android/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: node:fs sur plateforme: android
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/ios/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: assert sur plateforme: android
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/ios/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: assert sur plateforme: android
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/ios/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: fs sur plateforme: android
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/ios/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: fs sur plateforme: android
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/ios/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: path sur plateforme: android
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/ios/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: fs sur plateforme: android
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/ios/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: fs sur plateforme: android
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/ios/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: fs sur plateforme: android
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/ios/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: fs sur plateforme: android
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/ios/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: url sur plateforme: android
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/getenv/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: assert sur plateforme: android
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/ios/utils/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/ios/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/build/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/config-plugins/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/@expo/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: util sur plateforme: ios
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/xcode/lib/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/xcode/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] Erreur de résolution pour module: util sur plateforme: android
+[expo-cli] Erreur de fallback: Module does not exist in the Haste module map or in these directories:
+[expo-cli]   /home/runner/workspace/node_modules/xcode/lib/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/xcode/node_modules
+[expo-cli]   /home/runner/workspace/node_modules/node_modules
+[expo-cli]   /home/runner/workspace/node_modules
+[expo-cli]   /home/runner/node_modules
+[expo-cli]   /home/node_modules
+[expo-cli]   /node_modules
+[expo-cli] iOS Bundling failed 37319ms node_modules/expo-router/entry.js (1599 modules)
+[expo-cli] TypeError: Cannot read properties of null (reading 'type')
+✖ Export failed
+/home/runner/workspace/node_modules/expo/bin/cli export --output-dir dist --dump-sourcemap --dump-assetmap --platform ios --platform android exited with non-zero code: 1
+    Error: update command failed.
