@@ -1,8 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
 
-const SERVER_URL = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
-const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
+// Configuration serveur Replit uniquement
+const SERVER_URL = process.env.EXPO_PUBLIC_API_URL || 'https://workspace-eatfitbymax.replit.dev';
 
 export class PersistentStorage {
   // Test de connexion au serveur avec cache temporaire
@@ -44,56 +43,432 @@ export class PersistentStorage {
     }
   }
 
-  // Programmes storage
-  static async getProgrammes(): Promise<any[]> {
+  // Users storage
+  static async getUsers(): Promise<any[]> {
     try {
       const isConnected = await this.testConnection();
       if (!isConnected) {
-        console.log('📱 Serveur VPS indisponible, retour liste vide');
+        console.log('📱 Serveur Replit indisponible, retour liste vide');
         return [];
       }
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
-      const response = await fetch(`${SERVER_URL}/api/programmes`, {
+
+      const response = await fetch(`${SERVER_URL}/api/users`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
         signal: controller.signal
       });
-      
+
       clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Programmes récupérés depuis le serveur VPS');
+        console.log('Utilisateurs récupérés depuis le serveur Replit');
         return data;
       }
       throw new Error(`Erreur HTTP ${response.status}`);
     } catch (error) {
-      console.error('Erreur récupération programmes:', error);
+      console.error('Erreur récupération utilisateurs:', error);
       return [];
     }
   }
 
-  static async saveProgrammes(programmes: any[]): Promise<void> {
+  static async saveUsers(users: any[]): Promise<void> {
     try {
       await this.testConnection();
-      const response = await fetch(`${SERVER_URL}/api/programmes`, {
+      const response = await fetch(`${SERVER_URL}/api/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(programmes),
+        body: JSON.stringify(users),
+      });
+
+      if (response.ok) {
+        console.log('Utilisateurs sauvegardés sur le serveur Replit');
+        return;
+      }
+      throw new Error('Erreur sauvegarde utilisateurs sur le serveur');
+    } catch (error) {
+      console.error('Erreur sauvegarde utilisateurs:', error);
+      throw error;
+    }
+  }
+
+  // Messages storage
+  static async getMessages(userId: string): Promise<any[]> {
+    try {
+      await this.testConnection();
+      const response = await fetch(`${SERVER_URL}/api/messages/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Messages récupérés depuis le serveur Replit');
+        return data;
+      }
+      throw new Error('Erreur récupération messages depuis le serveur');
+    } catch (error) {
+      console.error('Erreur récupération messages:', error);
+      throw error;
+    }
+  }
+
+  static async saveMessages(userId: string, messages: any[]): Promise<void> {
+    try {
+      const response = await fetch(`${SERVER_URL}/api/messages/${userId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(messages),
       });
 
       if (!response.ok) {
-        throw new Error(`Erreur HTTP: ${response.status}`);
+        throw new Error('Erreur sauvegarde messages sur le serveur');
       }
 
-      console.log('Programmes sauvegardés sur le serveur VPS');
+      console.log('Messages sauvegardés sur le serveur Replit');
     } catch (error) {
-      console.error('Erreur sauvegarde programmes:', error);
+      console.error('Erreur sauvegarde messages:', error);
+      throw error;
+    }
+  }
+
+  // Méthodes pour Apple Health
+  static async saveHealthData(userId: string, healthData: any[]): Promise<void> {
+    try {
+      await this.testConnection();
+      const response = await fetch(`${SERVER_URL}/api/health/${userId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(healthData),
+      });
+
+      if (response.ok) {
+        console.log('Données Apple Health sauvegardées sur le serveur Replit');
+        return;
+      }
+      throw new Error('Erreur sauvegarde données Apple Health sur le serveur');
+    } catch (error) {
+      console.error('Erreur sauvegarde Apple Health:', error);
+      throw error;
+    }
+  }
+
+  static async getHealthData(userId: string): Promise<any[]> {
+    try {
+      await this.testConnection();
+      const response = await fetch(`${SERVER_URL}/api/health/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Données Apple Health récupérées depuis le serveur Replit');
+        return data;
+      }
+      throw new Error('Erreur récupération données Apple Health');
+    } catch (error) {
+      console.error('Erreur récupération Apple Health:', error);
+      return [];
+    }
+  }
+
+  // Weight data methods
+  static async saveWeightData(userId: string, weightData: any): Promise<void> {
+    let localSaved = false;
+    let replitSaved = false;
+
+    try {
+      // 1. Sauvegarde locale prioritaire
+      await AsyncStorage.setItem(`weight_data_${userId}`, JSON.stringify(weightData));
+      localSaved = true;
+      console.log('✅ Sauvegarde poids locale réussie');
+
+      // 2. PRIORITÉ: Essayer de sauvegarder sur le serveur Replit
+      const isConnected = await this.testConnection();
+      if (isConnected) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+          const response = await fetch(`${SERVER_URL}/api/weight/${userId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(weightData),
+            signal: controller.signal
+          });
+
+          clearTimeout(timeoutId);
+
+          if (response.ok) {
+            replitSaved = true;
+            console.log('🚀 Sauvegarde poids Replit réussie');
+          } else {
+            console.warn(`⚠️ Échec sauvegarde poids Replit (HTTP ${response.status})`);
+          }
+        } catch (replitError) {
+          console.warn('⚠️ Erreur sauvegarde poids Replit:', replitError);
+        }
+      }
+
+      // 3. Rapport final
+      if (localSaved && replitSaved) {
+        console.log('🎉 Sauvegarde poids complète (local + Replit)');
+      } else if (localSaved) {
+        console.log('⚠️ Sauvegarde poids locale uniquement');
+      }
+
+    } catch (error) {
+      console.error('❌ Erreur critique sauvegarde poids:', error);
+      throw error;
+    }
+  }
+
+  static async getWeightData(userId: string): Promise<any> {
+    try {
+      // Essayer d'abord le serveur Replit
+      const isConnected = await this.testConnection();
+      if (isConnected) {
+        try {
+          const response = await fetch(`${SERVER_URL}/api/weight/${userId}`);
+          if (response.ok) {
+            const data = await response.json();
+            console.log('Données poids récupérées depuis Replit');
+            return data;
+          }
+        } catch (error) {
+          console.warn('Erreur récupération poids Replit, fallback local');
+        }
+      }
+
+      // Fallback vers le stockage local
+      const localData = await AsyncStorage.getItem(`weight_data_${userId}`);
+      if (localData) {
+        console.log('Fallback vers le stockage local pour les données de poids');
+        return JSON.parse(localData);
+      }
+
+      // Données par défaut
+      return {
+        startWeight: 0,
+        currentWeight: 0,
+        targetWeight: 0,
+        lastWeightUpdate: null,
+        targetAsked: false,
+        weightHistory: [],
+      };
+    } catch (error) {
+      console.error('Erreur récupération données poids:', error);
+      return {
+        startWeight: 0,
+        currentWeight: 0,
+        targetWeight: 0,
+        lastWeightUpdate: null,
+        targetAsked: false,
+        weightHistory: [],
+      };
+    }
+  }
+
+  // Nutrition methods
+  static async saveNutrition(userId: string, nutrition: any[]): Promise<void> {
+    let localSaved = false;
+    let replitSaved = false;
+
+    try {
+      // 1. Sauvegarde locale prioritaire
+      await AsyncStorage.setItem(`nutrition_${userId}`, JSON.stringify(nutrition));
+      localSaved = true;
+      console.log('✅ Sauvegarde nutrition locale réussie');
+
+      // 2. PRIORITÉ: Essayer de sauvegarder sur le serveur Replit
+      const isConnected = await this.testConnection();
+      if (isConnected) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+          const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(nutrition),
+            signal: controller.signal
+          });
+
+          clearTimeout(timeoutId);
+
+          if (response.ok) {
+            replitSaved = true;
+            console.log('🚀 Sauvegarde nutrition Replit réussie');
+          } else {
+            console.warn(`⚠️ Échec sauvegarde nutrition Replit (HTTP ${response.status})`);
+          }
+        } catch (replitError) {
+          console.warn('⚠️ Erreur sauvegarde nutrition Replit:', replitError);
+        }
+      }
+
+      // 3. Rapport final
+      if (localSaved && replitSaved) {
+        console.log('🎉 Sauvegarde nutrition complète (local + Replit)');
+      } else if (localSaved) {
+        console.log('⚠️ Sauvegarde nutrition locale uniquement');
+      }
+
+    } catch (error) {
+      console.error('❌ Erreur critique sauvegarde nutrition:', error);
+      throw error;
+    }
+  }
+
+  static async getNutrition(userId: string): Promise<any[]> {
+    try {
+      // Essayer d'abord le serveur Replit
+      const isConnected = await this.testConnection();
+      if (isConnected) {
+        try {
+          const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`);
+          if (response.ok) {
+            const data = await response.json();
+            console.log('Nutrition récupérée depuis Replit');
+            return data;
+          }
+        } catch (error) {
+          console.warn('Erreur récupération nutrition Replit, fallback local');
+        }
+      }
+
+      // Fallback vers le stockage local
+      const localData = await AsyncStorage.getItem(`nutrition_${userId}`);
+      if (localData) {
+        console.log('Fallback vers le stockage local pour la nutrition');
+        return JSON.parse(localData);
+      }
+
+      return [];
+    } catch (error) {
+      console.error('Erreur récupération nutrition:', error);
+      return [];
+    }
+  }
+
+  // Workouts methods
+  static async saveWorkouts(userId: string, workouts: any[]): Promise<void> {
+    try {
+      const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(workouts),
+      });
+      if (!response.ok) {
+        throw new Error('Erreur sauvegarde entraînements');
+      }
+      console.log('Entraînements sauvegardés sur Replit');
+    } catch (error) {
+      console.error('Erreur sauvegarde entraînements:', error);
+      throw error;
+    }
+  }
+
+  static async getWorkouts(userId: string): Promise<any[]> {
+    try {
+      const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Entraînements récupérés depuis Replit');
+        return data;
+      }
+      throw new Error('Erreur récupération entraînements');
+    } catch (error) {
+      console.error('Erreur récupération entraînements:', error);
+      return [];
+    }
+  }
+
+  // User forme methods
+  static async getUserForme(userId: string, date: string): Promise<any> {
+    try {
+      const response = await fetch(`${SERVER_URL}/api/forme/${userId}/${date}`);
+      if (response.ok) {
+        const data = await response.json();
+        return data;
+      }
+      throw new Error('Erreur récupération forme');
+    } catch (error) {
+      console.error('Erreur récupération forme:', error);
+      return {
+        sleep: { hours: 0, quality: 'Moyen', bedTime: '', wakeTime: '' },
+        stress: { level: 5, factors: [], notes: '' },
+        heartRate: { resting: 0, variability: 0 },
+        rpe: { value: 5, notes: '' },
+        date: date
+      };
+    }
+  }
+
+  static async saveUserForme(userId: string, date: string, formeData: any): Promise<void> {
+    try {
+      await this.testConnection();
+      const response = await fetch(`${SERVER_URL}/api/forme/${userId}/${date}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formeData),
+      });
+      if (!response.ok) {
+        throw new Error('Erreur sauvegarde forme');
+      }
+    } catch (error) {
+      console.error('Erreur sauvegarde forme:', error);
+      throw error;
+    }
+  }
+
+  // Subscription methods
+  static async getSubscription(userId: string): Promise<any> {
+    try {
+      const response = await fetch(`${SERVER_URL}/api/stripe/subscription/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Abonnement récupéré depuis Replit');
+        return data;
+      }
+      throw new Error('Erreur récupération abonnement');
+    } catch (error) {
+      console.error('Erreur récupération abonnement:', error);
+      return { planId: 'free', isPremium: false };
+    }
+  }
+
+  // User profile methods
+  static async getUserProfile(userId: string): Promise<any> {
+    try {
+      const response = await fetch(`${SERVER_URL}/api/user-profile/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Profil utilisateur récupéré depuis Replit');
+        return data;
+      }
+      return null;
+    } catch (error) {
+      console.error('Erreur récupération profil:', error);
+      return null;
+    }
+  }
+
+  static async saveUserProfile(userId: string, profileData: any): Promise<void> {
+    try {
+      const response = await fetch(`${SERVER_URL}/api/user-profile/${userId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profileData),
+      });
+      if (!response.ok) {
+        throw new Error('Erreur sauvegarde profil');
+      }
+      console.log('Profil utilisateur sauvegardé sur Replit');
+    } catch (error) {
+      console.error('Erreur sauvegarde profil:', error);
       throw error;
     }
   }
@@ -106,7 +481,7 @@ export class PersistentStorage {
         const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`);
         if (response.ok) {
           const data = await response.json();
-          console.log('Entraînements récupérés depuis le serveur VPS');
+          console.log('Entraînements récupérés depuis le serveur Replit');
           return data;
         }
       }
@@ -162,7 +537,7 @@ export class PersistentStorage {
     try {
       console.log('🔍 Récupération des données nutrition (getUserNutrition)...');
 
-      // 1. PRIORITÉ: Essayer le serveur VPS
+      // 1. PRIORITÉ: Essayer le serveur Replit
       const isConnected = await this.testConnection();
       if (isConnected) {
         try {
@@ -184,13 +559,13 @@ export class PersistentStorage {
 
           if (response.ok) {
             const data = await response.json();
-            console.log(`✅ ${data.length} entrées nutrition récupérées depuis le serveur VPS`);
+            console.log(`✅ ${data.length} entrées nutrition récupérées depuis le serveur Replit`);
             // Mettre à jour le cache local
             await AsyncStorage.setItem(`nutrition_data_${userId}`, JSON.stringify(data));
             return data;
           }
-        } catch (vpsError) {
-          console.warn('⚠️ Erreur récupération nutrition VPS:', vpsError);
+        } catch (replitError) {
+          console.warn('⚠️ Erreur récupération nutrition Replit:', replitError);
         }
       }
 
@@ -208,7 +583,7 @@ export class PersistentStorage {
 
   static async saveUserNutrition(userId: string, nutrition: any[]): Promise<void> {
     let localSaved = false;
-    let vpsSaved = false;
+    let replitSaved = false;
 
     try {
       console.log(`🥗 Sauvegarde de ${nutrition.length} entrées nutrition (saveUserNutrition)...`);
@@ -218,36 +593,36 @@ export class PersistentStorage {
       localSaved = true;
       console.log('✅ Sauvegarde nutrition locale réussie');
 
-      // 2. PRIORITÉ: Essayer de sauvegarder sur le serveur VPS
+      // 2. PRIORITÉ: Essayer de sauvegarder sur le serveur Replit
       const isConnected = await this.testConnection();
       if (isConnected) {
         try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 8000);
-          
+
           const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(nutrition),
             signal: controller.signal
           });
-          
+
           clearTimeout(timeoutId);
 
           if (response.ok) {
-            vpsSaved = true;
-            console.log('🚀 Sauvegarde nutrition VPS réussie');
+            replitSaved = true;
+            console.log('🚀 Sauvegarde nutrition Replit réussie');
           } else {
-            console.warn(`⚠️ Échec sauvegarde nutrition VPS (HTTP ${response.status})`);
+            console.warn(`⚠️ Échec sauvegarde nutrition Replit (HTTP ${response.status})`);
           }
-        } catch (vpsError) {
-          console.warn('⚠️ Erreur sauvegarde nutrition VPS:', vpsError);
+        } catch (replitError) {
+          console.warn('⚠️ Erreur sauvegarde nutrition Replit:', replitError);
         }
       }
 
       // 3. Rapport final
-      if (localSaved && vpsSaved) {
-        console.log('🎉 Sauvegarde nutrition complète (local + VPS)');
+      if (localSaved && replitSaved) {
+        console.log('🎉 Sauvegarde nutrition complète (local + Replit)');
       } else if (localSaved) {
         console.log('⚠️ Sauvegarde nutrition locale uniquement');
       }
@@ -271,30 +646,30 @@ export class PersistentStorage {
     try {
       console.log('🔍 Récupération des données de poids...');
 
-      // 1. PRIORITÉ: Essayer le serveur VPS
+      // 1. PRIORITÉ: Essayer le serveur Replit
       const isConnected = await this.testConnection();
       if (isConnected) {
         try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 5000);
-          
+
           const response = await fetch(`${SERVER_URL}/api/weight/${userId}`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
             signal: controller.signal
           });
-          
+
           clearTimeout(timeoutId);
 
           if (response.ok) {
             const data = await response.json();
-            console.log('✅ Données poids récupérées depuis le serveur VPS');
+            console.log('✅ Données poids récupérées depuis le serveur Replit');
             // Mettre à jour le cache local
             await AsyncStorage.setItem(`weight_data_${userId}`, JSON.stringify(data));
             return data;
           }
-        } catch (vpsError) {
-          console.warn('⚠️ Erreur récupération poids VPS:', vpsError);
+        } catch (replitError) {
+          console.warn('⚠️ Erreur récupération poids Replit:', replitError);
         }
       }
 
@@ -324,7 +699,7 @@ export class PersistentStorage {
 
   static async saveUserWeight(userId: string, weightData: any): Promise<void> {
     let localSaved = false;
-    let vpsSaved = false;
+    let replitSaved = false;
 
     try {
       console.log('💾 Sauvegarde des données de poids...');
@@ -334,36 +709,36 @@ export class PersistentStorage {
       localSaved = true;
       console.log('✅ Sauvegarde poids locale réussie');
 
-      // 2. PRIORITÉ: Essayer de sauvegarder sur le serveur VPS
+      // 2. PRIORITÉ: Essayer de sauvegarder sur le serveur Replit
       const isConnected = await this.testConnection();
       if (isConnected) {
         try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 8000);
-          
+
           const response = await fetch(`${SERVER_URL}/api/weight/${userId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(weightData),
             signal: controller.signal
           });
-          
+
           clearTimeout(timeoutId);
 
           if (response.ok) {
-            vpsSaved = true;
-            console.log('🚀 Sauvegarde poids VPS réussie');
+            replitSaved = true;
+            console.log('🚀 Sauvegarde poids Replit réussie');
           } else {
-            console.warn(`⚠️ Échec sauvegarde poids VPS (HTTP ${response.status})`);
+            console.warn(`⚠️ Échec sauvegarde poids Replit (HTTP ${response.status})`);
           }
-        } catch (vpsError) {
-          console.warn('⚠️ Erreur sauvegarde poids VPS:', vpsError);
+        } catch (replitError) {
+          console.warn('⚠️ Erreur sauvegarde poids Replit:', replitError);
         }
       }
 
       // 3. Rapport final
-      if (localSaved && vpsSaved) {
-        console.log('🎉 Sauvegarde poids complète (local + VPS)');
+      if (localSaved && replitSaved) {
+        console.log('🎉 Sauvegarde poids complète (local + Replit)');
       } else if (localSaved) {
         console.log('⚠️ Sauvegarde poids locale uniquement');
       }
@@ -387,30 +762,30 @@ export class PersistentStorage {
     try {
       console.log('🔍 Récupération des mensurations...');
 
-      // 1. PRIORITÉ: Essayer le serveur VPS
+      // 1. PRIORITÉ: Essayer le serveur Replit
       const isConnected = await this.testConnection();
       if (isConnected) {
         try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 5000);
-          
+
           const response = await fetch(`${SERVER_URL}/api/mensurations/${userId}`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
             signal: controller.signal
           });
-          
+
           clearTimeout(timeoutId);
 
           if (response.ok) {
             const data = await response.json();
-            console.log('✅ Mensurations récupérées depuis le serveur VPS');
+            console.log('✅ Mensurations récupérées depuis le serveur Replit');
             // Mettre à jour le cache local
             await AsyncStorage.setItem(`mensurations_${userId}`, JSON.stringify(data));
             return data;
           }
-        } catch (vpsError) {
-          console.warn('⚠️ Erreur récupération mensurations VPS:', vpsError);
+        } catch (replitError) {
+          console.warn('⚠️ Erreur récupération mensurations Replit:', replitError);
         }
       }
 
@@ -456,7 +831,7 @@ export class PersistentStorage {
 
   static async saveUserMensurations(userId: string, mensurations: any): Promise<void> {
     let localSaved = false;
-    let vpsSaved = false;
+    let replitSaved = false;
 
     try {
       console.log('💾 Sauvegarde des mensurations...');
@@ -466,36 +841,36 @@ export class PersistentStorage {
       localSaved = true;
       console.log('✅ Sauvegarde mensurations locale réussie');
 
-      // 2. PRIORITÉ: Essayer de sauvegarder sur le serveur VPS
+      // 2. PRIORITÉ: Essayer de sauvegarder sur le serveur Replit
       const isConnected = await this.testConnection();
       if (isConnected) {
         try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 8000);
-          
+
           const response = await fetch(`${SERVER_URL}/api/mensurations/${userId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(mensurations),
             signal: controller.signal
           });
-          
+
           clearTimeout(timeoutId);
 
           if (response.ok) {
-            vpsSaved = true;
-            console.log('🚀 Sauvegarde mensurations VPS réussie');
+            replitSaved = true;
+            console.log('🚀 Sauvegarde mensurations Replit réussie');
           } else {
-            console.warn(`⚠️ Échec sauvegarde mensurations VPS (HTTP ${response.status})`);
+            console.warn(`⚠️ Échec sauvegarde mensurations Replit (HTTP ${response.status})`);
           }
-        } catch (vpsError) {
-          console.warn('⚠️ Erreur sauvegarde mensurations VPS:', vpsError);
+        } catch (replitError) {
+          console.warn('⚠️ Erreur sauvegarde mensurations Replit:', replitError);
         }
       }
 
       // 3. Rapport final
-      if (localSaved && vpsSaved) {
-        console.log('🎉 Sauvegarde mensurations complète (local + VPS)');
+      if (localSaved && replitSaved) {
+        console.log('🎉 Sauvegarde mensurations complète (local + Replit)');
       } else if (localSaved) {
         console.log('⚠️ Sauvegarde mensurations locale uniquement');
       }
@@ -515,437 +890,14 @@ export class PersistentStorage {
     }
   }
 
-  static async getUserForme(userId: string, date: string): Promise<any> {
-    try {
-      await this.testConnection();
-      const response = await fetch(`${SERVER_URL}/api/forme/${userId}/${date}`);
-      if (response.ok) {
-        return await response.json();
-      }
-      throw new Error('Erreur récupération forme');
-    } catch (error) {
-      console.error('Erreur récupération forme:', error);
-      return {
-        sleep: { hours: 0, quality: 'Moyen', bedTime: '', wakeTime: '' },
-        stress: { level: 5, factors: [], notes: '' },
-        heartRate: { resting: 0, variability: 0 },
-        rpe: { value: 5, notes: '' },
-        date: date
-      };
-    }
-  }
-
-  static async saveUserForme(userId: string, date: string, formeData: any): Promise<void> {
-    try {
-      await this.testConnection();
-      const response = await fetch(`${SERVER_URL}/api/forme/${userId}/${date}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formeData),
-      });
-      if (!response.ok) {
-        throw new Error('Erreur sauvegarde forme');
-      }
-    } catch (error) {
-      console.error('Erreur sauvegarde forme:', error);
-      throw error;
-    }
-  }
-
-  // Users storage
-  static async getUsers(): Promise<any[]> {
-    try {
-      const isConnected = await this.testConnection();
-      if (!isConnected) {
-        console.log('📱 Serveur VPS indisponible, retour liste vide');
-        return [];
-      }
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
-      const response = await fetch(`${SERVER_URL}/api/users`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Utilisateurs récupérés depuis le serveur VPS');
-        return data;
-      }
-      throw new Error(`Erreur HTTP ${response.status}`);
-    } catch (error) {
-      console.error('Erreur récupération utilisateurs:', error);
-      return [];
-    }
-  }
-
-  static async saveUsers(users: any[]): Promise<void> {
-    try {
-      await this.testConnection();
-      const response = await fetch(`${SERVER_URL}/api/users`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(users),
-      });
-
-      if (response.ok) {
-        console.log('Utilisateurs sauvegardés sur le serveur VPS');
-        return;
-      }
-      throw new Error('Erreur sauvegarde utilisateurs sur le serveur');
-    } catch (error) {
-      console.error('Erreur sauvegarde utilisateurs:', error);
-      throw error;
-    }
-  }
-
-  // Messages storage
-  static async getMessages(userId: string): Promise<any[]> {
-    try {
-      await this.testConnection();
-      const response = await fetch(`${SERVER_URL}/api/messages/${userId}`);
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Messages récupérés depuis le serveur VPS');
-        return data;
-      }
-      throw new Error('Erreur récupération messages depuis le serveur');
-    } catch (error) {
-      console.error('Erreur récupération messages:', error);
-      throw error;
-    }
-  }
-
-  // Sauvegarde des messages
-  static async saveMessages(userId: string, messages: any[]): Promise<void> {
-    try {
-      const response = await fetch(`${SERVER_URL}/api/messages/${userId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(messages),
-      });
-
-      if (!response.ok) {
-        throw new Error('Erreur sauvegarde messages sur le serveur');
-      }
-
-      console.log('Messages sauvegardés sur le serveur VPS');
-    } catch (error) {
-      console.error('Erreur sauvegarde messages:', error);
-      throw error;
-    }
-  }
-
-  // Méthodes pour Apple Health
-  static async saveHealthData(userId: string, healthData: any[]): Promise<void> {
-    try {
-      await this.testConnection();
-      const response = await fetch(`${SERVER_URL}/api/health/${userId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(healthData),
-      });
-
-      if (response.ok) {
-        console.log('Données Apple Health sauvegardées sur le serveur VPS');
-        return;
-      }
-      throw new Error('Erreur sauvegarde données Apple Health sur le serveur');
-    } catch (error) {
-      console.error('Erreur sauvegarde données Apple Health:', error);
-      throw error;
-    }
-  }
-
-  static async getHealthData(userId: string): Promise<any[]> {
-    try {
-      await this.testConnection();
-      const response = await fetch(`${SERVER_URL}/api/health/${userId}`);
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Données Apple Health récupérées du serveur VPS');
-        return data;
-      }
-      throw new Error('Erreur récupération données Apple Health du serveur');
-    } catch (error) {
-      console.error('Erreur récupération données Apple Health:', error);
-      return [];
-    }
-  }
-
-  // Méthodes pour Strava
-  static async saveStravaActivities(userId: string, activities: any[]): Promise<void> {
-    try {
-      await this.testConnection();
-      const response = await fetch(`${SERVER_URL}/api/strava/${userId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(activities),
-      });
-
-      if (response.ok) {
-        console.log('Activités Strava sauvegardées sur le serveur VPS');
-        return;
-      }
-      console.warn('Échec sauvegarde Strava sur serveur VPS, données conservées localement');
-    } catch (error) {
-      console.warn('Erreur sauvegarde activités Strava sur serveur VPS:', error);
-      console.log('Les données Strava restent disponibles localement');
-    }
-  }
-
-  // Méthodes pour les données nutritionnelles
-  static async getNutritionData(userId: string): Promise<any[]> {
-    try {
-      console.log('🔍 Récupération des données nutrition...');
-
-      // 1. PRIORITÉ: Essayer le serveur VPS
-      const isConnected = await this.testConnection();
-      if (isConnected) {
-        try {
-          const fetchWithTimeout = new Promise<Response>((resolve, reject) => {
-            const timeoutId = setTimeout(() => reject(new Error('Timeout')), 5000);
-            fetch(`${SERVER_URL}/api/nutrition/${userId}`, {
-              method: 'GET',
-              headers: { 'Content-Type': 'application/json' }
-            }).then(response => {
-              clearTimeout(timeoutId);
-              resolve(response);
-            }).catch(error => {
-              clearTimeout(timeoutId);
-              reject(error);
-            });
-          });
-
-          const response = await fetchWithTimeout;
-
-          if (response.ok) {
-            const data = await response.json();
-            console.log(`✅ ${data.length} entrées nutrition récupérées depuis le serveur VPS`);
-            // Mettre à jour le cache local
-            await AsyncStorage.setItem(`food_entries_${userId}`, JSON.stringify(data));
-            console.log('💾 Cache nutrition local mis à jour');
-            return data;
-          }
-        } catch (vpsError) {
-          console.warn('⚠️ Erreur récupération nutrition VPS:', vpsError);
-        }
-      }
-
-      // 2. FALLBACK: Utiliser le stockage local
-      console.log('📱 Utilisation du cache local nutrition (fallback)');
-      const localData = await AsyncStorage.getItem(`food_entries_${userId}`);
-      const nutrition = localData ? JSON.parse(localData) : [];
-      console.log(`💾 ${nutrition.length} entrées nutrition trouvées en local`);
-
-      return nutrition;
-    } catch (error) {
-      console.error('❌ Erreur critique récupération nutrition:', error);
-      return [];
-    }
-  }
-
-  static async saveNutritionData(userId: string, nutritionData: any[]): Promise<void> {
-    let localSaved = false;
-    let vpsSaved = false;
-
-    try {
-      console.log(`🥗 Sauvegarde de ${nutritionData.length} entrées nutrition...`);
-
-      // 1. TOUJOURS sauvegarder en local EN PREMIER
-      await AsyncStorage.setItem(`food_entries_${userId}`, JSON.stringify(nutritionData));
-      localSaved = true;
-      console.log('✅ Sauvegarde nutrition locale réussie');
-
-      // 2. PRIORITÉ: Essayer de sauvegarder sur le serveur VPS
-      const isConnected = await this.testConnection();
-      if (isConnected) {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 8000);
-          
-          const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(nutritionData),
-            signal: controller.signal
-          });
-          
-          clearTimeout(timeoutId);
-
-          if (response.ok) {
-            vpsSaved = true;
-            console.log('🚀 Sauvegarde nutrition VPS réussie');
-          } else {
-            console.warn(`⚠️ Échec sauvegarde nutrition VPS (HTTP ${response.status})`);
-          }
-        } catch (vpsError) {
-          console.warn('⚠️ Erreur sauvegarde nutrition VPS:', vpsError);
-        }
-      }
-
-      // 3. Rapport final
-      if (localSaved && vpsSaved) {
-        console.log('🎉 Sauvegarde nutrition complète (local + VPS)');
-      } else if (localSaved) {
-        console.log('⚠️ Sauvegarde nutrition locale uniquement');
-      }
-
-    } catch (error) {
-      console.error('❌ Erreur sauvegarde nutrition:', error);
-
-      // Dernier recours
-      if (!localSaved) {
-        try {
-          await AsyncStorage.setItem(`food_entries_${userId}`, JSON.stringify(nutritionData));
-          console.log('🆘 Sauvegarde nutrition locale de secours');
-        } catch (localError) {
-          console.error('🔥 ERREUR CRITIQUE nutrition:', localError);
-          throw localError;
-        }
-      }
-    }
-  }
-
-  // Méthodes pour les entraînements (workouts) avec priorité serveur VPS
-  static async getWorkouts(userId: string): Promise<any[]> {
-    try {
-      console.log('🔍 Récupération des entraînements...');
-
-      // 1. PRIORITÉ: Essayer le serveur VPS
-      const isConnected = await this.testConnection();
-      if (isConnected) {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 5000);
-          
-          const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            signal: controller.signal
-          });
-          
-          clearTimeout(timeoutId);
-
-          if (response.ok) {
-            const data = await response.json();
-            console.log(`✅ ${data.length} entraînements récupérés depuis le serveur VPS`);
-            // Mettre à jour le cache local avec les données du serveur
-            await AsyncStorage.setItem(`workouts_${userId}`, JSON.stringify(data));
-            console.log('💾 Cache local mis à jour');
-            return data;
-          }
-        } catch (vpsError) {
-          console.warn('⚠️ Erreur lors de la récupération VPS:', vpsError);
-        }
-      }
-
-      // 2. FALLBACK: Utiliser le stockage local
-      console.log('📱 Utilisation du stockage local (fallback)');
-      const localData = await AsyncStorage.getItem(`workouts_${userId}`);
-      const workouts = localData ? JSON.parse(localData) : [];
-      console.log(`💾 ${workouts.length} entraînements trouvés en local`);
-
-      if (workouts.length === 0) {
-        console.log('ℹ️ Aucun entraînement trouvé (ni serveur, ni local)');
-      }
-
-      return workouts;
-    } catch (error) {
-      console.error('❌ Erreur critique récupération entraînements:', error);
-      return [];
-    }
-  }
-
-  static async saveWorkouts(userId: string, workouts: any[]): Promise<void> {
-    let localSaved = false;
-    let vpsSaved = false;
-
-    try {
-      console.log(`💾 Sauvegarde de ${workouts.length} entraînements...`);
-
-      // 1. TOUJOURS sauvegarder en local EN PREMIER (garantie de persistance)
-      await AsyncStorage.setItem(`workouts_${userId}`, JSON.stringify(workouts));
-      localSaved = true;
-      console.log('✅ Sauvegarde locale réussie');
-
-      // 2. PRIORITÉ: Essayer de sauvegarder sur le serveur VPS
-      const isConnected = await this.testConnection();
-      if (isConnected) {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 8000);
-          
-          const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(workouts),
-            signal: controller.signal
-          });
-          
-          clearTimeout(timeoutId);
-
-          if (response.ok) {
-            vpsSaved = true;
-            console.log('🚀 Sauvegarde serveur VPS réussie');
-          } else {
-            console.warn(`⚠️ Échec sauvegarde VPS (HTTP ${response.status})`);
-          }
-        } catch (vpsError) {
-          console.warn('⚠️ Erreur sauvegarde VPS:', vpsError);
-        }
-      } else {
-        console.log('📶 Serveur VPS indisponible - sauvegarde locale uniquement');
-      }
-
-      // 3. Rapport final
-      if (localSaved && vpsSaved) {
-        console.log('🎉 Sauvegarde complète (local + VPS)');
-      } else if (localSaved) {
-        console.log('⚠️ Sauvegarde locale uniquement (VPS indisponible)');
-      } else {
-        throw new Error('Échec de toutes les sauvegardes');
-      }
-
-    } catch (error) {
-      console.error('❌ Erreur lors de la sauvegarde:', error);
-
-      // Dernier recours: s'assurer que la sauvegarde locale est faite
-      if (!localSaved) {
-        try {
-          await AsyncStorage.setItem(`workouts_${userId}`, JSON.stringify(workouts));
-          console.log('🆘 Sauvegarde locale de secours effectuée');
-        } catch (localError) {
-          console.error('🔥 ERREUR CRITIQUE - Impossible de sauvegarder:', localError);
-          throw new Error('Échec critique de la sauvegarde');
-        }
-      }
-    }
-  }
-
-  // Méthodes pour les données deforme
-  static async getFormeData(userId: string, date: string): Promise<any> {
+  static async getUserFormeData(userId: string, date: string): Promise<any> {
     try {
       const isConnected = await this.testConnection();
       if (isConnected) {
         const response = await fetch(`${SERVER_URL}/api/forme/${userId}/${date}`);
         if (response.ok) {
           const data = await response.json();
-          console.log('Données de forme récupérées depuis le serveur VPS');
+          console.log('Données de forme récupérées depuis le serveur Replit');
           // Sauvegarder en local comme backup
           await AsyncStorage.setItem(`forme_data_${userId}_${date}`, JSON.stringify(data));
           return data;
@@ -1004,7 +956,7 @@ export class PersistentStorage {
         });
 
         if (response.ok) {
-          console.log('Données de forme sauvegardées sur le serveur VPS');
+          console.log('Données de forme sauvegardées sur le serveur Replit');
         } else {
           console.log('Données de forme sauvegardées localement (serveur indisponible)');
         }
@@ -1034,7 +986,7 @@ export class PersistentStorage {
       // Sauvegarder en local
       await AsyncStorage.setItem('currentUser', JSON.stringify(user));
 
-      // Synchroniser avec le serveur VPS
+      // Synchroniser avec le serveur Replit
       if (user?.id) {
         try {
           const isConnected = await this.testConnection();
@@ -1052,65 +1004,6 @@ export class PersistentStorage {
   }
 
   // Méthodes pour les profils utilisateur
-  static async getUserProfile(userId: string): Promise<any> {
-    try {
-      const isConnected = await this.testConnection();
-      if (isConnected) {
-        const response = await fetch(`${SERVER_URL}/api/user-profile/${userId}`);
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Profil utilisateur récupéré depuis le serveur VPS');
-          // Sauvegarder en local comme backup
-          await AsyncStorage.setItem(`user_profile_${userId}`, JSON.stringify(data));
-          return data;
-        }
-      }
-
-      // Fallback vers le stockage local
-      console.log('Fallback vers le stockage local pour le profil utilisateur');
-      const localData = await AsyncStorage.getItem(`user_profile_${userId}`);
-      return localData ? JSON.parse(localData) : null;
-    } catch (error) {
-      console.error('Erreur récupération profil utilisateur:', error);
-      try {
-        const localData = await AsyncStorage.getItem(`user_profile_${userId}`);
-        return localData ? JSON.parse(localData) : null;
-      } catch (localError) {
-        console.error('Erreur stockage local profil:', localError);
-        return null;
-      }
-    }
-  }
-
-  static async saveUserProfile(userId: string, profileData: any): Promise<void> {
-    try {
-      // Toujours sauvegarder en local d'abord
-      await AsyncStorage.setItem(`user_profile_${userId}`, JSON.stringify(profileData));
-
-      const isConnected = await this.testConnection();
-      if (isConnected) {
-        const response = await fetch(`${SERVER_URL}/api/user-profile/${userId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(profileData),
-        });
-
-        if (response.ok) {
-          console.log('Profil utilisateur sauvegardé sur le serveur VPS');
-        } else {
-          console.log('Profil utilisateur sauvegardé localement (serveur indisponible)');
-        }
-      } else {
-        console.log('Profil utilisateur sauvegardé localement (serveur indisponible)');
-      }
-    } catch (error) {
-      console.error('Erreur sauvegarde profil utilisateur:', error);
-      // Au moins garder la sauvegarde locale
-      await AsyncStorage.setItem(`user_profile_${userId}`, JSON.stringify(profileData));
-    }
-  }
 
   // Méthodes pour les paramètres de notifications
   static async getNotificationSettings(userId: string): Promise<any> {
@@ -1120,7 +1013,7 @@ export class PersistentStorage {
         const response = await fetch(`${SERVER_URL}/api/notifications/${userId}`);
         if (response.ok) {
           const data = await response.json();
-          console.log('Paramètres notifications récupérés depuis le serveur VPS');
+          console.log('Paramètres notifications récupérés depuis le serveur Replit');
           await AsyncStorage.setItem(`notification_settings_${userId}`, JSON.stringify(data));
           return data;
         }
@@ -1166,7 +1059,7 @@ export class PersistentStorage {
         });
 
         if (response.ok) {
-          console.log('Paramètres notifications sauvegardés sur le serveur VPS');
+          console.log('Paramètres notifications sauvegardés sur le serveur Replit');
         } else {
           console.log('Paramètres notifications sauvegardés localement (serveur indisponible)');
         }
@@ -1187,7 +1080,7 @@ export class PersistentStorage {
         const response = await fetch(`${SERVER_URL}/api/app-preferences/${userId}`);
         if (response.ok) {
           const data = await response.json();
-          console.log('Préférences app récupérées depuis le serveur VPS');
+          console.log('Préférences app récupérées depuis le serveur Replit');
           await AsyncStorage.setItem(`app_preferences_${userId}`, JSON.stringify(data));
           return data;
         }
@@ -1229,7 +1122,7 @@ export class PersistentStorage {
         });
 
         if (response.ok) {
-          console.log('Préférences app sauvegardées sur le serveur VPS');
+          console.log('Préférences app sauvegardées sur le serveur Replit');
         } else {
           console.log('Préférences app sauvegardées localement (serveur indisponible)');
         }
@@ -1253,7 +1146,7 @@ export class PersistentStorage {
     }
   }
 
-  static async exportData(): Promise<{programmes: any[], users: any[]}> {
+  static async exportData(): Promise<{ programmes: any[], users: any[] }> {
     try {
       const programmes = await this.getProgrammes();
       const users = await this.getUsers();
@@ -1271,7 +1164,7 @@ export class PersistentStorage {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Activités Strava récupérées du serveur VPS');
+        console.log('Activités Strava récupérées du serveur Replit');
         return data;
       }
       throw new Error('Erreur récupération activités Strava du serveur');
@@ -1281,7 +1174,7 @@ export class PersistentStorage {
     }
   }
 
-  static async importData(data: {programmes: any[], users: any[]}): Promise<void> {
+  static async importData(data: { programmes: any[], users: any[] }): Promise<void> {
     try {
       await this.saveProgrammes(data.programmes || []);
       await this.saveUsers(data.users || []);
@@ -1305,33 +1198,33 @@ export class PersistentStorage {
 
     try {
       // Sur iOS, TOUJOURS utiliser le stockage local uniquement avec protection native
-      if (Platform.OS === 'ios') {
-        console.log('🍎 Mode iOS - stockage local sécurisé');
-        try {
-          // Protection contre les erreurs natives AsyncStorage
-          const localData = await new Promise((resolve, reject) => {
-            const timeout = setTimeout(() => {
-              reject(new Error('AsyncStorage timeout'));
-            }, 3000);
+      //if (Platform.OS === 'ios') {
+      //  console.log('🍎 Mode iOS - stockage local sécurisé');
+      //  try {
+      //    // Protection contre les erreurs natives AsyncStorage
+      //    const localData = await new Promise((resolve, reject) => {
+      //      const timeout = setTimeout(() => {
+      //        reject(new Error('AsyncStorage timeout'));
+      //      }, 3000);
 
-            AsyncStorage.getItem(`user_integrations_${userId}`)
-              .then(data => {
-                clearTimeout(timeout);
-                resolve(data);
-              })
-              .catch(error => {
-                clearTimeout(timeout);
-                console.error('🚨 Erreur native AsyncStorage:', error);
-                reject(error);
-              });
-          });
+      //      AsyncStorage.getItem(`user_integrations_${userId}`)
+      //        .then(data => {
+      //          clearTimeout(timeout);
+      //          resolve(data);
+      //        })
+      //        .catch(error => {
+      //          clearTimeout(timeout);
+      //          console.error('🚨 Erreur native AsyncStorage:', error);
+      //          reject(error);
+      //        });
+      //    });
 
-          return localData ? JSON.parse(localData as string) : defaultStatus;
-        } catch (localError) {
-          console.warn('⚠️ Erreur stockage local iOS sécurisé:', localError);
-          return defaultStatus;
-        }
-      }
+      //    return localData ? JSON.parse(localData as string) : defaultStatus;
+      //  } catch (localError) {
+      //    console.warn('⚠️ Erreur stockage local iOS sécurisé:', localError);
+      //    return defaultStatus;
+      //  }
+      //}
 
       // Pour les autres plateformes, tentative serveur puis fallback local
       const isConnected = await this.testConnection();
@@ -1339,7 +1232,7 @@ export class PersistentStorage {
         const response = await fetch(`${SERVER_URL}/api/integrations/${userId}`);
         if (response.ok) {
           const data = await response.json();
-          console.log('Statuts intégrations récupérés depuis le serveur VPS');
+          console.log('Statuts intégrations récupérés depuis le serveur Replit');
           // Sauvegarder en local comme backup
           await AsyncStorage.setItem(`user_integrations_${userId}`, JSON.stringify(data));
           return data;
@@ -1378,7 +1271,7 @@ export class PersistentStorage {
         });
 
         if (response.ok) {
-          console.log('Statuts intégrations sauvegardés sur le serveur VPS');
+          console.log('Statuts intégrations sauvegardés sur le serveur Replit');
         } else {
           console.log('Statuts intégrations sauvegardés localement (serveur indisponible)');
         }
@@ -1396,9 +1289,63 @@ export class PersistentStorage {
   static async syncData(): Promise<void> {
     try {
       await this.testConnection();
-      console.log('Serveur VPS opérationnel - toutes les données sont sur le serveur');
+      console.log('Serveur Replit opérationnel - toutes les données sont sur le serveur');
     } catch (error) {
-      console.error('Erreur connexion serveur VPS:', error);
+      console.error('Erreur connexion serveur Replit:', error);
+      throw error;
+    }
+  }
+
+  // Programmes storage
+  static async getProgrammes(): Promise<any[]> {
+    try {
+      const isConnected = await this.testConnection();
+      if (!isConnected) {
+        console.log('📱 Serveur Replit indisponible, retour liste vide');
+        return [];
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      const response = await fetch(`${SERVER_URL}/api/programmes`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Programmes récupérés depuis le serveur Replit');
+        return data;
+      }
+      throw new Error(`Erreur HTTP ${response.status}`);
+    } catch (error) {
+      console.error('Erreur récupération programmes:', error);
+      return [];
+    }
+  }
+
+  static async saveProgrammes(programmes: any[]): Promise<void> {
+    try {
+      await this.testConnection();
+      const response = await fetch(`${SERVER_URL}/api/programmes`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(programmes),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP: ${response.status}`);
+      }
+
+      console.log('Programmes sauvegardés sur le serveur Replit');
+    } catch (error) {
+      console.error('Erreur sauvegarde programmes:', error);
       throw error;
     }
   }
@@ -1547,7 +1494,7 @@ export const getMessages = async (userId: string): Promise<any[]> => {
     }
 
     const data = await response.json();
-    console.log(`[DEBUG] Messages récupérés depuis VPS:`, data.length);
+    console.log(`[DEBUG] Messages récupérés depuis Replit:`, data.length);
 
     // Sauvegarder en cache local
     await AsyncStorage.setItem(`messages_cache_${userId}`, JSON.stringify(data));
@@ -1557,7 +1504,7 @@ export const getMessages = async (userId: string): Promise<any[]> => {
       timestamp: new Date(message.timestamp)
     }));
   } catch (error) {
-    console.warn('[WARNING] Erreur récupération messages VPS:', error);
+    console.warn('[WARNING] Erreur récupération messages Replit:', error);
 
     // FALLBACK: Essayer le cache local
     try {
@@ -1580,32 +1527,6 @@ export const getMessages = async (userId: string): Promise<any[]> => {
   }
 };
 
-export const saveMessages = async (userId: string, messages: any[]): Promise<void> => {
-  try {
-    console.log(`[DEBUG] Sauvegarde messages pour userId: ${userId}`);
-    console.log(`[DEBUG] Nombre de messages à sauvegarder: ${messages.length}`);
-
-    const response = await fetch(`${API_URL}/api/messages/${userId}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(messages),
-    });
-
-    console.log(`[DEBUG] Sauvegarde response status: ${response.status}`);
-
-    if (!response.ok) {
-      throw new Error(`Erreur HTTP: ${response.status} - ${response.statusText}`);
-    }
-
-    console.log(`[DEBUG] Messages sauvegardés avec succès`);
-  } catch (error) {
-    console.error('[ERROR] Erreur sauvegarde messages:', error);
-    throw error;
-  }
-};
-
 export const testServerConnection = async (): Promise<boolean> => {
     try {
       const controller = new AbortController();
@@ -1622,7 +1543,7 @@ export const testServerConnection = async (): Promise<boolean> => {
     clearTimeout(timeoutId);
 
     if (response.ok) {
-      console.log('✅ Serveur VPS connecté');
+      console.log('✅ Serveur Replit connecté');
       return true;
     } else {
       console.log(`⚠️ Serveur indisponible (status: ${response.status})`);
@@ -1630,9 +1551,9 @@ export const testServerConnection = async (): Promise<boolean> => {
     }
   } catch (error) {
     if (error.name === 'AbortError') {
-      console.log('⚠️ Timeout de connexion au serveur VPS');
+      console.log('⚠️ Timeout de connexion au serveur Replit');
     } else {
-      console.log('⚠️ Erreur de connexion au serveur VPS:', error.message);
+      console.log('⚠️ Erreur de connexion au serveur Replit:', error.message);
     }
     return false;
   }
