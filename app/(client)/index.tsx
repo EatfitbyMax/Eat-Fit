@@ -711,15 +711,12 @@ export default function HomeScreen() {
 
       const today = new Date().toISOString().split('T')[0];
 
-      // 1. Récupérer les calories depuis la nutrition
+      // 1. Récupérer les calories depuis la nutrition sur le serveur
       let totalCalories = 0;
       try {
-        const foodEntries = await AsyncStorage.getItem(`food_entries_${currentUser.id}`);
-        if (foodEntries) {
-          const entries = JSON.parse(foodEntries);
-          const todayEntries = entries.filter((entry: any) => entry.date === today);
-          totalCalories = todayEntries.reduce((sum: number, entry: any) => sum + (entry.calories || 0), 0);
-        }
+        const nutritionEntries = await PersistentStorage.getUserNutrition(currentUser.id);
+        const todayEntries = nutritionEntries.filter((entry: any) => entry.date === today);
+        totalCalories = todayEntries.reduce((sum: number, entry: any) => sum + (entry.calories || 0), 0);
       } catch (error) {
         console.error('Erreur récupération calories:', error);
       }
@@ -827,33 +824,14 @@ export default function HomeScreen() {
     return baseGoal;
   };
 
-  // Charger les données de poids depuis le stockage local
+  // Charger les données de poids depuis le serveur uniquement
   const loadWeightData = async () => {
     try {
       const currentUser = await getCurrentUser();
       if (!currentUser) return;
 
-      // Charger depuis le serveur d'abord
-      try {
-        const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.replit.app';
-        const response = await fetch(`${VPS_URL}/api/weight/${user.id}`);
-        if (response.ok) {
-          const data = await response.json();
-          setWeightData(data);
-          // Sauvegarder en local comme backup
-          await AsyncStorage.setItem(`weight_data_${user.id}`, JSON.stringify(data));
-          return;
-        }
-      } catch (serverError) {
-        console.log('Fallback vers le stockage local pour les données de poids (index)');
-      }
-
-      // Fallback vers le stockage local
-      const weightDataString = await AsyncStorage.getItem(`weight_data_${currentUser.id}`);
-      if (weightDataString) {
-        const data = JSON.parse(weightDataString);
-        setWeightData(data);
-      }
+      const data = await PersistentStorage.getUserWeight(currentUser.id);
+      setWeightData(data);
     } catch (error) {
       console.error('Erreur chargement données poids:', error);
     }
@@ -940,29 +918,8 @@ export default function HomeScreen() {
         weeklyWorkoutsCount = weekWorkouts.length;
         console.log(`Séances planifiées cette semaine: ${weeklyWorkoutsCount}`);
       } catch (error) {
-        console.error('Erreur PersistentStorage, tentative fallback local:', error);
-        // Fallback vers le stockage local
-        try {
-          const storedWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
-          if (storedWorkouts) {
-            const workouts = JSON.parse(storedWorkouts);
-            console.log(`Fallback - Total entraînements trouvés: ${workouts.length}`);
-
-            const weekWorkouts = workouts.filter((workout: any) => {
-              const workoutDate = new Date(workout.date + 'T00:00:00');
-              const isInWeek = workoutDate >= startOfWeek && workoutDate <= endOfWeek;
-              if (isInWeek) {
-                console.log(`Fallback - Séance trouvée: ${workout.name} le ${workout.date}`);
-              }
-              return isInWeek;
-            });
-
-            weeklyWorkoutsCount = weekWorkouts.length;
-            console.log(`Fallback - Séances planifiées cette semaine: ${weeklyWorkoutsCount}`);
-          }
-        } catch (localError) {
-          console.error('Erreur fallback local séances hebdomadaires:', localError);
-        }
+        console.error('Erreur récupération workouts:', error);
+        weeklyWorkoutsCount = 0;
       }
 
       setWeeklyWorkouts(weeklyWorkoutsCount);
