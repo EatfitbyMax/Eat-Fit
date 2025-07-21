@@ -5,8 +5,10 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { checkSubscriptionStatus } from '@/utils/subscription';
+import { useAuth } from '../../utils/auth';
 
 export default function ClientLayout() {
+  const { user, isLoading } = useAuth();
   const colorScheme = useColorScheme();
   const [hasSubscription, setHasSubscription] = useState(false);
   const pathname = usePathname();
@@ -19,6 +21,14 @@ export default function ClientLayout() {
     const subscriptionStatus = await checkSubscriptionStatus();
     setHasSubscription(subscriptionStatus);
   };
+
+  if (isLoading) {
+    return null;
+  }
+
+  if (!user || user.userType !== 'client') {
+    return null;
+  }
 
   // Fonction pour déterminer si nous sommes sur une page liée à l'entraînement
   const isTrainingRelated = (currentPath: string) => {

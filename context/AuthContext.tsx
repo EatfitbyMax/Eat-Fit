@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { getCurrentUser, User } from '@/utils/auth';
 
 interface AuthContextType {
@@ -16,34 +16,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
+    const loadUser = async () => {
+      try {
+        const currentUser = await getCurrentUser();
+        // Vérifier si l'utilisateur a vraiment une session valide
+        if (currentUser && currentUser.email && isMounted) {
+          setUser(currentUser);
+          console.log('✅ Utilisateur connecté:', currentUser.email);
+        } else {
+          console.log('📱 Aucun utilisateur connecté, redirection vers login');
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('❌ Erreur chargement utilisateur:', error);
+        setUser(null);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
     loadUser();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  const loadUser = async () => {
-    try {
-      const currentUser = await getCurrentUser();
-      // Vérifier si l'utilisateur a vraiment une session valide
-      if (currentUser && currentUser.email) {
-        setUser(currentUser);
-        console.log('✅ Utilisateur connecté:', currentUser.email);
-      } else {
-        console.log('📱 Aucun utilisateur connecté, redirection vers login');
-        setUser(null);
-      }
-    } catch (error) {
-      console.error('❌ Erreur chargement utilisateur:', error);
-      setUser(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const login = (userData: User) => {
+  const login = useCallback((userData: User) => {
     setUser(userData);
     console.log('✅ Utilisateur connecté via contexte:', userData.email);
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       // Appeler la fonction logout du utils/auth
       await import('@/utils/auth').then(({ logout: authLogout }) => authLogout());
@@ -55,9 +63,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Même en cas d'erreur, vider l'état local
       setUser(null);
     }
-  };
+  }, []);
 
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
     try {
       const currentUser = await getCurrentUser();
       setUser(currentUser);
@@ -66,16 +74,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('❌ Erreur rafraîchissement utilisateur:', error);
       setUser(null);
     }
-  };
+  }, []);
+
+  const contextValue = useMemo(() => ({
+    user,
+    isLoading,
+    login,
+    logout,
+    refreshUser,
+  }), [user, isLoading, login, logout, refreshUser]);
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      isLoading,
-      login,
-      logout,
-      refreshUser,
-    }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,45 +1,51 @@
-
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter, useSegments } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
+import SplashScreenComponent from './SplashScreen';
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const segments = useSegments();
+  const [hasRedirected, setHasRedirected] = useState(false);
+
+  console.log('🛡️ AuthGuard - Route:', segments.join('/'), '| Utilisateur:', user ? 'Connecté' : 'Non connecté');
 
   useEffect(() => {
-    if (isLoading) return; // Attendre que l'authentification soit initialisée
+    if (isLoading || hasRedirected) return;
 
     const inAuthGroup = segments[0] === 'auth';
     const inClientGroup = segments[0] === '(client)';
     const inCoachGroup = segments[0] === '(coach)';
-    const currentRoute = segments.join('/');
-
-    // Log uniquement lors des changements d'état significatifs
-    console.log('🛡️ AuthGuard - Route:', currentRoute, '| Utilisateur:', user?.email || 'Non connecté');
+    const inTabsGroup = segments[0] === '(tabs)';
+    const currentPath = segments.join('/');
 
     if (!user) {
-      // Utilisateur non connecté - rediriger vers l'authentification
-      if (!inAuthGroup) {
+      // Utilisateur non connecté
+      if (!inAuthGroup && currentPath !== 'auth/login') {
         console.log('🔄 Redirection vers login');
+        setHasRedirected(true);
         router.replace('/auth/login');
       }
     } else {
-      // Utilisateur connecté - rediriger vers la bonne section
+      // Utilisateur connecté
       if (inAuthGroup) {
-        const targetRoute = user.userType === 'coach' ? '/(coach)/programmes' : '/(client)';
-        console.log('🔄 Redirection utilisateur connecté vers:', targetRoute);
+        console.log('🔄 Redirection vers app principal');
+        setHasRedirected(true);
+        const targetRoute = user.userType === 'coach' ? '/(coach)/profil' : '/(client)';
         router.replace(targetRoute);
-      } else if (user.userType === 'coach' && !inCoachGroup) {
-        console.log('🔄 Redirection coach vers sa section');
-        router.replace('/(coach)/programmes');
-      } else if (user.userType === 'client' && !inClientGroup) {
-        console.log('🔄 Redirection client vers sa section');
-        router.replace('/(client)');
       }
     }
-  }, [user, isLoading, segments]);
+  }, [user, isLoading, segments, hasRedirected]);
+
+  // Reset hasRedirected when user changes
+  useEffect(() => {
+    setHasRedirected(false);
+  }, [user?.id]);
+
+  if (isLoading) {
+    return <SplashScreenComponent />;
+  }
 
   return <>{children}</>;
 }
