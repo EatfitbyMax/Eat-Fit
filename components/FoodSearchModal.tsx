@@ -19,15 +19,9 @@ import * as ImagePicker from 'expo-image-picker';
 
 const { width } = Dimensions.get('window');
 
-// Import conditionnel du BarCodeScanner seulement sur mobile
-let BarCodeScanner: any = null;
+// Import conditionnel de Camera seulement sur mobile
 let Camera: any = null;
 if (Platform.OS !== 'web') {
-  try {
-    BarCodeScanner = require('expo-barcode-scanner').BarCodeScanner;
-  } catch (error) {
-    console.log('BarCodeScanner non disponible:', error);
-  }
   try {
     Camera = require('expo-camera').Camera;
   } catch (error) {
@@ -63,12 +57,12 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
 
   useEffect(() => {
     (async () => {
-      if (BarCodeScanner && Platform.OS !== 'web') {
+      if (Camera && Platform.OS !== 'web') {
         try {
-          const { status } = await BarCodeScanner.requestPermissionsAsync();
+          const { status } = await Camera.requestCameraPermissionsAsync();
           setHasPermission(status === 'granted');
         } catch (error) {
-          console.log('Erreur permissions scanner:', error);
+          console.log('Erreur permissions caméra:', error);
           setHasPermission(false);
         }
       } else {
@@ -153,7 +147,7 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
       return;
     }
 
-    if (!Camera || !BarCodeScanner) {
+    if (!Camera) {
       Alert.alert(
         'Scanner non disponible',
         'Le scanner automatique n\'est pas disponible. Voulez-vous saisir manuellement un code-barres ?',
@@ -334,13 +328,18 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
     }
   };
 
-  if (showScanner && BarCodeScanner && Platform.OS !== 'web') {
+  if (showScanner && Camera && Platform.OS !== 'web') {
+    const { CameraView } = Camera;
     return (
       <Modal visible={visible} animationType="slide">
         <View style={styles.scannerContainer}>
-          <BarCodeScanner
-            onBarCodeScanned={handleBarCodeScanned}
+          <CameraView
             style={StyleSheet.absoluteFillObject}
+            facing="back"
+            onBarcodeScanned={handleBarCodeScanned}
+            barcodeScannerSettings={{
+              barcodeTypes: ["qr", "pdf417", "code128", "code39", "codabar", "ean13", "ean8", "upc_a", "upc_e"],
+            }}
           />
           <View style={styles.scannerOverlay}>
             <Text style={styles.scannerText}>Scannez le code-barres du produit</Text>
