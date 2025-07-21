@@ -21,7 +21,7 @@ localPort = 8082
 externalPort = 3000
 
 [workflows]
-runButton = "Expo Go Safe Mode"
+runButton = "Expo Go Dev"
 
 [[workflows.workflow]]
 name = "Dev Server"
