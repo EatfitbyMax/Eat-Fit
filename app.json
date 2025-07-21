@@ -40,11 +40,7 @@
         "android.permission.RECORD_AUDIO"
       ]
     },
-    "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/crown-logo.png"
-    },
+    
     "extra": {
       "router": {},
       "eas": {
