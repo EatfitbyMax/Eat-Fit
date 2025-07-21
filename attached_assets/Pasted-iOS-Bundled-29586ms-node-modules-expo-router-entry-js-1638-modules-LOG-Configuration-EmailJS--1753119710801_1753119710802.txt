@@ -1,0 +1,30 @@
+iOS Bundled 29586ms node_modules/expo-router/entry.js (1638 modules)
+ LOG  🔧 Configuration EmailJS: {"PUBLIC_KEY": "your_publi...", "SERVICE_ID": "your_service_id", "TEMPLATE_ID": "your_template_id"}
+ LOG  ✅ Gestionnaires d'erreurs globaux configurés
+ LOG  ✅ Gestionnaires d'erreurs initialisés
+ LOG  📱 Aucun utilisateur connecté, redirection vers login
+ LOG  🛡️ AuthGuard - Route: (client) | Utilisateur: Non connecté
+ LOG  🔄 Redirection vers /auth/login - Aucun utilisateur connecté
+ LOG  🛡️ AuthGuard - Route: auth/login | Utilisateur: Non connecté
+ LOG  🛡️ AuthGuard - Route: auth/register | Utilisateur: Non connecté
+ LOG  🛡️ AuthGuard - Route: auth/register-goals | Utilisateur: Non connecté
+ LOG  🛡️ AuthGuard - Route: auth/register-profile | Utilisateur: Non connecté
+ LOG  🛡️ AuthGuard - Route: auth/register-sport | Utilisateur: Non connecté
+ LOG  🛡️ AuthGuard - Route: auth/register-activity | Utilisateur: Non connecté
+ LOG  🛡️ AuthGuard - Route: auth/register-account | Utilisateur: Non connecté
+ LOG  🔄 Tentative d'inscription pour: m.pacullmarquie@gmail.com
+ LOG  🔍 Test de connexion au serveur Replit: https://workspace-eatfitbymax.replit.dev
+ WARN  ⚠️ Échec réseau - Tentative de réveil du serveur...
+ LOG  🔄 Tentative de réveil du serveur Replit...
+ LOG  ⏳ Tentative 1/3
+ LOG  ❌ Tentative 1 échouée: Network request failed
+ LOG  ⏱️ Attente de 2000ms avant la prochaine tentative...
+ LOG  ⏳ Tentative 2/3
+ LOG  ❌ Tentative 2 échouée: Network request failed
+ LOG  ⏱️ Attente de 2000ms avant la prochaine tentative...
+ LOG  ⏳ Tentative 3/3
+ LOG  ❌ Tentative 3 échouée: Network request failed
+ LOG  ❌ Impossible de réveiller le serveur après plusieurs tentatives
+ ERROR  ❌ Erreur récupération utilisateurs: [Error: ❌ Impossible de se connecter au serveur Replit. Vérifiez votre connexion internet.]
+ ERROR  ❌ Erreur inscription complète: [Error: Impossible de récupérer les utilisateurs. Vérifiez votre connexion internet.]
+ ERROR  Erreur création compte: [Error: Impossible de créer le compte. Vérifiez votre connexion internet.]
