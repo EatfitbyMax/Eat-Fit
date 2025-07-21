@@ -7,7 +7,6 @@
     "icon": "./assets/images/crown-logo.png",
     "scheme": "eatfitbymax",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
     "platforms": ["ios", "android"],
     "ios": {
       "icon": "./assets/images/crown-logo.png",
