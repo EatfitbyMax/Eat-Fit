@@ -65,7 +65,7 @@ export default function AnimatedCrown({ size = 80, color = '#FFD700' }: Animated
   return (
     <View style={styles.container}>
       <Animated.View style={[styles.crownContainer, animatedStyle]}>
-        <Ionicons name="crown" size={size} color={color} />
+        <Ionicons name="medal-outline" size={size} color={color} />
       </Animated.View>
     </View>
   );
