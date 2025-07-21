@@ -9,6 +9,7 @@ import Animated, {
   withDelay,
 } from 'react-native-reanimated';
 import AnimatedCrown from '@/components/AnimatedCrown';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const { width, height } = Dimensions.get('window');
 
