@@ -16,13 +16,12 @@ const modulesToMock = [
 
 // Résolution conditionnelle améliorée
 config.resolver.resolveRequest = (context, moduleName, platform) => {
-  console.log(`🔍 Résolution: ${moduleName} pour ${platform}`);
-  
   try {
     // Vérification de la validité des paramètres
     if (typeof moduleName !== 'string' || !moduleName) {
       console.warn('⚠️ Nom de module invalide:', moduleName);
-      return null;
+      // Utiliser la résolution par défaut plutôt que de retourner null
+      return context.resolveRequest(context, moduleName, platform);
     }
 
     // Mock spécifique pour Stripe sur web
@@ -35,7 +34,8 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
           type: 'sourceFile',
         };
       } catch (error) {
-        console.warn('⚠️ Mock Stripe non trouvé:', error.message);
+        console.warn('⚠️ Mock Stripe non trouvé, utilisation résolution par défaut:', error.message);
+        return context.resolveRequest(context, moduleName, platform);
       }
     }
 
@@ -49,25 +49,24 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
           type: 'sourceFile',
         };
       } catch (error) {
-        console.warn(`⚠️ Mock générique non trouvé pour ${moduleName}:`, error.message);
+        console.warn(`⚠️ Mock générique non trouvé pour ${moduleName}, utilisation résolution par défaut:`, error.message);
+        return context.resolveRequest(context, moduleName, platform);
       }
     }
 
-    // Résolution par défaut avec vérification
-    const result = context.resolveRequest(context, moduleName, platform);
-    
-    // Vérifier que le résultat est valide
-    if (result && result.filePath && typeof result.filePath === 'string') {
-      return result;
-    } else {
-      console.warn('⚠️ Résolution invalide pour:', moduleName, result);
-      return null;
-    }
+    // Résolution par défaut
+    return context.resolveRequest(context, moduleName, platform);
     
   } catch (error) {
     console.warn(`⚠️ Erreur de résolution pour ${moduleName}:`, error.message);
-    // Retourner null au lieu d'undefined pour éviter l'erreur path.relative
-    return null;
+    // En cas d'erreur, essayer la résolution par défaut sans custom resolver
+    try {
+      return context.resolveRequest(context, moduleName, platform);
+    } catch (fallbackError) {
+      console.error(`❌ Résolution impossible pour ${moduleName}:`, fallbackError.message);
+      // Si même la résolution par défaut échoue, re-throw l'erreur
+      throw fallbackError;
+    }
   }
 };
 
