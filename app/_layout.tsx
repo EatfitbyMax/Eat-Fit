@@ -1,10 +1,6 @@
-
 import React from 'react';
 import { Platform } from 'react-native';
 import * as ErrorRecovery from 'expo-error-recovery';
-
-// Gestionnaire d'erreurs natives avec expo-error-recovery
-console.log('🍎 App démarré avec gestionnaires d\'erreurs sécurisés');
 
 // Gestion des erreurs natives non gérées
 if (ErrorRecovery) {
