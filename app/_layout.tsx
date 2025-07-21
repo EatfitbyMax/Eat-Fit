@@ -52,8 +52,20 @@ try {
 SplashScreen.preventAutoHideAsync();
 
 function AppNavigator() {
-  const { isLoading } = useAuth();
+  const { isLoading, user } = useAuth();
+  const [showSplash, setShowSplash] = React.useState(true);
 
+  // Gérer la fin du splash screen
+  const handleSplashFinish = () => {
+    setShowSplash(false);
+  };
+
+  // Afficher le splash screen au démarrage
+  if (showSplash) {
+    return <SplashScreenComponent onFinish={handleSplashFinish} />;
+  }
+
+  // Afficher le loading si l'auth est en cours
   if (isLoading) {
     return <SplashScreenComponent onFinish={() => {}} />;
   }
