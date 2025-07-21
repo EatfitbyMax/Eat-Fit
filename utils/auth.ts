@@ -1,3 +1,4 @@
+
 import { PersistentStorage } from './storage';
 
 interface User {
@@ -25,6 +26,7 @@ export async function initializeAdminAccount(): Promise<void> {
     // Pas d'initialisation locale nécessaire
   } catch (error) {
     console.error('Erreur initialisation base utilisateurs:', error);
+    throw new Error('Impossible d\'initialiser le système d\'authentification. Vérifiez votre connexion internet.');
   }
 }
 
@@ -101,15 +103,15 @@ export async function login(email: string, password: string): Promise<User | nul
       profileImage: user.profileImage
     };
 
-    // Sauvegarder la session en cache mémoire
+    // Sauvegarder la session en cache mémoire uniquement
     currentUserCache = userWithoutPassword;
-    console.log('💾 Session utilisateur mise en cache');
+    console.log('💾 Session utilisateur mise en cache mémoire');
 
     console.log('✅ Connexion réussie pour:', email);
     return userWithoutPassword;
   } catch (error) {
     console.error('❌ Erreur connexion complète:', error);
-    return null;
+    throw new Error('Impossible de se connecter. Vérifiez votre connexion internet.');
   }
 }
 
@@ -166,15 +168,15 @@ export async function register(userData: Omit<User, 'id'> & { password: string }
       profileImage: newUser.profileImage
     };
 
-    // Sauvegarder la session en cache mémoire
+    // Sauvegarder la session en cache mémoire uniquement
     currentUserCache = userWithoutPassword;
-    console.log('💾 Session utilisateur mise en cache');
+    console.log('💾 Session utilisateur mise en cache mémoire');
 
     console.log('✅ Inscription réussie pour:', userData.email);
     return userWithoutPassword;
   } catch (error) {
     console.error('❌ Erreur inscription complète:', error);
-    return null;
+    throw new Error('Impossible de créer le compte. Vérifiez votre connexion internet.');
   }
 }
 
@@ -198,7 +200,7 @@ export async function updateUserData(email: string, updateData: {
   targetWeight?: number;
 }): Promise<boolean> {
   try {
-    // Récupérer les utilisateurs depuis le serveur VPS
+    // Récupérer les utilisateurs depuis le serveur uniquement
     const users = await PersistentStorage.getUsers();
 
     // Trouver l'utilisateur à mettre à jour
@@ -219,17 +221,17 @@ export async function updateUserData(email: string, updateData: {
 
     users[userIndex] = updatedUser;
 
-    // Sauvegarder sur le serveur VPS
+    // Sauvegarder sur le serveur uniquement
     await PersistentStorage.saveUsers(users);
 
-    // Mettre à jour la session locale
-    const { password: _, ...userWithoutPassword } = updatedUser;
+    // Mettre à jour la session en cache mémoire
+    const { password: _, hashedPassword: __, ...userWithoutPassword } = updatedUser;
     currentUserCache = userWithoutPassword;
 
     console.log('Données utilisateur mises à jour avec succès');
     return true;
   } catch (error) {
     console.error('Erreur mise à jour utilisateur:', error);
-    return false;
+    throw new Error('Impossible de mettre à jour les données utilisateur. Vérifiez votre connexion internet.');
   }
 }

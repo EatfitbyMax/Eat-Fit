@@ -1,3 +1,4 @@
+
 import { ServerWakeupService } from './serverWakeup';
 
 // Configuration serveur Replit uniquement
@@ -5,17 +6,6 @@ const SERVER_URL = 'https://workspace-eatfitbymax.replit.dev';
 const API_URL = SERVER_URL;
 
 export class PersistentStorage {
-  // Fonction pour nettoyer toutes les données utilisateurs
-  static async clearAllUserData(): Promise<void> {
-    try {
-      console.log('🧹 Suppression des données utilisateurs sur le serveur...');
-      // Note: Cette fonction ne fait plus rien côté local
-    } catch (error) {
-      console.error('❌ Erreur nettoyage données:', error);
-      throw error;
-    }
-  }
-
   // Test de connexion au serveur avec réveil automatique
   static async testConnection(): Promise<boolean> {
     try {
@@ -68,7 +58,7 @@ export class PersistentStorage {
   static async ensureConnection(): Promise<void> {
     const isConnected = await this.testConnection();
     if (!isConnected) {
-      throw new Error('Impossible de se connecter au serveur Replit');
+      throw new Error('❌ Impossible de se connecter au serveur Replit. Vérifiez votre connexion internet.');
     }
   }
 
@@ -96,7 +86,7 @@ export class PersistentStorage {
       throw new Error(`Erreur HTTP ${response.status}`);
     } catch (error) {
       console.error('❌ Erreur récupération utilisateurs:', error);
-      throw error;
+      throw new Error('Impossible de récupérer les utilisateurs. Vérifiez votre connexion internet.');
     }
   }
 
@@ -119,7 +109,7 @@ export class PersistentStorage {
       throw new Error('Erreur sauvegarde utilisateurs sur le serveur');
     } catch (error) {
       console.error('❌ Erreur sauvegarde utilisateurs:', error);
-      throw error;
+      throw new Error('Impossible de sauvegarder les utilisateurs. Vérifiez votre connexion internet.');
     }
   }
 
@@ -137,7 +127,7 @@ export class PersistentStorage {
       throw new Error('Erreur récupération messages depuis le serveur');
     } catch (error) {
       console.error('❌ Erreur récupération messages:', error);
-      throw error;
+      throw new Error('Impossible de récupérer les messages. Vérifiez votre connexion internet.');
     }
   }
 
@@ -160,7 +150,7 @@ export class PersistentStorage {
       console.log('✅ Messages sauvegardés sur le serveur Replit');
     } catch (error) {
       console.error('❌ Erreur sauvegarde messages:', error);
-      throw error;
+      throw new Error('Impossible de sauvegarder les messages. Vérifiez votre connexion internet.');
     }
   }
 
@@ -184,7 +174,7 @@ export class PersistentStorage {
       throw new Error('Erreur sauvegarde données Apple Health sur le serveur');
     } catch (error) {
       console.error('❌ Erreur sauvegarde Apple Health:', error);
-      throw error;
+      throw new Error('Impossible de sauvegarder les données Apple Health. Vérifiez votre connexion internet.');
     }
   }
 
@@ -201,7 +191,7 @@ export class PersistentStorage {
       throw new Error('Erreur récupération données Apple Health');
     } catch (error) {
       console.error('❌ Erreur récupération Apple Health:', error);
-      throw error;
+      throw new Error('Impossible de récupérer les données Apple Health. Vérifiez votre connexion internet.');
     }
   }
 
@@ -229,7 +219,7 @@ export class PersistentStorage {
       }
     } catch (error) {
       console.error('❌ Erreur sauvegarde poids:', error);
-      throw error;
+      throw new Error('Impossible de sauvegarder les données de poids. Vérifiez votre connexion internet.');
     }
   }
 
@@ -246,14 +236,7 @@ export class PersistentStorage {
       throw new Error('Erreur récupération données poids');
     } catch (error) {
       console.error('❌ Erreur récupération données poids:', error);
-      return {
-        startWeight: 0,
-        currentWeight: 0,
-        targetWeight: 0,
-        lastWeightUpdate: null,
-        targetAsked: false,
-        weightHistory: [],
-      };
+      throw new Error('Impossible de récupérer les données de poids. Vérifiez votre connexion internet.');
     }
   }
 
@@ -281,7 +264,7 @@ export class PersistentStorage {
       }
     } catch (error) {
       console.error('❌ Erreur sauvegarde nutrition:', error);
-      throw error;
+      throw new Error('Impossible de sauvegarder les données nutritionnelles. Vérifiez votre connexion internet.');
     }
   }
 
@@ -298,7 +281,7 @@ export class PersistentStorage {
       throw new Error('Erreur récupération nutrition');
     } catch (error) {
       console.error('❌ Erreur récupération nutrition:', error);
-      return [];
+      throw new Error('Impossible de récupérer les données nutritionnelles. Vérifiez votre connexion internet.');
     }
   }
 
@@ -318,7 +301,7 @@ export class PersistentStorage {
       console.log('✅ Entraînements sauvegardés sur Replit');
     } catch (error) {
       console.error('❌ Erreur sauvegarde entraînements:', error);
-      throw error;
+      throw new Error('Impossible de sauvegarder les entraînements. Vérifiez votre connexion internet.');
     }
   }
 
@@ -335,7 +318,7 @@ export class PersistentStorage {
       throw new Error('Erreur récupération entraînements');
     } catch (error) {
       console.error('❌ Erreur récupération entraînements:', error);
-      return [];
+      throw new Error('Impossible de récupérer les entraînements. Vérifiez votre connexion internet.');
     }
   }
 
@@ -352,13 +335,7 @@ export class PersistentStorage {
       throw new Error('Erreur récupération forme');
     } catch (error) {
       console.error('❌ Erreur récupération forme:', error);
-      return {
-        sleep: { hours: 0, quality: 'Moyen', bedTime: '', wakeTime: '' },
-        stress: { level: 5, factors: [], notes: '' },
-        heartRate: { resting: 0, variability: 0 },
-        rpe: { value: 5, notes: '' },
-        date: date
-      };
+      throw new Error('Impossible de récupérer les données de forme. Vérifiez votre connexion internet.');
     }
   }
 
@@ -377,7 +354,7 @@ export class PersistentStorage {
       console.log('✅ Forme sauvegardée sur Replit');
     } catch (error) {
       console.error('❌ Erreur sauvegarde forme:', error);
-      throw error;
+      throw new Error('Impossible de sauvegarder les données de forme. Vérifiez votre connexion internet.');
     }
   }
 
@@ -395,7 +372,7 @@ export class PersistentStorage {
       throw new Error('Erreur récupération abonnement');
     } catch (error) {
       console.error('❌ Erreur récupération abonnement:', error);
-      return { planId: 'free', isPremium: false };
+      throw new Error('Impossible de récupérer les données d\'abonnement. Vérifiez votre connexion internet.');
     }
   }
 
@@ -413,7 +390,7 @@ export class PersistentStorage {
       return null;
     } catch (error) {
       console.error('❌ Erreur récupération profil:', error);
-      return null;
+      throw new Error('Impossible de récupérer le profil utilisateur. Vérifiez votre connexion internet.');
     }
   }
 
@@ -432,39 +409,11 @@ export class PersistentStorage {
       console.log('✅ Profil utilisateur sauvegardé sur Replit');
     } catch (error) {
       console.error('❌ Erreur sauvegarde profil:', error);
-      throw error;
+      throw new Error('Impossible de sauvegarder le profil utilisateur. Vérifiez votre connexion internet.');
     }
   }
 
-  // Toutes les autres méthodes utilisent maintenant uniquement le serveur
-  static async getUserWorkouts(userId: string): Promise<any[]> {
-    return await this.getWorkouts(userId);
-  }
-
-  static async saveUserWorkouts(userId: string, workouts: any[]): Promise<void> {
-    return await this.saveWorkouts(userId, workouts);
-  }
-
-  static async getUserData(): Promise<any> {
-    throw new Error('getUserData() non supporté - utilisez getCurrentUser() depuis auth.ts');
-  }
-
-  static async getUserNutrition(userId: string): Promise<any[]> {
-    return await this.getNutrition(userId);
-  }
-
-  static async saveUserNutrition(userId: string, nutrition: any[]): Promise<void> {
-    return await this.saveNutrition(userId, nutrition);
-  }
-
-  static async getUserWeight(userId: string): Promise<any> {
-    return await this.getWeightData(userId);
-  }
-
-  static async saveUserWeight(userId: string, weightData: any): Promise<void> {
-    return await this.saveWeightData(userId, weightData);
-  }
-
+  // Mensurations methods
   static async getUserMensurations(userId: string): Promise<any> {
     try {
       await this.ensureConnection();
@@ -478,22 +427,7 @@ export class PersistentStorage {
       throw new Error('Erreur récupération mensurations');
     } catch (error) {
       console.error('❌ Erreur récupération mensurations:', error);
-      return {
-        biceps: { start: 0, current: 0 },
-        bicepsGauche: { start: 0, current: 0 },
-        bicepsDroit: { start: 0, current: 0 },
-        cuisses: { start: 0, current: 0 },
-        cuissesGauche: { start: 0, current: 0 },
-        cuissesDroit: { start: 0, current: 0 },
-        pectoraux: { start: 0, current: 0 },
-        taille: { start: 0, current: 0 },
-        avantBras: { start: 0, current: 0 },
-        avantBrasGauche: { start: 0, current: 0 },
-        avantBrasDroit: { start: 0, current: 0 },
-        mollets: { start: 0, current: 0 },
-        molletsGauche: { start: 0, current: 0 },
-        molletsDroit: { start: 0, current: 0 },
-      };
+      throw new Error('Impossible de récupérer les mensurations. Vérifiez votre connexion internet.');
     }
   }
 
@@ -514,25 +448,8 @@ export class PersistentStorage {
       }
     } catch (error) {
       console.error('❌ Erreur sauvegarde mensurations:', error);
-      throw error;
+      throw new Error('Impossible de sauvegarder les mensurations. Vérifiez votre connexion internet.');
     }
-  }
-
-  static async getUserFormeData(userId: string, date: string): Promise<any> {
-    return await this.getUserForme(userId, date);
-  }
-
-  static async saveFormeData(userId: string, date: string, formeData: any): Promise<void> {
-    return await this.saveUserForme(userId, date, formeData);
-  }
-
-  // Utilisateur actuel - stocké sur le serveur maintenant
-  static async getCurrentUser(): Promise<any> {
-    throw new Error('getCurrentUser() moved to auth.ts - use auth.getCurrentUser()');
-  }
-
-  static async setCurrentUser(user: any): Promise<void> {
-    throw new Error('setCurrentUser() moved to auth.ts - use auth methods');
   }
 
   // Notification settings
@@ -549,14 +466,7 @@ export class PersistentStorage {
       throw new Error('Erreur récupération notifications');
     } catch (error) {
       console.error('❌ Erreur récupération paramètres notifications:', error);
-      return {
-        workoutReminder: true,
-        nutritionReminder: true,
-        progressUpdate: true,
-        reminderTime: '09:00',
-        weeklyReport: true,
-        coachMessages: true
-      };
+      throw new Error('Impossible de récupérer les paramètres de notifications. Vérifiez votre connexion internet.');
     }
   }
 
@@ -579,7 +489,7 @@ export class PersistentStorage {
       }
     } catch (error) {
       console.error('❌ Erreur sauvegarde paramètres notifications:', error);
-      throw error;
+      throw new Error('Impossible de sauvegarder les paramètres de notifications. Vérifiez votre connexion internet.');
     }
   }
 
@@ -597,12 +507,7 @@ export class PersistentStorage {
       throw new Error('Erreur récupération préférences');
     } catch (error) {
       console.error('❌ Erreur récupération préférences app:', error);
-      return {
-        theme: 'dark',
-        language: 'fr',
-        units: 'metric',
-        notifications: true
-      };
+      throw new Error('Impossible de récupérer les préférences de l\'application. Vérifiez votre connexion internet.');
     }
   }
 
@@ -625,21 +530,12 @@ export class PersistentStorage {
       }
     } catch (error) {
       console.error('❌ Erreur sauvegarde préférences app:', error);
-      throw error;
+      throw new Error('Impossible de sauvegarder les préférences de l\'application. Vérifiez votre connexion internet.');
     }
   }
 
   // Integration status
-  static async getIntegrationStatus(userId: string): Promise<any> {
-    return await this.getUserIntegrationStatus(userId);
-  }
-
   static async getUserIntegrationStatus(userId: string): Promise<any> {
-    const defaultStatus = {
-      appleHealth: { connected: false, permissions: [] },
-      strava: { connected: false }
-    };
-
     try {
       await this.ensureConnection();
 
@@ -652,7 +548,7 @@ export class PersistentStorage {
       throw new Error('Erreur récupération intégrations');
     } catch (error) {
       console.error('❌ Erreur récupération statuts intégrations:', error);
-      return defaultStatus;
+      throw new Error('Impossible de récupérer les statuts d\'intégrations. Vérifiez votre connexion internet.');
     }
   }
 
@@ -675,7 +571,7 @@ export class PersistentStorage {
       }
     } catch (error) {
       console.error('❌ Erreur sauvegarde statuts intégrations:', error);
-      throw error;
+      throw new Error('Impossible de sauvegarder les statuts d\'intégrations. Vérifiez votre connexion internet.');
     }
   }
 
@@ -703,7 +599,7 @@ export class PersistentStorage {
       throw new Error(`Erreur HTTP ${response.status}`);
     } catch (error) {
       console.error('❌ Erreur récupération programmes:', error);
-      return [];
+      throw new Error('Impossible de récupérer les programmes. Vérifiez votre connexion internet.');
     }
   }
 
@@ -726,7 +622,7 @@ export class PersistentStorage {
       console.log('✅ Programmes sauvegardés sur le serveur Replit');
     } catch (error) {
       console.error('❌ Erreur sauvegarde programmes:', error);
-      throw error;
+      throw new Error('Impossible de sauvegarder les programmes. Vérifiez votre connexion internet.');
     }
   }
 
@@ -745,7 +641,7 @@ export class PersistentStorage {
       throw new Error('Erreur récupération activités Strava du serveur');
     } catch (error) {
       console.error('❌ Erreur récupération activités Strava:', error);
-      return [];
+      throw new Error('Impossible de récupérer les activités Strava. Vérifiez votre connexion internet.');
     }
   }
 
@@ -760,11 +656,44 @@ export class PersistentStorage {
     }
   }
 
-  // Data management
-  static async clearAllData(): Promise<void> {
-    throw new Error('clearAllData() non supporté en mode serveur uniquement');
+  // Alias methods pour compatibilité
+  static async getIntegrationStatus(userId: string): Promise<any> {
+    return await this.getUserIntegrationStatus(userId);
   }
 
+  static async getUserWorkouts(userId: string): Promise<any[]> {
+    return await this.getWorkouts(userId);
+  }
+
+  static async saveUserWorkouts(userId: string, workouts: any[]): Promise<void> {
+    return await this.saveWorkouts(userId, workouts);
+  }
+
+  static async getUserNutrition(userId: string): Promise<any[]> {
+    return await this.getNutrition(userId);
+  }
+
+  static async saveUserNutrition(userId: string, nutrition: any[]): Promise<void> {
+    return await this.saveNutrition(userId, nutrition);
+  }
+
+  static async getUserWeight(userId: string): Promise<any> {
+    return await this.getWeightData(userId);
+  }
+
+  static async saveUserWeight(userId: string, weightData: any): Promise<void> {
+    return await this.saveWeightData(userId, weightData);
+  }
+
+  static async getUserFormeData(userId: string, date: string): Promise<any> {
+    return await this.getUserForme(userId, date);
+  }
+
+  static async saveFormeData(userId: string, date: string, formeData: any): Promise<void> {
+    return await this.saveUserForme(userId, date, formeData);
+  }
+
+  // Data management
   static async exportData(): Promise<{ programmes: any[], users: any[] }> {
     try {
       const programmes = await this.getProgrammes();
