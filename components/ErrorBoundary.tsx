@@ -1,6 +1,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import * as ErrorRecovery from 'expo-error-recovery';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface Props {
   children: ReactNode;
@@ -106,30 +107,38 @@ const styles = StyleSheet.create({
   },
   content: {
     alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 15,
+    padding: 30,
     maxWidth: 300,
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 16,
+    color: '#FFFFFF',
     textAlign: 'center',
+    marginBottom: 15,
   },
   message: {
     fontSize: 16,
-    color: '#cccccc',
-    marginBottom: 32,
+    color: '#CCCCCC',
     textAlign: 'center',
-    lineHeight: 24,
+    marginBottom: 25,
+    lineHeight: 22,
   },
   button: {
-    backgroundColor: '#FFD700',
-    paddingHorizontal: 32,
+    backgroundColor: '#F5A623',
+    paddingHorizontal: 30,
     paddingVertical: 12,
     borderRadius: 25,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   buttonText: {
-    color: '#000000',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
   },
