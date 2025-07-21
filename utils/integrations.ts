@@ -4,9 +4,9 @@ import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
 import { Platform } from 'react-native';
 
-// Apple Health activé avec gestion d'erreurs robuste
-const APPLE_HEALTH_DISABLED = false;
-const FORCE_SIMULATION_MODE = false;
+// Apple Health désactivé en mode Expo Go pour éviter les crashes
+const APPLE_HEALTH_DISABLED = true;
+const FORCE_SIMULATION_MODE = true;
 
 // Configuration flexible des intégrations natives sur iOS
 if (Platform.OS === 'ios') {
@@ -94,34 +94,9 @@ export class IntegrationsManager {
   // Apple Health Integration
   static async connectAppleHealth(userId: string): Promise<boolean> {
     try {
-      console.log('🍎 Tentative de connexion Apple Health native');
+      // TOUJOURS utiliser le mode simulation en développement pour éviter les crashes
+      console.log('🍎 Apple Health - Mode simulation (Expo Go)');
 
-      // Essayer d'abord la connexion native
-      try {
-        const HealthKitService = require('../utils/healthKit').default;
-        const isAvailable = await HealthKitService.isAvailable();
-        
-        if (isAvailable) {
-          const hasPermissions = await HealthKitService.requestPermissions();
-          if (hasPermissions) {
-            const integrationStatus = await this.getIntegrationStatus(userId);
-            integrationStatus.appleHealth = {
-              connected: true,
-              lastSync: new Date().toISOString(),
-              permissions: ['steps', 'calories', 'heartRate', 'weight', 'sleep']
-            };
-
-            await this.saveIntegrationStatus(userId, integrationStatus);
-            console.log('✅ Apple Health connecté nativement');
-            return true;
-          }
-        }
-      } catch (nativeError) {
-        console.log('⚠️ Connexion native échouée, fallback vers simulation:', nativeError.message);
-      }
-
-      // Fallback vers le mode simulation
-      console.log('🍎 Apple Health - Mode simulation de secours');
       const integrationStatus = await this.getIntegrationStatus(userId);
       integrationStatus.appleHealth = {
         connected: true,

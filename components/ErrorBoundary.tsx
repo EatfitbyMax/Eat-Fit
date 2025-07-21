@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,7 +21,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     console.log('🛡️ ErrorBoundary a capturé une erreur:', error.message);
-    
+
     // Log des erreurs natives spécifiques
     if (error.message?.includes('Native module') || 
         error.message?.includes('RCT') ||
@@ -34,43 +33,22 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
         name: error.name
       });
     }
-    
+
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.warn('🚨 Erreur capturée par ErrorBoundary:', {
+    console.error('🚨 ERREUR CAPTURÉE PAR ERROR BOUNDARY:', {
       error: error.message,
-      componentStack: errorInfo.componentStack?.substring(0, 200),
-      errorInfo: errorInfo
+      stack: error.stack?.substring(0, 500),
+      componentStack: errorInfo.componentStack?.substring(0, 500)
     });
 
-    // Vérifier si c'est une boucle d'erreurs
-    const errorKey = error.message + error.stack?.substring(0, 100);
-    const now = Date.now();
-    const lastErrorTime = (global as any).__lastErrorTime || 0;
-    const lastErrorKey = (global as any).__lastErrorKey || '';
-    
-    if (errorKey === lastErrorKey && (now - lastErrorTime) < 5000) {
-      console.error('🚫 BOUCLE D\'ERREURS DÉTECTÉE - Arrêt récupération automatique');
-      return;
-    }
-    
-    (global as any).__lastErrorTime = now;
-    (global as any).__lastErrorKey = errorKey;
-
-    // Tentative de récupération avec expo-error-recovery (avec protection)
-    if (ErrorRecovery && (error.message?.includes('Native module') || 
-                         error.message?.includes('RCT'))) {
-      console.log('🔄 Tentative de récupération d\'erreur native');
-      setTimeout(() => {
-        try {
-          ErrorRecovery.recover();
-        } catch (recoveryError) {
-          console.error('❌ Échec récupération:', recoveryError);
-        }
-      }, 2000); // Délai plus long
-    }
+    // Tentative de récupération automatique après 3 secondes
+    setTimeout(() => {
+      console.log('🔄 Tentative de récupération automatique...');
+      this.setState({ hasError: false, error: null });
+    }, 3000);
   }
 
   resetError = () => {
