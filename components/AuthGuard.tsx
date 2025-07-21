@@ -48,9 +48,9 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     };
 
     if (!user && !isAuthRoute) {
-      navigate('auth/login', 'Aucun utilisateur connecté');
+      navigate('/auth/login', 'Aucun utilisateur connecté');
     } else if (user && isAuthRoute) {
-      navigate('(client)', 'Utilisateur connecté');
+      navigate('/(client)', 'Utilisateur connecté');
     } else {
       // Reset navigation state si on est sur la bonne route
       lastNavigationRef.current = '';
