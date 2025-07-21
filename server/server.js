@@ -729,8 +729,26 @@ app.get('/api/health', (req, res) => {
 app.get('/api/health-check', (req, res) => {
   res.status(200).json({ 
     status: 'OK', 
-    message: 'Serveur VPS opérationnel',
-    timestamp: new Date().toISOString()
+    message: 'Serveur Replit opérationnel',
+    timestamp: new Date().toISOString(),
+    port: PORT,
+    host: '0.0.0.0'
+  });
+});
+
+// Route de diagnostic détaillé
+app.get('/api/diagnostic', (req, res) => {
+  res.status(200).json({
+    server: 'EatFitByMax API',
+    status: 'running',
+    environment: process.env.NODE_ENV || 'development',
+    port: PORT,
+    host: '0.0.0.0',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    platform: process.platform,
+    nodeVersion: process.version
   });
 });
 

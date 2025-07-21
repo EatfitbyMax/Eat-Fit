@@ -10,7 +10,8 @@ module.exports = {
     max_memory_restart: '1G',
     env: {
       NODE_ENV: 'production',
-      PORT: 5000
+      PORT: 5000,
+      HOST: '0.0.0.0'
     },
     error_file: '/home/runner/workspace/logs/err.log',
     out_file: '/home/runner/workspace/logs/out.log',
@@ -19,6 +20,8 @@ module.exports = {
     log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
     merge_logs: true,
     min_uptime: '10s',
-    max_restarts: 10
+    max_restarts: 10,
+    // Forcer le redémarrage en cas d'erreur
+    exp_backoff_restart_delay: 100
   }]
 };
