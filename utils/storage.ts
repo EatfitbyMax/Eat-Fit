@@ -2,7 +2,7 @@
 import { ServerWakeupService } from './serverWakeup';
 
 // Configuration serveur Replit uniquement
-const SERVER_URL = 'https://workspace-eatfitbymax.replit.dev';
+const SERVER_URL = 'https://eatfitbymax.replit.app';
 const API_URL = SERVER_URL;
 
 export class PersistentStorage {
