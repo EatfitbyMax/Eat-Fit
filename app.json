@@ -54,7 +54,6 @@
           "origin": false
         }
       ],
-      "expo-web-browser",
       [
         "expo-camera",
         {
