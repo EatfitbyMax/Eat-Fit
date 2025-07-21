@@ -146,10 +146,18 @@ export async function login(email: string, password: string): Promise<User | nul
 
 export async function logout(): Promise<void> {
   try {
-    await AsyncStorage.removeItem(CURRENT_USER_KEY);
-    console.log('Déconnexion réussie');
+    // Supprimer toutes les données de session utilisateur
+    await AsyncStorage.multiRemove([
+      CURRENT_USER_KEY,
+      'app_preferences',
+      'subscription_status',
+      'user_nutrition_data',
+      'user_fitness_data'
+    ]);
+    console.log('✅ Déconnexion réussie - toutes les données de session supprimées');
   } catch (error) {
-    console.error('Erreur déconnexion:', error);
+    console.error('❌ Erreur déconnexion:', error);
+    throw error;
   }
 }
 
