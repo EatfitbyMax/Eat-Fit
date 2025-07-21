@@ -1,0 +1,52 @@
+* Host eatfitbymax.replit.app:443 was resolved.
+* IPv6: (none)
+* IPv4: 34.117.33.233
+*   Trying 34.117.33.233:443...
+* ALPN: curl offers h2,http/1.1
+* TLSv1.3 (OUT), TLS handshake, Client hello (1):
+* TLSv1.3 (IN), TLS handshake, Server hello (2):
+* TLSv1.3 (IN), TLS change cipher, Change cipher spec (1):
+* TLSv1.3 (IN), TLS handshake, Encrypted Extensions (8):
+* TLSv1.3 (IN), TLS handshake, Certificate (11):
+* TLSv1.3 (IN), TLS handshake, CERT verify (15):
+* TLSv1.3 (IN), TLS handshake, Finished (20):
+* TLSv1.3 (OUT), TLS change cipher, Change cipher spec (1):
+* TLSv1.3 (OUT), TLS handshake, Finished (20):
+* SSL connection using TLSv1.3 / TLS_AES_256_GCM_SHA384 / x25519 / RSASSA-PSS
+* ALPN: server accepted h2
+* Server certificate:
+*  subject: CN=replit.app
+*  start date: Jun  7 17:28:56 2025 GMT
+*  expire date: Sep  5 18:24:52 2025 GMT
+*  subjectAltName: host "eatfitbymax.replit.app" matched cert's "*.replit.app"
+*  issuer: C=US; O=Google Trust Services; CN=WR3
+*  SSL certificate verify ok.
+*   Certificate level 0: Public key type RSA (2048/112 Bits/secBits), signed using sha256WithRSAEncryption
+*   Certificate level 1: Public key type RSA (2048/112 Bits/secBits), signed using sha256WithRSAEncryption
+*   Certificate level 2: Public key type RSA (4096/152 Bits/secBits), signed using sha384WithRSAEncryption
+* Connected to eatfitbymax.replit.app (34.117.33.233) port 443
+* using HTTP/2
+* [HTTP/2] [1] OPENED stream for https://eatfitbymax.replit.app/api/health
+* [HTTP/2] [1] [:method: GET]
+* [HTTP/2] [1] [:scheme: https]
+* [HTTP/2] [1] [:authority: eatfitbymax.replit.app]
+* [HTTP/2] [1] [:path: /api/health]
+* [HTTP/2] [1] [user-agent: curl/8.14.1]
+* [HTTP/2] [1] [accept: */*]
+> GET /api/health HTTP/2
+> Host: eatfitbymax.replit.app
+> User-Agent: curl/8.14.1
+> Accept: */*
+> 
+* TLSv1.3 (IN), TLS handshake, Newsession Ticket (4):
+* TLSv1.3 (IN), TLS handshake, Newsession Ticket (4):
+* Request completely sent off
+< HTTP/2 404 
+< date: Mon, 21 Jul 2025 17:50:48 GMT
+< content-length: 9
+< content-type: text/plain; charset=utf-8
+< via: 1.1 google
+< alt-svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+< 
+* Connection #0 to host eatfitbymax.replit.app left intact
+Not Found
