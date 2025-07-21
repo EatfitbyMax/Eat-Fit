@@ -1440,32 +1440,16 @@ export const saveUserData = async (userData: any): Promise<void> => {
 };
 
 // Adding message management functions here
-// Configuration de l'URL API avec fallback et validation
-const getApiUrl = () => {
-  const envUrl = process.env.EXPO_PUBLIC_API_URL;
-
-  if (envUrl) {
-    console.log(`[DEBUG] URL API depuis env: ${envUrl}`);
-    return envUrl;
-  }
-
-  // Fallback pour le développement
-  const fallbackUrl = 'http://51.178.29.220:5000';
-  console.log(`[DEBUG] URL API fallback: ${fallbackUrl}`);
-  return fallbackUrl;
-};
-
-const API_URL = getApiUrl();
 
 // Test de connexion à l'API
 export const testApiConnection = async (): Promise<{ success: boolean; message: string }> => {
   try {
-    console.log(`[DEBUG] Test de connexion API: ${API_URL}/api/health-check`);
+    console.log(`[DEBUG] Test de connexion API: ${SERVER_URL}/api/health`);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 secondes
 
-    const response = await fetch(`${API_URL}/api/health-check`, {
+    const response = await fetch(`${SERVER_URL}/api/health`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -1496,13 +1480,13 @@ export const testApiConnection = async (): Promise<{ success: boolean; message: 
 export const getMessages = async (userId: string): Promise<any[]> => {
   try {
     console.log(`[DEBUG] Récupération messages pour userId: ${userId}`);
-    console.log(`[DEBUG] URL API: ${API_URL}/api/messages/${userId}`);
+    console.log(`[DEBUG] URL API: ${SERVER_URL}/api/messages/${userId}`);
 
     // Test de connexion avec timeout court
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 secondes
 
-    const response = await fetch(`${API_URL}/api/messages/${userId}`, {
+    const response = await fetch(`${SERVER_URL}/api/messages/${userId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
