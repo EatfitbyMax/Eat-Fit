@@ -25,37 +25,19 @@ const CURRENT_USER_KEY = 'currentUser';
 const USERS_KEY = 'users';
 
 // Comptes par défaut
-const DEFAULT_ACCOUNTS = [
-  {
-    id: '1',
-    email: 'eatfitbymax@gmail.com',
-    password: 'MaxMax200303!',
-    name: 'Admin EatFitByMax',
-    userType: 'coach' as const,
-    createdAt: new Date().toISOString(),
-  }
-];
+const DEFAULT_ACCOUNTS: any[] = [];
 
 export async function initializeAdminAccount(): Promise<void> {
   try {
     const existingUsers = await AsyncStorage.getItem(USERS_KEY);
     if (!existingUsers) {
-      await AsyncStorage.setItem(USERS_KEY, JSON.stringify(DEFAULT_ACCOUNTS));
-      console.log('Comptes par défaut initialisés:', DEFAULT_ACCOUNTS.map(u => u.email));
+      await AsyncStorage.setItem(USERS_KEY, JSON.stringify([]));
+      console.log('💫 Base de données utilisateurs initialisée (vide)');
     } else {
-      const users = JSON.parse(existingUsers);
-      // Vérifier si le compte admin existe
-      const adminExists = users.find((u: any) => u.email === 'eatfitbymax@gmail.com');
-      if (!adminExists) {
-        users.push(...DEFAULT_ACCOUNTS);
-        await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
-        console.log('Compte admin ajouté aux utilisateurs existants');
-      } else {
-        console.log('Compte admin déjà existant');
-      }
+      console.log('📱 Base de données utilisateurs existante trouvée');
     }
   } catch (error) {
-    console.error('Erreur initialisation comptes:', error);
+    console.error('Erreur initialisation base utilisateurs:', error);
   }
 }
 
