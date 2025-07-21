@@ -7,10 +7,8 @@
     "icon": "./assets/images/crown-logo.png",
     "scheme": "eatfitbymax",
     "userInterfaceStyle": "automatic",
-    "platforms": [
-      "ios",
-      "android"
-    ],
+    "newArchEnabled": false,
+    "platforms": ["ios", "android"],
     "ios": {
       "icon": "./assets/images/crown-logo.png",
       "supportsTablet": true,
@@ -22,10 +20,10 @@
       },
       "entitlements": {},
       "infoPlist": {
-        "NSCameraUsageDescription": "EatFitBy Max utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas.",
-        "NSPhotoLibraryUsageDescription": "EatFitBy Max accède à votre galerie photo pour vous permettre de sélectionner des images de vos repas.",
-        "NSMotionUsageDescription": "EatFitBy Max utilise les capteurs de mouvement pour suivre votre activité physique.",
-        "NSLocationWhenInUseUsageDescription": "EatFitBy Max utilise votre localisation pour trouver des salles de sport et des restaurants sains près de chez vous.",
+        "NSCameraUsageDescription": "EatFitByMax utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas.",
+        "NSPhotoLibraryUsageDescription": "EatFitByMax accède à votre galerie photo pour vous permettre de sélectionner des images de vos repas.",
+        "NSMotionUsageDescription": "EatFitByMax utilise les capteurs de mouvement pour suivre votre activité physique.",
+        "NSLocationWhenInUseUsageDescription": "EatFitByMax utilise votre localisation pour trouver des salles de sport et des restaurants sains près de chez vous.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -37,9 +35,12 @@
       },
       "permissions": [
         "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
       ]
     },
+
     "extra": {
       "router": {},
       "eas": {
@@ -56,10 +57,11 @@
           "origin": false
         }
       ],
+      "expo-web-browser",
       [
         "expo-camera",
         {
-          "cameraPermission": "EatFitBy Max utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas."
+          "cameraPermission": "EatFitByMax utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas."
         }
       ],
       [
@@ -67,8 +69,7 @@
         {
           "addGeneratedScheme": false
         }
-      ],
-      "expo-font"
+      ]
     ],
     "experiments": {
       "typedRoutes": true
@@ -76,7 +77,6 @@
     "owner": "eatfit",
     "updates": {
       "url": "https://u.expo.dev/816e280b-c76c-4f13-8d77-1ef1898b8ceb"
-    },
-    "sdkVersion": "53.0.0"
+    }
   }
 }
