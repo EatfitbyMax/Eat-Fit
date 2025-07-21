@@ -22,7 +22,6 @@ import Animated, {
 import { LinearGradient } from 'expo-linear-gradient';
 import { getCurrentUser } from '@/utils/auth';
 import { syncWithExternalApps, IntegrationsManager } from '@/utils/integrations';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PersistentStorage } from '@/utils/storage';
 
 const { width, height } = Dimensions.get('window');
@@ -39,6 +38,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   const [todayStats, setTodayStats] = useState({
     calories: 0,
     workouts: 0,
@@ -90,18 +90,25 @@ export default function HomeScreen() {
   useFocusEffect(
     React.useCallback(() => {
       const loadDataOnFocus = async () => {
-        // Recharger les données utilisateur d'abord
-        await loadUserData();
+        try {
+          // Recharger les données utilisateur d'abord
+          await loadUserData();
 
-        // Ensuite charger les autres données
-        await loadTodayStats();
-        loadFormeScore();
-        loadWeightData();
-        calculateWeeklyWorkouts();
+          // Ensuite charger les autres données
+          await loadTodayStats();
+          await loadFormeScore();
+          await loadWeightData();
+          await calculateWeeklyWorkouts();
+
+          setConnectionError(null);
+        } catch (error: any) {
+          console.error('Erreur chargement données:', error);
+          setConnectionError(error.message);
+        }
       };
 
       loadDataOnFocus();
-    }, []) // Pas de dépendance pour éviter les boucles infinies
+    }, [])
   );
 
   const generateRandomTip = () => {
@@ -181,6 +188,7 @@ export default function HomeScreen() {
 
   const loadUserData = async () => {
     try {
+      setConnectionError(null);
       const currentUser = await getCurrentUser();
       if (currentUser) {
         // Toujours mettre à jour l'état utilisateur avec les dernières données
@@ -199,34 +207,11 @@ export default function HomeScreen() {
 
         await loadTodayStats();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur chargement utilisateur:', error);
+      setConnectionError(error.message || 'Erreur de connexion au serveur');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadFormeData = async () => {
-    try {
-      const currentUser = await getCurrentUser();
-      if (!currentUser) return;
-
-      const today = new Date().toISOString().split('T')[0];
-
-      // Simulation du calcul du score de forme basé sur le sommeil et la variabilité cardiaque
-      // En réalité, ces données viendraient des intégrations Apple Health/Strava
-      // Valeurs simulées pour la démonstration
-      setFormeData({
-        sleep: { hours: 7, quality: 'Bien', bedTime: '', wakeTime: '' },
-        stress: { level: 3, factors: [], notes: '' },
-        heartRate: { resting: 60, variability: 80 },
-        rpe: { value: 4, notes: '' },
-        cycle: currentUser?.gender === 'Femme' ? { phase: 'Menstruel', dayOfCycle: 1, symptoms: [], notes: '' } : undefined,
-        date: today
-      });
-    } catch (error) {
-      console.error('Erreur chargement données forme:', error);
-      setFormeData(null);
     }
   };
 
@@ -236,194 +221,67 @@ export default function HomeScreen() {
       if (!currentUser) return;
 
       const today = new Date().toISOString().split('T')[0];
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
 
-      // D'abord, essayer de récupérer le score déjà calculé par l'écran forme
-      const savedScore = await AsyncStorage.getItem(`forme_score_${currentUser.id}_${today}`);
-      if (savedScore) {
-        const score = parseInt(savedScore);
-        setFormeScore(score);
-        console.log(`Score de forme récupéré depuis l'écran forme: ${score}/100`);
-        return;
-      }
+      // Récupérer les données de forme depuis le serveur uniquement
+      try {
+        const todayData = await PersistentStorage.getFormeData(currentUser.id, today);
+        console.log('Données de forme chargées depuis le serveur pour l\'accueil');
 
-      // Si pas de score sauvegardé, calculer nous-mêmes
-      let todayData = null;
-      const localDataString = await AsyncStorage.getItem(`forme_data_${currentUser.id}_${today}`);
-
-      if (localDataString) {
-        todayData = JSON.parse(localDataString);
-        console.log('Données de forme chargées depuis le stockage local pour l\'accueil');
-      } else {
-        // Fallback vers le serveur si pas de données locales
-        try {
-          todayData = await PersistentStorage.getFormeData(currentUser.id, today);
-          console.log('Données de forme chargées depuis le serveur VPS pour l\'accueil');
-        } catch (serverError) {
-          console.log('Aucune donnée de forme trouvée, utilisation du score par défaut');
-          setFormeScore(75); // Valeur par défaut si aucune donnée
-          return;
-        }
-      }
-
-      // Récupérer les données nutritionnelles réelles
-      const nutritionData = await getTodayNutritionData();
-      if (todayData) {
-        todayData = {
-          ...todayData,
-          actualCalories: nutritionData.calories,
-          actualMacros: {
-            proteins: nutritionData.proteins,
-            carbohydrates: nutritionData.carbohydrates,
-            fat: nutritionData.fat
-          }
-        };
-      }
-
-      // Récupérer les notes RPE du jour si premium
-      if (isPremium && todayData) {
-        const todayRPEData = await getTodayActivityRPE(currentUser.id);
-        if (todayRPEData) {
-          todayData = {
+        if (todayData) {
+          // Récupérer les données nutritionnelles réelles
+          const nutritionData = await getTodayNutritionData();
+          const enrichedData = {
             ...todayData,
-            rpe: {
-              value: todayRPEData.rpe,
-              notes: todayRPEData.notes || '',
-              workoutId: 'auto_from_activity'
+            actualCalories: nutritionData.calories,
+            actualMacros: {
+              proteins: nutritionData.proteins,
+              carbohydrates: nutritionData.carbohydrates,
+              fat: nutritionData.fat
             }
           };
-        }
-      }
 
-      if (todayData) {
-        // Utiliser la même logique de calcul que dans forme.tsx
-        const realScore = calculateRealFormeScore(todayData, currentUser);
-        setFormeScore(realScore);
-        // Sauvegarder le score pour cohérence
-        await AsyncStorage.setItem(`forme_score_${currentUser.id}_${today}`, realScore.toString());
-        console.log(`Score de forme réel calculé pour l'accueil: ${realScore}/100`);
-      } else {
-        setFormeScore(75); // Valeur par défaut
+          // Calculer le score de forme
+          const realScore = calculateRealFormeScore(enrichedData, currentUser);
+          setFormeScore(realScore);
+          console.log(`Score de forme calculé pour l'accueil: ${realScore}/100`);
+        } else {
+          setFormeScore(75); // Valeur par défaut
+        }
+      } catch (error) {
+        console.log('Aucune donnée de forme trouvée, utilisation du score par défaut');
+        setFormeScore(75); // Valeur par défaut si aucune donnée
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur calcul score de forme:', error);
+      setConnectionError(error.message || 'Erreur de connexion');
       setFormeScore(75); // Valeur par défaut
     }
   };
 
-  // Fonction pour récupérer les données nutritionnelles du jour
+  // Fonction pour récupérer les données nutritionnelles du jour depuis le serveur uniquement
   const getTodayNutritionData = async () => {
     try {
       const currentUser = await getCurrentUser();
       if (!currentUser) return { calories: 0, proteins: 0, carbohydrates: 0, fat: 0 };
 
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
       const today = new Date().toISOString().split('T')[0];
 
-      // Essayer d'abord de charger depuis le serveur VPS
-      try {
-        const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.replit.app';
-        const response = await fetch(`${VPS_URL}/api/nutrition/${currentUser.id}`, { 
-          timeout: 5000 
-        });
+      // Récupérer depuis le serveur Replit uniquement
+      const nutritionEntries = await PersistentStorage.getUserNutrition(currentUser.id);
+      const todayEntries = nutritionEntries.filter((entry: any) => entry.date === today);
 
-        if (response.ok) {
-          const nutritionEntries = await response.json();
-          const todayEntries = nutritionEntries.filter((entry: any) => entry.date === today);
-          
-          const totals = todayEntries.reduce((sum: any, entry: any) => ({
-            calories: sum.calories + (entry.calories || 0),
-            proteins: sum.proteins + (entry.proteins || 0),
-            carbohydrates: sum.carbohydrates + (entry.carbohydrates || 0),
-            fat: sum.fat + (entry.fat || 0)
-          }), { calories: 0, proteins: 0, carbohydrates: 0, fat: 0 });
+      const totals = todayEntries.reduce((sum: any, entry: any) => ({
+        calories: sum.calories + (entry.calories || 0),
+        proteins: sum.proteins + (entry.proteins || 0),
+        carbohydrates: sum.carbohydrates + (entry.carbohydrates || 0),
+        fat: sum.fat + (entry.fat || 0)
+      }), { calories: 0, proteins: 0, carbohydrates: 0, fat: 0 });
 
-          console.log(`Nutrition depuis serveur: ${totals.calories} kcal, ${totals.proteins}g protéines`);
-          return totals;
-        }
-      } catch (serverError) {
-        console.log('Serveur nutrition indisponible, utilisation stockage local');
-      }
-
-      // Fallback vers le stockage local
-      const storedEntries = await AsyncStorage.getItem(`food_entries_${currentUser.id}`);
-      if (storedEntries) {
-        const entries = JSON.parse(storedEntries);
-        const todayEntries = entries.filter((entry: any) => entry.date === today);
-        
-        const totals = todayEntries.reduce((sum: any, entry: any) => ({
-          calories: sum.calories + (entry.calories || 0),
-          proteins: sum.proteins + (entry.proteins || 0),
-          carbohydrates: sum.carbohydrates + (entry.carbohydrates || 0),
-          fat: sum.fat + (entry.fat || 0)
-        }), { calories: 0, proteins: 0, carbohydrates: 0, fat: 0 });
-
-        console.log(`Nutrition depuis stockage local: ${totals.calories} kcal, ${totals.proteins}g protéines`);
-        return totals;
-      }
-
-      console.log('Aucune donnée nutrition trouvée');
-      return { calories: 0, proteins: 0, carbohydrates: 0, fat: 0 };
+      console.log(`Nutrition depuis serveur: ${totals.calories} kcal, ${totals.proteins}g protéines`);
+      return totals;
     } catch (error) {
       console.error('Erreur récupération données nutrition:', error);
-      return { calories: 0, proteins: 0, carbohydrates: 0, fat: 0 };
-    }
-  };
-
-  // Fonction pour récupérer les données RPE du jour
-  const getTodayActivityRPE = async (userId: string) => {
-    try {
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-      const storedRatings = await AsyncStorage.getItem(`activity_ratings_${userId}`);
-
-      if (!storedRatings) {
-        console.log('Aucune note RPE trouvée dans le stockage (accueil)');
-        return null;
-      }
-
-      const ratings = JSON.parse(storedRatings);
-
-      // Date du jour en format YYYY-MM-DD dans le timezone local
-      const today = new Date();
-      const todayString = today.getFullYear() + '-' + 
-        String(today.getMonth() + 1).padStart(2, '0') + '-' + 
-        String(today.getDate()).padStart(2, '0');
-
-      console.log('Recherche RPE pour le jour (accueil):', todayString);
-
-      // Récupérer toutes les activités du jour et fusionner leurs notes
-      const todayRatings = Object.entries(ratings)
-        .map(([activityId, rating]: [string, any]) => ({
-          activityId,
-          ...rating
-        }))
-        .filter((rating: any) => {
-          const ratingDate = rating.date.includes('T') ? rating.date.split('T')[0] : rating.date;
-          return ratingDate === todayString;
-        });
-
-      if (todayRatings.length > 0) {
-        console.log(`${todayRatings.length} activité(s) RPE trouvée(s) pour aujourd'hui (accueil)`);
-
-        // Calculer la moyenne des RPE et fusionner les notes
-        const avgRPE = Math.round(todayRatings.reduce((sum: number, r: any) => sum + r.rpe, 0) / todayRatings.length);
-        const allNotes = todayRatings
-          .map((r: any) => r.notes)
-          .filter((note: string) => note && note.trim() !== '')
-          .join(' • ');
-
-        return {
-          rpe: avgRPE,
-          notes: allNotes || `${todayRatings.length} séance${todayRatings.length > 1 ? 's' : ''} terminée${todayRatings.length > 1 ? 's' : ''} aujourd'hui`,
-          activityCount: todayRatings.length
-        };
-      }
-
-      console.log('Aucune activité RPE trouvée pour aujourd\'hui (accueil)');
-      return null;
-    } catch (error) {
-      console.error('Erreur récupération RPE du jour (accueil):', error);
-      return null;
+      throw new Error('Impossible de récupérer les données nutritionnelles. Vérifiez votre connexion internet.');
     }
   };
 
@@ -439,19 +297,18 @@ export default function HomeScreen() {
     let baseWeights = {
       sleep: 0.35,
       stress: 0.30,
-      heartRate: 0.0, // Initialisé à 0, sera ajusté par les plans
-      rpe: 0.0,       // Initialisé à 0, sera ajusté par les plans
+      heartRate: 0.0,
+      rpe: 0.0,
       cycle: isWoman ? 0.05 : 0,
-      macros: 0.0,    // Initialisé à 0, sera ajusté par les plans
-      micros: 0.0     // Initialisé à 0, sera ajusté par les plans
+      macros: 0.0,
+      micros: 0.0
     };
 
     // Ajuster les poids selon le plan
-    let weights = { ...baseWeights }; // Créer une copie pour ne pas modifier l'original
+    let weights = { ...baseWeights };
 
     if (isPremium) {
-      // Récupérer l'ID du plan de l'utilisateur (simulé, à remplacer par la logique réelle)
-      const userPlanId = 'premium_gold'; // Remplacez par la valeur réelle de l'utilisateur
+      const userPlanId = 'premium_gold';
 
       switch (userPlanId) {
         case 'premium_bronze':
@@ -477,7 +334,6 @@ export default function HomeScreen() {
           weights.micros = 0.10;
           break;
         default:
-          // Plan gratuit (ou inconnu) : sommeil et stress uniquement
           weights = {
             sleep: 0.5,
             stress: 0.5,
@@ -490,7 +346,6 @@ export default function HomeScreen() {
           break;
       }
     } else {
-      // Plan gratuit
       weights = {
         sleep: 0.5,
         stress: 0.5,
@@ -524,7 +379,6 @@ export default function HomeScreen() {
 
       let sleepScore = sleepHoursScore * (qualityMultiplier[formeData.sleep.quality] || 0.65);
 
-      // Ajustement cycle pour les femmes
       if (isWoman && formeData.cycle) {
         const cycleMultiplier = {
           'Menstruel': 0.9,
@@ -555,148 +409,10 @@ export default function HomeScreen() {
     totalScore += stressScore * weights.stress;
     totalWeight += weights.stress;
 
-    // FC repos - Plans Bronze et plus
-    if (weights.heartRate > 0 && formeData.heartRate?.resting > 0) {
-      const optimalResting = userData?.gender === 'Homme' ? 65 : 70;
-      let diff = Math.abs(formeData.heartRate.resting - optimalResting);
-
-      // Ajustement cycle pour les femmes: FC varie selon la phase
-      if (isWoman && formeData.cycle) {
-        const hrCycleAdjustment = {
-          'Menstruel': -3,       // FC légèrement plus élevée
-          'Folliculaire': 0,     // FC normale
-          'Ovulation': -2,       // FC peut être légèrement élevée
-          'Lutéal': -5           // FC souvent plus élevée en pré-menstruel
-        };
-
-        const adjustedOptimal = optimalResting + hrCycleAdjustment[formeData.cycle.phase];
-        diff = Math.abs(formeData.heartRate.resting - adjustedOptimal);
-      }
-
-      let hrScore;
-      if (diff <= 5) hrScore = 100;
-      else if (diff <= 10) hrScore = 85;
-      else if (diff <= 15) hrScore = 70;
-      else if (diff <= 20) hrScore = 55;
-      else hrScore = 30;
-
-      totalScore += hrScore * weights.heartRate;
-      totalWeight += weights.heartRate;
-    }
-
-    // RPE - Plans Bronze et plus
-    if (weights.rpe > 0 && formeData.rpe?.value > 0) {
-      let rpeScore;
-      if (formeData.rpe.value <= 3) rpeScore = 100;
-      else if (formeData.rpe.value <= 5) rpeScore = 80;
-      else if (formeData.rpe.value <= 7) rpeScore = 60;
-      else rpeScore = 30;
-
-      // Ajustement cycle pour les femmes
-      if (isWoman && formeData.cycle) {
-        const rpeCycleMultiplier = {
-          'Menstruel': 0.8,
-          'Folliculaire': 1.15,
-          'Ovulation': 1.2,
-          'Lutéal': 0.85
-        };
-        rpeScore *= (rpeCycleMultiplier[formeData.cycle.phase] || 1.0);
-      }
-
-      totalScore += rpeScore * weights.rpe;
-      totalWeight += weights.rpe;
-    }
-
-    // Relation Macronutriments/Fatigue - Plans Or et Diamant
-    if (weights.macros > 0) {
-      let macrosScore = 75; // Score par défaut simulé
-
-      // Impact du cycle pour les femmes
-      if (isWoman && formeData.cycle) {
-        const macrosCycleMultiplier = {
-          'Menstruel': 0.85,
-          'Folliculaire': 1.1,
-          'Ovulation': 1.15,
-          'Lutéal': 0.9
-        };
-        macrosScore *= (macrosCycleMultiplier[formeData.cycle.phase] || 1.0);
-      }
-
-      totalScore += macrosScore * weights.macros;
-      totalWeight += weights.macros;
-    }
-
-    // Relation Micronutriments/Fatigue - Plans Or et Diamant
-    if (weights.micros > 0) {
-      let microsScore = 75; // Score par défaut simulé
-
-      // Impact du cycle pour les femmes
-      if (isWoman && formeData.cycle) {
-        const microsCycleMultiplier = {
-          'Menstruel': 0.8,
-          'Folliculaire': 1.05,
-          'Ovulation': 1.1,
-          'Lutéal': 0.85
-        };
-        microsScore *= (microsCycleMultiplier[formeData.cycle.phase] || 1.0);
-      }
-
-      totalScore += microsScore * weights.micros;
-      totalWeight += weights.micros;
-    }
-
-    // Cycle hormonal pour les femmes
-    if (isWoman && formeData.cycle) {
-      let cycleScore = 75;
-      const dayInCycle = formeData.cycle.dayOfCycle || 1;
-
-      switch (formeData.cycle.phase) {
-        case 'Menstruel':
-          if (dayInCycle <= 2) {
-            cycleScore = 45;
-          } else if (dayInCycle <= 4) {
-            cycleScore = 55;
-          } else {
-            cycleScore = 65;
-          }
-          break;
-
-        case 'Folliculaire':
-          cycleScore = 70 + Math.min((dayInCycle - 5) * 3, 20);
-          break;
-
-        case 'Ovulation':
-          cycleScore = 95;
-          break;
-
-        case 'Lutéal':
-          const lutealDay = dayInCycle - 16;
-          if (lutealDay <= 4) {
-            cycleScore = 80;
-          } else if (lutealDay <= 8) {
-            cycleScore = 70;
-          } else {
-            cycleScore = 50;
-          }
-          break;
-      }
-
-      const symptomPenalty = Math.min((formeData.cycle.symptoms?.length || 0) * 8, 40);
-      cycleScore = Math.max(25, cycleScore - symptomPenalty);
-
-      if ((formeData.cycle.symptoms?.length || 0) === 0 && 
-          (formeData.cycle.phase === 'Folliculaire' || formeData.cycle.phase === 'Ovulation')) {
-        cycleScore = Math.min(100, cycleScore + 5);
-      }
-
-      totalScore += cycleScore * weights.cycle;
-      totalWeight += weights.cycle;
-    }
-
     // Calculer le score final
     let finalScore;
     if (totalWeight === 0) {
-      finalScore = 50; // Score par défaut si aucune donnée
+      finalScore = 50;
     } else {
       finalScore = totalScore / totalWeight;
     }
@@ -719,13 +435,13 @@ export default function HomeScreen() {
         totalCalories = todayEntries.reduce((sum: number, entry: any) => sum + (entry.calories || 0), 0);
       } catch (error) {
         console.error('Erreur récupération calories:', error);
+        throw new Error('Impossible de récupérer les données nutritionnelles');
       }
 
       // 2. Récupérer le nombre de séances terminées depuis Strava
       let totalWorkouts = 0;
       try {
         const stravaActivities = await IntegrationsManager.getStravaActivities(currentUser.id);
-        // Filtrer les activités du jour actuel
         totalWorkouts = stravaActivities.filter((activity: any) => {
           const activityDate = new Date(activity.date).toISOString().split('T')[0];
           return activityDate === today;
@@ -733,6 +449,7 @@ export default function HomeScreen() {
         console.log(`Séances terminées aujourd'hui (Strava): ${totalWorkouts}`);
       } catch (error) {
         console.error('Erreur récupération séances Strava:', error);
+        throw new Error('Impossible de récupérer les données Strava');
       }
 
       // 3. Récupérer les pas depuis Apple Health
@@ -745,24 +462,7 @@ export default function HomeScreen() {
         }
       } catch (error) {
         console.error('Erreur récupération pas Apple Health:', error);
-      }
-
-      // Si aucune donnée Apple Health, essayer de synchroniser
-      if (totalSteps === 0) {
-        try {
-          const integrationStatus = await IntegrationsManager.getIntegrationStatus(currentUser.id);
-          if (integrationStatus.appleHealth.connected) {
-            console.log('Tentative de synchronisation Apple Health...');
-            await IntegrationsManager.syncAppleHealthData(currentUser.id);
-            const updatedHealthData = await IntegrationsManager.getHealthData(currentUser.id);
-            const todayData = updatedHealthData.find((data: any) => data.date === today);
-            if (todayData) {
-              totalSteps = todayData.steps || 0;
-            }
-          }
-        } catch (syncError) {
-          console.warn('Impossible de synchroniser Apple Health:', syncError);
-        }
+        throw new Error('Impossible de récupérer les données Apple Health');
       }
 
       setTodayStats({
@@ -772,8 +472,9 @@ export default function HomeScreen() {
       });
 
       console.log(`Statistiques du jour chargées: ${Math.round(totalCalories)} calories, ${totalWorkouts} séances, ${totalSteps} pas`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur chargement statistiques du jour:', error);
+      setConnectionError(error.message || 'Erreur de connexion');
       // En cas d'erreur, garder des valeurs par défaut
       setTodayStats({
         calories: 0,
@@ -802,21 +503,16 @@ export default function HomeScreen() {
   const getTrainingGoal = () => {
     if (!user) return Math.max(weeklyWorkouts, 1);
 
-    // Si l'utilisateur a des séances planifiées, utiliser ce nombre comme objectif minimum
-    let baseGoal = Math.max(weeklyWorkouts, 1); // Au minimum, le nombre de séances planifiées
+    let baseGoal = Math.max(weeklyWorkouts, 1);
 
-    // Ajuster légèrement selon les objectifs de l'utilisateur
     if (user.goals?.includes('Me muscler') || user.goals?.includes('Gagner en performance')) {
-      // Pour ces objectifs, suggérer une séance supplémentaire si possible
       baseGoal = Math.max(baseGoal, weeklyWorkouts + 1);
     }
 
     if (user.goals?.includes('Perdre du poids')) {
-      // Pour la perte de poids, suggérer au minimum 2 séances
       baseGoal = Math.max(baseGoal, 2);
     }
 
-    // Si aucune séance n'est planifiée, suggérer un objectif minimal
     if (weeklyWorkouts === 0) {
       return user.goals?.includes('Perdre du poids') ? 2 : 1;
     }
@@ -832,8 +528,9 @@ export default function HomeScreen() {
 
       const data = await PersistentStorage.getUserWeight(currentUser.id);
       setWeightData(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur chargement données poids:', error);
+      setConnectionError(error.message || 'Erreur de connexion');
     }
   };
 
@@ -886,11 +583,11 @@ export default function HomeScreen() {
       const currentUser = await getCurrentUser();
       if (!currentUser) return;
 
-      // Calculer les dates de début et fin de semaine (Lundi à Dimanche)
+      // Calculer les dates de début et fin de semaine
       const today = new Date();
       const startOfWeek = new Date(today);
       const dayOfWeek = today.getDay();
-      const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Lundi comme début de semaine
+      const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
       startOfWeek.setDate(diff);
       startOfWeek.setHours(0, 0, 0, 0);
 
@@ -919,12 +616,13 @@ export default function HomeScreen() {
         console.log(`Séances planifiées cette semaine: ${weeklyWorkoutsCount}`);
       } catch (error) {
         console.error('Erreur récupération workouts:', error);
-        weeklyWorkoutsCount = 0;
+        throw new Error('Impossible de récupérer les entraînements');
       }
 
       setWeeklyWorkouts(weeklyWorkoutsCount);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur calcul séances hebdomadaires:', error);
+      setConnectionError(error.message || 'Erreur de connexion');
     }
   };
 
@@ -968,22 +666,61 @@ export default function HomeScreen() {
           {
             text: 'Synchroniser',
             onPress: async () => {
-              await syncWithExternalApps(user?.id || '');
-              Alert.alert('Succès', 'Synchronisation terminée');
+              try {
+                await syncWithExternalApps(user?.id || '');
+                Alert.alert('Succès', 'Synchronisation terminée');
+                setConnectionError(null);
+              } catch (error: any) {
+                setConnectionError(error.message || 'Erreur de synchronisation');
+                Alert.alert('Erreur', error.message || 'Impossible de synchroniser les données');
+              }
             }
           }
         ]
       );
-    } catch (error) {
-      Alert.alert('Erreur', 'Impossible de synchroniser les données');
+    } catch (error: any) {
+      setConnectionError(error.message || 'Erreur de synchronisation');
+      Alert.alert('Erreur', error.message || 'Impossible de synchroniser les données');
+    }
+  };
+
+  const handleRetryConnection = async () => {
+    setLoading(true);
+    setConnectionError(null);
+    try {
+      await loadUserData();
+    } catch (error: any) {
+      setConnectionError(error.message || 'Erreur de connexion');
+    } finally {
+      setLoading(false);
     }
   };
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>Chargement...</Text>
+        <Text style={styles.loadingText}>Connexion au serveur...</Text>
       </View>
+    );
+  }
+
+  // Affichage d'erreur de connexion
+  if (connectionError) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorTitle}>Connexion requise</Text>
+          <Text style={styles.errorMessage}>
+            {connectionError}
+          </Text>
+          <Text style={styles.errorSubMessage}>
+            Cette application nécessite une connexion internet pour fonctionner.
+          </Text>
+          <TouchableOpacity style={styles.retryButton} onPress={handleRetryConnection}>
+            <Text style={styles.retryButtonText}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -1136,7 +873,7 @@ export default function HomeScreen() {
         <View style={styles.goalsContainer}>
           <Text style={styles.sectionTitle}>Mes objectifs de la semaine</Text>
 
-          {/* Objectif Nutrition - Basé sur les objectifs nutritionnels personnalisés */}
+          {/* Objectif Nutrition */}
           <View style={styles.goalCard}>
             <View style={styles.goalHeader}>
               <Text style={styles.goalTitle}>🥗 Objectif calories journalier</Text>
@@ -1159,7 +896,7 @@ export default function HomeScreen() {
             </Text>
           </View>
 
-          {/* Objectif Entraînement - Basé sur les séances réelles de la semaine */}
+          {/* Objectif Entraînement */}
           <View style={styles.goalCard}>
             <View style={styles.goalHeader}>
               <Text style={styles.goalTitle}>💪 Séances d'entraînement</Text>
@@ -1184,7 +921,7 @@ export default function HomeScreen() {
             </Text>
           </View>
 
-          {/* Objectif Perte de poids - Basé sur les données de progression réelles */}
+          {/* Objectif Perte de poids */}
           {user?.goals?.includes('Perdre du poids') && (
             <View style={styles.goalCard}>
               <View style={styles.goalHeader}>
@@ -1206,7 +943,7 @@ export default function HomeScreen() {
             </View>
           )}
 
-          {/* Objectif secondaire basé sur les autres objectifs de l'utilisateur */}
+          {/* Objectif secondaire */}
           {user?.goals && user.goals.length > 0 && !user.goals.includes('Perdre du poids') && (
             <View style={styles.goalCard}>
               <View style={styles.goalHeader}>
@@ -1239,6 +976,44 @@ const styles = StyleSheet.create({
   loadingText: {
     color: '#FFFFFF',
     fontSize: 16,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#0D1117',
+    paddingHorizontal: 20,
+  },
+  errorTitle: {
+    color: '#FF6B6B',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  errorMessage: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  errorSubMessage: {
+    color: '#8B949E',
+    fontSize: 14,
+    marginBottom: 32,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  retryButton: {
+    backgroundColor: '#F5A623',
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 12,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
   scrollView: {
     flex: 1,
