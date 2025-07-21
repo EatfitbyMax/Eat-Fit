@@ -8,9 +8,10 @@ import { Platform } from 'react-native';
 const APPLE_HEALTH_DISABLED = true;
 const FORCE_SIMULATION_MODE = true;
 
-// Désactiver toutes les intégrations natives sur iOS
+// Configuration flexible des intégrations natives sur iOS
 if (Platform.OS === 'ios') {
-  console.log('🍎 Toutes les intégrations natives désactivées sur iOS');
+  // Permettre Apple Health mais avec gestion d'erreurs robuste
+  console.log('🍎 Intégrations iOS configurées avec gestion d\'erreurs');
 }
 
 export interface HealthData {

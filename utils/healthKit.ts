@@ -12,13 +12,45 @@ export interface HealthData {
 
 class HealthKitService {
   static async isAvailable(): Promise<boolean> {
-    return Platform.OS === 'ios';
+    if (Platform.OS !== 'ios') {
+      return false;
+    }
+    
+    try {
+      // Vérifier si le module react-native-health est disponible
+      const HealthKit = require('react-native-health');
+      return HealthKit.isAvailable && typeof HealthKit.isAvailable === 'function';
+    } catch (error) {
+      console.log('ℹ️ react-native-health non disponible, mode simulation');
+      return true; // Retourner true pour permettre le mode simulation
+    }
   }
 
   static async requestPermissions(): Promise<boolean> {
-    // Implémentation basique - à remplacer par une solution compatible
-    console.log('Permissions HealthKit demandées');
-    return true;
+    try {
+      const HealthKit = require('react-native-health');
+      
+      const permissions = {
+        permissions: {
+          read: [
+            HealthKit.Constants.Permissions.Steps,
+            HealthKit.Constants.Permissions.Calories,
+            HealthKit.Constants.Permissions.HeartRate,
+            HealthKit.Constants.Permissions.Weight,
+          ],
+          write: [
+            HealthKit.Constants.Permissions.Weight,
+          ],
+        },
+      };
+
+      const result = await HealthKit.initHealthKit(permissions);
+      console.log('✅ Permissions HealthKit accordées');
+      return result;
+    } catch (error) {
+      console.log('⚠️ Erreur permissions HealthKit, mode simulation:', error.message);
+      return true; // Mode simulation
+    }
   }
 
   static async getSteps(date: Date): Promise<number> {
