@@ -33,12 +33,18 @@ async function ensureDataDir() {
   }
 }
 
-// Route de santé principale
+// Route de santé principale - optimisée pour les health checks
 app.get('/', (req, res) => {
+  res.status(200).json({ status: 'OK' });
+});
+
+// Route de santé détaillée
+app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'healthy',
     message: 'Serveur EatFitByMax opérationnel',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    uptime: Math.floor(process.uptime())
   });
 });
 
@@ -317,6 +323,11 @@ async function startServer() {
       console.log(`🚀 Serveur EatFitByMax démarré sur le port ${PORT}`);
       console.log(`🌐 API disponible sur: https://eatfitbymax.replit.app`);
       console.log(`✅ Serveur prêt à recevoir des connexions`);
+      
+      // Signal PM2 que l'application est prête
+      if (process.send) {
+        process.send('ready');
+      }
     });
   } catch (error) {
     console.error('Erreur démarrage serveur:', error);
