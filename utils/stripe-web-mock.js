@@ -1,75 +1,68 @@
 
-// Mock générique pour les modules non disponibles sur web
-console.warn('⚠️ Utilisation du mock générique pour modules natifs');
+<old_str>// Mock pour Stripe sur web
+export const StripeProvider = ({ children }) => children;
+export const CardField = () => null;
+export const CardForm = () => null;
+export const useStripe = () => ({ confirmPayment: async () => ({ error: null }) });
+export const useConfirmPayment = () => ({ confirmPayment: async () => ({ error: null }) });
+export const initStripe = async () => {};
 
-// Mock Stripe
-const StripeProvider = ({ children }) => {
-  console.warn('Stripe non disponible sur web, utilisation du mock');
-  return children;
-};
-
-const useStripe = () => {
-  console.warn('Stripe non disponible sur web');
-  return {
-    createPaymentMethod: () => Promise.resolve({ error: null }),
-    confirmPayment: () => Promise.resolve({ error: null }),
-  };
-};
-
-const useConfirmPayment = () => [
-  () => Promise.resolve({ error: null }),
-  { loading: false }
-];
-
-const usePaymentSheet = () => {
-  console.warn('Stripe non disponible sur web');
-  return {
-    initPaymentSheet: () => Promise.resolve({ error: null }),
-    presentPaymentSheet: () => Promise.resolve({ error: { message: 'Stripe non disponible sur web' } }),
-    loading: false,
-  };
-};
-
-// Mock MaskedView
-const MaskedView = ({ children }) => {
-  console.warn('MaskedView non disponible sur web');
-  return children;
-};
-
-// Mock HealthKit  
-const HealthKit = {
-  isAvailable: () => Promise.resolve(false),
-  requestPermissions: () => Promise.resolve({ granted: false }),
-  queryQuantitySamples: () => Promise.resolve([]),
-};
-
-// Export par défaut et nommés pour compatibilité maximale
-const defaultExport = {
+// Export par défaut
+export default {
   StripeProvider,
+  CardField,
+  CardForm,
   useStripe,
   useConfirmPayment,
-  usePaymentSheet,
-  MaskedView,
-  HealthKit,
+  initStripe,
+};</old_str>
+<new_str>// Mock complet pour Stripe sur web
+const React = require('react');
+
+const StripeProvider = ({ children }) => React.createElement('div', {}, children);
+const CardField = () => React.createElement('div', { style: { display: 'none' } });
+const CardForm = () => React.createElement('div', { style: { display: 'none' } });
+
+const useStripe = () => ({
+  confirmPayment: async () => ({ error: null }),
+  createPaymentMethod: async () => ({ error: null }),
+  initPaymentSheet: async () => ({ error: null }),
+  presentPaymentSheet: async () => ({ error: null }),
+});
+
+const useConfirmPayment = () => ({
+  confirmPayment: async () => ({ error: null })
+});
+
+const initStripe = async () => {
+  console.log('Stripe mock initialized for web');
+  return Promise.resolve();
 };
 
+// Exports CommonJS et ES6
 module.exports = {
-  // Exports Stripe
   StripeProvider,
+  CardField,
+  CardForm,
   useStripe,
   useConfirmPayment,
-  usePaymentSheet,
-  
-  // Exports MaskedView
-  MaskedView,
-  default: MaskedView,
-  
-  // Exports HealthKit
-  HealthKit,
-  
-  // Export par défaut
-  ...defaultExport,
+  initStripe,
+  default: {
+    StripeProvider,
+    CardField,
+    CardForm,
+    useStripe,
+    useConfirmPayment,
+    initStripe,
+  }
 };
 
-// Support pour les imports ES6
-module.exports.default = defaultExport;
+// Support ES6 exports
+if (typeof exports === 'object' && typeof module !== 'undefined') {
+  module.exports.StripeProvider = StripeProvider;
+  module.exports.CardField = CardField;
+  module.exports.CardForm = CardForm;
+  module.exports.useStripe = useStripe;
+  module.exports.useConfirmPayment = useConfirmPayment;
+  module.exports.initStripe = initStripe;
+}</new_str>
