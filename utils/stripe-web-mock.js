@@ -1,68 +1,76 @@
 
-<old_str>// Mock pour Stripe sur web
-export const StripeProvider = ({ children }) => children;
-export const CardField = () => null;
-export const CardForm = () => null;
-export const useStripe = () => ({ confirmPayment: async () => ({ error: null }) });
-export const useConfirmPayment = () => ({ confirmPayment: async () => ({ error: null }) });
-export const initStripe = async () => {};
-
-// Export par défaut
-export default {
-  StripeProvider,
-  CardField,
-  CardForm,
-  useStripe,
-  useConfirmPayment,
-  initStripe,
-};</old_str>
-<new_str>// Mock complet pour Stripe sur web
+// Mock complet pour Stripe sur web - Compatible Metro/Expo
 const React = require('react');
 
-const StripeProvider = ({ children }) => React.createElement('div', {}, children);
-const CardField = () => React.createElement('div', { style: { display: 'none' } });
-const CardForm = () => React.createElement('div', { style: { display: 'none' } });
+// Composants React mock
+const StripeProvider = ({ children }) => {
+  if (React && React.createElement) {
+    return React.createElement('div', {}, children);
+  }
+  return children;
+};
 
-const useStripe = () => ({
-  confirmPayment: async () => ({ error: null }),
-  createPaymentMethod: async () => ({ error: null }),
-  initPaymentSheet: async () => ({ error: null }),
-  presentPaymentSheet: async () => ({ error: null }),
-});
+const CardField = () => {
+  if (React && React.createElement) {
+    return React.createElement('div', { style: { display: 'none' } });
+  }
+  return null;
+};
 
-const useConfirmPayment = () => ({
-  confirmPayment: async () => ({ error: null })
-});
+const CardForm = () => {
+  if (React && React.createElement) {
+    return React.createElement('div', { style: { display: 'none' } });
+  }
+  return null;
+};
+
+// Hooks mock
+const useStripe = () => {
+  return {
+    confirmPayment: async () => {
+      return { error: null };
+    },
+    createPaymentMethod: async () => {
+      return { error: null };
+    },
+    initPaymentSheet: async () => {
+      return { error: null };
+    },
+    presentPaymentSheet: async () => {
+      return { error: null };
+    }
+  };
+};
+
+const useConfirmPayment = () => {
+  return {
+    confirmPayment: async () => {
+      return { error: null };
+    }
+  };
+};
 
 const initStripe = async () => {
   console.log('Stripe mock initialized for web');
   return Promise.resolve();
 };
 
-// Exports CommonJS et ES6
-module.exports = {
+// Export principal
+const StripeMock = {
   StripeProvider,
   CardField,
   CardForm,
   useStripe,
   useConfirmPayment,
-  initStripe,
-  default: {
-    StripeProvider,
-    CardField,
-    CardForm,
-    useStripe,
-    useConfirmPayment,
-    initStripe,
-  }
+  initStripe
 };
 
-// Support ES6 exports
-if (typeof exports === 'object' && typeof module !== 'undefined') {
-  module.exports.StripeProvider = StripeProvider;
-  module.exports.CardField = CardField;
-  module.exports.CardForm = CardForm;
-  module.exports.useStripe = useStripe;
-  module.exports.useConfirmPayment = useConfirmPayment;
-  module.exports.initStripe = initStripe;
-}</new_str>
+// Support CommonJS
+module.exports = StripeMock;
+module.exports.StripeProvider = StripeProvider;
+module.exports.CardField = CardField;
+module.exports.CardForm = CardForm;
+module.exports.useStripe = useStripe;
+module.exports.useConfirmPayment = useConfirmPayment;
+module.exports.initStripe = initStripe;
+module.exports.default = StripeMock;
