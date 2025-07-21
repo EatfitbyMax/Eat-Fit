@@ -15,19 +15,19 @@ export class IntegrationsManager {
   // Méthodes pour Apple Health
   static async connectAppleHealth(userId: string, permissions: string[]): Promise<boolean> {
     try {
-      // Vérifier la disponibilité d'Apple Health
-      const isAvailable = await import('expo-health-kit')
-        .then(healthKit => healthKit.isAvailable())
-        .catch(() => false);
+      // Vérifier la disponibilité d'Apple Health (via expo-health-connect)
+      try {
+        const { isAvailable } = await import('expo-health-connect');
+        const available = await isAvailable();
+        
+        if (!available) {
+          console.log('Apple Health non disponible');
+          return false;
+        }
 
-      if (!isAvailable) {
-        console.log('Apple Health non disponible');
-        return false;
-      }
-
-      // Demander les permissions
-      const { requestPermissions } = await import('expo-health-kit');
-      const granted = await requestPermissions(permissions);
+        // Demander les permissions
+        const { requestPermissions } = await import('expo-health-connect');
+        const granted = await requestPermissions(permissions);
 
       if (granted) {
         // Sauvegarder le statut de connexion sur le serveur uniquement
@@ -71,7 +71,7 @@ export class IntegrationsManager {
         throw new Error('Apple Health non connecté');
       }
 
-      const { getHealthData } = await import('expo-health-kit');
+      const { getHealthData } = await import('expo-health-connect');
       
       // Obtenir les données des 7 derniers jours
       const endDate = new Date();
