@@ -5,20 +5,12 @@ modules = ["nodejs-20"]
 channel = "stable-24_05"
 
 [[ports]]
-localPort = 80
-externalPort = 3001
-
-[[ports]]
 localPort = 5000
-externalPort = 5000
-
-[[ports]]
-localPort = 8081
 externalPort = 80
 
 [[ports]]
-localPort = 8082
-externalPort = 3000
+localPort = 8081
+externalPort = 8081
 
 [[workflows]]
 runButton = "Dev Full Stack"
@@ -124,10 +116,6 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd server && node server.js"
-
-[[ports]]
-internalPort = 5000
-externalPort = 80
 
 [deployment]
 run = ["sh", "-c", "cd server && node server.js"]
