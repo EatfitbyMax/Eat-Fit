@@ -4,9 +4,12 @@ import * as ErrorRecovery from 'expo-error-recovery';
 
 // Protection contre les boucles de redémarrage
 let restartCount = 0;
-const MAX_RESTARTS = 3;
-const RESTART_WINDOW = 30000; // 30 secondes
+const MAX_RESTARTS = 2; // Réduire à 2 tentatives
+const RESTART_WINDOW = 60000; // Augmenter à 60 secondes
 let lastRestartTime = 0;
+let errorCount = 0;
+const ERROR_THRESHOLD = 5; // Seuil d'erreurs par minute
+let lastErrorReset = Date.now();
 
 // Gestionnaire d'erreurs JavaScript non gérées
 export const setupGlobalErrorHandlers = () => {
@@ -14,14 +17,29 @@ export const setupGlobalErrorHandlers = () => {
   const originalHandler = global.ErrorUtils?.getGlobalHandler?.();
   
   global.ErrorUtils?.setGlobalHandler?.((error, isFatal) => {
+    const now = Date.now();
+    
+    // Compteur d'erreurs pour détecter les boucles
+    if (now - lastErrorReset > 60000) {
+      errorCount = 0;
+      lastErrorReset = now;
+    }
+    
+    errorCount++;
+    
+    if (errorCount > ERROR_THRESHOLD) {
+      console.error('🚫 TROP D\'ERREURS - Arrêt des gestionnaires pour éviter les boucles');
+      return;
+    }
+
     console.error('🚨 ERREUR GLOBALE JS:', {
       error: error?.message || error,
       isFatal,
-      stack: error?.stack?.substring(0, 500)
+      count: errorCount,
+      stack: error?.stack?.substring(0, 300)
     });
 
     // Protection contre les boucles de redémarrage
-    const now = Date.now();
     if (now - lastRestartTime > RESTART_WINDOW) {
       restartCount = 0;
     }
@@ -36,8 +54,8 @@ export const setupGlobalErrorHandlers = () => {
       originalHandler(error, isFatal);
     }
 
-    // Tentative de récupération pour les erreurs non fatales
-    if (!isFatal && ErrorRecovery && restartCount < MAX_RESTARTS) {
+    // Tentative de récupération pour les erreurs non fatales seulement
+    if (!isFatal && ErrorRecovery && restartCount < MAX_RESTARTS && errorCount < 3) {
       restartCount++;
       lastRestartTime = now;
       
@@ -48,7 +66,7 @@ export const setupGlobalErrorHandlers = () => {
         } catch (recoveryError) {
           console.error('❌ Échec récupération JS:', recoveryError);
         }
-      }, 1000); // Délai plus long pour éviter les boucles rapides
+      }, 2000); // Délai plus long pour éviter les boucles rapides
     }
   });
 

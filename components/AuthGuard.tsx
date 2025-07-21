@@ -1,50 +1,77 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter, useSegments } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
-import SplashScreenComponent from './SplashScreen';
+import { View, ActivityIndicator } from 'react-native';
 
-export function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth();
+export default function AuthGuard({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
   const router = useRouter();
   const segments = useSegments();
-  const [hasRedirected, setHasRedirected] = useState(false);
-
-  console.log('🛡️ AuthGuard - Route:', segments.join('/'), '| Utilisateur:', user ? 'Connecté' : 'Non connecté');
+  const [isNavigating, setIsNavigating] = useState(false);
+  const lastNavigationRef = useRef<string>('');
+  const navigationTimeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
-    if (isLoading || hasRedirected) return;
+    if (loading || isNavigating) return;
 
-    const inAuthGroup = segments[0] === 'auth';
-    const inClientGroup = segments[0] === '(client)';
-    const inCoachGroup = segments[0] === '(coach)';
-    const inTabsGroup = segments[0] === '(tabs)';
-    const currentPath = segments.join('/');
+    const currentRoute = segments.join('/') || 'index';
 
-    if (!user) {
-      // Utilisateur non connecté
-      if (!inAuthGroup && currentPath !== 'auth/login') {
-        console.log('🔄 Redirection vers login');
-        setHasRedirected(true);
-        router.replace('/auth/login');
-      }
-    } else {
-      // Utilisateur connecté
-      if (inAuthGroup) {
-        console.log('🔄 Redirection vers app principal');
-        setHasRedirected(true);
-        const targetRoute = user.userType === 'coach' ? '/(coach)/profil' : '/(client)';
-        router.replace(targetRoute);
-      }
+    // Éviter les navigations répétées vers la même route
+    if (lastNavigationRef.current === currentRoute) {
+      return;
     }
-  }, [user, isLoading, segments, hasRedirected]);
 
-  // Reset hasRedirected when user changes
+    console.log('🛡️ AuthGuard - Route:', currentRoute, '| Utilisateur:', user ? 'Connecté' : 'Non connecté');
+
+    // Routes d'authentification
+    const authRoutes = ['auth/login', 'auth/register', 'auth/forgot-password', 'auth/change-password', 'auth/register-profile', 'auth/register-goals', 'auth/register-activity', 'auth/register-sport'];
+    const isAuthRoute = authRoutes.some(route => currentRoute.includes(route));
+
+    const navigate = (route: string, reason: string) => {
+      if (lastNavigationRef.current === route) return;
+
+      console.log('🔄 Redirection vers', route, '-', reason);
+      setIsNavigating(true);
+      lastNavigationRef.current = route;
+
+      // Clear any existing timeout
+      if (navigationTimeoutRef.current) {
+        clearTimeout(navigationTimeoutRef.current);
+      }
+
+      router.replace(route as any);
+
+      navigationTimeoutRef.current = setTimeout(() => {
+        setIsNavigating(false);
+        lastNavigationRef.current = '';
+      }, 2000);
+    };
+
+    if (!user && !isAuthRoute) {
+      navigate('/auth/login', 'Aucun utilisateur connecté');
+    } else if (user && isAuthRoute) {
+      navigate('/(client)', 'Utilisateur connecté');
+    } else {
+      // Reset navigation state si on est sur la bonne route
+      lastNavigationRef.current = '';
+    }
+  }, [user, loading, segments.join('/')]);
+
+  // Cleanup timeout on unmount
   useEffect(() => {
-    setHasRedirected(false);
-  }, [user?.id]);
+    return () => {
+      if (navigationTimeoutRef.current) {
+        clearTimeout(navigationTimeoutRef.current);
+      }
+    };
+  }, []);
 
-  if (isLoading) {
-    return <SplashScreenComponent />;
+  if (loading || isNavigating) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0D1117' }}>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </View>
+    );
   }
 
   return <>{children}</>;
