@@ -2,115 +2,107 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs').promises;
 const path = require('path');
-// Stripe sera chargé seulement si la clé est définie
-const stripe = process.env.STRIPE_SECRET_KEY ? require('stripe')(process.env.STRIPE_SECRET_KEY) : null;
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const DATA_DIR = path.join(__dirname, 'data');
 
-// Middleware de sécurité et logging
-const requestLogger = (req, res, next) => {
-  const start = Date.now();
-  const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - IP: ${clientIP}`);
-  
-  res.on('finish', () => {
-    const duration = Date.now() - start;
-    console.log(`${req.method} ${req.path} - ${res.statusCode} (${duration}ms) - IP: ${clientIP}`);
-  });
-  
-  next();
-};
-
-// Rate limiting simple
-const requestCounts = new Map();
-const rateLimit = (req, res, next) => {
-  const ip = req.ip || req.connection.remoteAddress;
-  const now = Date.now();
-  const windowMs = 60000; // 1 minute
-  const maxRequests = 100;
-
-  if (!requestCounts.has(ip)) {
-    requestCounts.set(ip, { count: 1, resetTime: now + windowMs });
-  } else {
-    const data = requestCounts.get(ip);
-    if (now > data.resetTime) {
-      data.count = 1;
-      data.resetTime = now + windowMs;
-    } else {
-      data.count++;
-      if (data.count > maxRequests) {
-        return res.status(429).json({ error: 'Trop de requêtes' });
-      }
-    }
-  }
-  
-  next();
-};
-
-// Route racine - doit être en premier pour les health checks
-app.get('/', (req, res) => {
-  res.status(200).json({ 
-    status: 'healthy'
-  });
-});
-
-app.use(requestLogger);
-app.use(rateLimit);
+// Middleware de base
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? [
-        'https://eatfitbymax.replit.app',
-        /^https:\/\/.*\.replit\.dev$/,
-        /^https:\/\/.*\.replit\.app$/,
-        'capacitor://localhost',
-        'ionic://localhost',
-        'http://localhost'
-      ]
-    : true, // Permettre toutes les origines en développement
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
-  optionsSuccessStatus: 200
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
 }));
+
 app.use(express.json({ limit: '50mb' }));
 
-// Middleware de gestion d'erreurs globales
-app.use((err, req, res, next) => {
-  console.error('Erreur serveur:', err.stack);
-  res.status(500).json({ error: 'Erreur interne du serveur' });
+// Logging simple
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
 });
 
 // Créer le dossier data s'il n'existe pas
-function initDataDir() {
-  const fs = require('fs');
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-    console.log('📁 Répertoire data créé');
+async function ensureDataDir() {
+  try {
+    await fs.mkdir(DATA_DIR, { recursive: true });
+    console.log('📁 Répertoire data vérifié');
+  } catch (error) {
+    console.error('Erreur création répertoire data:', error);
+  }
+}
+
+// Route de santé principale
+app.get('/', (req, res) => {
+  res.status(200).json({ 
+    status: 'healthy',
+    message: 'Serveur EatFitByMax opérationnel',
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'OK', 
+    message: 'Serveur EatFitByMax fonctionnel',
+    timestamp: new Date().toISOString(),
+    uptime: Math.floor(process.uptime())
+  });
+});
+
+app.get('/api/health-check', (req, res) => {
+  res.status(200).json({ 
+    status: 'OK', 
+    message: 'Serveur Replit opérationnel',
+    timestamp: new Date().toISOString(),
+    port: PORT
+  });
+});
+
+// Fonction utilitaire pour lire les fichiers JSON
+async function readJsonFile(filename, defaultValue = {}) {
+  try {
+    const filePath = path.join(DATA_DIR, filename);
+    const data = await fs.readFile(filePath, 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      return defaultValue;
+    }
+    throw error;
+  }
+}
+
+// Fonction utilitaire pour écrire les fichiers JSON
+async function writeJsonFile(filename, data) {
+  try {
+    const filePath = path.join(DATA_DIR, filename);
+    await fs.writeFile(filePath, JSON.stringify(data, null, 2));
+    return true;
+  } catch (error) {
+    console.error(`Erreur écriture ${filename}:`, error);
+    throw error;
   }
 }
 
 // Routes pour les utilisateurs
 app.get('/api/users', async (req, res) => {
   try {
-    const data = await fs.readFile(path.join(DATA_DIR, 'users.json'), 'utf8');
-    res.json(JSON.parse(data));
+    const users = await readJsonFile('users.json', []);
+    res.json(users);
   } catch (error) {
-    if (error.code === 'ENOENT') {
-      res.json([]);
-    } else {
-      res.status(500).json({ error: 'Erreur serveur' });
-    }
+    console.error('Erreur lecture utilisateurs:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
 app.post('/api/users', async (req, res) => {
   try {
-    const users = req.body;
-    await fs.writeFile(path.join(DATA_DIR, 'users.json'), JSON.stringify(users, null, 2));
+    await writeJsonFile('users.json', req.body);
     res.json({ success: true });
   } catch (error) {
+    console.error('Erreur sauvegarde utilisateurs:', error);
     res.status(500).json({ error: 'Erreur sauvegarde utilisateurs' });
   }
 });
@@ -118,127 +110,112 @@ app.post('/api/users', async (req, res) => {
 // Routes pour les programmes
 app.get('/api/programmes', async (req, res) => {
   try {
-    const data = await fs.readFile(path.join(DATA_DIR, 'programmes.json'), 'utf8');
-    res.json(JSON.parse(data));
+    const programmes = await readJsonFile('programmes.json', []);
+    res.json(programmes);
   } catch (error) {
-    if (error.code === 'ENOENT') {
-      res.json([]);
-    } else {
-      res.status(500).json({ error: 'Erreur serveur' });
-    }
+    console.error('Erreur lecture programmes:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
 app.post('/api/programmes', async (req, res) => {
   try {
-    const programmes = req.body;
-    await fs.writeFile(path.join(DATA_DIR, 'programmes.json'), JSON.stringify(programmes, null, 2));
+    await writeJsonFile('programmes.json', req.body);
     res.json({ success: true });
   } catch (error) {
+    console.error('Erreur sauvegarde programmes:', error);
     res.status(500).json({ error: 'Erreur sauvegarde programmes' });
   }
 });
 
-// Routes pour les messages
+// Routes pour les messages par utilisateur
 app.get('/api/messages/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const data = await fs.readFile(path.join(DATA_DIR, `messages_${userId}.json`), 'utf8');
-    res.json(JSON.parse(data));
+    const messages = await readJsonFile(`messages_${userId}.json`, []);
+    res.json(messages);
   } catch (error) {
-    if (error.code === 'ENOENT') {
-      res.json([]);
-    } else {
-      res.status(500).json({ error: 'Erreur serveur' });
-    }
+    console.error(`Erreur lecture messages utilisateur ${req.params.userId}:`, error);
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
 app.post('/api/messages/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const messages = req.body;
-    await fs.writeFile(path.join(DATA_DIR, `messages_${userId}.json`), JSON.stringify(messages, null, 2));
+    await writeJsonFile(`messages_${userId}.json`, req.body);
     res.json({ success: true });
   } catch (error) {
+    console.error(`Erreur sauvegarde messages utilisateur ${userId}:`, error);
     res.status(500).json({ error: 'Erreur sauvegarde messages' });
   }
 });
 
-// Routes pour Apple Health
+// Routes pour les données de santé Apple Health
 app.get('/api/health/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const data = await fs.readFile(path.join(DATA_DIR, `health_${userId}.json`), 'utf8');
-    res.json(JSON.parse(data));
+    const healthData = await readJsonFile(`health_${userId}.json`, []);
+    res.json(healthData);
   } catch (error) {
-    if (error.code === 'ENOENT') {
-      res.json([]);
-    } else {
-      res.status(500).json({ error: 'Erreur serveur' });
-    }
+    console.error(`Erreur lecture données santé utilisateur ${req.params.userId}:`, error);
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
 app.post('/api/health/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const healthData = req.body;
-    await fs.writeFile(path.join(DATA_DIR, `health_${userId}.json`), JSON.stringify(healthData, null, 2));
+    await writeJsonFile(`health_${userId}.json`, req.body);
     res.json({ success: true });
   } catch (error) {
+    console.error(`Erreur sauvegarde données santé utilisateur ${userId}:`, error);
     res.status(500).json({ error: 'Erreur sauvegarde données Apple Health' });
   }
 });
 
-// Routes pour les entraînements (workouts)
+// Routes pour les entraînements
 app.get('/api/workouts/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const data = await fs.readFile(path.join(DATA_DIR, `workouts_${userId}.json`), 'utf8');
-    res.json(JSON.parse(data));
+    const workouts = await readJsonFile(`workouts_${userId}.json`, []);
+    res.json(workouts);
   } catch (error) {
-    if (error.code === 'ENOENT') {
-      res.json([]);
-    } else {
-      res.status(500).json({ error: 'Erreur serveur' });
-    }
+    console.error(`Erreur lecture entraînements utilisateur ${req.params.userId}:`, error);
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
 app.post('/api/workouts/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const workouts = req.body;
-    await fs.writeFile(path.join(DATA_DIR, `workouts_${userId}.json`), JSON.stringify(workouts, null, 2));
+    await writeJsonFile(`workouts_${userId}.json`, req.body);
     res.json({ success: true });
   } catch (error) {
+    console.error(`Erreur sauvegarde entraînements utilisateur ${userId}:`, error);
     res.status(500).json({ error: 'Erreur sauvegarde entraînements' });
   }
 });
 
-// Routes pour Strava
+// Routes pour les données Strava
 app.get('/api/strava/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const data = await fs.readFile(path.join(DATA_DIR, `strava_${userId}.json`), 'utf8');
-    res.json(JSON.parse(data));
+    const stravaData = await readJsonFile(`strava_${userId}.json`, []);
+    res.json(stravaData);
   } catch (error) {
-    if (error.code === 'ENOENT') {
-      res.json([]);
-    } else {
-      res.status(500).json({ error: 'Erreur serveur' });
-    }
+    console.error(`Erreur lecture données Strava utilisateur ${req.params.userId}:`, error);
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
 app.post('/api/strava/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const stravaData = req.body;
-    await fs.writeFile(path.join(DATA_DIR, `strava_${userId}.json`), JSON.stringify(stravaData, null, 2));
+    await writeJsonFile(`strava_${userId}.json`, req.body);
     res.json({ success: true });
   } catch (error) {
+    console.error(`Erreur sauvegarde données Strava utilisateur ${userId}:`, error);
     res.status(500).json({ error: 'Erreur sauvegarde données Strava' });
   }
 });
@@ -247,51 +224,22 @@ app.post('/api/strava/:userId', async (req, res) => {
 app.get('/api/nutrition/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const data = await fs.readFile(path.join(DATA_DIR, `nutrition_${userId}.json`), 'utf8');
-    res.json(JSON.parse(data));
+    const nutritionData = await readJsonFile(`nutrition_${userId}.json`, []);
+    res.json(nutritionData);
   } catch (error) {
-    if (error.code === 'ENOENT') {
-      res.json([]);
-    } else {
-      res.status(500).json({ error: 'Erreur serveur' });
-    }
+    console.error(`Erreur lecture nutrition utilisateur ${req.params.userId}:`, error);
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
 app.post('/api/nutrition/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const nutritionData = req.body;
-    await fs.writeFile(path.join(DATA_DIR, `nutrition_${userId}.json`), JSON.stringify(nutritionData, null, 2));
+    await writeJsonFile(`nutrition_${userId}.json`, req.body);
     res.json({ success: true });
   } catch (error) {
+    console.error(`Erreur sauvegarde nutrition utilisateur ${userId}:`, error);
     res.status(500).json({ error: 'Erreur sauvegarde données nutrition' });
-  }
-});
-
-// Routes pour les données de forme
-app.get('/api/forme/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const data = await fs.readFile(path.join(DATA_DIR, `forme_${userId}.json`), 'utf8');
-    res.json(JSON.parse(data));
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      res.json({});
-    } else {
-      res.status(500).json({ error: 'Erreur serveur' });
-    }
-  }
-});
-
-app.post('/api/forme/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const formeData = req.body;
-    await fs.writeFile(path.join(DATA_DIR, `forme_${userId}.json`), JSON.stringify(formeData, null, 2));
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: 'Erreur sauvegarde données forme' });
   }
 });
 
@@ -299,479 +247,81 @@ app.post('/api/forme/:userId', async (req, res) => {
 app.get('/api/weight/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const data = await fs.readFile(path.join(DATA_DIR, `weight_${userId}.json`), 'utf8');
-    res.json(JSON.parse(data));
+    const defaultWeight = {
+      startWeight: 0,
+      currentWeight: 0,
+      targetWeight: 0,
+      lastWeightUpdate: null,
+      targetAsked: false,
+      weightHistory: []
+    };
+    const weightData = await readJsonFile(`weight_${userId}.json`, defaultWeight);
+    res.json(weightData);
   } catch (error) {
-    if (error.code === 'ENOENT') {
-      res.json({
-        startWeight: 0,
-        currentWeight: 0,
-        targetWeight: 0,
-        lastWeightUpdate: null,
-        targetAsked: false,
-        weightHistory: [],
-      });
-    } else {
-      res.status(500).json({ error: 'Erreur serveur' });
-    }
+    console.error(`Erreur lecture poids utilisateur ${req.params.userId}:`, error);
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
 app.post('/api/weight/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const weightData = req.body;
-    await fs.writeFile(path.join(DATA_DIR, `weight_${userId}.json`), JSON.stringify(weightData, null, 2));
+    await writeJsonFile(`weight_${userId}.json`, req.body);
     res.json({ success: true });
   } catch (error) {
+    console.error(`Erreur sauvegarde poids utilisateur ${userId}:`, error);
     res.status(500).json({ error: 'Erreur sauvegarde données poids' });
   }
-});
-
-// Routes pour les mensurations
-app.get('/api/mensurations/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const data = await fs.readFile(path.join(DATA_DIR, `mensurations_${userId}.json`), 'utf8');
-    res.json(JSON.parse(data));
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      res.json({
-        biceps: { start: 0, current: 0 },
-        bicepsGauche: { start: 0, current: 0 },
-        bicepsDroit: { start: 0, current: 0 },
-        cuisses: { start: 0, current: 0 },
-        cuissesGauche: { start: 0, current: 0 },
-        cuissesDroit: { start: 0, current: 0 },
-        pectoraux: { start: 0, current: 0 },
-        taille: { start: 0, current: 0 },
-        avantBras: { start: 0, current: 0 },
-        avantBrasGauche: { start: 0, current: 0 },
-        avantBrasDroit: { start: 0, current: 0 },
-        mollets: { start: 0, current: 0 },
-        molletsGauche: { start: 0, current: 0 },
-        molletsDroit: { start: 0, current: 0 },
-      });
-    } else {
-      res.status(500).json({ error: 'Erreur serveur' });
-    }
-  }
-});
-
-app.post('/api/mensurations/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const mensurationData = req.body;
-    await fs.writeFile(path.join(DATA_DIR, `mensurations_${userId}.json`), JSON.stringify(mensurationData, null, 2));
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: 'Erreur sauvegarde données mensurations' });
-  }
-});
-
-// Routes pour les données de forme par date
-app.get('/api/forme/:userId/:date', async (req, res) => {
-  try {
-    const { userId, date } = req.params;
-    const data = await fs.readFile(path.join(DATA_DIR, `forme_data_${userId}_${date}.json`), 'utf8');
-    res.json(JSON.parse(data));
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      res.json({
-        sleep: { hours: 0, quality: 'Moyen', bedTime: '', wakeTime: '' },
-        stress: { level: 5, factors: [], notes: '' },
-        heartRate: { resting: 0, variability: 0 },
-        rpe: { value: 5, notes: '' },
-        date: date
-      });
-    } else {
-      res.status(500).json({ error: 'Erreur serveur' });
-    }
-  }
-});
-
-app.post('/api/forme/:userId/:date', async (req, res) => {
-  try {
-    const { userId, date } = req.params;
-    const formeData = req.body;
-    await fs.writeFile(path.join(DATA_DIR, `forme_data_${userId}_${date}.json`), JSON.stringify(formeData, null, 2));
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: 'Erreur sauvegarde données forme' });
-  }
-});
-
-// Routes pour les statuts d'intégrations
-app.get('/api/integrations/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const data = await fs.readFile(path.join(DATA_DIR, `integrations_${userId}.json`), 'utf8');
-    res.json(JSON.parse(data));
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      res.json({
-        appleHealth: { connected: false, permissions: [] },
-        strava: { connected: false }
-      });
-    } else {
-      res.status(500).json({ error: 'Erreur serveur' });
-    }
-  }
-});
-
-app.post('/api/integrations/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const integrationData = req.body;
-    await fs.writeFile(path.join(DATA_DIR, `integrations_${userId}.json`), JSON.stringify(integrationData, null, 2));
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: 'Erreur sauvegarde statuts intégrations' });
-  }
-});
-
-// Routes Stripe pour les paiements
-app.post('/api/stripe/create-payment-intent', async (req, res) => {
-  try {
-    if (!stripe) {
-      return res.status(503).json({ error: 'Service de paiement non configuré' });
-    }
-
-    const { planId, userId, amount, currency } = req.body;
-
-    if (!planId || !userId || !amount) {
-      return res.status(400).json({ error: 'Paramètres manquants' });
-    }
-
-    // Créer ou récupérer le client Stripe
-    let customer;
-    try {
-      const customers = await stripe.customers.list({
-        email: `user-${userId}@eatfitbymax.com`,
-        limit: 1
-      });
-
-      if (customers.data.length > 0) {
-        customer = customers.data[0];
-      } else {
-        customer = await stripe.customers.create({
-          email: `user-${userId}@eatfitbymax.com`,
-          metadata: {
-            userId: userId,
-            planId: planId
-          }
-        });
-      }
-    } catch (error) {
-      console.error('Erreur création client:', error);
-      return res.status(500).json({ error: 'Erreur création client' });
-    }
-
-    // Validation du montant
-    if (amount <= 0 || amount > 999999) {
-      return res.status(400).json({ error: 'Montant invalide' });
-    }
-
-    // Créer le PaymentIntent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Stripe utilise les centimes
-      currency: currency || 'eur',
-      customer: customer.id,
-      automatic_payment_methods: {
-        enabled: true,
-      },
-      metadata: {
-        userId: userId,
-        planId: planId,
-        planName: req.body.planName || `Plan ${planId}`
-      }
-    });
-
-    // Créer une clé éphémère pour le client
-    const ephemeralKey = await stripe.ephemeralKeys.create(
-      { customer: customer.id },
-      { apiVersion: '2024-06-20' }
-    );
-
-    res.json({
-      clientSecret: paymentIntent.client_secret,
-      ephemeralKey: ephemeralKey.secret,
-      customer: customer.id,
-      paymentIntentId: paymentIntent.id
-    });
-
-  } catch (error) {
-    console.error('Erreur création PaymentIntent:', error);
-    res.status(500).json({ error: 'Erreur serveur lors de la création du paiement' });
-  }
-});
-
-// Route pour confirmer le paiement et activer l'abonnement
-app.post('/api/stripe/confirm-payment', async (req, res) => {
-  try {
-    const { paymentIntentId, userId } = req.body;
-
-    if (!paymentIntentId || !userId) {
-      return res.status(400).json({ error: 'Paramètres manquants' });
-    }
-
-    // Récupérer le PaymentIntent pour vérifier son statut
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-
-    if (paymentIntent.status === 'succeeded') {
-      // Activer l'abonnement côté serveur
-      const subscription = {
-        userId: userId,
-        planId: paymentIntent.metadata.planId,
-        planName: paymentIntent.metadata.planName,
-        price: paymentIntent.amount / 100,
-        currency: paymentIntent.currency.toUpperCase(),
-        status: 'active',
-        startDate: new Date().toISOString(),
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 jours
-        stripePaymentIntentId: paymentIntentId,
-        stripeCustomerId: paymentIntent.customer
-      };
-
-      // Sauvegarder l'abonnement
-      await fs.writeFile(
-        path.join(DATA_DIR, `subscription_${userId}.json`), 
-        JSON.stringify(subscription, null, 2)
-      );
-
-      res.json({ success: true, subscription });
-    } else {
-      res.status(400).json({ error: 'Paiement non confirmé' });
-    }
-
-  } catch (error) {
-    console.error('Erreur confirmation paiement:', error);
-    res.status(500).json({ error: 'Erreur serveur lors de la confirmation' });
-  }
-});
-
-// Route pour récupérer le statut d'abonnement
-app.get('/api/stripe/subscription/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-
-    const subscriptionData = await fs.readFile(
-      path.join(DATA_DIR, `subscription_${userId}.json`), 
-      'utf8'
-    );
-
-    const subscription = JSON.parse(subscriptionData);
-
-    // Vérifier si l'abonnement est encore valide
-    if (subscription.endDate && new Date(subscription.endDate) < new Date()) {
-      subscription.status = 'expired';
-      await fs.writeFile(
-        path.join(DATA_DIR, `subscription_${userId}.json`), 
-        JSON.stringify(subscription, null, 2)
-      );
-    }
-
-    res.json(subscription);
-
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      // Aucun abonnement trouvé, retourner gratuit
-      res.json({
-        planId: 'free',
-        planName: 'Version Gratuite',
-        price: 0,
-        currency: 'EUR',
-        status: 'active',
-        paymentMethod: 'none'
-      });
-    } else {
-      console.error('Erreur récupération abonnement:', error);
-      res.status(500).json({ error: 'Erreur serveur' });
-    }
-  }
-});
-
-// Webhook Stripe pour les événements de paiement
-app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (req, res) => {
-  const sig = req.headers['stripe-signature'];
-  let event;
-
-  try {
-    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-  } catch (err) {
-    console.error('Erreur vérification webhook:', err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-
-  // Gérer les événements Stripe
-  switch (event.type) {
-    case 'payment_intent.succeeded':
-      const paymentIntent = event.data.object;
-      console.log('✅ Paiement réussi:', paymentIntent.id);
-
-      // Ici vous pouvez ajouter une logique supplémentaire
-      // comme l'envoi d'emails de confirmation, etc.
-      break;
-
-    case 'payment_intent.payment_failed':
-      const failedPayment = event.data.object;
-      console.log('❌ Paiement échoué:', failedPayment.id);
-      break;
-
-    default:
-      console.log(`Événement non géré: ${event.type}`);
-  }
-
-  res.json({received: true});
 });
 
 // Routes pour les profils utilisateur
 app.get('/api/user-profile/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const data = await fs.readFile(path.join(DATA_DIR, `user_profile_${userId}.json`), 'utf8');
-    res.json(JSON.parse(data));
+    const profileData = await readJsonFile(`user_profile_${userId}.json`, null);
+    res.json(profileData);
   } catch (error) {
-    if (error.code === 'ENOENT') {
-      res.json(null);
-    } else {
-      res.status(500).json({ error: 'Erreur serveur' });
-    }
+    console.error(`Erreur lecture profil utilisateur ${req.params.userId}:`, error);
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
 app.post('/api/user-profile/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const profileData = req.body;
-    await fs.writeFile(path.join(DATA_DIR, `user_profile_${userId}.json`), JSON.stringify(profileData, null, 2));
+    await writeJsonFile(`user_profile_${userId}.json`, req.body);
     res.json({ success: true });
   } catch (error) {
+    console.error(`Erreur sauvegarde profil utilisateur ${userId}:`, error);
     res.status(500).json({ error: 'Erreur sauvegarde profil utilisateur' });
   }
 });
 
-// Routes pour les paramètres de notifications
-app.get('/api/notifications/:userId', async (req, res) => {
+// Gestion des erreurs globales
+app.use((err, req, res, next) => {
+  console.error('Erreur serveur:', err);
+  res.status(500).json({ error: 'Erreur interne du serveur' });
+});
+
+// Route 404
+app.use('*', (req, res) => {
+  res.status(404).json({ error: 'Route non trouvée' });
+});
+
+// Démarrage du serveur
+async function startServer() {
   try {
-    const { userId } = req.params;
-    const data = await fs.readFile(path.join(DATA_DIR, `notifications_${userId}.json`), 'utf8');
-    res.json(JSON.parse(data));
+    await ensureDataDir();
+
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀 Serveur EatFitByMax démarré sur le port ${PORT}`);
+      console.log(`🌐 API disponible sur: https://eatfitbymax.replit.app`);
+      console.log(`✅ Serveur prêt à recevoir des connexions`);
+    });
   } catch (error) {
-    if (error.code === 'ENOENT') {
-      res.json({
-        workoutReminder: true,
-        nutritionReminder: true,
-        progressUpdate: true,
-        reminderTime: '09:00',
-        weeklyReport: true,
-        coachMessages: true
-      });
-    } else {
-      res.status(500).json({ error: 'Erreur serveur' });
-    }
+    console.error('Erreur démarrage serveur:', error);
+    process.exit(1);
   }
-});
+}
 
-app.post('/api/notifications/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const notificationSettings = req.body;
-    await fs.writeFile(path.join(DATA_DIR, `notifications_${userId}.json`), JSON.stringify(notificationSettings, null, 2));
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: 'Erreur sauvegarde paramètres notifications' });
-  }
-});
-
-// Routes pour les préférences d'application
-app.get('/api/app-preferences/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const data = await fs.readFile(path.join(DATA_DIR, `app_preferences_${userId}.json`), 'utf8');
-    res.json(JSON.parse(data));
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      res.json({
-        theme: 'dark',
-        language: 'fr',
-        units: 'metric',
-        notifications: true
-      });
-    } else {
-      res.status(500).json({ error: 'Erreur serveur' });
-    }
-  }
-});
-
-app.post('/api/app-preferences/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const preferences = req.body;
-    await fs.writeFile(path.join(DATA_DIR, `app_preferences_${userId}.json`), JSON.stringify(preferences, null, 2));
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: 'Erreur sauvegarde préférences app' });
-  }
-});
-
-// Route de santé
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'OK', 
-    message: 'Serveur EatFitByMax fonctionnel',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime()
-  });
-});
-
-// Route de test de connexion (utilisée par l'app)
-app.get('/api/health-check', (req, res) => {
-  res.status(200).json({ 
-    status: 'OK', 
-    message: 'Serveur Replit opérationnel',
-    timestamp: new Date().toISOString(),
-    port: PORT,
-    host: '0.0.0.0'
-  });
-});
-
-// Route de diagnostic détaillé
-app.get('/api/diagnostic', (req, res) => {
-  res.status(200).json({
-    server: 'EatFitByMax API',
-    status: 'running',
-    environment: process.env.NODE_ENV || 'development',
-    port: PORT,
-    host: '0.0.0.0',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    memory: process.memoryUsage(),
-    platform: process.platform,
-    nodeVersion: process.version
-  });
-});
-
-// Route de statut détaillé
-app.get('/api/status', (req, res) => {
-  res.status(200).json({
-    server: 'EatFitByMax API',
-    version: '1.0.0',
-    environment: process.env.NODE_ENV || 'development',
-    port: PORT,
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Initialiser le répertoire de données au démarrage
-initDataDir();
-
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Serveur EatFitByMax Replit démarré sur le port ${PORT}`);
-  console.log(`🔧 Mode: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🌐 API disponible sur: https://eatfitbymax.replit.app`);
-  console.log(`📡 Serveur accessible sur toutes les interfaces (0.0.0.0:${PORT})`);
-  
-  // Test de santé au démarrage
-  console.log('✅ Serveur prêt à recevoir des connexions');
-});
+startServer();
