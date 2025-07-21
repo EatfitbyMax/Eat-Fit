@@ -1,67 +1,83 @@
-import React from 'react';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as ErrorRecovery from 'expo-error-recovery';
 
-interface ErrorBoundaryState {
+interface Props {
+  children: ReactNode;
+}
+
+interface State {
   hasError: boolean;
   error?: Error;
+  errorInfo?: ErrorInfo;
+  recoveryAttempts: number;
 }
 
-interface ErrorBoundaryProps {
-  children: React.ReactNode;
-  fallback?: React.ComponentType<{ error?: Error; resetError: () => void }>;
-}
+export class ErrorBoundary extends Component<Props, State> {
+  private readonly maxRecoveryAttempts = 2;
+  private lastErrorTime = 0;
+  private readonly errorCooldown = 5000; // 5 secondes
 
-export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
+  constructor(props: Props) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { 
+      hasError: false,
+      recoveryAttempts: 0
+    };
   }
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    console.log('🛡️ ErrorBoundary a capturé une erreur:', error.message);
-
-    // Log des erreurs natives spécifiques
-    if (error.message?.includes('Native module') || 
-        error.message?.includes('RCT') ||
-        error.message?.includes('NSException') ||
-        error.message?.includes('abort()')) {
-      console.error('🚨 ERREUR NATIVE DÉTECTÉE:', {
-        message: error.message,
-        stack: error.stack?.substring(0, 500),
-        name: error.name
-      });
-    }
-
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('🚨 ERREUR CAPTURÉE PAR ERROR BOUNDARY:', {
-      error: error.message,
-      stack: error.stack?.substring(0, 500),
-      componentStack: errorInfo.componentStack?.substring(0, 500)
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    const now = Date.now();
+
+    // Vérifier si on est dans une boucle d'erreurs
+    if (now - this.lastErrorTime < this.errorCooldown) {
+      console.log('🚫 Erreurs trop fréquentes - arrêt des tentatives de récupération');
+      this.setState({
+        error,
+        errorInfo,
+        recoveryAttempts: this.maxRecoveryAttempts
+      });
+      return;
+    }
+
+    this.lastErrorTime = now;
+    console.log('🛡️ ErrorBoundary a capturé une erreur:', error.message);
+
+    this.setState({
+      error,
+      errorInfo
     });
 
-    // Tentative de récupération automatique après 3 secondes
-    setTimeout(() => {
+    // Tentative de récupération automatique limitée
+    if (this.state.recoveryAttempts < this.maxRecoveryAttempts) {
       console.log('🔄 Tentative de récupération automatique...');
-      this.setState({ hasError: false, error: null });
-    }, 3000);
+
+      this.setState(prevState => ({
+        recoveryAttempts: prevState.recoveryAttempts + 1
+      }));
+
+      setTimeout(() => {
+        if (this.state.hasError) {
+          this.setState({ 
+            hasError: false, 
+            error: undefined, 
+            errorInfo: undefined 
+          });
+        }
+      }, 3000);
+    }
   }
 
   resetError = () => {
-    this.setState({ hasError: false, error: undefined });
+    this.setState({ hasError: false, error: undefined, errorInfo: undefined, recoveryAttempts: 0 });
   };
 
   render() {
     if (this.state.hasError) {
-      if (this.props.fallback) {
-        const FallbackComponent = this.props.fallback;
-        return <FallbackComponent error={this.state.error} resetError={this.resetError} />;
-      }
-
       return (
         <LinearGradient colors={['#1a1a1a', '#000000']} style={styles.container}>
           <View style={styles.content}>
