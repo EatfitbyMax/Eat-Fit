@@ -5,7 +5,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (user: User) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
 
@@ -39,9 +39,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log('✅ Utilisateur connecté via contexte:', userData.email);
   };
 
-  const logout = () => {
-    setUser(null);
-    console.log('✅ Utilisateur déconnecté via contexte');
+  const logout = async () => {
+    try {
+      // Appeler la fonction logout du utils/auth
+      await import('@/utils/auth').then(({ logout: authLogout }) => authLogout());
+      // Vider l'état du contexte
+      setUser(null);
+      console.log('✅ Utilisateur déconnecté via contexte');
+    } catch (error) {
+      console.error('❌ Erreur lors de la déconnexion:', error);
+      // Même en cas d'erreur, vider l'état local
+      setUser(null);
+    }
   };
 
   const refreshUser = async () => {

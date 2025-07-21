@@ -330,23 +330,26 @@ export default function ProfilScreen() {
     );
   };
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     Alert.alert(
       'Déconnexion',
       'Êtes-vous sûr de vouloir vous déconnecter ?',
       [
+        { text: 'Annuler', style: 'cancel' },
         {
-          text: 'Annuler',
-          style: 'cancel',
-        },
-        { 
-          text: 'Déconnexion', 
+          text: 'Déconnecter',
           style: 'destructive',
           onPress: async () => {
-            await logout();
-            router.replace('/auth/login');
+            try {
+              await logout();
+              router.replace('/auth/login');
+            } catch (error) {
+              console.error('Erreur lors de la déconnexion:', error);
+              // Même en cas d'erreur, rediriger vers login
+              router.replace('/auth/login');
+            }
           }
-        },
+        }
       ]
     );
   };
@@ -937,7 +940,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#21262D',
+    borderColor: '#212262D',
     marginTop: 16,
   },
   stravaTitle: {
