@@ -27,7 +27,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { initializeAdminAccount } from '@/utils/auth';
 import { migrateExistingData } from '@/utils/migration';
 import { PersistentStorage } from '../utils/storage';
-import SplashScreenComponent from '@/components/SplashScreen';
+import { SplashScreenComponent } from '@/components/SplashScreen';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { LanguageProvider } from '@/context/LanguageContext';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
@@ -64,12 +64,12 @@ function AppNavigator() {
 
   return (
     <AuthGuard>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="(client)" options={{ headerShown: false }} />
-        <Stack.Screen name="(coach)" options={{ headerShown: false }} />
-        <Stack.Screen name="auth" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="(client)" />
+        <Stack.Screen name="(coach)" />
+        <Stack.Screen name="auth" />
+        <Stack.Screen name="+not-found" options={{ headerShown: true, title: 'Page non trouvée' }} />
       </Stack>
     </AuthGuard>
   );

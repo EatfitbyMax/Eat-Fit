@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { getCurrentUser, User } from '@/utils/auth';
 
 interface AuthContextType {
@@ -20,18 +20,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const loadUser = async () => {
       try {
+        setIsLoading(true);
         const currentUser = await getCurrentUser();
-        // Vérifier si l'utilisateur a vraiment une session valide
-        if (currentUser && currentUser.email && isMounted) {
-          setUser(currentUser);
-          console.log('✅ Utilisateur connecté:', currentUser.email);
-        } else {
-          console.log('📱 Aucun utilisateur connecté, redirection vers login');
-          setUser(null);
+        
+        if (isMounted) {
+          if (currentUser && currentUser.email) {
+            setUser(currentUser);
+            console.log('✅ Utilisateur connecté:', currentUser.email);
+          } else {
+            console.log('📱 Aucun utilisateur connecté, redirection vers login');
+            setUser(null);
+          }
         }
       } catch (error) {
         console.error('❌ Erreur chargement utilisateur:', error);
-        setUser(null);
+        if (isMounted) {
+          setUser(null);
+        }
       } finally {
         if (isMounted) {
           setIsLoading(false);

@@ -1,3 +1,4 @@
+
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import * as ErrorRecovery from 'expo-error-recovery';
@@ -15,15 +16,15 @@ interface State {
 }
 
 export class ErrorBoundary extends Component<Props, State> {
-  private readonly maxRecoveryAttempts = 2;
-  private lastErrorTime = 0;
-  private readonly errorCooldown = 5000; // 5 secondes
+  private maxRecoveryAttempts = 3;
 
   constructor(props: Props) {
     super(props);
-    this.state = { 
+    this.state = {
       hasError: false,
-      recoveryAttempts: 0
+      error: undefined,
+      errorInfo: undefined,
+      recoveryAttempts: 0,
     };
   }
 
@@ -32,31 +33,18 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    const now = Date.now();
-
-    // Vérifier si on est dans une boucle d'erreurs
-    if (now - this.lastErrorTime < this.errorCooldown) {
-      console.log('🚫 Erreurs trop fréquentes - arrêt des tentatives de récupération');
-      this.setState({
-        error,
-        errorInfo,
-        recoveryAttempts: this.maxRecoveryAttempts
-      });
-      return;
-    }
-
-    this.lastErrorTime = now;
     console.log('🛡️ ErrorBoundary a capturé une erreur:', error.message);
+    console.log('📋 Infos erreur:', errorInfo.componentStack);
 
     this.setState({
       error,
-      errorInfo
+      errorInfo,
     });
 
-    // Tentative de récupération automatique limitée
+    // Tentative de récupération automatique si pas trop d'essais
     if (this.state.recoveryAttempts < this.maxRecoveryAttempts) {
       console.log('🔄 Tentative de récupération automatique...');
-
+      
       this.setState(prevState => ({
         recoveryAttempts: prevState.recoveryAttempts + 1
       }));
@@ -70,11 +58,18 @@ export class ErrorBoundary extends Component<Props, State> {
           });
         }
       }, 3000);
+    } else {
+      console.log('🚫 Erreurs trop fréquentes - arrêt des tentatives de récupération');
     }
   }
 
   resetError = () => {
-    this.setState({ hasError: false, error: undefined, errorInfo: undefined, recoveryAttempts: 0 });
+    this.setState({ 
+      hasError: false, 
+      error: undefined, 
+      errorInfo: undefined, 
+      recoveryAttempts: 0 
+    });
   };
 
   render() {
@@ -103,43 +98,34 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
   },
   content: {
+    padding: 20,
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 15,
-    padding: 30,
-    maxWidth: 300,
   },
   title: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    marginBottom: 16,
     textAlign: 'center',
-    marginBottom: 15,
   },
   message: {
     fontSize: 16,
     color: '#CCCCCC',
+    marginBottom: 24,
     textAlign: 'center',
-    marginBottom: 25,
-    lineHeight: 22,
+    lineHeight: 24,
   },
   button: {
-    backgroundColor: '#F5A623',
-    paddingHorizontal: 30,
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 25,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    borderRadius: 8,
   },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
 });
