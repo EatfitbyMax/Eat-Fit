@@ -85,3 +85,12 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd server && npx pm2 logs eatfitbymax-server --lines 50"
+
+[[workflows.workflow]]
+name = "Build iOS Production"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx eas build --platform ios --profile production"

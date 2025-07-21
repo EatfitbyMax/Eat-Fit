@@ -8,6 +8,7 @@
     "scheme": "eatfitbymax",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "platforms": ["ios", "android"],
     "ios": {
       "icon": "./assets/images/crown-logo.png",
       "supportsTablet": true,

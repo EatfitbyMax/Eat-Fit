@@ -1,3 +1,4 @@
+
 const { getDefaultConfig } = require('expo/metro-config');
 const path = require('path');
 
@@ -19,15 +20,32 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
       };
     }
 
-    // Résolution par défaut pour iOS et native
+    // Ignorer les modules Node.js sur iOS et Android
+    if ((platform === 'ios' || platform === 'android') && 
+        ['fs', 'path', 'assert', 'util', 'url', 'node:fs'].includes(moduleName)) {
+      return {
+        filePath: path.resolve(__dirname, 'utils/empty-mock.js'),
+        type: 'sourceFile',
+      };
+    }
+
+    // Résolution par défaut
     return context.resolveRequest(context, moduleName, platform);
   } catch (error) {
-    console.warn('Erreur de résolution pour module:', moduleName, 'sur plateforme:', platform);
-    // Fallback vers résolution par défaut
+    // Fallback pour les modules problématiques sur mobile
+    if ((platform === 'ios' || platform === 'android') && 
+        ['fs', 'path', 'assert', 'util', 'url', 'node:fs'].includes(moduleName)) {
+      return {
+        filePath: path.resolve(__dirname, 'utils/empty-mock.js'),
+        type: 'sourceFile',
+      };
+    }
+    
+    // Résolution par défaut
     try {
       return context.resolveRequest(context, moduleName, platform);
     } catch (fallbackError) {
-      console.warn('Erreur de fallback:', fallbackError.message);
+      console.warn('Erreur de résolution pour module:', moduleName, 'sur plateforme:', platform);
       return null;
     }
   }
