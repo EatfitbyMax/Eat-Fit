@@ -1,80 +1,31 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React from 'react';
 import { useRouter, useSegments } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
-import { View, ActivityIndicator } from 'react-native';
 
-export function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth();
-  const router = useRouter();
+interface AuthGuardProps {
+  children: React.ReactNode;
+}
+
+export default function AuthGuard({ children }: AuthGuardProps) {
+  const { user } = useAuth();
   const segments = useSegments();
-  const [isNavigating, setIsNavigating] = useState(false);
-  const lastNavigationRef = useRef<string>('');
-  const navigationTimeoutRef = useRef<NodeJS.Timeout>();
+  const router = useRouter();
 
-  useEffect(() => {
-    if (isLoading || isNavigating) return;
-
+  React.useEffect(() => {
     const currentRoute = segments.join('/') || 'index';
-
-    // Éviter les navigations répétées vers la même route
-    if (lastNavigationRef.current === currentRoute) {
-      return;
-    }
-
     console.log('🛡️ AuthGuard - Route:', currentRoute, '| Utilisateur:', user ? 'Connecté' : 'Non connecté');
 
-    // Routes d'authentification
-    const authRoutes = ['auth/login', 'auth/register', 'auth/forgot-password', 'auth/change-password', 'auth/register-profile', 'auth/register-goals', 'auth/register-activity', 'auth/register-sport'];
-    const isAuthRoute = authRoutes.some(route => currentRoute.includes(route));
-
-    const navigate = (route: string, reason: string) => {
-      if (lastNavigationRef.current === route) return;
-
-      console.log('🔄 Redirection vers', route, '-', reason);
-      setIsNavigating(true);
-      lastNavigationRef.current = route;
-
-      // Clear any existing timeout
-      if (navigationTimeoutRef.current) {
-        clearTimeout(navigationTimeoutRef.current);
-      }
-
-      // Utiliser push au lieu de replace pour éviter les erreurs de navigation
-      router.push(route as any);
-
-      navigationTimeoutRef.current = setTimeout(() => {
-        setIsNavigating(false);
-      }, 500);
-    };
+    const isAuthRoute = currentRoute.startsWith('auth');
+    const isTabsRoute = currentRoute.startsWith('(tabs)') || currentRoute === 'index';
 
     if (!user && !isAuthRoute) {
-      navigate('/auth/login', 'Aucun utilisateur connecté');
-    } else if (user && isAuthRoute) {
-      navigate('/(client)', 'Utilisateur connecté');
-    } else {
-      // Reset navigation state si on est sur la bonne route
-      lastNavigationRef.current = '';
+      console.log('🔄 Redirection vers', '/auth/login', '-', 'Aucun utilisateur connecté');
+      router.replace('/auth/login');
+    } else if (user && (isAuthRoute || isTabsRoute)) {
+      console.log('🔄 Redirection vers', '/(client)', '-', 'Utilisateur connecté');
+      router.replace('/(client)');
     }
-  }, [user, isLoading, segments.join('/')]);
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (navigationTimeoutRef.current) {
-        clearTimeout(navigationTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  if (isLoading || isNavigating) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0D1117' }}>
-        <ActivityIndicator size="large" color="#007AFF" />
-      </View>
-    );
-  }
+  }, [user, segments]);
 
   return <>{children}</>;
 }
-
-export default AuthGuard;
