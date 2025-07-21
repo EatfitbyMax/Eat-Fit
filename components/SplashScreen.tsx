@@ -1,69 +1,94 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  withDelay,
   withSequence,
-  Easing,
 } from 'react-native-reanimated';
 import AnimatedCrown from './AnimatedCrown';
 
 const { width, height } = Dimensions.get('window');
 
+// Précalculer les tailles pour éviter les recalculs
+const FONT_SIZES = {
+  title: Math.min(width * 0.15, 60),
+  byMax: Math.min(width * 0.04, 16),
+  motto: Math.min(width * 0.045, 18),
+  mottoLineHeight: Math.min(width * 0.065, 26),
+};
+
 interface SplashScreenProps {
   onFinish: () => void;
 }
 
-export function SplashScreenComponent({ onFinish }: SplashScreenProps) {
-  const [animationComplete, setAnimationComplete] = useState(false);
-
-  const opacity = useSharedValue(0);
-  const scale = useSharedValue(0.5);
+export default function SplashScreen({ onFinish }: SplashScreenProps) {
+  const crownOpacity = useSharedValue(0);
+  const crownScale = useSharedValue(0.8);
+  const titleOpacity = useSharedValue(0);
+  const subtitleOpacity = useSharedValue(0);
 
   useEffect(() => {
-    // Animation d'entrée
-    opacity.value = withTiming(1, {
-      duration: 1000,
-      easing: Easing.out(Easing.quad),
-    });
+    const startAnimation = () => {
+      // 1. Animation de la couronne
+      crownOpacity.value = withTiming(1, { duration: 800 });
+      crownScale.value = withSequence(
+        withTiming(1.1, { duration: 800 }),
+        withTiming(1, { duration: 200 })
+      );
 
-    scale.value = withSequence(
-      withTiming(1.2, {
-        duration: 800,
-        easing: Easing.out(Easing.back(1.7)),
-      }),
-      withTiming(1, {
-        duration: 300,
-        easing: Easing.inOut(Easing.quad),
-      })
-    );
+      // 2. Titre apparaît après l'animation de la couronne (3 secondes)
+      titleOpacity.value = withDelay(3000, withTiming(1, { duration: 800 }));
 
-    // Terminer l'animation après 2.5 secondes
-    const timer = setTimeout(() => {
-      setAnimationComplete(true);
-      onFinish();
-    }, 2500);
+      // 3. Sous-titre apparaît après le titre
+      subtitleOpacity.value = withDelay(3800, withTiming(1, { duration: 800 }));
 
-    return () => clearTimeout(timer);
-  }, []);
+      // 4. Terminer le splash screen après toutes les animations
+      setTimeout(() => {
+        onFinish();
+      }, 6000);
+    };
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ scale: scale.value }],
+    startAnimation();
+  }, [onFinish]);
+
+  const crownAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: crownOpacity.value,
+    transform: [{ scale: crownScale.value }]
+  }));
+
+  const titleAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: titleOpacity.value,
+    transform: [{
+      translateY: titleOpacity.value === 0 ? 20 : 0
+    }],
+  }));
+
+  const subtitleAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: subtitleOpacity.value,
+    transform: [{
+      translateY: subtitleOpacity.value === 0 ? 20 : 0
+    }],
   }));
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['#1a1a1a', '#000000']}
-        style={styles.gradient}
-      >
-        <Animated.View style={[styles.logoContainer, animatedStyle]}>
-          <AnimatedCrown size={120} />
+      <View style={styles.content}>
+        {/* Couronne animée */}
+        <Animated.View style={[styles.crownContainer, crownAnimatedStyle]}>
+          <AnimatedCrown />
         </Animated.View>
-      </LinearGradient>
+
+        {/* Titre principal */}
+        <Animated.View style={[styles.titleContainer, titleAnimatedStyle]}>
+          <Text style={styles.appTitle}>Eat Fit</Text>
+          <Text style={styles.byMax}>BY MAX</Text>
+        </Animated.View>
+
+
+      </View>
     </View>
   );
 }
@@ -71,16 +96,56 @@ export function SplashScreenComponent({ onFinish }: SplashScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  gradient: {
-    flex: 1,
+    backgroundColor: '#000000',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  logoContainer: {
-    justifyContent: 'center',
+  content: {
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    width: '100%',
+  },
+  crownContainer: {
+    marginBottom: 60,
+    alignItems: 'center',
+    width: '100%',
+  },
+  titleContainer: {
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    marginBottom: 40,
+    width: '100%',
+  },
+  appTitle: {
+    fontSize: FONT_SIZES.title,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    fontFamily: 'System',
+    letterSpacing: 2,
+  },
+  byMax: {
+    fontSize: FONT_SIZES.byMax,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginTop: 8,
+    fontFamily: 'System',
+    letterSpacing: 4,
+  },
+  subtitleContainer: {
+    paddingHorizontal: 30,
+    alignItems: 'center',
+    width: '100%',
+  },
+  motto: {
+    fontSize: FONT_SIZES.motto,
+    fontWeight: '500',
+    color: '#CCCCCC',
+    textAlign: 'center',
+    lineHeight: FONT_SIZES.mottoLineHeight,
+    fontStyle: 'italic',
+    opacity: 0.9,
   },
 });
-
-export default SplashScreenComponent;
