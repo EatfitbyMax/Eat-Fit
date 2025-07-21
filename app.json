@@ -1,3 +1,4 @@
+
 {
   "expo": {
     "name": "EatFit By Max",
@@ -20,10 +21,10 @@
       },
       "entitlements": {},
       "infoPlist": {
-        "NSCameraUsageDescription": "EatFitByMax utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas.",
-        "NSPhotoLibraryUsageDescription": "EatFitByMax accède à votre galerie photo pour vous permettre de sélectionner des images de vos repas.",
-        "NSMotionUsageDescription": "EatFitByMax utilise les capteurs de mouvement pour suivre votre activité physique.",
-        "NSLocationWhenInUseUsageDescription": "EatFitByMax utilise votre localisation pour trouver des salles de sport et des restaurants sains près de chez vous.",
+        "NSCameraUsageDescription": "EatFitBy Max utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas.",
+        "NSPhotoLibraryUsageDescription": "EatFitBy Max accède à votre galerie photo pour vous permettre de sélectionner des images de vos repas.",
+        "NSMotionUsageDescription": "EatFitBy Max utilise les capteurs de mouvement pour suivre votre activité physique.",
+        "NSLocationWhenInUseUsageDescription": "EatFitBy Max utilise votre localisation pour trouver des salles de sport et des restaurants sains près de chez vous.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -35,12 +36,9 @@
       },
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO",
-        "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
       ]
     },
-
     "extra": {
       "router": {},
       "eas": {
@@ -61,7 +59,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "EatFitByMax utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas."
+          "cameraPermission": "EatFitBy Max utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas."
         }
       ],
       [
