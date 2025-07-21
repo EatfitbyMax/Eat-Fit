@@ -1,0 +1,239 @@
+Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
+
+This error is located at:
+    at BottomTabNavigator (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:16232:18)
+    at anonymous (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:15381:38)
+    at ClientLayout (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:12496:58)
+    at Suspense (<anonymous>)
+    at Route (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:15449:24)
+    at BaseRoute (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:15802:24)
+    at StaticContainer (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:9363:17)
+    at EnsureSingleNavigator (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:5834:24)
+    at SceneView (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:9208:22)
+    at RNSScreenContentWrapper (<anonymous>)
+    at ScreenContentWrapper (<anonymous>)
+    at DebugContainer (<anonymous>)
+    at RNSScreen (<anonymous>)
+    at anonymous (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:116376:47)
+    at Suspender (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:130921:22)
+    at Suspense (<anonymous>)
+    at Freeze (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:130931:23)
+    at DelayedFreeze (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:130887:22)
+    at InnerScreen (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:130684:41)
+    at anonymous (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:130854:50)
+    at ScreenStackItem (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:131868:24)
+    at SceneView (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:129589:21)
+    at RNSScreenStack (<anonymous>)
+    at anonymous (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:131814:20)
+    at ScreenStack (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:131759:30)
+    at FrameSizeProviderInner (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:14133:29)
+    at FrameSizeProvider (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:14120:28)
+    at RCTView (<anonymous>)
+    at anonymous (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:105645:43)
+    at SafeAreaProviderCompat (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:15098:24)
+    at NativeStackView (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:129880:22)
+    at PreventRemoveProvider (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:7823:25)
+    at NavigationStateListenerProvider (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:9789:21)
+    at NavigationContent (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:8937:22)
+    at anonymous (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:8952:27)
+    at NativeStackNavigator (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:13050:18)
+    at anonymous (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:15381:38)
+    at AuthGuard (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7a3x17pid7.kirk.replit.dev/node_modules/expo-router/entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:68091:24)
+    at AppNavigator (https://92639832-db54-4e84-9c74-32f38f762c1a-00-15y7
+
+getRootForUpdatedFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:85908:96
+enqueueConcurrentRenderForLane
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:85898:33
+forceStoreRerender
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:87000:45
+anonymous
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:86986:56
+anonymous
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:6305:46
+batchUpdates
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:6305:25
+anonymous
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:6327:26
+latestCallback
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:5636:30
+commitHookEffectListMount
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:88917:35
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89081:46
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89080:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89080:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89080:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89140:231
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89131:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89148:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89148:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89080:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89080:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89080:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89148:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89148:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89080:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89148:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89148:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89080:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89148:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89148:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89148:40
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89080:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89148:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89148:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89148:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89148:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89148:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89148:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89080:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89148:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89148:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89148:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89080:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89148:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89080:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89080:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89080:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89123:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89080:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89148:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89080:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89148:40
+recursivelyTraverseLayoutEffects
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89330:127
+commitLayoutEffectOnFiber
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89102:40
+commitRootImpl
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:90176:406
+commitRootWhenReady
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89816:78
+performWorkOnRoot
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:89800:29
+performSyncWorkOnRoot
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:86013:21
+flushSyncWorkAcrossRoots_impl
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:85939:332
+processRootScheduleInMicrotask
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:85955:33
+anonymous
+    entry.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable:86017:83
