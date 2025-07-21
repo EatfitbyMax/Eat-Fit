@@ -41,7 +41,7 @@
         "android.permission.RECORD_AUDIO"
       ]
     },
-    
+
     "extra": {
       "router": {},
       "eas": {
@@ -52,7 +52,12 @@
       "policy": "sdkVersion"
     },
     "plugins": [
-      "expo-router",
+      [
+        "expo-router",
+        {
+          "origin": false
+        }
+      ],
       "expo-web-browser",
       [
         "expo-camera",
@@ -60,7 +65,6 @@
           "cameraPermission": "EatFitByMax utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas."
         }
       ],
-      
       [
         "expo-dev-client",
         {
