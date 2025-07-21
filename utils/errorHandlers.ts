@@ -5,10 +5,9 @@ import * as ErrorRecovery from 'expo-error-recovery';
 let restartCount = 0;
 const MAX_RESTARTS = 2;
 const RESTART_WINDOW = 60000;
-let lastRestartTime = 0;
-let errorCount = 0;
 const ERROR_THRESHOLD = 5;
-let lastErrorReset = Date.now();
+let errorCount = 0;
+const lastErrorReset = Date.now();
 
 // Gestionnaire d'erreurs JavaScript non gérées
 export const setupGlobalErrorHandlers = () => {
