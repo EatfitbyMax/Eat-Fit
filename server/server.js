@@ -12,11 +12,12 @@ const DATA_DIR = path.join(__dirname, 'data');
 // Middleware de sécurité et logging
 const requestLogger = (req, res, next) => {
   const start = Date.now();
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - IP: ${clientIP}`);
   
   res.on('finish', () => {
     const duration = Date.now() - start;
-    console.log(`${req.method} ${req.path} - ${res.statusCode} (${duration}ms)`);
+    console.log(`${req.method} ${req.path} - ${res.statusCode} (${duration}ms) - IP: ${clientIP}`);
   });
   
   next();
@@ -67,19 +68,11 @@ app.use(cors({
         'ionic://localhost',
         'http://localhost'
       ]
-    : [
-        'http://localhost:8081',
-        'http://localhost:8082', 
-        'https://workspace-eatfitbymax.replit.dev',
-        /^https:\/\/.*\.replit\.dev$/,
-        /^https:\/\/.*\.replit\.app$/,
-        'capacitor://localhost',
-        'ionic://localhost',
-        true
-      ],
+    : true, // Permettre toutes les origines en développement
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  optionsSuccessStatus: 200
 }));
 app.use(express.json({ limit: '50mb' }));
 
@@ -760,4 +753,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🔧 Mode: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🌐 API disponible sur: https://workspace-eatfitbymax.replit.dev`);
   console.log(`📡 Serveur accessible sur toutes les interfaces (0.0.0.0:${PORT})`);
+  
+  // Test de santé au démarrage
+  console.log('✅ Serveur prêt à recevoir des connexions');
 });
