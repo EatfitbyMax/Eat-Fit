@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Configuration serveur Replit uniquement
-const SERVER_URL = process.env.EXPO_PUBLIC_API_URL || 'https://workspace-eatfitbymax.replit.dev';
+const SERVER_URL = 'https://workspace-eatfitbymax.replit.dev';
+const API_URL = SERVER_URL;
 
 export class PersistentStorage {
   // Fonction pour nettoyer toutes les données utilisateurs
@@ -19,7 +20,7 @@ export class PersistentStorage {
         'programmes_sport',
         'programmes_nutrition'
       ];
-      
+
       await AsyncStorage.multiRemove(keysToRemove);
       console.log('🧹 Toutes les données utilisateurs supprimées');
     } catch (error) {
@@ -33,12 +34,12 @@ export class PersistentStorage {
 
   static async testConnection(): Promise<boolean> {
     try {
-      console.log(`Test de connexion au serveur Replit: ${SERVER_URL}`);
+      console.log(`🔍 Test de connexion au serveur Replit: ${SERVER_URL}`);
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // Augmenter le timeout
 
-      const response = await fetch(`${SERVER_URL}/api/health-check`, {
+      const response = await fetch(`${SERVER_URL}/api/health`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
