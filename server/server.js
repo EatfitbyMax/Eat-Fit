@@ -769,7 +769,7 @@ initDataDir();
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Serveur EatFitByMax Replit démarré sur le port ${PORT}`);
   console.log(`🔧 Mode: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🌐 API disponible sur: https://workspace-eatfitbymax.replit.dev`);
+  console.log(`🌐 API disponible sur: https://eatfitbymax.replit.app`);
   console.log(`📡 Serveur accessible sur toutes les interfaces (0.0.0.0:${PORT})`);
   
   // Test de santé au démarrage
