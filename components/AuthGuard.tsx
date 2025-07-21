@@ -3,8 +3,8 @@ import { useRouter, useSegments } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { View, ActivityIndicator } from 'react-native';
 
-export default function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+export function AuthGuard({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuth();
   const router = useRouter();
   const segments = useSegments();
   const [isNavigating, setIsNavigating] = useState(false);
@@ -12,7 +12,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const navigationTimeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
-    if (loading || isNavigating) return;
+    if (isLoading || isNavigating) return;
 
     const currentRoute = segments.join('/') || 'index';
 
@@ -76,3 +76,5 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
   return <>{children}</>;
 }
+
+export default AuthGuard;
