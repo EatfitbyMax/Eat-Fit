@@ -22,9 +22,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadUser = async () => {
     try {
       const currentUser = await getCurrentUser();
-      setUser(currentUser);
-      if (currentUser) {
+      // Vérifier si l'utilisateur a vraiment une session valide
+      if (currentUser && currentUser.email) {
+        setUser(currentUser);
         console.log('✅ Utilisateur connecté:', currentUser.email);
+      } else {
+        console.log('📱 Aucun utilisateur connecté, redirection vers login');
+        setUser(null);
       }
     } catch (error) {
       console.error('❌ Erreur chargement utilisateur:', error);
