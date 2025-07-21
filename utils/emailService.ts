@@ -3,9 +3,9 @@ import emailjs from '@emailjs/react-native';
 
 // Configuration EmailJS
 const EMAILJS_CONFIG = {
-  SERVICE_ID: process.env.EXPO_PUBLIC_EMAILJS_SERVICE_ID || 'your_service_id',
-  TEMPLATE_ID: process.env.EXPO_PUBLIC_EMAILJS_TEMPLATE_ID || 'your_template_id',
-  PUBLIC_KEY: process.env.EXPO_PUBLIC_EMAILJS_PUBLIC_KEY || 'your_public_key',
+  SERVICE_ID: process.env.EXPO_PUBLIC_EMAILJS_SERVICE_ID || 'service_3d0mqnl',
+  TEMPLATE_ID: process.env.EXPO_PUBLIC_EMAILJS_TEMPLATE_ID || 'template_cmyczjl',
+  PUBLIC_KEY: process.env.EXPO_PUBLIC_EMAILJS_PUBLIC_KEY || 't2undaGNuWxcNU2YD',
 };
 
 console.log('🔧 Configuration EmailJS:', {

@@ -96,4 +96,4 @@ task = "shell.exec"
 args = "npx eas build --platform ios --profile production"
 
 [deployment]
-run = ["sh", "-c", "cd server && node server.js"]
+run = ["sh", "-c", "cd server && npx pm2-runtime start ecosystem.config.js"]
