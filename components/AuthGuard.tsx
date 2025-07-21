@@ -55,7 +55,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       // Reset navigation state si on est sur la bonne route
       lastNavigationRef.current = '';
     }
-  }, [user, loading, segments.join('/')]);
+  }, [user, isLoading, segments.join('/')]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -66,7 +66,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  if (loading || isNavigating) {
+  if (isLoading || isNavigating) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0D1117' }}>
         <ActivityIndicator size="large" color="#007AFF" />
