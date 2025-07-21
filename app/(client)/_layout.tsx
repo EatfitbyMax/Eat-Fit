@@ -5,7 +5,7 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { checkSubscriptionStatus } from '@/utils/subscription';
-import { useAuth } from '../../utils/auth';
+import { useAuth } from '@/context/AuthContext';
 
 export default function ClientLayout() {
   const { user, isLoading } = useAuth();

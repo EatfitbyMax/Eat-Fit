@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Platform } from 'react-native';
 import * as ErrorRecovery from 'expo-error-recovery';
@@ -35,21 +36,23 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { setupGlobalErrorHandlers } from '@/utils/errorHandlers';
 
 // Import conditionnel sécurisé de Stripe
-let StripeProvider: any = null;
-const STRIPE_ENABLED = Platform.OS !== 'web' && process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+let StripeProvider = ({ children }: { children: React.ReactNode }) => <>{children}</>;
 
-if (STRIPE_ENABLED) {
-  try {
-    const stripe = require('@stripe/stripe-react-native');
-    StripeProvider = stripe.StripeProvider;
-    console.log('✅ Stripe chargé');
-  } catch (error) {
-    console.warn('⚠️ Stripe non disponible:', error);
-    StripeProvider = null;
+try {
+  if (Platform.OS === 'web') {
+    // Sur le web, utiliser le mock Stripe pour éviter les erreurs
+    const StripeMock = require('@/utils/stripe-web-mock');
+    StripeProvider = StripeMock.StripeProvider;
+  } else {
+    // Sur mobile, utiliser le vrai Stripe si disponible
+    const { StripeProvider: RealStripeProvider } = require('@stripe/stripe-react-native');
+    StripeProvider = RealStripeProvider;
   }
+} catch (error) {
+  console.log('⚠️ Stripe non disponible, utilisation du fallback');
 }
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
+// Configuration du splash screen
 SplashScreen.preventAutoHideAsync();
 
 function AppNavigator() {
@@ -98,28 +101,21 @@ export default function RootLayout() {
     return <SplashScreenComponent onFinish={() => {}} />;
   }
 
-  const AppWrapper = () => {
-    if (StripeProvider && STRIPE_ENABLED) {
-      return (
-        <StripeProvider
-          publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY!}
-          merchantIdentifier="merchant.com.eatfitbymax"
-        >
-          <AppNavigator />
-        </StripeProvider>
-      );
-    }
-    return <AppNavigator />;
-  };
+  const navigationTheme = colorScheme === 'dark' ? DarkTheme : DefaultTheme;
 
   return (
     <ErrorBoundary>
       <LanguageProvider>
         <ThemeProvider>
           <AuthProvider>
-            <NavigationThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-              <AppWrapper />
-            </NavigationThemeProvider>
+            <StripeProvider 
+              publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_mock_key'}
+              merchantIdentifier="merchant.com.eatfitbymax.app"
+            >
+              <NavigationThemeProvider value={navigationTheme}>
+                <AppNavigator />
+              </NavigationThemeProvider>
+            </StripeProvider>
           </AuthProvider>
         </ThemeProvider>
       </LanguageProvider>
