@@ -21,7 +21,7 @@ localPort = 8082
 externalPort = 3000
 
 [workflows]
-runButton = "Expo Go Dev"
+runButton = "Expo Go Safe Mode"
 
 [[workflows.workflow]]
 name = "Dev Server"
@@ -102,6 +102,15 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN npx expo start --dev-client"
+
+[[workflows.workflow]]
+name = "Expo Go Safe Mode"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN npx expo start --go --no-dev --minify"
 
 [deployment]
 run = ["sh", "-c", "cd server && node server.js"]

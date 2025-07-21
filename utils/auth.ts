@@ -205,6 +205,7 @@ export async function register(userData: {
   userType?: 'client' | 'coach';
 }): Promise<User | null> {
   try {
+    console.log('🔄 Début création compte pour:', userData.email);
     // Récupérer les utilisateurs existants avec fallback local
     let users = [];
     try {
@@ -256,12 +257,27 @@ export async function register(userData: {
 
     // Connecter automatiquement l'utilisateur (session locale uniquement)
     const { password: _, ...userWithoutPassword } = newUser;
-    await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userWithoutPassword));
+    
+    try {
+      await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userWithoutPassword));
+      console.log('✅ Session utilisateur créée avec succès');
+    } catch (storageError) {
+      console.error('❌ Erreur sauvegarde session:', storageError);
+      // Continue malgré l'erreur de stockage
+    }
 
-    console.log('Inscription réussie pour:', userData.email);
+    console.log('✅ Inscription réussie pour:', userData.email);
     return userWithoutPassword;
   } catch (error) {
-    console.error('Erreur inscription:', error);
+    console.error('❌ Erreur inscription complète:', error);
+    
+    // Nettoyer en cas d'erreur
+    try {
+      await AsyncStorage.removeItem(CURRENT_USER_KEY);
+    } catch (cleanupError) {
+      console.error('❌ Erreur nettoyage après échec:', cleanupError);
+    }
+    
     throw error;
   }
 }
