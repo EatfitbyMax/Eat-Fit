@@ -1,14 +1,5 @@
 
-<old_str>const { getDefaultConfig } = require('expo/metro-config');
-
-/** @type {import('expo/metro-config').MetroConfig} */
-const config = getDefaultConfig(__dirname);
-
-// Configuration simplifiée pour iOS uniquement
-config.resolver.platforms = ['ios', 'native'];
-
-module.exports = config;</old_str>
-<new_str>const { getDefaultConfig } = require('expo/metro-config');
+const { getDefaultConfig } = require('expo/metro-config');
 
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
@@ -36,4 +27,4 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   }
 };
 
-module.exports = config;</new_str>
+module.exports = config;
