@@ -59,13 +59,22 @@ app.use(requestLogger);
 app.use(rateLimit);
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://eatfitbymax.com', 'https://api.eatfitbymax.com']
+    ? [
+        'https://workspace-eatfitbymax.replit.dev',
+        /^https:\/\/.*\.replit\.dev$/,
+        /^https:\/\/.*\.replit\.app$/,
+        'capacitor://localhost',
+        'ionic://localhost',
+        'http://localhost'
+      ]
     : [
         'http://localhost:8081',
         'http://localhost:8082', 
         'https://workspace-eatfitbymax.replit.dev',
         /^https:\/\/.*\.replit\.dev$/,
         /^https:\/\/.*\.replit\.app$/,
+        'capacitor://localhost',
+        'ionic://localhost',
         true
       ],
   credentials: true,
