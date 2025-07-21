@@ -1,8 +1,16 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ServerWakeupService } from './serverWakeup';
 
 // Configuration serveur Replit uniquement
 const SERVER_URL = 'https://workspace-eatfitbymax.replit.dev';
 const API_URL = SERVER_URL;
+
+// Protection contre les erreurs BarCodeScanner
+try {
+  // Vérifier si BarCodeScanner est disponible sans l'importer immédiatement
+} catch (error) {
+  console.log('BarCodeScanner non disponible:', error.message);
+}
 
 export class PersistentStorage {
   // Fonction pour nettoyer toutes les données utilisateurs
@@ -36,13 +44,20 @@ export class PersistentStorage {
     try {
       console.log(`🔍 Test de connexion au serveur Replit: ${SERVER_URL}`);
 
+      // D'abord vérifier si nous sommes en ligne
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        console.warn('⚠️ Aucune connexion internet détectée');
+        return false;
+      }
+
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 secondes pour Replit
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 secondes pour Replit
 
       const response = await fetch(`${SERVER_URL}/api/health`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
         },
         signal: controller.signal
       });
@@ -55,11 +70,23 @@ export class PersistentStorage {
         return true;
       } else {
         console.warn(`⚠️ Serveur Replit indisponible (status: ${response.status})`);
+        
+        // Tenter de réveiller le serveur si le statut indique qu'il dort
+        if (response.status >= 500) {
+          console.log('🔄 Tentative de réveil du serveur...');
+          const wakeupSuccess = await ServerWakeupService.wakeupServer();
+          return wakeupSuccess;
+        }
+        
         return false;
       }
     } catch (error: any) {
       if (error.name === 'AbortError') {
-        console.warn('⚠️ Timeout de connexion au serveur Replit (10s)');
+        console.warn('⚠️ Timeout de connexion au serveur Replit (15s)');
+      } else if (error.message.includes('Network request failed')) {
+        console.warn('⚠️ Échec réseau - Tentative de réveil du serveur...');
+        const wakeupSuccess = await ServerWakeupService.wakeupServer();
+        return wakeupSuccess;
       } else {
         console.warn(`⚠️ Erreur de connexion au serveur ${SERVER_URL}:`, error.message);
       }
