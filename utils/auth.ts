@@ -1,145 +1,189 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PersistentStorage } from './storage';
 
-export interface User {
+interface User {
   id: string;
   email: string;
-  name: string;
+  password?: string;
   firstName?: string;
   lastName?: string;
-  goals?: string[];
-  gender?: 'Homme' | 'Femme';
-  age?: number;
-  height?: number;
-  weight?: number;
-  activityLevel?: string;
-  favoriteSport?: string;
-  targetWeight?: number;
   userType: 'client' | 'coach';
-  hasNutritionProgram?: boolean;
-  needsPasswordReset?: boolean;
-  createdAt: string;
+  age?: number;
+  weight?: number;
+  height?: number;
+  gender?: string;
+  activityLevel?: string;
+  goals?: string[];
+  profileImage?: string;
+  hashedPassword?: string;
 }
 
-const CURRENT_USER_KEY = 'currentUser';
-const USERS_KEY = 'users';
-
-// Comptes par défaut
-const DEFAULT_ACCOUNTS: any[] = [];
+let currentUserCache: User | null = null;
 
 export async function initializeAdminAccount(): Promise<void> {
   try {
-    const existingUsers = await AsyncStorage.getItem(USERS_KEY);
-    if (!existingUsers) {
-      await AsyncStorage.setItem(USERS_KEY, JSON.stringify([]));
-      console.log('💫 Base de données utilisateurs initialisée (vide)');
-    } else {
-      console.log('📱 Base de données utilisateurs existante trouvée');
-    }
+    console.log('💫 Utilisation du serveur Replit pour l\'authentification');
+    // Pas d'initialisation locale nécessaire
   } catch (error) {
     console.error('Erreur initialisation base utilisateurs:', error);
   }
 }
 
 export async function getCurrentUser(): Promise<User | null> {
-  try {
-    const currentUserData = await AsyncStorage.getItem(CURRENT_USER_KEY);
-    if (currentUserData) {
-      const user = JSON.parse(currentUserData);
-      return user;
-    }
-    return null;
-  } catch (error) {
-    console.error('❌ Erreur récupération utilisateur:', error);
-    return null;
+  if (currentUserCache) {
+    return currentUserCache;
   }
+  return null;
 }
 
 export async function login(email: string, password: string): Promise<User | null> {
   try {
     console.log('🔄 Tentative de connexion pour:', email);
-    
-    // Récupérer les utilisateurs depuis le serveur ou fallback local
-    let users = [];
-    try {
-      users = await PersistentStorage.getUsers();
-    } catch (error) {
-      console.warn('Erreur serveur, tentative récupération locale...');
-      // Fallback vers AsyncStorage local
-      const localUsers = await AsyncStorage.getItem(USERS_KEY);
-      if (localUsers) {
-        users = JSON.parse(localUsers);
-        console.log('Utilisateurs récupérés depuis le stockage local');
-      }
-    }
+
+    // Récupérer les utilisateurs depuis le serveur uniquement
+    const users = await PersistentStorage.getUsers();
 
     console.log('📊 Nombre d\'utilisateurs récupérés:', users.length);
     console.log('👥 Utilisateurs disponibles:', users.map((u: any) => ({ 
       email: u.email, 
       userType: u.userType,
-      hasPassword: !!u.password 
+      hashedPassword: u.hashedPassword ? 'OUI' : 'NON'
     })));
 
-    // Normaliser l'email (minuscules et trim)
-    const normalizedEmail = email.toLowerCase().trim();
-    
-    console.log('🔍 Recherche utilisateur avec email normalisé:', normalizedEmail);
-    
-    // Chercher l'utilisateur par email d'abord
-    const userByEmail = users.find((u: any) => 
-      u.email.toLowerCase().trim() === normalizedEmail
-    );
-    
-    if (userByEmail) {
-      console.log('✅ Utilisateur trouvé par email');
-      console.log('🔑 Comparaison des mots de passe:', {
-        saisi: password,
-        stocke: userByEmail.password,
-        match: userByEmail.password === password
-      });
-    } else {
-      console.log('❌ Aucun utilisateur trouvé avec cet email');
-    }
-    
-    const user = users.find((u: any) => 
-      u.email.toLowerCase().trim() === normalizedEmail && u.password === password
-    );
-
-    if (user) {
-      // Enlever le mot de passe avant de sauvegarder dans la session locale
-      const { password: _, ...userWithoutPassword } = user;
-      await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userWithoutPassword));
-      console.log('Connexion réussie pour:', user.email, 'Type:', user.userType);
-      
-      // Ajouter l'information si un changement de mot de passe est requis
-      return {
-        ...userWithoutPassword,
-        needsPasswordReset: user.needsPasswordReset || false
-      };
-    } else {
-      console.log('Identifiants incorrects pour:', normalizedEmail);
+    // Trouver l'utilisateur
+    const user = users.find((u: any) => u.email === email);
+    if (!user) {
+      console.log('❌ Utilisateur non trouvé pour:', email);
       return null;
     }
+
+    console.log('👤 Utilisateur trouvé:', {
+      email: user.email,
+      userType: user.userType,
+      hasPassword: user.password ? 'OUI' : 'NON',
+      hasHashedPassword: user.hashedPassword ? 'OUI' : 'NON'
+    });
+
+    // Vérifier le mot de passe
+    let isPasswordValid = false;
+
+    if (user.hashedPassword) {
+      // Nouveau système avec hash
+      const bcrypt = await import('bcryptjs');
+      isPasswordValid = await bcrypt.compare(password, user.hashedPassword);
+      console.log('🔐 Vérification avec hash:', isPasswordValid ? 'VALIDE' : 'INVALIDE');
+    } else if (user.password) {
+      // Ancien système (temporaire)
+      isPasswordValid = user.password === password;
+      console.log('🔓 Vérification ancien système:', isPasswordValid ? 'VALIDE' : 'INVALIDE');
+    } else {
+      console.log('❌ Aucun mot de passe défini pour cet utilisateur');
+      return null;
+    }
+
+    if (!isPasswordValid) {
+      console.log('❌ Mot de passe incorrect pour:', email);
+      return null;
+    }
+
+    // Créer l'objet utilisateur sans le mot de passe
+    const userWithoutPassword: User = {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      userType: user.userType,
+      age: user.age,
+      weight: user.weight,
+      height: user.height,
+      gender: user.gender,
+      activityLevel: user.activityLevel,
+      goals: user.goals,
+      profileImage: user.profileImage
+    };
+
+    // Sauvegarder la session en cache mémoire
+    currentUserCache = userWithoutPassword;
+    console.log('💾 Session utilisateur mise en cache');
+
+    console.log('✅ Connexion réussie pour:', email);
+    return userWithoutPassword;
   } catch (error) {
-    console.error('Erreur connexion:', error);
-    throw error;
+    console.error('❌ Erreur connexion complète:', error);
+    return null;
+  }
+}
+
+export async function register(userData: Omit<User, 'id'> & { password: string }): Promise<User | null> {
+  try {
+    console.log('🔄 Tentative d\'inscription pour:', userData.email);
+
+    // Récupérer les utilisateurs existants depuis le serveur uniquement
+    const users = await PersistentStorage.getUsers();
+    console.log('📊 Utilisateurs récupérés depuis le serveur:', users.length);
+
+    // Vérifier si l'utilisateur existe déjà
+    const existingUser = users.find((u: any) => u.email === userData.email);
+    if (existingUser) {
+      console.log('❌ Utilisateur déjà existant:', userData.email);
+      return null;
+    }
+
+    // Hacher le mot de passe
+    console.log('🔐 Hachage du mot de passe...');
+    const bcrypt = await import('bcryptjs');
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(userData.password, saltRounds);
+
+    // Créer le nouvel utilisateur
+    const newUser = {
+      ...userData,
+      id: Date.now().toString(),
+      hashedPassword: hashedPassword,
+      // Ne pas stocker le mot de passe en clair
+      password: undefined
+    };
+
+    // Ajouter à la liste des utilisateurs
+    users.push(newUser);
+
+    // Sauvegarder sur le serveur
+    await PersistentStorage.saveUsers(users);
+    console.log('✅ Utilisateurs sauvegardés sur le serveur');
+
+    // Créer l'objet de retour sans les mots de passe
+    const userWithoutPassword: User = {
+      id: newUser.id,
+      email: newUser.email,
+      firstName: newUser.firstName,
+      lastName: newUser.lastName,
+      userType: newUser.userType,
+      age: newUser.age,
+      weight: newUser.weight,
+      height: newUser.height,
+      gender: newUser.gender,
+      activityLevel: newUser.activityLevel,
+      goals: newUser.goals,
+      profileImage: newUser.profileImage
+    };
+
+    // Sauvegarder la session en cache mémoire
+    currentUserCache = userWithoutPassword;
+    console.log('💾 Session utilisateur mise en cache');
+
+    console.log('✅ Inscription réussie pour:', userData.email);
+    return userWithoutPassword;
+  } catch (error) {
+    console.error('❌ Erreur inscription complète:', error);
+    return null;
   }
 }
 
 export async function logout(): Promise<void> {
   try {
-    // Supprimer toutes les données de session utilisateur
-    await AsyncStorage.multiRemove([
-      CURRENT_USER_KEY,
-      'app_preferences',
-      'subscription_status',
-      'user_nutrition_data',
-      'user_fitness_data'
-    ]);
-    console.log('✅ Déconnexion réussie - toutes les données de session supprimées');
+    currentUserCache = null;
+    console.log('✅ Déconnexion réussie');
   } catch (error) {
     console.error('❌ Erreur déconnexion:', error);
-    throw error;
   }
 }
 
@@ -156,7 +200,7 @@ export async function updateUserData(email: string, updateData: {
   try {
     // Récupérer les utilisateurs depuis le serveur VPS
     const users = await PersistentStorage.getUsers();
-    
+
     // Trouver l'utilisateur à mettre à jour
     const userIndex = users.findIndex((u: any) => u.email === email);
     if (userIndex === -1) {
@@ -180,104 +224,12 @@ export async function updateUserData(email: string, updateData: {
 
     // Mettre à jour la session locale
     const { password: _, ...userWithoutPassword } = updatedUser;
-    await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userWithoutPassword));
+    currentUserCache = userWithoutPassword;
 
     console.log('Données utilisateur mises à jour avec succès');
     return true;
   } catch (error) {
     console.error('Erreur mise à jour utilisateur:', error);
     return false;
-  }
-}
-
-export async function register(userData: {
-  email: string;
-  password: string;
-  name: string;
-  firstName?: string;
-  lastName?: string;
-  goals?: string[];
-  gender?: 'Homme' | 'Femme';
-  age?: number;
-  height?: number;
-  weight?: number;
-  activityLevel?: string;
-  userType?: 'client' | 'coach';
-}): Promise<User | null> {
-  try {
-    console.log('🔄 Début création compte pour:', userData.email);
-    // Récupérer les utilisateurs existants avec fallback local
-    let users = [];
-    try {
-      users = await PersistentStorage.getUsers();
-    } catch (error) {
-      console.warn('Erreur serveur, récupération locale...');
-      const localUsers = await AsyncStorage.getItem(USERS_KEY);
-      if (localUsers) {
-        users = JSON.parse(localUsers);
-      }
-    }
-
-    // Vérifier si l'email existe déjà
-    const existingUser = users.find((u: any) => u.email === userData.email);
-    if (existingUser) {
-      console.log('Email déjà utilisé');
-      return null;
-    }
-
-    // Créer le nouvel utilisateur avec toutes les informations
-    const newUser = {
-      id: Date.now().toString(),
-      email: userData.email,
-      password: userData.password,
-      name: userData.name,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      goals: userData.goals,
-      gender: userData.gender,
-      age: userData.age,
-      height: userData.height,
-      weight: userData.weight,
-      activityLevel: userData.activityLevel,
-      userType: userData.userType || 'client' as const,
-      createdAt: new Date().toISOString(),
-    };
-
-    users.push(newUser);
-
-    // Sauvegarder avec fallback local
-    try {
-      await PersistentStorage.saveUsers(users);
-      console.log('Utilisateur sauvegardé sur le serveur');
-    } catch (error) {
-      console.warn('Erreur serveur, sauvegarde locale...');
-      await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
-      console.log('Utilisateur sauvegardé localement');
-    }
-
-    // Connecter automatiquement l'utilisateur (session locale uniquement)
-    const { password: _, ...userWithoutPassword } = newUser;
-    
-    try {
-      await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userWithoutPassword));
-      console.log('✅ Session utilisateur créée avec succès');
-    } catch (storageError) {
-      console.error('❌ Erreur sauvegarde session:', storageError);
-      // Continue malgré l'erreur de stockage
-    }
-
-    console.log('✅ Inscription réussie pour:', userData.email);
-    return userWithoutPassword;
-  } catch (error) {
-    console.error('❌ Erreur inscription complète:', error);
-    
-    // Nettoyer en cas d'erreur
-    try {
-      await AsyncStorage.removeItem(CURRENT_USER_KEY);
-    } catch (cleanupError) {
-      console.error('❌ Erreur nettoyage après échec:', cleanupError);
-    }
-    
-    throw error;
   }
 }

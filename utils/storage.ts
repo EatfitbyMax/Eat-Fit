@@ -1,57 +1,28 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ServerWakeupService } from './serverWakeup';
 
 // Configuration serveur Replit uniquement
 const SERVER_URL = 'https://workspace-eatfitbymax.replit.dev';
 const API_URL = SERVER_URL;
 
-// Protection contre les erreurs BarCodeScanner
-try {
-  // Vérifier si BarCodeScanner est disponible sans l'importer immédiatement
-} catch (error) {
-  console.log('BarCodeScanner non disponible:', error.message);
-}
-
 export class PersistentStorage {
   // Fonction pour nettoyer toutes les données utilisateurs
   static async clearAllUserData(): Promise<void> {
     try {
-      const keysToRemove = [
-        'users',
-        'currentUser', 
-        'user_preferences',
-        'training_history',
-        'nutrition_history',
-        'health_data',
-        'app_settings',
-        'programmes_coach',
-        'programmes_sport',
-        'programmes_nutrition'
-      ];
-
-      await AsyncStorage.multiRemove(keysToRemove);
-      console.log('🧹 Toutes les données utilisateurs supprimées');
+      console.log('🧹 Suppression des données utilisateurs sur le serveur...');
+      // Note: Cette fonction ne fait plus rien côté local
     } catch (error) {
       console.error('❌ Erreur nettoyage données:', error);
       throw error;
     }
   }
-  // Test de connexion au serveur avec cache temporaire
-  private static connectionCache: { isConnected: boolean; timestamp: number } | null = null;
-  private static readonly CACHE_DURATION = 30000; // 30 secondes
 
+  // Test de connexion au serveur avec réveil automatique
   static async testConnection(): Promise<boolean> {
     try {
       console.log(`🔍 Test de connexion au serveur Replit: ${SERVER_URL}`);
 
-      // D'abord vérifier si nous sommes en ligne
-      if (typeof navigator !== 'undefined' && !navigator.onLine) {
-        console.warn('⚠️ Aucune connexion internet détectée');
-        return false;
-      }
-
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 secondes pour Replit
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
 
       const response = await fetch(`${SERVER_URL}/api/health`, {
         method: 'GET',
@@ -70,14 +41,13 @@ export class PersistentStorage {
         return true;
       } else {
         console.warn(`⚠️ Serveur Replit indisponible (status: ${response.status})`);
-        
-        // Tenter de réveiller le serveur si le statut indique qu'il dort
+
         if (response.status >= 500) {
           console.log('🔄 Tentative de réveil du serveur...');
           const wakeupSuccess = await ServerWakeupService.wakeupServer();
           return wakeupSuccess;
         }
-        
+
         return false;
       }
     } catch (error: any) {
@@ -94,17 +64,21 @@ export class PersistentStorage {
     }
   }
 
+  // Assurer la connexion au serveur (avec réveil si nécessaire)
+  static async ensureConnection(): Promise<void> {
+    const isConnected = await this.testConnection();
+    if (!isConnected) {
+      throw new Error('Impossible de se connecter au serveur Replit');
+    }
+  }
+
   // Users storage
   static async getUsers(): Promise<any[]> {
     try {
-      const isConnected = await this.testConnection();
-      if (!isConnected) {
-        console.log('📱 Serveur Replit indisponible, retour liste vide');
-        return [];
-      }
+      await this.ensureConnection();
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
       const response = await fetch(`${SERVER_URL}/api/users`, {
         method: 'GET',
@@ -116,19 +90,20 @@ export class PersistentStorage {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Utilisateurs récupérés depuis le serveur Replit');
+        console.log('✅ Utilisateurs récupérés depuis le serveur Replit');
         return data;
       }
       throw new Error(`Erreur HTTP ${response.status}`);
     } catch (error) {
-      console.error('Erreur récupération utilisateurs:', error);
-      return [];
+      console.error('❌ Erreur récupération utilisateurs:', error);
+      throw error;
     }
   }
 
   static async saveUsers(users: any[]): Promise<void> {
     try {
-      await this.testConnection();
+      await this.ensureConnection();
+
       const response = await fetch(`${SERVER_URL}/api/users`, {
         method: 'POST',
         headers: {
@@ -138,12 +113,12 @@ export class PersistentStorage {
       });
 
       if (response.ok) {
-        console.log('Utilisateurs sauvegardés sur le serveur Replit');
+        console.log('✅ Utilisateurs sauvegardés sur le serveur Replit');
         return;
       }
       throw new Error('Erreur sauvegarde utilisateurs sur le serveur');
     } catch (error) {
-      console.error('Erreur sauvegarde utilisateurs:', error);
+      console.error('❌ Erreur sauvegarde utilisateurs:', error);
       throw error;
     }
   }
@@ -151,22 +126,25 @@ export class PersistentStorage {
   // Messages storage
   static async getMessages(userId: string): Promise<any[]> {
     try {
-      await this.testConnection();
+      await this.ensureConnection();
+
       const response = await fetch(`${SERVER_URL}/api/messages/${userId}`);
       if (response.ok) {
         const data = await response.json();
-        console.log('Messages récupérés depuis le serveur Replit');
+        console.log('✅ Messages récupérés depuis le serveur Replit');
         return data;
       }
       throw new Error('Erreur récupération messages depuis le serveur');
     } catch (error) {
-      console.error('Erreur récupération messages:', error);
+      console.error('❌ Erreur récupération messages:', error);
       throw error;
     }
   }
 
   static async saveMessages(userId: string, messages: any[]): Promise<void> {
     try {
+      await this.ensureConnection();
+
       const response = await fetch(`${SERVER_URL}/api/messages/${userId}`, {
         method: 'POST',
         headers: {
@@ -179,17 +157,18 @@ export class PersistentStorage {
         throw new Error('Erreur sauvegarde messages sur le serveur');
       }
 
-      console.log('Messages sauvegardés sur le serveur Replit');
+      console.log('✅ Messages sauvegardés sur le serveur Replit');
     } catch (error) {
-      console.error('Erreur sauvegarde messages:', error);
+      console.error('❌ Erreur sauvegarde messages:', error);
       throw error;
     }
   }
 
-  // Méthodes pour Apple Health
+  // Health data methods
   static async saveHealthData(userId: string, healthData: any[]): Promise<void> {
     try {
-      await this.testConnection();
+      await this.ensureConnection();
+
       const response = await fetch(`${SERVER_URL}/api/health/${userId}`, {
         method: 'POST',
         headers: {
@@ -199,118 +178,74 @@ export class PersistentStorage {
       });
 
       if (response.ok) {
-        console.log('Données Apple Health sauvegardées sur le serveur Replit');
+        console.log('✅ Données Apple Health sauvegardées sur le serveur Replit');
         return;
       }
       throw new Error('Erreur sauvegarde données Apple Health sur le serveur');
     } catch (error) {
-      console.error('Erreur sauvegarde Apple Health:', error);
+      console.error('❌ Erreur sauvegarde Apple Health:', error);
       throw error;
     }
   }
 
   static async getHealthData(userId: string): Promise<any[]> {
     try {
-      await this.testConnection();
+      await this.ensureConnection();
+
       const response = await fetch(`${SERVER_URL}/api/health/${userId}`);
       if (response.ok) {
         const data = await response.json();
-        console.log('Données Apple Health récupérées depuis le serveur Replit');
+        console.log('✅ Données Apple Health récupérées depuis le serveur Replit');
         return data;
       }
       throw new Error('Erreur récupération données Apple Health');
     } catch (error) {
-      console.error('Erreur récupération Apple Health:', error);
-      return [];
+      console.error('❌ Erreur récupération Apple Health:', error);
+      throw error;
     }
   }
 
   // Weight data methods
   static async saveWeightData(userId: string, weightData: any): Promise<void> {
-    let localSaved = false;
-    let replitSaved = false;
-
     try {
-      // 1. Sauvegarde locale prioritaire
-      await AsyncStorage.setItem(`weight_data_${userId}`, JSON.stringify(weightData));
-      localSaved = true;
-      console.log('✅ Sauvegarde poids locale réussie');
+      await this.ensureConnection();
 
-      // 2. PRIORITÉ: Essayer de sauvegarder sur le serveur Replit
-      const isConnected = await this.testConnection();
-      if (isConnected) {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-          const response = await fetch(`${SERVER_URL}/api/weight/${userId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(weightData),
-            signal: controller.signal
-          });
+      const response = await fetch(`${SERVER_URL}/api/weight/${userId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(weightData),
+        signal: controller.signal
+      });
 
-          clearTimeout(timeoutId);
+      clearTimeout(timeoutId);
 
-          if (response.ok) {
-            replitSaved = true;
-            console.log('🚀 Sauvegarde poids Replit réussie');
-          } else {
-            console.warn(`⚠️ Échec sauvegarde poids Replit (HTTP ${response.status})`);
-          }
-        } catch (replitError) {
-          console.warn('⚠️ Erreur sauvegarde poids Replit:', replitError);
-        }
+      if (response.ok) {
+        console.log('✅ Sauvegarde poids Replit réussie');
+      } else {
+        throw new Error(`Échec sauvegarde poids Replit (HTTP ${response.status})`);
       }
-
-      // 3. Rapport final
-      if (localSaved && replitSaved) {
-        console.log('🎉 Sauvegarde poids complète (local + Replit)');
-      } else if (localSaved) {
-        console.log('⚠️ Sauvegarde poids locale uniquement');
-      }
-
     } catch (error) {
-      console.error('❌ Erreur critique sauvegarde poids:', error);
+      console.error('❌ Erreur sauvegarde poids:', error);
       throw error;
     }
   }
 
   static async getWeightData(userId: string): Promise<any> {
     try {
-      // Essayer d'abord le serveur Replit
-      const isConnected = await this.testConnection();
-      if (isConnected) {
-        try {
-          const response = await fetch(`${SERVER_URL}/api/weight/${userId}`);
-          if (response.ok) {
-            const data = await response.json();
-            console.log('Données poids récupérées depuis Replit');
-            return data;
-          }
-        } catch (error) {
-          console.warn('Erreur récupération poids Replit, fallback local');
-        }
-      }
+      await this.ensureConnection();
 
-      // Fallback vers le stockage local
-      const localData = await AsyncStorage.getItem(`weight_data_${userId}`);
-      if (localData) {
-        console.log('Fallback vers le stockage local pour les données de poids');
-        return JSON.parse(localData);
+      const response = await fetch(`${SERVER_URL}/api/weight/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Données poids récupérées depuis Replit');
+        return data;
       }
-
-      // Données par défaut
-      return {
-        startWeight: 0,
-        currentWeight: 0,
-        targetWeight: 0,
-        lastWeightUpdate: null,
-        targetAsked: false,
-        weightHistory: [],
-      };
+      throw new Error('Erreur récupération données poids');
     } catch (error) {
-      console.error('Erreur récupération données poids:', error);
+      console.error('❌ Erreur récupération données poids:', error);
       return {
         startWeight: 0,
         currentWeight: 0,
@@ -324,82 +259,45 @@ export class PersistentStorage {
 
   // Nutrition methods
   static async saveNutrition(userId: string, nutrition: any[]): Promise<void> {
-    let localSaved = false;
-    let replitSaved = false;
-
     try {
-      // 1. Sauvegarde locale prioritaire
-      await AsyncStorage.setItem(`nutrition_${userId}`, JSON.stringify(nutrition));
-      localSaved = true;
-      console.log('✅ Sauvegarde nutrition locale réussie');
+      await this.ensureConnection();
 
-      // 2. PRIORITÉ: Essayer de sauvegarder sur le serveur Replit
-      const isConnected = await this.testConnection();
-      if (isConnected) {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-          const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(nutrition),
-            signal: controller.signal
-          });
+      const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nutrition),
+        signal: controller.signal
+      });
 
-          clearTimeout(timeoutId);
+      clearTimeout(timeoutId);
 
-          if (response.ok) {
-            replitSaved = true;
-            console.log('🚀 Sauvegarde nutrition Replit réussie');
-          } else {
-            console.warn(`⚠️ Échec sauvegarde nutrition Replit (HTTP ${response.status})`);
-          }
-        } catch (replitError) {
-          console.warn('⚠️ Erreur sauvegarde nutrition Replit:', replitError);
-        }
+      if (response.ok) {
+        console.log('✅ Sauvegarde nutrition Replit réussie');
+      } else {
+        throw new Error(`Échec sauvegarde nutrition Replit (HTTP ${response.status})`);
       }
-
-      // 3. Rapport final
-      if (localSaved && replitSaved) {
-        console.log('🎉 Sauvegarde nutrition complète (local + Replit)');
-      } else if (localSaved) {
-        console.log('⚠️ Sauvegarde nutrition locale uniquement');
-      }
-
     } catch (error) {
-      console.error('❌ Erreur critique sauvegarde nutrition:', error);
+      console.error('❌ Erreur sauvegarde nutrition:', error);
       throw error;
     }
   }
 
   static async getNutrition(userId: string): Promise<any[]> {
     try {
-      // Essayer d'abord le serveur Replit
-      const isConnected = await this.testConnection();
-      if (isConnected) {
-        try {
-          const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`);
-          if (response.ok) {
-            const data = await response.json();
-            console.log('Nutrition récupérée depuis Replit');
-            return data;
-          }
-        } catch (error) {
-          console.warn('Erreur récupération nutrition Replit, fallback local');
-        }
-      }
+      await this.ensureConnection();
 
-      // Fallback vers le stockage local
-      const localData = await AsyncStorage.getItem(`nutrition_${userId}`);
-      if (localData) {
-        console.log('Fallback vers le stockage local pour la nutrition');
-        return JSON.parse(localData);
+      const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Nutrition récupérée depuis Replit');
+        return data;
       }
-
-      return [];
+      throw new Error('Erreur récupération nutrition');
     } catch (error) {
-      console.error('Erreur récupération nutrition:', error);
+      console.error('❌ Erreur récupération nutrition:', error);
       return [];
     }
   }
@@ -407,6 +305,8 @@ export class PersistentStorage {
   // Workouts methods
   static async saveWorkouts(userId: string, workouts: any[]): Promise<void> {
     try {
+      await this.ensureConnection();
+
       const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -415,24 +315,26 @@ export class PersistentStorage {
       if (!response.ok) {
         throw new Error('Erreur sauvegarde entraînements');
       }
-      console.log('Entraînements sauvegardés sur Replit');
+      console.log('✅ Entraînements sauvegardés sur Replit');
     } catch (error) {
-      console.error('Erreur sauvegarde entraînements:', error);
+      console.error('❌ Erreur sauvegarde entraînements:', error);
       throw error;
     }
   }
 
   static async getWorkouts(userId: string): Promise<any[]> {
     try {
+      await this.ensureConnection();
+
       const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`);
       if (response.ok) {
         const data = await response.json();
-        console.log('Entraînements récupérés depuis Replit');
+        console.log('✅ Entraînements récupérés depuis Replit');
         return data;
       }
       throw new Error('Erreur récupération entraînements');
     } catch (error) {
-      console.error('Erreur récupération entraînements:', error);
+      console.error('❌ Erreur récupération entraînements:', error);
       return [];
     }
   }
@@ -440,6 +342,8 @@ export class PersistentStorage {
   // User forme methods
   static async getUserForme(userId: string, date: string): Promise<any> {
     try {
+      await this.ensureConnection();
+
       const response = await fetch(`${SERVER_URL}/api/forme/${userId}/${date}`);
       if (response.ok) {
         const data = await response.json();
@@ -447,7 +351,7 @@ export class PersistentStorage {
       }
       throw new Error('Erreur récupération forme');
     } catch (error) {
-      console.error('Erreur récupération forme:', error);
+      console.error('❌ Erreur récupération forme:', error);
       return {
         sleep: { hours: 0, quality: 'Moyen', bedTime: '', wakeTime: '' },
         stress: { level: 5, factors: [], notes: '' },
@@ -460,7 +364,8 @@ export class PersistentStorage {
 
   static async saveUserForme(userId: string, date: string, formeData: any): Promise<void> {
     try {
-      await this.testConnection();
+      await this.ensureConnection();
+
       const response = await fetch(`${SERVER_URL}/api/forme/${userId}/${date}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -469,8 +374,9 @@ export class PersistentStorage {
       if (!response.ok) {
         throw new Error('Erreur sauvegarde forme');
       }
+      console.log('✅ Forme sauvegardée sur Replit');
     } catch (error) {
-      console.error('Erreur sauvegarde forme:', error);
+      console.error('❌ Erreur sauvegarde forme:', error);
       throw error;
     }
   }
@@ -478,15 +384,17 @@ export class PersistentStorage {
   // Subscription methods
   static async getSubscription(userId: string): Promise<any> {
     try {
+      await this.ensureConnection();
+
       const response = await fetch(`${SERVER_URL}/api/stripe/subscription/${userId}`);
       if (response.ok) {
         const data = await response.json();
-        console.log('Abonnement récupéré depuis Replit');
+        console.log('✅ Abonnement récupéré depuis Replit');
         return data;
       }
       throw new Error('Erreur récupération abonnement');
     } catch (error) {
-      console.error('Erreur récupération abonnement:', error);
+      console.error('❌ Erreur récupération abonnement:', error);
       return { planId: 'free', isPremium: false };
     }
   }
@@ -494,21 +402,25 @@ export class PersistentStorage {
   // User profile methods
   static async getUserProfile(userId: string): Promise<any> {
     try {
+      await this.ensureConnection();
+
       const response = await fetch(`${SERVER_URL}/api/user-profile/${userId}`);
       if (response.ok) {
         const data = await response.json();
-        console.log('Profil utilisateur récupéré depuis Replit');
+        console.log('✅ Profil utilisateur récupéré depuis Replit');
         return data;
       }
       return null;
     } catch (error) {
-      console.error('Erreur récupération profil:', error);
+      console.error('❌ Erreur récupération profil:', error);
       return null;
     }
   }
 
   static async saveUserProfile(userId: string, profileData: any): Promise<void> {
     try {
+      await this.ensureConnection();
+
       const response = await fetch(`${SERVER_URL}/api/user-profile/${userId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -517,350 +429,55 @@ export class PersistentStorage {
       if (!response.ok) {
         throw new Error('Erreur sauvegarde profil');
       }
-      console.log('Profil utilisateur sauvegardé sur Replit');
+      console.log('✅ Profil utilisateur sauvegardé sur Replit');
     } catch (error) {
-      console.error('Erreur sauvegarde profil:', error);
+      console.error('❌ Erreur sauvegarde profil:', error);
       throw error;
     }
   }
 
-  // Fonctions pour les données utilisateur spécifiques
+  // Toutes les autres méthodes utilisent maintenant uniquement le serveur
   static async getUserWorkouts(userId: string): Promise<any[]> {
-    try {
-      const isConnected = await this.testConnection();
-      if (isConnected) {
-        const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`);
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Entraînements récupérés depuis le serveur Replit');
-          return data;
-        }
-      }
-
-      // Fallback vers le stockage local
-      console.log('Fallback vers le stockage local pour les entraînements');
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-      const localData = await AsyncStorage.getItem(`workouts_${userId}`);
-      return localData ? JSON.parse(localData) : [];
-    } catch (error) {
-      console.error('Erreur récupération entraînements:', error);
-      // Essayer le stockage local en cas d'erreur
-      try {
-        const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-        const localData = await AsyncStorage.getItem(`workouts_${userId}`);
-        return localData ? JSON.parse(localData) : [];
-      } catch (localError) {
-        console.error('Erreur stockage local:', localError);
-        return [];
-      }
-    }
+    return await this.getWorkouts(userId);
   }
 
   static async saveUserWorkouts(userId: string, workouts: any[]): Promise<void> {
-    try {
-      await this.testConnection();
-      const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(workouts),
-      });
-      if (!response.ok) {
-        throw new Error('Erreur sauvegarde entraînements');
-      }
-    } catch (error) {
-      console.error('Erreur sauvegarde entraînements:', error);
-      throw error;
-    }
+    return await this.saveWorkouts(userId, workouts);
   }
 
   static async getUserData(): Promise<any> {
-    try {
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-      const userData = await AsyncStorage.getItem('currentUser');
-      return userData ? JSON.parse(userData) : null;
-    } catch (error) {
-      console.error('Erreur récupération données utilisateur:', error);
-      return null;
-    }
+    throw new Error('getUserData() non supporté - utilisez getCurrentUser() depuis auth.ts');
   }
 
   static async getUserNutrition(userId: string): Promise<any[]> {
-    try {
-      console.log('🔍 Récupération des données nutrition (getUserNutrition)...');
-
-      // 1. PRIORITÉ: Essayer le serveur Replit
-      const isConnected = await this.testConnection();
-      if (isConnected) {
-        try {
-          const fetchWithTimeout = new Promise<Response>((resolve, reject) => {
-            const timeoutId = setTimeout(() => reject(new Error('Timeout')), 5000);
-            fetch(`${SERVER_URL}/api/nutrition/${userId}`, {
-              method: 'GET',
-              headers: { 'Content-Type': 'application/json' }
-            }).then(response => {
-              clearTimeout(timeoutId);
-              resolve(response);
-            }).catch(error => {
-              clearTimeout(timeoutId);
-              reject(error);
-            });
-          });
-
-          const response = await fetchWithTimeout;
-
-          if (response.ok) {
-            const data = await response.json();
-            console.log(`✅ ${data.length} entrées nutrition récupérées depuis le serveur Replit`);
-            // Mettre à jour le cache local
-            await AsyncStorage.setItem(`nutrition_data_${userId}`, JSON.stringify(data));
-            return data;
-          }
-        } catch (replitError) {
-          console.warn('⚠️ Erreur récupération nutrition Replit:', replitError);
-        }
-      }
-
-      // 2. FALLBACK: Utiliser le stockage local
-      console.log('📱 Utilisation du stockage local nutrition (fallback)');
-      const localData = await AsyncStorage.getItem(`nutrition_data_${userId}`);
-      const nutrition = localData ? JSON.parse(localData) : [];
-      console.log(`💾 ${nutrition.length} entrées nutrition trouvées en local`);
-      return nutrition;
-    } catch (error) {
-      console.error('❌ Erreur critique récupération nutrition:', error);
-      return [];
-    }
+    return await this.getNutrition(userId);
   }
 
   static async saveUserNutrition(userId: string, nutrition: any[]): Promise<void> {
-    let localSaved = false;
-    let replitSaved = false;
-
-    try {
-      console.log(`🥗 Sauvegarde de ${nutrition.length} entrées nutrition (saveUserNutrition)...`);
-
-      // 1. TOUJOURS sauvegarder en local EN PREMIER
-      await AsyncStorage.setItem(`nutrition_data_${userId}`, JSON.stringify(nutrition));
-      localSaved = true;
-      console.log('✅ Sauvegarde nutrition locale réussie');
-
-      // 2. PRIORITÉ: Essayer de sauvegarder sur le serveur Replit
-      const isConnected = await this.testConnection();
-      if (isConnected) {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 8000);
-
-          const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(nutrition),
-            signal: controller.signal
-          });
-
-          clearTimeout(timeoutId);
-
-          if (response.ok) {
-            replitSaved = true;
-            console.log('🚀 Sauvegarde nutrition Replit réussie');
-          } else {
-            console.warn(`⚠️ Échec sauvegarde nutrition Replit (HTTP ${response.status})`);
-          }
-        } catch (replitError) {
-          console.warn('⚠️ Erreur sauvegarde nutrition Replit:', replitError);
-        }
-      }
-
-      // 3. Rapport final
-      if (localSaved && replitSaved) {
-        console.log('🎉 Sauvegarde nutrition complète (local + Replit)');
-      } else if (localSaved) {
-        console.log('⚠️ Sauvegarde nutrition locale uniquement');
-      }
-
-    } catch (error) {
-      console.error('❌ Erreur sauvegarde nutrition:', error);
-
-      if (!localSaved) {
-        try {
-          await AsyncStorage.setItem(`nutrition_data_${userId}`, JSON.stringify(nutrition));
-          console.log('🆘 Sauvegarde nutrition locale de secours');
-        } catch (localError) {
-          console.error('🔥 ERREUR CRITIQUE nutrition:', localError);
-          throw localError;
-        }
-      }
-    }
+    return await this.saveNutrition(userId, nutrition);
   }
 
   static async getUserWeight(userId: string): Promise<any> {
-    try {
-      console.log('🔍 Récupération des données de poids...');
-
-      // 1. PRIORITÉ: Essayer le serveur Replit
-      const isConnected = await this.testConnection();
-      if (isConnected) {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-          const response = await fetch(`${SERVER_URL}/api/weight/${userId}`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            signal: controller.signal
-          });
-
-          clearTimeout(timeoutId);
-
-          if (response.ok) {
-            const data = await response.json();
-            console.log('✅ Données poids récupérées depuis le serveur Replit');
-            // Mettre à jour le cache local
-            await AsyncStorage.setItem(`weight_data_${userId}`, JSON.stringify(data));
-            return data;
-          }
-        } catch (replitError) {
-          console.warn('⚠️ Erreur récupération poids Replit:', replitError);
-        }
-      }
-
-      // 2. FALLBACK: Utiliser le stockage local
-      console.log('📱 Utilisation du stockage local poids (fallback)');
-      const localData = await AsyncStorage.getItem(`weight_data_${userId}`);
-      return localData ? JSON.parse(localData) : {
-        startWeight: 0,
-        currentWeight: 0,
-        targetWeight: 0,
-        lastWeightUpdate: null,
-        targetAsked: false,
-        weightHistory: [],
-      };
-    } catch (error) {
-      console.error('❌ Erreur critique récupération poids:', error);
-      return {
-        startWeight: 0,
-        currentWeight: 0,
-        targetWeight: 0,
-        lastWeightUpdate: null,
-        targetAsked: false,
-        weightHistory: [],
-      };
-    }
+    return await this.getWeightData(userId);
   }
 
   static async saveUserWeight(userId: string, weightData: any): Promise<void> {
-    let localSaved = false;
-    let replitSaved = false;
-
-    try {
-      console.log('💾 Sauvegarde des données de poids...');
-
-      // 1. TOUJOURS sauvegarder en local EN PREMIER
-      await AsyncStorage.setItem(`weight_data_${userId}`, JSON.stringify(weightData));
-      localSaved = true;
-      console.log('✅ Sauvegarde poids locale réussie');
-
-      // 2. PRIORITÉ: Essayer de sauvegarder sur le serveur Replit
-      const isConnected = await this.testConnection();
-      if (isConnected) {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 8000);
-
-          const response = await fetch(`${SERVER_URL}/api/weight/${userId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(weightData),
-            signal: controller.signal
-          });
-
-          clearTimeout(timeoutId);
-
-          if (response.ok) {
-            replitSaved = true;
-            console.log('🚀 Sauvegarde poids Replit réussie');
-          } else {
-            console.warn(`⚠️ Échec sauvegarde poids Replit (HTTP ${response.status})`);
-          }
-        } catch (replitError) {
-          console.warn('⚠️ Erreur sauvegarde poids Replit:', replitError);
-        }
-      }
-
-      // 3. Rapport final
-      if (localSaved && replitSaved) {
-        console.log('🎉 Sauvegarde poids complète (local + Replit)');
-      } else if (localSaved) {
-        console.log('⚠️ Sauvegarde poids locale uniquement');
-      }
-
-    } catch (error) {
-      console.error('❌ Erreur sauvegarde poids:', error);
-
-      if (!localSaved) {
-        try {
-          await AsyncStorage.setItem(`weight_data_${userId}`, JSON.stringify(weightData));
-          console.log('🆘 Sauvegarde poids locale de secours');
-        } catch (localError) {
-          console.error('🔥 ERREUR CRITIQUE poids:', localError);
-          throw localError;
-        }
-      }
-    }
+    return await this.saveWeightData(userId, weightData);
   }
 
   static async getUserMensurations(userId: string): Promise<any> {
     try {
-      console.log('🔍 Récupération des mensurations...');
+      await this.ensureConnection();
 
-      // 1. PRIORITÉ: Essayer le serveur Replit
-      const isConnected = await this.testConnection();
-      if (isConnected) {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-          const response = await fetch(`${SERVER_URL}/api/mensurations/${userId}`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            signal: controller.signal
-          });
-
-          clearTimeout(timeoutId);
-
-          if (response.ok) {
-            const data = await response.json();
-            console.log('✅ Mensurations récupérées depuis le serveur Replit');
-            // Mettre à jour le cache local
-            await AsyncStorage.setItem(`mensurations_${userId}`, JSON.stringify(data));
-            return data;
-          }
-        } catch (replitError) {
-          console.warn('⚠️ Erreur récupération mensurations Replit:', replitError);
-        }
+      const response = await fetch(`${SERVER_URL}/api/mensurations/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Mensurations récupérées depuis le serveur Replit');
+        return data;
       }
-
-      // 2. FALLBACK: Utiliser le stockage local
-      console.log('📱 Utilisation du stockage local mensurations (fallback)');
-      const localData = await AsyncStorage.getItem(`mensurations_${userId}`);
-      return localData ? JSON.parse(localData) : {
-        biceps: { start: 0, current: 0 },
-        bicepsGauche: { start: 0, current: 0 },
-        bicepsDroit: { start: 0, current: 0 },
-        cuisses: { start: 0, current: 0 },
-        cuissesGauche: { start: 0, current: 0 },
-        cuissesDroit: { start: 0, current: 0 },
-        pectoraux: { start: 0, current: 0 },
-        taille: { start: 0, current: 0 },
-        avantBras: { start: 0, current: 0 },
-        avantBrasGauche: { start: 0, current: 0 },
-        avantBrasDroit: { start: 0, current: 0 },
-        mollets: { start: 0, current: 0 },
-        molletsGauche: { start: 0, current: 0 },
-        molletsDroit: { start: 0, current: 0 },
-      };
+      throw new Error('Erreur récupération mensurations');
     } catch (error) {
-      console.error('❌ Erreur critique récupération mensurations:', error);
+      console.error('❌ Erreur récupération mensurations:', error);
       return {
         biceps: { start: 0, current: 0 },
         bicepsGauche: { start: 0, current: 0 },
@@ -881,208 +498,57 @@ export class PersistentStorage {
   }
 
   static async saveUserMensurations(userId: string, mensurations: any): Promise<void> {
-    let localSaved = false;
-    let replitSaved = false;
-
     try {
-      console.log('💾 Sauvegarde des mensurations...');
+      await this.ensureConnection();
 
-      // 1. TOUJOURS sauvegarder en local EN PREMIER
-      await AsyncStorage.setItem(`mensurations_${userId}`, JSON.stringify(mensurations));
-      localSaved = true;
-      console.log('✅ Sauvegarde mensurations locale réussie');
+      const response = await fetch(`${SERVER_URL}/api/mensurations/${userId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(mensurations),
+      });
 
-      // 2. PRIORITÉ: Essayer de sauvegarder sur le serveur Replit
-      const isConnected = await this.testConnection();
-      if (isConnected) {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 8000);
-
-          const response = await fetch(`${SERVER_URL}/api/mensurations/${userId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(mensurations),
-            signal: controller.signal
-          });
-
-          clearTimeout(timeoutId);
-
-          if (response.ok) {
-            replitSaved = true;
-            console.log('🚀 Sauvegarde mensurations Replit réussie');
-          } else {
-            console.warn(`⚠️ Échec sauvegarde mensurations Replit (HTTP ${response.status})`);
-          }
-        } catch (replitError) {
-          console.warn('⚠️ Erreur sauvegarde mensurations Replit:', replitError);
-        }
+      if (response.ok) {
+        console.log('✅ Sauvegarde mensurations Replit réussie');
+      } else {
+        throw new Error(`Échec sauvegarde mensurations Replit (HTTP ${response.status})`);
       }
-
-      // 3. Rapport final
-      if (localSaved && replitSaved) {
-        console.log('🎉 Sauvegarde mensurations complète (local + Replit)');
-      } else if (localSaved) {
-        console.log('⚠️ Sauvegarde mensurations locale uniquement');
-      }
-
     } catch (error) {
       console.error('❌ Erreur sauvegarde mensurations:', error);
-
-      if (!localSaved) {
-        try {
-          await AsyncStorage.setItem(`mensurations_${userId}`, JSON.stringify(mensurations));
-          console.log('🆘 Sauvegarde mensurations locale de secours');
-        } catch (localError) {
-          console.error('🔥 ERREUR CRITIQUE mensurations:', localError);
-          throw localError;
-        }
-      }
-    }
-  }
-
-  static async getUserFormeData(userId: string, date: string): Promise<any> {
-    try {
-      const isConnected = await this.testConnection();
-      if (isConnected) {
-        const response = await fetch(`${SERVER_URL}/api/forme/${userId}/${date}`);
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Données de forme récupérées depuis le serveur Replit');
-          // Sauvegarder en local comme backup
-          await AsyncStorage.setItem(`forme_data_${userId}_${date}`, JSON.stringify(data));
-          return data;
-        }
-      }
-
-      // Fallback vers le stockage local
-      console.log('Fallback vers le stockage local pour les données de forme');
-      const localData = await AsyncStorage.getItem(`forme_data_${userId}_${date}`);
-      return localData ? JSON.parse(localData) : {
-        sleep: { hours: 0, quality: 'Moyen', bedTime: '', wakeTime: '' },
-        stress: { level: 5, factors: [], notes: '' },
-        heartRate: { resting: 0, variability: 0 },
-        rpe: { value: 5, notes: '' },
-        cycle: { phase: 'Menstruel', dayOfCycle: 1, symptoms: [], notes: '' },
-        date: date
-      };
-    } catch (error) {
-      console.error('Erreur récupération données forme:', error);
-      try {
-        const localData = await AsyncStorage.getItem(`forme_data_${userId}_${date}`);
-        return localData ? JSON.parse(localData) : {
-          sleep: { hours: 0, quality: 'Moyen', bedTime: '', wakeTime: '' },
-          stress: { level: 5, factors: [], notes: '' },
-          heartRate: { resting: 0, variability: 0 },
-          rpe: { value: 5, notes: '' },
-          date: date
-        };
-      } catch (localError) {
-        console.error('Erreur stockage local forme:', localError);
-        return {
-          sleep: { hours: 0, quality: 'Moyen', bedTime: '', wakeTime: '' },
-          stress: { level: 5, factors: [], notes: '' },
-          heartRate: { resting: 0, variability: 0 },
-          rpe: { value: 5, notes: '' },
-          cycle: { phase: 'Menstruel', dayOfCycle: 1, symptoms: [], notes: '' },
-          date: date
-        };
-      }
-    }
-  }
-
-  static async saveFormeData(userId: string, date: string, formeData: any): Promise<void> {
-    try {
-      // Toujours sauvegarder en local d'abord
-      await AsyncStorage.setItem(`forme_data_${userId}_${date}`, JSON.stringify(formeData));
-
-      const isConnected = await this.testConnection();
-      if (isConnected) {
-        const response = await fetch(`${SERVER_URL}/api/forme/${userId}/${date}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formeData),
-        });
-
-        if (response.ok) {
-          console.log('Données de forme sauvegardées sur le serveur Replit');
-        } else {
-          console.log('Données de forme sauvegardées localement (serveur indisponible)');
-        }
-      } else {
-        console.log('Données de forme sauvegardées localement (serveur indisponible)');
-      }
-    } catch (error) {
-      console.error('Erreur sauvegarde données forme:', error);
-      // Au moins garder la sauvegarde locale
-      await AsyncStorage.setItem(`forme_data_${userId}_${date}`, JSON.stringify(formeData));
-    }
-  }
-
-  // Gestion de l'utilisateur actuel
-  static async getCurrentUser(): Promise<any> {
-    try {
-      const userData = await AsyncStorage.getItem('currentUser');
-      return userData ? JSON.parse(userData) : null;
-    } catch (error) {
-      console.error('Erreur récupération utilisateur:', error);
-      return null;
-    }
-  }
-
-  static async setCurrentUser(user: any): Promise<void> {
-    try {
-      // Sauvegarder en local
-      await AsyncStorage.setItem('currentUser', JSON.stringify(user));
-
-      // Synchroniser avec le serveur Replit
-      if (user?.id) {
-        try {
-          const isConnected = await this.testConnection();
-          if (isConnected) {
-            await this.saveUserProfile(user.id, user);
-          }
-        } catch (error) {
-          console.warn('Impossible de synchroniser le profil utilisateur avec le serveur:', error);
-        }
-      }
-    } catch (error) {
-      console.error('Erreur sauvegarde utilisateur actuel:', error);
       throw error;
     }
   }
 
-  // Méthodes pour les profils utilisateur
+  static async getUserFormeData(userId: string, date: string): Promise<any> {
+    return await this.getUserForme(userId, date);
+  }
 
-  // Méthodes pour les paramètres de notifications
+  static async saveFormeData(userId: string, date: string, formeData: any): Promise<void> {
+    return await this.saveUserForme(userId, date, formeData);
+  }
+
+  // Utilisateur actuel - stocké sur le serveur maintenant
+  static async getCurrentUser(): Promise<any> {
+    throw new Error('getCurrentUser() moved to auth.ts - use auth.getCurrentUser()');
+  }
+
+  static async setCurrentUser(user: any): Promise<void> {
+    throw new Error('setCurrentUser() moved to auth.ts - use auth methods');
+  }
+
+  // Notification settings
   static async getNotificationSettings(userId: string): Promise<any> {
     try {
-      const isConnected = await this.testConnection();
-      if (isConnected) {
-        const response = await fetch(`${SERVER_URL}/api/notifications/${userId}`);
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Paramètres notifications récupérés depuis le serveur Replit');
-          await AsyncStorage.setItem(`notification_settings_${userId}`, JSON.stringify(data));
-          return data;
-        }
-      }
+      await this.ensureConnection();
 
-      // Fallback vers le stockage local
-      console.log('Fallback vers le stockage local pour les paramètres notifications');
-      const localData = await AsyncStorage.getItem(`notification_settings_${userId}`);
-      return localData ? JSON.parse(localData) : {
-        workoutReminder: true,
-        nutritionReminder: true,
-        progressUpdate: true,
-        reminderTime: '09:00',
-        weeklyReport: true,
-        coachMessages: true
-      };
+      const response = await fetch(`${SERVER_URL}/api/notifications/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Paramètres notifications récupérés depuis le serveur Replit');
+        return data;
+      }
+      throw new Error('Erreur récupération notifications');
     } catch (error) {
-      console.error('Erreur récupération paramètres notifications:', error);
+      console.error('❌ Erreur récupération paramètres notifications:', error);
       return {
         workoutReminder: true,
         nutritionReminder: true,
@@ -1096,58 +562,41 @@ export class PersistentStorage {
 
   static async saveNotificationSettings(userId: string, settings: any): Promise<void> {
     try {
-      // Toujours sauvegarder en local d'abord
-      await AsyncStorage.setItem(`notification_settings_${userId}`, JSON.stringify(settings));
+      await this.ensureConnection();
 
-      const isConnected = await this.testConnection();
-      if (isConnected) {
-        const response = await fetch(`${SERVER_URL}/api/notifications/${userId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(settings),
-        });
+      const response = await fetch(`${SERVER_URL}/api/notifications/${userId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(settings),
+      });
 
-        if (response.ok) {
-          console.log('Paramètres notifications sauvegardés sur le serveur Replit');
-        } else {
-          console.log('Paramètres notifications sauvegardés localement (serveur indisponible)');
-        }
+      if (response.ok) {
+        console.log('✅ Paramètres notifications sauvegardés sur le serveur Replit');
       } else {
-        console.log('Paramètres notifications sauvegardés localement (serveur indisponible)');
+        throw new Error('Erreur sauvegarde notifications');
       }
     } catch (error) {
-      console.error('Erreur sauvegarde paramètres notifications:', error);
-      await AsyncStorage.setItem(`notification_settings_${userId}`, JSON.stringify(settings));
+      console.error('❌ Erreur sauvegarde paramètres notifications:', error);
+      throw error;
     }
   }
 
-  // Méthodes pour les préférences d'application
+  // App preferences
   static async getAppPreferences(userId: string): Promise<any> {
     try {
-      const isConnected = await this.testConnection();
-      if (isConnected) {
-        const response = await fetch(`${SERVER_URL}/api/app-preferences/${userId}`);
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Préférences app récupérées depuis le serveur Replit');
-          await AsyncStorage.setItem(`app_preferences_${userId}`, JSON.stringify(data));
-          return data;
-        }
-      }
+      await this.ensureConnection();
 
-      // Fallback vers le stockage local
-      console.log('Fallback vers le stockage local pour les préférences app');
-      const localData = await AsyncStorage.getItem(`app_preferences_${userId}`);
-      return localData ? JSON.parse(localData) : {
-        theme: 'dark',
-        language: 'fr',
-        units: 'metric',
-        notifications: true
-      };
+      const response = await fetch(`${SERVER_URL}/api/app-preferences/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Préférences app récupérées depuis le serveur Replit');
+        return data;
+      }
+      throw new Error('Erreur récupération préférences');
     } catch (error) {
-      console.error('Erreur récupération préférences app:', error);
+      console.error('❌ Erreur récupération préférences app:', error);
       return {
         theme: 'dark',
         language: 'fr',
@@ -1159,84 +608,28 @@ export class PersistentStorage {
 
   static async saveAppPreferences(userId: string, preferences: any): Promise<void> {
     try {
-      // Toujours sauvegarder en local d'abord
-      await AsyncStorage.setItem(`app_preferences_${userId}`, JSON.stringify(preferences));
+      await this.ensureConnection();
 
-      const isConnected = await this.testConnection();
-      if (isConnected) {
-        const response = await fetch(`${SERVER_URL}/api/app-preferences/${userId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(preferences),
-        });
-
-        if (response.ok) {
-          console.log('Préférences app sauvegardées sur le serveur Replit');
-        } else {
-          console.log('Préférences app sauvegardées localement (serveur indisponible)');
-        }
-      } else {
-        console.log('Préférences app sauvegardées localement (serveur indisponible)');
-      }
-    } catch (error) {
-      console.error('Erreur sauvegarde préférences app:', error);
-      await AsyncStorage.setItem(`app_preferences_${userId}`, JSON.stringify(preferences));
-    }
-  }
-
-  // Méthodes utilitaires
-  static async clearAllData(): Promise<void> {
-    try {
-      await AsyncStorage.multiRemove(['programmes_coach', 'users', 'current_user']);
-      console.log('Toutes les données locales ont été supprimées');
-    } catch (error) {
-      console.error('Erreur lors de la suppression des données:', error);
-      throw error;
-    }
-  }
-
-  static async exportData(): Promise<{ programmes: any[], users: any[] }> {
-    try {
-      const programmes = await this.getProgrammes();
-      const users = await this.getUsers();
-      return { programmes, users };
-    } catch (error) {
-      console.error('Erreur lors de l\'export des données:', error);
-      throw error;
-    }
-  }
-
-  static async getStravaActivities(userId: string): Promise<any[]> {
-    try {
-      await this.testConnection();
-      const response = await fetch(`${SERVER_URL}/api/strava/${userId}`);
+      const response = await fetch(`${SERVER_URL}/api/app-preferences/${userId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(preferences),
+      });
 
       if (response.ok) {
-        const data = await response.json();
-        console.log('Activités Strava récupérées du serveur Replit');
-        return data;
+        console.log('✅ Préférences app sauvegardées sur le serveur Replit');
+      } else {
+        throw new Error('Erreur sauvegarde préférences');
       }
-      throw new Error('Erreur récupération activités Strava du serveur');
     } catch (error) {
-      console.error('Erreur récupération activités Strava:', error);
-      return [];
-    }
-  }
-
-  static async importData(data: { programmes: any[], users: any[] }): Promise<void> {
-    try {
-      await this.saveProgrammes(data.programmes || []);
-      await this.saveUsers(data.users || []);
-      console.log('Données importées avec succès');
-    } catch (error) {
-      console.error('Erreur lors de l\'import des données:', error);
+      console.error('❌ Erreur sauvegarde préférences app:', error);
       throw error;
     }
   }
 
-  // Méthodes pour les statuts d'intégrations
+  // Integration status
   static async getIntegrationStatus(userId: string): Promise<any> {
     return await this.getUserIntegrationStatus(userId);
   }
@@ -1248,101 +641,40 @@ export class PersistentStorage {
     };
 
     try {
-      // Sur iOS, TOUJOURS utiliser le stockage local uniquement avec protection native
-      //if (Platform.OS === 'ios') {
-      //  console.log('🍎 Mode iOS - stockage local sécurisé');
-      //  try {
-      //    // Protection contre les erreurs natives AsyncStorage
-      //    const localData = await new Promise((resolve, reject) => {
-      //      const timeout = setTimeout(() => {
-      //        reject(new Error('AsyncStorage timeout'));
-      //      }, 3000);
+      await this.ensureConnection();
 
-      //      AsyncStorage.getItem(`user_integrations_${userId}`)
-      //        .then(data => {
-      //          clearTimeout(timeout);
-      //          resolve(data);
-      //        })
-      //        .catch(error => {
-      //          clearTimeout(timeout);
-      //          console.error('🚨 Erreur native AsyncStorage:', error);
-      //          reject(error);
-      //        });
-      //    });
-
-      //    return localData ? JSON.parse(localData as string) : defaultStatus;
-      //  } catch (localError) {
-      //    console.warn('⚠️ Erreur stockage local iOS sécurisé:', localError);
-      //    return defaultStatus;
-      //  }
-      //}
-
-      // Pour les autres plateformes, tentative serveur puis fallback local
-      const isConnected = await this.testConnection();
-      if (isConnected) {
-        const response = await fetch(`${SERVER_URL}/api/integrations/${userId}`);
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Statuts intégrations récupérés depuis le serveur Replit');
-          // Sauvegarder en local comme backup
-          await AsyncStorage.setItem(`user_integrations_${userId}`, JSON.stringify(data));
-          return data;
-        }
+      const response = await fetch(`${SERVER_URL}/api/integrations/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Statuts intégrations récupérés depuis le serveur Replit');
+        return data;
       }
-
-      // Fallback vers le stockage local
-      console.log('Fallback vers le stockage local pour les statuts intégrations');
-      const localData = await AsyncStorage.getItem(`user_integrations_${userId}`);
-      return localData ? JSON.parse(localData) : defaultStatus;
+      throw new Error('Erreur récupération intégrations');
     } catch (error) {
-      console.warn('Erreur récupération statuts intégrations:', error);
-      try {
-        const localData = await AsyncStorage.getItem(`user_integrations_${userId}`);
-        return localData ? JSON.parse(localData) : defaultStatus;
-      } catch (localError) {
-        console.warn('Erreur stockage local intégrations:', localError);
-        return defaultStatus;
-      }
+      console.error('❌ Erreur récupération statuts intégrations:', error);
+      return defaultStatus;
     }
   }
 
   static async saveIntegrationStatus(userId: string, status: any): Promise<void> {
     try {
-      // Toujours sauvegarder en local d'abord
-      await AsyncStorage.setItem(`user_integrations_${userId}`, JSON.stringify(status));
+      await this.ensureConnection();
 
-      const isConnected = await this.testConnection();
-      if (isConnected) {
-        const response = await fetch(`${SERVER_URL}/api/integrations/${userId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(status),
-        });
+      const response = await fetch(`${SERVER_URL}/api/integrations/${userId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(status),
+      });
 
-        if (response.ok) {
-          console.log('Statuts intégrations sauvegardés sur le serveur Replit');
-        } else {
-          console.log('Statuts intégrations sauvegardés localement (serveur indisponible)');
-        }
+      if (response.ok) {
+        console.log('✅ Statuts intégrations sauvegardés sur le serveur Replit');
       } else {
-        console.log('Statuts intégrations sauvegardés localement (serveur indisponible)');
+        throw new Error('Erreur sauvegarde intégrations');
       }
     } catch (error) {
-      console.error('Erreur sauvegarde statuts intégrations:', error);
-      // Au moins garder la sauvegarde locale
-      await AsyncStorage.setItem(`user_integrations_${userId}`, JSON.stringify(status));
-    }
-  }
-
-  // Vérification de l'état du serveur
-  static async syncData(): Promise<void> {
-    try {
-      await this.testConnection();
-      console.log('Serveur Replit opérationnel - toutes les données sont sur le serveur');
-    } catch (error) {
-      console.error('Erreur connexion serveur Replit:', error);
+      console.error('❌ Erreur sauvegarde statuts intégrations:', error);
       throw error;
     }
   }
@@ -1350,14 +682,10 @@ export class PersistentStorage {
   // Programmes storage
   static async getProgrammes(): Promise<any[]> {
     try {
-      const isConnected = await this.testConnection();
-      if (!isConnected) {
-        console.log('📱 Serveur Replit indisponible, retour liste vide');
-        return [];
-      }
+      await this.ensureConnection();
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
       const response = await fetch(`${SERVER_URL}/api/programmes`, {
         method: 'GET',
@@ -1369,19 +697,20 @@ export class PersistentStorage {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Programmes récupérés depuis le serveur Replit');
+        console.log('✅ Programmes récupérés depuis le serveur Replit');
         return data;
       }
       throw new Error(`Erreur HTTP ${response.status}`);
     } catch (error) {
-      console.error('Erreur récupération programmes:', error);
+      console.error('❌ Erreur récupération programmes:', error);
       return [];
     }
   }
 
   static async saveProgrammes(programmes: any[]): Promise<void> {
     try {
-      await this.testConnection();
+      await this.ensureConnection();
+
       const response = await fetch(`${SERVER_URL}/api/programmes`, {
         method: 'POST',
         headers: {
@@ -1394,9 +723,66 @@ export class PersistentStorage {
         throw new Error(`Erreur HTTP: ${response.status}`);
       }
 
-      console.log('Programmes sauvegardés sur le serveur Replit');
+      console.log('✅ Programmes sauvegardés sur le serveur Replit');
     } catch (error) {
-      console.error('Erreur sauvegarde programmes:', error);
+      console.error('❌ Erreur sauvegarde programmes:', error);
+      throw error;
+    }
+  }
+
+  // Strava activities
+  static async getStravaActivities(userId: string): Promise<any[]> {
+    try {
+      await this.ensureConnection();
+
+      const response = await fetch(`${SERVER_URL}/api/strava/${userId}`);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Activités Strava récupérées du serveur Replit');
+        return data;
+      }
+      throw new Error('Erreur récupération activités Strava du serveur');
+    } catch (error) {
+      console.error('❌ Erreur récupération activités Strava:', error);
+      return [];
+    }
+  }
+
+  // Vérification de l'état du serveur
+  static async syncData(): Promise<void> {
+    try {
+      await this.ensureConnection();
+      console.log('✅ Serveur Replit opérationnel - toutes les données sont sur le serveur');
+    } catch (error) {
+      console.error('❌ Erreur connexion serveur Replit:', error);
+      throw error;
+    }
+  }
+
+  // Data management
+  static async clearAllData(): Promise<void> {
+    throw new Error('clearAllData() non supporté en mode serveur uniquement');
+  }
+
+  static async exportData(): Promise<{ programmes: any[], users: any[] }> {
+    try {
+      const programmes = await this.getProgrammes();
+      const users = await this.getUsers();
+      return { programmes, users };
+    } catch (error) {
+      console.error('❌ Erreur lors de l\'export des données:', error);
+      throw error;
+    }
+  }
+
+  static async importData(data: { programmes: any[], users: any[] }): Promise<void> {
+    try {
+      await this.saveProgrammes(data.programmes || []);
+      await this.saveUsers(data.users || []);
+      console.log('✅ Données importées avec succès');
+    } catch (error) {
+      console.error('❌ Erreur lors de l\'import des données:', error);
       throw error;
     }
   }
@@ -1437,36 +823,10 @@ export const saveProgramme = async (programme: any) => {
   await PersistentStorage.saveProgrammes(programmes);
 };
 
-// Adding missing getClients function here
 export const getClients = async (): Promise<any[]> => {
   const users = await PersistentStorage.getUsers();
   return users.filter(user => user.userType === 'client');
 };
-
-// Fonction pour récupérer les données utilisateur
-export const getUserData = async (): Promise<any | null> => {
-  try {
-    const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-    const userData = await AsyncStorage.getItem('current_user');
-    return userData ? JSON.parse(userData) : null;
-  } catch (error) {
-    console.error('Erreur lors de la récupération:', error);
-    return null;
-  }
-};
-
-// Fonction pour sauvegarder les données utilisateur
-export const saveUserData = async (userData: any): Promise<void> => {
-  try {
-    const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-    await AsyncStorage.setItem('current_user', JSON.stringify(userData));
-  } catch (error) {
-    console.error('Erreur lors de la sauvegarde:', error);
-    throw error; // Propager l'erreur pour gestion appropriée
-  }
-};
-
-// Adding message management functions here
 
 // Test de connexion à l'API
 export const testApiConnection = async (): Promise<{ success: boolean; message: string }> => {
@@ -1474,7 +834,7 @@ export const testApiConnection = async (): Promise<{ success: boolean; message: 
     console.log(`[DEBUG] Test de connexion API: ${SERVER_URL}/api/health`);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 secondes
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     const response = await fetch(`${SERVER_URL}/api/health`, {
       method: 'GET',
@@ -1496,7 +856,7 @@ export const testApiConnection = async (): Promise<{ success: boolean; message: 
   } catch (error: any) {
     if (error.name === 'AbortError') {
       console.error('[ERROR] Timeout connexion API');
-      return { success: false, message: 'Timeout de connexion (5s)' };
+      return { success: false, message: 'Timeout de connexion (10s)' };
     }
 
     console.error('[ERROR] Test connexion API échoué:', error);
@@ -1505,93 +865,9 @@ export const testApiConnection = async (): Promise<{ success: boolean; message: 
 };
 
 export const getMessages = async (userId: string): Promise<any[]> => {
-  try {
-    console.log(`[DEBUG] Récupération messages pour userId: ${userId}`);
-    console.log(`[DEBUG] URL API: ${SERVER_URL}/api/messages/${userId}`);
-
-    // Test de connexion avec timeout court
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 secondes
-
-    const response = await fetch(`${SERVER_URL}/api/messages/${userId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      signal: controller.signal
-    });
-
-    clearTimeout(timeoutId);
-    console.log(`[DEBUG] Response status: ${response.status}`);
-
-    if (!response.ok) {
-      throw new Error(`Erreur HTTP: ${response.status} - ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    console.log(`[DEBUG] Messages récupérés depuis Replit:`, data.length);
-
-    // Sauvegarder en cache local
-    await AsyncStorage.setItem(`messages_cache_${userId}`, JSON.stringify(data));
-
-    return data.map((message: any) => ({
-      ...message,
-      timestamp: new Date(message.timestamp)
-    }));
-  } catch (error) {
-    console.warn('[WARNING] Erreur récupération messages Replit:', error);
-
-    // FALLBACK: Essayer le cache local
-    try {
-      const cachedData = await AsyncStorage.getItem(`messages_cache_${userId}`);
-      if (cachedData) {
-        const messages = JSON.parse(cachedData);
-        console.log(`[DEBUG] Messages récupérés depuis cache local:`, messages.length);
-        return messages.map((message: any) => ({
-          ...message,
-          timestamp: new Date(message.timestamp)
-        }));
-      }
-    } catch (cacheError) {
-      console.error('[ERROR] Erreur cache local messages:', cacheError);
-    }
-
-    // Dernier recours: tableau vide
-    console.log('[DEBUG] Aucun message trouvé, retour tableau vide');
-    return [];
-  }
+  return await PersistentStorage.getMessages(userId);
 };
 
 export const testServerConnection = async (): Promise<boolean> => {
-    try {
-      console.log(`🔍 Test connexion détaillé vers: ${SERVER_URL}/api/health-check`);
-      
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 secondes pour Replit
-
-      const response = await fetch(`${SERVER_URL}/api/health-check`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        signal: controller.signal,
-      });
-
-    clearTimeout(timeoutId);
-
-    if (response.ok) {
-      console.log('✅ Serveur Replit connecté');
-      return true;
-    } else {
-      console.log(`⚠️ Serveur indisponible (status: ${response.status})`);
-      return false;
-    }
-  } catch (error) {
-    if (error.name === 'AbortError') {
-      console.log('⚠️ Timeout de connexion au serveur Replit');
-    } else {
-      console.log('⚠️ Erreur de connexion au serveur Replit:', error.message);
-    }
-    return false;
-  }
+  return await PersistentStorage.testConnection();
 };
