@@ -161,11 +161,21 @@ export class PersistentStorage {
       const isConnected = await this.testConnection();
       if (isConnected) {
         try {
-          const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            signal: AbortSignal.timeout(5000)
+          const fetchWithTimeout = new Promise<Response>((resolve, reject) => {
+            const timeoutId = setTimeout(() => reject(new Error('Timeout')), 5000);
+            fetch(`${SERVER_URL}/api/nutrition/${userId}`, {
+              method: 'GET',
+              headers: { 'Content-Type': 'application/json' }
+            }).then(response => {
+              clearTimeout(timeoutId);
+              resolve(response);
+            }).catch(error => {
+              clearTimeout(timeoutId);
+              reject(error);
+            });
           });
+
+          const response = await fetchWithTimeout;
 
           if (response.ok) {
             const data = await response.json();
@@ -672,11 +682,21 @@ export class PersistentStorage {
       const isConnected = await this.testConnection();
       if (isConnected) {
         try {
-          const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            signal: AbortSignal.timeout(5000)
+          const fetchWithTimeout = new Promise<Response>((resolve, reject) => {
+            const timeoutId = setTimeout(() => reject(new Error('Timeout')), 5000);
+            fetch(`${SERVER_URL}/api/nutrition/${userId}`, {
+              method: 'GET',
+              headers: { 'Content-Type': 'application/json' }
+            }).then(response => {
+              clearTimeout(timeoutId);
+              resolve(response);
+            }).catch(error => {
+              clearTimeout(timeoutId);
+              reject(error);
+            });
           });
+
+          const response = await fetchWithTimeout;
 
           if (response.ok) {
             const data = await response.json();
@@ -867,7 +887,7 @@ export class PersistentStorage {
     }
   }
 
-  // Méthodes pour les données de forme
+  // Méthodes pour les données deforme
   static async getFormeData(userId: string, date: string): Promise<any> {
     try {
       const isConnected = await this.testConnection();
