@@ -39,18 +39,18 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         clearTimeout(navigationTimeoutRef.current);
       }
 
-      router.replace(route as any);
+      // Utiliser push au lieu de replace pour éviter les erreurs de navigation
+      router.push(route as any);
 
       navigationTimeoutRef.current = setTimeout(() => {
         setIsNavigating(false);
-        lastNavigationRef.current = '';
-      }, 2000);
+      }, 500);
     };
 
     if (!user && !isAuthRoute) {
-      navigate('/auth/login', 'Aucun utilisateur connecté');
+      navigate('auth/login', 'Aucun utilisateur connecté');
     } else if (user && isAuthRoute) {
-      navigate('/(client)', 'Utilisateur connecté');
+      navigate('(client)', 'Utilisateur connecté');
     } else {
       // Reset navigation state si on est sur la bonne route
       lastNavigationRef.current = '';
