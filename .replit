@@ -21,7 +21,7 @@ localPort = 8082
 externalPort = 3000
 
 [workflows]
-runButton = "Serveur Replit"
+runButton = "Dev Full Stack"
 
 [[workflows.workflow]]
 name = "Dev Server"
