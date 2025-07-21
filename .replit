@@ -62,4 +62,22 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd server && node server.js"
+args = "cd server && npx pm2 start ecosystem.config.js"
+
+[[workflows.workflow]]
+name = "Stop Backend Server"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd server && npx pm2 stop eatfitbymax-server"
+
+[[workflows.workflow]]
+name = "Server Logs"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd server && npx pm2 logs eatfitbymax-server --lines 50"
