@@ -6,7 +6,7 @@ export class ServerWakeupService {
   private static readonly TIMEOUT_MS = 30000; // 30 secondes
 
   static async wakeupServer(): Promise<boolean> {
-    const serverUrl = 'https://workspace-eatfitbymax.replit.dev';
+    const serverUrl = 'https://eatfitbymax.replit.app';
     
     console.log('🔄 Tentative de réveil du serveur Replit...');
     console.log(`🌐 URL du serveur: ${serverUrl}`);
@@ -87,7 +87,7 @@ export class ServerWakeupService {
 
   static async testConnection(): Promise<boolean> {
     try {
-      const serverUrl = 'https://workspace-eatfitbymax.replit.dev';
+      const serverUrl = 'https://eatfitbymax.replit.app';
       const response = await fetch(`${serverUrl}/api/health`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },

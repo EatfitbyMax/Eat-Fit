@@ -61,7 +61,7 @@ app.use(rateLimit);
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? [
-        'https://workspace-eatfitbymax.replit.dev',
+        'https://eatfitbymax.replit.app',
         /^https:\/\/.*\.replit\.dev$/,
         /^https:\/\/.*\.replit\.app$/,
         'capacitor://localhost',
