@@ -70,9 +70,14 @@ export async function login(email: string, password: string): Promise<User | nul
 
     if (user.hashedPassword) {
       // Nouveau système avec hash
-      const bcrypt = await import('bcryptjs');
-      isPasswordValid = await bcrypt.compare(password, user.hashedPassword);
-      console.log('🔐 Vérification avec hash:', isPasswordValid ? 'VALIDE' : 'INVALIDE');
+      try {
+        const bcrypt = require('bcryptjs');
+        isPasswordValid = bcrypt.compareSync(password, user.hashedPassword);
+        console.log('🔐 Vérification avec hash:', isPasswordValid ? 'VALIDE' : 'INVALIDE');
+      } catch (compareError) {
+        console.error('❌ Erreur comparaison hash:', compareError);
+        isPasswordValid = false;
+      }
     } else if (user.password) {
       // Ancien système (temporaire)
       isPasswordValid = user.password === password;
@@ -138,19 +143,33 @@ export async function register(userData: Omit<User, 'id'> & { password: string }
 
     // Hacher le mot de passe avec validation
     console.log('🔐 Hachage du mot de passe...', `Type: ${typeof userData.password}, Longueur: ${userData.password.length}`);
-    const bcrypt = await import('bcryptjs');
-    const saltRounds = 10;
-    const passwordString = String(userData.password).trim();
-    const hashedPassword = await bcrypt.hash(passwordString, saltRounds);
+    
+    try {
+      const bcrypt = require('bcryptjs');
+      const saltRounds = 10;
+      const passwordString = String(userData.password).trim();
+      
+      console.log('🔧 Préparation hachage:', {
+        passwordString: passwordString.substring(0, 3) + '***',
+        saltRounds,
+        bcryptVersion: 'bcryptjs'
+      });
+      
+      const hashedPassword = bcrypt.hashSync(passwordString, saltRounds);
+      console.log('✅ Hachage réussi, longueur:', hashedPassword.length);
+    } catch (hashError) {
+      console.error('❌ Erreur détaillée hachage:', hashError);
+      throw new Error(`Erreur hachage mot de passe: ${hashError.message}`);
+    }
 
     // Créer le nouvel utilisateur
-    const newUser = {
-      ...userData,
-      id: Date.now().toString(),
-      hashedPassword: hashedPassword,
-      // Ne pas stocker le mot de passe en clair
-      password: undefined
-    };
+      const newUser = {
+        ...userData,
+        id: Date.now().toString(),
+        hashedPassword: hashedPassword,
+        // Ne pas stocker le mot de passe en clair
+        password: undefined
+      };
 
     // Ajouter à la liste des utilisateurs
     users.push(newUser);
