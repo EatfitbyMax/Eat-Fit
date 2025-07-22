@@ -17,7 +17,7 @@ localPort = 8082
 externalPort = 3000
 
 [workflows]
-runButton = "Expo Go"
+runButton = "Dev Server"
 
 [[workflows.workflow]]
 name = "Dev Server"
@@ -25,7 +25,7 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN npx expo start --clear --reset-cache --port 8082"
+args = "npx expo start"
 
 [[workflows.workflow]]
 name = "EAS Init"
@@ -58,87 +58,6 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npx eas build --platform android --profile preview"
-
-[[workflows.workflow]]
-name = "Start Backend Server"
-author = 42598128
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd server && npx pm2 start ecosystem.config.js"
-
-[[workflows.workflow]]
-name = "Stop Backend Server"
-author = 42598128
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd server && npx pm2 stop eatfitbymax-server"
-
-[[workflows.workflow]]
-name = "Server Logs"
-author = 42598128
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd server && npx pm2 logs eatfitbymax-server --lines 50"
-
-[[workflows.workflow]]
-name = "Build iOS Production"
-author = 42598128
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npx eas build --platform ios --profile production"
-
-[[workflows.workflow]]
-name = "Start Server"
-author = 42598128
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd server && node server.js"
-
-[[workflows.workflow]]
-name = "Stop Server"
-author = 42598128
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "pkill -f \"node server.js\""
-
-[[workflows.workflow]]
-name = "Start VPS Server"
-author = 42598128
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd server && npx pm2 start ecosystem.config.js"
-
-[[workflows.workflow]]
-name = "Expo Go Tunnel"
-author = 42598128
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npx expo start --tunnel"
-
-[[workflows.workflow]]
-name = "Expo Clean Start"
-author = 42598128
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npx expo start --clear --reset-cache"
 
 [deployment]
 run = ["sh", "-c", "cd server && PORT=5000 node server.js"]
