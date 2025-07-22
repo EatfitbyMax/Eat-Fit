@@ -1,33 +1,55 @@
 
-# Fichiers à exclure du build EAS
-attached_assets/
+# Fichiers de développement
+.env.local
+.env.development
+*.log
 logs/
-server/logs/
-deploy-temp/
-scripts/backup-*.js
-scripts/restore-*.js
-**/*.log
-**/*.tmp
+.DS_Store
+.vscode/
+.idea/
+
+# Fichiers temporaires et de cache
 .expo/
-node_modules/.cache/
-**/.DS_Store
-*.md
-README.md
-privacy-policy.md
-email-setup-guide.md
-ios-health-config.md
+.next/
+node_modules/
+.tsbuildinfo
+*.tsbuildinfo
 
-# Assets de développement
-**/*.sketch
-**/*.fig
-**/*.psd
+# Fichiers de test
+__tests__/
+*.test.*
+*.spec.*
+coverage/
 
-# Fichiers de sauvegarde
-**/backup-*
-**/restore-*
+# Fichiers de backup et debug
 backups/
+debug/
+*.backup
+*.debug
 
-# Fichiers temporaires
-**/.temp/
-**/temp/
-**/.cache/
+# Assets non utilisés
+attached_assets/
+screenshots/
+docs/
+
+# Serveur de développement
+server/node_modules/
+server/logs/
+server/.env
+server/*.log
+
+# Fichiers temporaires macOS/iOS
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Fichiers spécifiques au développement
+deploy-temp/
+scripts/backup-app.js
+scripts/restore-backup.js
+scripts/sync-data.js
+
+# Fichiers de configuration locale
+.replit
+rei

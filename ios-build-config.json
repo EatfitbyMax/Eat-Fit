@@ -1,0 +1,33 @@
+
+{
+  "buildConfiguration": {
+    "platform": "ios",
+    "environment": "production",
+    "optimizations": {
+      "minifyJS": true,
+      "treeShaking": true,
+      "bundleSize": "optimized"
+    }
+  },
+  "capabilities": [
+    "HealthKit",
+    "Camera",
+    "PhotoLibrary",
+    "Motion"
+  ],
+  "entitlements": {
+    "com.apple.developer.healthkit": true,
+    "com.apple.developer.healthkit.access": [
+      "health-records"
+    ]
+  },
+  "infoPlistAdditions": {
+    "NSHealthShareUsageDescription": "EatFitByMax utilise Apple Health pour synchroniser vos données de santé et fitness afin de vous fournir un suivi personnalisé de votre progression.",
+    "NSHealthUpdateUsageDescription": "EatFitByMax peut écrire des données dans Apple Health pour garder vos informations de santé à jour.",
+    "ITSAppUsesNonExemptEncryption": false
+  },
+  "buildSettings": {
+    "ENABLE_BITCODE": false,
+    "SWIFT_VERSION": "5.0"
+  }
+}

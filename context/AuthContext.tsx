@@ -22,7 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         setIsLoading(true);
         const currentUser = await getCurrentUser();
-        
+
         if (isMounted) {
           if (currentUser && currentUser.email) {
             setUser(currentUser);

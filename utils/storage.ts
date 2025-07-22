@@ -792,3 +792,18 @@ export const getMessages = async (userId: string): Promise<any[]> => {
 export const testServerConnection = async (): Promise<boolean> => {
   return await PersistentStorage.testConnection();
 };
+
+// Configuration serveur avec fallback robuste pour la production
+const getServerUrl = () => {
+  // En production, utiliser l'URL de production par défaut
+  if (process.env.NODE_ENV === 'production') {
+    return process.env.EXPO_PUBLIC_API_URL || 'https://eatfitbymax.replit.app';
+  }
+
+  // En développement, essayer toutes les options
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+  const vpsUrl = process.env.EXPO_PUBLIC_VPS_URL;
+  const devUrl = process.env.EXPO_PUBLIC_DEV_SERVER_URL;
+
+  return apiUrl || vpsUrl || devUrl || 'https://eatfitbymax.replit.app';
+};
