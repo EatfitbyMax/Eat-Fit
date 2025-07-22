@@ -9,7 +9,10 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "jest --watchAll",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "prebuild-check": "node ./scripts/prebuild-check-ios.js",
+    "build:ios:preview": "npm run prebuild-check && npx eas build --platform ios --profile preview",
+    "build:ios:production": "npm run prebuild-check && npx eas build --platform ios --profile production"
   },
   "jest": {
     "preset": "jest-expo"
