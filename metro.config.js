@@ -20,7 +20,6 @@ config.transformer.minifierConfig = {
 // Configuration pour autoriser les connexions externes sur Replit
 config.server = {
   port: 8081,
-  host: '0.0.0.0',
 };
 
 module.exports = config;
