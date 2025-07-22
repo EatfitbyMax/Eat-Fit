@@ -430,7 +430,7 @@ export async function syncWithExternalApps(userId: string): Promise<void> {
 
 export const testServerConnection = async (serverUrl: string): Promise<boolean> => {
   try {
-    console.log(`Test de connexion au serveur Replit: ${serverUrl}`);
+    console.log(`Test de connexion au serveur VPS: ${serverUrl}`);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);

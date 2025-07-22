@@ -1612,9 +1612,9 @@ export default function ProgresScreen() {
       // Charger les données nutritionnelles réelles avec priorité sur le serveur VPS
       let nutritionEntries = [];
       
-      // Essayer le serveur VPS d'abord avec timeout plus court
+      // Charger depuis le serveur VPS
       try {
-        const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.replit.app';
+        const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';s://eatfitbymax.replit.app';
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 secondes timeout
 
