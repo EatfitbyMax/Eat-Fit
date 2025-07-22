@@ -1,8 +1,8 @@
 import { ServerWakeupService } from './serverWakeup';
 
-// Configuration serveur VPS uniquement
-const SERVER_URL = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
-const API_URL = process.env.EXPO_PUBLIC_VPS_URL || process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
+// Configuration serveur VPS OVH pour développement et production
+const SERVER_URL = 'http://51.178.29.220:5000';
+const API_URL = 'http://51.178.29.220:5000';
 
 export class PersistentStorage {
   // Test de connexion au serveur VPS

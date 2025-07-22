@@ -926,7 +926,7 @@ export default function FormeScreen() {
 
       // Charger depuis le serveur VPS
       try {
-        const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
+        const VPS_URL = 'http://51.178.29.220:5000';
         const response = await fetch(`${VPS_URL}/api/nutrition/${userData.id}`, { 
           timeout: 5000 
         });
