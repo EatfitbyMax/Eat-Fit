@@ -76,9 +76,9 @@ export async function login(email: string, password: string): Promise<User | nul
         const hashedInput = await Crypto.digestStringAsync(
           Crypto.CryptoDigestAlgorithm.SHA256,
           saltedPassword,
-          { encoding: Crypto.CryptoEncoding.BASE64URL }
+          { encoding: Crypto.CryptoEncoding.BASE64 }  // <-- corrigé ici
         );
-        
+
         isPasswordValid = hashedInput === user.hashedPassword;
         console.log('🔐 Vérification avec hash:', isPasswordValid ? 'VALIDE' : 'INVALIDE');
       } catch (compareError) {
@@ -165,7 +165,7 @@ export async function register(userData: Omit<User, 'id'> & { password: string }
       hashedPassword = await Crypto.digestStringAsync(
         Crypto.CryptoDigestAlgorithm.SHA256,
         saltedPassword,
-        { encoding: Crypto.CryptoEncoding.BASE64URL }
+        { encoding: Crypto.CryptoEncoding.BASE64 }  // <-- corrigé ici
       );
 
       console.log('✅ Hachage réussi avec expo-crypto, longueur:', hashedPassword.length);
@@ -175,13 +175,13 @@ export async function register(userData: Omit<User, 'id'> & { password: string }
     }
 
     // Créer le nouvel utilisateur
-      const newUser = {
-        ...userData,
-        id: Date.now().toString(),
-        hashedPassword: hashedPassword,
-        // Ne pas stocker le mot de passe en clair
-        password: undefined
-      };
+    const newUser = {
+      ...userData,
+      id: Date.now().toString(),
+      hashedPassword: hashedPassword,
+      // Ne pas stocker le mot de passe en clair
+      password: undefined
+    };
 
     // Ajouter à la liste des utilisateurs
     users.push(newUser);
