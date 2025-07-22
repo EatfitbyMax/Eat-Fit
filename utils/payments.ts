@@ -115,7 +115,7 @@ export const checkAppointmentLimit = async (
   appointments: any[]
 ): Promise<{ canBook: boolean; reason?: string; remaining?: number }> => {
   const limits = getAppointmentLimits(userPlanId);
-  
+
   // Si aucune limite (plan gratuit ou bronze)
   if (limits.monthly === 0 && limits.weekly === 0) {
     return { 
@@ -134,7 +134,7 @@ export const checkAppointmentLimit = async (
   if (limits.monthly > 0) {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    
+
     const monthlyAppointments = userAppointments.filter(apt => {
       const aptDate = new Date(apt.date);
       return aptDate >= startOfMonth && aptDate <= endOfMonth;
@@ -158,7 +158,7 @@ export const checkAppointmentLimit = async (
     const startOfWeek = new Date(now);
     startOfWeek.setDate(now.getDate() - now.getDay() + 1); // Lundi
     startOfWeek.setHours(0, 0, 0, 0);
-    
+
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6); // Dimanche
     endOfWeek.setHours(23, 59, 59, 999);
@@ -213,8 +213,8 @@ export class PaymentService {
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://workspace.eatfitbymax.replit.dev:5000';
-        
+        const serverUrl = 'http://51.178.29.220:5000';
+
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
 
@@ -249,7 +249,7 @@ export class PaymentService {
       } catch (error) {
         lastError = error as Error;
         console.warn(`Tentative ${attempt}/${maxRetries} échouée:`, error);
-        
+
         if (attempt < maxRetries) {
           // Délai exponentiel avant retry
           await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
@@ -490,8 +490,8 @@ export class PaymentService {
 
   private static async confirmPaymentOnServer(paymentIntentId: string, userId: string): Promise<void> {
     try {
-      const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://workspace.eatfitbymax.replit.dev:5000';
-      
+      const serverUrl = 'http://51.178.29.220:5000';
+
       const response = await fetch(`${serverUrl}/api/stripe/confirm-payment`, {
         method: 'POST',
         headers: {
