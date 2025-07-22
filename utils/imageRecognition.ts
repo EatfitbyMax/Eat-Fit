@@ -1,4 +1,6 @@
 import { OpenFoodFactsService } from './openfoodfacts';
+import { Platform } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 
 // Interfaces pour la reconnaissance d'image
 interface RecognitionResult {
@@ -275,3 +277,25 @@ export class ImageRecognitionService {
     ];
   }
 }
+
+// Configuration optimisée pour iOS
+const getImagePickerOptions = (): ImagePicker.ImagePickerOptions => {
+  const baseOptions: ImagePicker.ImagePickerOptions = {
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsEditing: true,
+    aspect: [1, 1],
+    quality: Platform.OS === 'ios' ? 0.7 : 0.8, // Qualité réduite sur iOS pour les performances
+  };
+
+  if (Platform.OS === 'ios') {
+    return {
+      ...baseOptions,
+      allowsMultipleSelection: false,
+      presentationStyle: ImagePicker.UIImagePickerPresentationStyle.AUTOMATIC,
+    };
+  }
+
+  return baseOptions;
+};
+
+const imagePickerOptions = getImagePickerOptions();

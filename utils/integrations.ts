@@ -1,5 +1,22 @@
-
 import { PersistentStorage } from './storage';
+import { Platform } from 'react-native';
+import * as AuthSession from 'expo-auth-session';
+import * as WebBrowser from 'expo-web-browser';
+
+// Configuration Strava sécurisée pour la production
+const STRAVA_CLIENT_ID = process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID || '';
+const STRAVA_CLIENT_SECRET = process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET || '';
+
+// Configuration du redirect URI selon l'environnement
+const getStravaRedirectUri = () => {
+  if (Platform.OS === 'ios' && !__DEV__) {
+    // En production iOS, utiliser le custom scheme
+    return 'eatfitbymax://strava-callback';
+  }
+  return AuthSession.makeRedirectUri({ useProxy: true });
+};
+
+const STRAVA_REDIRECT_URI = getStravaRedirectUri();
 
 export interface IntegrationConfig {
   appleHealth: {
@@ -18,7 +35,7 @@ export class IntegrationsManager {
       // Vérifier la disponibilité d'Apple Health (via expo-health-connect)
       const HealthConnect = await import('expo-health-connect');
       const available = await HealthConnect.isAvailable();
-      
+
       if (!available) {
         console.log('Apple Health non disponible');
         return false;
@@ -70,7 +87,7 @@ export class IntegrationsManager {
       }
 
       const HealthConnect = await import('expo-health-connect');
-      
+
       // Obtenir les données des 7 derniers jours
       const endDate = new Date();
       const startDate = new Date();
@@ -97,7 +114,7 @@ export class IntegrationsManager {
 
       // Organiser les données par date
       const healthDataByDate = {};
-      
+
       // Traiter les pas
       stepData.forEach((entry: any) => {
         const date = new Date(entry.startDate).toISOString().split('T')[0];
@@ -230,7 +247,7 @@ export class IntegrationsManager {
   static async refreshStravaToken(userId: string): Promise<string> {
     try {
       const status = await this.getIntegrationStatus(userId);
-      
+
       if (!status.strava.connected || !status.strava.refreshToken) {
         throw new Error('Strava non connecté ou token de rafraîchissement manquant');
       }
@@ -274,7 +291,7 @@ export class IntegrationsManager {
   static async getValidStravaToken(userId: string): Promise<string> {
     try {
       const status = await this.getIntegrationStatus(userId);
-      
+
       if (!status.strava.connected) {
         throw new Error('Strava non connecté');
       }
