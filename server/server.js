@@ -324,10 +324,8 @@ async function startServer() {
       console.log(`🌐 API disponible sur: https://eatfitbymax.replit.app`);
       console.log(`✅ Serveur prêt à recevoir des connexions sur 0.0.0.0:${PORT}`);
       
-      // Signal PM2 que l'application est prête
-      if (process.send) {
-        process.send('ready');
-      }
+      // Serveur prêt pour Replit
+      console.log('📡 Serveur Replit configuré et en ligne');
     });
 
     server.on('error', (error) => {
