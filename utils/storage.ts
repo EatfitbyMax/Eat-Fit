@@ -1,9 +1,8 @@
-
 import { ServerWakeupService } from './serverWakeup';
 
 // Configuration serveur Replit uniquement
 const SERVER_URL = 'https://eatfitbymax.replit.app';
-const API_URL = SERVER_URL;
+const API_URL = process.env.EXPO_PUBLIC_VPS_URL || process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
 
 export class PersistentStorage {
   // Test de connexion au serveur avec réveil automatique
