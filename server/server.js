@@ -96,16 +96,23 @@ async function writeJsonFile(filename, data) {
 app.get('/api/users', async (req, res) => {
   try {
     const users = await readJsonFile('users.json', []);
+    console.log(`📊 Récupération utilisateurs: ${users.length} utilisateurs trouvés`);
     res.json(users);
   } catch (error) {
     console.error('Erreur lecture utilisateurs:', error);
-    res.status(500).json({ error: 'Erreur serveur' });
+    // Retourner un tableau vide au lieu d'une erreur pour permettre l'inscription
+    console.log('📝 Création d\'un fichier users.json vide');
+    const emptyUsers = [];
+    await writeJsonFile('users.json', emptyUsers);
+    res.json(emptyUsers);
   }
 });
 
 app.post('/api/users', async (req, res) => {
   try {
+    console.log('💾 Sauvegarde utilisateurs:', Array.isArray(req.body) ? req.body.length : 'format invalide');
     await writeJsonFile('users.json', req.body);
+    console.log('✅ Utilisateurs sauvegardés avec succès');
     res.json({ success: true });
   } catch (error) {
     console.error('Erreur sauvegarde utilisateurs:', error);
