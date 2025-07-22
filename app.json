@@ -9,6 +9,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "platforms": ["ios", "android"],
+    "jsEngine": "hermes",
     "ios": {
       "icon": "./assets/images/crown-logo.png",
       "supportsTablet": true,
@@ -72,6 +73,9 @@
         }
       ]
     ],
+    "packagerOpts": {
+      "config": "metro.config.js"
+    },
     "experiments": {
       "typedRoutes": true
     },
