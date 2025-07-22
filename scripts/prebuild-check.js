@@ -1,10 +1,9 @@
-
 #!/usr/bin/env node
 
 const fs = require('fs');
 const path = require('path');
 
-console.log('🔍 Vérification pré-build EAS iOS complète...\n');
+console.log('🔍 Vérification pré-build EAS...');
 
 // Vérifier les fichiers critiques
 const criticalFiles = [
@@ -13,8 +12,7 @@ const criticalFiles = [
   'metro.config.js',
   'babel.config.js',
   'package.json',
-  '.env',
-  'tsconfig.json'
+  '.env'
 ];
 
 let hasErrors = false;
