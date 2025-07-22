@@ -7,7 +7,7 @@ const config = getDefaultConfig(__dirname);
 config.resolver.platforms = ['ios', 'android', 'native', 'web'];
 config.resolver.assetExts.push('db', 'json');
 
-// Configuration pour résoudre les modules Node.js non supportés par Expo Go
+// Configuration spéciale pour EAS Build
 config.resolver.alias = {
   'fs': require.resolve('./utils/empty-mock.js'),
   'path': require.resolve('./utils/empty-mock.js'),
@@ -22,13 +22,14 @@ config.resolver.alias = {
   'events': require.resolve('./utils/empty-mock.js'),
 };
 
-// Exclure complètement les packages problématiques pour Expo Go
-config.resolver.blockList = [
-  /node_modules\/@expo\/config-plugins\/.*\/XML\.js$/,
-  /node_modules\/@expo\/config-plugins\/.*\/utils\/XML$/,
-  /node_modules\/@expo\/config-plugins\/build\/utils\/XML/,
-  /node_modules\/@expo\/config-plugins\/build\/index\.js$/,
-];
+// Bloquer les modules problématiques uniquement pour Expo Go
+if (process.env.EXPO_PUBLIC_USE_EAS_BUILD !== 'true') {
+  config.resolver.blockList = [
+    /node_modules\/@expo\/config-plugins\/.*\/XML\.js$/,
+    /node_modules\/@expo\/config-plugins\/.*\/utils\/XML$/,
+    /node_modules\/@expo\/config-plugins\/build\/utils\/XML/,
+  ];
+}
 
 // Configuration pour Hermes
 config.transformer.minifierConfig = {
@@ -40,7 +41,7 @@ config.transformer.minifierConfig = {
   },
 };
 
-// Configuration pour autoriser les connexions externes sur Replit
+// Configuration serveur
 config.server = {
   port: 8081,
 };

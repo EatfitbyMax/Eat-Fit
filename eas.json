@@ -15,11 +15,13 @@
     "preview": {
       "distribution": "internal",
       "channel": "preview",
+      "env": {
+        "EXPO_PUBLIC_USE_EAS_BUILD": "true"
+      },
       "ios": {
         "simulator": false,
         "resourceClass": "m-medium",
-        "buildConfiguration": "Release",
-        "enterpriseProvisioning": "adhoc"
+        "buildConfiguration": "Release"
       },
       "android": {
         "buildType": "apk"
@@ -29,6 +31,9 @@
       "developmentClient": false,
       "distribution": "store",
       "channel": "production",
+      "env": {
+        "EXPO_PUBLIC_USE_EAS_BUILD": "true"
+      },
       "ios": {
         "resourceClass": "m-medium",
         "autoIncrement": true

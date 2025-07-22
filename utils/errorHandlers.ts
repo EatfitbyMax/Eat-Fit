@@ -7,103 +7,74 @@ const MAX_RESTARTS = 2;
 const RESTART_WINDOW = 60000;
 const ERROR_THRESHOLD = 5;
 let errorCount = 0;
-const lastErrorReset = Date.now();
+let lastErrorReset = Date.now();
+let lastRestartTime = 0;
 
-// Gestionnaire d'erreurs JavaScript non gérées
+// Gestionnaire d'erreurs global
 export const setupGlobalErrorHandlers = () => {
   try {
-    // Erreurs JavaScript non gérées
-    const originalHandler = global.ErrorUtils?.getGlobalHandler?.();
+    // Gestionnaire d'erreurs JavaScript non capturées
+    const originalErrorHandler = ErrorUtils.getGlobalHandler();
 
-    global.ErrorUtils?.setGlobalHandler?.((error, isFatal) => {
-      const now = Date.now();
-
-      // Compteur d'erreurs pour détecter les boucles
-      if (now - lastErrorReset > 60000) {
-        errorCount = 0;
-        lastErrorReset = now;
-      }
+    ErrorUtils.setGlobalHandler((error: Error, isFatal?: boolean) => {
+      console.error('🔴 Erreur globale capturée:', {
+        message: error.message,
+        stack: error.stack?.substring(0, 500),
+        isFatal,
+        platform: Platform.OS
+      });
 
       errorCount++;
 
-      if (errorCount > ERROR_THRESHOLD) {
-        console.error('🚫 TROP D\'ERREURS - Arrêt des gestionnaires pour éviter les boucles');
-        return;
+      // Appeler le gestionnaire original
+      if (originalErrorHandler) {
+        originalErrorHandler(error, isFatal);
       }
 
-      console.error('🚨 ERREUR GLOBALE JS:', {
-        error: error?.message || error,
-        isFatal,
-        count: errorCount,
-        stack: error?.stack?.substring(0, 300)
-      });
-
-      // Protection contre les boucles de redémarrage
-      if (now - lastRestartTime > RESTART_WINDOW) {
-        restartCount = 0;
-      }
-
-      if (restartCount >= MAX_RESTARTS) {
-        console.error('🚫 TROP DE REDÉMARRAGES - Arrêt des tentatives de récupération');
-        return;
-      }
-
-      // Appeler le gestionnaire original s'il existe
-      if (originalHandler) {
-        try {
-          originalHandler(error, isFatal);
-        } catch (handlerError) {
-          console.error('❌ Erreur dans le gestionnaire original:', handlerError);
-        }
-      }
-
-      // Tentative de récupération pour les erreurs non fatales seulement
-      if (!isFatal && ErrorRecovery && restartCount < MAX_RESTARTS && errorCount < 3) {
-        restartCount++;
-        lastRestartTime = now;
-
-        setTimeout(() => {
-          try {
-            console.log(`🔄 Tentative récupération ${restartCount}/${MAX_RESTARTS}`);
-            ErrorRecovery.recover();
-          } catch (recoveryError) {
-            console.error('❌ Échec récupération JS:', recoveryError);
-          }
-        }, 2000);
+      // Gestion spéciale pour iOS
+      if (Platform.OS === 'ios' && isFatal && errorCount >= ERROR_THRESHOLD) {
+        handleCriticalError(error);
       }
     });
 
     // Gestionnaire pour les promesses rejetées
-    if (typeof global !== 'undefined' && global.HermesInternal?.setExceptionHandler) {
-      global.HermesInternal.setExceptionHandler((error) => {
-        console.error('🚨 EXCEPTION HERMES:', {
-          error: error?.message || error,
-          stack: error?.stack?.substring(0, 500)
-        });
-      });
-    }
-
-    // Gestionnaire pour les rejets de promesses non gérés
-    const handleUnhandledRejection = (event: any) => {
-      console.error('🚨 PROMESSE REJETÉE NON GÉRÉE:', {
-        reason: event.reason,
-        promise: event.promise
-      });
-
-      // Empêcher le crash de l'app
-      if (event.preventDefault) {
-        event.preventDefault();
-      }
+    const unhandledRejectionHandler = (event: any) => {
+      console.error('🔴 Promise rejetée non gérée:', event.reason);
+      errorCount++;
     };
 
-    if (typeof global !== 'undefined' && global.addEventListener) {
-      global.addEventListener('unhandledrejection', handleUnhandledRejection);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('unhandledrejection', unhandledRejectionHandler);
     }
 
     console.log('✅ Gestionnaires d\'erreurs globaux configurés');
 
   } catch (setupError) {
     console.error('❌ Erreur lors de la configuration des gestionnaires:', setupError);
+  }
+};
+
+// Fonction pour gérer les erreurs critiques
+const handleCriticalError = (error: Error) => {
+  const now = Date.now();
+
+  if (now - lastRestartTime < RESTART_WINDOW && restartCount >= MAX_RESTARTS) {
+    console.error('🚨 Trop de redémarrages, arrêt des tentatives');
+    return;
+  }
+
+  if (now - lastRestartTime >= RESTART_WINDOW) {
+    restartCount = 0;
+  }
+
+  restartCount++;
+  lastRestartTime = now;
+
+  try {
+    console.log('🔄 Tentative de récupération d\'erreur...');
+    ErrorRecovery.recoveryProps && ErrorRecovery.recoveryProps.restart();
+  } catch (recoveryError) {
+    console.error('❌ Échec de la récupération:', recoveryError);
   }
 };
 
@@ -152,7 +123,7 @@ export const safeAsyncStorageCall = async <T>(
   try {
     return await new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        reject(new Error('AsyncStorage timeout'));
+        reject(new Error(`Timeout AsyncStorage: ${context}`));
       }, 5000);
 
       operation()
@@ -162,12 +133,12 @@ export const safeAsyncStorageCall = async <T>(
         })
         .catch(error => {
           clearTimeout(timeout);
-          logNativeError(error, context);
           reject(error);
         });
     });
   } catch (error) {
-    console.warn(`⚠️ Erreur AsyncStorage [${context}]:`, error);
+    console.error(`❌ Erreur AsyncStorage [${context}]:`, error);
+    logNativeError(error as Error, context);
     return defaultValue;
   }
 };
