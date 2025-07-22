@@ -76,6 +76,13 @@
     "packagerOpts": {
       "config": "metro.config.js"
     },
+    "expo": {
+      "doctor": {
+        "reactNativeDirectoryCheck": {
+          "exclude": ["@expo/config-plugins"]
+        }
+      }
+    },
     "experiments": {
       "typedRoutes": true
     },
