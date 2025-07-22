@@ -4,10 +4,12 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'reac
 import { useRouter } from 'expo-router';
 import { register } from '@/utils/auth';
 import { useRegistration } from '@/context/RegistrationContext';
+import { useAuth } from '@/context/AuthContext';
 
 export default function RegisterAccountScreen() {
   const router = useRouter();
   const { registrationData, updateRegistrationData, resetRegistrationData } = useRegistration();
+  const { login } = useAuth();
   const [email, setEmail] = useState(registrationData.email);
   const [password, setPassword] = useState(registrationData.password);
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -56,6 +58,9 @@ export default function RegisterAccountScreen() {
         const user = await register(userData);
         
         if (user) {
+          // Connecter l'utilisateur dans le contexte d'authentification
+          login(user);
+          
           // Réinitialiser les données d'inscription
           resetRegistrationData();
           
@@ -65,7 +70,10 @@ export default function RegisterAccountScreen() {
             [
               {
                 text: 'OK',
-                onPress: () => router.replace('/(client)')
+                onPress: () => {
+                  // Rediriger directement vers l'application client
+                  router.replace('/(client)');
+                }
               }
             ]
           );
