@@ -1,4 +1,5 @@
 import { PersistentStorage } from './storage';
+import * as Crypto from 'expo-crypto';
 
 interface User {
   id: string;
@@ -70,8 +71,15 @@ export async function login(email: string, password: string): Promise<User | nul
     if (user.hashedPassword) {
       // Nouveau système avec hash
       try {
-        const bcrypt = require('bcryptjs');
-        isPasswordValid = bcrypt.compareSync(password, user.hashedPassword);
+        const passwordString = String(password).trim();
+        const saltedPassword = passwordString + 'eatfitbymax_salt_2025';
+        const hashedInput = await Crypto.digestStringAsync(
+          Crypto.CryptoDigestAlgorithm.SHA256,
+          saltedPassword,
+          { encoding: Crypto.CryptoEncoding.BASE64URL }
+        );
+        
+        isPasswordValid = hashedInput === user.hashedPassword;
         console.log('🔐 Vérification avec hash:', isPasswordValid ? 'VALIDE' : 'INVALIDE');
       } catch (compareError) {
         console.error('❌ Erreur comparaison hash:', compareError);
@@ -149,14 +157,18 @@ export async function register(userData: Omit<User, 'id'> & { password: string }
 
       console.log('🔧 Préparation hachage:', {
         passwordString: passwordString.substring(0, 3) + '***',
-        method: 'simple-hash'
+        method: 'expo-crypto-sha256'
       });
 
-      // Simple hachage basé sur btoa et transformation
+      // Hachage sécurisé avec expo-crypto
       const saltedPassword = passwordString + 'eatfitbymax_salt_2025';
-      hashedPassword = btoa(saltedPassword).replace(/[+/=]/g, (m) => ({'+': '-', '/': '_', '=': ''}[m] || m));
+      hashedPassword = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.SHA256,
+        saltedPassword,
+        { encoding: Crypto.CryptoEncoding.BASE64URL }
+      );
 
-      console.log('✅ Hachage réussi, longueur:', hashedPassword.length);
+      console.log('✅ Hachage réussi avec expo-crypto, longueur:', hashedPassword.length);
     } catch (hashError) {
       console.error('❌ Erreur détaillée hachage:', hashError);
       throw new Error(`Erreur hachage mot de passe: ${hashError.message}`);
