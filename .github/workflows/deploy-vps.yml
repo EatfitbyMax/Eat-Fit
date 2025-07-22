@@ -26,7 +26,7 @@ jobs:
         username: ${{ secrets.VPS_USER }}
         key: ${{ secrets.VPS_SSH_KEY }}
         script: |
-          cd /chemin/vers/votre/app
+          cd /home/ubuntu/eatfitbymax
           git pull origin main
           cd server
           npm install --production
