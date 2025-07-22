@@ -123,22 +123,22 @@ task = "shell.exec"
 args = "cd server && npx pm2 start ecosystem.config.js"
 
 [[workflows.workflow]]
-name = "Dev Server with Tunnel"
+name = "Expo Go Tunnel"
 author = 42598128
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN npx expo start --clear --reset-cache --port 8082 --tunnel"
+args = "npx expo start --tunnel"
 
 [[workflows.workflow]]
-name = "Expo Go"
+name = "Expo Clean Start"
 author = 42598128
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npx expo start"
+args = "npx expo start --clear --reset-cache"
 
 [deployment]
 run = ["sh", "-c", "cd server && PORT=5000 node server.js"]
