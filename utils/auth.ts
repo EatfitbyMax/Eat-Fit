@@ -119,6 +119,12 @@ export async function register(userData: Omit<User, 'id'> & { password: string }
   try {
     console.log('🔄 Tentative d\'inscription pour:', userData.email);
 
+    // Vérifier que le mot de passe est bien fourni
+    if (!userData.password || typeof userData.password !== 'string') {
+      console.log('❌ Mot de passe invalide ou manquant');
+      throw new Error('Mot de passe requis');
+    }
+
     // Récupérer les utilisateurs existants depuis le serveur uniquement
     const users = await PersistentStorage.getUsers();
     console.log('📊 Utilisateurs récupérés depuis le serveur:', users.length);
@@ -130,11 +136,12 @@ export async function register(userData: Omit<User, 'id'> & { password: string }
       return null;
     }
 
-    // Hacher le mot de passe
-    console.log('🔐 Hachage du mot de passe...');
+    // Hacher le mot de passe avec validation
+    console.log('🔐 Hachage du mot de passe...', `Type: ${typeof userData.password}, Longueur: ${userData.password.length}`);
     const bcrypt = await import('bcryptjs');
     const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(userData.password, saltRounds);
+    const passwordString = String(userData.password).trim();
+    const hashedPassword = await bcrypt.hash(passwordString, saltRounds);
 
     // Créer le nouvel utilisateur
     const newUser = {
