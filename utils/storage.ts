@@ -1,14 +1,14 @@
 import { ServerWakeupService } from './serverWakeup';
 
-// Configuration serveur Replit uniquement
-const SERVER_URL = 'https://eatfitbymax.replit.app';
+// Configuration serveur VPS uniquement
+const SERVER_URL = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
 const API_URL = process.env.EXPO_PUBLIC_VPS_URL || process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
 
 export class PersistentStorage {
-  // Test de connexion au serveur avec réveil automatique
+  // Test de connexion au serveur VPS
   static async testConnection(): Promise<boolean> {
     try {
-      console.log(`🔍 Test de connexion au serveur Replit: ${SERVER_URL}`);
+      console.log(`🔍 Test de connexion au serveur VPS: ${SERVER_URL}`);
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -26,38 +26,29 @@ export class PersistentStorage {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Serveur Replit opérationnel -', data.message);
+        console.log('✅ Serveur VPS opérationnel -', data.message);
         return true;
       } else {
-        console.warn(`⚠️ Serveur Replit indisponible (status: ${response.status})`);
-
-        if (response.status >= 500) {
-          console.log('🔄 Tentative de réveil du serveur...');
-          const wakeupSuccess = await ServerWakeupService.wakeupServer();
-          return wakeupSuccess;
-        }
-
+        console.warn(`⚠️ Serveur VPS indisponible (status: ${response.status})`);
         return false;
       }
     } catch (error: any) {
       if (error.name === 'AbortError') {
-        console.warn('⚠️ Timeout de connexion au serveur Replit (15s)');
+        console.warn('⚠️ Timeout de connexion au serveur VPS (15s)');
       } else if (error.message.includes('Network request failed')) {
-        console.warn('⚠️ Échec réseau - Tentative de réveil du serveur...');
-        const wakeupSuccess = await ServerWakeupService.wakeupServer();
-        return wakeupSuccess;
+        console.warn('⚠️ Échec réseau - Vérifiez la connexion au serveur VPS');
       } else {
-        console.warn(`⚠️ Erreur de connexion au serveur ${SERVER_URL}:`, error.message);
+        console.warn(`⚠️ Erreur de connexion au serveur VPS ${SERVER_URL}:`, error.message);
       }
       return false;
     }
   }
 
-  // Assurer la connexion au serveur (avec réveil si nécessaire)
+  // Assurer la connexion au serveur VPS
   static async ensureConnection(): Promise<void> {
     const isConnected = await this.testConnection();
     if (!isConnected) {
-      throw new Error('❌ Impossible de se connecter au serveur Replit. Vérifiez votre connexion internet.');
+      throw new Error('❌ Impossible de se connecter au serveur VPS. Vérifiez votre connexion internet et que le serveur est démarré.');
     }
   }
 
@@ -618,7 +609,7 @@ export class PersistentStorage {
         throw new Error(`Erreur HTTP: ${response.status}`);
       }
 
-      console.log('✅ Programmes sauvegardés sur le serveur Replit');
+      console.log('✅ Programmes sauvegardés sur le serveur VPS');
     } catch (error) {
       console.error('❌ Erreur sauvegarde programmes:', error);
       throw new Error('Impossible de sauvegarder les programmes. Vérifiez votre connexion internet.');
@@ -634,7 +625,7 @@ export class PersistentStorage {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Activités Strava récupérées du serveur Replit');
+        console.log('✅ Activités Strava récupérées du serveur VPS');
         return data;
       }
       throw new Error('Erreur récupération activités Strava du serveur');
@@ -648,9 +639,9 @@ export class PersistentStorage {
   static async syncData(): Promise<void> {
     try {
       await this.ensureConnection();
-      console.log('✅ Serveur Replit opérationnel - toutes les données sont sur le serveur');
+      console.log('✅ Serveur VPS opérationnel - toutes les données sont sur le serveur');
     } catch (error) {
-      console.error('❌ Erreur connexion serveur Replit:', error);
+      console.error('❌ Erreur connexion serveur VPS:', error);
       throw error;
     }
   }
