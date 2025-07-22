@@ -58,8 +58,8 @@
       [
         "expo-router",
         {
-          "origin": false,
-          "headOrigin": false
+          "origin": "https://eatfitbymax.app",
+          "headOrigin": "https://eatfitbymax.app"
         }
       ],
       "expo-web-browser",

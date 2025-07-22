@@ -3,53 +3,62 @@
 .env.local
 .env.development
 *.log
-logs/
+*.tmp
+
+# Dossiers de cache et temporaires
+node_modules/
+.expo/
+.next/
+dist/
+build/
+coverage/
+
+# Fichiers système
 .DS_Store
 .vscode/
 .idea/
-
-# Fichiers temporaires et de cache
-.expo/
-.next/
-node_modules/
-.tsbuildinfo
-*.tsbuildinfo
-
-# Fichiers de test
-__tests__/
-*.test.*
-*.spec.*
-coverage/
-
-# Fichiers de backup et debug
-backups/
-debug/
-*.backup
-*.debug
-
-# Assets non utilisés
-attached_assets/
-screenshots/
-docs/
-
-# Serveur de développement
-server/node_modules/
-server/logs/
-server/.env
-server/*.log
-
-# Fichiers temporaires macOS/iOS
-Thumbs.db
 *.swp
 *.swo
 *~
 
-# Fichiers spécifiques au développement
+# Fichiers de déploiement local
+server/
 deploy-temp/
-scripts/backup-app.js
-scripts/restore-backup.js
-scripts/sync-data.js
+logs/
+
+# Assets de développement
+attached_assets/
+*.mov
+*.MP4
 
 # Fichiers de configuration locale
 .replit
+replit.nix
 rei
+
+# Backups et fichiers temporaires
+backup/
+temp/
+*.backup
+*.bak
+
+# Certificats et clés (sauf si nécessaires)
+*.p12
+*.mobileprovision
+google-service-account.json
+
+# Scripts de développement
+scripts/reset-*.js
+scripts/backup-*.js
+scripts/deploy-*.sh
+
+# Métadonnées spécifiques
+app-store-metadata.json
+ios-health-config.md
+privacy-policy.md
+email-setup-guide.md
+
+# Tests
+__tests__/
+*.test.*
+*.spec.*
