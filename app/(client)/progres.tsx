@@ -1614,7 +1614,7 @@ export default function ProgresScreen() {
       
       // Charger depuis le serveur VPS
       try {
-        const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';s://eatfitbymax.replit.app';
+        const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 secondes timeout
 
