@@ -1,0 +1,33 @@
+
+# Fichiers à exclure du build EAS
+attached_assets/
+logs/
+server/logs/
+deploy-temp/
+scripts/backup-*.js
+scripts/restore-*.js
+**/*.log
+**/*.tmp
+.expo/
+node_modules/.cache/
+**/.DS_Store
+*.md
+README.md
+privacy-policy.md
+email-setup-guide.md
+ios-health-config.md
+
+# Assets de développement
+**/*.sketch
+**/*.fig
+**/*.psd
+
+# Fichiers de sauvegarde
+**/backup-*
+**/restore-*
+backups/
+
+# Fichiers temporaires
+**/.temp/
+**/temp/
+**/.cache/

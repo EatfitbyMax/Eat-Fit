@@ -4,6 +4,8 @@ import { ServerWakeupService } from './serverWakeup';
 const SERVER_URL = 'http://51.178.29.220:5000';
 const API_URL = 'http://51.178.29.220:5000';
 
+import { Platform } from 'react-native';
+
 export class PersistentStorage {
   // Test de connexion au serveur VPS
   static async testConnection(): Promise<boolean> {

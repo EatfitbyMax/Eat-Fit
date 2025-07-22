@@ -76,7 +76,7 @@ export async function login(email: string, password: string): Promise<User | nul
         const hashedInput = await Crypto.digestStringAsync(
           Crypto.CryptoDigestAlgorithm.SHA256,
           saltedPassword,
-          { encoding: Crypto.CryptoEncoding.BASE64 }  // <-- corrigé ici
+          { encoding: Crypto.CryptoEncoding.HEX }
         );
 
         isPasswordValid = hashedInput === user.hashedPassword;
@@ -165,7 +165,7 @@ export async function register(userData: Omit<User, 'id'> & { password: string }
       hashedPassword = await Crypto.digestStringAsync(
         Crypto.CryptoDigestAlgorithm.SHA256,
         saltedPassword,
-        { encoding: Crypto.CryptoEncoding.BASE64 }  // <-- corrigé ici
+        { encoding: Crypto.CryptoEncoding.HEX }
       );
 
       console.log('✅ Hachage réussi avec expo-crypto, longueur:', hashedPassword.length);
