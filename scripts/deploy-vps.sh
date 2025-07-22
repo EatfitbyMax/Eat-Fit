@@ -5,9 +5,9 @@
 echo "🚀 Déploiement EatFitByMax sur VPS OVH..."
 
 # Variables
-VPS_HOST="votre-ip-vps"
-VPS_USER="votre-utilisateur"
-VPS_PATH="/chemin/vers/votre/app"
+VPS_HOST="51.178.29.220"
+VPS_USER="ubuntu"
+VPS_PATH="/home/ubuntu/eatfitbymax"
 
 # Mise à jour du code depuis GitHub
 echo "📥 Mise à jour depuis GitHub..."
