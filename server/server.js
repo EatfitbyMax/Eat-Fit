@@ -319,16 +319,22 @@ async function startServer() {
   try {
     await ensureDataDir();
 
-    app.listen(PORT, '0.0.0.0', () => {
+    const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Serveur EatFitByMax démarré sur le port ${PORT}`);
       console.log(`🌐 API disponible sur: https://eatfitbymax.replit.app`);
-      console.log(`✅ Serveur prêt à recevoir des connexions`);
+      console.log(`✅ Serveur prêt à recevoir des connexions sur 0.0.0.0:${PORT}`);
       
       // Signal PM2 que l'application est prête
       if (process.send) {
         process.send('ready');
       }
     });
+
+    server.on('error', (error) => {
+      console.error('❌ Erreur serveur:', error);
+      process.exit(1);
+    });
+
   } catch (error) {
     console.error('Erreur démarrage serveur:', error);
     process.exit(1);
