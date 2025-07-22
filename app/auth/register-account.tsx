@@ -17,16 +17,24 @@ export default function RegisterAccountScreen() {
   const handleFinish = async () => {
     if (email.trim() && password.trim() && password === confirmPassword) {
       try {
+        console.log('🔧 Validation données inscription:', {
+          email: email.trim(),
+          passwordLength: password.length,
+          passwordType: typeof password,
+          firstName: registrationData.firstName,
+          lastName: registrationData.lastName
+        });
+
         // Mettre à jour les données d'inscription avec email/password
         updateRegistrationData({
           email: email.trim().toLowerCase(),
-          password: password,
+          password: password.trim(),
         });
 
         // Créer l'objet utilisateur complet avec toutes les informations
         const userData = {
           email: email.trim().toLowerCase(),
-          password: password,
+          password: password.trim(),
           name: `${registrationData.firstName} ${registrationData.lastName}`,
           firstName: registrationData.firstName,
           lastName: registrationData.lastName,
@@ -38,6 +46,11 @@ export default function RegisterAccountScreen() {
           activityLevel: registrationData.activityLevel,
           userType: 'client' as const,
         };
+
+        console.log('📋 Données utilisateur préparées:', {
+          ...userData,
+          password: '***'
+        });
 
         // Créer le compte avec toutes les informations
         const user = await register(userData);
