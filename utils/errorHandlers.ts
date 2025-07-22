@@ -1,60 +1,18 @@
+
 import { Platform } from 'react-native';
 import * as ErrorRecovery from 'expo-error-recovery';
 
 // Protection contre les boucles de redémarrage
 let restartCount = 0;
 const MAX_RESTARTS = 2;
-const RESTART_WINDOW = 60000;
-const ERROR_THRESHOLD = 5;
-let errorCount = 0;
-let lastErrorReset = Date.now();
+const RESTART_WINDOW = 60000; // 1 minute
 let lastRestartTime = 0;
 
-// Gestionnaire d'erreurs global
-export const setupGlobalErrorHandlers = () => {
-  try {
-    // Gestionnaire d'erreurs JavaScript non capturées
-    const originalErrorHandler = ErrorUtils.getGlobalHandler();
+// Compteurs d'erreurs
+let errorCount = 0;
+let lastErrorReset = Date.now();
 
-    ErrorUtils.setGlobalHandler((error: Error, isFatal?: boolean) => {
-      console.error('🔴 Erreur globale capturée:', {
-        message: error.message,
-        stack: error.stack?.substring(0, 500),
-        isFatal,
-        platform: Platform.OS
-      });
-
-      errorCount++;
-
-      // Appeler le gestionnaire original
-      if (originalErrorHandler) {
-        originalErrorHandler(error, isFatal);
-      }
-
-      // Gestion spéciale pour iOS
-      if (Platform.OS === 'ios' && isFatal && errorCount >= ERROR_THRESHOLD) {
-        handleCriticalError(error);
-      }
-    });
-
-    // Gestionnaire pour les promesses rejetées
-    const unhandledRejectionHandler = (event: any) => {
-      console.error('🔴 Promise rejetée non gérée:', event.reason);
-      errorCount++;
-    };
-
-    if (typeof window !== 'undefined') {
-      window.addEventListener('unhandledrejection', unhandledRejectionHandler);
-    }
-
-    console.log('✅ Gestionnaires d\'erreurs globaux configurés');
-
-  } catch (setupError) {
-    console.error('❌ Erreur lors de la configuration des gestionnaires:', setupError);
-  }
-};
-
-// Fonction pour gérer les erreurs critiques
+// Gestionnaire d'erreurs critiques
 const handleCriticalError = (error: Error) => {
   const now = Date.now();
 
@@ -72,7 +30,9 @@ const handleCriticalError = (error: Error) => {
 
   try {
     console.log('🔄 Tentative de récupération d\'erreur...');
-    ErrorRecovery.recoveryProps && ErrorRecovery.recoveryProps.restart();
+    if (ErrorRecovery.recoveryProps) {
+      ErrorRecovery.recoveryProps.restart();
+    }
   } catch (recoveryError) {
     console.error('❌ Échec de la récupération:', recoveryError);
   }
@@ -102,43 +62,81 @@ export const logNativeError = (error: Error, context: string) => {
   const isNativeError = error.message?.includes('Native module') ||
                        error.message?.includes('RCT') ||
                        error.message?.includes('NSException') ||
-                       error.stack?.includes('0x');
+                       error.message?.includes('JavaException');
 
   if (isNativeError) {
-    console.error(`🔴 ERREUR NATIVE [${context}]:`, {
+    console.error(`🔴 Erreur native détectée (${context}):`, {
       message: error.message,
-      stack: error.stack?.substring(0, 300),
-      name: error.name,
-      platform: Platform.OS
+      stack: error.stack,
+      platform: Platform.OS,
+      isNative: true
+    });
+  } else {
+    console.error(`⚠️ Erreur JavaScript (${context}):`, {
+      message: error.message,
+      stack: error.stack,
+      platform: Platform.OS,
+      isNative: false
+    });
+  }
+
+  errorCount++;
+};
+
+// Gestionnaire d'erreur global pour les promesses
+export const setupGlobalErrorHandler = () => {
+  if (typeof global !== 'undefined') {
+    // Gestionnaire pour les promesses rejetées non gérées
+    global.addEventListener?.('unhandledrejection', (event: any) => {
+      console.error('🔴 Promesse rejetée non gérée:', event.reason);
+      logNativeError(new Error(event.reason), 'unhandledrejection');
+      event.preventDefault();
+    });
+
+    // Gestionnaire pour les erreurs JavaScript non gérées
+    global.addEventListener?.('error', (event: any) => {
+      console.error('🔴 Erreur JavaScript non gérée:', event.error);
+      logNativeError(event.error, 'uncaught-exception');
+      event.preventDefault();
     });
   }
 };
 
-// Wrapper sécurisé pour les appels AsyncStorage
-export const safeAsyncStorageCall = async <T>(
-  operation: () => Promise<T>,
-  defaultValue: T,
-  context: string
+// Wrapper sécurisé pour les appels à des APIs natives
+export const safeNativeCall = async <T>(
+  apiCall: () => Promise<T>,
+  fallbackValue: T,
+  context: string = 'unknown'
 ): Promise<T> => {
   try {
-    return await new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        reject(new Error(`Timeout AsyncStorage: ${context}`));
-      }, 5000);
-
-      operation()
-        .then(result => {
-          clearTimeout(timeout);
-          resolve(result);
-        })
-        .catch(error => {
-          clearTimeout(timeout);
-          reject(error);
-        });
-    });
+    return await apiCall();
   } catch (error) {
-    console.error(`❌ Erreur AsyncStorage [${context}]:`, error);
-    logNativeError(error as Error, context);
-    return defaultValue;
+    logNativeError(error as Error, `safeNativeCall-${context}`);
+    return fallbackValue;
   }
+};
+
+// Wrapper pour les composants React susceptibles d'erreurs natives
+export const withErrorBoundary = <P extends object>(
+  Component: React.ComponentType<P>,
+  fallbackComponent?: React.ComponentType<any>
+) => {
+  return (props: P) => {
+    try {
+      return React.createElement(Component, props);
+    } catch (error) {
+      logNativeError(error as Error, 'component-render');
+      return fallbackComponent ? React.createElement(fallbackComponent, props) : null;
+    }
+  };
+};
+
+export default {
+  handleCriticalError,
+  resetErrorCounters,
+  getErrorStats,
+  logNativeError,
+  setupGlobalErrorHandler,
+  safeNativeCall,
+  withErrorBoundary
 };
