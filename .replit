@@ -95,5 +95,23 @@ mode = "sequential"
 task = "shell.exec"
 args = "npx eas build --platform ios --profile production"
 
+[[workflows.workflow]]
+name = "Start Server"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd server && node server.js"
+
+[[workflows.workflow]]
+name = "Stop Server"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f \"node server.js\""
+
 [deployment]
-run = ["sh", "-c", "cd server && npx pm2-runtime start ecosystem.config.js"]
+run = ["sh", "-c", "cd server && node server.js"]
