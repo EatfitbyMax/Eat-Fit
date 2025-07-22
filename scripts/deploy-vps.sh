@@ -8,6 +8,7 @@ echo "🚀 Déploiement EatFitByMax sur VPS OVH..."
 VPS_HOST="51.178.29.220"
 VPS_USER="ubuntu"
 VPS_PATH="/home/ubuntu/eatfitbymax"
+# Clé SSH privée à configurer dans les secrets GitHub
 
 # Mise à jour du code depuis GitHub
 echo "📥 Mise à jour depuis GitHub..."
