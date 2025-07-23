@@ -29,9 +29,9 @@ export class IntegrationsManager {
   // Méthodes pour Apple Health
   static async connectAppleHealth(userId: string, permissions: string[]): Promise<boolean> {
     try {
-      // Vérifier la disponibilité d'Apple Health (via expo-health-connect)
-      const HealthConnect = await import('expo-health-connect');
-      const available = await HealthConnect.isAvailable();
+      // Vérifier la disponibilité d'Apple Health (via rn-apple-healthkit)
+      const AppleHealthKit = require('rn-apple-healthkit');
+      const available = AppleHealthKit.isAvailable();
 
       if (!available) {
         console.log('Apple Health non disponible');
@@ -39,7 +39,33 @@ export class IntegrationsManager {
       }
 
       // Demander les permissions
-      const granted = await HealthConnect.requestPermissions(permissions);
+      const healthKitPermissions = {
+        permissions: {
+          read: [
+            AppleHealthKit.Constants.Permissions.Steps,
+            AppleHealthKit.Constants.Permissions.ActiveEnergyBurned,
+            AppleHealthKit.Constants.Permissions.HeartRate,
+            AppleHealthKit.Constants.Permissions.Weight,
+            AppleHealthKit.Constants.Permissions.DistanceWalkingRunning,
+          ],
+          write: [
+            AppleHealthKit.Constants.Permissions.Weight,
+            AppleHealthKit.Constants.Permissions.ActiveEnergyBurned,
+          ],
+        },
+      };
+
+      const granted = await new Promise<boolean>((resolve) => {
+        AppleHealthKit.initHealthKit(healthKitPermissions, (error: any) => {
+          if (error) {
+            console.log('⚠️ Erreur permissions HealthKit:', error);
+            resolve(false);
+          } else {
+            console.log('✅ Permissions HealthKit accordées');
+            resolve(true);
+          }
+        });
+      });
 
       if (granted) {
         // Sauvegarder le statut de connexion sur le serveur uniquement
@@ -127,14 +153,9 @@ export class IntegrationsManager {
       });
 
       // Récupérer les données de sommeil (pas directement supporté par rn-apple-healthkit de base)
-      const sleepData: any[] = [];ndDate.toISOString()
-      });
-
-      const sleepData = await HealthConnect.getHealthData({
-        type: 'sleepAnalysis',
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString()
-      });
+      const sleepData: any[] = [];
+      // Note: Les données de sommeil nécessitent une configuration spéciale avec rn-apple-healthkit
+      // Pour l'instant, on laisse le tableau vide
 
       // Organiser les données par date
       const healthDataByDate = {};
