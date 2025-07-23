@@ -514,6 +514,7 @@ app.get('/strava-callback', (req, res) => {
         <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
           <h2>Erreur de connexion Strava</h2>
           <p>Une erreur s'est produite lors de la connexion à Strava.</p>
+          <p>Erreur: ${error}</p>
           <p>Vous pouvez fermer cette fenêtre et réessayer.</p>
         </body>
       </html>
@@ -524,15 +525,30 @@ app.get('/strava-callback', (req, res) => {
     console.log('✅ Code d\'autorisation Strava reçu:', code);
     return res.send(`
       <html>
-        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-          <h2>Connexion Strava réussie!</h2>
-          <p>Votre compte Strava a été connecté avec succès.</p>
-          <p>Vous pouvez fermer cette fenêtre et retourner dans l'application.</p>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Connexion Strava réussie</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5;">
+          <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto;">
+            <h2 style="color: #FC4C02;">Connexion Strava réussie!</h2>
+            <p>Votre compte Strava a été connecté avec succès.</p>
+            <p><strong>Code reçu:</strong> ${code.substring(0, 10)}...</p>
+            <p style="margin-top: 30px;">Vous pouvez fermer cette fenêtre et retourner dans l'application.</p>
+          </div>
           <script>
-            // Essayer de rediriger vers l'app
+            // Essayer de rediriger vers l'app mobile
+            console.log('Tentative de redirection vers l\'app mobile...');
+            
+            // Délai pour laisser le temps de lire le message
             setTimeout(() => {
-              window.location.href = 'eatfitbymax://strava-callback?code=${code}';
-            }, 2000);
+              try {
+                window.location.href = 'eatfitbymax://strava-callback?code=${code}';
+              } catch (e) {
+                console.log('Redirection mobile échouée:', e);
+              }
+            }, 3000);
           </script>
         </body>
       </html>
@@ -544,6 +560,7 @@ app.get('/strava-callback', (req, res) => {
       <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
         <h2>Paramètres manquants</h2>
         <p>Les paramètres de callback sont manquants.</p>
+        <p>URL reçue: ${req.url}</p>
       </body>
     </html>
   `);
