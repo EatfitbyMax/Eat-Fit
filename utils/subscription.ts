@@ -12,7 +12,7 @@ export const SUBSCRIPTION_PLANS = [
     features: [
       'Fonctionnalités de base',
       'Suivi simple des repas',
-      'Plans d'entraînement basiques'
+      'Plans d\'entraînement basiques'
     ]
   },
   {
