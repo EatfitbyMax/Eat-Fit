@@ -60,6 +60,49 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Endpoints pour les intégrations
+app.get('/api/integrations/:userId', (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    // Pour l'instant, retourner les valeurs par défaut
+    // Plus tard, vous pourrez récupérer depuis une base de données
+    const defaultIntegrations = {
+      appleHealth: {
+        connected: false,
+        permissions: [],
+        lastSync: null
+      },
+      strava: {
+        connected: false,
+        lastSync: null,
+        athleteId: null
+      }
+    };
+
+    console.log(`📱 Statuts intégrations demandés pour utilisateur: ${userId}`);
+    res.json(defaultIntegrations);
+  } catch (error) {
+    console.error('❌ Erreur récupération intégrations:', error);
+    res.status(500).json({ error: 'Erreur serveur intégrations' });
+  }
+});
+
+app.post('/api/integrations/:userId', (req, res) => {
+  const { userId } = req.params;
+  const integrationStatus = req.body;
+
+  try {
+    // Pour l'instant, juste confirmer la sauvegarde
+    // Plus tard, vous pourrez sauvegarder dans une base de données
+    console.log(`💾 Sauvegarde intégrations pour utilisateur ${userId}:`, integrationStatus);
+    res.json({ success: true, message: 'Intégrations sauvegardées' });
+  } catch (error) {
+    console.error('❌ Erreur sauvegarde intégrations:', error);
+    res.status(500).json({ error: 'Erreur serveur sauvegarde intégrations' });
+  }
+});
+
 app.get('/api/health-check', (req, res) => {
   res.status(200).json({ 
     status: 'OK', 
@@ -438,13 +481,13 @@ app.post('/api/stripe/confirm-payment', async (req, res) => {
 app.post('/api/strava/exchange-token', async (req, res) => {
   try {
     const { code, userId } = req.body;
-    
+
     if (!code || !userId) {
       return res.status(400).json({ error: 'Code et userId requis' });
     }
 
     console.log('🔄 Échange du code Strava pour utilisateur:', userId);
-    
+
     // Échanger le code contre un token d'accès
     const tokenResponse = await fetch('https://www.strava.com/oauth/token', {
       method: 'POST',
@@ -487,7 +530,7 @@ app.get('/api/strava/status/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     const tokenData = await readJsonFile(`strava_tokens_${userId}.json`, null);
-    
+
     if (tokenData && tokenData.connected) {
       res.json({ 
         connected: true, 
@@ -506,14 +549,14 @@ app.get('/api/strava/status/:userId', async (req, res) => {
 // Callback Strava - Route principale
 app.get('/strava-callback', (req, res) => {
   const { code, error, state } = req.query;
-  
+
   console.log('🔗 Callback Strava reçu:', { 
     code: code ? code.substring(0, 10) + '...' : 'aucun',
     error: error || 'aucune',
     state: state || 'aucun',
     url: req.url
   });
-  
+
   if (error) {
     console.error('❌ Erreur callback Strava:', error);
     return res.status(400).send(`
@@ -565,7 +608,7 @@ app.get('/strava-callback', (req, res) => {
           </div>
           <script>
             console.log('📱 Code Strava reçu, tentative de redirection vers l\'app mobile...');
-            
+
             // Tentative de redirection immédiate vers l'app
             try {
               // Essayer le deep link vers l'application
@@ -574,13 +617,13 @@ app.get('/strava-callback', (req, res) => {
             } catch (e) {
               console.log('⚠️ Redirection deep link échouée:', e);
             }
-            
+
             // Message après délai
             setTimeout(() => {
               const div = document.querySelector('div');
               div.innerHTML += '<p style="color: #28a745; font-weight: bold; margin-top: 20px;">Si l\'application ne s\'ouvre pas automatiquement, retournez manuellement dans l\'app mobile.</p>';
             }, 2000);
-            
+
             // Tentative de fermeture automatique
             setTimeout(() => {
               try {
@@ -638,13 +681,13 @@ app.get('/test-strava', (req, res) => {
             <li><strong>Client Secret:</strong> ${process.env.STRAVA_CLIENT_SECRET ? 'Configuré ✅' : 'Non configuré ❌'}</li>
             <li><strong>Redirect URI:</strong> https://eatfitbymax.replit.app/strava-callback</li>
           </ul>
-          
+
           <h3>Test de connexion Strava :</h3>
           <a href="https://www.strava.com/oauth/authorize?client_id=${process.env.STRAVA_CLIENT_ID || 'MISSING'}&response_type=code&redirect_uri=https://eatfitbymax.replit.app/strava-callback&approval_prompt=force&scope=read,activity:read_all" 
              style="display: inline-block; background: #FC4C02; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold;">
             🔗 Tester la connexion Strava
           </a>
-          
+
           <p style="margin-top: 20px; font-size: 14px; color: #666;">
             Ce lien vous redirigera vers Strava pour tester la configuration.
           </p>
