@@ -182,7 +182,39 @@ export class IntegrationsManager {
   }
 
   // Méthodes pour Strava
-  static async connectStrava(userId: string, authCode: string): Promise<boolean> {
+  static async connectStrava(userId: string): Promise<boolean> {
+    try {
+      const clientId = process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID;
+      
+      if (!clientId) {
+        throw new Error('Configuration Strava manquante');
+      }
+
+      // Créer l'URL d'autorisation Strava
+      const authUrl = `https://www.strava.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${STRAVA_REDIRECT_URI}&approval_prompt=force&scope=read,activity:read_all`;
+      
+      console.log('🔗 Ouverture de l\'autorisation Strava:', authUrl);
+      
+      // Ouvrir l'autorisation Strava
+      const result = await WebBrowser.openAuthSessionAsync(authUrl, STRAVA_REDIRECT_URI);
+      
+      if (result.type === 'success' && result.url) {
+        const url = new URL(result.url);
+        const code = url.searchParams.get('code');
+        
+        if (code) {
+          return await this.exchangeStravaCode(code, userId);
+        }
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('❌ Erreur connexion Strava:', error);
+      throw new Error('Impossible de se connecter à Strava. Vérifiez votre connexion internet.');
+    }
+  }
+
+  static async exchangeStravaCode(code: string, userId: string): Promise<boolean> {
     try {
       const clientId = process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID;
       const clientSecret = process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET;
@@ -200,7 +232,7 @@ export class IntegrationsManager {
         body: JSON.stringify({
           client_id: clientId,
           client_secret: clientSecret,
-          code: authCode,
+          code: code,
           grant_type: 'authorization_code'
         })
       });
