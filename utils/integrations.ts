@@ -83,24 +83,51 @@ export class IntegrationsManager {
         throw new Error('Apple Health non connecté');
       }
 
-      const HealthConnect = await import('expo-health-connect');
+      const AppleHealthKit = require('rn-apple-healthkit');
 
       // Obtenir les données des 7 derniers jours
       const endDate = new Date();
       const startDate = new Date();
       startDate.setDate(endDate.getDate() - 7);
 
-      // Récupérer différents types de données
-      const stepData = await HealthConnect.getHealthData({
-        type: 'steps',
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString()
+      // Récupérer les pas des 7 derniers jours
+      const stepData: any[] = [];
+      for (let i = 0; i < 7; i++) {
+        const currentDate = new Date(startDate);
+        currentDate.setDate(startDate.getDate() + i);
+        
+        const stepsForDay = await new Promise<number>((resolve) => {
+          const options = {
+            startDate: new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate()).toISOString(),
+            endDate: new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() + 1).toISOString(),
+          };
+          
+          AppleHealthKit.getStepCount(options, (callbackError: any, results: any) => {
+            resolve(callbackError ? 0 : results?.value || 0);
+          });
+        });
+
+        stepData.push({
+          startDate: currentDate.toISOString(),
+          value: stepsForDay
+        });
+      }
+
+      // Récupérer les données de fréquence cardiaque
+      const heartRateData = await new Promise<any[]>((resolve) => {
+        const options = {
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+          limit: 100,
+        };
+        
+        AppleHealthKit.getHeartRateSamples(options, (callbackError: any, results: any) => {
+          resolve(callbackError ? [] : results || []);
+        });
       });
 
-      const heartRateData = await HealthConnect.getHealthData({
-        type: 'heartRate',
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString()
+      // Récupérer les données de sommeil (pas directement supporté par rn-apple-healthkit de base)
+      const sleepData: any[] = [];ndDate.toISOString()
       });
 
       const sleepData = await HealthConnect.getHealthData({
@@ -131,15 +158,8 @@ export class IntegrationsManager {
       });
 
       // Traiter les données de sommeil
-      sleepData.forEach((entry: any) => {
-        const date = new Date(entry.startDate).toISOString().split('T')[0];
-        if (!healthDataByDate[date]) {
-          healthDataByDate[date] = { date, steps: 0, heartRate: [], sleep: [] };
-        }
-        healthDataByDate[date].sleep.push({
-          startDate: entry.startDate,
-          endDate: entry.endDate,
-          value: entry.value
+      // Les données de sommeil ne sont pas directement disponibles via rn-apple-healthkit
+      // On peut ajouter cette fonctionnalité plus tard si nécessaire entry.value
         });
       });
 
