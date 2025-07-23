@@ -1,0 +1,18 @@
+LOG  Données utilisateur récupérées: {"activityLevel": "leger", "age": 22, "email": "m.pacullmarquie@gmail.com", "firstName": "Maxandre", "gender": "Homme", "goals": ["Perdre du poids", "Me muscler", "Gagner en performance", "Planifier mes repas"], "height": 175, "id": "1753194251123", "lastName": "Marquie", "profileImage": undefined, "userType": "client", "weight": 78}
+ LOG  🔍 Test de connexion au serveur VPS: http://51.178.29.220:5000
+ LOG  Données utilisateur récupérées: {"activityLevel": "leger", "age": 22, "email": "m.pacullmarquie@gmail.com", "firstName": "Maxandre", "gender": "Homme", "goals": ["Perdre du poids", "Me muscler", "Gagner en performance", "Planifier mes repas"], "height": 175, "id": "1753194251123", "lastName": "Marquie", "profileImage": undefined, "userType": "client", "weight": 78}
+ LOG  🔍 Test de connexion au serveur VPS: http://51.178.29.220:5000
+ LOG  🔍 Données d'abonnement récupérées: {"isPremium": true, "planId": "bronze"}
+ LOG  💎 Configuration abonnement premium: {"planId": "bronze", "planName": "BRONZE", "status": "active"}
+ LOG  🔍 Données d'abonnement récupérées: {"isPremium": true, "planId": "bronze"}
+ LOG  💎 Configuration abonnement premium: {"planId": "bronze", "planName": "BRONZE", "status": "active"}
+ LOG  🔍 Debug Profil - isPremium: true currentSubscription: {"currency": "EUR", "paymentMethod": "none", "planId": "free", "planName": "Version Gratuite", "price": 0, "status": "active"} user: m.pacullmarquie@gmail.com
+ LOG  🔍 Debug Profil - isPremium: true currentSubscription: {"currency": "EUR", "paymentMethod": "none", "planId": "free", "planName": "Version Gratuite", "price": 0, "status": "active"} user: m.pacullmarquie@gmail.com
+ LOG  ✅ Serveur VPS opérationnel - Serveur EatFitByMax fonctionnel
+ LOG  ✅ Serveur VPS opérationnel - Serveur EatFitByMax fonctionnel
+ ERROR  ❌ Erreur récupération statuts intégrations: [Error: Erreur récupération intégrations]
+ ERROR  ❌ Erreur récupération statuts intégrations: [Error: Impossible de récupérer les statuts d'intégrations. Vérifiez votre connexion internet.]
+ ERROR  Failed to load integration status: [Error: Impossible de récupérer les statuts d'intégrations. Vérifiez votre connexion internet.]
+ ERROR  ❌ Erreur récupération statuts intégrations: [Error: Erreur récupération intégrations]
+ ERROR  ❌ Erreur récupération statuts intégrations: [Error: Impossible de récupérer les statuts d'intégrations. Vérifiez votre connexion internet.]
+ ERROR  Failed to load integration status: [Error: Impossible de récupérer les statuts d'intégrations. Vérifiez votre connexion internet.]
