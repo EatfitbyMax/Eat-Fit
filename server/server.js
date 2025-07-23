@@ -316,6 +316,44 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Erreur interne du serveur' });
 });
 
+// Routes pour Stripe
+app.post('/api/stripe/create-payment-intent', async (req, res) => {
+  try {
+    const { planId, planName, userId, amount, currency } = req.body;
+
+    // Simulation d'un PaymentIntent pour les tests
+    const paymentIntent = {
+      clientSecret: `pi_test_${Date.now()}_secret_${Math.random().toString(36).substr(2, 9)}`,
+      ephemeralKey: `ek_test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      customer: `cus_test_${userId}_${Math.random().toString(36).substr(2, 9)}`
+    };
+
+    console.log(`💳 PaymentIntent créé pour ${planName} (${amount}${currency}) - User: ${userId}`);
+    
+    res.json(paymentIntent);
+  } catch (error) {
+    console.error('Erreur création PaymentIntent:', error);
+    res.status(500).json({ error: 'Erreur création PaymentIntent' });
+  }
+});
+
+app.post('/api/stripe/confirm-payment', async (req, res) => {
+  try {
+    const { paymentIntentId, userId } = req.body;
+
+    console.log(`✅ PaymentIntent confirmé: ${paymentIntentId} pour utilisateur: ${userId}`);
+    
+    res.json({ 
+      success: true, 
+      paymentIntentId,
+      status: 'succeeded'
+    });
+  } catch (error) {
+    console.error('Erreur confirmation PaymentIntent:', error);
+    res.status(500).json({ error: 'Erreur confirmation PaymentIntent' });
+  }
+});
+
 // Route 404
 app.use('*', (req, res) => {
   res.status(404).json({ error: 'Route non trouvée' });
