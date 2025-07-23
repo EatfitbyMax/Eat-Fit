@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, TextInput, FlatList, KeyboardAvoidingView, Platform, Modal, Alert } from 'react-native';
-import { getMessages, saveMessages, PersistentStorage } from '../../utils/storage';
+import { getMessages, saveMessages, PersistentStorage, testApiConnection } from '../../utils/storage';
 import { getCurrentUser } from '../../utils/auth';
 import { checkSubscriptionStatusBoolean } from '../../utils/subscription';
 import AsyncStorage from '@react-native-async-storage/async-storage';
