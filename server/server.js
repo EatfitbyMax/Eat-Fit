@@ -322,6 +322,12 @@ app.post('/api/stripe/create-payment-intent', async (req, res) => {
     const { planId, planName, userId, amount, currency } = req.body;
 
     // Vérifier que Stripe est configuré
+    console.log('🔑 Debug Stripe:', {
+      hasKey: !!process.env.STRIPE_SECRET_KEY,
+      keyPrefix: process.env.STRIPE_SECRET_KEY ? process.env.STRIPE_SECRET_KEY.substring(0, 10) + '...' : 'non définie',
+      isDefault: process.env.STRIPE_SECRET_KEY === 'sk_test_your_stripe_secret_key_here'
+    });
+
     if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY === 'sk_test_your_stripe_secret_key_here') {
       console.error('❌ Clé Stripe non configurée');
       return res.status(500).json({ error: 'Configuration Stripe manquante' });
@@ -381,7 +387,7 @@ app.post('/api/stripe/create-payment-intent', async (req, res) => {
 
     console.log(`💳 PaymentIntent créé pour ${planName} (${amount}${currency}) - User: ${userId}`);
     console.log(`🔑 PaymentIntent ID: ${paymentIntent.id}`);
-    
+
     res.json({
       clientSecret: paymentIntent.client_secret,
       ephemeralKey: ephemeralKey.secret,
@@ -411,7 +417,7 @@ app.post('/api/stripe/confirm-payment', async (req, res) => {
 
     console.log(`✅ PaymentIntent confirmé: ${paymentIntentId} pour utilisateur: ${userId}`);
     console.log(`📊 Statut du paiement: ${paymentIntent.status}`);
-    
+
     res.json({ 
       success: true, 
       paymentIntentId,
@@ -439,7 +445,7 @@ async function startServer() {
       console.log(`🚀 Serveur EatFitByMax démarré sur le port ${PORT}`);
       console.log(`🌐 API disponible sur: https://eatfitbymax.replit.app`);
       console.log(`✅ Serveur prêt à recevoir des connexions sur 0.0.0.0:${PORT}`);
-      
+
       // Serveur prêt pour Replit
       console.log('📡 Serveur Replit configuré et en ligne');
     });
