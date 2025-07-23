@@ -1,0 +1,15 @@
+
+diff --git a/node_modules/@expo/metro-config/src/serializer/fork/js.ts b/node_modules/@expo/metro-config/src/serializer/fork/js.ts
+index 1234567..abcdefg 100644
+--- a/node_modules/@expo/metro-config/src/serializer/fork/js.ts
++++ b/node_modules/@expo/metro-config/src/serializer/fork/js.ts
+@@ -106,7 +106,10 @@ function getModuleParams(
+     const moduleParams = modules.map((module) => {
+-      const relativePath = path.relative(projectRoot, module.path);
++      const relativePath = path.relative(
++        projectRoot || '',
++        module.path || ''
++      );
+       return {
+         id: module.id,
+         path: relativePath,
