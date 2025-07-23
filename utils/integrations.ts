@@ -9,8 +9,8 @@ const STRAVA_CLIENT_SECRET = process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET || '';
 
 // Configuration du redirect URI selon l'environnement  
 const getStravaRedirectUri = (): string => {
-  // Toujours utiliser l'URL du VPS OVH pour la production
-  return 'http://51.178.29.220:5000/strava-callback';
+  // Utiliser HTTPS pour la production sur le VPS OVH
+  return 'https://51.178.29.220:5000/strava-callback';
 };
 
 const STRAVA_REDIRECT_URI = getStravaRedirectUri();
