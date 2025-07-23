@@ -503,27 +503,43 @@ app.get('/api/strava/status/:userId', async (req, res) => {
   }
 });
 
-// Callback Strava
+// Callback Strava - Route principale
 app.get('/strava-callback', (req, res) => {
-  const { code, error } = req.query;
+  const { code, error, state } = req.query;
+  
+  console.log('🔗 Callback Strava reçu:', { 
+    code: code ? code.substring(0, 10) + '...' : 'aucun',
+    error: error || 'aucune',
+    state: state || 'aucun',
+    url: req.url
+  });
   
   if (error) {
-    console.error('Erreur callback Strava:', error);
+    console.error('❌ Erreur callback Strava:', error);
     return res.status(400).send(`
+      <!DOCTYPE html>
       <html>
-        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-          <h2>Erreur de connexion Strava</h2>
-          <p>Une erreur s'est produite lors de la connexion à Strava.</p>
-          <p>Erreur: ${error}</p>
-          <p>Vous pouvez fermer cette fenêtre et réessayer.</p>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Erreur Strava</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5;">
+          <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto;">
+            <h2 style="color: #e74c3c;">❌ Erreur de connexion Strava</h2>
+            <p>Une erreur s'est produite lors de la connexion à Strava.</p>
+            <p><strong>Erreur:</strong> ${error}</p>
+            <p style="margin-top: 30px;">Vous pouvez fermer cette fenêtre et réessayer dans l'application.</p>
+          </div>
         </body>
       </html>
     `);
   }
 
   if (code) {
-    console.log('✅ Code d\'autorisation Strava reçu:', code);
+    console.log('✅ Code d\'autorisation Strava reçu avec succès');
     return res.send(`
+      <!DOCTYPE html>
       <html>
         <head>
           <meta charset="UTF-8">
@@ -532,46 +548,107 @@ app.get('/strava-callback', (req, res) => {
         </head>
         <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5;">
           <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto;">
-            <h2 style="color: #FC4C02;">✅ Connexion Strava réussie!</h2>
-            <p>Votre compte Strava a été connecté avec succès à EatFit By Max.</p>
-            <p><strong>Code d'autorisation:</strong> ${code.substring(0, 10)}...</p>
-            <p style="margin-top: 30px; font-weight: bold;">Vous pouvez maintenant fermer cette fenêtre et retourner dans l'application mobile.</p>
-            <p style="margin-top: 15px; font-size: 12px; color: #666;">Cette page va se fermer automatiquement dans quelques secondes...</p>
+            <h2 style="color: #FC4C02;">🎉 Connexion Strava réussie!</h2>
+            <p>Votre compte Strava a été connecté avec succès à <strong>EatFit By Max</strong>.</p>
+            <p style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <strong>Code d'autorisation:</strong><br>
+              <code style="font-size: 12px; color: #666;">${code.substring(0, 15)}...</code>
+            </p>
+            <div style="border: 2px dashed #28a745; padding: 20px; border-radius: 8px; background: #f8fff8; margin: 20px 0;">
+              <p style="margin: 0; font-weight: bold; color: #28a745;">
+                ✓ Vous pouvez maintenant fermer cette fenêtre et retourner dans l'application mobile.
+              </p>
+            </div>
+            <p style="font-size: 12px; color: #666; margin-top: 20px;">
+              Cette page va tenter de rediriger automatiquement vers l'application...
+            </p>
           </div>
           <script>
-            // Essayer de rediriger vers l'app mobile
-            console.log('Code Strava reçu, tentative de redirection vers l\'app mobile...');
+            console.log('📱 Code Strava reçu, tentative de redirection vers l\'app mobile...');
             
-            // Délai pour laisser le temps de lire le message
+            // Tentative de redirection immédiate vers l'app
+            try {
+              // Essayer le deep link vers l'application
+              window.location.href = 'eatfitbymax://strava-callback?code=${code}';
+              console.log('🔗 Tentative de redirection deep link');
+            } catch (e) {
+              console.log('⚠️ Redirection deep link échouée:', e);
+            }
+            
+            // Message après délai
+            setTimeout(() => {
+              const div = document.querySelector('div');
+              div.innerHTML += '<p style="color: #28a745; font-weight: bold; margin-top: 20px;">Si l\'application ne s\'ouvre pas automatiquement, retournez manuellement dans l\'app mobile.</p>';
+            }, 2000);
+            
+            // Tentative de fermeture automatique
             setTimeout(() => {
               try {
-                // Essayer plusieurs méthodes de redirection
-                window.location.href = 'eatfitbymax://strava-callback?code=${code}';
-                
-                // Alternative : fermer la fenêtre si possible
-                setTimeout(() => {
-                  try {
-                    window.close();
-                  } catch (e) {
-                    console.log('Impossible de fermer la fenêtre automatiquement');
-                  }
-                }, 1000);
+                window.close();
               } catch (e) {
-                console.log('Redirection mobile échouée:', e);
+                console.log('⚠️ Impossible de fermer la fenêtre automatiquement');
               }
-            }, 3000);
+            }, 5000);
           </script>
         </body>
       </html>
     `);
   }
 
+  // Cas où ni code ni erreur ne sont présents
+  console.warn('⚠️ Callback Strava sans paramètres valides');
   res.status(400).send(`
+    <!DOCTYPE html>
     <html>
-      <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-        <h2>Paramètres manquants</h2>
-        <p>Les paramètres de callback sont manquants.</p>
-        <p>URL reçue: ${req.url}</p>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Paramètres manquants</title>
+      </head>
+      <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5;">
+        <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto;">
+          <h2 style="color: #f39c12;">⚠️ Paramètres manquants</h2>
+          <p>Les paramètres de callback Strava sont manquants.</p>
+          <p style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <strong>URL reçue:</strong><br>
+            <code style="font-size: 12px; word-break: break-all;">${req.url}</code>
+          </p>
+          <p>Veuillez réessayer la connexion depuis l'application mobile.</p>
+        </div>
+      </body>
+    </html>
+  `);
+});
+
+// Route de test pour Strava
+app.get('/test-strava', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Test Strava Configuration</title>
+      </head>
+      <body style="font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5;">
+        <div style="max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px;">
+          <h1>🔧 Test Configuration Strava</h1>
+          <h3>Configuration actuelle :</h3>
+          <ul>
+            <li><strong>Client ID:</strong> ${process.env.STRAVA_CLIENT_ID || 'Non configuré'}</li>
+            <li><strong>Client Secret:</strong> ${process.env.STRAVA_CLIENT_SECRET ? 'Configuré ✅' : 'Non configuré ❌'}</li>
+            <li><strong>Redirect URI:</strong> https://eatfitbymax.replit.app/strava-callback</li>
+          </ul>
+          
+          <h3>Test de connexion Strava :</h3>
+          <a href="https://www.strava.com/oauth/authorize?client_id=${process.env.STRAVA_CLIENT_ID || 'MISSING'}&response_type=code&redirect_uri=https://eatfitbymax.replit.app/strava-callback&approval_prompt=force&scope=read,activity:read_all" 
+             style="display: inline-block; background: #FC4C02; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold;">
+            🔗 Tester la connexion Strava
+          </a>
+          
+          <p style="margin-top: 20px; font-size: 14px; color: #666;">
+            Ce lien vous redirigera vers Strava pour tester la configuration.
+          </p>
+        </div>
       </body>
     </html>
   `);
