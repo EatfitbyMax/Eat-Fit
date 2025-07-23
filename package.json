@@ -11,7 +11,7 @@
     "test": "jest --watchAll",
     "lint": "expo lint",
     "prebuild-check": "node ./scripts/prebuild-check-ios.js",
-    "build:ios:preview": "npm run prebuild-check && npx eas build --platform ios --profile preview",
+    "build:ios:preview": "npm run prebuild-check && npx eas build --platform ios --profile preview --clear-cache",
     "build:ios:production": "npm run prebuild-check && npx eas build --platform ios --profile production"
   },
   "jest": {
@@ -93,9 +93,6 @@
     "jest-expo": "~53.0.9",
     "npm-force-resolutions": "^0.0.10",
     "typescript": "~5.8.3"
-  },
-  "overrides": {
-    "@expo/config-plugins": "~10.1.1"
   },
   "private": true
 }
