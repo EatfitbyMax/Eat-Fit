@@ -532,19 +532,30 @@ app.get('/strava-callback', (req, res) => {
         </head>
         <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5;">
           <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto;">
-            <h2 style="color: #FC4C02;">Connexion Strava réussie!</h2>
-            <p>Votre compte Strava a été connecté avec succès.</p>
-            <p><strong>Code reçu:</strong> ${code.substring(0, 10)}...</p>
-            <p style="margin-top: 30px;">Vous pouvez fermer cette fenêtre et retourner dans l'application.</p>
+            <h2 style="color: #FC4C02;">✅ Connexion Strava réussie!</h2>
+            <p>Votre compte Strava a été connecté avec succès à EatFit By Max.</p>
+            <p><strong>Code d'autorisation:</strong> ${code.substring(0, 10)}...</p>
+            <p style="margin-top: 30px; font-weight: bold;">Vous pouvez maintenant fermer cette fenêtre et retourner dans l'application mobile.</p>
+            <p style="margin-top: 15px; font-size: 12px; color: #666;">Cette page va se fermer automatiquement dans quelques secondes...</p>
           </div>
           <script>
             // Essayer de rediriger vers l'app mobile
-            console.log('Tentative de redirection vers l\'app mobile...');
+            console.log('Code Strava reçu, tentative de redirection vers l\'app mobile...');
             
             // Délai pour laisser le temps de lire le message
             setTimeout(() => {
               try {
+                // Essayer plusieurs méthodes de redirection
                 window.location.href = 'eatfitbymax://strava-callback?code=${code}';
+                
+                // Alternative : fermer la fenêtre si possible
+                setTimeout(() => {
+                  try {
+                    window.close();
+                  } catch (e) {
+                    console.log('Impossible de fermer la fenêtre automatiquement');
+                  }
+                }, 1000);
               } catch (e) {
                 console.log('Redirection mobile échouée:', e);
               }
