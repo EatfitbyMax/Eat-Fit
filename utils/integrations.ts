@@ -213,46 +213,40 @@ export class IntegrationsManager {
 
   static async exchangeStravaCode(code: string, userId: string): Promise<boolean> {
     try {
-      const clientId = process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID;
-      const clientSecret = process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET;
-
-      if (!clientId || !clientSecret) {
-        throw new Error('Configuration Strava manquante');
-      }
-
-      // Échanger le code d'autorisation contre un token d'accès
-      const tokenResponse = await fetch('https://www.strava.com/oauth/token', {
+      const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
+      
+      // Utiliser le serveur VPS pour l'échange du token
+      const response = await fetch(`${serverUrl}/api/strava/exchange-token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          client_id: clientId,
-          client_secret: clientSecret,
           code: code,
-          grant_type: 'authorization_code'
+          userId: userId
         })
       });
 
-      if (!tokenResponse.ok) {
+      if (!response.ok) {
         throw new Error('Erreur lors de l\'authentification Strava');
       }
 
-      const tokenData = await tokenResponse.json();
+      const result = await response.json();
 
-      // Sauvegarder les tokens sur le serveur uniquement
-      const status = await this.getIntegrationStatus(userId);
-      status.strava = {
-        connected: true,
-        accessToken: tokenData.access_token,
-        refreshToken: tokenData.refresh_token,
-        expiresAt: tokenData.expires_at,
-        athlete: tokenData.athlete
-      };
-      await PersistentStorage.saveIntegrationStatus(userId, status);
+      if (result.success) {
+        // Mettre à jour le statut local
+        const status = await this.getIntegrationStatus(userId);
+        status.strava = {
+          connected: true,
+          athlete: result.athlete
+        };
+        await PersistentStorage.saveIntegrationStatus(userId, status);
 
-      console.log('✅ Strava connecté');
-      return true;
+        console.log('✅ Strava connecté via serveur VPS');
+        return true;
+      }
+
+      return false;
     } catch (error) {
       console.error('❌ Erreur connexion Strava:', error);
       throw new Error('Impossible de se connecter à Strava. Vérifiez votre connexion internet.');
@@ -402,6 +396,30 @@ export class IntegrationsManager {
     } catch (error) {
       console.error('❌ Erreur récupération activités Strava:', error);
       throw new Error('Impossible de récupérer les activités Strava. Vérifiez votre connexion internet.');
+    }
+  }
+
+  static async getStravaStatusFromServer(userId: string): Promise<any> {
+    try {
+      const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
+      
+      const response = await fetch(`${serverUrl}/api/strava/status/${userId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Statut Strava récupéré du serveur VPS:', data);
+        return data;
+      }
+
+      return { connected: false };
+    } catch (error) {
+      console.error('❌ Erreur récupération statut Strava du serveur:', error);
+      return { connected: false };
     }
   }
 
