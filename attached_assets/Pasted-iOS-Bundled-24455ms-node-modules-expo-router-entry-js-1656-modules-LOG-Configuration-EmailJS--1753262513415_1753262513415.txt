@@ -1,0 +1,28 @@
+iOS Bundled 24455ms node_modules/expo-router/entry.js (1656 modules)
+ LOG  🔧 Configuration EmailJS: {"PUBLIC_KEY": "t2undaGNuW...", "SERVICE_ID": "service_3d0mqnl", "TEMPLATE_ID": "template_cmyczjl"}
+ WARN  ⚠️ Erreur initialisation gestionnaires: [TypeError: 0, _errorHandlers.setupGlobalErrorHandlers is not a function (it is undefined)]
+ LOG  📱 Aucun utilisateur connecté, redirection vers login
+ LOG  🛡️ AuthGuard - Route: (client) | Utilisateur: Non connecté
+ LOG  🔄 Redirection vers /auth/login - Aucun utilisateur connecté
+ LOG  🛡️ AuthGuard - Route: auth/login | Utilisateur: Non connecté
+ LOG  🔄 Tentative de connexion pour: m.pacullmarquie@gmail.com
+ LOG  🔍 Test de connexion au serveur VPS: http://51.178.29.220:5000
+ LOG  ✅ Serveur VPS opérationnel - Serveur EatFitByMax fonctionnel
+ LOG  ✅ Utilisateurs récupérés depuis le serveur Replit
+ LOG  📊 Nombre d'utilisateurs récupérés: 1
+ LOG  👥 Utilisateurs disponibles: [{"email": "m.pacullmarquie@gmail.com", "hashedPassword": "OUI", "userType": "client"}]
+ LOG  👤 Utilisateur trouvé: {"email": "m.pacullmarquie@gmail.com", "hasHashedPassword": "OUI", "hasPassword": "NON", "userType": "client"}
+ LOG  🔐 Vérification avec hash: INVALIDE
+ LOG  ❌ Mot de passe incorrect pour: m.pacullmarquie@gmail.com
+ LOG  🛡️ AuthGuard - Route: auth/forgot-password | Utilisateur: Non connecté
+ LOG  🔍 Test de connexion au serveur VPS: http://51.178.29.220:5000
+ LOG  ✅ Serveur VPS opérationnel - Serveur EatFitByMax fonctionnel
+ LOG  ✅ Utilisateurs récupérés depuis le serveur Replit
+ LOG  🔍 Test de connexion au serveur VPS: http://51.178.29.220:5000
+ LOG  ✅ Serveur VPS opérationnel - Serveur EatFitByMax fonctionnel
+ LOG  ✅ Utilisateurs sauvegardés sur le serveur Replit
+ LOG  📧 Démarrage envoi email à: m.pacullmarquie@gmail.com
+ LOG  ✅ EmailJS initialisé avec succès
+ LOG  📤 Envoi avec les paramètres: {"service": "service_3d0mqnl", "template": "template_cmyczjl", "to": "m.pacullmarquie@gmail.com"}
+ ERROR  ❌ Exception service email: The public key is required. Visit https://dashboard.emailjs.com/admin/account
+ LOG  🛡️ AuthGuard - Route: auth/login | Utilisateur: Non connecté
