@@ -3,6 +3,7 @@ modules = ["nodejs-18"]
 
 [nix]
 channel = "stable-24_05"
+packages = ["gnupatch"]
 
 [[ports]]
 localPort = 5000
