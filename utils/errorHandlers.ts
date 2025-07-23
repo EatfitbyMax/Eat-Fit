@@ -84,7 +84,7 @@ export const logNativeError = (error: Error, context: string) => {
 };
 
 // Gestionnaire d'erreur global pour les promesses
-export const setupGlobalErrorHandler = () => {
+export const setupGlobalErrorHandlers = () => {
   if (typeof global !== 'undefined') {
     // Gestionnaire pour les promesses rejetées non gérées
     global.addEventListener?.('unhandledrejection', (event: any) => {
@@ -136,7 +136,7 @@ export default {
   resetErrorCounters,
   getErrorStats,
   logNativeError,
-  setupGlobalErrorHandler,
+  setupGlobalErrorHandler: setupGlobalErrorHandlers,
   safeNativeCall,
   withErrorBoundary
 };
