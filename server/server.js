@@ -434,6 +434,75 @@ app.post('/api/stripe/confirm-payment', async (req, res) => {
   }
 });
 
+// Routes pour les intégrations Strava
+app.post('/api/strava/exchange-token', async (req, res) => {
+  try {
+    const { code, userId } = req.body;
+    
+    if (!code || !userId) {
+      return res.status(400).json({ error: 'Code et userId requis' });
+    }
+
+    console.log('🔄 Échange du code Strava pour utilisateur:', userId);
+    
+    // Échanger le code contre un token d'accès
+    const tokenResponse = await fetch('https://www.strava.com/oauth/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        client_id: process.env.STRAVA_CLIENT_ID,
+        client_secret: process.env.STRAVA_CLIENT_SECRET,
+        code: code,
+        grant_type: 'authorization_code'
+      })
+    });
+
+    if (!tokenResponse.ok) {
+      throw new Error('Erreur lors de l\'authentification Strava');
+    }
+
+    const tokenData = await tokenResponse.json();
+
+    // Sauvegarder les tokens
+    const tokenFilePath = `strava_tokens_${userId}.json`;
+    await writeJsonFile(tokenFilePath, {
+      accessToken: tokenData.access_token,
+      refreshToken: tokenData.refresh_token,
+      expiresAt: tokenData.expires_at,
+      athlete: tokenData.athlete,
+      connected: true
+    });
+
+    console.log('✅ Tokens Strava sauvegardés pour utilisateur:', userId);
+    res.json({ success: true, athlete: tokenData.athlete });
+  } catch (error) {
+    console.error('❌ Erreur échange token Strava:', error);
+    res.status(500).json({ error: 'Erreur échange token Strava' });
+  }
+});
+
+app.get('/api/strava/status/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const tokenData = await readJsonFile(`strava_tokens_${userId}.json`, null);
+    
+    if (tokenData && tokenData.connected) {
+      res.json({ 
+        connected: true, 
+        athlete: tokenData.athlete,
+        lastSync: null 
+      });
+    } else {
+      res.json({ connected: false });
+    }
+  } catch (error) {
+    console.error('❌ Erreur statut Strava:', error);
+    res.json({ connected: false });
+  }
+});
+
 // Callback Strava
 app.get('/strava-callback', (req, res) => {
   const { code, error } = req.query;
