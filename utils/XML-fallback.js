@@ -17,14 +17,3 @@ module.exports = {
     return '';
   }
 };
-// Fallback pour le module XML manquant dans @expo/config-plugins
-module.exports = {
-  format: () => '',
-  parse: () => ({}),
-  parseString: () => ({}),
-  Builder: function() {
-    return {
-      buildObject: () => ''
-    };
-  }
-};
