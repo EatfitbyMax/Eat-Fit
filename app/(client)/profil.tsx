@@ -97,28 +97,21 @@ export default function ProfilScreen() {
 
   const loadSubscriptionStatus = async () => {
     try {
-      const subscriptionData = await checkSubscriptionStatus();
-      console.log('🔍 Données d\'abonnement récupérées:', subscriptionData);
+      const currentUser = await getCurrentUser();
+      if (!currentUser) return;
 
-      // Mettre à jour les données d'abonnement pour l'affichage
-      if (subscriptionData.isPremium) {
-        const planName = subscriptionData.planId === 'diamond' ? 'DIAMANT' :
-                         subscriptionData.planId === 'gold' ? 'OR' : 
-                         subscriptionData.planId === 'silver' ? 'ARGENT' : 'BRONZE';
+      // Utiliser getCurrentSubscription au lieu de checkSubscriptionStatus
+      const subscription = await PaymentService.getCurrentSubscription(currentUser.id);
+      console.log('🔍 Abonnement actuel récupéré:', subscription);
 
-        const subscription = { 
-          planId: subscriptionData.planId,
-          status: 'active',
-          planName: planName
-        };
-
-        console.log('💎 Configuration abonnement premium:', subscription);
+      if (subscription && subscription.planId !== 'free') {
         setIsPremium(true);
         setCurrentSubscription(subscription);
+        console.log('💎 Configuration abonnement premium:', subscription);
       } else {
-        console.log('📝 Aucun abonnement premium détecté');
         setIsPremium(false);
-        setCurrentSubscription(null);
+        setCurrentSubscription(subscription);
+        console.log('📝 Plan gratuit configuré');
       }
     } catch (error) {
       console.error("Failed to load subscription status:", error);
