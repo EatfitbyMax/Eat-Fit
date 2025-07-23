@@ -129,47 +129,38 @@ export const getCurrentSubscription = async (userId: string): Promise<Subscripti
   try {
     console.log('🔍 Récupération abonnement pour:', userId);
 
-    // Récupérer depuis le serveur VPS
-    const response = await fetch(`${process.env.EXPO_PUBLIC_VPS_URL}/api/subscription/${userId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    // Utiliser checkSubscriptionStatus pour obtenir les données d'abonnement
+    const subscriptionStatus = await checkSubscriptionStatus();
+    console.log('🔍 Statut abonnement récupéré:', subscriptionStatus);
 
-    if (response.ok) {
-      const subscriptionData = await response.json();
-      console.log('🔍 Données d\'abonnement récupérées:', subscriptionData);
+    if (subscriptionStatus.isPremium && subscriptionStatus.planId && subscriptionStatus.planId !== 'free') {
+      const plan = SUBSCRIPTION_PLANS.find(p => p.id === subscriptionStatus.planId);
+      if (plan) {
+        const subscription = {
+          planId: subscriptionStatus.planId,
+          planName: plan.name,
+          status: 'active' as const,
+          price: plan.price,
+          currency: 'EUR',
+          paymentMethod: 'none'
+        };
 
-      if (subscriptionData.isPremium && subscriptionData.planId && subscriptionData.planId !== 'free') {
-        const plan = SUBSCRIPTION_PLANS.find(p => p.id === subscriptionData.planId);
-        if (plan) {
-          const subscription = {
-            planId: subscriptionData.planId,
-            planName: plan.name,
-            status: 'active',
-            price: plan.price,
-            currency: 'EUR',
-            paymentMethod: subscriptionData.paymentMethod || 'none'
-          };
-
-          console.log('💎 Configuration abonnement premium:', subscription);
-          return subscription;
-        }
+        console.log('💎 Configuration abonnement premium:', subscription);
+        return subscription;
       }
     }
 
-    // Fallback sur le plan gratuit
+    // Plan gratuit par défaut
     const freeSubscription = {
       planId: 'free',
       planName: 'Version Gratuite',
-      status: 'active',
+      status: 'active' as const,
       price: 0,
       currency: 'EUR',
       paymentMethod: 'none'
     };
 
-    console.log('🆓 Utilisation du plan gratuit par défaut');
+    console.log('🆓 Utilisation du plan gratuit');
     return freeSubscription;
   } catch (error) {
     console.error('❌ Erreur récupération abonnement:', error);
@@ -178,7 +169,7 @@ export const getCurrentSubscription = async (userId: string): Promise<Subscripti
     const freeSubscription = {
       planId: 'free',
       planName: 'Version Gratuite', 
-      status: 'active',
+      status: 'active' as const,
       price: 0,
       currency: 'EUR',
       paymentMethod: 'none'
