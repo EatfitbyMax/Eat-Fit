@@ -1,0 +1,61 @@
+diff --git a/node_modules/@expo/config-plugins/build/utils/XML.d.ts b/node_modules/@expo/config-plugins/build/utils/XML.d.ts
+index 5811321..39cec60 100644
+--- a/node_modules/@expo/config-plugins/build/utils/XML.d.ts
++++ b/node_modules/@expo/config-plugins/build/utils/XML.d.ts
+@@ -25,3 +25,23 @@ export declare function format(manifest: any, { indentLevel, newline }?: {
+  */
+ export declare function escapeAndroidString(value: string): string;
+ export declare function unescapeAndroidString(value: string): string;
++export interface ParseOptions {
++  explicitArray?: boolean;
++  mergeAttrs?: boolean;
++  normalize?: boolean;
++  normalizeTags?: boolean;
++  trim?: boolean;
++}
++
++export interface BuilderOptions {
++  rootName?: string;
++  renderOpts?: {
++    pretty?: boolean;
++    indent?: string;
++  };
++}
++
++export function parseStringToXml(xmlString: string, options?: ParseOptions): Promise<any>;
++export function buildObject(obj: any, options?: BuilderOptions): string;
++export function parseString(xmlString: string, options?: ParseOptions): Promise<any>;
++export function stringify(obj: any, options?: BuilderOptions): string;
+diff --git a/node_modules/@expo/config-plugins/build/utils/XML.js b/node_modules/@expo/config-plugins/build/utils/XML.js
+index 0440584..9e80280 100644
+--- a/node_modules/@expo/config-plugins/build/utils/XML.js
++++ b/node_modules/@expo/config-plugins/build/utils/XML.js
+@@ -162,3 +162,28 @@ function unescapeAndroidString(value) {
+   return value.replace(/\\(.)/g, '$1');
+ }
+ //# sourceMappingURL=XML.js.map
++const xml2js = require('xml2js');
++
++function parseStringToXml(xmlString, options = {}) {
++  return new Promise((resolve, reject) => {
++    xml2js.parseString(xmlString, options, (err, result) => {
++      if (err) {
++        reject(err);
++      } else {
++        resolve(result);
++      }
++    });
++  });
++}
++
++function buildObject(obj, options = {}) {
++  const builder = new xml2js.Builder(options);
++  return builder.buildObject(obj);
++}
++
++module.exports = {
++  parseStringToXml,
++  buildObject,
++  parseString: parseStringToXml,
++  stringify: buildObject
++};

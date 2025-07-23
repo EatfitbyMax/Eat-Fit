@@ -12,7 +12,8 @@
     "lint": "expo lint",
     "prebuild-check": "node ./scripts/prebuild-check-ios.js",
     "build:ios:preview": "npm run prebuild-check && npx eas build --platform ios --profile preview --clear-cache",
-    "build:ios:production": "npm run prebuild-check && npx eas build --platform ios --profile production"
+    "build:ios:production": "npm run prebuild-check && npx eas build --platform ios --profile production",
+    "postinstall": "node ./scripts/postinstall.js"
   },
   "jest": {
     "preset": "jest-expo"
