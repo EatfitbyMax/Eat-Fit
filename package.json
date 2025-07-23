@@ -40,6 +40,7 @@
     "@react-navigation/native": "^7.1.6",
     "@stripe/stripe-react-native": "0.45.0",
     "@types/bcryptjs": "^2.4.6",
+    "@types/xml2js": "^0.4.14",
     "bcryptjs": "^3.0.2",
     "expo": "53.0.20",
     "expo-auth-session": "~6.2.1",
@@ -78,7 +79,8 @@
     "react-native-screens": "~4.11.1",
     "react-native-svg": "15.11.2",
     "react-native-web": "~0.20.0",
-    "react-native-webview": "13.13.5"
+    "react-native-webview": "13.13.5",
+    "xml2js": "^0.6.2"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
