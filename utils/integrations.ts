@@ -10,7 +10,10 @@ const STRAVA_CLIENT_SECRET = process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET || '';
 // Configuration du redirect URI selon l'environnement  
 const getStravaRedirectUri = (): string => {
   // Utiliser le domaine Replit pour les tests
-  return 'https://eatfitbymax.replit.app/strava-callback';
+  if (Platform.OS === 'web') {
+    return 'https://eatfitbymax.replit.app/strava-callback';
+  }
+  return 'eatfitbymax://auth/strava-callback';
 };
 
 const STRAVA_REDIRECT_URI = getStravaRedirectUri();
@@ -27,7 +30,7 @@ export interface IntegrationConfig {
 
 export class IntegrationsManager {
   // Méthodes pour Apple Health
-  static async connectAppleHealth(userId: string, permissions: string[]): Promise<boolean> {
+  static async connectAppleHealth(userId: string, permissions?: string[]): Promise<boolean> {
     try {
       // Vérifier la disponibilité d'Apple Health (via rn-apple-healthkit)
       const AppleHealthKit = require('rn-apple-healthkit');
@@ -72,7 +75,13 @@ export class IntegrationsManager {
         const status = await this.getIntegrationStatus(userId);
         status.appleHealth = {
           connected: true,
-          permissions: permissions
+          permissions: permissions || [
+            'Steps',
+            'ActiveEnergyBurned',
+            'HeartRate',
+            'Weight',
+            'DistanceWalkingRunning'
+          ]
         };
         await PersistentStorage.saveIntegrationStatus(userId, status);
         console.log('✅ Apple Health connecté');
@@ -205,15 +214,6 @@ export class IntegrationsManager {
     } catch (error) {
       console.error('❌ Erreur synchronisation Apple Health:', error);
       throw new Error('Impossible de synchroniser les données Apple Health. Vérifiez votre connexion internet.');
-    }
-  }
-
-  static async getHealthData(userId: string): Promise<any[]> {
-    try {
-      return await PersistentStorage.getHealthData(userId);
-    } catch (error) {
-      console.error('❌ Erreur récupération données Apple Health:', error);
-      throw new Error('Impossible de récupérer les données Apple Health. Vérifiez votre connexion internet.');
     }
   }
 

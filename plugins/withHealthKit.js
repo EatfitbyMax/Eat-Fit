@@ -9,7 +9,7 @@ module.exports = function withHealthKit(config) {
       config.modResults.UIRequiredDeviceCapabilities.push('healthkit');
     }
 
-    // S'assurer que les descriptions d'usage sont présentes
+    // S'assurer que les descriptions d'usage sont présentes pour rn-apple-healthkit
     config.modResults.NSHealthShareUsageDescription = 
       config.modResults.NSHealthShareUsageDescription || 
       "EatFitBy Max utilise Apple Health pour synchroniser vos données de santé et fitness afin de vous fournir un suivi personnalisé de votre progression.";
@@ -17,6 +17,10 @@ module.exports = function withHealthKit(config) {
     config.modResults.NSHealthUpdateUsageDescription = 
       config.modResults.NSHealthUpdateUsageDescription || 
       "EatFitBy Max peut écrire des données dans Apple Health pour garder vos informations de santé à jour.";
+
+    // Ajouter les entitlements HealthKit si nécessaire
+    config.modResults['com.apple.developer.healthkit'] = true;
+    config.modResults['com.apple.developer.healthkit.access'] = [];
 
     return config;
   });
