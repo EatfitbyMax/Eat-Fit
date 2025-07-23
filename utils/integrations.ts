@@ -9,8 +9,8 @@ const STRAVA_CLIENT_SECRET = process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET || '';
 
 // Configuration du redirect URI selon l'environnement  
 const getStravaRedirectUri = (): string => {
-  // Utiliser le domaine personnalisé pour la production
-  return 'https://api.eatfitbymax.com/strava-callback';
+  // Utiliser le domaine Replit pour les tests
+  return 'https://eatfitbymax.replit.app/strava-callback';
 };
 
 const STRAVA_REDIRECT_URI = getStravaRedirectUri();
