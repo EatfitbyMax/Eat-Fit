@@ -531,17 +531,43 @@ export class PersistentStorage {
     try {
       await this.ensureConnection();
 
-      const response = await fetch(`${SERVER_URL}/api/integrations/${userId}`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      const response = await fetch(`${SERVER_URL}/api/integrations/${userId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
       if (response.ok) {
         const data = await response.json();
         console.log('✅ Statuts intégrations récupérés depuis le serveur Replit');
         return data;
+      } else {
+        console.log('⚠️ Endpoint intégrations non disponible, utilisation des valeurs par défaut');
+        return this.getDefaultIntegrationConfig();
       }
-      throw new Error('Erreur récupération intégrations');
     } catch (error) {
-      console.error('❌ Erreur récupération statuts intégrations:', error);
-      throw new Error('Impossible de récupérer les statuts d\'intégrations. Vérifiez votre connexion internet.');
+      console.log('⚠️ Erreur récupération statuts intégrations, utilisation des valeurs par défaut:', error?.message || error);
+      return this.getDefaultIntegrationConfig();
     }
+  }
+
+  private static getDefaultIntegrationConfig(): any {
+    return {
+      appleHealth: {
+        connected: false,
+        permissions: []
+      },
+      strava: {
+        connected: false
+      }
+    };
   }
 
   static async saveIntegrationStatus(userId: string, status: any): Promise<void> {

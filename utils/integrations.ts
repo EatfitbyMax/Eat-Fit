@@ -381,8 +381,18 @@ export class IntegrationsManager {
     try {
       return await PersistentStorage.getUserIntegrationStatus(userId);
     } catch (error) {
-      console.error('❌ Erreur récupération statuts intégrations:', error);
-      throw new Error('Impossible de récupérer les statuts d\'intégrations. Vérifiez votre connexion internet.');
+      console.log('⚠️ Erreur récupération statuts intégrations, utilisation des valeurs par défaut:', error?.message || error);
+      
+      // Retourner une configuration par défaut au lieu de lancer une erreur
+      return {
+        appleHealth: {
+          connected: false,
+          permissions: []
+        },
+        strava: {
+          connected: false
+        }
+      };
     }
   }
 
@@ -479,34 +489,41 @@ export interface IntegrationStatus {
 
 export const getIntegrationStatuses = async (userId: string): Promise<IntegrationStatus[]> => {
   try {
-    // Tester la connexion au serveur d'abord
-    const testResponse = await fetch(`${process.env.EXPO_PUBLIC_VPS_URL}/api/health`, {
-      method: 'GET',
-      timeout: 5000, // Timeout de 5 secondes
-    });
+    console.log('🔍 Récupération statuts intégrations pour:', userId);
+    
+    // Tester d'abord la disponibilité du serveur avec un timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 secondes
 
-    if (!testResponse.ok) {
-      console.log('⚠️ Serveur non disponible, utilisation des données par défaut pour les intégrations');
+    try {
+      const testResponse = await fetch(`${process.env.EXPO_PUBLIC_VPS_URL}/api/health`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!testResponse.ok) {
+        console.log('⚠️ Serveur non disponible, utilisation des données par défaut pour les intégrations');
+        return getDefaultIntegrationStatuses();
+      }
+
+      console.log('✅ Serveur disponible pour les intégrations');
+    } catch (testError) {
+      clearTimeout(timeoutId);
+      console.log('⚠️ Test de connexion échoué, utilisation des données par défaut pour les intégrations');
       return getDefaultIntegrationStatuses();
     }
 
-    const response = await fetch(`${process.env.EXPO_PUBLIC_VPS_URL}/api/integrations/${userId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      timeout: 10000, // Timeout de 10 secondes
-    });
+    // Pour l'instant, on retourne toujours les valeurs par défaut car l'endpoint n'existe pas encore
+    console.log('📋 Utilisation des statuts d\'intégrations par défaut');
+    return getDefaultIntegrationStatuses();
 
-    if (!response.ok) {
-      console.log('⚠️ Erreur récupération intégrations, utilisation des données par défaut');
-      return getDefaultIntegrationStatuses();
-    }
-
-    const data = await response.json();
-    return data.integrations || getDefaultIntegrationStatuses();
   } catch (error) {
-    console.log('⚠️ Intégrations indisponibles, utilisation des valeurs par défaut');
+    console.log('⚠️ Erreur récupération intégrations, utilisation des valeurs par défaut:', error?.message || error);
     return getDefaultIntegrationStatuses();
   }
 };
