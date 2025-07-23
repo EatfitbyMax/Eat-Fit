@@ -1,4 +1,3 @@
-
 #!/usr/bin/env node
 
 const fs = require('fs');
@@ -36,7 +35,7 @@ criticalFiles.forEach(file => {
 console.log('\n📱 Vérification de la configuration app.json:');
 try {
   const appConfig = JSON.parse(fs.readFileSync('app.json', 'utf8'));
-  
+
   const checks = [
     { key: 'expo.name', value: appConfig.expo?.name, required: true },
     { key: 'expo.slug', value: appConfig.expo?.slug, required: true },
@@ -67,7 +66,7 @@ try {
       'NSLocationWhenInUseUsageDescription',
       'NSHealthShareUsageDescription'
     ];
-    
+
     requiredPermissions.forEach(permission => {
       if (appConfig.expo.ios.infoPlist[permission]) {
         console.log(`✅ Permission iOS: ${permission}`);
@@ -92,7 +91,7 @@ try {
       }
     });
   }
-  
+
 } catch (error) {
   console.error('❌ Erreur parsing app.json:', error.message);
   hasErrors = true;
@@ -102,10 +101,10 @@ try {
 console.log('\n🏗️ Vérification de la configuration EAS:');
 try {
   const easConfig = JSON.parse(fs.readFileSync('eas.json', 'utf8'));
-  
+
   if (easConfig.build?.production?.ios) {
     console.log('✅ Configuration iOS production présente');
-    
+
     const iosConfig = easConfig.build.production.ios;
     if (iosConfig.resourceClass) {
       console.log(`✅ Resource class: ${iosConfig.resourceClass}`);
@@ -131,7 +130,7 @@ try {
       warnings.push('⚠️ Informations App Store Connect incomplètes');
     }
   }
-  
+
 } catch (error) {
   console.error('❌ Erreur parsing eas.json:', error.message);
   hasErrors = true;
@@ -151,11 +150,10 @@ const optionalEnvVars = [
   'EXPO_PUBLIC_CLARIFAI_API_KEY'
 ];
 
-// Charger les variables depuis .env
 if (fs.existsSync('.env')) {
   const envContent = fs.readFileSync('.env', 'utf8');
   const envLines = envContent.split('\n').filter(line => line.trim() && !line.startsWith('#'));
-  
+
   requiredEnvVars.forEach(envVar => {
     const found = envLines.some(line => line.startsWith(`${envVar}=`));
     if (found) {
@@ -230,7 +228,6 @@ try {
     }
   });
 
-  // Vérifier les versions compatibles
   const expoVersion = packageJson.dependencies?.expo;
   if (expoVersion && !expoVersion.includes('53.')) {
     warnings.push('⚠️ Version Expo non testée pour ce build');
@@ -275,14 +272,12 @@ try {
 // Vérifications spécifiques EAS Build
 console.log('\n🔧 Vérifications spécifiques EAS Build:');
 
-// Vérifier .easignore
 if (fs.existsSync('.easignore')) {
   console.log('✅ .easignore présent');
 } else {
   recommendations.push('💡 Créer un fichier .easignore pour optimiser le build');
 }
 
-// Vérifier les fichiers sensibles
 const sensitiveFiles = ['.env.local', 'google-service-account.json', 'ios/'];
 sensitiveFiles.forEach(file => {
   if (fs.existsSync(file)) {
@@ -292,7 +287,7 @@ sensitiveFiles.forEach(file => {
   }
 });
 
-// Afficher les résultats
+// Résumé
 console.log('\n📊 Résumé de la vérification:');
 
 if (recommendations.length > 0) {
@@ -316,14 +311,14 @@ if (hasErrors) {
 } else {
   console.log('\n✅ Toutes les vérifications critiques sont passées avec succès !');
   console.log('🚀 Votre projet EatFitByMax est prêt pour le build EAS iOS.');
-  
+
   if (warnings.length > 0) {
     console.log(`\n📝 ${warnings.length} avertissement(s) à considérer pour optimiser votre build.`);
   }
-  
+
   console.log('\n🎯 Commandes de build recommandées:');
   console.log('   Preview: npx eas build --platform ios --profile preview');
   console.log('   Production: npx eas build --platform ios --profile production');
-  
+
   process.exit(0);
 }
