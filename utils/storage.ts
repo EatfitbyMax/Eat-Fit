@@ -685,6 +685,19 @@ export class PersistentStorage {
     return await this.saveUserForme(userId, date, formeData);
   }
 
+  // Méthodes pour compatibilité avec l'authentification
+  static async getCurrentUser(): Promise<any> {
+    // Cette méthode redirige vers le module auth approprié
+    const { getCurrentUser } = await import('./auth');
+    return await getCurrentUser();
+  }
+
+  static async setCurrentUser(user: any): Promise<void> {
+    // Cette méthode est utilisée pour la compatibilité mais ne fait rien
+    // car l'utilisateur actuel est géré dans le module auth
+    console.log('📝 setCurrentUser appelé pour compatibilité');
+  }
+
   // Data management
   static async exportData(): Promise<{ programmes: any[], users: any[] }> {
     try {
