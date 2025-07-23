@@ -57,7 +57,7 @@ class HealthKitService {
         });
       });
     } catch (error) {
-      console.log('⚠️ Erreur permissions HealthKit, mode simulation:', error.message);
+      console.log('⚠️ Erreur permissions HealthKit, mode simulation:', error);
       return true; // Mode simulation
     }
   }
