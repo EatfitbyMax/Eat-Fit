@@ -180,9 +180,7 @@ export class IntegrationsManager {
 
       // Traiter les données de sommeil
       // Les données de sommeil ne sont pas directement disponibles via rn-apple-healthkit
-      // On peut ajouter cette fonctionnalité plus tard si nécessaire entry.value
-        });
-      });
+      // On peut ajouter cette fonctionnalité plus tard si nécessaire
 
       // Convertir en tableau et calculer les moyennes
       const processedData = Object.values(healthDataByDate).map((dayData: any) => ({

@@ -25,7 +25,8 @@
           "@emailjs/react-native",
           "expo-camera",
           "react-native-health",
-          "react-native-health/RNHealth"
+          "react-native-health/RNHealth",
+          "rn-apple-healthkit"
         ],
         "listUnknownPackages": false
       }
