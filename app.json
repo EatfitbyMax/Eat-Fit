@@ -82,7 +82,8 @@
             "newArchEnabled": true
           }
         }
-      ]
+      ],
+      "./plugins/withHealthKit.js"
     ],
 
     "experiments": {
