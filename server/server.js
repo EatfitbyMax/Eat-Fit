@@ -321,16 +321,73 @@ app.post('/api/stripe/create-payment-intent', async (req, res) => {
   try {
     const { planId, planName, userId, amount, currency } = req.body;
 
-    // Simulation d'un PaymentIntent pour les tests
-    const paymentIntent = {
-      clientSecret: `pi_test_${Date.now()}_secret_${Math.random().toString(36).substr(2, 9)}`,
-      ephemeralKey: `ek_test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      customer: `cus_test_${userId}_${Math.random().toString(36).substr(2, 9)}`
-    };
+    // Vérifier que Stripe est configuré
+    if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY === 'sk_test_your_stripe_secret_key_here') {
+      console.error('❌ Clé Stripe non configurée');
+      return res.status(500).json({ error: 'Configuration Stripe manquante' });
+    }
+
+    // Initialiser Stripe avec la vraie clé
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+    // Convertir le montant en centimes (Stripe fonctionne en centimes)
+    const amountInCents = Math.round(amount * 100);
+
+    // Créer ou récupérer le customer
+    let customer;
+    try {
+      const customers = await stripe.customers.list({
+        email: `user_${userId}@eatfitbymax.com`,
+        limit: 1
+      });
+
+      if (customers.data.length > 0) {
+        customer = customers.data[0];
+      } else {
+        customer = await stripe.customers.create({
+          email: `user_${userId}@eatfitbymax.com`,
+          metadata: {
+            userId: userId,
+            planId: planId
+          }
+        });
+      }
+    } catch (customerError) {
+      console.error('Erreur création customer:', customerError);
+      return res.status(500).json({ error: 'Erreur création customer' });
+    }
+
+    // Créer le PaymentIntent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amountInCents,
+      currency: currency.toLowerCase(),
+      customer: customer.id,
+      automatic_payment_methods: {
+        enabled: true,
+      },
+      metadata: {
+        planId: planId,
+        planName: planName,
+        userId: userId
+      },
+      description: `Abonnement ${planName} pour EatFit By Max`
+    });
+
+    // Créer l'ephemeral key pour le customer
+    const ephemeralKey = await stripe.ephemeralKeys.create(
+      { customer: customer.id },
+      { apiVersion: '2023-10-16' }
+    );
 
     console.log(`💳 PaymentIntent créé pour ${planName} (${amount}${currency}) - User: ${userId}`);
+    console.log(`🔑 PaymentIntent ID: ${paymentIntent.id}`);
     
-    res.json(paymentIntent);
+    res.json({
+      clientSecret: paymentIntent.client_secret,
+      ephemeralKey: ephemeralKey.secret,
+      customer: customer.id,
+      paymentIntentId: paymentIntent.id
+    });
   } catch (error) {
     console.error('Erreur création PaymentIntent:', error);
     res.status(500).json({ error: 'Erreur création PaymentIntent' });
@@ -341,12 +398,26 @@ app.post('/api/stripe/confirm-payment', async (req, res) => {
   try {
     const { paymentIntentId, userId } = req.body;
 
+    // Vérifier que Stripe est configuré
+    if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY === 'sk_test_your_stripe_secret_key_here') {
+      console.error('❌ Clé Stripe non configurée');
+      return res.status(500).json({ error: 'Configuration Stripe manquante' });
+    }
+
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+    // Récupérer le PaymentIntent pour vérifier son statut
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
     console.log(`✅ PaymentIntent confirmé: ${paymentIntentId} pour utilisateur: ${userId}`);
+    console.log(`📊 Statut du paiement: ${paymentIntent.status}`);
     
     res.json({ 
       success: true, 
       paymentIntentId,
-      status: 'succeeded'
+      status: paymentIntent.status,
+      amount: paymentIntent.amount,
+      currency: paymentIntent.currency
     });
   } catch (error) {
     console.error('Erreur confirmation PaymentIntent:', error);
