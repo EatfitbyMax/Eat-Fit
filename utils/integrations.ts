@@ -467,3 +467,76 @@ export const testServerConnection = async (serverUrl: string): Promise<boolean> 
     return false;
   }
 };
+
+export interface IntegrationStatus {
+  id: string;
+  name: string;
+  description: string;
+  isConnected: boolean;
+  icon: string;
+  lastSync: Date | null;
+}
+
+export const getIntegrationStatuses = async (userId: string): Promise<IntegrationStatus[]> => {
+  try {
+    // Tester la connexion au serveur d'abord
+    const testResponse = await fetch(`${process.env.EXPO_PUBLIC_VPS_URL}/api/health`, {
+      method: 'GET',
+      timeout: 5000, // Timeout de 5 secondes
+    });
+
+    if (!testResponse.ok) {
+      console.log('⚠️ Serveur non disponible, utilisation des données par défaut pour les intégrations');
+      return getDefaultIntegrationStatuses();
+    }
+
+    const response = await fetch(`${process.env.EXPO_PUBLIC_VPS_URL}/api/integrations/${userId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      timeout: 10000, // Timeout de 10 secondes
+    });
+
+    if (!response.ok) {
+      console.log('⚠️ Erreur récupération intégrations, utilisation des données par défaut');
+      return getDefaultIntegrationStatuses();
+    }
+
+    const data = await response.json();
+    return data.integrations || getDefaultIntegrationStatuses();
+  } catch (error) {
+    console.log('⚠️ Intégrations indisponibles, utilisation des valeurs par défaut');
+    return getDefaultIntegrationStatuses();
+  }
+};
+
+// Fonction helper pour les valeurs par défaut
+const getDefaultIntegrationStatuses = (): IntegrationStatus[] => {
+  return [
+    {
+      id: 'strava',
+      name: 'Strava',
+      description: 'Synchronisation des activités sportives',
+      isConnected: false,
+      icon: '🏃‍♂️',
+      lastSync: null
+    },
+    {
+      id: 'apple-health',
+      name: 'Apple Health',
+      description: 'Données de santé et fitness',
+      isConnected: false,
+      icon: '❤️',
+      lastSync: null
+    },
+    {
+      id: 'google-fit',
+      name: 'Google Fit',
+      description: 'Suivi d\'activité Google',
+      isConnected: false,
+      icon: '📊',
+      lastSync: null
+    }
+  ];
+};
