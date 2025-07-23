@@ -12,6 +12,13 @@ interface User {
   weight?: number;
   height?: number;
   gender?: string;
+  activityLevel?: string;
+  goals?: string[];
+  profileImage?: string;
+  hashedPassword?: string;
+}
+
+let currentUserCache: User | null = null;
 
 export async function resetUserPasswordHash(email: string, newPassword: string): Promise<boolean> {
   try {
@@ -53,15 +60,6 @@ export async function resetUserPasswordHash(email: string, newPassword: string):
     return false;
   }
 }
-
-
-  activityLevel?: string;
-  goals?: string[];
-  profileImage?: string;
-  hashedPassword?: string;
-}
-
-let currentUserCache: User | null = null;
 
 export async function initializeAdminAccount(): Promise<void> {
   try {
