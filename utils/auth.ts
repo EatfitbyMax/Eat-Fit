@@ -20,6 +20,47 @@ interface User {
 
 let currentUserCache: User | null = null;
 
+export async function forceRegenerateUserHash(email: string, currentPassword: string): Promise<boolean> {
+  try {
+    console.log('🔄 Régénération forcée du hash pour:', email);
+    
+    // Récupérer les utilisateurs
+    const users = await PersistentStorage.getUsers();
+    
+    // Trouver l'utilisateur
+    const userIndex = users.findIndex((u: any) => u.email === email);
+    if (userIndex === -1) {
+      console.log('❌ Utilisateur non trouvé pour la régénération');
+      return false;
+    }
+    
+    // Générer le nouveau hash avec le système actuel (HEX)
+    const passwordString = String(currentPassword).trim();
+    const saltedPassword = passwordString + 'eatfitbymax_salt_2025';
+    const hashedPassword = await Crypto.digestStringAsync(
+      Crypto.CryptoDigestAlgorithm.SHA256,
+      saltedPassword,
+      { encoding: Crypto.CryptoEncoding.HEX }
+    );
+    
+    // Mettre à jour l'utilisateur
+    users[userIndex] = {
+      ...users[userIndex],
+      hashedPassword: hashedPassword,
+      password: undefined // Supprimer l'ancien mot de passe en clair
+    };
+    
+    // Sauvegarder
+    await PersistentStorage.saveUsers(users);
+    
+    console.log('✅ Hash régénéré avec succès pour:', email);
+    return true;
+  } catch (error) {
+    console.error('❌ Erreur régénération hash:', error);
+    return false;
+  }
+}
+
 export async function resetUserPasswordHash(email: string, newPassword: string): Promise<boolean> {
   try {
     console.log('🔄 Réinitialisation du hash pour:', email);
@@ -114,26 +155,57 @@ export async function login(email: string, password: string): Promise<User | nul
       try {
         const passwordString = String(password).trim();
         const saltedPassword = passwordString + 'eatfitbymax_salt_2025';
-        const hashedInput = await Crypto.digestStringAsync(
+        
+        console.log('🔍 Debug hash comparison:', {
+          inputLength: passwordString.length,
+          saltedLength: saltedPassword.length,
+          storedHashLength: user.hashedPassword.length,
+          storedHashPreview: user.hashedPassword.substring(0, 10) + '...'
+        });
+
+        // Vérifier d'abord avec le nouveau système HEX
+        const hashedInputHex = await Crypto.digestStringAsync(
           Crypto.CryptoDigestAlgorithm.SHA256,
           saltedPassword,
           { encoding: Crypto.CryptoEncoding.HEX }
         );
-
-        console.log('🔍 Debug hash comparison:', {
-          inputLength: passwordString.length,
-          saltedLength: saltedPassword.length,
-          hashedInputLength: hashedInput.length,
-          storedHashLength: user.hashedPassword.length,
-          hashedInputPreview: hashedInput.substring(0, 10) + '...',
-          storedHashPreview: user.hashedPassword.substring(0, 10) + '...'
-        });
-
-        isPasswordValid = hashedInput === user.hashedPassword;
-        console.log('🔐 Vérification avec hash:', isPasswordValid ? 'VALIDE' : 'INVALIDE');
+        
+        isPasswordValid = hashedInputHex === user.hashedPassword;
+        console.log('🔐 Vérification HEX:', isPasswordValid ? 'VALIDE' : 'INVALIDE');
+        
+        // Si échec avec HEX, essayer avec Base64 (ancien système)
+        if (!isPasswordValid && user.hashedPassword.length === 44) {
+          console.log('🔄 Tentative avec ancien encodage Base64...');
+          const hashedInputBase64 = await Crypto.digestStringAsync(
+            Crypto.CryptoDigestAlgorithm.SHA256,
+            saltedPassword,
+            { encoding: Crypto.CryptoEncoding.BASE64 }
+          );
+          
+          isPasswordValid = hashedInputBase64 === user.hashedPassword;
+          console.log('🔐 Vérification Base64:', isPasswordValid ? 'VALIDE' : 'INVALIDE');
+          
+          // Si connexion réussie avec Base64, migrer vers HEX
+          if (isPasswordValid) {
+            console.log('🔄 Migration du hash Base64 vers HEX...');
+            try {
+              // Mettre à jour l'utilisateur avec le nouveau hash HEX
+              const updatedUsers = users.map((u: any) => 
+                u.email === email 
+                  ? { ...u, hashedPassword: hashedInputHex }
+                  : u
+              );
+              
+              await PersistentStorage.saveUsers(updatedUsers);
+              console.log('✅ Migration Base64->HEX terminée');
+            } catch (migrationError) {
+              console.error('⚠️ Erreur migration Base64->HEX (connexion maintenue):', migrationError);
+            }
+          }
+        }
         
         if (!isPasswordValid) {
-          console.log('❌ Hash mismatch détecté - tentative avec ancien système');
+          console.log('❌ Hash mismatch détecté - tentative avec ancien système mot de passe');
         }
       } catch (compareError) {
         console.error('❌ Erreur comparaison hash:', compareError);
