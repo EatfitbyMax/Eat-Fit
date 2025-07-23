@@ -434,6 +434,52 @@ app.post('/api/stripe/confirm-payment', async (req, res) => {
   }
 });
 
+// Callback Strava
+app.get('/strava-callback', (req, res) => {
+  const { code, error } = req.query;
+  
+  if (error) {
+    console.error('Erreur callback Strava:', error);
+    return res.status(400).send(`
+      <html>
+        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+          <h2>Erreur de connexion Strava</h2>
+          <p>Une erreur s'est produite lors de la connexion à Strava.</p>
+          <p>Vous pouvez fermer cette fenêtre et réessayer.</p>
+        </body>
+      </html>
+    `);
+  }
+
+  if (code) {
+    console.log('✅ Code d\'autorisation Strava reçu:', code);
+    return res.send(`
+      <html>
+        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+          <h2>Connexion Strava réussie!</h2>
+          <p>Votre compte Strava a été connecté avec succès.</p>
+          <p>Vous pouvez fermer cette fenêtre et retourner dans l'application.</p>
+          <script>
+            // Essayer de rediriger vers l'app
+            setTimeout(() => {
+              window.location.href = 'eatfitbymax://strava-callback?code=${code}';
+            }, 2000);
+          </script>
+        </body>
+      </html>
+    `);
+  }
+
+  res.status(400).send(`
+    <html>
+      <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+        <h2>Paramètres manquants</h2>
+        <p>Les paramètres de callback sont manquants.</p>
+      </body>
+    </html>
+  `);
+});
+
 // Route 404
 app.use('*', (req, res) => {
   res.status(404).json({ error: 'Route non trouvée' });

@@ -7,13 +7,10 @@ import * as WebBrowser from 'expo-web-browser';
 const STRAVA_CLIENT_ID = process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID || '';
 const STRAVA_CLIENT_SECRET = process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET || '';
 
-// Configuration du redirect URI selon l'environnement
+// Configuration du redirect URI selon l'environnement  
 const getStravaRedirectUri = () => {
-  if (Platform.OS === 'ios' && !__DEV__) {
-    // En production iOS, utiliser le custom scheme
-    return 'eatfitbymax://strava-callback';
-  }
-  return AuthSession.makeRedirectUri({ useProxy: true });
+  // Utiliser l'URL du serveur comme callback temporaire
+  return `${process.env.EXPO_PUBLIC_VPS_URL}/strava-callback`;
 };
 
 const STRAVA_REDIRECT_URI = getStravaRedirectUri();
