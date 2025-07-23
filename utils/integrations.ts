@@ -9,8 +9,8 @@ const STRAVA_CLIENT_SECRET = process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET || '';
 
 // Configuration du redirect URI selon l'environnement  
 const getStravaRedirectUri = () => {
-  // Utiliser l'URL Replit comme callback
-  return `https://eatfitbymax.replit.app/strava-callback`;
+  // Utiliser l'URL de workspace Replit temporairement
+  return `https://workspace-eatfitbymax.replit.dev/strava-callback`;
 };
 
 const STRAVA_REDIRECT_URI = getStravaRedirectUri();
