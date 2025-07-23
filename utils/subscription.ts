@@ -1,6 +1,83 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getCurrentUser } from './auth';
 
+// Plans d'abonnement disponibles
+export const SUBSCRIPTION_PLANS = [
+  {
+    id: 'free',
+    name: 'Version Gratuite',
+    price: 0,
+    duration: 'month',
+    currency: 'EUR',
+    features: [
+      'Fonctionnalités de base',
+      'Suivi simple des repas',
+      'Plans d'entraînement basiques'
+    ]
+  },
+  {
+    id: 'bronze',
+    name: 'BRONZE',
+    price: 9.99,
+    duration: 'month',
+    currency: 'EUR',
+    features: [
+      'Toutes les fonctionnalités gratuites',
+      'Plans d\'entraînement avancés',
+      'Suivi nutritionnel détaillé',
+      'Support prioritaire'
+    ]
+  },
+  {
+    id: 'silver',
+    name: 'SILVER',
+    price: 19.99,
+    duration: 'month',
+    currency: 'EUR',
+    features: [
+      'Toutes les fonctionnalités Bronze',
+      'Coaching personnalisé',
+      'Intégrations avancées',
+      'Analyses détaillées'
+    ]
+  },
+  {
+    id: 'gold',
+    name: 'GOLD',
+    price: 29.99,
+    duration: 'month',
+    currency: 'EUR',
+    features: [
+      'Toutes les fonctionnalités Silver',
+      'Suivi en temps réel',
+      'API complète',
+      'Support 24/7'
+    ]
+  },
+  {
+    id: 'diamond',
+    name: 'DIAMOND',
+    price: 49.99,
+    duration: 'month',
+    currency: 'EUR',
+    features: [
+      'Toutes les fonctionnalités Gold',
+      'Coach personnel dédié',
+      'Accès anticipé aux nouvelles fonctionnalités',
+      'Personnalisation complète'
+    ]
+  }
+];
+
+export interface Subscription {
+  planId: string;
+  planName: string;
+  status: 'active' | 'inactive' | 'cancelled';
+  price: number;
+  currency: string;
+  paymentMethod: string;
+}
+
 export const checkSubscriptionStatus = async (): Promise<{ isPremium: boolean; planId: string }> => {
   try {
     const currentUser = await getCurrentUser();
