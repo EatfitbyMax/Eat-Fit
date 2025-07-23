@@ -12,6 +12,49 @@ interface User {
   weight?: number;
   height?: number;
   gender?: string;
+
+export async function resetUserPasswordHash(email: string, newPassword: string): Promise<boolean> {
+  try {
+    console.log('🔄 Réinitialisation du hash pour:', email);
+    
+    // Récupérer les utilisateurs
+    const users = await PersistentStorage.getUsers();
+    
+    // Trouver l'utilisateur
+    const userIndex = users.findIndex((u: any) => u.email === email);
+    if (userIndex === -1) {
+      console.log('❌ Utilisateur non trouvé pour la réinitialisation');
+      return false;
+    }
+    
+    // Générer le nouveau hash
+    const passwordString = String(newPassword).trim();
+    const saltedPassword = passwordString + 'eatfitbymax_salt_2025';
+    const hashedPassword = await Crypto.digestStringAsync(
+      Crypto.CryptoDigestAlgorithm.SHA256,
+      saltedPassword,
+      { encoding: Crypto.CryptoEncoding.HEX }
+    );
+    
+    // Mettre à jour l'utilisateur
+    users[userIndex] = {
+      ...users[userIndex],
+      hashedPassword: hashedPassword,
+      password: undefined // Supprimer l'ancien mot de passe en clair
+    };
+    
+    // Sauvegarder
+    await PersistentStorage.saveUsers(users);
+    
+    console.log('✅ Hash réinitialisé avec succès pour:', email);
+    return true;
+  } catch (error) {
+    console.error('❌ Erreur réinitialisation hash:', error);
+    return false;
+  }
+}
+
+
   activityLevel?: string;
   goals?: string[];
   profileImage?: string;
@@ -79,8 +122,21 @@ export async function login(email: string, password: string): Promise<User | nul
           { encoding: Crypto.CryptoEncoding.HEX }
         );
 
+        console.log('🔍 Debug hash comparison:', {
+          inputLength: passwordString.length,
+          saltedLength: saltedPassword.length,
+          hashedInputLength: hashedInput.length,
+          storedHashLength: user.hashedPassword.length,
+          hashedInputPreview: hashedInput.substring(0, 10) + '...',
+          storedHashPreview: user.hashedPassword.substring(0, 10) + '...'
+        });
+
         isPasswordValid = hashedInput === user.hashedPassword;
         console.log('🔐 Vérification avec hash:', isPasswordValid ? 'VALIDE' : 'INVALIDE');
+        
+        if (!isPasswordValid) {
+          console.log('❌ Hash mismatch détecté - tentative avec ancien système');
+        }
       } catch (compareError) {
         console.error('❌ Erreur comparaison hash:', compareError);
         isPasswordValid = false;
@@ -89,6 +145,32 @@ export async function login(email: string, password: string): Promise<User | nul
       // Ancien système (temporaire)
       isPasswordValid = user.password === password;
       console.log('🔓 Vérification ancien système:', isPasswordValid ? 'VALIDE' : 'INVALIDE');
+      
+      // Si la connexion réussit avec l'ancien système, migrer vers le nouveau hash
+      if (isPasswordValid) {
+        console.log('🔄 Migration du mot de passe vers le nouveau système de hash...');
+        try {
+          const passwordString = String(password).trim();
+          const saltedPassword = passwordString + 'eatfitbymax_salt_2025';
+          const newHashedPassword = await Crypto.digestStringAsync(
+            Crypto.CryptoDigestAlgorithm.SHA256,
+            saltedPassword,
+            { encoding: Crypto.CryptoEncoding.HEX }
+          );
+          
+          // Mettre à jour l'utilisateur dans la base
+          const updatedUsers = users.map((u: any) => 
+            u.email === email 
+              ? { ...u, hashedPassword: newHashedPassword, password: undefined }
+              : u
+          );
+          
+          await PersistentStorage.saveUsers(updatedUsers);
+          console.log('✅ Migration du hash terminée');
+        } catch (migrationError) {
+          console.error('⚠️ Erreur migration hash (connexion maintenue):', migrationError);
+        }
+      }
     } else {
       console.log('❌ Aucun mot de passe défini pour cet utilisateur');
       return null;
