@@ -1,8 +1,41 @@
-
-#!/usr/bin/env node
-
 const fs = require('fs');
 const path = require('path');
+
+console.log('🔧 Post-installation setup pour EatFitByMax...');
+
+// Appliquer les patches si nécessaire
+try {
+  const { execSync } = require('child_process');
+
+  // Vérifier si patch-package est disponible
+  try {
+    execSync('npx patch-package --help', { stdio: 'ignore' });
+    console.log('📦 Application des patches...');
+    execSync('npx patch-package', { stdio: 'inherit' });
+    console.log('✅ Patches appliqués avec succès');
+  } catch (error) {
+    console.log('⚠️ patch-package non disponible, installation des patches ignorée');
+  }
+} catch (error) {
+  console.log('⚠️ Erreur lors de l\'application des patches:', error.message);
+}
+
+// Vérifier la structure des fichiers critiques
+const criticalFiles = [
+  'app.json',
+  'metro.config.js',
+  'babel.config.js',
+  '.env'
+];
+
+console.log('\n📁 Vérification des fichiers critiques:');
+criticalFiles.forEach(file => {
+  if (fs.existsSync(file)) {
+    console.log(`✅ ${file}`);
+  } else {
+    console.log(`⚠️ ${file} manquant`);
+  }
+});
 
 console.log('🔧 Post-install: Création du fichier XML manquant...');
 
@@ -87,3 +120,5 @@ try {
 } catch (error) {
   console.error('❌ Erreur lors de la création du fichier XML:', error.message);
 }
+
+console.log('\n✅ Post-installation terminée avec succès!');
