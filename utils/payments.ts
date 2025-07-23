@@ -198,8 +198,18 @@ export class PaymentService {
         throw new Error('Plan invalide ou gratuit');
       }
 
+      console.log('🔄 Création PaymentIntent pour:', { planId, userId, price: plan.price });
+
       // Appel au vrai serveur backend
       const response = await this.callServerAPI(plan, userId);
+
+      // Vérifier la réponse
+      if (!response.clientSecret || !response.ephemeralKey || !response.customer) {
+        console.error('❌ Réponse incomplète du serveur:', response);
+        throw new Error('Réponse incomplète du serveur de paiement');
+      }
+
+      console.log('✅ PaymentIntent créé avec succès');
       return response;
     } catch (error) {
       console.error('Erreur création PaymentIntent:', error);
@@ -241,6 +251,30 @@ export class PaymentService {
         }
 
         const data = await response.json();
+        
+        // Validation complète de la réponse
+        if (!data.clientSecret) {
+          throw new Error('ClientSecret manquant dans la réponse du serveur');
+        }
+        
+        if (!data.clientSecret.includes('_secret_')) {
+          throw new Error(`ClientSecret invalide: ${data.clientSecret}`);
+        }
+        
+        if (!data.ephemeralKey) {
+          throw new Error('EphemeralKey manquant dans la réponse du serveur');
+        }
+        
+        if (!data.customer) {
+          throw new Error('Customer ID manquant dans la réponse du serveur');
+        }
+
+        console.log('✅ Réponse serveur validée:', {
+          clientSecretPrefix: data.clientSecret.substring(0, 15) + '...',
+          customerPrefix: data.customer.substring(0, 10) + '...',
+          ephemeralKeyPrefix: data.ephemeralKey.substring(0, 10) + '...'
+        });
+
         return {
           clientSecret: data.clientSecret,
           ephemeralKey: data.ephemeralKey,
@@ -273,6 +307,14 @@ export class PaymentService {
 
       // Créer le PaymentIntent
       const { clientSecret, ephemeralKey, customer } = await this.createPaymentIntent(plan.id, userId);
+
+      // Vérifier le format du clientSecret
+      if (!clientSecret || !clientSecret.includes('_secret_')) {
+        console.error('❌ ClientSecret invalide:', clientSecret);
+        throw new Error('Format de clientSecret invalide reçu du serveur');
+      }
+
+      console.log('✅ ClientSecret valide reçu:', clientSecret.substring(0, 20) + '...');
 
       // Initialiser le Payment Sheet avec Apple Pay
       const { error: initError } = await initPaymentSheet({
@@ -342,6 +384,14 @@ export class PaymentService {
 
       // Créer le PaymentIntent
       const { clientSecret, ephemeralKey, customer } = await this.createPaymentIntent(plan.id, userId);
+
+      // Vérifier le format du clientSecret
+      if (!clientSecret || !clientSecret.includes('_secret_')) {
+        console.error('❌ ClientSecret invalide:', clientSecret);
+        throw new Error('Format de clientSecret invalide reçu du serveur');
+      }
+
+      console.log('✅ ClientSecret valide reçu:', clientSecret.substring(0, 20) + '...');
 
       // Initialiser le Payment Sheet avec Google Pay
       const { error: initError } = await initPaymentSheet({
