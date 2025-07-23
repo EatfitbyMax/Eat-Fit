@@ -21,11 +21,16 @@ const { width } = Dimensions.get('window');
 
 // Import conditionnel de Camera seulement sur mobile
 let Camera: any = null;
+let CameraView: any = null;
 if (Platform.OS !== 'web') {
   try {
-    Camera = require('expo-camera').Camera;
+    const cameraModule = require('expo-camera');
+    Camera = cameraModule.Camera;
+    CameraView = cameraModule.CameraView;
   } catch (error) {
     console.log('Camera non disponible:', error);
+    Camera = null;
+    CameraView = null;
   }
 }
 
@@ -328,8 +333,7 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
     }
   };
 
-  if (showScanner && Camera && Platform.OS !== 'web') {
-    const { CameraView } = Camera;
+  if (showScanner && Camera && CameraView && Platform.OS !== 'web') {
     return (
       <Modal visible={visible} animationType="slide">
         <View style={styles.scannerContainer}>
