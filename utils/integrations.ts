@@ -8,9 +8,9 @@ const STRAVA_CLIENT_ID = process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID || '';
 const STRAVA_CLIENT_SECRET = process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET || '';
 
 // Configuration du redirect URI selon l'environnement  
-const getStravaRedirectUri = () => {
-  // Utiliser uniquement le serveur VPS OVH
-  return `http://51.178.29.220:5000/strava-callback`;
+const getStravaRedirectUri = (): string => {
+  // Toujours utiliser l'URL du VPS OVH pour la production
+  return 'http://51.178.29.220:5000/strava-callback';
 };
 
 const STRAVA_REDIRECT_URI = getStravaRedirectUri();
@@ -182,28 +182,28 @@ export class IntegrationsManager {
   static async connectStrava(userId: string): Promise<boolean> {
     try {
       const clientId = process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID;
-      
+
       if (!clientId) {
         throw new Error('Configuration Strava manquante');
       }
 
       // Créer l'URL d'autorisation Strava
       const authUrl = `https://www.strava.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${STRAVA_REDIRECT_URI}&approval_prompt=force&scope=read,activity:read_all`;
-      
+
       console.log('🔗 Ouverture de l\'autorisation Strava:', authUrl);
-      
+
       // Ouvrir l'autorisation Strava
       const result = await WebBrowser.openAuthSessionAsync(authUrl, STRAVA_REDIRECT_URI);
-      
+
       if (result.type === 'success' && result.url) {
         const url = new URL(result.url);
         const code = url.searchParams.get('code');
-        
+
         if (code) {
           return await this.exchangeStravaCode(code, userId);
         }
       }
-      
+
       return false;
     } catch (error) {
       console.error('❌ Erreur connexion Strava:', error);
@@ -214,7 +214,7 @@ export class IntegrationsManager {
   static async exchangeStravaCode(code: string, userId: string): Promise<boolean> {
     try {
       const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
-      
+
       // Utiliser le serveur VPS pour l'échange du token
       const response = await fetch(`${serverUrl}/api/strava/exchange-token`, {
         method: 'POST',
@@ -402,7 +402,7 @@ export class IntegrationsManager {
   static async getStravaStatusFromServer(userId: string): Promise<any> {
     try {
       const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
-      
+
       const response = await fetch(`${serverUrl}/api/strava/status/${userId}`, {
         method: 'GET',
         headers: {
@@ -429,7 +429,7 @@ export class IntegrationsManager {
       return await PersistentStorage.getUserIntegrationStatus(userId);
     } catch (error) {
       console.log('⚠️ Erreur récupération statuts intégrations, utilisation des valeurs par défaut:', error?.message || error);
-      
+
       // Retourner une configuration par défaut au lieu de lancer une erreur
       return {
         appleHealth: {
@@ -537,7 +537,7 @@ export interface IntegrationStatus {
 export const getIntegrationStatuses = async (userId: string): Promise<IntegrationStatus[]> => {
   try {
     console.log('🔍 Récupération statuts intégrations pour:', userId);
-    
+
     // Tester d'abord la disponibilité du serveur avec un timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 secondes
