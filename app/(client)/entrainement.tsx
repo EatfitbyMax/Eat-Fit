@@ -724,7 +724,8 @@ export default function EntrainementScreen() {
 
   const loadUserAndWorkouts = async () => {
     try {
-      const userData = await PersistentStorage.getUserData();
+      const { getCurrentUser } = await import('@/utils/auth');
+      const userData = await getCurrentUser();
       if (userData) {
         setCurrentUser(userData);
         const userWorkouts = await PersistentStorage.getUserWorkouts(userData.id);
