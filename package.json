@@ -81,6 +81,7 @@
     "react-native-svg": "15.11.2",
     "react-native-web": "~0.20.0",
     "react-native-webview": "13.13.5",
+    "stripe": "^14.21.0",
     "xml2js": "^0.6.2"
   },
   "devDependencies": {
