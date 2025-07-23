@@ -9,8 +9,8 @@ const STRAVA_CLIENT_SECRET = process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET || '';
 
 // Configuration du redirect URI selon l'environnement  
 const getStravaRedirectUri = () => {
-  // Utiliser l'URL de workspace Replit temporairement
-  return `https://workspace-eatfitbymax.replit.dev/strava-callback`;
+  // Utiliser uniquement le serveur VPS OVH
+  return `http://51.178.29.220:5000/strava-callback`;
 };
 
 const STRAVA_REDIRECT_URI = getStravaRedirectUri();
@@ -375,8 +375,8 @@ export class IntegrationsManager {
         achievementCount: activity.achievement_count
       }));
 
-      // Sauvegarder les activités sur le serveur uniquement
-      const serverUrl = 'https://workspace-eatfitbymax.replit.dev';
+      // Sauvegarder les activités sur le serveur VPS uniquement
+      const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
       const saveResponse = await fetch(`${serverUrl}/api/strava/${userId}`, {
         method: 'POST',
         headers: {
