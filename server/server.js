@@ -1,3 +1,6 @@
+// Charger les variables d'environnement en premier
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs').promises;
