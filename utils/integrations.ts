@@ -29,9 +29,12 @@ export class IntegrationsManager {
   // Méthodes pour Apple Health
   static async connectAppleHealth(userId: string, permissions: string[]): Promise<boolean> {
     try {
-      // Vérifier la disponibilité d'Apple Health (via expo-health-connect)
-      const HealthConnect = await import('expo-health-connect');
-      const available = await HealthConnect.isAvailable();
+      // Désactiver temporairement expo-health-connect à cause du bug XML
+      // const HealthConnect = await import('expo-health-connect');
+      // const available = await HealthConnect.isAvailable();
+      
+      // Mock temporaire
+      const available = false;
 
       if (!available) {
         console.log('Apple Health non disponible');
@@ -83,9 +86,14 @@ export class IntegrationsManager {
         throw new Error('Apple Health non connecté');
       }
 
-      const HealthConnect = await import('expo-health-connect');
-
-      // Obtenir les données des 7 derniers jours
+      // Mock temporaire - expo-health-connect désactivé
+      // const HealthConnect = await import('expo-health-connect');
+      
+      // Retourner des données vides temporairement
+      const processedData = [];
+      await PersistentStorage.saveHealthData(userId, processedData);
+      console.log('⚠️ Apple Health temporairement désactivé (problème XML)');
+      return;
       const endDate = new Date();
       const startDate = new Date();
       startDate.setDate(endDate.getDate() - 7);
