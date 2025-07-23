@@ -20,7 +20,7 @@ config.resolver.alias = {
   'url': require.resolve('./empty-shim.js'),
   'querystring': require.resolve('./empty-shim.js'),
   'events': require.resolve('./empty-shim.js'),
-  '@expo/config-plugins/build/utils/XML': require.resolve('./utils/XML.js'),
+  '@expo/config-plugins/build/utils/XML': require.resolve('./utils/XML-fallback.js'),
 };
 
 // Bloquer les modules problématiques
