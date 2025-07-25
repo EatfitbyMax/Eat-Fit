@@ -270,6 +270,10 @@ export default function EntrainementScreen() {
   };
 
   const handleProgrammesTab = () => {
+    console.log('=== DEBUG ABONNEMENT ===');
+    console.log('hasSubscription:', hasSubscription);
+    console.log('========================');
+    
     if (!hasSubscription) {
       setShowSubscriptionModal(true);
       return;
@@ -919,7 +923,7 @@ export default function EntrainementScreen() {
             </View>
           )}
 
-          {selectedTab === 'Programmes' && hasSubscription && (
+          {selectedTab === 'Programmes' && (
             <View style={styles.emptyState}>
               <View style={styles.emptyIcon}>
                 <Text style={styles.emptyIconText}>💪</Text>
