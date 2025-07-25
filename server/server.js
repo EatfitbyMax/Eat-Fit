@@ -712,30 +712,20 @@ app.get('/strava-callback', async (req, res) => {
           </div>
 
           <div class="success-message">
-            ✓ <strong>Connexion Strava terminée !</strong><br>
-            Retournez dans l'application EatFit By Max pour continuer.
+            ✓ <strong>Vous pouvez maintenant fermer cette fenêtre et retourner dans l'application mobile.</strong>
           </div>
 
           <button class="close-button" onclick="closeWindow()">
-            🔙 Retourner à l'application
+            Fermer et retourner à l'app
           </button>
 
-          <div style="background: #f0f8ff; border: 1px solid #b3d9ff; border-radius: 8px; padding: 15px; margin: 20px 0; text-align: left;">
-            <p style="margin: 0; font-size: 14px; color: #1e88e5;">
-              <strong>📱 Instructions :</strong><br>
-              • <strong>iPhone/iPad :</strong> Appuyez sur "Terminé" en haut à gauche<br>
-              • <strong>Android :</strong> Utilisez le bouton retour de votre appareil<br>
-              • Ou attendez la fermeture automatique
-            </p>
-          </div>
-
           <p class="redirect-info">
-            Fermeture automatique dans <span class="countdown" id="countdown">8</span> secondes...
+            Fermeture automatique dans <span class="countdown" id="countdown">5</span> secondes...
           </p>
         </div>
 
         <script>
-          let countdown = 8;
+          let countdown = 5;
           const countdownElement = document.getElementById('countdown');
 
           function updateCountdown() {
@@ -743,65 +733,30 @@ app.get('/strava-callback', async (req, res) => {
             countdown--;
 
             if (countdown < 0) {
-              attemptClose();
+              closeWindow();
             }
-          }
-
-          function attemptClose() {
-            // Méthode 1: Essayer de fermer l'onglet/fenêtre
-            try {
-              window.close();
-              console.log('Tentative window.close()');
-            } catch(e) {
-              console.log('window.close() échoué:', e);
-            }
-
-            // Méthode 2: Redirection vers l'app si possible
-            setTimeout(() => {
-              try {
-                // Essayer de rediriger vers l'app Expo
-                window.location.href = 'exp+eatfitbymax://';
-                console.log('Tentative redirection vers app');
-              } catch(e) {
-                console.log('Redirection app échouée:', e);
-                // Méthode 3: Page blanche en dernier recours
-                window.location.href = 'about:blank';
-              }
-            }, 1000);
           }
 
           function closeWindow() {
-            attemptClose();
+            // Essayer plusieurs méthodes de fermeture
+            try {
+              window.close();
+            } catch(e) {
+              // Si window.close() ne fonctionne pas, rediriger vers une page vide
+              window.location.href = 'about:blank';
+            }
           }
 
-          // Démarrer le countdown avec délai plus long
+          // Démarrer le countdown
           const interval = setInterval(updateCountdown, 1000);
           updateCountdown();
 
-          // Écouter les clics sur le bouton
-          document.addEventListener('DOMContentLoaded', function() {
-            const closeBtn = document.querySelector('.close-button');
-            if (closeBtn) {
-              closeBtn.addEventListener('click', attemptClose);
+          // Écouter les événements de visibilité pour fermer quand l'utilisateur revient
+          document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+              setTimeout(closeWindow, 1000);
             }
           });
-
-          // Message à l'utilisateur si la fermeture automatique échoue
-          setTimeout(() => {
-            if (!document.hidden) {
-              const container = document.querySelector('.container');
-              if (container) {
-                container.innerHTML += `
-                  <div style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196f3;">
-                    <p style="margin: 0; color: #1976d2; font-size: 14px;">
-                      <strong>📱 Pour iOS Safari :</strong><br>
-                      Appuyez sur le bouton "Terminé" en haut à gauche pour fermer cette page et retourner à l'application.
-                    </p>
-                  </div>
-                `;
-              }
-            }
-          }, 10000);
         </script>
       </body>
       </html>

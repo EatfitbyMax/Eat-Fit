@@ -233,12 +233,11 @@ export class IntegrationsManager {
 
       // Utiliser une approche différente pour iOS
       const result = await WebBrowser.openBrowserAsync(authUrl, {
-        dismissButtonStyle: 'done',
+        dismissButtonStyle: 'cancel',
         presentationStyle: WebBrowser.WebBrowserPresentationStyle.OVER_FULL_SCREEN,
         controlsColor: '#F5A623',
-        showTitle: true,
+        showTitle: false,
         enableBarCollapsing: false,
-        showInRecents: false,
       });
 
       console.log('🔄 Résultat WebBrowser:', result);
@@ -248,48 +247,25 @@ export class IntegrationsManager {
         return false;
       }
 
-      // Polling pour vérifier la connexion pendant 45 secondes max
+      // Polling pour vérifier la connexion pendant 30 secondes max
       console.log('🔄 Vérification de la connexion Strava...');
-      const maxAttempts = 18; // 45 secondes (18 x 2.5s)
+      const maxAttempts = 15; // 30 secondes (15 x 2s)
 
       for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        await new Promise(resolve => setTimeout(resolve, 2500));
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
         try {
-          // Vérifier d'abord sur le serveur
-          const serverStatus = await this.getStravaStatusFromServer(userId);
-          if (serverStatus.connected) {
-            console.log('✅ Connexion Strava confirmée côté serveur après', (attempt + 1) * 2.5, 'secondes');
-            
-            // Mettre à jour le statut local
-            const status = await this.getIntegrationStatus(userId);
-            status.strava = {
-              connected: true,
-              lastSync: new Date().toISOString(),
-              athlete: serverStatus.athlete
-            };
-            await PersistentStorage.saveIntegrationStatus(userId, status);
-            
+          const status = await this.getIntegrationStatus(userId);
+          if (status.strava.connected) {
+            console.log('✅ Connexion Strava confirmée après', (attempt + 1) * 2, 'secondes');
             return true;
           }
         } catch (pollError) {
-          console.log('🔄 Tentative', attempt + 1, '- Vérification en cours...');
+          console.log('🔄 Tentative', attempt + 1, '- En attente...');
         }
       }
 
-      console.log('⏰ Timeout atteint - Vérification du statut final...');
-      
-      // Dernière vérification
-      try {
-        const finalStatus = await this.getStravaStatusFromServer(userId);
-        if (finalStatus.connected) {
-          console.log('✅ Connexion trouvée lors de la vérification finale');
-          return true;
-        }
-      } catch (error) {
-        console.log('❌ Vérification finale échouée');
-      }
-      
+      console.log('⏰ Timeout - Vérification manuelle recommandée');
       return false;
 
     } catch (error) {
