@@ -113,6 +113,7 @@ export default function SubscriptionModal({
       case 'bronze': return '🥉';
       case 'silver': return '🥈';
       case 'gold': return '🥇';
+      case 'diamond': return '💎';
       default: return '💎';
     }
   };
