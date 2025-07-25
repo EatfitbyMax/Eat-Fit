@@ -4,6 +4,7 @@ import { getCurrentUser, User } from '@/utils/auth';
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
+  isLoggingOut: boolean;
   login: (user: User) => void;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -14,6 +15,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -60,39 +62,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       console.log('🚪 Début de la déconnexion...');
       
-      // 1. Vider immédiatement l'état utilisateur
+      // 1. IMMÉDIATEMENT marquer comme en cours de déconnexion
+      setIsLoggingOut(true);
+      console.log('🔄 État de déconnexion activé');
+      
+      // 2. Attendre un tick pour s'assurer que l'état est propagé
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      // 3. Vider l'état utilisateur
       setUser(null);
       setIsLoading(false);
       console.log('✅ État contexte réinitialisé');
       
-      // 2. Vider le cache auth
+      // 4. Vider le cache auth
       const { logout: authLogout } = await import('@/utils/auth');
       await authLogout();
       console.log('✅ Cache auth vidé');
       
-      // 3. Forcer un rafraîchissement pour s'assurer que getCurrentUser retourne null
+      // 5. Vérification finale
       const { getCurrentUser } = await import('@/utils/auth');
       const checkUser = await getCurrentUser();
       if (checkUser !== null) {
         console.error('⚠️ ATTENTION: Utilisateur encore en cache après logout!');
-        // Forcer le nettoyage une fois de plus
         await authLogout();
       } else {
         console.log('✅ Vérification: Aucun utilisateur en cache');
       }
       
-      // 4. Redirection forcée vers login
+      // 6. Redirection forcée vers login
       const { router } = await import('expo-router');
       router.replace('/auth/login');
       console.log('🔄 Redirection forcée vers /auth/login');
       
+      // 7. Désactiver l'état de déconnexion
+      setIsLoggingOut(false);
       console.log('✅ Déconnexion complète terminée');
       
     } catch (error) {
       console.error('❌ Erreur lors de la déconnexion:', error);
+      
       // Forcer la réinitialisation même en cas d'erreur
       setUser(null);
       setIsLoading(false);
+      setIsLoggingOut(false);
       
       // Redirection de secours
       try {
@@ -119,10 +131,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const contextValue = useMemo(() => ({
     user,
     isLoading,
+    isLoggingOut,
     login,
     logout,
     refreshUser,
-  }), [user, isLoading, login, logout, refreshUser]);
+  }), [user, isLoading, isLoggingOut, login, logout, refreshUser]);
 
   return (
     <AuthContext.Provider value={contextValue}>

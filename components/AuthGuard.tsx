@@ -8,14 +8,14 @@ interface AuthGuardProps {
 }
 
 export default function AuthGuard({ children }: AuthGuardProps) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isLoggingOut } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
   React.useEffect(() => {
-    // Ne pas rediriger pendant le chargement
-    if (isLoading) {
-      console.log('🛡️ AuthGuard - En cours de chargement...');
+    // Ne pas rediriger pendant le chargement ou la déconnexion
+    if (isLoading || isLoggingOut) {
+      console.log('🛡️ AuthGuard - En cours de chargement ou déconnexion...');
       return;
     }
 
@@ -28,14 +28,16 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     const isClientRoute = currentRoute.startsWith('(client)');
     const isCoachRoute = currentRoute.startsWith('(coach)');
 
-    // PRIORITÉ ABSOLUE : Si pas d'utilisateur connecté, rediriger vers login
-    if (!user) {
+    // PRIORITÉ ABSOLUE : Si pas d'utilisateur connecté OU en cours de déconnexion, rediriger vers login
+    if (!user || isLoggingOut) {
       if (!isAuthRoute) {
-        console.log('🔄 PRIORITÉ ABSOLUE - Redirection vers /auth/login - Utilisateur NON connecté');
+        const reason = isLoggingOut ? 'Déconnexion en cours' : 'Utilisateur NON connecté';
+        console.log(`🔄 PRIORITÉ ABSOLUE - Redirection vers /auth/login - ${reason}`);
         router.replace('/auth/login');
         return;
       } else {
-        console.log('🛡️ AuthGuard - Déjà sur route auth, utilisateur non connecté - OK');
+        const reason = isLoggingOut ? 'déconnexion en cours' : 'utilisateur non connecté';
+        console.log(`🛡️ AuthGuard - Déjà sur route auth, ${reason} - OK`);
         return;
       }
     }
@@ -64,7 +66,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
         console.log('🛡️ AuthGuard - Accès autorisé pour utilisateur connecté');
       }
     }
-  }, [user, segments, isLoading, router]);
+  }, [user, segments, isLoading, isLoggingOut, router]);
 
   return <>{children}</>;
 }
