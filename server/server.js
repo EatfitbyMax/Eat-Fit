@@ -679,11 +679,11 @@ app.get('/test-strava', (req, res) => {
           <ul>
             <li><strong>Client ID:</strong> ${process.env.STRAVA_CLIENT_ID || 'Non configuré'}</li>
             <li><strong>Client Secret:</strong> ${process.env.STRAVA_CLIENT_SECRET ? 'Configuré ✅' : 'Non configuré ❌'}</li>
-            <li><strong>Redirect URI:</strong> https://eatfitbymax.replit.app/strava-callback</li>
+            <li><strong>Redirect URI:</strong> https://eatfitbymax.cloud/strava-callback</li>
           </ul>
 
           <h3>Test de connexion Strava :</h3>
-          <a href="https://www.strava.com/oauth/authorize?client_id=${process.env.STRAVA_CLIENT_ID || 'MISSING'}&response_type=code&redirect_uri=https://eatfitbymax.replit.app/strava-callback&approval_prompt=force&scope=read,activity:read_all" 
+          <a href="https://www.strava.com/oauth/authorize?client_id=${process.env.STRAVA_CLIENT_ID || 'MISSING'}&response_type=code&redirect_uri=https://eatfitbymax.cloud/strava-callback&approval_prompt=force&scope=read,activity:read_all" 
              style="display: inline-block; background: #FC4C02; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold;">
             🔗 Tester la connexion Strava
           </a>
