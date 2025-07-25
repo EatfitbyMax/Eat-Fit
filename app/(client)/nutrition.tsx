@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Modal, Alert } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import FoodSearchModal from '@/components/FoodSearchModal';
+import SubscriptionModal from '@/components/SubscriptionModal';
 import { FoodProduct, OpenFoodFactsService, FoodEntry } from '@/utils/openfoodfacts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getCurrentUser } from '@/utils/auth';
@@ -1393,57 +1394,15 @@ function NutritionScreen() {
         </View>
 
         {/* Modal d'abonnement */}
-        <Modal
+        <SubscriptionModal
           visible={showSubscriptionModal}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={() => setShowSubscriptionModal(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>🔒 Accès Premium</Text>
-                <TouchableOpacity 
-                  style={styles.closeButton}
-                  onPress={() => setShowSubscriptionModal(false)}
-                >
-                  <Text style={styles.closeButtonText}>×</Text>
-                </TouchableOpacity>
-              </View>
-
-              <Text style={styles.modalDescription}>
-                L'accès aux programmes nutrition est réservé aux membres Premium.
-              </Text>
-
-              <View style={styles.benefitsList}>
-                <Text style={styles.benefitItem}>✓ Programmes nutrition personnalisés</Text>
-                <Text style={styles.benefitItem}>✓ Suivi par un coach professionnel</Text>
-                <Text style={styles.benefitItem}>✓ Plans de repas détaillés</Text>
-                <Text style={styles.benefitItem}>✓ Ajustements selon vos progrès</Text>
-              </View>
-
-              <TouchableOpacity 
-                style={styles.subscribeButton}
-                onPress={() => {
-                  setShowSubscriptionModal(false);
-                  Alert.alert(
-                    'Abonnement Premium', 
-                    'Fonctionnalité d\'abonnement en cours de développement.'
-                  );
-                }}
-              >
-                <Text style={styles.subscribeButtonText}>S'abonner maintenant</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.cancelButton}
-                onPress={() => setShowSubscriptionModal(false)}
-              >
-                <Text style={styles.cancelButtonText}>Plus tard</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
+          onClose={() => setShowSubscriptionModal(false)}
+          onSubscribe={(planId) => {
+            console.log('Plan sélectionné:', planId);
+            // Vous pouvez ajouter ici la logique pour gérer l'abonnement
+            setShowSubscriptionModal(false);
+          }}
+        />
 
         {/* Modal de recherche d'aliments */}
         <FoodSearchModal
@@ -1760,76 +1719,7 @@ const styles = StyleSheet.create({
     color: '#FFA500',
     fontWeight: '600',
   },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
-    backgroundColor: '#161B22',
-    borderRadius: 12,
-    padding: width < 375 ? 20 : 24,
-    width: '80%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  modalTitle: {
-    fontSize: width < 375 ? 18 : 20,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  closeButton: {
-    backgroundColor: '#21262D',
-    borderRadius: 12,
-    width: width < 375 ? 24 : 28,
-    height: width < 375 ? 24 : 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeButtonText: {
-    fontSize: width < 375 ? 14 : 16,
-    color: '#8B949E',
-    fontWeight: 'bold',
-  },
-  modalDescription: {
-    fontSize: width < 375 ? 14 : 16,
-    color: '#8B949E',
-    marginBottom: 20,
-  },
-  benefitsList: {
-    marginBottom: 20,
-  },
-  benefitItem: {
-    fontSize: width < 375 ? 14 : 16,
-    color: '#FFFFFF',
-    marginBottom: 8,
-  },
-  subscribeButton: {
-    backgroundColor: '#F5A623',
-    paddingVertical: width < 375 ? 12 : 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  subscribeButtonText: {
-    fontSize: width < 375 ? 14 : 16,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-  },
-  cancelButton: {
-    paddingVertical: width < 375 ? 12 : 14,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    fontSize: width < 375 ? 14 : 16,
-    color: '#8B949E',
-  },
+  
   foodList: {
     marginBottom: 16,
   },
