@@ -88,20 +88,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('✅ Vérification: Aucun utilisateur en cache');
       }
 
-      // 5. Reset complet de la navigation avec replace
-      const { router } = await import('expo-router');
+      // 5. La navigation sera gérée par AuthGuard automatiquement
+      // grâce aux états isLoggingOut et user = null
+      console.log('🔄 AuthGuard va automatiquement rediriger vers /auth/login');
 
-      // Fermer tous les modaux et sheets
-      router.dismissAll();
+      // 6. Attendre un tick pour que le contexte se propage
+      await new Promise(resolve => setTimeout(resolve, 100));
 
-      // Utiliser replace au lieu de reset pour éviter les problèmes de navigation
-      router.replace('/auth/login');
-      console.log('🔄 Navigation redirigée vers /auth/login avec replace');
-
-      // 6. Attendre encore un tick pour s'assurer que la navigation a pris effet
-      await new Promise(resolve => setTimeout(resolve, 50));
-
-      // 7. Désactiver l'état de déconnexion APRÈS la navigation
+      // 7. Désactiver l'état de déconnexion
       setIsLoggingOut(false);
       console.log('✅ Déconnexion complète terminée');
 
@@ -113,17 +107,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
       setIsLoggingOut(false);
 
-      // Redirection de secours
-      try {
-        const { router } = await import('expo-router');
-        router.replace('/auth/login');
-        console.log('🔄 Reset de secours de la navigation réussi');
-      } catch (routerError) {
-        console.error('❌ Erreur reset navigation:', routerError);
-        // En dernier recours, forcer la redirection
-        const { router } = await import('expo-router');
-        router.push('/auth/login');
-      }
+      // AuthGuard gérera automatiquement la redirection
+      console.log('🔄 AuthGuard va gérer la redirection de secours');
     }
   }, []);
 

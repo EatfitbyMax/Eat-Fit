@@ -21,10 +21,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     // Si déconnexion en cours, forcer immédiatement vers login
     if (isLoggingOut) {
       console.log('🛡️ AuthGuard - Déconnexion en cours, redirection immédiate...');
-      router.reset({
-        index: 0,
-        routes: [{ name: '/auth/login' }],
-      });
+      router.replace('/auth/login');
       return;
     }
 
