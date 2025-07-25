@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useRouter, useSegments } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
@@ -30,27 +31,26 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     // PRIORITÉ ABSOLUE : Si pas d'utilisateur connecté, rediriger vers login
     if (!user) {
       if (!isAuthRoute) {
-        console.log('🔄 FORCÉ - Redirection vers /auth/login - Utilisateur déconnecté');
-        // Utiliser replace pour éviter de revenir en arrière
+        console.log('🔄 PRIORITÉ ABSOLUE - Redirection vers /auth/login - Utilisateur NON connecté');
         router.replace('/auth/login');
         return;
       } else {
-        console.log('🛡️ AuthGuard - Déjà sur route auth, utilisateur non connecté');
+        console.log('🛡️ AuthGuard - Déjà sur route auth, utilisateur non connecté - OK');
         return;
       }
     }
 
     // Si utilisateur connecté, gérer les redirections normales
-    if (user) {
+    if (user && user.email) {
       if (isAuthRoute) {
         // Rediriger depuis les pages auth vers l'interface appropriée
         const redirectPath = user.userType === 'coach' ? '/(coach)' : '/(client)';
-        console.log('🔄 Redirection vers', redirectPath, '- Utilisateur connecté depuis auth');
+        console.log('🔄 Redirection depuis auth vers', redirectPath, '- Utilisateur connecté');
         router.replace(redirectPath);
       } else if (isTabsRoute) {
         // Rediriger depuis les tabs vers l'interface utilisateur appropriée
         const redirectPath = user.userType === 'coach' ? '/(coach)' : '/(client)';
-        console.log('🔄 Redirection vers', redirectPath, '- Utilisateur connecté depuis tabs');
+        console.log('🔄 Redirection depuis tabs vers', redirectPath, '- Utilisateur connecté');
         router.replace(redirectPath);
       } else if (isClientRoute && user.userType !== 'client') {
         // Empêcher l'accès client si pas client

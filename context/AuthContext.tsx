@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { getCurrentUser, User } from '@/utils/auth';
 
@@ -60,25 +61,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       console.log('🚪 Début de la déconnexion...');
       
-      // 1. Vider le cache auth immédiatement
-      await import('@/utils/auth').then(({ logout: authLogout }) => authLogout());
-      console.log('✅ Cache auth vidé');
-      
-      // 2. Forcer l'état à null et déclencher un re-render
+      // 1. Vider immédiatement l'état utilisateur
       setUser(null);
       setIsLoading(false);
       console.log('✅ État contexte réinitialisé');
       
-      // 3. Attendre un tick pour s'assurer que l'état est propagé
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // 2. Vider le cache auth
+      const { logout: authLogout } = await import('@/utils/auth');
+      await authLogout();
+      console.log('✅ Cache auth vidé');
       
-      // 4. Redirection forcée
+      // 3. Forcer un rafraîchissement pour s'assurer que getCurrentUser retourne null
+      const { getCurrentUser } = await import('@/utils/auth');
+      const checkUser = await getCurrentUser();
+      if (checkUser !== null) {
+        console.error('⚠️ ATTENTION: Utilisateur encore en cache après logout!');
+        // Forcer le nettoyage une fois de plus
+        await authLogout();
+      } else {
+        console.log('✅ Vérification: Aucun utilisateur en cache');
+      }
+      
+      // 4. Redirection forcée vers login
       const { router } = await import('expo-router');
       router.replace('/auth/login');
       console.log('🔄 Redirection forcée vers /auth/login');
       
-      // 5. Log final de confirmation
-      console.log('✅ Déconnexion complète réussie');
+      console.log('✅ Déconnexion complète terminée');
       
     } catch (error) {
       console.error('❌ Erreur lors de la déconnexion:', error);
