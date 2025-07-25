@@ -237,20 +237,66 @@ export default function ProfileScreen() {
       }
 
       if (integrationStatus.strava.connected) {
-        await IntegrationsManager.disconnectStrava(currentUser.id);
-        setIntegrationStatus(prev => ({
-          ...prev,
-          strava: { connected: false, lastSync: null, athleteId: null }
-        }));
-        Alert.alert("Succès", "Strava déconnecté");
+        Alert.alert(
+          "Déconnecter Strava",
+          "Êtes-vous sûr de vouloir déconnecter Strava ?",
+          [
+            { text: "Annuler", style: "cancel" },
+            { 
+              text: "Déconnecter", 
+              style: "destructive",
+              onPress: async () => {
+                try {
+                  await IntegrationsManager.disconnectStrava(currentUser.id);
+                  setIntegrationStatus(prev => ({
+                    ...prev,
+                    strava: { connected: false, lastSync: null, athleteId: null }
+                  }));
+                  Alert.alert("Succès", "Strava déconnecté");
+                } catch (error) {
+                  Alert.alert("Erreur", "Impossible de déconnecter Strava");
+                }
+              }
+            }
+          ]
+        );
       } else {
-        const success = await IntegrationsManager.connectStrava(currentUser.id);
-        if (success) {
-          await loadIntegrationStatus();
-          Alert.alert("Succès", "Strava connecté avec succès");
-        } else {
-          Alert.alert("Erreur", "Impossible de connecter Strava");
-        }
+        Alert.alert(
+          "Connexion Strava",
+          "Vous allez être redirigé vers Strava pour autoriser l'accès. Une fois l'autorisation donnée, fermez la page web et revenez dans l'application.",
+          [
+            { text: "Annuler", style: "cancel" },
+            { 
+              text: "Continuer",
+              onPress: async () => {
+                const success = await IntegrationsManager.connectStrava(currentUser.id);
+                
+                // Recharger le statut dans tous les cas
+                await loadIntegrationStatus();
+                
+                if (success) {
+                  Alert.alert(
+                    "Succès", 
+                    "Strava connecté avec succès ! Vos activités seront maintenant synchronisées.",
+                    [{ text: "OK" }]
+                  );
+                } else {
+                  Alert.alert(
+                    "Information", 
+                    "Si vous avez autorisé l'accès, la connexion peut prendre quelques instants. Vérifiez votre statut dans quelques secondes.",
+                    [
+                      { text: "OK" },
+                      { 
+                        text: "Vérifier maintenant",
+                        onPress: () => loadIntegrationStatus()
+                      }
+                    ]
+                  );
+                }
+              }
+            }
+          ]
+        );
       }
     } catch (error) {
       console.error("Failed to toggle Strava:", error);
