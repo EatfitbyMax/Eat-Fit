@@ -75,6 +75,7 @@ export default function ProfileScreen() {
     try {
       const currentUser = await getCurrentUser();
       console.log('Données utilisateur récupérées:', currentUser);
+      console.log('🏃 Sport favori de l\'utilisateur:', currentUser?.favoriteSport);
       setUser(currentUser);
 
       if (currentUser?.id) {
@@ -132,11 +133,14 @@ export default function ProfileScreen() {
   };
 
   const getSportDisplay = () => {
+    console.log('🔍 Debug getSportDisplay - user.favoriteSport:', user?.favoriteSport);
+    
     if (!user?.favoriteSport) {
       return { emoji: '🏃', name: 'Non renseigné' };
     }
 
     const sport = allSports.find(s => s.id === user.favoriteSport);
+    console.log('🏃 Sport trouvé:', sport);
     return sport ? { emoji: sport.emoji, name: sport.name } : { emoji: '🏃', name: 'Non renseigné' };
   };
 

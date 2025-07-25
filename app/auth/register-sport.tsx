@@ -33,6 +33,7 @@ export default function RegisterSportScreen() {
 
   const handleNext = () => {
     if (selectedSport) {
+      console.log('🏃 Sauvegarde du sport favori:', selectedSport);
       updateRegistrationData({ favoriteSport: selectedSport });
       router.push('/auth/register-activity');
     }
