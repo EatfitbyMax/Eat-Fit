@@ -14,6 +14,7 @@ interface User {
   gender?: string;
   activityLevel?: string;
   goals?: string[];
+  favoriteSport?: string;
   profileImage?: string;
   hashedPassword?: string;
 }
@@ -264,6 +265,7 @@ export async function login(email: string, password: string): Promise<User | nul
       gender: user.gender,
       activityLevel: user.activityLevel,
       goals: user.goals,
+      favoriteSport: user.favoriteSport,
       profileImage: user.profileImage
     };
 
@@ -331,6 +333,8 @@ export async function register(userData: Omit<User, 'id'> & { password: string }
       ...userData,
       id: Date.now().toString(),
       hashedPassword: hashedPassword,
+      // S'assurer que le sport favori est inclus
+      favoriteSport: userData.favoriteSport || '',
       // Ne pas stocker le mot de passe en clair
       password: undefined
     };
@@ -355,6 +359,7 @@ export async function register(userData: Omit<User, 'id'> & { password: string }
       gender: newUser.gender,
       activityLevel: newUser.activityLevel,
       goals: newUser.goals,
+      favoriteSport: newUser.favoriteSport,
       profileImage: newUser.profileImage
     };
 
