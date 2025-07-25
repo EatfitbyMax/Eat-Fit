@@ -66,7 +66,6 @@ export const SUBSCRIPTION_PLANS = [
       '4 analyses vidéo/mois'
     ]
   }
-  }
 ];
 
 export interface Subscription {
