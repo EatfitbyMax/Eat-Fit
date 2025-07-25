@@ -276,7 +276,7 @@ export default function EntrainementScreen() {
     
     if (!hasSubscription) {
       setShowSubscriptionModal(true);
-      return;
+      return; // Ne pas changer d'onglet
     }
     setSelectedTab('Programmes');
   };
@@ -923,7 +923,7 @@ export default function EntrainementScreen() {
             </View>
           )}
 
-          {selectedTab === 'Programmes' && (
+          {selectedTab === 'Programmes' && hasSubscription && (
             <View style={styles.emptyState}>
               <View style={styles.emptyIcon}>
                 <Text style={styles.emptyIconText}>💪</Text>
