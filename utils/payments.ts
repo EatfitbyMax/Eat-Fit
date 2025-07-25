@@ -43,57 +43,60 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   },
   {
     id: 'bronze',
-    name: 'Abonnement Bronze',
+    name: 'BRONZE',
     price: 9.99,
     currency: 'EUR',
     duration: 'mois',
     appointmentLimits: { monthly: 0, weekly: 0 },
     features: [
       'Messagerie avec le coach',
-      '1 programme nutrition de base',
-      'Suivi hebdomadaire',
-      'Aucun rendez-vous inclus'
+      '1 programme nutritionnel/semaine',
+      '1 programme sportif/semaine'
     ]
   },
   {
     id: 'silver',
-    name: 'Abonnement Argent',
+    name: 'ARGENT',
     price: 19.99,
     currency: 'EUR',
     duration: 'mois',
     appointmentLimits: { monthly: 1, weekly: 0 },
     features: [
-      'Tout du Bronze',
-      'Programmes nutrition personnalisés',
-      'Programmes d\'entraînement',
-      '1 rendez-vous par mois'
+      'Messagerie avec le coach',
+      '3 programmes nutritionnels/semaine',
+      '3 programmes sportifs/semaine',
+      '1 rendez-vous/mois'
     ]
   },
   {
     id: 'gold',
-    name: 'Abonnement Or',
+    name: 'OR',
     price: 49.99,
     currency: 'EUR',
     duration: 'mois',
-    appointmentLimits: { monthly: 0, weekly: 1 },
+    appointmentLimits: { monthly: 4, weekly: 0 },
     features: [
-      'Tout de l\'Argent',
-      'Coaching 24h/24 7j/7',
-      'Programmes ultra-personnalisés',
-      '1 rendez-vous par semaine',
-      'Suivi en temps réel'
+      'Messagerie avec le coach',
+      '5 programmes nutritionnels/semaine',
+      '5 programmes sportifs/semaine',
+      '4 rendez-vous/mois',
+      '2 analyses vidéo/mois'
     ]
   },
   {
     id: 'diamond',
-    name: 'Abonnement Diamant',
+    name: 'DIAMANT',
     price: 99.99,
     currency: 'EUR',
     duration: 'mois',
-    appointmentLimits: { monthly: 0, weekly: 2 },
+    appointmentLimits: { monthly: 8, weekly: 0 },
     features: [
-      'Tout de l\'Or',
-      'Coach personnel dédié VIP',
+      'Messagerie avec le coach',
+      '7 programmes nutritionnels/semaine',
+      '7 programmes sportifs/semaine',
+      '8 rendez-vous/mois',
+      '4 analyses vidéo/mois'
+    ]é VIP',
       'Accès aux événements exclusifs',
       'Consultations nutrition expert',
       'Support premium 24h/24',

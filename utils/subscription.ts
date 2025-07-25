@@ -22,49 +22,50 @@ export const SUBSCRIPTION_PLANS = [
     duration: 'month',
     currency: 'EUR',
     features: [
-      'Toutes les fonctionnalités gratuites',
-      'Plans d\'entraînement avancés',
-      'Suivi nutritionnel détaillé',
-      'Support prioritaire'
+      'Messagerie avec le coach',
+      '1 programme nutritionnel/semaine',
+      '1 programme sportif/semaine'
     ]
   },
   {
     id: 'silver',
-    name: 'SILVER',
+    name: 'ARGENT',
     price: 19.99,
     duration: 'month',
     currency: 'EUR',
     features: [
-      'Toutes les fonctionnalités Bronze',
-      'Coaching personnalisé',
-      'Intégrations avancées',
-      'Analyses détaillées'
+      'Messagerie avec le coach',
+      '3 programmes nutritionnels/semaine',
+      '3 programmes sportifs/semaine',
+      '1 rendez-vous/mois'
     ]
   },
   {
     id: 'gold',
-    name: 'GOLD',
-    price: 29.99,
-    duration: 'month',
-    currency: 'EUR',
-    features: [
-      'Toutes les fonctionnalités Silver',
-      'Suivi en temps réel',
-      'API complète',
-      'Support 24/7'
-    ]
-  },
-  {
-    id: 'diamond',
-    name: 'DIAMOND',
+    name: 'OR',
     price: 49.99,
     duration: 'month',
     currency: 'EUR',
     features: [
-      'Toutes les fonctionnalités Gold',
-      'Coach personnel dédié',
-      'Accès anticipé aux nouvelles fonctionnalités',
-      'Personnalisation complète'
+      'Messagerie avec le coach',
+      '5 programmes nutritionnels/semaine',
+      '5 programmes sportifs/semaine',
+      '4 rendez-vous/mois',
+      '2 analyses vidéo/mois'
+    ]
+  },
+  {
+    id: 'diamond',
+    name: 'DIAMANT',
+    price: 99.99,
+    duration: 'month',
+    currency: 'EUR',
+    features: [
+      'Messagerie avec le coach',
+      '7 programmes nutritionnels/semaine',
+      '7 programmes sportifs/semaine',
+      '8 rendez-vous/mois',
+      '4 analyses vidéo/mois'
     ]
   }
 ];
