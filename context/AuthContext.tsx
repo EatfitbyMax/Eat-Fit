@@ -90,10 +90,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('✅ Vérification: Aucun utilisateur en cache');
       }
       
-      // 6. Redirection forcée vers login
+      // 6. Reset complet de la navigation pour forcer le re-rendu d'AuthGuard
       const { router } = await import('expo-router');
-      router.replace('/auth/login');
-      console.log('🔄 Redirection forcée vers /auth/login');
+      router.dismissAll(); // Ferme tous les modaux/sheets ouverts
+      router.reset({
+        index: 0,
+        routes: [{ name: '/auth/login' }],
+      });
+      console.log('🔄 Navigation complètement réinitialisée vers /auth/login');
       
       // 7. Désactiver l'état de déconnexion
       setIsLoggingOut(false);
@@ -107,13 +111,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
       setIsLoggingOut(false);
       
-      // Redirection de secours
+      // Redirection de secours avec reset
       try {
         const { router } = await import('expo-router');
-        router.replace('/auth/login');
-        console.log('🔄 Redirection de secours réussie');
+        router.dismissAll();
+        router.reset({
+          index: 0,
+          routes: [{ name: '/auth/login' }],
+        });
+        console.log('🔄 Reset de secours de la navigation réussi');
       } catch (routerError) {
-        console.error('❌ Erreur redirection de secours:', routerError);
+        console.error('❌ Erreur reset de secours:', routerError);
       }
     }
   }, []);

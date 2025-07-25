@@ -13,9 +13,19 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter();
 
   React.useEffect(() => {
-    // Ne pas rediriger pendant le chargement ou la déconnexion
-    if (isLoading || isLoggingOut) {
-      console.log('🛡️ AuthGuard - En cours de chargement ou déconnexion...');
+    // Ne pas rediriger pendant le chargement
+    if (isLoading) {
+      console.log('🛡️ AuthGuard - En cours de chargement...');
+      return;
+    }
+
+    // Si déconnexion en cours, forcer immédiatement vers login
+    if (isLoggingOut) {
+      console.log('🛡️ AuthGuard - Déconnexion en cours, redirection immédiate...');
+      router.reset({
+        index: 0,
+        routes: [{ name: '/auth/login' }],
+      });
       return;
     }
 
