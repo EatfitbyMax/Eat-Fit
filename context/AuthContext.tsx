@@ -60,29 +60,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       console.log('🚪 Début de la déconnexion...');
       
-      // Vider immédiatement l'état du contexte
-      setUser(null);
-      console.log('✅ État contexte vidé');
-      
-      // Appeler la fonction logout du utils/auth
+      // 1. Vider le cache auth immédiatement
       await import('@/utils/auth').then(({ logout: authLogout }) => authLogout());
-      console.log('✅ Cache mémoire vidé');
+      console.log('✅ Cache auth vidé');
       
-      // Redirection immédiate vers login
+      // 2. Forcer l'état à null et déclencher un re-render
+      setUser(null);
+      setIsLoading(false);
+      console.log('✅ État contexte réinitialisé');
+      
+      // 3. Attendre un tick pour s'assurer que l'état est propagé
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // 4. Redirection forcée
       const { router } = await import('expo-router');
       router.replace('/auth/login');
       console.log('🔄 Redirection forcée vers /auth/login');
       
+      // 5. Log final de confirmation
+      console.log('✅ Déconnexion complète réussie');
+      
     } catch (error) {
       console.error('❌ Erreur lors de la déconnexion:', error);
-      // S'assurer que l'état est vidé même en cas d'erreur
+      // Forcer la réinitialisation même en cas d'erreur
       setUser(null);
-      // Redirection même en cas d'erreur
+      setIsLoading(false);
+      
+      // Redirection de secours
       try {
         const { router } = await import('expo-router');
         router.replace('/auth/login');
+        console.log('🔄 Redirection de secours réussie');
       } catch (routerError) {
-        console.error('❌ Erreur redirection:', routerError);
+        console.error('❌ Erreur redirection de secours:', routerError);
       }
     }
   }, []);

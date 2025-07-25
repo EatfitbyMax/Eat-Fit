@@ -372,10 +372,24 @@ export async function register(userData: Omit<User, 'id'> & { password: string }
 
 export async function logout(): Promise<void> {
   try {
+    // Vider immédiatement le cache utilisateur
     currentUserCache = null;
-    console.log('✅ Déconnexion réussie');
+    
+    // S'assurer qu'aucune référence n'existe
+    console.log('✅ Déconnexion réussie - Cache utilisateur vidé');
+    
+    // Forcer une vérification immédiate
+    const currentUser = await getCurrentUser();
+    if (currentUser === null) {
+      console.log('✅ Vérification réussie - Aucun utilisateur en cache');
+    } else {
+      console.error('⚠️ Attention - Utilisateur encore en cache après déconnexion');
+      currentUserCache = null; // Forcer à nouveau
+    }
   } catch (error) {
     console.error('❌ Erreur déconnexion:', error);
+    // S'assurer que le cache est vidé même en cas d'erreur
+    currentUserCache = null;
   }
 }
 

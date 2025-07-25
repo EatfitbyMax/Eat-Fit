@@ -27,19 +27,20 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     const isClientRoute = currentRoute.startsWith('(client)');
     const isCoachRoute = currentRoute.startsWith('(coach)');
 
-    // Si pas d'utilisateur connecté
+    // PRIORITÉ ABSOLUE : Si pas d'utilisateur connecté, rediriger vers login
     if (!user) {
-      // Rediriger vers login sauf si déjà sur une route auth
       if (!isAuthRoute) {
-        console.log('🔄 Redirection vers /auth/login - Aucun utilisateur connecté');
+        console.log('🔄 FORCÉ - Redirection vers /auth/login - Utilisateur déconnecté');
+        // Utiliser replace pour éviter de revenir en arrière
         router.replace('/auth/login');
+        return;
       } else {
-        console.log('🛡️ AuthGuard - Déjà sur une route auth, pas de redirection');
+        console.log('🛡️ AuthGuard - Déjà sur route auth, utilisateur non connecté');
+        return;
       }
-      return;
     }
 
-    // Si utilisateur connecté
+    // Si utilisateur connecté, gérer les redirections normales
     if (user) {
       if (isAuthRoute) {
         // Rediriger depuis les pages auth vers l'interface appropriée
@@ -60,7 +61,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
         console.log('🚫 Accès coach refusé - Type utilisateur:', user.userType);
         router.replace('/(client)');
       } else {
-        console.log('🛡️ AuthGuard - Accès autorisé');
+        console.log('🛡️ AuthGuard - Accès autorisé pour utilisateur connecté');
       }
     }
   }, [user, segments, isLoading, router]);
