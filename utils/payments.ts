@@ -96,12 +96,6 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
       '7 programmes sportifs/semaine',
       '8 rendez-vous/mois',
       '4 analyses vidéo/mois'
-    ]é VIP',
-      'Accès aux événements exclusifs',
-      'Consultations nutrition expert',
-      'Support premium 24h/24',
-      '2 rendez-vous par semaine',
-      'Programmes sur mesure illimités'
     ]
   }
 ];
