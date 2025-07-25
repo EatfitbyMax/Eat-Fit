@@ -68,7 +68,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       console.log('✅ État contexte vidé');
       
-      // Redirection immédiate vers login après déconnexion
+      // Attendre que le contexte soit complètement synchronisé
+      await new Promise(resolve => setTimeout(resolve, 200));
+      console.log('✅ Synchronisation contexte terminée');
+      
+      // Redirection vers login après synchronisation complète
       const { router } = await import('expo-router');
       router.replace('/auth/login');
       console.log('🔄 Redirection forcée vers /auth/login');
@@ -79,6 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       // Redirection même en cas d'erreur
       try {
+        await new Promise(resolve => setTimeout(resolve, 200));
         const { router } = await import('expo-router');
         router.replace('/auth/login');
       } catch (routerError) {
