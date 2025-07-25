@@ -64,18 +64,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await import('@/utils/auth').then(({ logout: authLogout }) => authLogout());
       console.log('✅ Cache mémoire vidé');
       
-      // Ensuite vider l'état du contexte avec un petit délai pour la synchronisation
+      // Vider immédiatement l'état du contexte
       setUser(null);
       console.log('✅ État contexte vidé');
       
-      // Petit délai pour s'assurer que le contexte est synchronisé
-      await new Promise(resolve => setTimeout(resolve, 100));
-      console.log('✅ Déconnexion complète');
+      // Redirection immédiate vers login après déconnexion
+      const { router } = await import('expo-router');
+      router.replace('/auth/login');
+      console.log('🔄 Redirection forcée vers /auth/login');
       
     } catch (error) {
       console.error('❌ Erreur lors de la déconnexion:', error);
       // S'assurer que l'état est vidé même en cas d'erreur
       setUser(null);
+      // Redirection même en cas d'erreur
+      try {
+        const { router } = await import('expo-router');
+        router.replace('/auth/login');
+      } catch (routerError) {
+        console.error('❌ Erreur redirection:', routerError);
+      }
     }
   }, []);
 
