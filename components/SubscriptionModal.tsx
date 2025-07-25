@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -16,79 +17,43 @@ import { PaymentService, SUBSCRIPTION_PLANS, SubscriptionPlan } from '../utils/p
 interface SubscriptionModalProps {
   visible: boolean;
   onClose: () => void;
-  userId: string;
-  currentPlanId?: string;
-  onSubscriptionUpdate?: () => void;
+  onSubscribe?: (planId: string) => void;
 }
 
-export default function SubscriptionModal({ 
-  visible, 
-  onClose, 
-  userId, 
-  currentPlanId = 'free',
-  onSubscriptionUpdate 
-}: SubscriptionModalProps) {
-  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
+export default function SubscriptionModal({ visible, onClose, onSubscribe }: SubscriptionModalProps) {
   const [loading, setLoading] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
-  const handlePlanSelection = async (plan: SubscriptionPlan) => {
-    if (plan.id === 'free') {
-      Alert.alert(
-        'Version Gratuite',
-        'Vous êtes déjà sur la version gratuite avec les fonctionnalités de base.',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
+  // Filtrer pour exclure le plan gratuit
+  const premiumPlans = SUBSCRIPTION_PLANS.filter(plan => plan.id !== 'free');
 
-    if (plan.id === currentPlanId) {
-      Alert.alert(
-        'Abonnement Actuel',
-        'Vous êtes déjà abonné à ce plan.',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
-
-    setSelectedPlan(plan);
-
-    Alert.alert(
-      `Abonnement ${plan.name}`,
-      `Prix: ${plan.price}€/${plan.duration}\n\nFonctionnalités incluses:\n${plan.features.join('\n• ')}`,
-      [
-        { text: 'Annuler', style: 'cancel' },
-        { 
-          text: Platform.OS === 'ios' ? 'Payer avec Apple Pay' : 'Payer avec Google Pay',
-          onPress: () => handlePayment(plan)
-        }
-      ]
-    );
-  };
-
-  const handlePayment = async (plan: SubscriptionPlan) => {
+  const handleSubscribe = async (plan: SubscriptionPlan) => {
+    if (loading) return;
+    
     setLoading(true);
+    setSelectedPlan(plan.id);
 
     try {
       let success = false;
 
       if (Platform.OS === 'ios') {
-        success = await PaymentService.presentApplePayPayment(plan, userId);
+        success = await PaymentService.presentApplePayPayment(plan, 'current_user_id');
       } else if (Platform.OS === 'android') {
-        success = await PaymentService.presentGooglePayPayment(plan, userId);
+        success = await PaymentService.presentGooglePayPayment(plan, 'current_user_id');
       } else {
-        Alert.alert('Erreur', 'Paiement non supporté sur cette plateforme');
+        Alert.alert('Erreur', 'Paiement non disponible sur cette plateforme');
         return;
       }
 
       if (success) {
         Alert.alert(
-          'Paiement Réussi ! 🎉',
-          `Votre abonnement ${plan.name} a été activé avec succès.\n\nVous avez maintenant accès à toutes les fonctionnalités premium.`,
+          'Félicitations !',
+          `Votre abonnement ${plan.name} a été activé avec succès.`,
           [
             {
-              text: 'Parfait !',
+              text: 'OK',
               onPress: () => {
-                onSubscriptionUpdate?.();
+                onSubscribe?.(plan.id);
                 onClose();
               }
             }
@@ -96,11 +61,8 @@ export default function SubscriptionModal({
         );
       }
     } catch (error) {
-      console.error('Erreur paiement:', error);
-      Alert.alert(
-        'Erreur de Paiement',
-        'Une erreur est survenue lors du paiement. Veuillez réessayer.'
-      );
+      console.error('Erreur abonnement:', error);
+      Alert.alert('Erreur', 'Une erreur est survenue lors du traitement de votre paiement.');
     } finally {
       setLoading(false);
       setSelectedPlan(null);
@@ -109,219 +71,235 @@ export default function SubscriptionModal({
 
   const getPlanIcon = (planId: string) => {
     switch (planId) {
-      case 'free': return '🆓';
       case 'bronze': return '🥉';
       case 'silver': return '🥈';
       case 'gold': return '🥇';
       case 'diamond': return '💎';
-      default: return '💎';
+      default: return '⭐';
     }
   };
 
-  const getPlanColor = (planId: string) => {
+  const getPlanColors = (planId: string) => {
     switch (planId) {
-      case 'free': return ['#2A2A2A', '#3A3A3A'];
-      case 'bronze': return ['#CD7F32', '#8B4513'];
-      case 'silver': return ['#C0C0C0', '#808080'];
-      case 'gold': return ['#FFD700', '#FFA500'];
-      case 'diamond': return ['#B9F2FF', '#00BFFF'];
-      default: return ['#2A2A2A', '#3A3A3A'];
+      case 'bronze':
+        return {
+          gradient: ['#CD7F32', '#B8860B', '#A0522D'],
+          border: '#CD7F32',
+          background: '#2D1810'
+        };
+      case 'silver':
+        return {
+          gradient: ['#C0C0C0', '#A8A8A8', '#808080'],
+          border: '#C0C0C0',
+          background: '#1A1A1A'
+        };
+      case 'gold':
+        return {
+          gradient: ['#FFD700', '#FFA500', '#FF8C00'],
+          border: '#FFD700',
+          background: '#2D2416'
+        };
+      case 'diamond':
+        return {
+          gradient: ['#E6E6FA', '#DA70D6', '#9370DB'],
+          border: '#9370DB',
+          background: '#2D1A2D'
+        };
+      default:
+        return {
+          gradient: ['#666666', '#555555', '#444444'],
+          border: '#666666',
+          background: '#1A1A1A'
+        };
     }
   };
-
-  const isCurrentPlan = (planId: string) => planId === currentPlanId;
 
   return (
     <Modal
       visible={visible}
+      transparent
       animationType="slide"
-      presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Choisir un Abonnement</Text>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Text style={styles.closeButtonText}>✕</Text>
-          </TouchableOpacity>
-        </View>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContainer}>
+          <ScrollView showsVerticalScrollIndicator={false}>
+            {/* Header */}
+            <View style={styles.header}>
+              <Text style={styles.title}>Choisissez votre abonnement</Text>
+              <Text style={styles.subtitle}>
+                Accédez à tous les services de coaching personnalisé
+              </Text>
+            </View>
 
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {SUBSCRIPTION_PLANS.map((plan) => (
+            {/* Plans */}
+            <View style={styles.plansContainer}>
+              {premiumPlans.map((plan) => {
+                const colors = getPlanColors(plan.id);
+                const isLoading = loading && selectedPlan === plan.id;
+
+                return (
+                  <TouchableOpacity
+                    key={plan.id}
+                    style={[
+                      styles.planCard,
+                      { 
+                        backgroundColor: colors.background,
+                        borderColor: colors.border
+                      }
+                    ]}
+                    onPress={() => handleSubscribe(plan)}
+                    disabled={loading}
+                    activeOpacity={0.8}
+                  >
+                    <LinearGradient
+                      colors={colors.gradient}
+                      style={styles.planGradient}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                    >
+                      <View style={styles.planHeader}>
+                        <View style={styles.planIconContainer}>
+                          <Text style={styles.planIcon}>
+                            {getPlanIcon(plan.id)}
+                          </Text>
+                        </View>
+                        <View style={styles.planTitleContainer}>
+                          <Text style={styles.planName}>{plan.name}</Text>
+                        </View>
+                        <View style={styles.planPriceContainer}>
+                          <Text style={styles.planPrice}>
+                            {plan.price.toFixed(2)}€/mois
+                          </Text>
+                        </View>
+                      </View>
+
+                      <View style={styles.featuresContainer}>
+                        {plan.features.map((feature, index) => (
+                          <View key={index} style={styles.featureRow}>
+                            <Text style={styles.featureCheck}>✓</Text>
+                            <Text style={styles.featureText}>{feature}</Text>
+                          </View>
+                        ))}
+                      </View>
+
+                      {isLoading && (
+                        <View style={styles.loadingOverlay}>
+                          <ActivityIndicator size="large" color="#FFFFFF" />
+                          <Text style={styles.loadingText}>Traitement...</Text>
+                        </View>
+                      )}
+                    </LinearGradient>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Footer */}
             <TouchableOpacity
-              key={plan.id}
-              style={[
-                styles.planCard,
-                isCurrentPlan(plan.id) && styles.currentPlanCard
-              ]}
-              onPress={() => handlePlanSelection(plan)}
+              style={styles.laterButton}
+              onPress={onClose}
               disabled={loading}
             >
-              <LinearGradient
-                colors={getPlanColor(plan.id)}
-                style={styles.planGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={styles.planHeader}>
-                  <Text style={styles.planIcon}>{getPlanIcon(plan.id)}</Text>
-                  <View style={styles.planTitleContainer}>
-                    <Text style={styles.planName}>{plan.name}</Text>
-                    {isCurrentPlan(plan.id) && (
-                      <Text style={styles.currentPlanLabel}>Actuel</Text>
-                    )}
-                  </View>
-                  <View style={styles.planPriceContainer}>
-                    {plan.price > 0 ? (
-                      <>
-                        <Text style={styles.planPrice}>{plan.price}€</Text>
-                        <Text style={styles.planDuration}>/{plan.duration}</Text>
-                      </>
-                    ) : (
-                      <Text style={styles.planPrice}>Gratuit</Text>
-                    )}
-                  </View>
-                </View>
-
-                <View style={styles.featuresContainer}>
-                  {plan.features.map((feature, index) => (
-                    <Text key={index} style={styles.feature}>
-                      • {feature}
-                    </Text>
-                  ))}
-                </View>
-
-                {plan.price > 0 && !isCurrentPlan(plan.id) && (
-                  <View style={styles.paymentButton}>
-                    <Text style={styles.paymentButtonText}>
-                      {Platform.OS === 'ios' ? '🍎 Apple Pay' : '📱 Google Pay'}
-                    </Text>
-                  </View>
-                )}
-              </LinearGradient>
+              <Text style={styles.laterButtonText}>Peut-être plus tard</Text>
             </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {loading && (
-          <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="large" color="#D4A574" />
-            <Text style={styles.loadingText}>Traitement du paiement...</Text>
-          </View>
-        )}
+          </ScrollView>
+        </View>
       </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  modalOverlay: {
     flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
     backgroundColor: '#1E1E1E',
+    borderRadius: 20,
+    padding: 24,
+    margin: 20,
+    maxHeight: '85%',
+    width: '90%',
+    maxWidth: 400,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
-    paddingTop: 60,
-    borderBottomWidth: 1,
-    borderBottomColor: '#3A3A3A',
+    marginBottom: 24,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 8,
   },
-  closeButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#3A3A3A',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closeButtonText: {
-    color: '#FFFFFF',
+  subtitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    color: '#CCCCCC',
+    textAlign: 'center',
+    lineHeight: 22,
   },
-  content: {
-    flex: 1,
-    padding: 20,
+  plansContainer: {
+    gap: 16,
   },
   planCard: {
-    marginBottom: 16,
     borderRadius: 16,
-    overflow: 'hidden',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-  },
-  currentPlanCard: {
     borderWidth: 2,
-    borderColor: '#D4A574',
+    overflow: 'hidden',
   },
   planGradient: {
     padding: 20,
+    position: 'relative',
   },
   planHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
   },
-  planIcon: {
-    fontSize: 32,
+  planIconContainer: {
     marginRight: 12,
+  },
+  planIcon: {
+    fontSize: 24,
   },
   planTitleContainer: {
     flex: 1,
   },
   planName: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
-  },
-  currentPlanLabel: {
-    fontSize: 12,
-    color: '#D4A574',
-    fontWeight: '600',
-    marginTop: 2,
   },
   planPriceContainer: {
     alignItems: 'flex-end',
   },
   planPrice: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
-  planDuration: {
-    fontSize: 14,
-    color: '#CCCCCC',
-  },
   featuresContainer: {
-    marginBottom: 16,
+    gap: 8,
   },
-  feature: {
-    fontSize: 14,
-    color: '#FFFFFF',
-    marginBottom: 4,
-    opacity: 0.9,
-  },
-  paymentButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+  featureRow: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  paymentButtonText: {
-    color: '#FFFFFF',
+  featureCheck: {
     fontSize: 16,
-    fontWeight: '600',
+    color: '#FFFFFF',
+    marginRight: 8,
+    fontWeight: 'bold',
+  },
+  featureText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    flex: 1,
+    lineHeight: 20,
   },
   loadingOverlay: {
     position: 'absolute',
@@ -332,10 +310,21 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 16,
   },
   loadingText: {
     color: '#FFFFFF',
+    marginTop: 8,
     fontSize: 16,
-    marginTop: 12,
+  },
+  laterButton: {
+    marginTop: 24,
+    padding: 16,
+    alignItems: 'center',
+  },
+  laterButtonText: {
+    fontSize: 16,
+    color: '#888888',
+    textDecorationLine: 'underline',
   },
 });

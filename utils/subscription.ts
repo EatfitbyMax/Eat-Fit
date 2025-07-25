@@ -10,9 +10,7 @@ export const SUBSCRIPTION_PLANS = [
     duration: 'month',
     currency: 'EUR',
     features: [
-      'Fonctionnalités de base',
-      'Suivi simple des repas',
-      'Plans d\'entraînement basiques'
+      'Fonctionnalités de base disponibles'
     ]
   },
   {
@@ -67,6 +65,7 @@ export const SUBSCRIPTION_PLANS = [
       '8 rendez-vous/mois',
       '4 analyses vidéo/mois'
     ]
+  }
   }
 ];
 
