@@ -63,6 +63,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Vider l'état du contexte
       setUser(null);
       console.log('✅ Utilisateur déconnecté via contexte');
+      
+      // Forcer la redirection vers login après déconnexion
+      const { useRouter } = await import('expo-router');
+      // Note: Cette approche sera complétée par AuthGuard
     } catch (error) {
       console.error('❌ Erreur lors de la déconnexion:', error);
       // Même en cas d'erreur, vider l'état local
