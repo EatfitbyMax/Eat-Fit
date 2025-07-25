@@ -6,6 +6,7 @@ import { useFocusEffect } from 'expo-router';
 import { checkSubscriptionStatus } from '@/utils/subscription';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PersistentStorage } from '@/utils/storage';
+import SubscriptionModal from '@/components/SubscriptionModal';
 
 const { width } = Dimensions.get('window');
 
@@ -16,6 +17,7 @@ export default function ProgresScreen() {
   const [selectedPeriod, setSelectedPeriod] = useState('Mois');
   const progressAnimation = useSharedValue(0);
   const [userData, setUserData] = useState<any>(null);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [weightData, setWeightData] = useState({
     startWeight: 0,
     currentWeight: 0,
@@ -98,7 +100,18 @@ export default function ProgresScreen() {
     loadUserData();
     loadProgressData();
     loadNutritionData();
+    checkUserSubscription();
   }, []);
+
+  const checkUserSubscription = async () => {
+    try {
+      const subscriptionStatus = await checkSubscriptionStatus();
+      setIsPremium(subscriptionStatus.isPremium);
+    } catch (error) {
+      console.error('Erreur vérification abonnement:', error);
+      setIsPremium(false);
+    }
+  };
 
   // Recharger les données utilisateur et nutritionnelles quand l'écran est focalisé
   useFocusEffect(
@@ -2034,11 +2047,7 @@ export default function ProgresScreen() {
               style={[styles.measurementTab, selectedMeasurementTab === 'Mensurations' && styles.activeMeasurementTab]}
               onPress={() => {
                 if (!isPremium) {
-                  Alert.alert(
-                    'Fonctionnalité Premium',
-                    'Le suivi des mensurations musculaires est réservé aux abonnés premium.',
-                    [{ text: 'OK' }]
-                  );
+                  setShowSubscriptionModal(true);
                   return;
                 }
                 setSelectedMeasurementTab('Mensurations');
@@ -3176,6 +3185,16 @@ export default function ProgresScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Modal d'abonnement */}
+      <SubscriptionModal
+        visible={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+        onSubscriptionSuccess={() => {
+          setShowSubscriptionModal(false);
+          checkUserSubscription(); // Recharger le statut d'abonnement
+        }}
+      />
     </SafeAreaView>
   );
 }
