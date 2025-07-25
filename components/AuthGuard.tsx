@@ -27,10 +27,12 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     const isClientRoute = currentRoute.startsWith('(client)');
     const isCoachRoute = currentRoute.startsWith('(coach)');
 
-    // Vérification simple : si pas d'utilisateur et pas sur une route auth, rediriger
-    if (!user && !isAuthRoute) {
-      console.log('🔄 Redirection vers /auth/login - Aucun utilisateur connecté');
-      router.replace('/auth/login');
+    // Vérification stricte : si pas d'utilisateur connecté
+    if (!user) {
+      if (!isAuthRoute) {
+        console.log('🔄 Redirection vers /auth/login - Aucun utilisateur connecté');
+        router.replace('/auth/login');
+      }
       return;
     }
 
