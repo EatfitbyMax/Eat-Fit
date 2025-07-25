@@ -60,19 +60,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       console.log('🚪 Début de la déconnexion...');
       
-      // Appeler la fonction logout du utils/auth d'abord
-      await import('@/utils/auth').then(({ logout: authLogout }) => authLogout());
-      console.log('✅ Cache mémoire vidé');
-      
-      // Vider immédiatement l'état du contexte
+      // Vider immédiatement l'état du contexte d'abord
       setUser(null);
       console.log('✅ État contexte vidé');
       
-      // Attendre que le contexte soit complètement synchronisé
-      await new Promise(resolve => setTimeout(resolve, 200));
-      console.log('✅ Synchronisation contexte terminée');
+      // Ensuite appeler la fonction logout du utils/auth
+      await import('@/utils/auth').then(({ logout: authLogout }) => authLogout());
+      console.log('✅ Cache mémoire vidé');
       
-      // Redirection vers login après synchronisation complète
+      // Vérifier que l'utilisateur est bien déconnecté côté serveur
+      const { getCurrentUser } = await import('@/utils/auth');
+      const currentUser = await getCurrentUser();
+      console.log('🔍 Vérification serveur après déconnexion:', currentUser ? 'ENCORE CONNECTÉ' : 'DÉCONNECTÉ');
+      
+      // Redirection immédiate vers login
       const { router } = await import('expo-router');
       router.replace('/auth/login');
       console.log('🔄 Redirection forcée vers /auth/login');
@@ -81,9 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('❌ Erreur lors de la déconnexion:', error);
       // S'assurer que l'état est vidé même en cas d'erreur
       setUser(null);
-      // Redirection même en cas d'erreur
       try {
-        await new Promise(resolve => setTimeout(resolve, 200));
         const { router } = await import('expo-router');
         router.replace('/auth/login');
       } catch (routerError) {
