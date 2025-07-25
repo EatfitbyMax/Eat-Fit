@@ -58,18 +58,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
-      // Appeler la fonction logout du utils/auth
-      await import('@/utils/auth').then(({ logout: authLogout }) => authLogout());
-      // Vider l'état du contexte
-      setUser(null);
-      console.log('✅ Utilisateur déconnecté via contexte');
+      console.log('🚪 Début de la déconnexion...');
       
-      // Forcer la redirection vers login après déconnexion
-      const { useRouter } = await import('expo-router');
-      // Note: Cette approche sera complétée par AuthGuard
+      // Vider IMMÉDIATEMENT l'état du contexte
+      setUser(null);
+      console.log('✅ État utilisateur vidé');
+      
+      // Ensuite appeler la fonction logout du utils/auth
+      await import('@/utils/auth').then(({ logout: authLogout }) => authLogout());
+      console.log('✅ Déconnexion complète');
+      
     } catch (error) {
       console.error('❌ Erreur lors de la déconnexion:', error);
-      // Même en cas d'erreur, vider l'état local
+      // S'assurer que l'état est vidé même en cas d'erreur
       setUser(null);
     }
   }, []);

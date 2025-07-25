@@ -13,10 +13,13 @@ export default function AuthGuard({ children }: AuthGuardProps) {
 
   React.useEffect(() => {
     // Ne pas rediriger pendant le chargement
-    if (isLoading) return;
+    if (isLoading) {
+      console.log('🛡️ AuthGuard - En cours de chargement...');
+      return;
+    }
 
     const currentRoute = segments.join('/') || 'index';
-    console.log('🛡️ AuthGuard - Route:', currentRoute, '| Utilisateur:', user ? 'Connecté' : 'Non connecté');
+    console.log('🛡️ AuthGuard - Route:', currentRoute, '| Utilisateur:', user ? `Connecté (${user.email})` : 'Non connecté');
 
     const isAuthRoute = currentRoute.startsWith('auth');
     const isTabsRoute = currentRoute.startsWith('(tabs)') || currentRoute === 'index';
@@ -29,13 +32,15 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     } else if (user && isAuthRoute) {
       // Rediriger selon le type d'utilisateur
       const redirectPath = user.userType === 'coach' ? '/(coach)' : '/(client)';
-      console.log('🔄 Redirection vers', redirectPath, '- Utilisateur connecté');
+      console.log('🔄 Redirection vers', redirectPath, '- Utilisateur connecté depuis auth');
       router.replace(redirectPath);
     } else if (user && isTabsRoute) {
       // Rediriger depuis les tabs vers l'interface utilisateur appropriée
       const redirectPath = user.userType === 'coach' ? '/(coach)' : '/(client)';
-      console.log('🔄 Redirection vers', redirectPath, '- Depuis tabs');
+      console.log('🔄 Redirection vers', redirectPath, '- Utilisateur connecté depuis tabs');
       router.replace(redirectPath);
+    } else {
+      console.log('🛡️ AuthGuard - Aucune redirection nécessaire');
     }
   }, [user, segments, isLoading]);
 
