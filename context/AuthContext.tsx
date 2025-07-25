@@ -60,12 +60,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       console.log('🚪 Début de la déconnexion...');
       
-      // Vider IMMÉDIATEMENT l'état du contexte
-      setUser(null);
-      console.log('✅ État utilisateur vidé');
-      
-      // Ensuite appeler la fonction logout du utils/auth
+      // Appeler la fonction logout du utils/auth d'abord
       await import('@/utils/auth').then(({ logout: authLogout }) => authLogout());
+      console.log('✅ Cache mémoire vidé');
+      
+      // Ensuite vider l'état du contexte avec un petit délai pour la synchronisation
+      setUser(null);
+      console.log('✅ État contexte vidé');
+      
+      // Petit délai pour s'assurer que le contexte est synchronisé
+      await new Promise(resolve => setTimeout(resolve, 100));
       console.log('✅ Déconnexion complète');
       
     } catch (error) {
