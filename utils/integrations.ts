@@ -224,19 +224,55 @@ export class IntegrationsManager {
       }
 
       // Créer l'URL d'autorisation Strava
-      const authUrl = `https://www.strava.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${STRAVA_REDIRECT_URI}&approval_prompt=force&scope=read,activity:read_all`;
+      const authUrl = `https://www.strava.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${STRAVA_REDIRECT_URI}&approval_prompt=force&scope=read,activity:read_all&state=${userId}`;
 
       console.log('🔗 Ouverture de l\'autorisation Strava:', authUrl);
 
-      // Ouvrir l'autorisation Strava
-      const result = await WebBrowser.openAuthSessionAsync(authUrl, STRAVA_REDIRECT_URI);
+      // Ouvrir l'autorisation Strava avec une approche plus robuste
+      const result = await WebBrowser.openAuthSessionAsync(
+        authUrl, 
+        STRAVA_REDIRECT_URI,
+        {
+          showInRecents: false,
+          // Permettre à l'utilisateur de revenir à l'app
+          presentationStyle: WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN
+        }
+      );
+
+      console.log('🔄 Résultat WebBrowser:', result);
 
       if (result.type === 'success' && result.url) {
         const url = new URL(result.url);
         const code = url.searchParams.get('code');
+        const state = url.searchParams.get('state');
 
-        if (code) {
+        console.log('✅ Code reçu depuis WebBrowser:', code ? code.substring(0, 10) + '...' : 'aucun');
+
+        if (code && state === userId) {
           return await this.exchangeStravaCode(code, userId);
+        }
+      } else if (result.type === 'cancel') {
+        console.log('🚫 Utilisateur a annulé l\'autorisation Strava');
+        return false;
+      } else if (result.type === 'dismiss') {
+        console.log('📱 WebBrowser fermé, vérification du statut Strava...');
+        
+        // Attendre un peu puis vérifier si la connexion a réussi côté serveur
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        const serverStatus = await this.getStravaStatusFromServer(userId);
+        if (serverStatus && serverStatus.connected) {
+          console.log('✅ Connexion Strava confirmée côté serveur');
+          
+          // Mettre à jour le statut local
+          const status = await this.getIntegrationStatus(userId);
+          status.strava = {
+            connected: true,
+            athlete: serverStatus.athlete
+          };
+          await PersistentStorage.saveIntegrationStatus(userId, status);
+          
+          return true;
         }
       }
 

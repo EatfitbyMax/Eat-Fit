@@ -547,7 +547,7 @@ app.get('/api/strava/status/:userId', async (req, res) => {
 });
 
 // Callback Strava - Route principale
-app.get('/strava-callback', (req, res) => {
+app.get('/strava-callback', async (req, res) => {
   const { code, error, state } = req.query;
 
   console.log('🔗 Callback Strava reçu:', { 
@@ -581,6 +581,46 @@ app.get('/strava-callback', (req, res) => {
 
   if (code) {
     console.log('✅ Code d\'autorisation Strava reçu avec succès');
+    
+    // Si nous avons un state (userId), traiter immédiatement le token
+    if (state) {
+      try {
+        console.log('🔄 Traitement automatique du token pour utilisateur:', state);
+        
+        // Échanger le code contre un token d'accès
+        const tokenResponse = await fetch('https://www.strava.com/oauth/token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            client_id: process.env.STRAVA_CLIENT_ID,
+            client_secret: process.env.STRAVA_CLIENT_SECRET,
+            code: code,
+            grant_type: 'authorization_code'
+          })
+        });
+
+        if (tokenResponse.ok) {
+          const tokenData = await tokenResponse.json();
+
+          // Sauvegarder les tokens
+          const tokenFilePath = `strava_tokens_${state}.json`;
+          await writeJsonFile(tokenFilePath, {
+            accessToken: tokenData.access_token,
+            refreshToken: tokenData.refresh_token,
+            expiresAt: tokenData.expires_at,
+            athlete: tokenData.athlete,
+            connected: true
+          });
+
+          console.log('✅ Tokens Strava sauvegardés automatiquement pour utilisateur:', state);
+        }
+      } catch (error) {
+        console.error('❌ Erreur traitement automatique token:', error);
+      }
+    }
+    
     return res.send(`
       <!DOCTYPE html>
       <html>
@@ -602,36 +642,29 @@ app.get('/strava-callback', (req, res) => {
                 ✓ Vous pouvez maintenant fermer cette fenêtre et retourner dans l'application mobile.
               </p>
             </div>
-            <p style="font-size: 12px; color: #666; margin-top: 20px;">
-              Cette page va tenter de rediriger automatiquement vers l'application...
-            </p>
+            <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 0; font-size: 14px; color: #1976d2;">
+                💡 <strong>Instructions:</strong><br>
+                1. Fermez cette fenêtre<br>
+                2. Retournez dans l'app EatFit By Max<br>
+                3. Votre connexion Strava sera automatiquement mise à jour
+              </p>
+            </div>
+            <button onclick="window.close()" style="background: #FC4C02; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-size: 16px; cursor: pointer; margin-top: 20px;">
+              Fermer cette fenêtre
+            </button>
           </div>
           <script>
-            console.log('📱 Code Strava reçu, tentative de redirection vers l\'app mobile...');
+            console.log('📱 Code Strava reçu et traité côté serveur');
 
-            // Tentative de redirection immédiate vers l'app
-            try {
-              // Essayer le deep link vers l'application
-              window.location.href = 'eatfitbymax://strava-callback?code=${code}';
-              console.log('🔗 Tentative de redirection deep link');
-            } catch (e) {
-              console.log('⚠️ Redirection deep link échouée:', e);
-            }
-
-            // Message après délai
-            setTimeout(() => {
-              const div = document.querySelector('div');
-              div.innerHTML += '<p style="color: #28a745; font-weight: bold; margin-top: 20px;">Si l\'application ne s\'ouvre pas automatiquement, retournez manuellement dans l\'app mobile.</p>';
-            }, 2000);
-
-            // Tentative de fermeture automatique
+            // Tentative de redirection vers l'app (optionnel)
             setTimeout(() => {
               try {
-                window.close();
+                window.location.href = 'eatfitbymax://strava-success';
               } catch (e) {
-                console.log('⚠️ Impossible de fermer la fenêtre automatiquement');
+                console.log('⚠️ Redirection deep link non supportée');
               }
-            }, 5000);
+            }, 1000);
           </script>
         </body>
       </html>
