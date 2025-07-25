@@ -13,8 +13,8 @@ import {
   SafeAreaView
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import { logout } from '@/utils/auth';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { logout, getCurrentUser } from '@/utils/auth';
 import { useAuth } from '@/context/AuthContext';
 import { IntegrationsManager, IntegrationStatus } from '@/utils/integrations';
 import { checkSubscriptionStatus } from '@/utils/subscription';
