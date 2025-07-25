@@ -6,33 +6,26 @@ interface AuthGuardProps {
   children: React.ReactNode;
 }
 
-export default function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth();
+export default function AuthGuard({ children }: AuthGuardProps) {
+  const { user } = useAuth();
+  const segments = useSegments();
   const router = useRouter();
-  const pathname = usePathname();
 
-  useEffect(() => {
-    if (!isLoading) {
-      if (!user && !pathname.includes('/auth/')) {
-        console.log('🔄 Redirection vers login depuis AuthGuard - pathname:', pathname);
-        router.replace('/auth/login');
-      } else if (user && pathname.includes('/auth/')) {
-        console.log('🔄 Redirection vers accueil depuis AuthGuard - user:', user.email);
-        router.replace('/(client)');
-      }
+  React.useEffect(() => {
+    const currentRoute = segments.join('/') || 'index';
+    console.log('🛡️ AuthGuard - Route:', currentRoute, '| Utilisateur:', user ? 'Connecté' : 'Non connecté');
+
+    const isAuthRoute = currentRoute.startsWith('auth');
+    const isTabsRoute = currentRoute.startsWith('(tabs)') || currentRoute === 'index';
+
+    if (!user && !isAuthRoute) {
+      console.log('🔄 Redirection vers', '/auth/login', '-', 'Aucun utilisateur connecté');
+      router.replace('/auth/login');
+    } else if (user && (isAuthRoute || isTabsRoute)) {
+      console.log('🔄 Redirection vers', '/(client)', '-', 'Utilisateur connecté');
+      router.replace('/(client)');
     }
-  }, [user, isLoading, pathname, router]);
-
-  // Afficher un écran de chargement pendant la vérification
-  if (isLoading) {
-    return <SplashScreen />;
-  }
-
-  // Si pas d'utilisateur et on n'est pas sur une page d'auth, ne rien afficher
-  // (la redirection va se faire)
-  if (!user && !pathname.includes('/auth/')) {
-    return <SplashScreen />;
-  }
+  }, [user, segments]);
 
   return <>{children}</>;
 }
