@@ -100,8 +100,8 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
         };
       case 'diamond':
         return {
-          gradient: ['#E6E6FA', '#DA70D6', '#9370DB'],
-          border: '#9370DB',
+          gradient: ['#B0E0E6', '#4682B4', '#1E90FF'],
+          border: '#B0E0E6',
           background: '#2D1A2D'
         };
       default:
