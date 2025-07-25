@@ -9,6 +9,7 @@ import { getUserData, PersistentStorage } from '@/utils/storage';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { getRecommendedPrograms, getSportEmoji, getSportName, WorkoutProgram } from '@/utils/sportPrograms';
+import SubscriptionModal from '@/components/SubscriptionModal';
 
 export default function EntrainementScreen() {
   const router = useRouter();
@@ -36,6 +37,7 @@ export default function EntrainementScreen() {
   const [rpeRating, setRpeRating] = useState(5);
   const [rpeNotes, setRpeNotes] = useState('');
   const [activityRatings, setActivityRatings] = useState<{[key: string]: {rpe: number, notes: string, date: string}}>({});
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
   const daysOfWeek = [
     'Lundi', 
@@ -269,16 +271,7 @@ export default function EntrainementScreen() {
 
   const handleProgrammesTab = () => {
     if (!hasSubscription) {
-      Alert.alert(
-        'Abonnement requis',
-        'Cette fonctionnalité est réservée aux membres premium. Souhaitez-vous vous abonner ?',
-        [
-          { text: 'Plus tard', style: 'cancel' },
-          { text: 'S\'abonner', onPress: () => {
-            console.log('Redirection vers abonnement');
-          }}
-        ]
-      );
+      setShowSubscriptionModal(true);
       return;
     }
     setSelectedTab('Programmes');
@@ -1029,6 +1022,19 @@ export default function EntrainementScreen() {
           </View>
         </View>
       )}
+
+      {/* Modal d'abonnement */}
+      <SubscriptionModal
+        visible={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+        onSubscribe={(planId) => {
+          console.log('Plan sélectionné:', planId);
+          // Ici vous pouvez ajouter la logique pour gérer l'abonnement
+          setShowSubscriptionModal(false);
+          // Optionnel: recharger le statut d'abonnement après souscription
+          checkUserSubscription();
+        }}
+      />
     </SafeAreaView>
   );
 }
