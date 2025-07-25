@@ -27,29 +27,43 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     const isClientRoute = currentRoute.startsWith('(client)');
     const isCoachRoute = currentRoute.startsWith('(coach)');
 
-    // Vérification stricte : si pas d'utilisateur connecté
+    // Si pas d'utilisateur connecté
     if (!user) {
+      // Rediriger vers login sauf si déjà sur une route auth
       if (!isAuthRoute) {
         console.log('🔄 Redirection vers /auth/login - Aucun utilisateur connecté');
         router.replace('/auth/login');
+      } else {
+        console.log('🛡️ AuthGuard - Déjà sur une route auth, pas de redirection');
       }
       return;
     }
 
-    // Si utilisateur connecté et sur une route auth, rediriger vers l'interface appropriée
-    if (user && isAuthRoute) {
-      const redirectPath = user.userType === 'coach' ? '/(coach)' : '/(client)';
-      console.log('🔄 Redirection vers', redirectPath, '- Utilisateur connecté depuis auth');
-      router.replace(redirectPath);
-    } else if (user && isTabsRoute) {
-      // Rediriger depuis les tabs vers l'interface utilisateur appropriée
-      const redirectPath = user.userType === 'coach' ? '/(coach)' : '/(client)';
-      console.log('🔄 Redirection vers', redirectPath, '- Utilisateur connecté depuis tabs');
-      router.replace(redirectPath);
-    } else {
-      console.log('🛡️ AuthGuard - Aucune redirection nécessaire');
+    // Si utilisateur connecté
+    if (user) {
+      if (isAuthRoute) {
+        // Rediriger depuis les pages auth vers l'interface appropriée
+        const redirectPath = user.userType === 'coach' ? '/(coach)' : '/(client)';
+        console.log('🔄 Redirection vers', redirectPath, '- Utilisateur connecté depuis auth');
+        router.replace(redirectPath);
+      } else if (isTabsRoute) {
+        // Rediriger depuis les tabs vers l'interface utilisateur appropriée
+        const redirectPath = user.userType === 'coach' ? '/(coach)' : '/(client)';
+        console.log('🔄 Redirection vers', redirectPath, '- Utilisateur connecté depuis tabs');
+        router.replace(redirectPath);
+      } else if (isClientRoute && user.userType !== 'client') {
+        // Empêcher l'accès client si pas client
+        console.log('🚫 Accès client refusé - Type utilisateur:', user.userType);
+        router.replace('/(coach)');
+      } else if (isCoachRoute && user.userType !== 'coach') {
+        // Empêcher l'accès coach si pas coach
+        console.log('🚫 Accès coach refusé - Type utilisateur:', user.userType);
+        router.replace('/(client)');
+      } else {
+        console.log('🛡️ AuthGuard - Accès autorisé');
+      }
     }
-  }, [user, segments, isLoading]);
+  }, [user, segments, isLoading, router]);
 
   return <>{children}</>;
 }
