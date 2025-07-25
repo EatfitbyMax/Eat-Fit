@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -29,7 +28,7 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
 
   const handleSubscribe = async (plan: SubscriptionPlan) => {
     if (loading) return;
-    
+
     setLoading(true);
     setSelectedPlan(plan.id);
 
