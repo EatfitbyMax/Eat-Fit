@@ -134,7 +134,7 @@ export default function ProfileScreen() {
 
   const getSportDisplay = () => {
     console.log('🔍 Debug getSportDisplay - user.favoriteSport:', user?.favoriteSport);
-    
+
     if (!user?.favoriteSport) {
       return { emoji: '🏃', name: 'Non renseigné' };
     }
@@ -940,7 +940,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   stravaStatus: {
-    fontSize: 14,
+    ```text
+fontSize: 14,
     color: '#8B949E',
     lineHeight: 20,
     marginBottom: 20,
