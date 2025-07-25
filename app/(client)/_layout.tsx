@@ -22,11 +22,19 @@ export default function ClientLayout() {
     setHasSubscription(subscriptionStatus);
   };
 
+  // Afficher un loader pendant le chargement
   if (isLoading) {
     return null;
   }
 
-  if (!user || user.userType !== 'client') {
+  // Vérification stricte : rediriger si pas connecté ou pas client
+  if (!user) {
+    console.log('🚫 ClientLayout - Accès refusé: Aucun utilisateur connecté');
+    return null;
+  }
+
+  if (user.userType !== 'client') {
+    console.log('🚫 ClientLayout - Accès refusé: Type utilisateur incorrect', user.userType);
     return null;
   }
 

@@ -1,10 +1,34 @@
-
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+import { useAuth } from '@/context/AuthContext';
 
-export default function CoachTabLayout() {
+import { HapticTab } from '@/components/HapticTab';
+import { IconSymbol } from '@/components/ui/IconSymbol';
+import TabBarBackground from '@/components/ui/TabBarBackground';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
+
+export default function CoachLayout() {
+  const { user, isLoading } = useAuth();
+  const colorScheme = useColorScheme();
+
+  // Afficher un loader pendant le chargement
+  if (isLoading) {
+    return null;
+  }
+
+  // Vérification stricte : rediriger si pas connecté ou pas coach
+  if (!user) {
+    console.log('🚫 CoachLayout - Accès refusé: Aucun utilisateur connecté');
+    return null;
+  }
+
+  if (user.userType !== 'coach') {
+    console.log('🚫 CoachLayout - Accès refusé: Type utilisateur incorrect', user.userType);
+    return null;
+  }
+
   return (
     <Tabs
       screenOptions={{
