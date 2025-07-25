@@ -19,18 +19,27 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     }
 
     const currentRoute = segments.join('/') || 'index';
-    console.log('🛡️ AuthGuard - Route:', currentRoute, '| Utilisateur:', user ? `Connecté (${user.email})` : 'Non connecté');
+    const userStatus = user ? `Connecté (${user.email})` : 'Non connecté';
+    console.log('🛡️ AuthGuard - Route:', currentRoute, '| Utilisateur:', userStatus);
 
     const isAuthRoute = currentRoute.startsWith('auth');
     const isTabsRoute = currentRoute.startsWith('(tabs)') || currentRoute === 'index';
     const isClientRoute = currentRoute.startsWith('(client)');
     const isCoachRoute = currentRoute.startsWith('(coach)');
 
-    if (!user && !isAuthRoute) {
-      console.log('🔄 Redirection vers /auth/login - Aucun utilisateur connecté');
-      router.replace('/auth/login');
-    } else if (user && isAuthRoute) {
-      // Rediriger selon le type d'utilisateur
+    // Vérification stricte : si pas d'utilisateur, rediriger vers login
+    if (!user) {
+      if (!isAuthRoute) {
+        console.log('🔄 Redirection vers /auth/login - Aucun utilisateur connecté');
+        router.replace('/auth/login');
+      } else {
+        console.log('🛡️ AuthGuard - Déjà sur une route auth, pas de redirection');
+      }
+      return;
+    }
+
+    // Si utilisateur connecté et sur une route auth, rediriger vers l'interface appropriée
+    if (user && isAuthRoute) {
       const redirectPath = user.userType === 'coach' ? '/(coach)' : '/(client)';
       console.log('🔄 Redirection vers', redirectPath, '- Utilisateur connecté depuis auth');
       router.replace(redirectPath);
