@@ -374,26 +374,59 @@ export async function logout(): Promise<void> {
   try {
     console.log('🔄 Fonction logout appelée - Vidage du cache...');
     
-    // Vider immédiatement et définitivement le cache utilisateur
+    // Vider immédiatement et définitivement le cache utilisateur - TRIPLE CHECK
     currentUserCache = null;
     
-    // Ajouter une vérification supplémentaire pour s'assurer du nettoyage
+    // Force garbage collection si possible
+    if (global && global.gc) {
+      try {
+        global.gc();
+      } catch (e) {
+        // Ignore si gc n'est pas disponible
+      }
+    }
+    
+    // Vérification immédiate
     if (currentUserCache !== null) {
-      console.error('⚠️ CRITIQUE: Cache utilisateur non vidé!');
+      console.error('⚠️ CRITIQUE: Cache utilisateur non vidé à la première tentative!');
+      currentUserCache = null;
+    }
+    
+    // Attendre un tick et re-vérifier
+    await new Promise(resolve => setTimeout(resolve, 10));
+    
+    if (currentUserCache !== null) {
+      console.error('⚠️ CRITIQUE: Cache utilisateur non vidé après timeout!');
       currentUserCache = null;
     }
     
     console.log('✅ Déconnexion réussie - Cache utilisateur complètement vidé');
     
-    // Vérification finale
-    const testUser = await getCurrentUser();
-    if (testUser === null) {
-      console.log('✅ Vérification finale réussie - getCurrentUser retourne null');
-    } else {
-      console.error('❌ ERREUR CRITIQUE: getCurrentUser retourne encore un utilisateur!');
-      // Forcer le nettoyage une dernière fois
+    // Vérification finale multiple
+    let finalCheck = 0;
+    while (finalCheck < 3) {
+      const testUser = await getCurrentUser();
+      if (testUser === null) {
+        console.log(`✅ Vérification finale ${finalCheck + 1}/3 réussie - getCurrentUser retourne null`);
+        break;
+      } else {
+        console.error(`❌ ERREUR CRITIQUE ${finalCheck + 1}/3: getCurrentUser retourne encore un utilisateur!`);
+        currentUserCache = null;
+        finalCheck++;
+        
+        if (finalCheck < 3) {
+          await new Promise(resolve => setTimeout(resolve, 10));
+        }
+      }
+    }
+    
+    if (finalCheck === 3) {
+      console.error('❌ ERREUR PERSISTANTE: Impossible de vider le cache après 3 tentatives');
+      // Dernier effort - réassigner la variable
+      currentUserCache = undefined as any;
       currentUserCache = null;
     }
+    
   } catch (error) {
     console.error('❌ Erreur déconnexion:', error);
     // S'assurer que le cache est vidé même en cas d'erreur
