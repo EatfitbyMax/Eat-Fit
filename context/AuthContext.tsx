@@ -1,5 +1,4 @@
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { getCurrentUser, User } from '@/utils/auth';
 
 interface AuthContextType {
