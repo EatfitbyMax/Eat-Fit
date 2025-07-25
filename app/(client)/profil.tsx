@@ -13,16 +13,18 @@ import {
   SafeAreaView
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter, useFocusEffect } from 'expo-router';
-import { logout, getCurrentUser } from '@/utils/auth';
+import { useRouter } from 'expo-router';
+import { logout } from '@/utils/auth';
+import { useAuth } from '@/context/AuthContext';
 import { IntegrationsManager, IntegrationStatus } from '@/utils/integrations';
 import { checkSubscriptionStatus } from '@/utils/subscription';
 import { PaymentService } from '@/utils/payments';
 import SubscriptionModal from '@/components/SubscriptionModal';
 import { allSports } from '@/utils/sportPrograms';
 
-export default function ProfilScreen() {
+export default function ProfileScreen() {
   const router = useRouter();
+  const { logout: authLogout } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [integrationStatus, setIntegrationStatus] = useState({
@@ -323,28 +325,14 @@ export default function ProfilScreen() {
     );
   };
 
-  const handleLogout = () => {
-    Alert.alert(
-      'Déconnexion',
-      'Êtes-vous sûr de vouloir vous déconnecter ?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Déconnecter',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await logout();
-              router.replace('/auth/login');
-            } catch (error) {
-              console.error('Erreur lors de la déconnexion:', error);
-              // Même en cas d'erreur, rediriger vers login
-              router.replace('/auth/login');
-            }
-          }
-        }
-      ]
-    );
+  const handleLogout = async () => {
+    try {
+      console.log('🚪 Bouton déconnexion appuyé - Début de la déconnexion...');
+      await authLogout(); // Utilise la fonction logout du contexte AuthContext
+      console.log('✅ Déconnexion contexte terminée');
+    } catch (error) {
+      console.error('❌ Erreur lors de la déconnexion contexte:', error);
+    }
   };
 
   return (
@@ -950,7 +938,8 @@ const styles = StyleSheet.create({
   stravaStatus: {
     fontSize: 14,
     color: '#8B949E',
-    lineHeight: 20,
+    ```text
+lineHeight: 20,
     marginBottom: 20,
   },
   stravaActions: {
