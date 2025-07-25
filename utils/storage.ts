@@ -1,8 +1,8 @@
 import { ServerWakeupService } from './serverWakeup';
 
 // Configuration serveur VPS OVH pour développement et production
-const SERVER_URL = 'http://51.178.29.220:5000';
-const API_URL = 'http://51.178.29.220:5000';
+const SERVER_URL = 'https://eatfitbymax.cloud';
+const API_URL = 'https://eatfitbymax.cloud';
 
 import { Platform } from 'react-native';
 
