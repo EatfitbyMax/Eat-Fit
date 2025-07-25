@@ -263,15 +263,16 @@ export default function EntrainementScreen() {
   const checkUserSubscription = async () => {
     try {
       const subscriptionStatus = await checkSubscriptionStatus();
-      setHasSubscription(subscriptionStatus);
+      setHasSubscription(subscriptionStatus.isPremium);
     } catch (error) {
       console.error('Erreur vérification abonnement:', error);
+      setHasSubscription(false);
     }
   };
 
   const handleProgrammesTab = () => {
     console.log('=== DEBUG ABONNEMENT ===');
-    console.log('hasSubscription:', hasSubscription);
+    console.log('hasSubscription (boolean):', hasSubscription);
     console.log('========================');
     
     if (!hasSubscription) {
