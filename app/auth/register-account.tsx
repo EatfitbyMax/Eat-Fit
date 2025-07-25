@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -47,6 +46,7 @@ export default function RegisterAccountScreen() {
           weight: parseInt(registrationData.weight),
           activityLevel: registrationData.activityLevel,
           userType: 'client' as const,
+          favoriteSport: registrationData.favoriteSport,
         };
 
         console.log('📋 Données utilisateur préparées:', {
@@ -56,14 +56,14 @@ export default function RegisterAccountScreen() {
 
         // Créer le compte avec toutes les informations
         const user = await register(userData);
-        
+
         if (user) {
           // Connecter l'utilisateur dans le contexte d'authentification
           login(user);
-          
+
           // Réinitialiser les données d'inscription
           resetRegistrationData();
-          
+
           Alert.alert(
             'Compte créé !',
             'Votre compte client a été créé avec succès.',
