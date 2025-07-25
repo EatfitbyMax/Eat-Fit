@@ -1,5 +1,5 @@
-import { Tabs, usePathname } from 'expo-router';
 import React, { useState, useEffect } from 'react';
+import { Tabs, usePathname } from 'expo-router';
 import { Platform } from 'react-native';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { Colors } from '@/constants/Colors';
