@@ -938,8 +938,7 @@ const styles = StyleSheet.create({
   stravaStatus: {
     fontSize: 14,
     color: '#8B949E',
-    ```text
-lineHeight: 20,
+    lineHeight: 20,
     marginBottom: 20,
   },
   stravaActions: {
