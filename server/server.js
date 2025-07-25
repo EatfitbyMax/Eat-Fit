@@ -581,12 +581,12 @@ app.get('/strava-callback', async (req, res) => {
 
   if (code) {
     console.log('✅ Code d\'autorisation Strava reçu avec succès');
-    
+
     // Si nous avons un state (userId), traiter immédiatement le token
     if (state) {
       try {
         console.log('🔄 Traitement automatique du token pour utilisateur:', state);
-        
+
         // Échanger le code contre un token d'accès
         const tokenResponse = await fetch('https://www.strava.com/oauth/token', {
           method: 'POST',
@@ -620,53 +620,145 @@ app.get('/strava-callback', async (req, res) => {
         console.error('❌ Erreur traitement automatique token:', error);
       }
     }
-    
-    return res.send(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Connexion Strava réussie</title>
-        </head>
-        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5;">
-          <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto;">
-            <h2 style="color: #FC4C02;">🎉 Connexion Strava réussie!</h2>
-            <p>Votre compte Strava a été connecté avec succès à <strong>EatFit By Max</strong>.</p>
-            <p style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <strong>Code d'autorisation:</strong><br>
-              <code style="font-size: 12px; color: #666;">${code.substring(0, 15)}...</code>
-            </p>
-            <div style="border: 2px dashed #28a745; padding: 20px; border-radius: 8px; background: #f8fff8; margin: 20px 0;">
-              <p style="margin: 0; font-weight: bold; color: #28a745;">
-                ✓ Vous pouvez maintenant fermer cette fenêtre et retourner dans l'application mobile.
-              </p>
-            </div>
-            <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <p style="margin: 0; font-size: 14px; color: #1976d2;">
-                💡 <strong>Instructions:</strong><br>
-                1. Fermez cette fenêtre<br>
-                2. Retournez dans l'app EatFit By Max<br>
-                3. Votre connexion Strava sera automatiquement mise à jour
-              </p>
-            </div>
-            <button onclick="window.close()" style="background: #FC4C02; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-size: 16px; cursor: pointer; margin-top: 20px;">
-              Fermer cette fenêtre
-            </button>
-          </div>
-          <script>
-            console.log('📱 Code Strava reçu et traité côté serveur');
 
-            // Tentative de redirection vers l'app (optionnel)
-            setTimeout(() => {
-              try {
-                window.location.href = 'eatfitbymax://strava-success';
-              } catch (e) {
-                console.log('⚠️ Redirection deep link non supportée');
-              }
-            }, 1000);
-          </script>
-        </body>
+    res.send(`
+      <!DOCTYPE html>
+      <html lang="fr">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Connexion Strava réussie!</title>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 400px;
+            width: 100%;
+          }
+          .success-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+          }
+          h1 {
+            color: #FC4C02;
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+          }
+          p {
+            color: #333;
+            line-height: 1.6;
+            margin-bottom: 20px;
+          }
+          .code {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            margin: 20px 0;
+            word-break: break-all;
+          }
+          .success-message {
+            background: #e8f5e8;
+            border: 2px dashed #4CAF50;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            color: #2e7d32;
+          }
+          .redirect-info {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 20px;
+          }
+          .close-button {
+            background: #FC4C02;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 20px;
+          }
+          .countdown {
+            font-weight: bold;
+            color: #FC4C02;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="success-icon">🎉</div>
+          <h1>Connexion Strava réussie!</h1>
+          <p>Votre compte Strava a été connecté avec succès à <strong>EatFit By Max</strong>.</p>
+
+          <div class="code">
+            <strong>Code d'autorisation:</strong><br>
+            ${code.substring(0, 20)}...
+          </div>
+
+          <div class="success-message">
+            ✓ <strong>Vous pouvez maintenant fermer cette fenêtre et retourner dans l'application mobile.</strong>
+          </div>
+
+          <button class="close-button" onclick="closeWindow()">
+            Fermer et retourner à l'app
+          </button>
+
+          <p class="redirect-info">
+            Fermeture automatique dans <span class="countdown" id="countdown">5</span> secondes...
+          </p>
+        </div>
+
+        <script>
+          let countdown = 5;
+          const countdownElement = document.getElementById('countdown');
+
+          function updateCountdown() {
+            countdownElement.textContent = countdown;
+            countdown--;
+
+            if (countdown < 0) {
+              closeWindow();
+            }
+          }
+
+          function closeWindow() {
+            // Essayer plusieurs méthodes de fermeture
+            try {
+              window.close();
+            } catch(e) {
+              // Si window.close() ne fonctionne pas, rediriger vers une page vide
+              window.location.href = 'about:blank';
+            }
+          }
+
+          // Démarrer le countdown
+          const interval = setInterval(updateCountdown, 1000);
+          updateCountdown();
+
+          // Écouter les événements de visibilité pour fermer quand l'utilisateur revient
+          document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+              setTimeout(closeWindow, 1000);
+            }
+          });
+        </script>
+      </body>
       </html>
     `);
   }

@@ -127,13 +127,13 @@ export class IntegrationsManager {
       for (let i = 0; i < 7; i++) {
         const currentDate = new Date(startDate);
         currentDate.setDate(startDate.getDate() + i);
-        
+
         const stepsForDay = await new Promise<number>((resolve) => {
           const options = {
             startDate: new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate()).toISOString(),
             endDate: new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() + 1).toISOString(),
           };
-          
+
           AppleHealthKit.getStepCount(options, (callbackError: any, results: any) => {
             resolve(callbackError ? 0 : results?.value || 0);
           });
@@ -152,7 +152,7 @@ export class IntegrationsManager {
           endDate: endDate.toISOString(),
           limit: 100,
         };
-        
+
         AppleHealthKit.getHeartRateSamples(options, (callbackError: any, results: any) => {
           resolve(callbackError ? [] : results || []);
         });
@@ -217,69 +217,60 @@ export class IntegrationsManager {
   // Méthodes pour Strava
   static async connectStrava(userId: string): Promise<boolean> {
     try {
+      console.log('🔗 Début de la connexion Strava pour utilisateur:', userId);
+
       const clientId = process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID;
+      const redirectUri = `${process.env.EXPO_PUBLIC_VPS_URL}/strava-callback`;
 
       if (!clientId) {
-        throw new Error('Configuration Strava manquante');
+        console.error('❌ STRAVA_CLIENT_ID manquant');
+        return false;
       }
 
-      // Créer l'URL d'autorisation Strava
-      const authUrl = `https://www.strava.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${STRAVA_REDIRECT_URI}&approval_prompt=force&scope=read,activity:read_all&state=${userId}`;
+      const authUrl = `https://www.strava.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&approval_prompt=force&scope=read,activity:read_all&state=${userId}`;
 
       console.log('🔗 Ouverture de l\'autorisation Strava:', authUrl);
 
-      // Ouvrir l'autorisation Strava avec une approche plus robuste
-      const result = await WebBrowser.openAuthSessionAsync(
-        authUrl, 
-        STRAVA_REDIRECT_URI,
-        {
-          showInRecents: false,
-          // Permettre à l'utilisateur de revenir à l'app
-          presentationStyle: WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN
-        }
-      );
+      // Utiliser une approche différente pour iOS
+      const result = await WebBrowser.openBrowserAsync(authUrl, {
+        dismissButtonStyle: 'cancel',
+        presentationStyle: WebBrowser.WebBrowserPresentationStyle.OVER_FULL_SCREEN,
+        controlsColor: '#F5A623',
+        showTitle: false,
+        enableBarCollapsing: false,
+      });
 
       console.log('🔄 Résultat WebBrowser:', result);
 
-      if (result.type === 'success' && result.url) {
-        const url = new URL(result.url);
-        const code = url.searchParams.get('code');
-        const state = url.searchParams.get('state');
-
-        console.log('✅ Code reçu depuis WebBrowser:', code ? code.substring(0, 10) + '...' : 'aucun');
-
-        if (code && state === userId) {
-          return await this.exchangeStravaCode(code, userId);
-        }
-      } else if (result.type === 'cancel') {
+      if (result.type === 'cancel') {
         console.log('🚫 Utilisateur a annulé l\'autorisation Strava');
         return false;
-      } else if (result.type === 'dismiss') {
-        console.log('📱 WebBrowser fermé, vérification du statut Strava...');
-        
-        // Attendre un peu puis vérifier si la connexion a réussi côté serveur
+      }
+
+      // Polling pour vérifier la connexion pendant 30 secondes max
+      console.log('🔄 Vérification de la connexion Strava...');
+      const maxAttempts = 15; // 30 secondes (15 x 2s)
+
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
         await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        const serverStatus = await this.getStravaStatusFromServer(userId);
-        if (serverStatus && serverStatus.connected) {
-          console.log('✅ Connexion Strava confirmée côté serveur');
-          
-          // Mettre à jour le statut local
+
+        try {
           const status = await this.getIntegrationStatus(userId);
-          status.strava = {
-            connected: true,
-            athlete: serverStatus.athlete
-          };
-          await PersistentStorage.saveIntegrationStatus(userId, status);
-          
-          return true;
+          if (status.strava.connected) {
+            console.log('✅ Connexion Strava confirmée après', (attempt + 1) * 2, 'secondes');
+            return true;
+          }
+        } catch (pollError) {
+          console.log('🔄 Tentative', attempt + 1, '- En attente...');
         }
       }
 
+      console.log('⏰ Timeout - Vérification manuelle recommandée');
       return false;
+
     } catch (error) {
       console.error('❌ Erreur connexion Strava:', error);
-      throw new Error('Impossible de se connecter à Strava. Vérifiez votre connexion internet.');
+      return false;
     }
   }
 
