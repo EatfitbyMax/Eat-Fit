@@ -15,6 +15,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { logout, getCurrentUser } from '@/utils/auth';
+import { useAuth } from '@/context/AuthContext';
 import { IntegrationsManager, IntegrationStatus } from '@/utils/integrations';
 import { checkSubscriptionStatus } from '@/utils/subscription';
 import { PaymentService } from '@/utils/payments';
@@ -23,6 +24,7 @@ import { allSports } from '@/utils/sportPrograms';
 
 export default function ProfilScreen() {
   const router = useRouter();
+  const { logout: contextLogout } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [integrationStatus, setIntegrationStatus] = useState({
@@ -130,12 +132,22 @@ export default function ProfilScreen() {
   };
 
   const getSportDisplay = () => {
+    console.log('🔍 Debug sport favori - user:', user);
+    console.log('🔍 Debug sport favori - favoriteSport:', user?.favoriteSport);
+    console.log('🔍 Debug sport favori - allSports:', allSports);
+
     if (!user?.favoriteSport) {
       return { emoji: '🏃', name: 'Non renseigné' };
     }
 
-    const sport = allSports.find(s => s.id === user.favoriteSport);
-    return sport ? { emoji: sport.emoji, name: sport.name } : { emoji: '🏃', name: 'Non renseigné' };
+    // Rechercher par ID ou par nom si l'ID n'est pas trouvé
+    let sport = allSports.find(s => s.id === user.favoriteSport);
+    if (!sport) {
+      sport = allSports.find(s => s.name === user.favoriteSport);
+    }
+
+    console.log('🔍 Debug sport trouvé:', sport);
+    return sport ? { emoji: sport.emoji, name: sport.name } : { emoji: '🏃', name: user.favoriteSport || 'Non renseigné' };
   };
 
   const handleAppleHealthToggle = async () => {
@@ -265,7 +277,9 @@ export default function ProfilScreen() {
         return;
       }
 
-      await IntegrationsManager.syncAllData(currentUser.id);
+      // Utiliser la fonction syncWithExternalApps qui existe
+      const { syncWithExternalApps } = await import('@/utils/integrations');
+      await syncWithExternalApps(currentUser.id);
       Alert.alert("Succès", "Synchronisation terminée");
       await loadIntegrationStatus();
     } catch (error) {
@@ -314,13 +328,49 @@ export default function ProfilScreen() {
     }
   };
 
-  const handleSubscribe = (plan: string) => {
+  const handleSubscribe = async (planId: string) => {
+    if (!user?.id) {
+      Alert.alert('Erreur', 'Utilisateur non connecté');
+      return;
+    }
+
     setShowSubscriptionModal(false);
-    Alert.alert(
-      'Abonnement Premium',
-      `Vous avez sélectionné le plan ${plan}. Fonctionnalité d'abonnement en cours de développement.`,
-      [{ text: 'OK' }]
-    );
+    setIsLoading(true);
+
+    try {
+      const { SUBSCRIPTION_PLANS } = await import('@/utils/payments');
+      const plan = SUBSCRIPTION_PLANS.find(p => p.id === planId);
+      
+      if (!plan) {
+        Alert.alert('Erreur', 'Plan non trouvé');
+        return;
+      }
+
+      // Utiliser Apple Pay sur iOS ou Google Pay sur Android
+      const { PaymentService } = await import('@/utils/payments');
+      let success = false;
+
+      if (Platform.OS === 'ios') {
+        success = await PaymentService.presentApplePayPayment(plan, user.id);
+      } else if (Platform.OS === 'android') {
+        success = await PaymentService.presentGooglePayPayment(plan, user.id);
+      } else {
+        Alert.alert('Information', 'Paiement non disponible sur cette plateforme');
+        return;
+      }
+
+      if (success) {
+        Alert.alert('Succès', 'Abonnement activé avec succès !');
+        await loadSubscriptionStatus();
+      } else {
+        Alert.alert('Annulé', 'Paiement annulé ou échoué');
+      }
+    } catch (error) {
+      console.error('Erreur paiement:', error);
+      Alert.alert('Erreur', 'Impossible de traiter le paiement');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleLogout = () => {
@@ -334,11 +384,13 @@ export default function ProfilScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await logout();
-              router.replace('/auth/login');
+              // Utiliser le logout du contexte d'authentification
+              await contextLogout();
+              console.log('✅ Déconnexion réussie');
+              // La redirection sera gérée automatiquement par AuthGuard
             } catch (error) {
               console.error('Erreur lors de la déconnexion:', error);
-              // Même en cas d'erreur, rediriger vers login
+              // En cas d'erreur, forcer la redirection
               router.replace('/auth/login');
             }
           }
@@ -722,11 +774,11 @@ export default function ProfilScreen() {
             {/* Plan Bronze */}
             <TouchableOpacity 
               style={[styles.subscriptionPlan, styles.bronzePlan]}
-              onPress={() => handleSubscribe('Bronze')}
+              onPress={() => handleSubscribe('bronze')}
             >
               <View style={styles.planHeader}>
                 <Text style={styles.planName}>🥉 BRONZE</Text>
-                <Text style={styles.planPrice}>19,99€/mois</Text>
+                <Text style={styles.planPrice}>9,99€/mois</Text>
               </View>
               <View style={styles.planFeatures}>
                 <Text style={styles.planFeature}>✓ Messagerie avec le coach</Text>
@@ -738,34 +790,34 @@ export default function ProfilScreen() {
             {/* Plan Argent */}
             <TouchableOpacity 
               style={[styles.subscriptionPlan, styles.silverPlan]}
-              onPress={() => handleSubscribe('Argent')}
+              onPress={() => handleSubscribe('silver')}
             >
               <View style={styles.planHeader}>
                 <Text style={styles.planName}>🥈 ARGENT</Text>
-                <Text style={styles.planPrice}>39,99€/mois</Text>
+                <Text style={styles.planPrice}>19,99€/mois</Text>
               </View>
               <View style={styles.planFeatures}>
                 <Text style={styles.planFeature}>✓ Tout du plan Bronze</Text>
                 <Text style={styles.planFeature}>✓ Programmes nutrition personnalisés</Text>
                 <Text style={styles.planFeature}>✓ Programmes d'entraînement</Text>
-                <Text style={styles.planFeature}>✓ Rendez-vous vidéo (2/mois)</Text>
+                <Text style={styles.planFeature}>✓ 1 rendez-vous par mois</Text>
               </View>
             </TouchableOpacity>
 
             {/* Plan Or */}
             <TouchableOpacity 
               style={[styles.subscriptionPlan, styles.goldPlan]}
-              onPress={() => handleSubscribe('Or')}
+              onPress={() => handleSubscribe('gold')}
             >
               <View style={styles.planHeader}>
                 <Text style={styles.planName}>🥇 OR</Text>
-                <Text style={styles.planPrice}>69,99€/mois</Text>
+                <Text style={styles.planPrice}>49,99€/mois</Text>
               </View>
               <View style={styles.planFeatures}>
                 <Text style={styles.planFeature}>✓ Tout du plan Argent</Text>
                 <Text style={styles.planFeature}>✓ Coaching 24h/24 7j/7</Text>
                 <Text style={styles.planFeature}>✓ Programmes ultra-personnalisés</Text>
-                <Text style={styles.planFeature}>✓ Rendez-vous vidéo illimités</Text>
+                <Text style={styles.planFeature}>✓ 1 rendez-vous par semaine</Text>
                 <Text style={styles.planFeature}>✓ Suivi en temps réel</Text>
               </View>
             </TouchableOpacity>
