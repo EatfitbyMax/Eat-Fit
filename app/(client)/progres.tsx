@@ -156,6 +156,21 @@ export default function ProgresScreen() {
         }
 
         if (saved) {
+          // S'assurer que le poids de départ correspond au profil utilisateur
+          const userWeight = user.weight || 0;
+          if (userWeight > 0 && (!saved.startWeight || saved.startWeight === 0)) {
+            saved.startWeight = userWeight;
+            // Si pas de poids actuel défini, utiliser le poids du profil
+            if (!saved.currentWeight || saved.currentWeight === 0) {
+              saved.currentWeight = userWeight;
+            }
+            // Ajouter à l'historique si pas déjà présent
+            if (!saved.weightHistory || saved.weightHistory.length === 0) {
+              saved.weightHistory = [{ weight: userWeight, date: user.createdAt || new Date().toISOString() }];
+            }
+            await saveWeightData(saved);
+            console.log('Poids de départ synchronisé depuis le profil utilisateur:', userWeight);
+          }
 
           // Synchroniser avec l'objectif du profil utilisateur si disponible
           const userTargetWeight = user.targetWeight || 0;
