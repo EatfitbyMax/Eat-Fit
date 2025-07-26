@@ -1024,7 +1024,7 @@ export default function CoachScreen() {
 
         {/* Modal d'abonnement */}
         <SubscriptionModal
-          isVisible={showSubscriptionModal}
+          visible={showSubscriptionModal}
           onClose={handleCloseSubscriptionModal}
         />
 
