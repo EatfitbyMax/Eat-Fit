@@ -14,6 +14,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SUBSCRIPTION_PLANS, checkAppointmentLimit, getAppointmentLimits, PaymentService } from '../../utils/payments';
 import SubscriptionModal from '../../components/SubscriptionModal';
+import { useNavigation } from '@react-navigation/native';
 
 interface Message {
   id: string;
@@ -462,6 +463,8 @@ export default function CoachScreen() {
   const [appointmentLimitCheck, setAppointmentLimitCheck] = useState<{ canBook: boolean; reason?: string; remaining?: number } | null>(null);
   const [userPlan, setUserPlan] = useState<string>('free');
 
+  const navigation = useNavigation();
+
   useEffect(() => {
     initUser();
     loadCoachInfo();
@@ -784,6 +787,16 @@ export default function CoachScreen() {
     );
   };
 
+  const handleCloseSubscriptionModal = () => {
+    setShowSubscriptionModal(false);
+    // Si l'utilisateur n'est pas Premium, le rediriger vers l'accueil avec un petit délai
+    if (!isPremium) {
+      setTimeout(() => {
+        navigation.navigate('Home' as never);
+      }, 300); // Délai pour permettre à la modal de se fermer
+    }
+  };
+
   return (
     <GestureHandlerRootView style={styles.container}>
       <SafeAreaView style={styles.container}>
@@ -1012,7 +1025,7 @@ export default function CoachScreen() {
         {/* Modal d'abonnement */}
         <SubscriptionModal
           isVisible={showSubscriptionModal}
-          onClose={() => setShowSubscriptionModal(false)}
+          onClose={handleCloseSubscriptionModal}
         />
 
         {/* Modal de prise de rendez-vous */}
