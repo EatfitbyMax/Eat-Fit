@@ -23,14 +23,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const loadUser = async () => {
       try {
         setIsLoading(true);
+        console.log('🔄 Chargement utilisateur avec session persistante...');
+        
         const currentUser = await getCurrentUser();
 
         if (isMounted) {
           if (currentUser && currentUser.email) {
             setUser(currentUser);
-            console.log('✅ Utilisateur connecté:', currentUser.email);
+            console.log('✅ Utilisateur connecté (session restaurée):', currentUser.email);
           } else {
-            console.log('📱 Aucun utilisateur connecté, redirection vers login');
+            console.log('📱 Aucune session valide trouvée, redirection vers login');
             setUser(null);
           }
         }
