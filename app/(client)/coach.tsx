@@ -5,6 +5,7 @@ import { getCurrentUser } from '../../utils/auth';
 import { checkSubscriptionStatusBoolean } from '../../utils/subscription';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PanGestureHandler, GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useRouter } from 'expo-router';
 import Animated, {
   useAnimatedGestureHandler,
   useAnimatedStyle,
@@ -443,6 +444,7 @@ const AppointmentModal = ({ visible, onClose, coachInfo, currentUser, onAppointm
 };
 
 export default function CoachScreen() {
+  const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -726,6 +728,14 @@ export default function CoachScreen() {
       setAppointments(newAppointments);
     } catch (error) {
       console.error('Erreur sauvegarde rendez-vous:', error);
+    }
+  };
+
+  const handleCloseSubscriptionModal = () => {
+    setShowSubscriptionModal(false);
+    // Si l'utilisateur n'est pas Premium, le rediriger vers l'accueil
+    if (!isPremium) {
+      router.push('/(client)');
     }
   };
 
@@ -1019,7 +1029,7 @@ export default function CoachScreen() {
         {/* Modal d'abonnement */}
         <SubscriptionModal
           visible={showSubscriptionModal}
-          onClose={() => setShowSubscriptionModal(false)}
+          onClose={handleCloseSubscriptionModal}
         />
 
         {/* Modal de prise de rendez-vous */}
