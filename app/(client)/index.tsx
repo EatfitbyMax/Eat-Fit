@@ -225,7 +225,7 @@ export default function HomeScreen() {
       // Récupérer les données de forme depuis le serveur uniquement
       try {
         const todayData = await PersistentStorage.getFormeData(currentUser.id, today);
-        console.log('Données de forme chargées depuis le serveur pour l\'accueil');
+        console.log('✅ Données de forme chargées depuis le serveur VPS pour l\'accueil');
 
         if (todayData) {
           // Récupérer les données nutritionnelles réelles
@@ -435,10 +435,10 @@ export default function HomeScreen() {
         console.log('🍽️ [ACCUEIL] Récupération données nutrition...');
         const nutritionEntries = await PersistentStorage.getUserNutrition(currentUser.id);
         console.log('🍽️ [ACCUEIL] Entrées nutrition récupérées:', nutritionEntries.length);
-        
+
         const todayEntries = nutritionEntries.filter((entry: any) => entry.date === today);
         console.log('🍽️ [ACCUEIL] Entrées d\'aujourd\'hui:', todayEntries.length);
-        
+
         totalCalories = todayEntries.reduce((sum: number, entry: any) => sum + (entry.calories || 0), 0);
         console.log('🔥 [ACCUEIL] Total calories calculé:', totalCalories);
       } catch (error) {

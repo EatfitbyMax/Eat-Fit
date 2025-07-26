@@ -590,10 +590,9 @@ export default function CoachScreen() {
     }
 
     try {
-      console.log('[DEBUG] Chargement messages pour:', currentUser.id);
+      console.log('[DEBUG] Chargement messages depuis VPS pour:', currentUser.id);
       const messagesData = await getMessages(currentUser.id);
-      setMessages(messagesData);
-      console.log('[DEBUG] Messages chargés avec succès:', messagesData.length);
+      console.log('[DEBUG] Messages récupérés depuis VPS:', messagesData?.length || 0);
 
       // Ajouter un message informatif si pas de connexion serveur
       if (messagesData.length === 0) {

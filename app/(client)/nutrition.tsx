@@ -62,7 +62,7 @@ function NutritionScreen() {
     carbohydrates: 312,
     fat: 83,
   });
-  
+
   const [microGoals, setMicroGoals] = useState({
     // Vitamines
     vitaminA: 900, // μg
@@ -100,7 +100,7 @@ function NutritionScreen() {
   });
   const [waterIntake, setWaterIntake] = useState(0); // en ml
   const [dailyWaterGoal, setDailyWaterGoal] = useState(2000); // objectif de base en ml
-  
+
   // États pour le système de navigation
   const [currentView, setCurrentView] = useState<'macros' | 'vitamines' | 'mineraux' | 'autres'>('macros');
 
@@ -354,7 +354,7 @@ function NutritionScreen() {
 
         // Sauvegarder sur le serveur VPS
         try {
-          const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.replit.app';
+          const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 secondes timeout
 
@@ -413,7 +413,7 @@ function NutritionScreen() {
       (acc, entry) => {
         // Estimation des micronutriments basée sur les macronutriments
         const estimatedMicros = estimateMicronutrients(entry);
-        
+
         return {
           calories: acc.calories + entry.calories,
           proteins: acc.proteins + entry.proteins,
@@ -476,7 +476,7 @@ function NutritionScreen() {
   const estimateMicronutrients = (entry: FoodEntry) => {
     const productName = entry.product.name?.toLowerCase() || '';
     const calories = entry.calories;
-    
+
     // Coefficients de base par 100 kcal
     let vitaminA = 0, vitaminC = 0, vitaminD = 0, vitaminE = 0, vitaminK = 0;
     let vitaminB1 = 0, vitaminB2 = 0, vitaminB3 = 0, vitaminB5 = 0, vitaminB6 = 0;
@@ -653,7 +653,7 @@ function NutritionScreen() {
 
       // Essayer de charger depuis le serveur VPS d'abord
       try {
-        const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.replit.app';
+        const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
         const response = await fetch(`${VPS_URL}/api/nutrition/${user.id}`);
 
         if (response.ok) {
@@ -676,6 +676,8 @@ function NutritionScreen() {
         }
       }
 
+      This update replaces the Replit URL with the VPS URL in two places within the NutritionScreen component.
+```
       // Charger les données d'hydratation
       const waterStored = await AsyncStorage.getItem(`water_intake_${user.id}_${selectedDate.toISOString().split('T')[0]}`);
       if (waterStored) {
@@ -716,7 +718,7 @@ function NutritionScreen() {
     }
   };
 
-  
+
 
   const getMealEntries = (mealType: string) => {
     const dateString = selectedDate.toISOString().split('T')[0];
@@ -739,7 +741,7 @@ function NutritionScreen() {
 
       // Sauvegarder sur le serveur VPS
       try {
-        const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.replit.app';
+        const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
         const response = await fetch(`${VPS_URL}/api/nutrition/${user.id}`, {
           method: 'POST',
           headers: {
@@ -1227,7 +1229,7 @@ function NutritionScreen() {
             )}
           </View>
 
-          
+
 
           {/* Boutons de navigation */}
           <View style={styles.navigationButtons}>
@@ -1239,7 +1241,7 @@ function NutritionScreen() {
                 Macros
               </Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity 
               style={[styles.navButton, currentView === 'vitamines' && styles.activeNavButton]}
               onPress={() => setCurrentView('vitamines')}
@@ -1719,7 +1721,7 @@ const styles = StyleSheet.create({
     color: '#FFA500',
     fontWeight: '600',
   },
-  
+
   foodList: {
     marginBottom: 16,
   },
@@ -1948,7 +1950,7 @@ const styles = StyleSheet.create({
     borderRadius: 1.5,
   },
 
-  
+
 
   // Styles pour les boutons de navigation
   navigationButtons: {
