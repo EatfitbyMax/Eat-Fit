@@ -72,7 +72,7 @@ export class PersistentStorage {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Utilisateurs récupérés depuis le serveur Replit');
+        console.log('✅ Utilisateurs récupérés depuis le serveur VPS');
         return data;
       }
       throw new Error(`Erreur HTTP ${response.status}`);
@@ -95,7 +95,7 @@ export class PersistentStorage {
       });
 
       if (response.ok) {
-        console.log('✅ Utilisateurs sauvegardés sur le serveur Replit');
+        console.log('✅ Utilisateurs sauvegardés sur le serveur VPS');
         return;
       }
       throw new Error('Erreur sauvegarde utilisateurs sur le serveur');
@@ -113,7 +113,7 @@ export class PersistentStorage {
       const response = await fetch(`${SERVER_URL}/api/messages/${userId}`);
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Messages récupérés depuis le serveur Replit');
+        console.log('✅ Messages récupérés depuis le serveur VPS');
         return data;
       }
       throw new Error('Erreur récupération messages depuis le serveur');
@@ -139,7 +139,7 @@ export class PersistentStorage {
         throw new Error('Erreur sauvegarde messages sur le serveur');
       }
 
-      console.log('✅ Messages sauvegardés sur le serveur Replit');
+      console.log('✅ Messages sauvegardés sur le serveur VPS');
     } catch (error) {
       console.error('❌ Erreur sauvegarde messages:', error);
       throw new Error('Impossible de sauvegarder les messages. Vérifiez votre connexion internet.');
@@ -160,7 +160,7 @@ export class PersistentStorage {
       });
 
       if (response.ok) {
-        console.log('✅ Données Apple Health sauvegardées sur le serveur Replit');
+        console.log('✅ Données Apple Health sauvegardées sur le serveur VPS');
         return;
       }
       throw new Error('Erreur sauvegarde données Apple Health sur le serveur');
@@ -177,7 +177,7 @@ export class PersistentStorage {
       const response = await fetch(`${SERVER_URL}/api/health/${userId}`);
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Données Apple Health récupérées depuis le serveur Replit');
+        console.log('✅ Données Apple Health récupérées depuis le serveur VPS');
         return data;
       }
       throw new Error('Erreur récupération données Apple Health');
