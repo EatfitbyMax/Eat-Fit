@@ -469,6 +469,13 @@ export default function CoachScreen() {
     testConnection();
   }, []);
 
+  // Afficher automatiquement la modal d'abonnement pour les utilisateurs non-Premium
+  useEffect(() => {
+    if (currentUser && !isPremium) {
+      setShowSubscriptionModal(true);
+    }
+  }, [currentUser, isPremium]);
+
   const testConnection = async () => {
     try {
       const { testApiConnection } = await import('../../utils/storage');
