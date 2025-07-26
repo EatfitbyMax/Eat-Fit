@@ -471,6 +471,15 @@ export class IntegrationsManager {
     }
   }
 
+  static async getHealthData(userId: string): Promise<any[]> {
+    try {
+      return await PersistentStorage.getHealthData(userId);
+    } catch (error) {
+      console.error('❌ Erreur récupération données Apple Health:', error);
+      throw new Error('Impossible de récupérer les données Apple Health. Vérifiez votre connexion internet.');
+    }
+  }
+
   static async getStravaStatusFromServer(userId: string): Promise<any> {
     try {
       const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
