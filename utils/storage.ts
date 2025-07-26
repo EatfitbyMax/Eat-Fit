@@ -205,9 +205,9 @@ export class PersistentStorage {
       clearTimeout(timeoutId);
 
       if (response.ok) {
-        console.log('✅ Sauvegarde poids Replit réussie');
+        console.log('✅ Sauvegarde poids serveur VPS réussie');
       } else {
-        throw new Error(`Échec sauvegarde poids Replit (HTTP ${response.status})`);
+        throw new Error(`Échec sauvegarde poids serveur VPS (HTTP ${response.status})`);
       }
     } catch (error) {
       console.error('❌ Erreur sauvegarde poids:', error);
@@ -222,7 +222,7 @@ export class PersistentStorage {
       const response = await fetch(`${SERVER_URL}/api/weight/${userId}`);
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Données poids récupérées depuis Replit');
+        console.log('✅ Données poids récupérées depuis le serveur VPS');
         return data;
       }
       throw new Error('Erreur récupération données poids');
@@ -290,7 +290,7 @@ export class PersistentStorage {
       if (!response.ok) {
         throw new Error('Erreur sauvegarde entraînements');
       }
-      console.log('✅ Entraînements sauvegardés sur Replit');
+      console.log('✅ Entraînements sauvegardés sur le serveur VPS');
     } catch (error) {
       console.error('❌ Erreur sauvegarde entraînements:', error);
       throw new Error('Impossible de sauvegarder les entraînements. Vérifiez votre connexion internet.');
@@ -304,7 +304,7 @@ export class PersistentStorage {
       const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`);
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Entraînements récupérés depuis Replit');
+        console.log('✅ Entraînements récupérés depuis le serveur VPS');
         return data;
       }
       throw new Error('Erreur récupération entraînements');
@@ -343,7 +343,7 @@ export class PersistentStorage {
       if (!response.ok) {
         throw new Error('Erreur sauvegarde forme');
       }
-      console.log('✅ Forme sauvegardée sur Replit');
+      console.log('✅ Forme sauvegardée sur le serveur VPS');
     } catch (error) {
       console.error('❌ Erreur sauvegarde forme:', error);
       throw new Error('Impossible de sauvegarder les données de forme. Vérifiez votre connexion internet.');
@@ -358,7 +358,7 @@ export class PersistentStorage {
       const response = await fetch(`${SERVER_URL}/api/stripe/subscription/${userId}`);
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Abonnement récupéré depuis Replit');
+        console.log('✅ Abonnement récupéré depuis le serveur VPS');
         return data;
       }
       throw new Error('Erreur récupération abonnement');
@@ -376,7 +376,7 @@ export class PersistentStorage {
       const response = await fetch(`${SERVER_URL}/api/user-profile/${userId}`);
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Profil utilisateur récupéré depuis Replit');
+        console.log('✅ Profil utilisateur récupéré depuis le serveur VPS');
         return data;
       }
       return null;
@@ -398,7 +398,7 @@ export class PersistentStorage {
       if (!response.ok) {
         throw new Error('Erreur sauvegarde profil');
       }
-      console.log('✅ Profil utilisateur sauvegardé sur Replit');
+      console.log('✅ Profil utilisateur sauvegardé sur le serveur VPS');
     } catch (error) {
       console.error('❌ Erreur sauvegarde profil:', error);
       throw new Error('Impossible de sauvegarder le profil utilisateur. Vérifiez votre connexion internet.');
@@ -413,7 +413,7 @@ export class PersistentStorage {
       const response = await fetch(`${SERVER_URL}/api/mensurations/${userId}`);
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Mensurations récupérées depuis le serveur Replit');
+        console.log('✅ Mensurations récupérées depuis le serveur VPS');
         return data;
       }
       throw new Error('Erreur récupération mensurations');
@@ -434,9 +434,9 @@ export class PersistentStorage {
       });
 
       if (response.ok) {
-        console.log('✅ Sauvegarde mensurations Replit réussie');
+        console.log('✅ Sauvegarde mensurations serveur VPS réussie');
       } else {
-        throw new Error(`Échec sauvegarde mensurations Replit (HTTP ${response.status})`);
+        throw new Error(`Échec sauvegarde mensurations serveur VPS (HTTP ${response.status})`);
       }
     } catch (error) {
       console.error('❌ Erreur sauvegarde mensurations:', error);
@@ -452,7 +452,7 @@ export class PersistentStorage {
       const response = await fetch(`${SERVER_URL}/api/notifications/${userId}`);
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Paramètres notifications récupérés depuis le serveur Replit');
+        console.log('✅ Paramètres notifications récupérés depuis le serveur VPS');
         return data;
       }
       throw new Error('Erreur récupération notifications');
@@ -475,7 +475,7 @@ export class PersistentStorage {
       });
 
       if (response.ok) {
-        console.log('✅ Paramètres notifications sauvegardés sur le serveur Replit');
+        console.log('✅ Paramètres notifications sauvegardés sur le serveur VPS');
       } else {
         throw new Error('Erreur sauvegarde notifications');
       }
@@ -493,7 +493,7 @@ export class PersistentStorage {
       const response = await fetch(`${SERVER_URL}/api/app-preferences/${userId}`);
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Préférences app récupérées depuis le serveur Replit');
+        console.log('✅ Préférences app récupérées depuis le serveur VPS');
         return data;
       }
       throw new Error('Erreur récupération préférences');
@@ -516,7 +516,7 @@ export class PersistentStorage {
       });
 
       if (response.ok) {
-        console.log('✅ Préférences app sauvegardées sur le serveur Replit');
+        console.log('✅ Préférences app sauvegardées sur le serveur VPS');
       } else {
         throw new Error('Erreur sauvegarde préférences');
       }
@@ -546,7 +546,7 @@ export class PersistentStorage {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Statuts intégrations récupérés depuis le serveur Replit');
+        console.log('✅ Statuts intégrations récupérés depuis le serveur VPS');
         return data;
       } else {
         console.log('⚠️ Endpoint intégrations non disponible, utilisation des valeurs par défaut');
@@ -583,7 +583,7 @@ export class PersistentStorage {
       });
 
       if (response.ok) {
-        console.log('✅ Statuts intégrations sauvegardés sur le serveur Replit');
+        console.log('✅ Statuts intégrations sauvegardés sur le serveur VPS');
       } else {
         throw new Error('Erreur sauvegarde intégrations');
       }
@@ -728,7 +728,7 @@ export class PersistentStorage {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Programmes récupérés depuis le serveur Replit');
+        console.log('✅ Programmes récupérés depuis le serveur VPS');
         return data;
       }
       throw new Error(`Erreur HTTP ${response.status}`);
