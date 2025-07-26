@@ -688,7 +688,31 @@ export class PersistentStorage {
   }
 
   static async getUserNutrition(userId: string): Promise<any[]> {
-    return await this.getNutrition(userId);
+    try {
+      const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
+      console.log('📊 [STORAGE] getUserNutrition - URL:', serverUrl, 'UserId:', userId);
+
+      const response = await fetch(`${serverUrl}/api/nutrition/${userId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log('📊 [STORAGE] Response status:', response.status, 'OK:', response.ok);
+
+      if (!response.ok) {
+        throw new Error(`Erreur serveur: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ [STORAGE] Nutrition récupérée depuis Replit - Nombre d\'entrées:', data.length);
+      console.log('📊 [STORAGE] Premières entrées:', data.slice(0, 3));
+      return data;
+    } catch (error) {
+      console.error('❌ [STORAGE] Erreur récupération nutrition:', error);
+      throw new Error('Impossible de récupérer les données nutritionnelles. Vérifiez votre connexion internet.');
+    }
   }
 
   static async saveUserNutrition(userId: string, nutrition: any[]): Promise<void> {

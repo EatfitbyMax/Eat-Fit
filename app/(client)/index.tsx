@@ -426,15 +426,23 @@ export default function HomeScreen() {
       if (!currentUser) return;
 
       const today = new Date().toISOString().split('T')[0];
+      console.log('🏠 [ACCUEIL] Chargement statistiques pour:', currentUser.email, 'Date:', today);
+      console.log('🌐 [ACCUEIL] URL serveur utilisée:', process.env.EXPO_PUBLIC_VPS_URL);
 
       // 1. Récupérer les calories depuis la nutrition sur le serveur
       let totalCalories = 0;
       try {
+        console.log('🍽️ [ACCUEIL] Récupération données nutrition...');
         const nutritionEntries = await PersistentStorage.getUserNutrition(currentUser.id);
+        console.log('🍽️ [ACCUEIL] Entrées nutrition récupérées:', nutritionEntries.length);
+        
         const todayEntries = nutritionEntries.filter((entry: any) => entry.date === today);
+        console.log('🍽️ [ACCUEIL] Entrées d\'aujourd\'hui:', todayEntries.length);
+        
         totalCalories = todayEntries.reduce((sum: number, entry: any) => sum + (entry.calories || 0), 0);
+        console.log('🔥 [ACCUEIL] Total calories calculé:', totalCalories);
       } catch (error) {
-        console.error('Erreur récupération calories:', error);
+        console.error('❌ [ACCUEIL] Erreur récupération calories:', error);
         throw new Error('Impossible de récupérer les données nutritionnelles');
       }
 
