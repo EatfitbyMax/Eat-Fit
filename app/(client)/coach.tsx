@@ -478,6 +478,23 @@ export default function CoachScreen() {
     }
   }, [currentUser, isPremium]);
 
+  // Afficher la modal à chaque fois que la page devient active (focus)
+  useEffect(() => {
+    const checkAndShowModal = () => {
+      if (currentUser && !isPremium) {
+        setShowSubscriptionModal(true);
+      }
+    };
+
+    // Vérifier immédiatement
+    checkAndShowModal();
+
+    // Ajouter un listener pour quand la page devient active
+    const timer = setTimeout(checkAndShowModal, 100);
+
+    return () => clearTimeout(timer);
+  }, []); // Se déclenche à chaque montage du composant
+
   const testConnection = async () => {
     try {
       const { testApiConnection } = await import('../../utils/storage');
