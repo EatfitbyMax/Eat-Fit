@@ -250,9 +250,9 @@ export class PersistentStorage {
       clearTimeout(timeoutId);
 
       if (response.ok) {
-        console.log('✅ Sauvegarde nutrition Replit réussie');
+        console.log('✅ Sauvegarde nutrition VPS réussie');
       } else {
-        throw new Error(`Échec sauvegarde nutrition Replit (HTTP ${response.status})`);
+        throw new Error(`Échec sauvegarde nutrition VPS (HTTP ${response.status})`);
       }
     } catch (error) {
       console.error('❌ Erreur sauvegarde nutrition:', error);
@@ -267,7 +267,7 @@ export class PersistentStorage {
       const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`);
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Nutrition récupérée depuis Replit');
+        console.log('✅ Nutrition récupérée depuis le serveur VPS');
         return data;
       }
       throw new Error('Erreur récupération nutrition');
@@ -706,7 +706,7 @@ export class PersistentStorage {
       }
 
       const data = await response.json();
-      console.log('✅ [STORAGE] Nutrition récupérée depuis Replit - Nombre d\'entrées:', data.length);
+      console.log('✅ [STORAGE] Nutrition récupérée depuis le serveur VPS - Nombre d\'entrées:', data.length);
       console.log('📊 [STORAGE] Premières entrées:', data.slice(0, 3));
       return data;
     } catch (error) {
