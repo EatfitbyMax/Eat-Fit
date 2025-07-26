@@ -792,7 +792,7 @@ export default function CoachScreen() {
     // Si l'utilisateur n'est pas Premium, le rediriger vers l'accueil avec un petit délai
     if (!isPremium) {
       setTimeout(() => {
-        navigation.navigate('Home' as never);
+        navigation.navigate('index' as never);
       }, 300); // Délai pour permettre à la modal de se fermer
     }
   };
