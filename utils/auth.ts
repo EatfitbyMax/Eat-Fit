@@ -1,5 +1,6 @@
 import { PersistentStorage } from './storage';
 import * as Crypto from 'expo-crypto';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface User {
   id: string;
@@ -20,6 +21,117 @@ interface User {
 }
 
 let currentUserCache: User | null = null;
+
+// Clés pour AsyncStorage
+const SESSION_KEY = 'eatfitbymax_session';
+const SESSION_EXPIRY_KEY = 'eatfitbymax_session_expiry';
+
+// Durée de validité de la session (7 jours)
+const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 jours en millisecondes
+
+// Fonction pour créer un token de session sécurisé
+async function createSessionToken(userEmail: string): Promise<string> {
+  const timestamp = Date.now().toString();
+  const sessionData = `${userEmail}:${timestamp}`;
+  const hashedToken = await Crypto.digestStringAsync(
+    Crypto.CryptoDigestAlgorithm.SHA256,
+    sessionData + 'eatfitbymax_session_salt_2025',
+    { encoding: Crypto.CryptoEncoding.HEX }
+  );
+  return hashedToken;
+}
+
+// Fonction pour sauvegarder la session
+async function saveSession(user: User): Promise<void> {
+  try {
+    const sessionToken = await createSessionToken(user.email);
+    const expiryTime = Date.now() + SESSION_DURATION;
+    
+    await AsyncStorage.setItem(SESSION_KEY, JSON.stringify({
+      token: sessionToken,
+      userEmail: user.email,
+      userId: user.id,
+      userType: user.userType
+    }));
+    
+    await AsyncStorage.setItem(SESSION_EXPIRY_KEY, expiryTime.toString());
+    
+    console.log('💾 Session sauvegardée avec succès, expire le:', new Date(expiryTime).toLocaleString());
+  } catch (error) {
+    console.error('❌ Erreur sauvegarde session:', error);
+  }
+}
+
+// Fonction pour récupérer la session
+async function loadSession(): Promise<User | null> {
+  try {
+    const sessionData = await AsyncStorage.getItem(SESSION_KEY);
+    const expiryData = await AsyncStorage.getItem(SESSION_EXPIRY_KEY);
+    
+    if (!sessionData || !expiryData) {
+      console.log('📱 Aucune session sauvegardée');
+      return null;
+    }
+    
+    const expiryTime = parseInt(expiryData);
+    const currentTime = Date.now();
+    
+    // Vérifier si la session a expiré
+    if (currentTime > expiryTime) {
+      console.log('⏰ Session expirée, suppression...');
+      await clearSession();
+      return null;
+    }
+    
+    const session = JSON.parse(sessionData);
+    
+    // Récupérer les données utilisateur complètes depuis le serveur
+    const users = await PersistentStorage.getUsers();
+    const user = users.find((u: any) => u.email === session.userEmail && u.id === session.userId);
+    
+    if (!user) {
+      console.log('❌ Utilisateur de session non trouvé sur le serveur');
+      await clearSession();
+      return null;
+    }
+    
+    // Créer l'objet utilisateur sans le mot de passe
+    const userWithoutPassword: User = {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      userType: user.userType,
+      age: user.age,
+      weight: user.weight,
+      height: user.height,
+      gender: user.gender,
+      activityLevel: user.activityLevel,
+      goals: user.goals,
+      favoriteSport: user.favoriteSport,
+      profileImage: user.profileImage
+    };
+    
+    console.log('✅ Session restaurée pour:', user.email, '- Expire le:', new Date(expiryTime).toLocaleString());
+    return userWithoutPassword;
+    
+  } catch (error) {
+    console.error('❌ Erreur chargement session:', error);
+    await clearSession();
+    return null;
+  }
+}
+
+// Fonction pour supprimer la session
+async function clearSession(): Promise<void> {
+  try {
+    await AsyncStorage.removeItem(SESSION_KEY);
+    await AsyncStorage.removeItem(SESSION_EXPIRY_KEY);
+    console.log('🗑️ Session supprimée');
+  } catch (error) {
+    console.error('❌ Erreur suppression session:', error);
+  }
+}
 
 export async function forceRegenerateUserHash(email: string, currentPassword: string): Promise<boolean> {
   try {
@@ -114,9 +226,26 @@ export async function initializeAdminAccount(): Promise<void> {
 }
 
 export async function getCurrentUser(): Promise<User | null> {
+  // Vérifier d'abord le cache mémoire
   if (currentUserCache) {
     return currentUserCache;
   }
+  
+  // Si pas de cache mémoire, essayer de charger depuis la session persistante
+  try {
+    console.log('🔄 Tentative de restauration de session...');
+    const sessionUser = await loadSession();
+    
+    if (sessionUser) {
+      // Mettre en cache mémoire
+      currentUserCache = sessionUser;
+      console.log('✅ Session restaurée et mise en cache pour:', sessionUser.email);
+      return sessionUser;
+    }
+  } catch (error) {
+    console.error('❌ Erreur restauration session:', error);
+  }
+  
   return null;
 }
 
@@ -269,9 +398,10 @@ export async function login(email: string, password: string): Promise<User | nul
       profileImage: user.profileImage
     };
 
-    // Sauvegarder la session en cache mémoire uniquement
+    // Sauvegarder la session en cache mémoire et de manière persistante
     currentUserCache = userWithoutPassword;
-    console.log('💾 Session utilisateur mise en cache mémoire');
+    await saveSession(userWithoutPassword);
+    console.log('💾 Session utilisateur mise en cache mémoire et sauvegardée');
 
     console.log('✅ Connexion réussie pour:', email);
     return userWithoutPassword;
@@ -363,9 +493,10 @@ export async function register(userData: Omit<User, 'id'> & { password: string }
       profileImage: newUser.profileImage
     };
 
-    // Sauvegarder la session en cache mémoire uniquement
+    // Sauvegarder la session en cache mémoire et de manière persistante
     currentUserCache = userWithoutPassword;
-    console.log('💾 Session utilisateur mise en cache mémoire');
+    await saveSession(userWithoutPassword);
+    console.log('💾 Session utilisateur mise en cache mémoire et sauvegardée');
 
     console.log('✅ Inscription réussie pour:', userData.email);
     return userWithoutPassword;
@@ -377,7 +508,10 @@ export async function register(userData: Omit<User, 'id'> & { password: string }
 
 export async function logout(): Promise<void> {
   try {
-    console.log('🔄 Fonction logout appelée - Vidage du cache...');
+    console.log('🔄 Fonction logout appelée - Vidage du cache et de la session...');
+    
+    // Supprimer la session persistante AVANT de vider le cache
+    await clearSession();
     
     // Vider immédiatement et définitivement le cache utilisateur - TRIPLE CHECK
     currentUserCache = null;
@@ -474,9 +608,10 @@ export async function updateUserData(email: string, updateData: {
     // Sauvegarder sur le serveur uniquement
     await PersistentStorage.saveUsers(users);
 
-    // Mettre à jour la session en cache mémoire
+    // Mettre à jour la session en cache mémoire et persistante
     const { password: _, hashedPassword: __, ...userWithoutPassword } = updatedUser;
     currentUserCache = userWithoutPassword;
+    await saveSession(userWithoutPassword);
 
     console.log('Données utilisateur mises à jour avec succès');
     return true;
