@@ -48,7 +48,7 @@ export default function AideFeedbackScreen() {
       title: "Centre d'aide en ligne",
       description: "Documentation complète",
       icon: "🌐",
-      action: () => Linking.openURL('https://help.eatfitbymax.com')
+      action: () => Linking.openURL('https://help.eatfitbymax.cloud')
     },
     {
       title: "Chat en direct",
@@ -60,7 +60,7 @@ export default function AideFeedbackScreen() {
       title: "Communauté",
       description: "Forum des utilisateurs",
       icon: "👥",
-      action: () => Linking.openURL('https://community.eatfitbymax.com')
+      action: () => Linking.openURL('https://community.eatfitbymax.cloud')
     }
   ];
 
