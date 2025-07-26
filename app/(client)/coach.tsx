@@ -5,7 +5,6 @@ import { getCurrentUser } from '../../utils/auth';
 import { checkSubscriptionStatusBoolean } from '../../utils/subscription';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PanGestureHandler, GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useRouter } from 'expo-router';
 import Animated, {
   useAnimatedGestureHandler,
   useAnimatedStyle,
@@ -444,7 +443,6 @@ const AppointmentModal = ({ visible, onClose, coachInfo, currentUser, onAppointm
 };
 
 export default function CoachScreen() {
-  const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -470,30 +468,6 @@ export default function CoachScreen() {
     loadAppointments();
     testConnection();
   }, []);
-
-  // Afficher automatiquement la modal d'abonnement pour les utilisateurs non-Premium
-  useEffect(() => {
-    if (currentUser && !isPremium) {
-      setShowSubscriptionModal(true);
-    }
-  }, [currentUser, isPremium]);
-
-  // Afficher la modal à chaque fois que la page devient active (focus)
-  useEffect(() => {
-    const checkAndShowModal = () => {
-      if (currentUser && !isPremium) {
-        setShowSubscriptionModal(true);
-      }
-    };
-
-    // Vérifier immédiatement
-    checkAndShowModal();
-
-    // Ajouter un listener pour quand la page devient active
-    const timer = setTimeout(checkAndShowModal, 100);
-
-    return () => clearTimeout(timer);
-  }, []); // Se déclenche à chaque montage du composant
 
   const testConnection = async () => {
     try {
@@ -745,14 +719,6 @@ export default function CoachScreen() {
       setAppointments(newAppointments);
     } catch (error) {
       console.error('Erreur sauvegarde rendez-vous:', error);
-    }
-  };
-
-  const handleCloseSubscriptionModal = () => {
-    setShowSubscriptionModal(false);
-    // Si l'utilisateur n'est pas Premium, le rediriger vers l'accueil
-    if (!isPremium) {
-      router.push('/(client)');
     }
   };
 
@@ -1045,8 +1011,8 @@ export default function CoachScreen() {
 
         {/* Modal d'abonnement */}
         <SubscriptionModal
-          visible={showSubscriptionModal}
-          onClose={handleCloseSubscriptionModal}
+          isVisible={showSubscriptionModal}
+          onClose={() => setShowSubscriptionModal(false)}
         />
 
         {/* Modal de prise de rendez-vous */}
