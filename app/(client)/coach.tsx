@@ -479,6 +479,17 @@ export default function CoachScreen() {
     }
   }, [currentUser, isPremium]);
 
+  // Réinitialiser la modal à chaque fois qu'on revient sur la page pour les utilisateurs FREE
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      if (currentUser && !isPremium) {
+        setShowSubscriptionModal(true);
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation, currentUser, isPremium]);
+
   const testConnection = async () => {
     try {
       const { testApiConnection } = await import('../../utils/storage');
