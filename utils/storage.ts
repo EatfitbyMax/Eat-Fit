@@ -593,6 +593,123 @@ export class PersistentStorage {
     }
   }
 
+  // Workouts methods
+  static async getWorkouts(userId: string): Promise<any[]> {
+    try {
+      await this.ensureConnection();
+
+      const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Entraînements récupérés depuis le serveur VPS');
+        return data;
+      }
+      return [];
+    } catch (error) {
+      console.error('❌ Erreur récupération entraînements:', error);
+      return [];
+    }
+  }
+
+  static async saveWorkouts(userId: string, workouts: any[]): Promise<void> {
+    try {
+      await this.ensureConnection();
+
+      const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(workouts),
+      });
+
+      if (response.ok) {
+        console.log('✅ Entraînements sauvegardés sur le serveur VPS');
+      } else {
+        throw new Error('Erreur sauvegarde entraînements');
+      }
+    } catch (error) {
+      console.error('❌ Erreur sauvegarde entraînements:', error);
+      throw new Error('Impossible de sauvegarder les entraînements. Vérifiez votre connexion internet.');
+    }
+  }
+
+  // Recent sports methods
+  static async getRecentSports(userId: string): Promise<string[]> {
+    try {
+      await this.ensureConnection();
+
+      const response = await fetch(`${SERVER_URL}/api/recent-sports/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Sports récents récupérés depuis le serveur VPS');
+        return data;
+      }
+      return [];
+    } catch (error) {
+      console.error('❌ Erreur récupération sports récents:', error);
+      return [];
+    }
+  }
+
+  static async saveRecentSports(userId: string, sports: string[]): Promise<void> {
+    try {
+      await this.ensureConnection();
+
+      const response = await fetch(`${SERVER_URL}/api/recent-sports/${userId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sports),
+      });
+
+      if (response.ok) {
+        console.log('✅ Sports récents sauvegardés sur le serveur VPS');
+      } else {
+        throw new Error('Erreur sauvegarde sports récents');
+      }
+    } catch (error) {
+      console.error('❌ Erreur sauvegarde sports récents:', error);
+      throw new Error('Impossible de sauvegarder les sports récents. Vérifiez votre connexion internet.');
+    }
+  }
+
+  // Activity ratings methods
+  static async getActivityRatings(userId: string): Promise<any> {
+    try {
+      await this.ensureConnection();
+
+      const response = await fetch(`${SERVER_URL}/api/activity-ratings/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Notes RPE récupérées depuis le serveur VPS');
+        return data;
+      }
+      return {};
+    } catch (error) {
+      console.error('❌ Erreur récupération notes RPE:', error);
+      return {};
+    }
+  }
+
+  static async saveActivityRatings(userId: string, ratings: any): Promise<void> {
+    try {
+      await this.ensureConnection();
+
+      const response = await fetch(`${SERVER_URL}/api/activity-ratings/${userId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ratings),
+      });
+
+      if (response.ok) {
+        console.log('✅ Notes RPE sauvegardées sur le serveur VPS');
+      } else {
+        throw new Error('Erreur sauvegarde notes RPE');
+      }
+    } catch (error) {
+      console.error('❌ Erreur sauvegarde notes RPE:', error);
+      throw new Error('Impossible de sauvegarder les notes RPE. Vérifiez votre connexion internet.');
+    }
+  }
+
   // Programmes storage
   static async getProgrammes(): Promise<any[]> {
     try {

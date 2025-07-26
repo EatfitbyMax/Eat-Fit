@@ -237,12 +237,13 @@ export default function CreerEntrainementScreen() {
       const currentUser = await getCurrentUser();
       if (!currentUser) return;
 
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-      const recentSportsData = await AsyncStorage.getItem(`recent_sports_${currentUser.id}`);
-      
-      if (recentSportsData) {
-        const recent = JSON.parse(recentSportsData);
-        setRecentSports(recent);
+      try {
+        const recentSportsData = await PersistentStorage.getRecentSports(currentUser.id);
+        if (recentSportsData) {
+          setRecentSports(recentSportsData);
+        }
+      } catch (error) {
+        console.error('Erreur chargement sports récents depuis serveur VPS:', error);
       }
     } catch (error) {
       console.error('Erreur chargement sports récents:', error);
@@ -258,18 +259,19 @@ export default function CreerEntrainementScreen() {
       const sport = allSports.find(s => s.name === sportName);
       if (!sport) return;
 
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-      
-      // Récupérer les sports récents actuels
-      const currentRecentData = await AsyncStorage.getItem(`recent_sports_${currentUser.id}`);
-      const currentRecent = currentRecentData ? JSON.parse(currentRecentData) : [];
+      try {
+        // Récupérer les sports récents actuels depuis le serveur VPS
+        const currentRecent = await PersistentStorage.getRecentSports(currentUser.id) || [];
 
-      // Créer la nouvelle liste (enlever le sport s'il existe déjà, puis l'ajouter en premier)
-      const updatedRecent = [sport.id, ...currentRecent.filter((id: string) => id !== sport.id)].slice(0, 5); // Max 5 sports récents
+        // Créer la nouvelle liste (enlever le sport s'il existe déjà, puis l'ajouter en premier)
+        const updatedRecent = [sport.id, ...currentRecent.filter((id: string) => id !== sport.id)].slice(0, 5); // Max 5 sports récents
 
-      // Sauvegarder
-      await AsyncStorage.setItem(`recent_sports_${currentUser.id}`, JSON.stringify(updatedRecent));
-      setRecentSports(updatedRecent);
+        // Sauvegarder sur le serveur VPS
+        await PersistentStorage.saveRecentSports(currentUser.id, updatedRecent);
+        setRecentSports(updatedRecent);
+      } catch (error) {
+        console.error('Erreur sauvegarde sport récent sur serveur VPS:', error);
+      }
     } catch (error) {
       console.error('Erreur sauvegarde sport récent:', error);
     }
@@ -343,23 +345,20 @@ export default function CreerEntrainementScreen() {
         return;
       }
 
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-
       const workoutToSave: Workout = {
         ...workout,
         id: Date.now().toString(),
         date: params.selectedDate as string || workout.date
       };
 
-      // Récupérer les entraînements existants
-      const existingWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
-      const workouts = existingWorkouts ? JSON.parse(existingWorkouts) : [];
+      // Récupérer les entraînements existants depuis le serveur VPS
+      const existingWorkouts = await PersistentStorage.getWorkouts(currentUser.id);
 
       // Ajouter le nouvel entraînement
-      workouts.push(workoutToSave);
+      const updatedWorkouts = [...existingWorkouts, workoutToSave];
 
-      // Sauvegarder
-      await AsyncStorage.setItem(`workouts_${currentUser.id}`, JSON.stringify(workouts));
+      // Sauvegarder sur le serveur VPS
+      await PersistentStorage.saveWorkouts(currentUser.id, updatedWorkouts);
 
       Alert.alert(
         'Succès', 

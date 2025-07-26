@@ -107,12 +107,9 @@ export default function GererEntrainementsScreen() {
       console.log('=== CHARGEMENT ENTRAINEMENTS POUR DATE ===');
       console.log('Date cible:', dateToUse);
 
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-      const storedWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
-      
-      if (storedWorkouts) {
-        const allWorkouts = JSON.parse(storedWorkouts);
-        console.log('Total entraînements stockés:', allWorkouts.length);
+      try {
+        const allWorkouts = await PersistentStorage.getWorkouts(currentUser.id);
+        console.log('Total entraînements stockés sur serveur VPS:', allWorkouts.length);
         
         // Filtrer par date exacte
         const dayWorkouts = allWorkouts.filter((workout: Workout) => {
@@ -125,8 +122,8 @@ export default function GererEntrainementsScreen() {
         
         console.log(`Entraînements filtrés pour ${dateToUse}:`, dayWorkouts.length);
         setWorkouts(dayWorkouts);
-      } else {
-        console.log('Aucun entraînement stocké');
+      } catch (error) {
+        console.error('Erreur chargement entraînements depuis serveur VPS:', error);
         setWorkouts([]);
       }
     } catch (error) {
@@ -184,20 +181,17 @@ export default function GererEntrainementsScreen() {
       console.log('=== SUPPRESSION ENTRAINEMENT ===');
       console.log('ID à supprimer:', workoutId);
 
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-      const storedWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
-      
-      if (storedWorkouts) {
-        const allWorkouts = JSON.parse(storedWorkouts);
+      try {
+        const allWorkouts = await PersistentStorage.getWorkouts(currentUser.id);
         const updatedWorkouts = allWorkouts.filter((w: Workout) => w.id !== workoutId);
         
-        await AsyncStorage.setItem(`workouts_${currentUser.id}`, JSON.stringify(updatedWorkouts));
+        await PersistentStorage.saveWorkouts(currentUser.id, updatedWorkouts);
         
         // Mettre à jour la liste locale
         const updatedLocalWorkouts = workouts.filter(w => w.id !== workoutId);
         setWorkouts(updatedLocalWorkouts);
         
-        console.log(`Entraînement supprimé. Restants: ${updatedLocalWorkouts.length}`);
+        console.log(`Entraînement supprimé du serveur VPS. Restants: ${updatedLocalWorkouts.length}`);
         
         Alert.alert('Succès', 'Entraînement supprimé avec succès !');
         
@@ -207,6 +201,9 @@ export default function GererEntrainementsScreen() {
             router.back();
           }, 1000);
         }
+      } catch (error) {
+        console.error('Erreur suppression depuis serveur VPS:', error);
+        Alert.alert('Erreur', 'Impossible de supprimer l\'entraînement');
       }
     } catch (error) {
       console.error('Erreur suppression:', error);
