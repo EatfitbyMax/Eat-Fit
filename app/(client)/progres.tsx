@@ -213,6 +213,9 @@ export default function ProgresScreen() {
   const saveWeightData = async (newData: any) => {
     try {
       if (userData) {
+        // Mettre à jour l'état immédiatement pour un affichage instantané
+        setWeightData(newData);
+        
         // Sauvegarder localement d'abord
         await AsyncStorage.setItem(`weight_data_${userData.id}`, JSON.stringify(newData));
         
@@ -235,8 +238,6 @@ export default function ProgresScreen() {
         } catch (serverError) {
           console.warn('Erreur serveur poids:', serverError);
         }
-        
-        setWeightData(newData);
       }
     } catch (error) {
       console.error('Erreur sauvegarde données poids:', error);
@@ -295,6 +296,9 @@ export default function ProgresScreen() {
       targetWeight: target,
       targetAsked: true, // Marquer comme demandé
     };
+
+    // Mettre à jour l'état immédiatement
+    setWeightData(newData);
 
     await saveWeightData(newData);
 
