@@ -116,10 +116,9 @@ export default function EntrainementScreen() {
 
       console.log('=== CHARGEMENT TOUS LES ENTRAINEMENTS ===');
 
-      // Charger depuis le serveur VPS d'abord
       try {
         const workouts = await PersistentStorage.getWorkouts(currentUser.id);
-        console.log(`Total entraînements chargés depuis le serveur: ${workouts.length}`);
+        console.log(`Total entraînements chargés depuis le serveur VPS: ${workouts.length}`);
 
         // Debug: grouper par date
         const workoutsByDate = workouts.reduce((acc: any, workout: any) => {
@@ -138,19 +137,8 @@ export default function EntrainementScreen() {
         // Forcer la mise à jour de l'état même si les données sont identiques
         setWorkouts([...workouts]);
       } catch (error) {
-        console.error('Erreur chargement entraînements depuis serveur:', error);
-        // Fallback vers le stockage local
-        const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-        const storedWorkouts = await AsyncStorage.getItem(`workouts_${currentUser.id}`);
-
-        if (storedWorkouts) {
-          const allWorkouts = JSON.parse(storedWorkouts);
-          console.log(`Total entraînements chargés en local: ${allWorkouts.length}`);
-          setWorkouts([...allWorkouts]);
-        } else {
-          console.log('Aucun entraînement trouvé');
-          setWorkouts([]);
-        }
+        console.error('Erreur chargement entraînements depuis serveur VPS:', error);
+        setWorkouts([]);
       }
 
       console.log('=== FIN CHARGEMENT TOUS LES ENTRAINEMENTS ===');
@@ -165,11 +153,13 @@ export default function EntrainementScreen() {
       const currentUser = await getCurrentUser();
       if (!currentUser) return;
 
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-      const storedRatings = await AsyncStorage.getItem(`activity_ratings_${currentUser.id}`);
-
-      if (storedRatings) {
-        setActivityRatings(JSON.parse(storedRatings));
+      try {
+        const storedRatings = await PersistentStorage.getActivityRatings(currentUser.id);
+        if (storedRatings) {
+          setActivityRatings(storedRatings);
+        }
+      } catch (error) {
+        console.error('Erreur chargement notes RPE depuis serveur VPS:', error);
       }
     } catch (error) {
       console.error('Erreur chargement notes RPE:', error);
@@ -192,10 +182,12 @@ export default function EntrainementScreen() {
 
       setActivityRatings(newRatings);
 
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-      await AsyncStorage.setItem(`activity_ratings_${currentUser.id}`, JSON.stringify(newRatings));
-
-      console.log(`Note RPE sauvegardée pour activité ${activityId}: ${rpe}/10`);
+      try {
+        await PersistentStorage.saveActivityRatings(currentUser.id, newRatings);
+        console.log(`Note RPE sauvegardée sur serveur VPS pour activité ${activityId}: ${rpe}/10`);
+      } catch (error) {
+        console.error('Erreur sauvegarde note RPE sur serveur VPS:', error);
+      }
     } catch (error) {
       console.error('Erreur sauvegarde note RPE:', error);
     }
@@ -726,7 +718,7 @@ export default function EntrainementScreen() {
       const userData = await getCurrentUser();
       if (userData) {
         setCurrentUser(userData);
-        const userWorkouts = await PersistentStorage.getUserWorkouts(userData.id);
+        const userWorkouts = await PersistentStorage.getWorkouts(userData.id);
         setWorkouts(userWorkouts);
       }
     } catch (error) {
@@ -738,9 +730,9 @@ export default function EntrainementScreen() {
     try {
       if (!currentUser?.id) return;
 
-      await PersistentStorage.saveUserWorkouts(currentUser.id, newWorkouts);
+      await PersistentStorage.saveWorkouts(currentUser.id, newWorkouts);
       setWorkouts(newWorkouts);
-      console.log('Entraînements sauvegardés pour utilisateur:', currentUser.id);
+      console.log('Entraînements sauvegardés sur serveur VPS pour utilisateur:', currentUser.id);
     } catch (error) {
       console.error('Erreur sauvegarde:', error);
     }
