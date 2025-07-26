@@ -676,8 +676,6 @@ function NutritionScreen() {
         }
       }
 
-      This update replaces the Replit URL with the VPS URL in two places within the NutritionScreen component.
-```
       // Charger les données d'hydratation
       const waterStored = await AsyncStorage.getItem(`water_intake_${user.id}_${selectedDate.toISOString().split('T')[0]}`);
       if (waterStored) {
