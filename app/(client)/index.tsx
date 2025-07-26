@@ -871,7 +871,7 @@ export default function HomeScreen() {
 
         {/* Objectifs de la semaine */}
         <View style={styles.goalsContainer}>
-          <Text style={styles.sectionTitle}>Mes objectifs de la semaine</Text>
+          <Text style={styles.sectionTitle}>Mes objectifs </Text>
 
           {/* Objectif Nutrition */}
           <View style={styles.goalCard}>
@@ -899,7 +899,7 @@ export default function HomeScreen() {
           {/* Objectif Entraînement */}
           <View style={styles.goalCard}>
             <View style={styles.goalHeader}>
-              <Text style={styles.goalTitle}>💪 Séances d'entraînement</Text>
+              <Text style={styles.goalTitle}>💪 Objectif d'entraînements</Text>
               <Text style={styles.goalProgress}>{getWeeklyWorkouts()}/{getTrainingGoal()}</Text>
             </View>
             <View style={styles.progressBar}>
