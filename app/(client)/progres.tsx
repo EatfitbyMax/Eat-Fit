@@ -134,10 +134,10 @@ export default function ProgresScreen() {
         const user = JSON.parse(currentUserString);
         setUserData(user);
 
-        // Charger les données de poids depuis le serveur d'abord
+        // Charger les données de poids depuis le serveur VPS d'abord
         let saved = null;
         try {
-          const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.replit.app';
+          const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
           const response = await fetch(`${VPS_URL}/api/weight/${user.id}`);
           if (response.ok) {
             saved = await response.json();
@@ -145,7 +145,7 @@ export default function ProgresScreen() {
             // Sauvegarder en local comme backup
             await AsyncStorage.setItem(`weight_data_${user.id}`, JSON.stringify(saved));
           } else {
-            throw new Error('Serveur indisponible');
+            throw new Error('Serveur VPS indisponible');
           }
         } catch (serverError) {
           console.log('Fallback vers le stockage local pour les données de poids');
@@ -221,7 +221,7 @@ export default function ProgresScreen() {
         
         // Sauvegarder sur le serveur VPS
         try {
-          const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.replit.app';
+          const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
           const response = await fetch(`${VPS_URL}/api/weight/${userData.id}`, {
             method: 'POST',
             headers: {
@@ -236,7 +236,7 @@ export default function ProgresScreen() {
             console.warn('Échec sauvegarde poids sur serveur VPS, données conservées localement');
           }
         } catch (serverError) {
-          console.warn('Erreur serveur poids:', serverError);
+          console.warn('Erreur serveur VPS poids:', serverError);
         }
       }
     } catch (error) {
@@ -363,7 +363,7 @@ export default function ProgresScreen() {
         
         // Sauvegarder sur le serveur VPS
         try {
-          const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.replit.app';
+          const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
           const response = await fetch(`${VPS_URL}/api/mensurations/${userData.id}`, {
             method: 'POST',
             headers: {
@@ -378,7 +378,7 @@ export default function ProgresScreen() {
             console.warn('Échec sauvegarde mensurations sur serveur VPS, données conservées localement');
           }
         } catch (serverError) {
-          console.warn('Erreur serveur mensurations:', serverError);
+          console.warn('Erreur serveur VPS mensurations:', serverError);
         }
         
         setMensurationData(newData);
@@ -1631,7 +1631,7 @@ export default function ProgresScreen() {
       
       // Charger depuis le serveur VPS
       try {
-        const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
+        const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 secondes timeout
 
@@ -1648,7 +1648,7 @@ export default function ProgresScreen() {
           // Sauvegarder en local comme backup
           await AsyncStorage.setItem(`food_entries_${user.id}`, JSON.stringify(nutritionEntries));
         } else {
-          throw new Error('Réponse serveur non-OK');
+          throw new Error('Réponse serveur VPS non-OK');
         }
       } catch (serverError) {
         console.log('Erreur serveur VPS nutrition (progrès):', serverError.message);
