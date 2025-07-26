@@ -472,6 +472,13 @@ export default function CoachScreen() {
     testConnection();
   }, []);
 
+  // Afficher la modal d'abonnement immédiatement pour les utilisateurs FREE
+  useEffect(() => {
+    if (currentUser && !isPremium) {
+      setShowSubscriptionModal(true);
+    }
+  }, [currentUser, isPremium]);
+
   const testConnection = async () => {
     try {
       const { testApiConnection } = await import('../../utils/storage');
@@ -811,34 +818,7 @@ export default function CoachScreen() {
             <Text style={styles.title}>Coach</Text>
           </View>
 
-          {!isPremium ? (
-            /* Affichage pour les non-abonnés */
-            <View style={styles.premiumRequiredContainer}>
-              <View style={styles.premiumIcon}>
-                <Text style={styles.premiumIconText}>👑</Text>
-              </View>
-
-              <Text style={styles.premiumTitle}>Accès Premium Requis</Text>
-
-              <Text style={styles.premiumDescription}>
-                Cette fonctionnalité est disponible uniquement avec un abonnement Premium.
-              </Text>
-
-              <View style={styles.premiumFeatures}>
-                <Text style={styles.featureItem}>✨ Accès direct à votre coach personnel</Text>
-                <Text style={styles.featureItem}>💬 Messagerie illimitée</Text>
-                <Text style={styles.featureItem}>📅 Prise de rendez-vous</Text>
-                <Text style={styles.featureItem}>🎯 Programmes personnalisés</Text>
-              </View>
-
-              <TouchableOpacity 
-                style={styles.subscribeNowButton}
-                onPress={() => setShowSubscriptionModal(true)}
-              >
-                <Text style={styles.subscribeNowButtonText}>Découvrir nos offres Premium</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
+          {isPremium ? (
             /* Affichage pour les abonnés Premium */
             <>
               {/* Coach Info fixe */}
@@ -1018,6 +998,14 @@ export default function CoachScreen() {
                 </View>
               )}
             </>
+          ) : (
+            /* Affichage minimal pour les utilisateurs FREE - la modal s'affiche automatiquement */
+            <View style={styles.freeUserContainer}>
+              <View style={styles.premiumIcon}>
+                <Text style={styles.premiumIconText}>👑</Text>
+              </View>
+              <Text style={styles.freeUserText}>Chargement des options d'abonnement...</Text>
+            </View>
           )}
         </View>
         </KeyboardAvoidingView>
@@ -1495,5 +1483,70 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#DA3633',
     fontWeight: '500',
+  },
+  freeUserContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
+  freeUserText: {
+    fontSize: 16,
+    color: '#8B949E',
+    textAlign: 'center',
+    marginTop: 16,
+  },
+  premiumRequiredContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
+  premiumIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#F5A623',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  premiumIconText: {
+    fontSize: 32,
+  },
+  premiumTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  premiumDescription: {
+    fontSize: 16,
+    color: '#8B949E',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  premiumFeatures: {
+    marginBottom: 32,
+  },
+  featureItem: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  subscribeNowButton: {
+    backgroundColor: '#F5A623',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+  },
+  subscribeNowButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000000',
+    textAlign: 'center',
   },
 });
