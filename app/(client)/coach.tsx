@@ -13,6 +13,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { SUBSCRIPTION_PLANS, checkAppointmentLimit, getAppointmentLimits, PaymentService } from '../../utils/payments';
+import SubscriptionModal from '../../components/SubscriptionModal';
 
 interface Message {
   id: string;
@@ -473,7 +474,7 @@ export default function CoachScreen() {
       const { testApiConnection } = await import('../../utils/storage');
       const result = await testApiConnection();
       console.log('[DEBUG] Test connexion résultat:', result);
-      
+
       if (!result.success) {
         console.warn('[WARNING] Problème de connexion API:', result.message);
       }
@@ -572,7 +573,7 @@ export default function CoachScreen() {
       const messagesData = await getMessages(currentUser.id);
       setMessages(messagesData);
       console.log('[DEBUG] Messages chargés avec succès:', messagesData.length);
-      
+
       // Ajouter un message informatif si pas de connexion serveur
       if (messagesData.length === 0) {
         const connectionTest = await testApiConnection();
@@ -583,7 +584,7 @@ export default function CoachScreen() {
     } catch (error) {
       console.error('[ERROR] Erreur chargement messages dans coach.tsx:', error);
       setMessages([]);
-      
+
       // Optionnel: ajouter un message d'état pour l'utilisateur
       console.log('[INFO] Messages indisponibles - vérification de la connexion...');
     }
@@ -613,15 +614,6 @@ export default function CoachScreen() {
         console.error('Erreur sauvegarde messages:', error);
       }
     }
-  };
-
-  const handleSubscribe = (plan: string) => {
-    setShowSubscriptionModal(false);
-    Alert.alert(
-      'Abonnement ' + plan,
-      `Vous avez choisi l'abonnement ${plan}. Fonctionnalité d'abonnement en cours de développement.`,
-      [{ text: 'OK' }]
-    );
   };
 
   const SwipeableMessage = ({ message }: { message: Message }) => {
@@ -1018,79 +1010,10 @@ export default function CoachScreen() {
         </KeyboardAvoidingView>
 
         {/* Modal d'abonnement */}
-        <Modal
-          visible={showSubscriptionModal}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={() => setShowSubscriptionModal(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.subscriptionModal}>
-              <Text style={styles.modalTitle}>Choisissez votre abonnement</Text>
-              <Text style={styles.modalSubtitle}>
-                Accédez à tous les services de coaching personnalisé
-              </Text>
-
-              {/* Plan Bronze */}
-              <TouchableOpacity 
-                style={[styles.subscriptionPlan, styles.bronzePlan]}
-                onPress={() => handleSubscribe('Bronze')}
-              >
-                <View style={styles.planHeader}>
-                  <Text style={styles.planName}>🥉 BRONZE</Text>
-                  <Text style={styles.planPrice}>19,99€/mois</Text>
-                </View>
-                <View style={styles.planFeatures}>
-                  <Text style={styles.planFeature}>✓ Messagerie avec le coach</Text>
-                  <Text style={styles.planFeature}>✓ 1 programme nutrition de base</Text>
-                  <Text style={styles.planFeature}>✓ Suivi hebdomadaire</Text>
-                </View>
-              </TouchableOpacity>
-
-              {/* Plan Argent */}
-              <TouchableOpacity 
-                style={[styles.subscriptionPlan, styles.silverPlan]}
-                onPress={() => handleSubscribe('Argent')}
-              >
-                <View style={styles.planHeader}>
-                  <Text style={styles.planName}>🥈 ARGENT</Text>
-                  <Text style={styles.planPrice}>39,99€/mois</Text>
-                </View>
-                <View style={styles.planFeatures}>
-                  <Text style={styles.planFeature}>✓ Tout du plan Bronze</Text>
-                  <Text style={styles.planFeature}>✓ Programmes nutrition personnalisés</Text>
-                  <Text style={styles.planFeature}>✓ Programmes d'entraînement</Text>
-                  <Text style={styles.planFeature}>✓ Rendez-vous vidéo (2/mois)</Text>
-                </View>
-              </TouchableOpacity>
-
-              {/* Plan Or */}
-              <TouchableOpacity 
-                style={[styles.subscriptionPlan, styles.goldPlan]}
-                onPress={() => handleSubscribe('Or')}
-              >
-                <View style={styles.planHeader}>
-                  <Text style={styles.planName}>🥇 OR</Text>
-                  <Text style={styles.planPrice}>69,99€/mois</Text>
-                </View>
-                <View style={styles.planFeatures}>
-                  <Text style={styles.planFeature}>✓ Tout du plan Argent</Text>
-                  <Text style={styles.planFeature}>✓ Coaching 24h/24 7j/7</Text>
-                  <Text style={styles.planFeature}>✓ Programmes ultra-personnalisés</Text>
-                  <Text style={styles.planFeature}>✓ Rendez-vous vidéo illimités</Text>
-                  <Text style={styles.planFeature}>✓ Suivi en temps réel</Text>
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.closeModalButton}
-                onPress={() => setShowSubscriptionModal(false)}
-              >
-                <Text style={styles.closeModalButtonText}>Peut-être plus tard</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
+        <SubscriptionModal
+          isVisible={showSubscriptionModal}
+          onClose={() => setShowSubscriptionModal(false)}
+        />
 
         {/* Modal de prise de rendez-vous */}
         <AppointmentModal 
@@ -1490,429 +1413,6 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontWeight: 'bold',
     fontSize: 14,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  subscriptionModal: {
-    backgroundColor: '#161B22',
-    borderRadius: 16,
-    padding: 24,
-    width: '100%',
-    maxWidth: 400,
-    borderWidth: 1,
-    borderColor: '#21262D',
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  modalSubtitle: {
-    fontSize: 16,
-    color: '#8B949E',
-    textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 22,
-  },
-  subscriptionPlan: {
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 2,
-  },
-  bronzePlan: {
-    backgroundColor: '#2D1810',
-    borderColor: '#CD7F32',
-  },
-  silverPlan: {
-    backgroundColor: '#1A1A1A',
-    borderColor: '#C0C0C0',
-  },
-  goldPlan: {
-    backgroundColor: '#2D2416',
-    borderColor: '#FFD700',
-  },
-  planHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  planName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  planPrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#F5A623',
-  },
-  planFeatures: {
-    gap: 6,
-  },
-  planFeature: {
-    fontSize: 14,
-    color: '#FFFFFF',
-    lineHeight: 20,
-  },
-  closeModalButton: {
-    backgroundColor: '#21262D',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    marginTop: 16,
-    alignItems: 'center',
-  },
-  closeModalButtonText: {
-    color: '#8B949E',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  premiumRequiredContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    marginTop: 40,
-  },
-  // Styles pour le modal de rendez-vous
-  appointmentModal: {
-    backgroundColor: '#161B22',
-    borderRadius: 20,
-    margin: 20,
-    maxHeight: '90%',
-    borderWidth: 1,
-    borderColor: '#21262D',
-  },
-  appointmentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#21262D',
-  },
-  appointmentTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  appointmentSubtitle: {
-    fontSize: 16,
-    color: '#8B949E',
-    textAlign: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  closeButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#21262D',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeButtonText: {
-    color: '#8B949E',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  sectionContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 12,
-  },
-  typeContainer: {
-    gap: 8,
-  },
-  typeButton: {
-    backgroundColor: '#21262D',
-    borderRadius: 10,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#21262D',
-  },
-  typeButtonActive: {
-    backgroundColor: '#F5A623',
-    borderColor: '#F5A623',
-  },
-  typeButtonText: {
-    color: '#8B949E',
-    fontSize: 14,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  typeButtonTextActive: {
-    color: '#000000',
-    fontWeight: 'bold',
-  },
-  calendarHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  weekNavButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#21262D',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  weekNavText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  weekContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 6,
-  },
-  dayButton: {
-    flex: 1,
-    backgroundColor: '#21262D',
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#21262D',
-    minHeight: 60,
-  },
-  dayButtonSelected: {
-    backgroundColor: '#F5A623',
-    borderColor: '#F5A623',
-  },
-  dayButtonToday: {
-    borderColor: '#F5A623',
-  },
-  dayButtonTextDay: {
-    color: '#8B949E',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  dayButtonTextDate: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginTop: 2,
-  },
-  dayButtonTextSelected: {
-    color: '#000000',
-  },
-  dayButtonUnavailable: {
-    backgroundColor: '#161B22',
-    borderColor: '#21262D',
-    opacity: 0.5,
-  },
-  dayButtonTextUnavailable: {
-    color: '#6B7280',
-  },
-  dayButtonUnavailableIndicator: {
-    position: 'absolute',
-    top: 2,
-    right: 2,
-    fontSize: 8,
-    color: '#EF4444',
-    fontWeight: 'bold',
-  },
-  noSlotsContainer: {
-    alignItems: 'center',
-    paddingVertical: 32,
-    paddingHorizontal: 16,
-  },
-  noSlotsText: {
-    color: '#8B949E',
-    fontSize: 16,
-    fontWeight: '500',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  noSlotsSubtext: {
-    color: '#6B7280',
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  slotsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  slotButton: {
-    backgroundColor: '#21262D',
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderWidth: 1,
-    borderColor: '#21262D',
-    width: '22%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 50,
-    alignSelf: 'stretch',
-  },
-  slotButtonSelected: {
-    backgroundColor: '#F5A623',
-    borderColor: '#F5A623',
-  },
-  slotButtonText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '600',
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  slotButtonTextSelected: {
-    color: '#000000',
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  notesInput: {
-    backgroundColor: '#21262D',
-    borderRadius: 8,
-    padding: 12,
-    color: '#FFFFFF',
-    fontSize: 14,
-    borderWidth: 1,
-    borderColor: '#21262D',
-    textAlignVertical: 'top',
-  },
-  summaryContainer: {
-    marginHorizontal: 20,
-    backgroundColor: '#21262D',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-  },
-  summaryTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 12,
-  },
-  summaryItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  summaryLabel: {
-    color: '#8B949E',
-    fontSize: 14,
-  },
-  summaryValue: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  appointmentButtons: {
-    padding: 20,
-    gap: 12,
-  },
-  bookButton: {
-    backgroundColor: '#F5A623',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  bookButtonDisabled: {
-    backgroundColor: '#21262D',
-    opacity: 0.5,
-  },
-  bookButtonText: {
-    color: '#000000',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  cancelAppointmentButton: {
-    backgroundColor: '#21262D',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  cancelAppointmentButtonText: {
-    color: '#8B949E',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  premiumIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#F5A623',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 24,
-    shadowColor: '#F5A623',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  premiumIconText: {
-    fontSize: 32,
-  },
-  premiumTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-  premiumDescription: {
-    fontSize: 16,
-    color: '#8B949E',
-    textAlign: 'center',
-    marginBottom: 32,
-    lineHeight: 22,
-  },
-  premiumFeatures: {
-    alignSelf: 'stretch',
-    marginBottom: 32,
-  },
-  featureItem: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    marginBottom: 12,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  subscribeNowButton: {
-    backgroundColor: '#F5A623',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 12,
-    shadowColor: '#F5A6A623',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  subscribeNowButtonText: {
-    color: '#000000',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
   },
   appointmentItem: {
     backgroundColor: '#21262D',
