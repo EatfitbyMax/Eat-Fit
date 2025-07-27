@@ -1,3 +1,4 @@
+
 import { Platform } from 'react-native';
 import { InAppPurchaseService, IAP_SUBSCRIPTION_PLANS, IAPSubscriptionPlan } from './inAppPurchases';
 
@@ -121,12 +122,6 @@ export class PaymentService {
       console.error('❌ Erreur paiement Apple Pay:', error);
       throw error;
     }
-  }
-
-  static async presentGooglePayPayment(plan: SubscriptionPlan, userId: string): Promise<boolean> {
-    // Pour Android, on pourrait implémenter Google Play Billing plus tard
-    console.log('ℹ️ Google Pay non encore implémenté');
-    return false;
   }
 
   static async restorePurchases(userId: string): Promise<boolean> {
