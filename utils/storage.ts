@@ -1,5 +1,4 @@
 import { ServerWakeupService } from './serverWakeup';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Configuration serveur VPS OVH pour développement et production
 const SERVER_URL = 'https://eatfitbymax.cloud';
@@ -491,46 +490,16 @@ export class PersistentStorage {
     try {
       await this.ensureConnection();
 
-      const response = await fetch(`${SERVER_URL}/api/app-preferences/${userId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          console.log('📱 Préférences non trouvées, utilisation des préférences par défaut');
-          const defaultPreferences = {
-            theme: 'dark',
-            language: 'fr',
-            notifications: true,
-            units: 'metric'
-          };
-          // Essayer de sauvegarder les préférences par défaut, mais ne pas bloquer si ça échoue
-          try {
-            await this.saveAppPreferences(userId, defaultPreferences);
-            console.log('✅ Préférences par défaut sauvegardées sur le serveur');
-          } catch (saveError) {
-            console.warn('⚠️ Impossible de sauvegarder les préférences par défaut, utilisation en local uniquement');
-          }
-          return defaultPreferences;
-        }
-        throw new Error(`Erreur HTTP: ${response.status}`);
+      const response = await fetch(`${SERVER_URL}/api/app-preferences/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Préférences app récupérées depuis le serveur VPS');
+        return data;
       }
-
-      const data = await response.json();
-      console.log('✅ Préférences app récupérées depuis le serveur VPS');
-      return data;
+      throw new Error('Erreur récupération préférences');
     } catch (error) {
-      console.warn('⚠️ Erreur récupération préférences app, utilisation des préférences par défaut:', error);
-      // Retourner les préférences par défaut au lieu de lancer une erreur
-      return {
-        theme: 'dark',
-        language: 'fr',
-        notifications: true,
-        units: 'metric'
-      };
+      console.error('❌ Erreur récupération préférences app:', error);
+      throw new Error('Impossible de récupérer les préférences de l\'application. Vérifiez votre connexion internet.');
     }
   }
 
@@ -538,33 +507,22 @@ export class PersistentStorage {
     try {
       await this.ensureConnection();
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-
       const response = await fetch(`${SERVER_URL}/api/app-preferences/${userId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(preferences),
-        signal: controller.signal
       });
-
-      clearTimeout(timeoutId);
 
       if (response.ok) {
         console.log('✅ Préférences app sauvegardées sur le serveur VPS');
       } else {
-        const errorText = await response.text().catch(() => 'Erreur inconnue');
-        throw new Error(`Erreur sauvegarde préférences (${response.status}): ${errorText}`);
+        throw new Error('Erreur sauvegarde préférences');
       }
-    } catch (error: any) {
-      if (error.name === 'AbortError') {
-        console.warn('⚠️ Timeout sauvegarde préférences (5s)');
-        throw new Error('Timeout lors de la sauvegarde des préférences');
-      }
+    } catch (error) {
       console.error('❌ Erreur sauvegarde préférences app:', error);
-      throw new Error(`Impossible de sauvegarder les préférences: ${error.message}`);
+      throw new Error('Impossible de sauvegarder les préférences de l\'application. Vérifiez votre connexion internet.');
     }
   }
 
@@ -937,7 +895,7 @@ export const getAllUsers = async () => {
 };
 
 export const getAllProgrammes = async () => {
-  return awaitPersistentStorage.getProgrammes();
+  return await PersistentStorage.getProgrammes();
 };
 
 export const saveUser = async (user: any) => {
