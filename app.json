@@ -72,7 +72,12 @@
           "addGeneratedScheme": false
         }
       ],
-      "expo-in-app-purchases",
+      [
+        "expo-in-app-purchases",
+        {
+          "appleTeamId": "U52ZR3HQFP"
+        }
+      ],
       "expo-build-properties",
       "./plugins/withHealthKit.js"
     ],

@@ -13,7 +13,7 @@ if (ErrorRecovery) {
   });
 }
 
-import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
+import { DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -30,6 +30,7 @@ import { AuthProvider, useAuth } from '@/context/AuthContext';
 import AuthGuard from '@/components/AuthGuard';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { setupGlobalErrorHandlers } from '@/utils/errorHandlers';
+import { InAppPurchaseService } from '@/utils/inAppPurchases';
 
 // Import conditionnel sécurisé de Stripe
 let StripeProvider = ({ children }: { children: React.ReactNode }) => <>{children}</>;
@@ -104,6 +105,30 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [loaded]);
+
+   // Initialiser les achats intégrés
+   useEffect(() => {
+    const initializeIAP = async () => {
+      if (Platform.OS === 'ios') {
+        try {
+          await InAppPurchaseService.init();
+          console.log('✅ In-App Purchases initialisés');
+        } catch (error: any) {
+          console.warn('⚠️ Erreur lors de l\'initialisation des achats intégrés:', error.message);
+        }
+      } else {
+        console.log('ℹ️ In-App Purchases non pris en charge sur cette plateforme.');
+      }
+    };
+
+    initializeIAP();
+
+    return () => {
+      if (Platform.OS === 'ios') {
+        InAppPurchaseService.end();
+      }
+    };
+  }, []);
 
   if (!loaded) {
     return <SplashScreenComponent onFinish={() => {}} />;
