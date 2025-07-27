@@ -490,31 +490,31 @@ export class PersistentStorage {
     try {
       await this.ensureConnection();
 
+      console.log('🔔 Tentative sauvegarde paramètres notifications pour utilisateur:', userId);
+
       const response = await fetch(`${SERVER_URL}/api/notifications/${userId}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings),
       });
 
       if (response.ok) {
-        console.log('✅ Paramètres notifications sauvegardés sur le serveur VPS');
-      } else if (response.status === 404) {
-        const errorData = await response.json();
-        console.warn('⚠️ Utilisateur non trouvé pour sauvegarde notifications:', errorData.error);
-        throw new Error('Utilisateur non trouvé. Veuillez vous reconnecter.');
+        const result = await response.json();
+        console.log('✅ Paramètres notifications sauvegardés sur le serveur VPS:', result);
       } else {
-        const errorData = await response.json();
-        console.error('❌ Erreur serveur sauvegarde notifications:', errorData);
-        throw new Error('Erreur sauvegarde notifications');
+        const errorText = await response.text();
+        console.warn('⚠️ Erreur serveur pour sauvegarde notifications:', response.status, errorText);
+
+        if (response.status === 404) {
+          console.warn('⚠️ Utilisateur non trouvé pour sauvegarde notifications');
+          throw new Error('Utilisateur non trouvé. Veuillez vous reconnecter.');
+        } else {
+          throw new Error(`Erreur serveur: ${response.status}`);
+        }
       }
     } catch (error) {
       console.error('❌ Erreur sauvegarde paramètres notifications:', error);
-      if (error.message.includes('Utilisateur non trouvé')) {
-        throw error; // Propager l'erreur spécifique
-      }
-      throw new Error('Impossible de sauvegarder les paramètres de notifications. Vérifiez votre connexion internet.');
+      throw error;
     }
   }
 
@@ -954,7 +954,7 @@ export const saveProgramme = async (programme: any) => {
     programmes.push(programme);
   }
 
-  await PersistentStorage.saveProgrammes(programmes);
+Updated saveProgramme function and getServerUrl function to enhance flexibility and robustness.  await PersistentStorage.saveProgrammes(programmes);
 };
 
 export const getClients = async (): Promise<any[]> => {
