@@ -323,6 +323,35 @@ export default function NotificationsScreen() {
           >
             <Text style={styles.actionButtonText}>🧪 Tester les notifications</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.actionButton, { backgroundColor: '#28A745', marginTop: 12 }]}
+            onPress={async () => {
+              if (user?.id && settings.progressUpdates) {
+                try {
+                  await NotificationService.sendMotivationNotification(
+                    user.id, 
+                    'Félicitations ! Vous avez atteint un nouveau niveau de progression ! 🎉'
+                  );
+                  Alert.alert(
+                    '🎯 Notification de progrès envoyée', 
+                    'Une notification de motivation va apparaître immédiatement !',
+                    [{ text: 'OK' }]
+                  );
+                } catch (error) {
+                  Alert.alert('Erreur', 'Impossible d\'envoyer la notification de progrès');
+                }
+              } else if (!settings.progressUpdates) {
+                Alert.alert(
+                  'Notifications désactivées', 
+                  'Activez les "Mises à jour de progrès" pour tester cette fonctionnalité.',
+                  [{ text: 'OK' }]
+                );
+              }
+            }}
+          >
+            <Text style={styles.actionButtonText}>🎯 Tester notification de progrès</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
