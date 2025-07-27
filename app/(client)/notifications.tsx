@@ -144,7 +144,7 @@ export default function NotificationsScreen() {
         <View style={styles.header}>
           <TouchableOpacity 
             style={styles.backButton}
-            onPress={() => router.back()}
+            onPress={() => router.push('/(client)/parametres-application')}
           >
             <Text style={styles.backText}>←</Text>
           </TouchableOpacity>
