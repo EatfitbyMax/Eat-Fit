@@ -23,12 +23,8 @@ export default function NotificationsScreen() {
     loadUserData();
   }, []);
 
-  useEffect(() => {
-    // Initialiser les notifications quand l'utilisateur est chargé
-    if (user?.id) {
-      NotificationService.initializeNotifications(user.id);
-    }
-  }, [user]);
+  // Supprimer l'initialisation automatique des notifications
+  // Elles seront initialisées uniquement lors des changements de paramètres
 
   const loadUserData = async () => {
     try {
@@ -52,8 +48,11 @@ export default function NotificationsScreen() {
         // Sauvegarder directement sur le serveur
         await saveNotificationSettings(newSettings);
         
-        // Mettre à jour les notifications programmées
-        await NotificationService.updateNotifications(user.id);
+        // Mettre à jour les notifications programmées seulement si c'est un paramètre qui affecte la programmation
+        const notificationTypes = ['mealReminders', 'workoutReminders', 'weeklyReports', 'pushNotifications'];
+        if (notificationTypes.includes(key)) {
+          await NotificationService.updateNotifications(user.id);
+        }
         
         console.log('✅ Paramètre de notification mis à jour:', key, '=', value);
       }
