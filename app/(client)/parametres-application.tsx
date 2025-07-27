@@ -355,22 +355,9 @@ export default function ParametresApplicationScreen() {
           </View>
         </View>
 
-        {/* Sécurité */}
+        {/* Sécurité et confidentialité */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>🔒 Sécurité</Text>
-
-          <View style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            <View style={styles.settingInfo}>
-              <Text style={[styles.settingTitle, { color: theme.text }]}>Verrouillage biométrique</Text>
-              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Face ID / Touch ID pour l'application</Text>
-            </View>
-            <Switch
-              value={settings.biometricLock}
-              onValueChange={(value) => updateSetting('biometricLock', value)}
-              trackColor={{ false: '#21262D', true: '#F5A623' }}
-              thumbColor={settings.biometricLock ? '#FFFFFF' : '#8B949E'}
-            />
-          </View>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>🔒 Sécurité et confidentialité</Text>
 
           <TouchableOpacity 
             style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}
@@ -378,68 +365,10 @@ export default function ParametresApplicationScreen() {
           >
             <View style={styles.settingInfo}>
               <Text style={[styles.settingTitle, { color: theme.text }]}>Sécurité et confidentialité</Text>
-              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Gérer vos paramètres de sécurité</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Gérer vos paramètres de sécurité et confidentialité</Text>
             </View>
             <Text style={[styles.settingArrow, { color: theme.textSecondary }]}>›</Text>
           </TouchableOpacity>
-        </View>
-
-        {/* Données et stockage */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>💾 Données et stockage</Text>
-
-          <TouchableOpacity 
-            style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]} 
-            onPress={clearCache}
-          >
-            <View style={styles.settingInfo}>
-              <Text style={[styles.settingTitle, { color: theme.text }]}>Vider le cache</Text>
-              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Libérer de l'espace de stockage</Text>
-            </View>
-            <Text style={[styles.settingArrow, { color: theme.textSecondary }]}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}
-            onPress={exportData}
-          >
-            <View style={styles.settingInfo}>
-              <Text style={[styles.settingTitle, { color: theme.text }]}>Exporter mes données</Text>
-              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Télécharger toutes vos données</Text>
-            </View>
-            <Text style={[styles.settingArrow, { color: theme.textSecondary }]}>›</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Confidentialité */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>🔐 Confidentialité</Text>
-
-          <View style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            <View style={styles.settingInfo}>
-              <Text style={[styles.settingTitle, { color: theme.text }]}>Analytics</Text>
-              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Partager des données d'utilisation anonymes</Text>
-            </View>
-            <Switch
-              value={settings.analytics}
-              onValueChange={(value) => updateSetting('analytics', value)}
-              trackColor={{ false: '#21262D', true: '#F5A623' }}
-              thumbColor={settings.analytics ? '#FFFFFF' : '#8B949E'}
-            />
-          </View>
-
-          <View style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            <View style={styles.settingInfo}>
-              <Text style={[styles.settingTitle, { color: theme.text }]}>Rapports de crash</Text>
-              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Envoyer automatiquement les rapports d'erreur</Text>
-            </View>
-            <Switch
-              value={settings.crashReporting}
-              onValueChange={(value) => updateSetting('crashReporting', value)}
-              trackColor={{ false: '#21262D', true: '#F5A623' }}
-              thumbColor={settings.crashReporting ? '#FFFFFF' : '#8B949E'}
-            />
-          </View>
         </View>
 
         {/* Notifications */}
