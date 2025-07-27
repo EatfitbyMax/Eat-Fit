@@ -500,15 +500,20 @@ export class PersistentStorage {
 
       if (!response.ok) {
         if (response.status === 404) {
-          console.log('✅ Préférences non trouvées, création des préférences par défaut sur le serveur');
+          console.log('📱 Préférences non trouvées, utilisation des préférences par défaut');
           const defaultPreferences = {
             theme: 'dark',
             language: 'fr',
             notifications: true,
             units: 'metric'
           };
-          // Sauvegarder les préférences par défaut sur le serveur
-          await this.saveAppPreferences(userId, defaultPreferences);
+          // Essayer de sauvegarder les préférences par défaut, mais ne pas bloquer si ça échoue
+          try {
+            await this.saveAppPreferences(userId, defaultPreferences);
+            console.log('✅ Préférences par défaut sauvegardées sur le serveur');
+          } catch (saveError) {
+            console.warn('⚠️ Impossible de sauvegarder les préférences par défaut, utilisation en local uniquement');
+          }
           return defaultPreferences;
         }
         throw new Error(`Erreur HTTP: ${response.status}`);
@@ -518,8 +523,14 @@ export class PersistentStorage {
       console.log('✅ Préférences app récupérées depuis le serveur VPS');
       return data;
     } catch (error) {
-      console.error('❌ Erreur récupération préférences app:', error);
-      throw new Error('Impossible de récupérer les préférences de l\'application. Vérifiez votre connexion internet.');
+      console.warn('⚠️ Erreur récupération préférences app, utilisation des préférences par défaut:', error);
+      // Retourner les préférences par défaut au lieu de lancer une erreur
+      return {
+        theme: 'dark',
+        language: 'fr',
+        notifications: true,
+        units: 'metric'
+      };
     }
   }
 
@@ -527,22 +538,33 @@ export class PersistentStorage {
     try {
       await this.ensureConnection();
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
       const response = await fetch(`${SERVER_URL}/api/app-preferences/${userId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(preferences),
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         console.log('✅ Préférences app sauvegardées sur le serveur VPS');
       } else {
-        throw new Error('Erreur sauvegarde préférences sur le serveur');
+        const errorText = await response.text().catch(() => 'Erreur inconnue');
+        throw new Error(`Erreur sauvegarde préférences (${response.status}): ${errorText}`);
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.warn('⚠️ Timeout sauvegarde préférences (5s)');
+        throw new Error('Timeout lors de la sauvegarde des préférences');
+      }
       console.error('❌ Erreur sauvegarde préférences app:', error);
-      throw new Error('Impossible de sauvegarder les préférences de l\'application. Vérifiez votre connexion internet.');
+      throw new Error(`Impossible de sauvegarder les préférences: ${error.message}`);
     }
   }
 
