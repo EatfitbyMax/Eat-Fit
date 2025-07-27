@@ -408,43 +408,43 @@ app.get('/api/notifications/:userId', (req, res) => {
     const { userId } = req.params;
     console.log(`🔔 Récupération paramètres notifications pour utilisateur ${userId}`);
 
-    // Charger les utilisateurs existants
-    const users = loadUsers();
-    const user = users.find(user => user.id === userId);
-
-    // Paramètres par défaut
+    // Paramètres par défaut (notifications activées par défaut)
     const defaultSettings = {
       pushNotifications: true,
       mealReminders: true,
       workoutReminders: true,
       progressUpdates: true,
       coachMessages: true,
-      weeklyReports: false,
+      weeklyReports: true,
       soundEnabled: true,
       vibrationEnabled: true,
     };
 
+    // Charger les utilisateurs existants
+    const users = loadUsers();
+    const user = users.find(user => user.id === userId);
+
     if (!user) {
-      console.log(`⚠️ Utilisateur ${userId} non trouvé, retour des paramètres par défaut`);
+      console.log(`⚠️ Utilisateur ${userId} non trouvé, création avec paramètres par défaut`);
       return res.json(defaultSettings);
     }
 
     // Retourner les paramètres existants ou les paramètres par défaut
     const notificationSettings = user.notificationSettings || defaultSettings;
 
-    console.log(`✅ Paramètres notifications récupérés pour ${userId}`);
+    console.log(`✅ Paramètres notifications récupérés pour ${userId}:`, notificationSettings);
     res.json(notificationSettings);
 
   } catch (error) {
     console.error('❌ Erreur récupération paramètres notifications:', error);
-    // Retourner les paramètres par défaut en cas d'erreur
+    // Retourner les paramètres par défaut en cas d'erreur (notifications activées)
     const defaultSettings = {
       pushNotifications: true,
       mealReminders: true,
       workoutReminders: true,
       progressUpdates: true,
       coachMessages: true,
-      weeklyReports: false,
+      weeklyReports: true,
       soundEnabled: true,
       vibrationEnabled: true,
     };

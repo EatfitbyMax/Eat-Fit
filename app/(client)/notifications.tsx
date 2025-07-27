@@ -125,10 +125,18 @@ export default function NotificationsScreen() {
       if (currentUser?.id) {
         console.log('🔔 Chargement paramètres notifications pour utilisateur:', currentUser.id);
         const savedSettings = await PersistentStorage.getNotificationSettings(currentUser.id);
-        setSettings(savedSettings);
-        console.log('✅ Paramètres notifications chargés:', savedSettings);
+        
+        // Vérifier que les paramètres sont valides (pas juste une erreur)
+        if (savedSettings && typeof savedSettings === 'object' && !savedSettings.error) {
+          setSettings(savedSettings);
+          console.log('✅ Paramètres notifications chargés:', savedSettings);
+        } else {
+          console.log('⚠️ Paramètres invalides, utilisation des paramètres par défaut');
+          throw new Error('Paramètres notifications invalides');
+        }
       } else {
         console.error('❌ Aucun utilisateur connecté pour charger les paramètres notifications');
+        throw new Error('Aucun utilisateur connecté');
       }
     } catch (error) {
       console.error('Erreur chargement paramètres notifications:', error);
@@ -144,6 +152,7 @@ export default function NotificationsScreen() {
         vibrationEnabled: true,
       };
       setSettings(defaultSettings);
+      console.log('✅ Paramètres par défaut appliqués');
     }
   };
 
