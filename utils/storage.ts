@@ -1,4 +1,5 @@
 import { ServerWakeupService } from './serverWakeup';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Configuration serveur VPS OVH pour développement et production
 const SERVER_URL = 'https://eatfitbymax.cloud';
@@ -488,18 +489,7 @@ export class PersistentStorage {
   // App preferences
   static async getAppPreferences(userId: string): Promise<any> {
     try {
-      // Vérifier d'abord la connectivité au serveur
-      const isOnline = await this.testConnection();
-      if (!isOnline) {
-        console.warn('📱 Serveur indisponible, utilisation des préférences locales');
-        // Retourner des préférences par défaut si le serveur n'est pas disponible
-        return {
-          theme: 'dark',
-          language: 'fr',
-          notifications: true,
-          units: 'metric'
-        };
-      }
+      await this.ensureConnection();
 
       const response = await fetch(`${SERVER_URL}/api/app-preferences/${userId}`, {
         method: 'GET',
@@ -510,14 +500,14 @@ export class PersistentStorage {
 
       if (!response.ok) {
         if (response.status === 404) {
-          console.log('📱 Préférences non trouvées, création des préférences par défaut');
+          console.log('✅ Préférences non trouvées, création des préférences par défaut sur le serveur');
           const defaultPreferences = {
             theme: 'dark',
             language: 'fr',
             notifications: true,
             units: 'metric'
           };
-          // Sauvegarder les préférences par défaut
+          // Sauvegarder les préférences par défaut sur le serveur
           await this.saveAppPreferences(userId, defaultPreferences);
           return defaultPreferences;
         }
@@ -528,42 +518,14 @@ export class PersistentStorage {
       console.log('✅ Préférences app récupérées depuis le serveur VPS');
       return data;
     } catch (error) {
-      console.warn('⚠️ Erreur récupération préférences serveur:', error);
-
-      // Essayer de récupérer depuis AsyncStorage en fallback
-      try {
-        const localPreferences = await AsyncStorage.getItem(`app_preferences_${userId}`);
-        if (localPreferences) {
-          console.log('📱 Utilisation des préférences locales sauvegardées');
-          return JSON.parse(localPreferences);
-        }
-      } catch (localError) {
-        console.warn('⚠️ Erreur récupération préférences locales:', localError);
-      }
-
-      // Retourner des préférences par défaut en dernier recours
-      console.log('📱 Utilisation des préférences par défaut');
-      return {
-        theme: 'dark',
-        language: 'fr',
-        notifications: true,
-        units: 'metric'
-      };
+      console.error('❌ Erreur récupération préférences app:', error);
+      throw new Error('Impossible de récupérer les préférences de l\'application. Vérifiez votre connexion internet.');
     }
   }
 
   static async saveAppPreferences(userId: string, preferences: any): Promise<void> {
     try {
-      // Toujours sauvegarder localement d'abord
-      await AsyncStorage.setItem(`app_preferences_${userId}`, JSON.stringify(preferences));
-      console.log('💾 Préférences sauvegardées localement');
-
-      // Essayer de synchroniser avec le serveur
-      const isOnline = await this.testConnection();
-      if (!isOnline) {
-        console.warn('📱 Serveur indisponible, préférences sauvegardées uniquement en local');
-        return;
-      }
+      await this.ensureConnection();
 
       const response = await fetch(`${SERVER_URL}/api/app-preferences/${userId}`, {
         method: 'POST',
@@ -576,12 +538,11 @@ export class PersistentStorage {
       if (response.ok) {
         console.log('✅ Préférences app sauvegardées sur le serveur VPS');
       } else {
-        throw new Error('Erreur sauvegarde préférences');
+        throw new Error('Erreur sauvegarde préférences sur le serveur');
       }
     } catch (error) {
-      console.warn('⚠️ Erreur sauvegarde préférences serveur:', error);
-      // Ne pas lancer d'erreur, les préférences sont sauvegardées localement
-      console.log('📱 Préférences conservées en local uniquement');
+      console.error('❌ Erreur sauvegarde préférences app:', error);
+      throw new Error('Impossible de sauvegarder les préférences de l\'application. Vérifiez votre connexion internet.');
     }
   }
 
