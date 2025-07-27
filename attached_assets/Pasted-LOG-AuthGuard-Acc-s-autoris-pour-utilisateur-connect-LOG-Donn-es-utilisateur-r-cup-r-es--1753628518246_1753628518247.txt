@@ -1,0 +1,71 @@
+LOG  🛡️ AuthGuard - Accès autorisé pour utilisateur connecté
+ LOG  Données utilisateur récupérées: {"activityLevel": "leger", "age": 22, "email": "m.pacullmarquie@gmail.com", "favoriteSport": "triathlon", "firstName": "Maxandre", "gender": "Homme", "goals": ["Perdre du poids", "Me muscler", "Gagner en performance", "Planifier mes repas"], "height": 175, "id": "1753194251123", "lastName": "Marquie", "profileImage": undefined, "userType": "client", "weight": 78}
+ LOG  🏃 Sport favori de l'utilisateur: triathlon
+ LOG  🔍 Test de connexion au serveur VPS: https://eatfitbymax.cloud
+ LOG  Données utilisateur récupérées: {"activityLevel": "leger", "age": 22, "email": "m.pacullmarquie@gmail.com", "favoriteSport": "triathlon", "firstName": "Maxandre", "gender": "Homme", "goals": ["Perdre du poids", "Me muscler", "Gagner en performance", "Planifier mes repas"], "height": 175, "id": "1753194251123", "lastName": "Marquie", "profileImage": undefined, "userType": "client", "weight": 78}
+ LOG  🏃 Sport favori de l'utilisateur: triathlon
+ LOG  🔍 Test de connexion au serveur VPS: https://eatfitbymax.cloud
+ LOG  🔍 Abonnement actuel récupéré: {"currency": "EUR", "paymentMethod": "none", "planId": "free", "planName": "Version Gratuite", "price": 0, "status": "active"}
+ LOG  📝 Plan gratuit configuré
+ LOG  🔍 Abonnement actuel récupéré: {"currency": "EUR", "paymentMethod": "none", "planId": "free", "planName": "Version Gratuite", "price": 0, "status": "active"}
+ LOG  📝 Plan gratuit configuré
+ LOG  🔍 Debug getSportDisplay - user.favoriteSport: triathlon
+ LOG  🏃 Sport trouvé: {"category": "Sport d'endurance", "emoji": "🏊‍♂️", "id": "triathlon", "name": "Triathlon"}
+ LOG  🔍 Debug getSportDisplay - user.favoriteSport: triathlon
+ LOG  🏃 Sport trouvé: {"category": "Sport d'endurance", "emoji": "🏊‍♂️", "id": "triathlon", "name": "Triathlon"}
+ LOG  🔍 Debug Profil - isPremium: false currentSubscription: {"currency": "EUR", "paymentMethod": "none", "planId": "free", "planName": "Version Gratuite", "price": 0, "status": "active"} user: m.pacullmarquie@gmail.com
+ LOG  🔍 Debug getSportDisplay - user.favoriteSport: triathlon
+ LOG  🏃 Sport trouvé: {"category": "Sport d'endurance", "emoji": "🏊‍♂️", "id": "triathlon", "name": "Triathlon"}
+ LOG  🔍 Debug getSportDisplay - user.favoriteSport: triathlon
+ LOG  🏃 Sport trouvé: {"category": "Sport d'endurance", "emoji": "🏊‍♂️", "id": "triathlon", "name": "Triathlon"}
+ LOG  🔍 Debug Profil - isPremium: false currentSubscription: {"currency": "EUR", "paymentMethod": "none", "planId": "free", "planName": "Version Gratuite", "price": 0, "status": "active"} user: m.pacullmarquie@gmail.com
+ LOG  ✅ Serveur VPS opérationnel - Serveur EatFitByMax fonctionnel
+ LOG  ✅ Serveur VPS opérationnel - Serveur EatFitByMax fonctionnel
+ LOG  ✅ Statuts intégrations récupérés depuis le serveur VPS
+ LOG  ✅ Statuts intégrations récupérés depuis le serveur VPS
+ LOG  🔍 Debug getSportDisplay - user.favoriteSport: triathlon
+ LOG  🏃 Sport trouvé: {"category": "Sport d'endurance", "emoji": "🏊‍♂️", "id": "triathlon", "name": "Triathlon"}
+ LOG  🔍 Debug getSportDisplay - user.favoriteSport: triathlon
+ LOG  🏃 Sport trouvé: {"category": "Sport d'endurance", "emoji": "🏊‍♂️", "id": "triathlon", "name": "Triathlon"}
+ LOG  🔍 Debug Profil - isPremium: false currentSubscription: {"currency": "EUR", "paymentMethod": "none", "planId": "free", "planName": "Version Gratuite", "price": 0, "status": "active"} user: m.pacullmarquie@gmail.com
+ LOG  🔍 Debug getSportDisplay - user.favoriteSport: triathlon
+ LOG  🏃 Sport trouvé: {"category": "Sport d'endurance", "emoji": "🏊‍♂️", "id": "triathlon", "name": "Triathlon"}
+ LOG  🔍 Debug getSportDisplay - user.favoriteSport: triathlon
+ LOG  🏃 Sport trouvé: {"category": "Sport d'endurance", "emoji": "🏊‍♂️", "id": "triathlon", "name": "Triathlon"}
+ LOG  🔍 Debug Profil - isPremium: false currentSubscription: {"currency": "EUR", "paymentMethod": "none", "planId": "free", "planName": "Version Gratuite", "price": 0, "status": "active"} user: m.pacullmarquie@gmail.com
+ LOG  🛡️ AuthGuard - Route: (client)/parametres-application | Utilisateur: Connecté (m.pacullmarquie@gmail.com)
+ LOG  🛡️ AuthGuard - Accès autorisé pour utilisateur connecté
+ LOG  🛡️ AuthGuard - Route: (client)/notifications | Utilisateur: Connecté (m.pacullmarquie@gmail.com)
+ LOG  🛡️ AuthGuard - Accès autorisé pour utilisateur connecté
+ LOG  🔔 Chargement paramètres notifications pour utilisateur: 1753194251123
+ LOG  🔍 Test de connexion au serveur VPS: https://eatfitbymax.cloud
+ LOG  🔔 Initialisation des notifications pour: 1753194251123
+ LOG  ✅ Permissions notifications accordées
+ LOG  🔍 Test de connexion au serveur VPS: https://eatfitbymax.cloud
+ LOG  ✅ Serveur VPS opérationnel - Serveur EatFitByMax fonctionnel
+ LOG  ✅ Serveur VPS opérationnel - Serveur EatFitByMax fonctionnel
+ LOG  🔔 Réponse serveur notifications: 404 false
+ LOG  ⚠️ Erreur serveur, utilisation des paramètres par défaut locaux
+ ERROR  ❌ Erreur récupération paramètres notifications: [Error: Erreur serveur: 404]
+ LOG  ⚠️ Utilisation des paramètres notifications par défaut suite à erreur
+ LOG  ✅ Paramètres notifications chargés: {"coachMessages": true, "mealReminders": true, "progressUpdates": true, "pushNotifications": true, "soundEnabled": true, "vibrationEnabled": true, "weeklyReports": true, "workoutReminders": true}
+ LOG  🔔 Réponse serveur notifications: 404 false
+ LOG  ⚠️ Erreur serveur, utilisation des paramètres par défaut locaux
+ ERROR  ❌ Erreur récupération paramètres notifications: [Error: Erreur serveur: 404]
+ LOG  ⚠️ Utilisation des paramètres notifications par défaut suite à erreur
+ LOG  ✅ Rappels de repas programmés
+ LOG  🔍 Test de connexion au serveur VPS: https://eatfitbymax.cloud
+ LOG  ✅ Serveur VPS opérationnel - Serveur EatFitByMax fonctionnel
+ LOG  🔔 Réponse serveur notifications: 404 false
+ LOG  ⚠️ Erreur serveur, utilisation des paramètres par défaut locaux
+ ERROR  ❌ Erreur récupération paramètres notifications: [Error: Erreur serveur: 404]
+ LOG  ⚠️ Utilisation des paramètres notifications par défaut suite à erreur
+ LOG  ✅ Rappels d'entraînement programmés
+ LOG  🔍 Test de connexion au serveur VPS: https://eatfitbymax.cloud
+ LOG  ✅ Serveur VPS opérationnel - Serveur EatFitByMax fonctionnel
+ LOG  🔔 Réponse serveur notifications: 404 false
+ LOG  ⚠️ Erreur serveur, utilisation des paramètres par défaut locaux
+ ERROR  ❌ Erreur récupération paramètres notifications: [Error: Erreur serveur: 404]
+ LOG  ⚠️ Utilisation des paramètres notifications par défaut suite à erreur
+ LOG  ✅ Rapport hebdomadaire programmé
+ LOG  ✅ Toutes les notifications ont été initialisées
