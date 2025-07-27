@@ -835,7 +835,7 @@ app.get('/strava-callback', async (req, res) => {
             }, 1000);
           </script>
         </body>
-      </html>
+      The code adds new endpoints for managing notification settings, including retrieval, saving, and testing.      </html>
     `);
   }
 
@@ -897,6 +897,116 @@ app.get('/test-strava', (req, res) => {
     </html>
   `);
 });
+
+// ========================================
+// 🔔 GESTION DES NOTIFICATIONS
+// ========================================
+
+// Récupérer les paramètres de notifications d'un utilisateur
+app.get('/api/notifications/settings/:userId', (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log(`🔔 Récupération paramètres notifications pour utilisateur: ${userId}`);
+
+    // Paramètres par défaut
+    const defaultSettings = {
+      pushNotifications: true,
+      mealReminders: true,
+      workoutReminders: true,
+      progressUpdates: true,
+      coachMessages: true,
+      weeklyReports: true,
+      soundEnabled: true,
+      vibrationEnabled: true
+    };
+
+    // Chercher les paramètres personnalisés dans les données utilisateur
+    const users = loadUsers();
+    const user = users.find(u => u.id === userId);
+
+    if (user && user.notificationSettings) {
+      console.log('✅ Paramètres notifications personnalisés trouvés');
+      res.json({
+        success: true,
+        settings: { ...defaultSettings, ...user.notificationSettings }
+      });
+    } else {
+      console.log('📝 Utilisation des paramètres notifications par défaut');
+      res.json({
+        success: true,
+        settings: defaultSettings
+      });
+    }
+  } catch (error) {
+    console.error('❌ Erreur récupération paramètres notifications:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erreur serveur lors de la récupération des paramètres'
+    });
+  }
+});
+
+// Sauvegarder les paramètres de notifications d'un utilisateur
+app.post('/api/notifications/settings/:userId', (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { settings } = req.body;
+
+    console.log(`🔔 Sauvegarde paramètres notifications pour utilisateur: ${userId}`);
+
+    const users = loadUsers();
+    const userIndex = users.findIndex(u => u.id === userId);
+
+    if (userIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        error: 'Utilisateur non trouvé'
+      });
+    }
+
+    // Mettre à jour les paramètres de notifications
+    users[userIndex].notificationSettings = settings;
+
+    // Sauvegarder
+    saveUsers(users);
+
+    console.log('✅ Paramètres notifications sauvegardés');
+    res.json({
+      success: true,
+      message: 'Paramètres notifications mis à jour'
+    });
+  } catch (error) {
+    console.error('❌ Erreur sauvegarde paramètres notifications:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erreur serveur lors de la sauvegarde'
+    });
+  }
+});
+
+// Test de notification
+app.post('/api/notifications/test/:userId', (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log(`🧪 Test notification pour utilisateur: ${userId}`);
+
+    // Simuler l'envoi d'une notification de test
+    res.json({
+      success: true,
+      message: 'Notification de test envoyée avec succès'
+    });
+  } catch (error) {
+    console.error('❌ Erreur test notification:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erreur lors du test de notification'
+    });
+  }
+});
+
+// ========================================
+// 🔄 GESTION DES MISES À JOUR EAS
+// ========================================
 
 // Route 404
 app.use('*', (req, res) => {

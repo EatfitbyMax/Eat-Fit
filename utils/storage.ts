@@ -5,6 +5,7 @@ const SERVER_URL = 'https://eatfitbymax.cloud';
 const API_URL = 'https://eatfitbymax.cloud';
 
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export class PersistentStorage {
   // Test de connexion au serveur VPS
@@ -444,31 +445,48 @@ export class PersistentStorage {
     }
   }
 
-  // Notification settings
+    // Récupérer les paramètres de notifications
   static async getNotificationSettings(userId: string): Promise<any> {
     try {
-      await this.ensureConnection();
+      console.log(`🔔 Récupération paramètres notifications pour utilisateur: ${userId}`);
 
-      const response = await fetch(`${SERVER_URL}/api/notifications/${userId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      // D'abord essayer de récupérer depuis le serveur
+      try {
+        const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
+        console.log(`🔍 Test de connexion au serveur VPS: ${serverUrl}`);
 
-      console.log('🔔 Réponse serveur notifications:', response.status, response.ok);
+        const response = await fetch(`${serverUrl}/api/notifications/settings/${userId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log('✅ Paramètres notifications récupérés depuis le serveur VPS:', data);
-        return data;
-      } else {
-        console.log('⚠️ Erreur serveur, utilisation des paramètres par défaut locaux');
-        throw new Error(`Erreur serveur: ${response.status}`);
+        console.log(`🔔 Réponse serveur notifications: ${response.status} ${response.ok}`);
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.settings) {
+            console.log('✅ Paramètres notifications récupérés depuis le serveur');
+            // Sauvegarder localement pour cache
+            await AsyncStorage.setItem(`notifications_${userId}`, JSON.stringify(data.settings));
+            return data.settings;
+          }
+        } else {
+          console.log('⚠️ Erreur serveur, utilisation des paramètres par défaut locaux');
+        }
+      } catch (serverError) {
+        console.log('⚠️ Erreur connexion serveur, utilisation des paramètres locaux');
       }
-    } catch (error) {
-      console.error('❌ Erreur récupération paramètres notifications:', error);
-      // Retourner les paramètres par défaut en cas d'erreur (notifications activées par défaut)
+
+      // Fallback : utiliser le cache local
+      const localSettings = await AsyncStorage.getItem(`notifications_${userId}`);
+      if (localSettings) {
+        console.log('📱 Paramètres notifications récupérés du cache local');
+        return JSON.parse(localSettings);
+      }
+
+      // Paramètres par défaut
       const defaultSettings = {
         pushNotifications: true,
         mealReminders: true,
@@ -477,39 +495,61 @@ export class PersistentStorage {
         coachMessages: true,
         weeklyReports: true,
         soundEnabled: true,
-        vibrationEnabled: true,
+        vibrationEnabled: true
       };
+
       console.log('⚠️ Utilisation des paramètres notifications par défaut suite à erreur');
+      await this.saveNotificationSettings(userId, defaultSettings);
+      return defaultSettings;
+    } catch (error) {
+      console.error('❌ Erreur récupération paramètres notifications:', error);
+
+      // En cas d'erreur, retourner les paramètres par défaut
+      const defaultSettings = {
+        pushNotifications: true,
+        mealReminders: true,
+        workoutReminders: true,
+        progressUpdates: true,
+        coachMessages: true,
+        weeklyReports: true,
+        soundEnabled: true,
+        vibrationEnabled: true
+      };
+
       return defaultSettings;
     }
   }
 
+  // Sauvegarder les paramètres de notifications
   static async saveNotificationSettings(userId: string, settings: any): Promise<void> {
     try {
-      await this.ensureConnection();
+      console.log(`🔔 Sauvegarde paramètres notifications pour utilisateur: ${userId}`);
 
-      console.log('🔔 Tentative sauvegarde paramètres notifications pour utilisateur:', userId);
+      // Sauvegarder localement d'abord
+      await AsyncStorage.setItem(`notifications_${userId}`, JSON.stringify(settings));
 
-      const response = await fetch(`${SERVER_URL}/api/notifications/${userId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings),
-      });
+      // Essayer de synchroniser avec le serveur
+      try {
+        const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
 
-      if (response.ok) {
-        const result = await response.json();
-        console.log('✅ Paramètres notifications sauvegardés sur le serveur VPS:', result);
-      } else {
-        const errorText = await response.text();
-        console.warn('⚠️ Erreur serveur pour sauvegarde notifications:', response.status, errorText);
+        const response = await fetch(`${serverUrl}/api/notifications/settings/${userId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ settings }),
+        });
 
-        if (response.status === 404) {
-          console.warn('⚠️ Utilisateur non trouvé pour sauvegarde notifications');
-          throw new Error('Utilisateur non trouvé. Veuillez vous reconnecter.');
+        if (response.ok) {
+          console.log('✅ Paramètres notifications synchronisés avec le serveur');
         } else {
-          throw new Error(`Erreur serveur: ${response.status}`);
+          console.log('⚠️ Erreur synchronisation serveur, sauvegarde locale uniquement');
         }
+      } catch (serverError) {
+        console.log('⚠️ Serveur non accessible, sauvegarde locale uniquement');
       }
+
+      console.log('✅ Paramètres notifications sauvegardés');
     } catch (error) {
       console.error('❌ Erreur sauvegarde paramètres notifications:', error);
       throw error;
