@@ -48,10 +48,30 @@ export default function NotificationsScreen() {
         // Sauvegarder directement sur le serveur
         await saveNotificationSettings(newSettings);
         
-        // Mettre à jour les notifications programmées seulement si c'est un paramètre qui affecte la programmation
-        const notificationTypes = ['mealReminders', 'workoutReminders', 'weeklyReports', 'pushNotifications'];
-        if (notificationTypes.includes(key)) {
-          await NotificationService.updateNotifications(user.id);
+        // Mettre à jour seulement les notifications concernées par le paramètre modifié
+        switch (key) {
+          case 'mealReminders':
+            await NotificationService.updateMealNotifications(user.id);
+            break;
+          case 'workoutReminders':
+            await NotificationService.updateWorkoutNotifications(user.id);
+            break;
+          case 'weeklyReports':
+            await NotificationService.updateWeeklyReportNotifications(user.id);
+            break;
+          case 'pushNotifications':
+            // Si les notifications push sont désactivées, tout annuler
+            if (!value) {
+              await NotificationService.cancelAllNotifications();
+            } else {
+              // Si réactivées, tout reprogrammer
+              await NotificationService.updateNotifications(user.id);
+            }
+            break;
+          // Les autres paramètres (soundEnabled, vibrationEnabled, etc.) n'ont pas besoin de reprogrammation
+          default:
+            console.log(`🔔 Paramètre ${key} mis à jour sans reprogrammation`);
+            break;
         }
         
         console.log('✅ Paramètre de notification mis à jour:', key, '=', value);

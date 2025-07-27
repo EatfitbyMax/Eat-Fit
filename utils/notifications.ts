@@ -288,7 +288,66 @@ export class NotificationService {
     }
   }
 
-  // Mettre à jour les notifications quand les paramètres changent
+  // Mettre à jour seulement les notifications de repas
+  static async updateMealNotifications(userId: string): Promise<void> {
+    try {
+      // Annuler seulement les notifications de repas existantes
+      const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
+      for (const notification of scheduledNotifications) {
+        if (notification.content.title?.includes('🌅') || 
+            notification.content.title?.includes('☀️') || 
+            notification.content.title?.includes('🌆')) {
+          await Notifications.cancelScheduledNotificationAsync(notification.identifier);
+        }
+      }
+
+      // Reprogrammer seulement les notifications de repas
+      await this.scheduleNutritionReminders(userId);
+      console.log('✅ Notifications de repas mises à jour');
+    } catch (error) {
+      console.error('❌ Erreur mise à jour notifications repas:', error);
+    }
+  }
+
+  // Mettre à jour seulement les notifications d'entraînement
+  static async updateWorkoutNotifications(userId: string): Promise<void> {
+    try {
+      // Annuler seulement les notifications d'entraînement existantes
+      const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
+      for (const notification of scheduledNotifications) {
+        if (notification.content.title?.includes('🏋️‍♂️')) {
+          await Notifications.cancelScheduledNotificationAsync(notification.identifier);
+        }
+      }
+
+      // Reprogrammer seulement les notifications d'entraînement
+      await this.scheduleWorkoutReminders(userId);
+      console.log('✅ Notifications d\'entraînement mises à jour');
+    } catch (error) {
+      console.error('❌ Erreur mise à jour notifications entraînement:', error);
+    }
+  }
+
+  // Mettre à jour seulement les rapports hebdomadaires
+  static async updateWeeklyReportNotifications(userId: string): Promise<void> {
+    try {
+      // Annuler seulement les notifications de rapport hebdomadaire existantes
+      const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
+      for (const notification of scheduledNotifications) {
+        if (notification.content.title?.includes('📊')) {
+          await Notifications.cancelScheduledNotificationAsync(notification.identifier);
+        }
+      }
+
+      // Reprogrammer seulement les rapports hebdomadaires
+      await this.scheduleWeeklyReport(userId);
+      console.log('✅ Notifications rapport hebdomadaire mises à jour');
+    } catch (error) {
+      console.error('❌ Erreur mise à jour notifications rapport:', error);
+    }
+  }
+
+  // Mettre à jour les notifications quand les paramètres changent (méthode générale conservée pour compatibilité)
   static async updateNotifications(userId: string): Promise<void> {
     try {
       // Annuler les anciennes
