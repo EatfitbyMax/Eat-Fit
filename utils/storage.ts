@@ -488,24 +488,82 @@ export class PersistentStorage {
   // App preferences
   static async getAppPreferences(userId: string): Promise<any> {
     try {
-      await this.ensureConnection();
-
-      const response = await fetch(`${SERVER_URL}/api/app-preferences/${userId}`);
-      if (response.ok) {
-        const data = await response.json();
-        console.log('✅ Préférences app récupérées depuis le serveur VPS');
-        return data;
+      // Vérifier d'abord la connectivité au serveur
+      const isOnline = await this.testConnection();
+      if (!isOnline) {
+        console.warn('📱 Serveur indisponible, utilisation des préférences locales');
+        // Retourner des préférences par défaut si le serveur n'est pas disponible
+        return {
+          theme: 'dark',
+          language: 'fr',
+          notifications: true,
+          units: 'metric'
+        };
       }
-      throw new Error('Erreur récupération préférences');
+
+      const response = await fetch(`${SERVER_URL}/api/app-preferences/${userId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          console.log('📱 Préférences non trouvées, création des préférences par défaut');
+          const defaultPreferences = {
+            theme: 'dark',
+            language: 'fr',
+            notifications: true,
+            units: 'metric'
+          };
+          // Sauvegarder les préférences par défaut
+          await this.saveAppPreferences(userId, defaultPreferences);
+          return defaultPreferences;
+        }
+        throw new Error(`Erreur HTTP: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Préférences app récupérées depuis le serveur VPS');
+      return data;
     } catch (error) {
-      console.error('❌ Erreur récupération préférences app:', error);
-      throw new Error('Impossible de récupérer les préférences de l\'application. Vérifiez votre connexion internet.');
+      console.warn('⚠️ Erreur récupération préférences serveur:', error);
+
+      // Essayer de récupérer depuis AsyncStorage en fallback
+      try {
+        const localPreferences = await AsyncStorage.getItem(`app_preferences_${userId}`);
+        if (localPreferences) {
+          console.log('📱 Utilisation des préférences locales sauvegardées');
+          return JSON.parse(localPreferences);
+        }
+      } catch (localError) {
+        console.warn('⚠️ Erreur récupération préférences locales:', localError);
+      }
+
+      // Retourner des préférences par défaut en dernier recours
+      console.log('📱 Utilisation des préférences par défaut');
+      return {
+        theme: 'dark',
+        language: 'fr',
+        notifications: true,
+        units: 'metric'
+      };
     }
   }
 
   static async saveAppPreferences(userId: string, preferences: any): Promise<void> {
     try {
-      await this.ensureConnection();
+      // Toujours sauvegarder localement d'abord
+      await AsyncStorage.setItem(`app_preferences_${userId}`, JSON.stringify(preferences));
+      console.log('💾 Préférences sauvegardées localement');
+
+      // Essayer de synchroniser avec le serveur
+      const isOnline = await this.testConnection();
+      if (!isOnline) {
+        console.warn('📱 Serveur indisponible, préférences sauvegardées uniquement en local');
+        return;
+      }
 
       const response = await fetch(`${SERVER_URL}/api/app-preferences/${userId}`, {
         method: 'POST',
@@ -521,8 +579,9 @@ export class PersistentStorage {
         throw new Error('Erreur sauvegarde préférences');
       }
     } catch (error) {
-      console.error('❌ Erreur sauvegarde préférences app:', error);
-      throw new Error('Impossible de sauvegarder les préférences de l\'application. Vérifiez votre connexion internet.');
+      console.warn('⚠️ Erreur sauvegarde préférences serveur:', error);
+      // Ne pas lancer d'erreur, les préférences sont sauvegardées localement
+      console.log('📱 Préférences conservées en local uniquement');
     }
   }
 
@@ -895,7 +954,7 @@ export const getAllUsers = async () => {
 };
 
 export const getAllProgrammes = async () => {
-  return await PersistentStorage.getProgrammes();
+  return awaitPersistentStorage.getProgrammes();
 };
 
 export const saveUser = async (user: any) => {
