@@ -126,7 +126,7 @@ export class NotificationService {
         return;
       }
 
-      const soundConfig = settings.soundEnabled ? 'default' : false;
+      const soundConfig = settings.soundEnabled ? 'default' : undefined;
 
       // Programmer rappel entraînement (18h00)
       await Notifications.scheduleNotificationAsync({
@@ -158,7 +158,7 @@ export class NotificationService {
         return;
       }
 
-      const soundConfig = settings.soundEnabled ? 'default' : false;
+      const soundConfig = settings.soundEnabled ? 'default' : undefined;
 
       await Notifications.scheduleNotificationAsync({
         content: {
@@ -185,7 +185,7 @@ export class NotificationService {
         return;
       }
 
-      const soundConfig = settings.soundEnabled ? 'default' : false;
+      const soundConfig = settings.soundEnabled ? 'default' : undefined;
 
       await Notifications.scheduleNotificationAsync({
         content: {
@@ -212,7 +212,7 @@ export class NotificationService {
         return;
       }
 
-      const soundConfig = settings.soundEnabled ? 'default' : false;
+      const soundConfig = settings.soundEnabled ? 'default' : undefined;
 
       // Tous les dimanches à 20h
       await Notifications.scheduleNotificationAsync({
@@ -263,7 +263,7 @@ export class NotificationService {
   static async testNotification(userId: string): Promise<void> {
     try {
       const settings = await PersistentStorage.getNotificationSettings(userId);
-      const soundConfig = settings.soundEnabled ? 'default' : false;
+      const soundConfig = settings.soundEnabled ? 'default' : undefined;
 
       await Notifications.scheduleNotificationAsync({
         content: {
