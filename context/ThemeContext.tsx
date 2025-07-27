@@ -79,39 +79,41 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   const loadThemePreference = async () => {
     try {
-      const savedTheme = await AsyncStorage.getItem('theme_preference');
-      if (savedTheme !== null) {
-        setIsDarkMode(savedTheme === 'dark');
+      // Charger les préférences depuis le serveur uniquement
+      const { PersistentStorage } = await import('../utils/storage');
+      const currentUser = await PersistentStorage.getCurrentUser();
+      
+      if (currentUser?.id) {
+        const preferences = await PersistentStorage.getAppPreferences(currentUser.id);
+        setIsDarkMode(preferences.theme === 'dark');
+        console.log('✅ Thème chargé depuis le serveur VPS:', preferences.theme);
       } else {
-        // Si pas de préférence sauvegardée, utiliser le thème système
+        // Si pas d'utilisateur connecté, utiliser le thème système
         setIsDarkMode(systemColorScheme === 'dark');
+        console.log('📱 Utilisation du thème système:', systemColorScheme);
       }
     } catch (error) {
-      console.error('Erreur lors du chargement des préférences de thème:', error);
+      console.warn('⚠️ Erreur chargement thème serveur, utilisation du thème système:', error);
+      setIsDarkMode(systemColorScheme === 'dark');
     }
   };
 
   const saveThemePreference = async (isDark: boolean) => {
     try {
-      await AsyncStorage.setItem('theme_preference', isDark ? 'dark' : 'light');
-      
-      // Synchroniser avec le serveur VPS (sans bloquer l'utilisateur)
-      try {
-        const { PersistentStorage } = await import('../utils/storage');
-        const currentUser = await PersistentStorage.getCurrentUser();
-        if (currentUser?.id) {
-          // Récupérer les préférences actuelles (avec fallback)
-          const preferences = await PersistentStorage.getAppPreferences(currentUser.id);
-          preferences.theme = isDark ? 'dark' : 'light';
-          // Sauvegarder (avec fallback local automatique)
-          await PersistentStorage.saveAppPreferences(currentUser.id, preferences);
-        }
-      } catch (error) {
-        // Log en debug uniquement, ne pas afficher d'erreur à l'utilisateur
-        console.debug('Synchronisation thème en arrière-plan échouée:', error);
+      // Synchroniser uniquement avec le serveur VPS
+      const { PersistentStorage } = await import('../utils/storage');
+      const currentUser = await PersistentStorage.getCurrentUser();
+      if (currentUser?.id) {
+        // Récupérer les préférences actuelles depuis le serveur
+        const preferences = await PersistentStorage.getAppPreferences(currentUser.id);
+        preferences.theme = isDark ? 'dark' : 'light';
+        // Sauvegarder sur le serveur uniquement
+        await PersistentStorage.saveAppPreferences(currentUser.id, preferences);
+        console.log('✅ Thème synchronisé avec le serveur VPS');
       }
     } catch (error) {
-      console.error('Erreur lors de la sauvegarde des préférences de thème:', error);
+      console.error('❌ Erreur lors de la synchronisation du thème avec le serveur:', error);
+      throw new Error('Impossible de synchroniser le thème avec le serveur. Vérifiez votre connexion internet.');
     }
   };
 
