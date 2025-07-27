@@ -72,6 +72,7 @@
           "addGeneratedScheme": false
         }
       ],
+      "expo-in-app-purchases",
       "expo-build-properties",
       "./plugins/withHealthKit.js"
     ],
