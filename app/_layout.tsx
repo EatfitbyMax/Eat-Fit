@@ -141,14 +141,15 @@ export default function RootLayout() {
       <LanguageProvider>
         <ThemeProvider>
           <AuthProvider>
-            <StripeProvider 
-              publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_mock_key'}
-              merchantIdentifier="merchant.com.eatfitbymax.app"
-            >
-              <NavigationThemeProvider value={navigationTheme}>
-                <AppNavigator />
-              </NavigationThemeProvider>
-            </StripeProvider>
+            <AuthGuard>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="(client)" />
+                <Stack.Screen name="(coach)" />
+                <Stack.Screen name="auth" />
+                <Stack.Screen name="+not-found" options={{ headerShown: true, title: 'Page non trouvée' }} />
+              </Stack>
+            </AuthGuard>
           </AuthProvider>
         </ThemeProvider>
       </LanguageProvider>
