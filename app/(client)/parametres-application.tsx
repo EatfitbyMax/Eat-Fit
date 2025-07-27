@@ -355,22 +355,6 @@ export default function ParametresApplicationScreen() {
           </View>
         </View>
 
-        {/* Sécurité et confidentialité */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>🔒 Sécurité et confidentialité</Text>
-
-          <TouchableOpacity 
-            style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}
-            onPress={() => router.push('/(client)/securite-confidentialite')}
-          >
-            <View style={styles.settingInfo}>
-              <Text style={[styles.settingTitle, { color: theme.text }]}>Sécurité et confidentialité</Text>
-              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Gérer vos paramètres de sécurité et confidentialité</Text>
-            </View>
-            <Text style={[styles.settingArrow, { color: theme.textSecondary }]}>›</Text>
-          </TouchableOpacity>
-        </View>
-
         {/* Notifications */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>🔔 Notifications</Text>
