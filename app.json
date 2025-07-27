@@ -8,7 +8,7 @@
     "scheme": "eatfitbymax",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "platforms": ["ios", "android"],
+    "platforms": ["ios"],
     "jsEngine": "hermes",
 
     "ios": {
@@ -31,21 +31,7 @@
       }
     },
 
-    "android": {
-      "icon": "./assets/images/crown-logo.png",
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/crown-logo.png",
-        "backgroundColor": "#1E1E1E"
-      },
-      "notification": {
-        "icon": "./assets/images/crown-logo.png",
-        "color": "#FFD700"
-      },
-      "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
-      ]
-    },
+    
 
     "extra": {
       "router": {},

@@ -15,12 +15,7 @@ Notifications.setNotificationHandler({
 
 // Configuration du canal de notification par défaut (Android)
 if (Platform.OS === 'android') {
-  Notifications.setNotificationChannelAsync('default', {
-    name: 'EatFit By Max',
-    importance: Notifications.AndroidImportance.MAX,
-    vibrationPattern: [0, 250, 250, 250],
-    lightColor: '#FFD700',
-  });
+  // Configuration iOS uniquement - pas besoin de canal Android
 }
 
 export class NotificationService {

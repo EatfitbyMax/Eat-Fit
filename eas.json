@@ -23,9 +23,7 @@
         "resourceClass": "m-medium",
         "buildConfiguration": "Release"
       },
-      "android": {
-        "buildType": "apk"
-      }
+      
     },
     "production": {
       "developmentClient": false,
@@ -38,10 +36,7 @@
         "resourceClass": "m-medium",
         "autoIncrement": true
       },
-      "android": {
-        "buildType": "app-bundle",
-        "autoIncrement": "versionCode"
-      }
+      
     },
     "standalone": {
       "developmentClient": false,
@@ -60,10 +55,7 @@
         "ascAppId": "6748567188",
         "appleTeamId": "U52ZR3HQFP"
       },
-      "android": {
-        "serviceAccountKeyPath": "./google-service-account.json",
-        "track": "internal"
-      }
+      
     }
   }
 }
