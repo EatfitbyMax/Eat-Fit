@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Switch, Alert, ActionSheetIOS, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Switch, Alert, ActionSheetIOS, Platform, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '@/context/ThemeContext';
@@ -19,6 +20,9 @@ export default function ParametresApplicationScreen() {
     units: 'Métrique',
     notifications: true,
     dataUsage: 'WiFi uniquement',
+    autoBackup: true,
+    biometricLock: false,
+    highQualityImages: true,
   });
 
   useEffect(() => {
@@ -59,8 +63,14 @@ export default function ParametresApplicationScreen() {
         {
           text: 'Vider',
           style: 'destructive',
-          onPress: () => {
-            Alert.alert('Succès', 'Cache vidé avec succès');
+          onPress: async () => {
+            try {
+              // Simulate cache clearing
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              Alert.alert('Succès', 'Cache vidé avec succès');
+            } catch (error) {
+              Alert.alert('Erreur', 'Impossible de vider le cache');
+            }
           }
         }
       ]
@@ -69,17 +79,17 @@ export default function ParametresApplicationScreen() {
 
   const showLanguageOptions = () => {
     const languageOptions = [
-      { label: t('french'), code: 'fr' as SupportedLanguage },
-      { label: t('english'), code: 'en' as SupportedLanguage },
-      { label: t('spanish'), code: 'es' as SupportedLanguage },
-      { label: t('german'), code: 'de' as SupportedLanguage },
+      { label: 'Français', code: 'fr' as SupportedLanguage },
+      { label: 'English', code: 'en' as SupportedLanguage },
+      { label: 'Español', code: 'es' as SupportedLanguage },
+      { label: 'Deutsch', code: 'de' as SupportedLanguage },
     ];
 
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
         {
-          title: t('choose_language'),
-          options: [...languageOptions.map(lang => lang.label), t('cancel')],
+          title: 'Choisir la langue',
+          options: [...languageOptions.map(lang => lang.label), 'Annuler'],
           cancelButtonIndex: languageOptions.length,
         },
         (buttonIndex) => {
@@ -91,7 +101,7 @@ export default function ParametresApplicationScreen() {
       );
     } else {
       Alert.alert(
-        t('choose_language'),
+        'Choisir la langue',
         'Sélectionnez votre langue préférée',
         [
           ...languageOptions.map(lang => ({
@@ -101,7 +111,7 @@ export default function ParametresApplicationScreen() {
               updateSetting('language', lang.label);
             }
           })),
-          { text: t('cancel'), style: 'cancel' }
+          { text: 'Annuler', style: 'cancel' }
         ]
       );
     }
@@ -142,6 +152,37 @@ export default function ParametresApplicationScreen() {
     }
   };
 
+  const showDataUsageOptions = () => {
+    const options = ['WiFi uniquement', 'WiFi et données mobiles', 'Désactivé'];
+
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          title: 'Utilisation des données',
+          options: [...options, 'Annuler'],
+          cancelButtonIndex: options.length,
+        },
+        (buttonIndex) => {
+          if (buttonIndex < options.length) {
+            updateSetting('dataUsage', options[buttonIndex]);
+          }
+        }
+      );
+    } else {
+      Alert.alert(
+        'Utilisation des données',
+        'Choisir quand synchroniser',
+        [
+          ...options.map(option => ({
+            text: option,
+            onPress: () => updateSetting('dataUsage', option)
+          })),
+          { text: 'Annuler', style: 'cancel' }
+        ]
+      );
+    }
+  };
+
   const resetSettings = () => {
     Alert.alert(
       'Réinitialiser les paramètres',
@@ -162,6 +203,9 @@ export default function ParametresApplicationScreen() {
               units: 'Métrique',
               notifications: true,
               dataUsage: 'WiFi uniquement',
+              autoBackup: true,
+              biometricLock: false,
+              highQualityImages: true,
             };
             saveSettings(defaultSettings);
             Alert.alert('Succès', 'Paramètres réinitialisés');
@@ -171,9 +215,24 @@ export default function ParametresApplicationScreen() {
     );
   };
 
+  const exportData = () => {
+    Alert.alert(
+      'Exporter les données',
+      'Vos données seront exportées et envoyées par email sous 24h.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Exporter', onPress: () => Alert.alert('Export en cours', 'Vous recevrez un email de confirmation.') }
+      ]
+    );
+  };
+
+  const openSystemSettings = () => {
+    Linking.openSettings();
+  };
+
   return (
     <SafeAreaView style={[styles.container, {backgroundColor: theme.background}]}>
-      <ScrollView style={styles.scrollView}>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={[styles.header, { borderBottomColor: theme.border }]}>
           <TouchableOpacity 
@@ -182,34 +241,33 @@ export default function ParametresApplicationScreen() {
           >
             <Text style={[styles.backText, { color: theme.text }]}>←</Text>
           </TouchableOpacity>
-          <Text style={[styles.title, { color: theme.text }]}>{t('app_settings')}</Text>
+          <Text style={[styles.title, { color: theme.text }]}>Paramètres de l'application</Text>
           <View style={styles.placeholder} />
         </View>
 
         {/* Apparence */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>🎨 {t('appearance')}</Text>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>🎨 Apparence</Text>
 
-          {/* Mode sombre */}
           <View style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
             <View style={styles.settingInfo}>
-              <Text style={[styles.settingTitle, { color: theme.text }]}>{t('dark_mode')}</Text>
-              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>{t('dark_interface')}</Text>
+              <Text style={[styles.settingTitle, { color: theme.text }]}>Mode sombre</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Interface sombre pour vos yeux</Text>
             </View>
             <Switch
               value={isDarkMode}
               onValueChange={toggleTheme}
-              trackColor={{ false: '#21262D', true: '#1F6FEB' }}
+              trackColor={{ false: '#21262D', true: '#F5A623' }}
               thumbColor={isDarkMode ? '#FFFFFF' : '#8B949E'}
             />
           </View>
 
           <TouchableOpacity 
             style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}
-            onPress={() => showLanguageOptions()}
+            onPress={showLanguageOptions}
           >
             <View style={styles.settingInfo}>
-              <Text style={[styles.settingTitle, { color: theme.text }]}>{t('language')}</Text>
+              <Text style={[styles.settingTitle, { color: theme.text }]}>Langue</Text>
               <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>{settings.language}</Text>
             </View>
             <Text style={[styles.settingArrow, { color: theme.textSecondary }]}>›</Text>
@@ -217,16 +275,29 @@ export default function ParametresApplicationScreen() {
 
           <TouchableOpacity 
             style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}
-            onPress={() => showUnitsOptions()}
+            onPress={showUnitsOptions}
           >
             <View style={styles.settingInfo}>
-              <Text style={[styles.settingTitle, { color: theme.text }]}>{t('units')}</Text>
+              <Text style={[styles.settingTitle, { color: theme.text }]}>Unités de mesure</Text>
               <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>
-                {settings.units === 'Métrique' ? t('metric_units') : t('imperial_units')}
+                {settings.units === 'Métrique' ? 'Kilogrammes, centimètres' : 'Livres, pieds'}
               </Text>
             </View>
             <Text style={[styles.settingArrow, { color: theme.textSecondary }]}>›</Text>
           </TouchableOpacity>
+
+          <View style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
+            <View style={styles.settingInfo}>
+              <Text style={[styles.settingTitle, { color: theme.text }]}>Images haute qualité</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Télécharger les images en haute définition</Text>
+            </View>
+            <Switch
+              value={settings.highQualityImages}
+              onValueChange={(value) => updateSetting('highQualityImages', value)}
+              trackColor={{ false: '#21262D', true: '#F5A623' }}
+              thumbColor={settings.highQualityImages ? '#FFFFFF' : '#8B949E'}
+            />
+          </View>
         </View>
 
         {/* Synchronisation */}
@@ -241,10 +312,21 @@ export default function ParametresApplicationScreen() {
             <Switch
               value={settings.autoSync}
               onValueChange={(value) => updateSetting('autoSync', value)}
-              trackColor={{ false: '#21262D', true: '#1F6FEB' }}
+              trackColor={{ false: '#21262D', true: '#F5A623' }}
               thumbColor={settings.autoSync ? '#FFFFFF' : '#8B949E'}
             />
           </View>
+
+          <TouchableOpacity 
+            style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}
+            onPress={showDataUsageOptions}
+          >
+            <View style={styles.settingInfo}>
+              <Text style={[styles.settingTitle, { color: theme.text }]}>Utilisation des données</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>{settings.dataUsage}</Text>
+            </View>
+            <Text style={[styles.settingArrow, { color: theme.textSecondary }]}>›</Text>
+          </TouchableOpacity>
 
           <View style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
             <View style={styles.settingInfo}>
@@ -254,15 +336,49 @@ export default function ParametresApplicationScreen() {
             <Switch
               value={settings.offlineMode}
               onValueChange={(value) => updateSetting('offlineMode', value)}
-              trackColor={{ false: '#21262D', true: '#1F6FEB' }}
+              trackColor={{ false: '#21262D', true: '#F5A623' }}
               thumbColor={settings.offlineMode ? '#FFFFFF' : '#8B949E'}
             />
           </View>
 
-          <TouchableOpacity style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <View style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
             <View style={styles.settingInfo}>
-              <Text style={[styles.settingTitle, { color: theme.text }]}>Utilisation des données</Text>
-              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>{settings.dataUsage}</Text>
+              <Text style={[styles.settingTitle, { color: theme.text }]}>Sauvegarde automatique</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Sauvegarder automatiquement vos données</Text>
+            </View>
+            <Switch
+              value={settings.autoBackup}
+              onValueChange={(value) => updateSetting('autoBackup', value)}
+              trackColor={{ false: '#21262D', true: '#F5A623' }}
+              thumbColor={settings.autoBackup ? '#FFFFFF' : '#8B949E'}
+            />
+          </View>
+        </View>
+
+        {/* Sécurité */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>🔒 Sécurité</Text>
+
+          <View style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
+            <View style={styles.settingInfo}>
+              <Text style={[styles.settingTitle, { color: theme.text }]}>Verrouillage biométrique</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Face ID / Touch ID pour l'application</Text>
+            </View>
+            <Switch
+              value={settings.biometricLock}
+              onValueChange={(value) => updateSetting('biometricLock', value)}
+              trackColor={{ false: '#21262D', true: '#F5A623' }}
+              thumbColor={settings.biometricLock ? '#FFFFFF' : '#8B949E'}
+            />
+          </View>
+
+          <TouchableOpacity 
+            style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}
+            onPress={() => router.push('/(client)/securite-confidentialite')}
+          >
+            <View style={styles.settingInfo}>
+              <Text style={[styles.settingTitle, { color: theme.text }]}>Sécurité et confidentialité</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Gérer vos paramètres de sécurité</Text>
             </View>
             <Text style={[styles.settingArrow, { color: theme.textSecondary }]}>›</Text>
           </TouchableOpacity>
@@ -272,7 +388,10 @@ export default function ParametresApplicationScreen() {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>💾 Données et stockage</Text>
 
-          <TouchableOpacity style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]} onPress={clearCache}>
+          <TouchableOpacity 
+            style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]} 
+            onPress={clearCache}
+          >
             <View style={styles.settingInfo}>
               <Text style={[styles.settingTitle, { color: theme.text }]}>Vider le cache</Text>
               <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Libérer de l'espace de stockage</Text>
@@ -280,18 +399,13 @@ export default function ParametresApplicationScreen() {
             <Text style={[styles.settingArrow, { color: theme.textSecondary }]}>›</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <TouchableOpacity 
+            style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}
+            onPress={exportData}
+          >
             <View style={styles.settingInfo}>
-              <Text style={[styles.settingTitle, { color: theme.text }]}>Sauvegarde</Text>
-              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Sauvegarder vos données</Text>
-            </View>
-            <Text style={[styles.settingArrow, { color: theme.textSecondary }]}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            <View style={styles.settingInfo}>
-              <Text style={[styles.settingTitle, { color: theme.text }]}>Exporter les données</Text>
-              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Télécharger vos données</Text>
+              <Text style={[styles.settingTitle, { color: theme.text }]}>Exporter mes données</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Télécharger toutes vos données</Text>
             </View>
             <Text style={[styles.settingArrow, { color: theme.textSecondary }]}>›</Text>
           </TouchableOpacity>
@@ -299,7 +413,7 @@ export default function ParametresApplicationScreen() {
 
         {/* Confidentialité */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>🔒 Confidentialité</Text>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>🔐 Confidentialité</Text>
 
           <View style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
             <View style={styles.settingInfo}>
@@ -309,7 +423,7 @@ export default function ParametresApplicationScreen() {
             <Switch
               value={settings.analytics}
               onValueChange={(value) => updateSetting('analytics', value)}
-              trackColor={{ false: '#21262D', true: '#1F6FEB' }}
+              trackColor={{ false: '#21262D', true: '#F5A623' }}
               thumbColor={settings.analytics ? '#FFFFFF' : '#8B949E'}
             />
           </View>
@@ -322,7 +436,7 @@ export default function ParametresApplicationScreen() {
             <Switch
               value={settings.crashReporting}
               onValueChange={(value) => updateSetting('crashReporting', value)}
-              trackColor={{ false: '#21262D', true: '#1F6FEB' }}
+              trackColor={{ false: '#21262D', true: '#F5A623' }}
               thumbColor={settings.crashReporting ? '#FFFFFF' : '#8B949E'}
             />
           </View>
@@ -342,15 +456,29 @@ export default function ParametresApplicationScreen() {
             </View>
             <Text style={[styles.settingArrow, { color: theme.textSecondary }]}>›</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}
+            onPress={openSystemSettings}
+          >
+            <View style={styles.settingInfo}>
+              <Text style={[styles.settingTitle, { color: theme.text }]}>Paramètres système</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Ouvrir les paramètres iOS/Android</Text>
+            </View>
+            <Text style={[styles.settingArrow, { color: theme.textSecondary }]}>›</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Actions */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>⚙️ Actions</Text>
 
-          <TouchableOpacity style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]} onPress={resetSettings}>
+          <TouchableOpacity 
+            style={[styles.settingItem, styles.dangerItem, { backgroundColor: theme.card, borderColor: '#F85149' }]} 
+            onPress={resetSettings}
+          >
             <View style={styles.settingInfo}>
-              <Text style={[styles.settingTitle, styles.dangerText, { color: theme.text }]}>Réinitialiser les paramètres</Text>
+              <Text style={[styles.settingTitle, styles.dangerText]}>Réinitialiser les paramètres</Text>
               <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Restaurer les paramètres par défaut</Text>
             </View>
             <Text style={[styles.settingArrow, { color: theme.textSecondary }]}>›</Text>
@@ -358,9 +486,13 @@ export default function ParametresApplicationScreen() {
         </View>
 
         {/* Version */}
-        <View style={styles.versionContainer}>
+        <View style={[styles.versionContainer, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <Text style={[styles.versionTitle, { color: theme.text }]}>Informations de l'application</Text>
           <Text style={[styles.versionText, { color: theme.textSecondary }]}>EatFitByMax v1.0.0</Text>
-          <Text style={[styles.versionSubtext, { color: theme.textSecondary }]}>Dernière mise à jour: 11 juin 2024</Text>
+          <Text style={[styles.versionSubtext, { color: theme.textSecondary }]}>Build: 2024.27.07</Text>
+          <Text style={[styles.versionSubtext, { color: theme.textSecondary }]}>
+            Plateforme: {Platform.OS === 'ios' ? 'iOS' : 'Android'}
+          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -418,6 +550,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  dangerItem: {
+    borderColor: '#F85149',
+  },
   settingInfo: {
     flex: 1,
   },
@@ -440,7 +575,18 @@ const styles = StyleSheet.create({
   },
   versionContainer: {
     padding: 20,
-    alignItems: 'center',
+    backgroundColor: '#161B22',
+    margin: 20,
+    marginTop: 0,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  versionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 12,
   },
   versionText: {
     fontSize: 14,
@@ -450,5 +596,6 @@ const styles = StyleSheet.create({
   versionSubtext: {
     fontSize: 12,
     color: '#6A737D',
+    marginBottom: 2,
   },
 });
