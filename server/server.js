@@ -412,12 +412,7 @@ app.get('/api/notifications/:userId', (req, res) => {
     const users = loadUsers();
     const user = users.find(user => user.id === userId);
 
-    if (!user) {
-      console.error(`❌ Utilisateur ${userId} non trouvé pour récupération paramètres notifications`);
-      return res.status(404).json({ error: 'Utilisateur non trouvé' });
-    }
-
-    // Retourner les paramètres de notifications ou les paramètres par défaut
+    // Paramètres par défaut
     const defaultSettings = {
       pushNotifications: true,
       mealReminders: true,
@@ -429,6 +424,12 @@ app.get('/api/notifications/:userId', (req, res) => {
       vibrationEnabled: true,
     };
 
+    if (!user) {
+      console.log(`⚠️ Utilisateur ${userId} non trouvé, retour des paramètres par défaut`);
+      return res.json(defaultSettings);
+    }
+
+    // Retourner les paramètres de notifications ou les paramètres par défaut
     const notificationSettings = user.notificationSettings || defaultSettings;
 
     console.log(`✅ Paramètres notifications récupérés pour ${userId}`);
@@ -436,7 +437,18 @@ app.get('/api/notifications/:userId', (req, res) => {
 
   } catch (error) {
     console.error('❌ Erreur récupération paramètres notifications:', error);
-    res.status(500).json({ error: 'Erreur récupération paramètres notifications' });
+    // Retourner les paramètres par défaut en cas d'erreur
+    const defaultSettings = {
+      pushNotifications: true,
+      mealReminders: true,
+      workoutReminders: true,
+      progressUpdates: true,
+      coachMessages: true,
+      weeklyReports: false,
+      soundEnabled: true,
+      vibrationEnabled: true,
+    };
+    res.json(defaultSettings);
   }
 });
 
@@ -452,8 +464,8 @@ app.post('/api/notifications/:userId', (req, res) => {
     const userIndex = users.findIndex(user => user.id === userId);
 
     if (userIndex === -1) {
-      console.error(`❌ Utilisateur ${userId} non trouvé pour sauvegarde paramètres notifications`);
-      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+      console.log(`⚠️ Utilisateur ${userId} non trouvé, impossible de sauvegarder les paramètres notifications`);
+      return res.status(404).json({ error: 'Utilisateur non trouvé. Les paramètres de notifications ne peuvent pas être sauvegardés.' });
     }
 
     // Mettre à jour les paramètres de notifications

@@ -463,19 +463,10 @@ export class PersistentStorage {
         console.log('✅ Paramètres notifications récupérés depuis le serveur VPS:', data);
         return data;
       } else {
-        // Retourner les paramètres par défaut si l'utilisateur n'existe pas encore
-        const defaultSettings = {
-          pushNotifications: true,
-          mealReminders: true,
-          workoutReminders: true,
-          progressUpdates: true,
-          coachMessages: true,
-          weeklyReports: false,
-          soundEnabled: true,
-          vibrationEnabled: true,
-        };
-        console.log('⚠️ Utilisation des paramètres notifications par défaut');
-        return defaultSettings;
+        // Le serveur retourne maintenant toujours des paramètres par défaut
+        const data = await response.json();
+        console.log('⚠️ Utilisation des paramètres notifications par défaut du serveur');
+        return data;
       }
     } catch (error) {
       console.error('❌ Erreur récupération paramètres notifications:', error);
@@ -509,11 +500,20 @@ export class PersistentStorage {
 
       if (response.ok) {
         console.log('✅ Paramètres notifications sauvegardés sur le serveur VPS');
+      } else if (response.status === 404) {
+        const errorData = await response.json();
+        console.warn('⚠️ Utilisateur non trouvé pour sauvegarde notifications:', errorData.error);
+        throw new Error('Utilisateur non trouvé. Veuillez vous reconnecter.');
       } else {
+        const errorData = await response.json();
+        console.error('❌ Erreur serveur sauvegarde notifications:', errorData);
         throw new Error('Erreur sauvegarde notifications');
       }
     } catch (error) {
       console.error('❌ Erreur sauvegarde paramètres notifications:', error);
+      if (error.message.includes('Utilisateur non trouvé')) {
+        throw error; // Propager l'erreur spécifique
+      }
       throw new Error('Impossible de sauvegarder les paramètres de notifications. Vérifiez votre connexion internet.');
     }
   }
