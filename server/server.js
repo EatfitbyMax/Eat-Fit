@@ -429,7 +429,7 @@ app.get('/api/notifications/:userId', (req, res) => {
       return res.json(defaultSettings);
     }
 
-    // Retourner les paramètres de notifications ou les paramètres par défaut
+    // Retourner les paramètres de // Retourner les paramètres existants ou les paramètres par défaut
     const notificationSettings = user.notificationSettings || defaultSettings;
 
     console.log(`✅ Paramètres notifications récupérés pour ${userId}`);
@@ -470,6 +470,19 @@ app.post('/api/notifications/:userId', (req, res) => {
 
     // Mettre à jour les paramètres de notifications
     users[userIndex].notificationSettings = settings;
+    users[userIndex].lastUpdated = new Date().toISOString();
+
+    // Sauvegarder dans le fichier
+    saveUsers(users);
+
+    console.log(`✅ Paramètres notifications sauvegardés pour ${userId}`);
+    res.json({ success: true, message: 'Paramètres notifications sauvegardés' });
+
+  } catch (error) {
+    console.error('❌ Erreur sauvegarde paramètres notifications:', error);
+    res.status(500).json({ error: 'Erreur sauvegarde paramètres notifications' });
+  }
+});Index].notificationSettings = settings;
     users[userIndex].lastUpdated = new Date().toISOString();
 
     // Sauvegarder dans le fichier

@@ -14,7 +14,7 @@ export default function NotificationsScreen() {
     workoutReminders: true,
     progressUpdates: true,
     coachMessages: true,
-    weeklyReports: false,
+    weeklyReports: true,
     soundEnabled: true,
     vibrationEnabled: true,
   });
@@ -132,14 +132,14 @@ export default function NotificationsScreen() {
       }
     } catch (error) {
       console.error('Erreur chargement paramètres notifications:', error);
-      // Utiliser les paramètres par défaut en cas d'erreur
+      // Utiliser les paramètres par défaut en cas d'erreur (notifications activées)
       const defaultSettings = {
         pushNotifications: true,
         mealReminders: true,
         workoutReminders: true,
         progressUpdates: true,
         coachMessages: true,
-        weeklyReports: false,
+        weeklyReports: true,
         soundEnabled: true,
         vibrationEnabled: true,
       };

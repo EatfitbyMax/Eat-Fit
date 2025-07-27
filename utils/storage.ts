@@ -470,14 +470,14 @@ export class PersistentStorage {
       }
     } catch (error) {
       console.error('❌ Erreur récupération paramètres notifications:', error);
-      // Retourner les paramètres par défaut en cas d'erreur
+      // Retourner les paramètres par défaut en cas d'erreur (notifications activées par défaut)
       const defaultSettings = {
         pushNotifications: true,
         mealReminders: true,
         workoutReminders: true,
         progressUpdates: true,
         coachMessages: true,
-        weeklyReports: false,
+        weeklyReports: true,
         soundEnabled: true,
         vibrationEnabled: true,
       };
