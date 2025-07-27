@@ -40,17 +40,16 @@ export default function NotificationsScreen() {
     setSettings(newSettings);
 
     try {
-      const users = await PersistentStorage.getUsers();
-      const userIndex = users.findIndex(u => u.email === user.email);
-
-      if (userIndex !== -1) {
-        users[userIndex] = { ...users[userIndex], notificationSettings: newSettings };
-        await PersistentStorage.saveUsers(users);
-        await PersistentStorage.setCurrentUser(users[userIndex]);
+      if (user?.id) {
+        // Sauvegarder directement sur le serveur
+        await saveNotificationSettings(newSettings);
+        console.log('✅ Paramètre de notification mis à jour:', key, '=', value);
       }
     } catch (error) {
       console.error('Erreur sauvegarde paramètres:', error);
       Alert.alert('Erreur', 'Impossible de sauvegarder les paramètres');
+      // Revenir à l'ancienne valeur en cas d'erreur
+      setSettings(settings);
     }
   };
 
@@ -110,13 +109,29 @@ export default function NotificationsScreen() {
 
   const loadNotificationSettings = async () => {
     try {
-      const currentUser = await PersistentStorage.getCurrentUser();
+      const currentUser = await getCurrentUser();
       if (currentUser?.id) {
+        console.log('🔔 Chargement paramètres notifications pour utilisateur:', currentUser.id);
         const savedSettings = await PersistentStorage.getNotificationSettings(currentUser.id);
         setSettings(savedSettings);
+        console.log('✅ Paramètres notifications chargés:', savedSettings);
+      } else {
+        console.error('❌ Aucun utilisateur connecté pour charger les paramètres notifications');
       }
     } catch (error) {
       console.error('Erreur chargement paramètres notifications:', error);
+      // Utiliser les paramètres par défaut en cas d'erreur
+      const defaultSettings = {
+        pushNotifications: true,
+        mealReminders: true,
+        workoutReminders: true,
+        progressUpdates: true,
+        coachMessages: true,
+        weeklyReports: false,
+        soundEnabled: true,
+        vibrationEnabled: true,
+      };
+      setSettings(defaultSettings);
     }
   };
 
