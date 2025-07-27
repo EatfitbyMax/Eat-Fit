@@ -333,6 +333,37 @@ app.post('/api/weight/:userId', async (req, res) => {
   }
 });
 
+// Routes pour les préférences d'application
+app.get('/api/app-preferences/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const defaultPreferences = {
+      theme: 'dark',
+      language: 'fr',
+      notifications: true,
+      units: 'metric'
+    };
+    const preferences = await readJsonFile(`app_preferences_${userId}.json`, defaultPreferences);
+    console.log(`✅ Préférences app récupérées pour utilisateur: ${userId}`);
+    res.json(preferences);
+  } catch (error) {
+    console.error(`Erreur lecture préférences app utilisateur ${req.params.userId}:`, error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+app.post('/api/app-preferences/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    await writeJsonFile(`app_preferences_${userId}.json`, req.body);
+    console.log(`✅ Préférences app sauvegardées pour utilisateur: ${userId}`);
+    res.json({ success: true });
+  } catch (error) {
+    console.error(`Erreur sauvegarde préférences app utilisateur ${userId}:`, error);
+    res.status(500).json({ error: 'Erreur sauvegarde préférences app' });
+  }
+});
+
 // Routes pour les profils utilisateur
 app.get('/api/user-profile/:userId', async (req, res) => {
   try {
