@@ -1,4 +1,3 @@
-
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
@@ -25,23 +24,23 @@ if (Platform.OS === 'android') {
 }
 
 export class NotificationService {
-  
+
   // Demander les permissions de notifications
   static async requestPermissions(): Promise<boolean> {
     if (Device.isDevice) {
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
-      
+
       if (existingStatus !== 'granted') {
         const { status } = await Notifications.requestPermissionsAsync();
         finalStatus = status;
       }
-      
+
       if (finalStatus !== 'granted') {
         console.warn('⚠️ Permission notifications refusée');
         return false;
       }
-      
+
       console.log('✅ Permissions notifications accordées');
       return true;
     } else {
@@ -54,7 +53,7 @@ export class NotificationService {
   static async scheduleNutritionReminders(userId: string): Promise<void> {
     try {
       const settings = await PersistentStorage.getNotificationSettings(userId);
-      
+
       if (!settings.mealReminders || !settings.pushNotifications) {
         console.log('🔔 Rappels de repas désactivés');
         return;
@@ -64,7 +63,7 @@ export class NotificationService {
       await Notifications.cancelAllScheduledNotificationsAsync();
 
       // Sons personnalisés selon les préférences
-      const soundConfig = settings.soundEnabled ? 'default' : undefined;
+      const soundConfig = settings.soundEnabled ? 'default' : false;
 
       // Programmer petit-déjeuner (8h00)
       await Notifications.scheduleNotificationAsync({
@@ -121,13 +120,13 @@ export class NotificationService {
   static async scheduleWorkoutReminders(userId: string): Promise<void> {
     try {
       const settings = await PersistentStorage.getNotificationSettings(userId);
-      
+
       if (!settings.workoutReminders || !settings.pushNotifications) {
         console.log('🔔 Rappels d\'entraînement désactivés');
         return;
       }
 
-      const soundConfig = settings.soundEnabled ? 'default' : undefined;
+      const soundConfig = settings.soundEnabled ? 'default' : false;
 
       // Programmer rappel entraînement (18h00)
       await Notifications.scheduleNotificationAsync({
@@ -154,12 +153,12 @@ export class NotificationService {
   static async sendMotivationNotification(userId: string, message: string): Promise<void> {
     try {
       const settings = await PersistentStorage.getNotificationSettings(userId);
-      
+
       if (!settings.progressUpdates || !settings.pushNotifications) {
         return;
       }
 
-      const soundConfig = settings.soundEnabled ? 'default' : undefined;
+      const soundConfig = settings.soundEnabled ? 'default' : false;
 
       await Notifications.scheduleNotificationAsync({
         content: {
@@ -181,12 +180,12 @@ export class NotificationService {
   static async sendCoachNotification(userId: string, coachName: string, message: string): Promise<void> {
     try {
       const settings = await PersistentStorage.getNotificationSettings(userId);
-      
+
       if (!settings.coachMessages || !settings.pushNotifications) {
         return;
       }
 
-      const soundConfig = settings.soundEnabled ? 'default' : undefined;
+      const soundConfig = settings.soundEnabled ? 'default' : false;
 
       await Notifications.scheduleNotificationAsync({
         content: {
@@ -208,12 +207,12 @@ export class NotificationService {
   static async scheduleWeeklyReport(userId: string): Promise<void> {
     try {
       const settings = await PersistentStorage.getNotificationSettings(userId);
-      
+
       if (!settings.weeklyReports || !settings.pushNotifications) {
         return;
       }
 
-      const soundConfig = settings.soundEnabled ? 'default' : undefined;
+      const soundConfig = settings.soundEnabled ? 'default' : false;
 
       // Tous les dimanches à 20h
       await Notifications.scheduleNotificationAsync({
@@ -241,7 +240,7 @@ export class NotificationService {
   static async initializeNotifications(userId: string): Promise<void> {
     try {
       console.log('🔔 Initialisation des notifications pour:', userId);
-      
+
       // Demander les permissions
       const hasPermission = await this.requestPermissions();
       if (!hasPermission) {
@@ -264,7 +263,7 @@ export class NotificationService {
   static async testNotification(userId: string): Promise<void> {
     try {
       const settings = await PersistentStorage.getNotificationSettings(userId);
-      const soundConfig = settings.soundEnabled ? 'default' : undefined;
+      const soundConfig = settings.soundEnabled ? 'default' : false;
 
       await Notifications.scheduleNotificationAsync({
         content: {
@@ -299,10 +298,10 @@ export class NotificationService {
     try {
       // Annuler les anciennes
       await this.cancelAllNotifications();
-      
+
       // Reprogrammer avec les nouveaux paramètres
       await this.initializeNotifications(userId);
-      
+
       console.log('✅ Notifications mises à jour');
     } catch (error) {
       console.error('❌ Erreur mise à jour notifications:', error);
