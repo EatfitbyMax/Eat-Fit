@@ -463,10 +463,8 @@ export class PersistentStorage {
         console.log('✅ Paramètres notifications récupérés depuis le serveur VPS:', data);
         return data;
       } else {
-        // Le serveur retourne maintenant toujours des paramètres par défaut
-        const data = await response.json();
-        console.log('⚠️ Utilisation des paramètres notifications par défaut du serveur');
-        return data;
+        console.log('⚠️ Erreur serveur, utilisation des paramètres par défaut locaux');
+        throw new Error(`Erreur serveur: ${response.status}`);
       }
     } catch (error) {
       console.error('❌ Erreur récupération paramètres notifications:', error);
