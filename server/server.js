@@ -138,26 +138,39 @@ async function writeJsonFile(filename, data) {
   }
 }
 
+// Fake data storage
+let users = [];
+
+// Utility function to load users from memory
+const loadUsers = () => {
+    return users;
+};
+
+// Utility function to save users to memory
+const saveUsers = (updatedUsers) => {
+    users = updatedUsers;
+};
+
 // Routes pour les utilisateurs
 app.get('/api/users', async (req, res) => {
   try {
-    const users = await readJsonFile('users.json', []);
+    // Utilisez la fonction pour charger les utilisateurs
+    const users = loadUsers();
     console.log(`📊 Récupération utilisateurs: ${users.length} utilisateurs trouvés`);
     res.json(users);
   } catch (error) {
     console.error('Erreur lecture utilisateurs:', error);
     // Retourner un tableau vide au lieu d'une erreur pour permettre l'inscription
-    console.log('📝 Création d\'un fichier users.json vide');
-    const emptyUsers = [];
-    await writeJsonFile('users.json', emptyUsers);
-    res.json(emptyUsers);
+    console.log('📝 Initialisation d\'une liste d\'utilisateurs vide');
+    res.json([]);
   }
 });
 
 app.post('/api/users', async (req, res) => {
   try {
+    // Utilisez la fonction pour sauvegarder les utilisateurs
+    saveUsers(req.body);
     console.log('💾 Sauvegarde utilisateurs:', Array.isArray(req.body) ? req.body.length : 'format invalide');
-    await writeJsonFile('users.json', req.body);
     console.log('✅ Utilisateurs sauvegardés avec succès');
     res.json({ success: true });
   } catch (error) {
@@ -353,6 +366,109 @@ app.post('/api/user-profile/:userId', async (req, res) => {
   } catch (error) {
     console.error(`Erreur sauvegarde profil utilisateur ${userId}:`, error);
     res.status(500).json({ error: 'Erreur sauvegarde profil utilisateur' });
+  }
+});
+
+// Route pour sauvegarder les préférences d'application
+app.post('/api/app-preferences/:userId', (req, res) => {
+  try {
+    const { userId } = req.params;
+    const preferences = req.body;
+
+    console.log(`📱 Sauvegarde préférences app pour utilisateur ${userId}:`, preferences);
+
+    // Charger les utilisateurs existants
+    const users = loadUsers();
+    const userIndex = users.findIndex(user => user.id === userId);
+
+    if (userIndex === -1) {
+      console.error(`❌ Utilisateur ${userId} non trouvé pour sauvegarde préférences app`);
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    // Mettre à jour les préférences de l'utilisateur
+    users[userIndex].appPreferences = preferences;
+    users[userIndex].lastUpdated = new Date().toISOString();
+
+    // Sauvegarder dans le fichier
+    saveUsers(users);
+
+    console.log(`✅ Préférences app sauvegardées pour ${userId}`);
+    res.json({ success: true, message: 'Préférences sauvegardées' });
+
+  } catch (error) {
+    console.error('❌ Erreur sauvegarde préférences app:', error);
+    res.status(500).json({ error: 'Erreur sauvegarde préférences app' });
+  }
+});
+
+// Routes pour les paramètres de notifications
+app.get('/api/notifications/:userId', (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log(`🔔 Récupération paramètres notifications pour utilisateur ${userId}`);
+
+    // Charger les utilisateurs existants
+    const users = loadUsers();
+    const user = users.find(user => user.id === userId);
+
+    if (!user) {
+      console.error(`❌ Utilisateur ${userId} non trouvé pour récupération paramètres notifications`);
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    // Retourner les paramètres de notifications ou les paramètres par défaut
+    const defaultSettings = {
+      pushNotifications: true,
+      mealReminders: true,
+      workoutReminders: true,
+      progressUpdates: true,
+      coachMessages: true,
+      weeklyReports: false,
+      soundEnabled: true,
+      vibrationEnabled: true,
+    };
+
+    const notificationSettings = user.notificationSettings || defaultSettings;
+
+    console.log(`✅ Paramètres notifications récupérés pour ${userId}`);
+    res.json(notificationSettings);
+
+  } catch (error) {
+    console.error('❌ Erreur récupération paramètres notifications:', error);
+    res.status(500).json({ error: 'Erreur récupération paramètres notifications' });
+  }
+});
+
+app.post('/api/notifications/:userId', (req, res) => {
+  try {
+    const { userId } = req.params;
+    const settings = req.body;
+
+    console.log(`🔔 Sauvegarde paramètres notifications pour utilisateur ${userId}:`, settings);
+
+    // Charger les utilisateurs existants
+    const users = loadUsers();
+    const userIndex = users.findIndex(user => user.id === userId);
+
+    if (userIndex === -1) {
+      console.error(`❌ Utilisateur ${userId} non trouvé pour sauvegarde paramètres notifications`);
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    // Mettre à jour les paramètres de notifications
+    users[userIndex].notificationSettings = settings;
+    users[userIndex].lastUpdated = new Date().toISOString();
+
+    // Sauvegarder dans le fichier
+    saveUsers(users);
+
+    console.log(`✅ Paramètres notifications sauvegardés pour ${userId}`);
+    res.json({ success: true, message: 'Paramètres notifications sauvegardés' });
+
+  } catch (error) {
+    console.error('❌ Erreur sauvegarde paramètres notifications:', error);
+    res.status(500).json({ error: 'Erreur sauvegarde paramètres notifications' });
   }
 });
 
@@ -581,12 +697,12 @@ app.get('/strava-callback', async (req, res) => {
 
   if (code) {
     console.log('✅ Code d\'autorisation Strava reçu avec succès');
-    
+
     // Si nous avons un state (userId), traiter immédiatement le token
     if (state) {
       try {
         console.log('🔄 Traitement automatique du token pour utilisateur:', state);
-        
+
         // Échanger le code contre un token d'accès
         const tokenResponse = await fetch('https://www.strava.com/oauth/token', {
           method: 'POST',
@@ -620,7 +736,7 @@ app.get('/strava-callback', async (req, res) => {
         console.error('❌ Erreur traitement automatique token:', error);
       }
     }
-    
+
     return res.send(`
       <!DOCTYPE html>
       <html>
