@@ -24,7 +24,7 @@
         "NSCameraUsageDescription": "EatFitBy Max utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas.",
         "NSPhotoLibraryUsageDescription": "EatFitBy Max accède à votre galerie photo pour vous permettre de sélectionner des images de vos repas.",
         "NSMotionUsageDescription": "EatFitBy Max utilise les capteurs de mouvement pour suivre votre activité physique.",
-        "NSLocationWhenInUseUsageDescription": "EatFitBy Max utilise votre localisation pour trouver des salles de sport et des restaurants sains près de chez vous.",
+        "NSLocationWhenInUseUsausageDescription": "EatFitBy Max utilise votre localisation pour trouver des salles de sport et des restaurants sains près de chez vous.",
         "NSHealthShareUsageDescription": "EatFitBy Max utilise Apple Health pour synchroniser vos données de santé et fitness afin de vous fournir un suivi personnalisé de votre progression.",
         "NSHealthUpdateUsageDescription": "EatFitBy Max peut écrire des données dans Apple Health pour garder vos informations de santé à jour.",
         "UIRequiredDeviceCapabilities": ["healthkit"]
@@ -36,6 +36,10 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/crown-logo.png",
         "backgroundColor": "#1E1E1E"
+      },
+      "notification": {
+        "icon": "./assets/images/crown-logo.png",
+        "color": "#1E1E1E"
       },
       "permissions": [
         "android.permission.CAMERA",
@@ -66,6 +70,14 @@
         "expo-camera",
         {
           "cameraPermission": "EatFitBy Max utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/crown-logo.png",
+          "color": "#1E1E1E",
+          "defaultChannel": "default"
         }
       ],
       [

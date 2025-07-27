@@ -13,6 +13,16 @@ Notifications.setNotificationHandler({
   }),
 });
 
+// Configuration du canal de notification par défaut (Android)
+if (Platform.OS === 'android') {
+  Notifications.setNotificationChannelAsync('default', {
+    name: 'EatFit By Max',
+    importance: Notifications.AndroidImportance.MAX,
+    vibrationPattern: [0, 250, 250, 250],
+    lightColor: '#1E1E1E',
+  });
+}
+
 export class NotificationService {
   
   // Demander les permissions de notifications
