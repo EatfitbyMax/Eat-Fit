@@ -237,7 +237,7 @@ export default function ParametresApplicationScreen() {
         <View style={[styles.header, { borderBottomColor: theme.border }]}>
           <TouchableOpacity 
             style={styles.backButton}
-            onPress={() => router.back()}
+            onPress={() => router.push('/(client)/profil')}
           >
             <Text style={[styles.backText, { color: theme.text }]}>←</Text>
           </TouchableOpacity>
