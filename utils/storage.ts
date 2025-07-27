@@ -449,16 +449,49 @@ export class PersistentStorage {
     try {
       await this.ensureConnection();
 
-      const response = await fetch(`${SERVER_URL}/api/notifications/${userId}`);
+      const response = await fetch(`${SERVER_URL}/api/notifications/${userId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log('🔔 Réponse serveur notifications:', response.status, response.ok);
+
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Paramètres notifications récupérés depuis le serveur VPS');
+        console.log('✅ Paramètres notifications récupérés depuis le serveur VPS:', data);
         return data;
+      } else {
+        // Retourner les paramètres par défaut si l'utilisateur n'existe pas encore
+        const defaultSettings = {
+          pushNotifications: true,
+          mealReminders: true,
+          workoutReminders: true,
+          progressUpdates: true,
+          coachMessages: true,
+          weeklyReports: false,
+          soundEnabled: true,
+          vibrationEnabled: true,
+        };
+        console.log('⚠️ Utilisation des paramètres notifications par défaut');
+        return defaultSettings;
       }
-      throw new Error('Erreur récupération notifications');
     } catch (error) {
       console.error('❌ Erreur récupération paramètres notifications:', error);
-      throw new Error('Impossible de récupérer les paramètres de notifications. Vérifiez votre connexion internet.');
+      // Retourner les paramètres par défaut en cas d'erreur
+      const defaultSettings = {
+        pushNotifications: true,
+        mealReminders: true,
+        workoutReminders: true,
+        progressUpdates: true,
+        coachMessages: true,
+        weeklyReports: false,
+        soundEnabled: true,
+        vibrationEnabled: true,
+      };
+      console.log('⚠️ Utilisation des paramètres notifications par défaut suite à erreur');
+      return defaultSettings;
     }
   }
 
