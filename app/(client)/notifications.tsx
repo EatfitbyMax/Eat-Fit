@@ -302,57 +302,7 @@ export default function NotificationsScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Quick Actions */}
-        <View style={styles.section}>
-          <TouchableOpacity 
-            style={styles.actionButton}
-            onPress={async () => {
-              if (user?.id) {
-                try {
-                  await NotificationService.testNotification(user.id);
-                  Alert.alert(
-                    '🧪 Test envoyé', 
-                    'Une notification de test va apparaître dans 2 secondes avec le son configuré !',
-                    [{ text: 'OK' }]
-                  );
-                } catch (error) {
-                  Alert.alert('Erreur', 'Impossible d\'envoyer la notification de test');
-                }
-              }
-            }}
-          >
-            <Text style={styles.actionButtonText}>🧪 Tester les notifications</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.actionButton, { backgroundColor: '#28A745', marginTop: 12 }]}
-            onPress={async () => {
-              if (user?.id && settings.progressUpdates) {
-                try {
-                  await NotificationService.sendMotivationNotification(
-                    user.id, 
-                    'Félicitations ! Vous avez atteint un nouveau niveau de progression ! 🎉'
-                  );
-                  Alert.alert(
-                    '🎯 Notification de progrès envoyée', 
-                    'Une notification de motivation va apparaître immédiatement !',
-                    [{ text: 'OK' }]
-                  );
-                } catch (error) {
-                  Alert.alert('Erreur', 'Impossible d\'envoyer la notification de progrès');
-                }
-              } else if (!settings.progressUpdates) {
-                Alert.alert(
-                  'Notifications désactivées', 
-                  'Activez les "Mises à jour de progrès" pour tester cette fonctionnalité.',
-                  [{ text: 'OK' }]
-                );
-              }
-            }}
-          >
-            <Text style={styles.actionButtonText}>🎯 Tester notification de progrès</Text>
-          </TouchableOpacity>
-        </View>
+        
       </ScrollView>
     </SafeAreaView>
   );
