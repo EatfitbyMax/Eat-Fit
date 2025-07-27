@@ -39,7 +39,7 @@
       },
       "notification": {
         "icon": "./assets/images/crown-logo.png",
-        "color": "#FFD700"
+        "color": "#1E1E1E"
       },
       "permissions": [
         "android.permission.CAMERA",
@@ -76,7 +76,7 @@
         "expo-notifications",
         {
           "icon": "./assets/images/crown-logo.png",
-          "color": "#FFD700",
+          "color": "#1E1E1E",
           "defaultChannel": "default"
         }
       ],
