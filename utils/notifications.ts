@@ -347,6 +347,48 @@ export class NotificationService {
     }
   }
 
+  // Déclencher des notifications de progrès automatiques
+  static async checkAndSendProgressNotifications(userId: string, context: 'workout' | 'nutrition' | 'weight' | 'achievement'): Promise<void> {
+    try {
+      const settings = await PersistentStorage.getNotificationSettings(userId);
+
+      if (!settings.progressUpdates || !settings.pushNotifications) {
+        return;
+      }
+
+      const motivationMessages = {
+        workout: [
+          'Excellent travail ! Votre séance d\'entraînement est terminée ! 💪',
+          'Bravo ! Vous continuez sur votre lancée ! 🏃‍♂️',
+          'Superbe séance ! Vos efforts paient ! 🔥'
+        ],
+        nutrition: [
+          'Parfait ! Vous respectez vos objectifs nutritionnels ! 🥗',
+          'Excellent suivi alimentaire aujourd\'hui ! 📊',
+          'Bravo pour votre discipline nutritionnelle ! 🎯'
+        ],
+        weight: [
+          'Félicitations ! Vous progressez vers votre objectif ! ⚖️',
+          'Excellent ! Votre progression est remarquable ! 📈',
+          'Bravo ! Continuez sur cette voie ! 🎊'
+        ],
+        achievement: [
+          'Objectif atteint ! Vous êtes sur la bonne voie ! 🏆',
+          'Félicitations ! Un nouveau cap franchi ! 🌟',
+          'Incroyable progression ! Vous méritez cette réussite ! 🎉'
+        ]
+      };
+
+      const messages = motivationMessages[context];
+      const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+
+      await this.sendMotivationNotification(userId, randomMessage);
+      console.log(`✅ Notification de progrès automatique envoyée (${context})`);
+    } catch (error) {
+      console.error('❌ Erreur notification progrès automatique:', error);
+    }
+  }
+
   // Mettre à jour les notifications quand les paramètres changent (méthode générale conservée pour compatibilité)
   static async updateNotifications(userId: string): Promise<void> {
     try {
