@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Swi
 import { useRouter } from 'expo-router';
 import { getCurrentUser } from '@/utils/auth';
 import { PersistentStorage } from '@/utils/storage';
+import { NotificationService } from '@/utils/notifications';
 
 export default function NotificationsScreen() {
   const router = useRouter();
@@ -21,6 +22,13 @@ export default function NotificationsScreen() {
   useEffect(() => {
     loadUserData();
   }, []);
+
+  useEffect(() => {
+    // Initialiser les notifications quand l'utilisateur est chargé
+    if (user?.id) {
+      NotificationService.initializeNotifications(user.id);
+    }
+  }, [user]);
 
   const loadUserData = async () => {
     try {
@@ -43,6 +51,10 @@ export default function NotificationsScreen() {
       if (user?.id) {
         // Sauvegarder directement sur le serveur
         await saveNotificationSettings(newSettings);
+        
+        // Mettre à jour les notifications programmées
+        await NotificationService.updateNotifications(user.id);
+        
         console.log('✅ Paramètre de notification mis à jour:', key, '=', value);
       }
     } catch (error) {
@@ -266,7 +278,20 @@ export default function NotificationsScreen() {
         <View style={styles.section}>
           <TouchableOpacity 
             style={styles.actionButton}
-            onPress={() => Alert.alert('Test', 'Notification de test envoyée !')}
+            onPress={async () => {
+              if (user?.id) {
+                try {
+                  await NotificationService.testNotification(user.id);
+                  Alert.alert(
+                    '🧪 Test envoyé', 
+                    'Une notification de test va apparaître dans 2 secondes avec le son configuré !',
+                    [{ text: 'OK' }]
+                  );
+                } catch (error) {
+                  Alert.alert('Erreur', 'Impossible d\'envoyer la notification de test');
+                }
+              }
+            }}
           >
             <Text style={styles.actionButtonText}>🧪 Tester les notifications</Text>
           </TouchableOpacity>
