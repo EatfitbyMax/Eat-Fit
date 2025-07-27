@@ -402,7 +402,7 @@ app.post('/api/app-preferences/:userId', (req, res) => {
   }
 });
 
-// Routes pour les paramètres de notifications
+// Routes pour les paramètres de notifications (compatibilité ancienne API)
 app.get('/api/notifications/:userId', (req, res) => {
   try {
     const { userId } = req.params;
@@ -437,58 +437,6 @@ app.get('/api/notifications/:userId', (req, res) => {
   } catch (error) {
     console.error('❌ Erreur récupération paramètres notifications:', error);
     res.status(500).json({ error: 'Erreur récupération paramètres notifications' });
-  }
-});
-
-app.post('/api/notifications/:userId', (req, res) => {
-  try {
-    const { userId } = req.params;
-    const notificationSettings = req.body;
-    console.log(`🔔 Sauvegarde paramètres notifications pour utilisateur ${userId}:`, notificationSettings);
-
-    // Charger les utilisateurs existants
-    const users = loadUsers();
-    const userIndex = users.findIndex(user => user.id === userId);
-
-    if (userIndex === -1) {
-      console.log(`⚠️ Utilisateur ${userId} non trouvé pour sauvegarde notifications`);
-      return res.status(404).json({ error: 'Utilisateur non trouvé' });
-    }
-
-    // Mettre à jour les paramètres de notifications de l'utilisateur
-    users[userIndex].notificationSettings = notificationSettings;
-    users[userIndex].lastUpdated = new Date().toISOString();
-
-    // Sauvegarder dans le fichier
-    saveUsers(users);
-
-    console.log(`✅ Paramètres notifications sauvegardés pour ${userId}`);
-    res.json({ success: true, message: 'Paramètres notifications sauvegardés' });
-
-  } catch (error) {
-    console.error('❌ Erreur sauvegarde paramètres notifications:', error);
-    res.status(500).json({ error: 'Erreur sauvegarde paramètres notifications' });
-  }
-}); paramètres existants ou les paramètres par défaut
-    const notificationSettings = user.notificationSettings || defaultSettings;
-
-    console.log(`✅ Paramètres notifications récupérés pour ${userId}:`, notificationSettings);
-    res.json(notificationSettings);
-
-  } catch (error) {
-    console.error('❌ Erreur récupération paramètres notifications:', error);
-    // Retourner les paramètres par défaut en cas d'erreur (notifications activées)
-    const defaultSettings = {
-      pushNotifications: true,
-      mealReminders: true,
-      workoutReminders: true,
-      progressUpdates: true,
-      coachMessages: true,
-      weeklyReports: true,
-      soundEnabled: true,
-      vibrationEnabled: true,
-    };
-    res.json(defaultSettings);
   }
 });
 
@@ -902,11 +850,11 @@ app.get('/test-strava', (req, res) => {
 // 🔔 GESTION DES NOTIFICATIONS
 // ========================================
 
-// Récupérer les paramètres de notifications d'un utilisateur
+// Récupérer les paramètres de notifications d'un utilisateur (nouvelle API)
 app.get('/api/notifications/settings/:userId', (req, res) => {
   try {
     const { userId } = req.params;
-    console.log(`🔔 Récupération paramètres notifications pour utilisateur: ${userId}`);
+    console.log(`🔔 [SETTINGS] Récupération paramètres notifications pour utilisateur: ${userId}`);
 
     // Paramètres par défaut
     const defaultSettings = {
@@ -925,20 +873,20 @@ app.get('/api/notifications/settings/:userId', (req, res) => {
     const user = users.find(u => u.id === userId);
 
     if (user && user.notificationSettings) {
-      console.log('✅ Paramètres notifications personnalisés trouvés');
+      console.log('✅ [SETTINGS] Paramètres notifications personnalisés trouvés');
       res.json({
         success: true,
         settings: { ...defaultSettings, ...user.notificationSettings }
       });
     } else {
-      console.log('📝 Utilisation des paramètres notifications par défaut');
+      console.log('📝 [SETTINGS] Utilisation des paramètres notifications par défaut');
       res.json({
         success: true,
         settings: defaultSettings
       });
     }
   } catch (error) {
-    console.error('❌ Erreur récupération paramètres notifications:', error);
+    console.error('❌ [SETTINGS] Erreur récupération paramètres notifications:', error);
     res.status(500).json({
       success: false,
       error: 'Erreur serveur lors de la récupération des paramètres'
@@ -946,18 +894,19 @@ app.get('/api/notifications/settings/:userId', (req, res) => {
   }
 });
 
-// Sauvegarder les paramètres de notifications d'un utilisateur
+// Sauvegarder les paramètres de notifications d'un utilisateur (nouvelle API)
 app.post('/api/notifications/settings/:userId', (req, res) => {
   try {
     const { userId } = req.params;
     const { settings } = req.body;
 
-    console.log(`🔔 Sauvegarde paramètres notifications pour utilisateur: ${userId}`);
+    console.log(`🔔 [SETTINGS] Sauvegarde paramètres notifications pour utilisateur: ${userId}`, settings);
 
     const users = loadUsers();
     const userIndex = users.findIndex(u => u.id === userId);
 
     if (userIndex === -1) {
+      console.log(`⚠️ [SETTINGS] Utilisateur ${userId} non trouvé`);
       return res.status(404).json({
         success: false,
         error: 'Utilisateur non trouvé'
@@ -966,17 +915,18 @@ app.post('/api/notifications/settings/:userId', (req, res) => {
 
     // Mettre à jour les paramètres de notifications
     users[userIndex].notificationSettings = settings;
+    users[userIndex].lastUpdated = new Date().toISOString();
 
     // Sauvegarder
     saveUsers(users);
 
-    console.log('✅ Paramètres notifications sauvegardés');
+    console.log(`✅ [SETTINGS] Paramètres notifications sauvegardés pour ${userId}`);
     res.json({
       success: true,
       message: 'Paramètres notifications mis à jour'
     });
   } catch (error) {
-    console.error('❌ Erreur sauvegarde paramètres notifications:', error);
+    console.error('❌ [SETTINGS] Erreur sauvegarde paramètres notifications:', error);
     res.status(500).json({
       success: false,
       error: 'Erreur serveur lors de la sauvegarde'

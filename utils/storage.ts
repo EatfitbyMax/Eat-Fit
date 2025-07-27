@@ -473,7 +473,21 @@ export class PersistentStorage {
             return data.settings;
           }
         } else {
-          console.log('⚠️ Erreur serveur, utilisation des paramètres par défaut locaux');
+          console.log('⚠️ Erreur serveur, fallback vers ancienne API');
+          // Fallback vers l'ancienne API
+          const fallbackResponse = await fetch(`${serverUrl}/api/notifications/${userId}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+          
+          if (fallbackResponse.ok) {
+            const fallbackData = await fallbackResponse.json();
+            console.log('✅ Paramètres notifications récupérés depuis l\'ancienne API');
+            await AsyncStorage.setItem(`notifications_${userId}`, JSON.stringify(fallbackData));
+            return fallbackData;
+          }
         }
       } catch (serverError) {
         console.log('⚠️ Erreur connexion serveur, utilisation des paramètres locaux');
@@ -543,7 +557,21 @@ export class PersistentStorage {
         if (response.ok) {
           console.log('✅ Paramètres notifications synchronisés avec le serveur');
         } else {
-          console.log('⚠️ Erreur synchronisation serveur, sauvegarde locale uniquement');
+          console.log('⚠️ Erreur synchronisation serveur, fallback vers ancienne API');
+          // Fallback vers l'ancienne API
+          const fallbackResponse = await fetch(`${serverUrl}/api/notifications/${userId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(settings),
+          });
+          
+          if (fallbackResponse.ok) {
+            console.log('✅ Paramètres notifications sauvegardés via ancienne API');
+          } else {
+            console.log('⚠️ Échec sauvegarde sur les deux APIs, sauvegarde locale uniquement');
+          }
         }
       } catch (serverError) {
         console.log('⚠️ Serveur non accessible, sauvegarde locale uniquement');
