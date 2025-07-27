@@ -450,12 +450,12 @@ export class PersistentStorage {
     try {
       console.log(`🔔 Récupération paramètres notifications pour utilisateur: ${userId}`);
 
-      // D'abord essayer de récupérer depuis le serveur
+      // Utiliser directement l'ancienne API qui fonctionne
       try {
         const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
         console.log(`🔍 Test de connexion au serveur VPS: ${serverUrl}`);
 
-        const response = await fetch(`${serverUrl}/api/notifications/settings/${userId}`, {
+        const response = await fetch(`${serverUrl}/api/notifications/${userId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -466,28 +466,12 @@ export class PersistentStorage {
 
         if (response.ok) {
           const data = await response.json();
-          if (data.success && data.settings) {
-            console.log('✅ Paramètres notifications récupérés depuis le serveur');
-            // Sauvegarder localement pour cache
-            await AsyncStorage.setItem(`notifications_${userId}`, JSON.stringify(data.settings));
-            return data.settings;
-          }
+          console.log('✅ Paramètres notifications récupérés depuis le serveur');
+          // Sauvegarder localement pour cache
+          await AsyncStorage.setItem(`notifications_${userId}`, JSON.stringify(data));
+          return data;
         } else {
-          console.log('⚠️ Erreur serveur, fallback vers ancienne API');
-          // Fallback vers l'ancienne API
-          const fallbackResponse = await fetch(`${serverUrl}/api/notifications/${userId}`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          });
-          
-          if (fallbackResponse.ok) {
-            const fallbackData = await fallbackResponse.json();
-            console.log('✅ Paramètres notifications récupérés depuis l\'ancienne API');
-            await AsyncStorage.setItem(`notifications_${userId}`, JSON.stringify(fallbackData));
-            return fallbackData;
-          }
+          console.log('⚠️ Erreur serveur, utilisation des paramètres par défaut locaux');
         }
       } catch (serverError) {
         console.log('⚠️ Erreur connexion serveur, utilisation des paramètres locaux');
@@ -542,36 +526,22 @@ export class PersistentStorage {
       // Sauvegarder localement d'abord
       await AsyncStorage.setItem(`notifications_${userId}`, JSON.stringify(settings));
 
-      // Essayer de synchroniser avec le serveur
+      // Essayer de synchroniser avec le serveur via l'ancienne API qui fonctionne
       try {
         const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
 
-        const response = await fetch(`${serverUrl}/api/notifications/settings/${userId}`, {
+        const response = await fetch(`${serverUrl}/api/notifications/${userId}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ settings }),
+          body: JSON.stringify(settings),
         });
 
         if (response.ok) {
-          console.log('✅ Paramètres notifications synchronisés avec le serveur');
+          console.log('✅ Paramètres notifications sauvegardés sur le serveur');
         } else {
-          console.log('⚠️ Erreur synchronisation serveur, fallback vers ancienne API');
-          // Fallback vers l'ancienne API
-          const fallbackResponse = await fetch(`${serverUrl}/api/notifications/${userId}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(settings),
-          });
-          
-          if (fallbackResponse.ok) {
-            console.log('✅ Paramètres notifications sauvegardés via ancienne API');
-          } else {
-            console.log('⚠️ Échec sauvegarde sur les deux APIs, sauvegarde locale uniquement');
-          }
+          console.log('⚠️ Échec sauvegarde serveur, sauvegarde locale uniquement');
         }
       } catch (serverError) {
         console.log('⚠️ Serveur non accessible, sauvegarde locale uniquement');
