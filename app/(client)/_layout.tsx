@@ -133,17 +133,18 @@ export default function ClientLayout() {
         options={{
           title: 'Profil',
           tabBarIcon: ({ color, focused }) => {
-            const isActive = focused || pathname.includes('informations-personnelles');
+            const isActive = focused || pathname.includes('informations-personnelles') || pathname.includes('parametres-application');
+            const isOnParametresApp = pathname === '/(client)/parametres-application';
             return (
               <IconSymbol 
                 size={28} 
                 name={isActive ? 'person.fill' : 'person'} 
-                color={isActive ? '#F5A623' : color} 
+                color={isOnParametresApp ? '#F5A623' : (isActive ? '#F5A623' : color)} 
               />
             );
           },
           tabBarLabelStyle: (() => {
-            const isActive = pathname.includes('informations-personnelles') || pathname.includes('profil');
+            const isActive = pathname.includes('informations-personnelles') || pathname.includes('profil') || pathname.includes('parametres-application');
             return {
               color: isActive ? '#F5A623' : '#8B949E',
             };
