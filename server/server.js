@@ -429,7 +429,47 @@ app.get('/api/notifications/:userId', (req, res) => {
       return res.json(defaultSettings);
     }
 
-    // Retourner les paramètres existants ou les paramètres par défaut
+    // Retourner les paramètres de notification ou les paramètres par défaut
+    const notificationSettings = user.notificationSettings || defaultSettings;
+    console.log(`✅ Paramètres notifications récupérés pour ${userId}:`, notificationSettings);
+    res.json(notificationSettings);
+
+  } catch (error) {
+    console.error('❌ Erreur récupération paramètres notifications:', error);
+    res.status(500).json({ error: 'Erreur récupération paramètres notifications' });
+  }
+});
+
+app.post('/api/notifications/:userId', (req, res) => {
+  try {
+    const { userId } = req.params;
+    const notificationSettings = req.body;
+    console.log(`🔔 Sauvegarde paramètres notifications pour utilisateur ${userId}:`, notificationSettings);
+
+    // Charger les utilisateurs existants
+    const users = loadUsers();
+    const userIndex = users.findIndex(user => user.id === userId);
+
+    if (userIndex === -1) {
+      console.log(`⚠️ Utilisateur ${userId} non trouvé pour sauvegarde notifications`);
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    // Mettre à jour les paramètres de notifications de l'utilisateur
+    users[userIndex].notificationSettings = notificationSettings;
+    users[userIndex].lastUpdated = new Date().toISOString();
+
+    // Sauvegarder dans le fichier
+    saveUsers(users);
+
+    console.log(`✅ Paramètres notifications sauvegardés pour ${userId}`);
+    res.json({ success: true, message: 'Paramètres notifications sauvegardés' });
+
+  } catch (error) {
+    console.error('❌ Erreur sauvegarde paramètres notifications:', error);
+    res.status(500).json({ error: 'Erreur sauvegarde paramètres notifications' });
+  }
+}); paramètres existants ou les paramètres par défaut
     const notificationSettings = user.notificationSettings || defaultSettings;
 
     console.log(`✅ Paramètres notifications récupérés pour ${userId}:`, notificationSettings);
