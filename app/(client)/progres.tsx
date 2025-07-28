@@ -1641,41 +1641,80 @@ export default function ProgresScreen() {
       const user = await PersistentStorage.getCurrentUser();
       if (!user) return;
 
+      console.log('=== CHARGEMENT DONNÉES NUTRITION PROGRÈS ===');
+      console.log('User ID:', user.id);
+
       // Charger les données nutritionnelles réelles avec priorité sur le serveur VPS
       let nutritionEntries = [];
       
-      // Charger depuis le serveur VPS
+      // Charger depuis le serveur VPS avec la même logique que nutrition.tsx
       try {
         const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
+        console.log('🌐 Tentative de connexion au serveur VPS:', VPS_URL);
+        
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 secondes timeout
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 secondes timeout comme nutrition.tsx
 
         const response = await fetch(`${VPS_URL}/api/nutrition/${user.id}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
           signal: controller.signal
         });
 
         clearTimeout(timeoutId);
 
+        console.log('📊 Response status:', response.status, 'OK:', response.ok);
+
         if (response.ok) {
           nutritionEntries = await response.json();
-          console.log('Données nutrition chargées depuis le serveur VPS pour les progrès:', nutritionEntries.length, 'entrées');
+          console.log('✅ Données nutrition chargées depuis le serveur VPS pour les progrès:', nutritionEntries.length, 'entrées');
+          
+          // Validation des données reçues
+          if (!Array.isArray(nutritionEntries)) {
+            console.warn('⚠️ Format de données inattendu, initialisation avec tableau vide');
+            nutritionEntries = [];
+          } else {
+            // Afficher les premières entrées pour debug
+            if (nutritionEntries.length > 0) {
+              console.log('📊 Premières entrées nutrition:', nutritionEntries.slice(0, 3).map(e => ({
+                date: e.date,
+                product: e.product?.name || 'Inconnu',
+                calories: e.calories
+              })));
+            }
+          }
           
           // Sauvegarder en local comme backup
           await AsyncStorage.setItem(`food_entries_${user.id}`, JSON.stringify(nutritionEntries));
+          console.log('💾 Sauvegarde locale effectuée');
         } else {
-          throw new Error('Réponse serveur VPS non-OK');
+          throw new Error(`Réponse serveur VPS non-OK: ${response.status}`);
         }
       } catch (serverError) {
-        console.log('Erreur serveur VPS nutrition (progrès):', serverError.message);
+        console.log('❌ Erreur serveur VPS nutrition (progrès):', serverError.message);
         
         // Fallback vers le stockage local
-        console.log('Fallback vers le stockage local pour nutrition (progrès)');
-        const stored = await AsyncStorage.getItem(`food_entries_${user.id}`);
-        if (stored) {
-          nutritionEntries = JSON.parse(stored);
-          console.log('Données nutrition chargées depuis le stockage local:', nutritionEntries.length, 'entrées');
-        } else {
-          console.log('Aucune donnée nutritionnelle trouvée en local');
+        console.log('📱 Fallback vers le stockage local pour nutrition (progrès)');
+        try {
+          const stored = await AsyncStorage.getItem(`food_entries_${user.id}`);
+          if (stored) {
+            const parsedData = JSON.parse(stored);
+            if (Array.isArray(parsedData)) {
+              nutritionEntries = parsedData;
+              console.log('✅ Données nutrition chargées depuis le stockage local:', nutritionEntries.length, 'entrées');
+            } else {
+              console.warn('⚠️ Données locales invalides, initialisation avec tableau vide');
+              nutritionEntries = [];
+            }
+          } else {
+            console.log('⚠️ Aucune donnée nutritionnelle trouvée en local');
+            nutritionEntries = [];
+          }
+        } catch (localError) {
+          console.error('❌ Erreur lecture stockage local:', localError);
+          nutritionEntries = [];
         }
       }
 
