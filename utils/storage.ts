@@ -351,12 +351,12 @@ export class PersistentStorage {
     }
   }
 
-  // Subscription methods
+  // Subscription methods - gérés par Apple App Store
   static async getSubscription(userId: string): Promise<any> {
     try {
       await this.ensureConnection();
 
-      const response = await fetch(`${SERVER_URL}/api/stripe/subscription/${userId}`);
+      const response = await fetch(`${SERVER_URL}/api/subscription/${userId}`);
       if (response.ok) {
         const data = await response.json();
         console.log('✅ Abonnement récupéré depuis le serveur VPS');
