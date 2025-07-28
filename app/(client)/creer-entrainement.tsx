@@ -17,6 +17,7 @@ import { getCurrentUser } from '../../utils/auth';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { allSports } from '@/utils/sportPrograms';
+import { PersistentStorage } from '@/utils/storage';
 
 interface Exercise {
   id: string;
@@ -598,7 +599,7 @@ export default function CreerEntrainementScreen() {
                 const isFavorite = sport.id === userFavoriteSport;
                 const isRecent = recentSports.includes(sport.id) && !isFavorite;
                 const isFirstRecent = isRecent && index === 1; // Premier sport récent après le favori
-                
+
                 return (
                   <View key={sport.id}>
                     {/* Séparateur pour les sports récents */}
@@ -607,7 +608,7 @@ export default function CreerEntrainementScreen() {
                         <Text style={styles.sectionSeparatorText}>📋 Sports récents</Text>
                       </View>
                     )}
-                    
+
                     {/* Séparateur pour tous les sports */}
                     {!isFavorite && !isRecent && index === (recentSports.filter(id => id !== userFavoriteSport).length + (userFavoriteSport ? 1 : 0)) && (
                       <View style={styles.sectionSeparator}>
@@ -647,13 +648,13 @@ export default function CreerEntrainementScreen() {
                             </Text>
                           </View>
                         </View>
-                        
+
                         {isFavorite && (
                           <View style={styles.favoriteIndicator}>
                             <Text style={styles.favoriteIndicatorText}>⭐ Favori</Text>
                           </View>
                         )}
-                        
+
                         {isRecent && (
                           <View style={styles.recentIndicator}>
                             <Text style={styles.recentIndicatorText}>🕒 Récent</Text>
@@ -881,7 +882,7 @@ export default function CreerEntrainementScreen() {
                     placeholder={getPlaceholderForField('intensity', workout.type)}
                     placeholderTextColor="#8B949E"
                   />
-                </View>
+                                  </View>
               )}
 
               {/* Champs individuels selon le sport */}
@@ -946,11 +947,11 @@ export default function CreerEntrainementScreen() {
   // Fonction pour formater la date correctement
   const formatSelectedDate = () => {
     if (!params.selectedDate) return '';
-    
+
     // Créer la date en ajustant pour le fuseau horaire local
     const dateString = params.selectedDate as string;
     const date = new Date(dateString + 'T00:00:00');
-    
+
     return date.toLocaleDateString('fr-FR', {
       weekday: 'long',
       day: 'numeric',
