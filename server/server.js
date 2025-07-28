@@ -478,8 +478,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Erreur interne du serveur' });
 });
 
-// Endpoints Stripe supprimés - utilisation des achats intégrés Apple uniquement
-// Les paiements sont maintenant gérés directement par Apple App Store
+// Paiements gérés exclusivement par Apple App Store via In-App Purchases
 
 // Routes pour les intégrations Strava
 app.post('/api/strava/exchange-token', async (req, res) => {

@@ -32,22 +32,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { setupGlobalErrorHandlers } from '@/utils/errorHandlers';
 import { InAppPurchaseService } from '@/utils/inAppPurchases';
 
-// Import conditionnel sécurisé de Stripe
-let StripeProvider = ({ children }: { children: React.ReactNode }) => <>{children}</>;
-
-try {
-  if (Platform.OS === 'web') {
-    // Sur le web, utiliser le mock Stripe pour éviter les erreurs
-    const StripeMock = require('@/utils/stripe-web-mock');
-    StripeProvider = StripeMock.StripeProvider;
-  } else {
-    // Sur mobile, utiliser le vrai Stripe si disponible
-    const { StripeProvider: RealStripeProvider } = require('@stripe/stripe-react-native');
-    StripeProvider = RealStripeProvider;
-  }
-} catch (error) {
-  console.log('⚠️ Stripe non disponible, utilisation du fallback');
-}
+// Stripe supprimé - utilisation des achats intégrés Apple uniquement
 
 // Configuration du splash screen
 SplashScreen.preventAutoHideAsync();
@@ -134,22 +119,12 @@ export default function RootLayout() {
     return <SplashScreenComponent onFinish={() => {}} />;
   }
 
-  const navigationTheme = colorScheme === 'dark' ? DarkTheme : DefaultTheme;
-
   return (
     <ErrorBoundary>
       <LanguageProvider>
         <ThemeProvider>
           <AuthProvider>
-            <AuthGuard>
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="(client)" />
-                <Stack.Screen name="(coach)" />
-                <Stack.Screen name="auth" />
-                <Stack.Screen name="+not-found" options={{ headerShown: true, title: 'Page non trouvée' }} />
-              </Stack>
-            </AuthGuard>
+            <AppNavigator />
           </AuthProvider>
         </ThemeProvider>
       </LanguageProvider>

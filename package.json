@@ -40,7 +40,6 @@
     "@react-navigation/bottom-tabs": "^7.3.10",
     "@react-navigation/elements": "^2.3.8",
     "@react-navigation/native": "^7.1.6",
-    "@stripe/stripe-react-native": "0.45.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/xml2js": "^0.4.14",
     "bcryptjs": "^3.0.2",
