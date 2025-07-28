@@ -1,19 +1,19 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
-  SafeAreaView, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  SafeAreaView,
   Alert,
-  RefreshControl
+  RefreshControl,
 } from 'react-native';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { getCurrentUser } from '../../utils/auth';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { PersistentStorage } from '@/utils/storage';
 
 interface Workout {
   id: string;
@@ -49,16 +49,16 @@ export default function GererEntrainementsScreen() {
   useEffect(() => {
     const selectedDayParam = params.selectedDay as string;
     const selectedDateParam = params.selectedDate as string;
-    
+
     console.log('=== CHANGEMENT DE PARAMÈTRES ===');
     console.log('Nouveau jour:', selectedDayParam);
     console.log('Nouvelle date:', selectedDateParam);
-    
+
     if (selectedDayParam && selectedDateParam) {
       // Mettre à jour les états locaux
       setSelectedDay(selectedDayParam);
       setSelectedDate(selectedDateParam);
-      
+
       // Recharger les données pour la nouvelle date
       loadWorkoutsData(selectedDateParam);
     }
@@ -77,7 +77,7 @@ export default function GererEntrainementsScreen() {
   const initializeData = () => {
     const selectedDayParam = params.selectedDay as string;
     const selectedDateParam = params.selectedDate as string;
-    
+
     console.log('=== INITIALISATION GERER-ENTRAINEMENTS ===');
     console.log('Jour sélectionné:', selectedDayParam);
     console.log('Date sélectionnée:', selectedDateParam);
@@ -110,7 +110,7 @@ export default function GererEntrainementsScreen() {
       try {
         const allWorkouts = await PersistentStorage.getWorkouts(currentUser.id);
         console.log('Total entraînements stockés sur serveur VPS:', allWorkouts.length);
-        
+
         // Filtrer par date exacte
         const dayWorkouts = allWorkouts.filter((workout: Workout) => {
           const match = workout.date === dateToUse;
@@ -119,7 +119,7 @@ export default function GererEntrainementsScreen() {
           }
           return match;
         });
-        
+
         console.log(`Entraînements filtrés pour ${dateToUse}:`, dayWorkouts.length);
         setWorkouts(dayWorkouts);
       } catch (error) {
@@ -184,17 +184,17 @@ export default function GererEntrainementsScreen() {
       try {
         const allWorkouts = await PersistentStorage.getWorkouts(currentUser.id);
         const updatedWorkouts = allWorkouts.filter((w: Workout) => w.id !== workoutId);
-        
+
         await PersistentStorage.saveWorkouts(currentUser.id, updatedWorkouts);
-        
+
         // Mettre à jour la liste locale
         const updatedLocalWorkouts = workouts.filter(w => w.id !== workoutId);
         setWorkouts(updatedLocalWorkouts);
-        
+
         console.log(`Entraînement supprimé du serveur VPS. Restants: ${updatedLocalWorkouts.length}`);
-        
+
         Alert.alert('Succès', 'Entraînement supprimé avec succès !');
-        
+
         // Si plus d'entraînements pour ce jour, retourner à la page principale
         if (updatedLocalWorkouts.length === 0) {
           setTimeout(() => {
@@ -295,7 +295,7 @@ export default function GererEntrainementsScreen() {
             <Text style={styles.workoutType}>{workout.type}</Text>
           </View>
         </View>
-        
+
         <View style={styles.workoutActions}>
           <TouchableOpacity 
             style={styles.editButton}
@@ -394,7 +394,7 @@ export default function GererEntrainementsScreen() {
         >
           <Text style={styles.backButtonText}>← Retour</Text>
         </TouchableOpacity>
-        
+
         <View style={styles.headerInfo}>
           <Text style={styles.title}>Séances planifiées</Text>
           {selectedDate && (
