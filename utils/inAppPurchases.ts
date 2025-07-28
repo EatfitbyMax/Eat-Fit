@@ -11,8 +11,12 @@ if (!IS_EXPO_GO) {
   try {
     InAppPurchases = require('expo-in-app-purchases');
   } catch (error) {
-    console.log('📱 Mode fantôme IAP: expo-in-app-purchases non disponible');
+    console.log('📱 Mode fantôme IAP: expo-in-app-purchases non disponible, utilisation du mock');
+    InAppPurchases = require('./expo-in-app-purchases-mock').default;
   }
+} else {
+  // Utiliser le mock en mode Expo Go
+  InAppPurchases = require('./expo-in-app-purchases-mock').default;
 }
 
 export interface IAPSubscriptionPlan {
@@ -131,8 +135,13 @@ export class InAppPurchaseService {
         return true;
       }
 
-      if (Platform.OS !== 'ios' || !InAppPurchases) {
-        console.log('ℹ️ IAP disponible uniquement sur iOS avec build EAS');
+      if (Platform.OS !== 'ios') {
+        console.log('ℹ️ IAP disponible uniquement sur iOS');
+        return false;
+      }
+
+      if (!InAppPurchases) {
+        console.log('ℹ️ InAppPurchases non disponible');
         return false;
       }
 
@@ -185,8 +194,12 @@ export class InAppPurchaseService {
         return true;
       }
 
-      if (Platform.OS !== 'ios' || !InAppPurchases) {
-        throw new Error('IAP disponible uniquement sur iOS avec build EAS');
+      if (Platform.OS !== 'ios') {
+        throw new Error('IAP disponible uniquement sur iOS');
+      }
+
+      if (!InAppPurchases) {
+        throw new Error('InAppPurchases non disponible');
       }
 
       if (!this.isInitialized) {
@@ -295,7 +308,11 @@ export class InAppPurchaseService {
         return false;
       }
 
-      if (Platform.OS !== 'ios' || !InAppPurchases) {
+      if (Platform.OS !== 'ios') {
+        return false;
+      }
+
+      if (!InAppPurchases) {
         return false;
       }
 
