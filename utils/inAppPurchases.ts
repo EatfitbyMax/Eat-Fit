@@ -1,7 +1,19 @@
 
 import { Platform } from 'react-native';
-import * as InAppPurchases from 'expo-in-app-purchases';
 import { PersistentStorage } from './storage';
+
+// Mode fantôme pour Expo Go - désactive les IAP en développement
+const IS_EXPO_GO = __DEV__ && !process.env.EXPO_PUBLIC_USE_EAS_BUILD;
+
+// Import conditionnel pour éviter les erreurs dans Expo Go
+let InAppPurchases: any = null;
+if (!IS_EXPO_GO) {
+  try {
+    InAppPurchases = require('expo-in-app-purchases');
+  } catch (error) {
+    console.log('📱 Mode fantôme IAP: expo-in-app-purchases non disponible');
+  }
+}
 
 export interface IAPSubscriptionPlan {
   id: string;
@@ -105,8 +117,22 @@ export class InAppPurchaseService {
 
   static async initialize(): Promise<boolean> {
     try {
-      if (Platform.OS !== 'ios') {
-        console.log('ℹ️ IAP disponible uniquement sur iOS');
+      if (IS_EXPO_GO) {
+        console.log('👻 Mode fantôme IAP: Simulation initialisation réussie');
+        this.isInitialized = true;
+        // Simuler des produits pour le développement
+        this.availableProducts = Object.values(IAP_PRODUCT_IDS).map(id => ({
+          productId: id,
+          price: '9.99',
+          currency: 'EUR',
+          title: `Produit ${id}`,
+          description: `Description ${id}`
+        })) as any[];
+        return true;
+      }
+
+      if (Platform.OS !== 'ios' || !InAppPurchases) {
+        console.log('ℹ️ IAP disponible uniquement sur iOS avec build EAS');
         return false;
       }
 
@@ -146,8 +172,21 @@ export class InAppPurchaseService {
 
   static async purchaseSubscription(productId: string, userId: string): Promise<boolean> {
     try {
-      if (Platform.OS !== 'ios') {
-        throw new Error('IAP disponible uniquement sur iOS');
+      if (IS_EXPO_GO) {
+        console.log('👻 Mode fantôme IAP: Simulation achat réussi pour:', productId);
+        // Simuler un achat réussi
+        const mockPurchase = {
+          productId,
+          transactionId: `mock_${Date.now()}`,
+          originalTransactionId: `mock_original_${Date.now()}`,
+          transactionDate: Date.now()
+        };
+        await this.handleSuccessfulPurchase(mockPurchase as any, userId);
+        return true;
+      }
+
+      if (Platform.OS !== 'ios' || !InAppPurchases) {
+        throw new Error('IAP disponible uniquement sur iOS avec build EAS');
       }
 
       if (!this.isInitialized) {
@@ -251,7 +290,12 @@ export class InAppPurchaseService {
 
   static async restorePurchases(userId: string): Promise<boolean> {
     try {
-      if (Platform.OS !== 'ios') {
+      if (IS_EXPO_GO) {
+        console.log('👻 Mode fantôme IAP: Simulation restauration (aucun achat trouvé)');
+        return false;
+      }
+
+      if (Platform.OS !== 'ios' || !InAppPurchases) {
         return false;
       }
 
@@ -334,7 +378,13 @@ export class InAppPurchaseService {
 
   static async disconnect(): Promise<void> {
     try {
-      if (this.isInitialized) {
+      if (IS_EXPO_GO) {
+        console.log('👻 Mode fantôme IAP: Simulation déconnexion réussie');
+        this.isInitialized = false;
+        return;
+      }
+
+      if (this.isInitialized && InAppPurchases) {
         await InAppPurchases.disconnectAsync();
         this.isInitialized = false;
         console.log('✅ Déconnexion IAP réussie');

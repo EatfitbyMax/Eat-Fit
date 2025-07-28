@@ -31,7 +31,7 @@
       }
     },
 
-    
+
 
     "extra": {
       "router": {},
@@ -72,7 +72,6 @@
           "addGeneratedScheme": false
         }
       ],
-      "expo-in-app-purchases",
       "expo-build-properties",
       "./plugins/withHealthKit.js"
     ],
@@ -88,3 +87,784 @@
     }
   }
 }
+```
+
+```json
+{
+  "expo": {
+    "name": "EatFit By Max",
+    "slug": "eatfitbymax",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/crown-logo.png",
+    "scheme": "eatfitbymax",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "platforms": ["ios"],
+    "jsEngine": "hermes",
+
+    "ios": {
+      "icon": "./assets/images/crown-logo.png",
+      "supportsTablet": true,
+      "bundleIdentifier": "com.eatfitbymax.app",
+      "requireFullScreen": false,
+      "userInterfaceStyle": "automatic",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "NSCameraUsageDescription": "EatFitBy Max utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas.",
+        "NSPhotoLibraryUsageDescription": "EatFitBy Max accède à votre galerie photo pour vous permettre de sélectionner des images de vos repas.",
+        "NSMotionUsageDescription": "EatFitBy Max utilise les capteurs de mouvement pour suivre votre activité physique.",
+        "NSLocationWhenInUseUsausageDescription": "EatFitBy Max utilise votre localisation pour trouver des salles de sport et des restaurants sains près de chez vous.",
+        "NSHealthShareUsageDescription": "EatFitBy Max utilise Apple Health pour synchroniser vos données de santé et fitness afin de vous fournir un suivi personnalisé de votre progression.",
+        "NSHealthUpdateUsageDescription": "EatFitBy Max peut écrire des données dans Apple Health pour garder vos informations de santé à jour.",
+        "UIRequiredDeviceCapabilities": ["healthkit"]
+      }
+    },
+
+
+
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "816e280b-c76c-4f13-8d77-1ef1898b8ceb"
+      }
+    },
+
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "origin": "https://eatfitbymax.app"
+        }
+      ],
+      "expo-web-browser",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "EatFitBy Max utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/crown-logo.png",
+          "color": "#FFD700",
+          "defaultChannel": "default"
+        }
+      ],
+      [
+        "expo-dev-client",
+        {
+          "addGeneratedScheme": false
+        }
+      ],
+      "expo-build-properties",
+      "./plugins/withHealthKit.js"
+    ],
+
+    "experiments": {
+      "typedRoutes": true
+    },
+
+    "owner": "eatfit",
+
+    "updates": {
+      "url": "https://u.expo.dev/816e280b-c76c-4f13-8d77-1ef1898b8ceb"
+    }
+  }
+}
+```
+
+```json
+{
+  "expo": {
+    "name": "EatFit By Max",
+    "slug": "eatfitbymax",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/crown-logo.png",
+    "scheme": "eatfitbymax",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "platforms": ["ios"],
+    "jsEngine": "hermes",
+    "ios": {
+      "icon": "./assets/images/crown-logo.png",
+      "supportsTablet": true,
+      "bundleIdentifier": "com.eatfitbymax.app",
+      "requireFullScreen": false,
+      "userInterfaceStyle": "automatic",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "NSCameraUsageDescription": "EatFitBy Max utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas.",
+        "NSPhotoLibraryUsageDescription": "EatFitBy Max accède à votre galerie photo pour vous permettre de sélectionner des images de vos repas.",
+        "NSMotionUsageDescription": "EatFitBy Max utilise les capteurs de mouvement pour suivre votre activité physique.",
+        "NSLocationWhenInUseUsausageDescription": "EatFitBy Max utilise votre localisation pour trouver des salles de sport et des restaurants sains près de chez vous.",
+        "NSHealthShareUsageDescription": "EatFitBy Max utilise Apple Health pour synchroniser vos données de santé et fitness afin de vous fournir un suivi personnalisé de votre progression.",
+        "NSHealthUpdateUsageDescription": "EatFitBy Max peut écrire des données dans Apple Health pour garder vos informations de santé à jour.",
+        "UIRequiredDeviceCapabilities": [
+          "healthkit"
+        ]
+      }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "816e280b-c76c-4f13-8d77-1ef1898b8ceb"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "origin": "https://eatfitbymax.app"
+        }
+      ],
+      "expo-web-browser",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "EatFitBy Max utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/crown-logo.png",
+          "color": "#FFD700",
+          "defaultChannel": "default"
+        }
+      ],
+      [
+        "expo-dev-client",
+        {
+          "addGeneratedScheme": false
+        }
+      ],
+      "expo-build-properties",
+      "./plugins/withHealthKit.js"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "owner": "eatfit",
+    "updates": {
+      "url": "https://u.expo.dev/816e280b-c76c-4f13-8d77-1ef1898b8ceb"
+    }
+  }
+}
+```
+
+```json
+{
+  "expo": {
+    "name": "EatFit By Max",
+    "slug": "eatfitbymax",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/crown-logo.png",
+    "scheme": "eatfitbymax",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "platforms": [
+      "ios"
+    ],
+    "jsEngine": "hermes",
+    "ios": {
+      "icon": "./assets/images/crown-logo.png",
+      "supportsTablet": true,
+      "bundleIdentifier": "com.eatfitbymax.app",
+      "requireFullScreen": false,
+      "userInterfaceStyle": "automatic",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "NSCameraUsageDescription": "EatFitBy Max utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas.",
+        "NSPhotoLibraryUsageDescription": "EatFitBy Max accède à votre galerie photo pour vous permettre de sélectionner des images de vos repas.",
+        "NSMotionUsageDescription": "EatFitBy Max utilise les capteurs de mouvement pour suivre votre activité physique.",
+        "NSLocationWhenInUseUsausageDescription": "EatFitBy Max utilise votre localisation pour trouver des salles de sport et des restaurants sains près de chez vous.",
+        "NSHealthShareUsageDescription": "EatFitBy Max utilise Apple Health pour synchroniser vos données de santé et fitness afin de vous fournir un suivi personnalisé de votre progression.",
+        "NSHealthUpdateUsageDescription": "EatFitBy Max peut écrire des données dans Apple Health pour garder vos informations de santé à jour.",
+        "UIRequiredDeviceCapabilities": [
+          "healthkit"
+        ]
+      }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "816e280b-c76c-4f13-8d77-1ef1898b8ceb"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "origin": "https://eatfitbymax.app"
+        }
+      ],
+      "expo-web-browser",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "EatFitBy Max utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/crown-logo.png",
+          "color": "#FFD700",
+          "defaultChannel": "default"
+        }
+      ],
+      [
+        "expo-dev-client",
+        {
+          "addGeneratedScheme": false
+        }
+      ],
+      "expo-build-properties",
+      "./plugins/withHealthKit.js"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "owner": "eatfit",
+    "updates": {
+      "url": "https://u.expo.dev/816e280b-c76c-4f13-8d77-1ef1898b8ceb"
+    }
+  }
+}
+```
+
+```json
+{
+  "expo": {
+    "name": "EatFit By Max",
+    "slug": "eatfitbymax",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/crown-logo.png",
+    "scheme": "eatfitbymax",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "platforms": [
+      "ios"
+    ],
+    "jsEngine": "hermes",
+    "ios": {
+      "icon": "./assets/images/crown-logo.png",
+      "supportsTablet": true,
+      "bundleIdentifier": "com.eatfitbymax.app",
+      "requireFullScreen": false,
+      "userInterfaceStyle": "automatic",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "NSCameraUsageDescription": "EatFitBy Max utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas.",
+        "NSPhotoLibraryUsageDescription": "EatFitBy Max accède à votre galerie photo pour vous permettre de sélectionner des images de vos repas.",
+        "NSMotionUsageDescription": "EatFitBy Max utilise les capteurs de mouvement pour suivre votre activité physique.",
+        "NSLocationWhenInUseUsausageDescription": "EatFitBy Max utilise votre localisation pour trouver des salles de sport et des restaurants sains près de chez vous.",
+        "NSHealthShareUsageDescription": "EatFitBy Max utilise Apple Health pour synchroniser vos données de santé et fitness afin de vous fournir un suivi personnalisé de votre progression.",
+        "NSHealthUpdateUsageDescription": "EatFitBy Max peut écrire des données dans Apple Health pour garder vos informations de santé à jour.",
+        "UIRequiredDeviceCapabilities": [
+          "healthkit"
+        ]
+      }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "816e280b-c76c-4f13-8d77-1ef1898b8ceb"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "origin": "https://eatfitbymax.app"
+        }
+      ],
+      "expo-web-browser",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "EatFitBy Max utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/crown-logo.png",
+          "color": "#FFD700",
+          "defaultChannel": "default"
+        }
+      ],
+      [
+        "expo-dev-client",
+        {
+          "addGeneratedScheme": false
+        }
+      ],
+      "./plugins/withHealthKit.js"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "owner": "eatfit",
+    "updates": {
+      "url": "https://u.expo.dev/816e280b-c76c-4f13-8d77-1ef1898b8ceb"
+    }
+  }
+}
+```
+
+```json
+{
+  "expo": {
+    "name": "EatFit By Max",
+    "slug": "eatfitbymax",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/crown-logo.png",
+    "scheme": "eatfitbymax",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "platforms": [
+      "ios"
+    ],
+    "jsEngine": "hermes",
+    "ios": {
+      "icon": "./assets/images/crown-logo.png",
+      "supportsTablet": true,
+      "bundleIdentifier": "com.eatfitbymax.app",
+      "requireFullScreen": false,
+      "userInterfaceStyle": "automatic",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "NSCameraUsageDescription": "EatFitBy Max utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas.",
+        "NSPhotoLibraryUsageDescription": "EatFitBy Max accède à votre galerie photo pour vous permettre de sélectionner des images de vos repas.",
+        "NSMotionUsageDescription": "EatFitBy Max utilise les capteurs de mouvement pour suivre votre activité physique.",
+        "NSLocationWhenInUseUsausageDescription": "EatFitBy Max utilise votre localisation pour trouver des salles de sport et des restaurants sains près de chez vous.",
+        "NSHealthShareUsageDescription": "EatFitBy Max utilise Apple Health pour synchroniser vos données de santé et fitness afin de vous fournir un suivi personnalisé de votre progression.",
+        "NSHealthUpdateUsageDescription": "EatFitBy Max peut écrire des données dans Apple Health pour garder vos informations de santé à jour.",
+        "UIRequiredDeviceCapabilities": [
+          "healthkit"
+        ]
+      }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "816e280b-c76c-4f13-8d77-1ef1898b8ceb"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "origin": "https://eatfitbymax.app"
+        }
+      ],
+      "expo-web-browser",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "EatFitBy Max utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/crown-logo.png",
+          "color": "#FFD700",
+          "defaultChannel": "default"
+        }
+      ],
+      [
+        "expo-dev-client",
+        {
+          "addGeneratedScheme": false
+        }
+      ],
+      "./plugins/withHealthKit.js"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "owner": "eatfit",
+    "updates": {
+      "url": "https://u.expo.dev/816e280b-c76c-4f13-8d77-1ef1898b8ceb"
+    }
+  }
+}
+```
+
+```json
+{
+  "expo": {
+    "name": "EatFit By Max",
+    "slug": "eatfitbymax",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/crown-logo.png",
+    "scheme": "eatfitbymax",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "platforms": [
+      "ios"
+    ],
+    "jsEngine": "hermes",
+    "ios": {
+      "icon": "./assets/images/crown-logo.png",
+      "supportsTablet": true,
+      "bundleIdentifier": "com.eatfitbymax.app",
+      "requireFullScreen": false,
+      "userInterfaceStyle": "automatic",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "NSCameraUsageDescription": "EatFitBy Max utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas.",
+        "NSPhotoLibraryUsageDescription": "EatFitBy Max accède à votre galerie photo pour vous permettre de sélectionner des images de vos repas.",
+        "NSMotionUsageDescription": "EatFitBy Max utilise les capteurs de mouvement pour suivre votre activité physique.",
+        "NSLocationWhenInUseUsausageDescription": "EatFitBy Max utilise votre localisation pour trouver des salles de sport et des restaurants sains près de chez vous.",
+        "NSHealthShareUsageDescription": "EatFitBy Max utilise Apple Health pour synchroniser vos données de santé et fitness afin de vous fournir un suivi personnalisé de votre progression.",
+        "NSHealthUpdateUsageDescription": "EatFitBy Max peut écrire des données dans Apple Health pour garder vos informations de santé à jour.",
+        "UIRequiredDeviceCapabilities": [
+          "healthkit"
+        ]
+      }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "816e280b-c76c-4f13-8d77-1ef1898b8ceb"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "origin": "https://eatfitbymax.app"
+        }
+      ],
+      "expo-web-browser",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "EatFitBy Max utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/crown-logo.png",
+          "color": "#FFD700",
+          "defaultChannel": "default"
+        }
+      ],
+      [
+        "expo-dev-client",
+        {
+          "addGeneratedScheme": false
+        }
+      ],
+      "./plugins/withHealthKit.js"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "owner": "eatfit",
+    "updates": {
+      "url": "https://u.expo.dev/816e280b-c76c-4f13-8d77-1ef1898b8ceb"
+    }
+  }
+}
+```
+
+```json
+{
+  "expo": {
+    "name": "EatFit By Max",
+    "slug": "eatfitbymax",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/crown-logo.png",
+    "scheme": "eatfitbymax",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "platforms": [
+      "ios"
+    ],
+    "jsEngine": "hermes",
+    "ios": {
+      "icon": "./assets/images/crown-logo.png",
+      "supportsTablet": true,
+      "bundleIdentifier": "com.eatfitbymax.app",
+      "requireFullScreen": false,
+      "userInterfaceStyle": "automatic",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "NSCameraUsageDescription": "EatFitBy Max utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas.",
+        "NSPhotoLibraryUsageDescription": "EatFitBy Max accède à votre galerie photo pour vous permettre de sélectionner des images de vos repas.",
+        "NSMotionUsageDescription": "EatFitBy Max utilise les capteurs de mouvement pour suivre votre activité physique.",
+        "NSLocationWhenInUseUsausageDescription": "EatFitBy Max utilise votre localisation pour trouver des salles de sport et des restaurants sains près de chez vous.",
+        "NSHealthShareUsageDescription": "EatFitBy Max utilise Apple Health pour synchroniser vos données de santé et fitness afin de vous fournir un suivi personnalisé de votre progression.",
+        "NSHealthUpdateUsageDescription": "EatFitBy Max peut écrire des données dans Apple Health pour garder vos informations de santé à jour.",
+        "UIRequiredDeviceCapabilities": [
+          "healthkit"
+        ]
+      }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "816e280b-c76c-4f13-8d77-1ef1898b8ceb"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "origin": "https://eatfitbymax.app"
+        }
+      ],
+      "expo-web-browser",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "EatFitBy Max utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/crown-logo.png",
+          "color": "#FFD700",
+          "defaultChannel": "default"
+        }
+      ],
+      [
+        "expo-dev-client",
+        {
+          "addGeneratedScheme": false
+        }
+      ],
+      "./plugins/withHealthKit.js"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "owner": "eatfit",
+    "updates": {
+      "url": "https://u.expo.dev/816e280b-c76c-4f13-8d77-1ef1898b8ceb"
+    }
+  }
+}
+```
+
+```json
+{
+  "expo": {
+    "name": "EatFit By Max",
+    "slug": "eatfitbymax",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/crown-logo.png",
+    "scheme": "eatfitbymax",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "platforms": [
+      "ios"
+    ],
+    "jsEngine": "hermes",
+    "ios": {
+      "icon": "./assets/images/crown-logo.png",
+      "supportsTablet": true,
+      "bundleIdentifier": "com.eatfitbymax.app",
+      "requireFullScreen": false,
+      "userInterfaceStyle": "automatic",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "NSCameraUsageDescription": "EatFitBy Max utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas.",
+        "NSPhotoLibraryUsageDescription": "EatFitBy Max accède à votre galerie photo pour vous permettre de sélectionner des images de vos repas.",
+        "NSMotionUsageDescription": "EatFitBy Max utilise les capteurs de mouvement pour suivre votre activité physique.",
+        "NSLocationWhenInUseUsausageDescription": "EatFitBy Max utilise votre localisation pour trouver des salles de sport et des restaurants sains près de chez vous.",
+        "NSHealthShareUsageDescription": "EatFitBy Max utilise Apple Health pour synchroniser vos données de santé et fitness afin de vous fournir un suivi personnalisé de votre progression.",
+        "NSHealthUpdateUsageDescription": "EatFitBy Max peut écrire des données dans Apple Health pour garder vos informations de santé à jour.",
+        "UIRequiredDeviceCapabilities": [
+          "healthkit"
+        ]
+      }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "816e280b-c76c-4f13-8d77-1ef1898b8ceb"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "origin": "https://eatfitbymax.app"
+        }
+      ],
+      "expo-web-browser",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "EatFitBy Max utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/crown-logo.png",
+          "color": "#FFD700",
+          "defaultChannel": "default"
+        }
+      ],
+      [
+        "expo-dev-client",
+        {
+          "addGeneratedScheme": false
+        }
+      ],
+      "./plugins/withHealthKit.js"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "owner": "eatfit",
+    "updates": {
+      "url": "https://u.expo.dev/816e280b-c76c-4f13-8d77-1ef1898b8ceb"
+    }
+  }
+}
+```
+
+```json
+{
+  "expo": {
+    "name": "EatFit By Max",
+    "slug": "eatfitbymax",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/crown-logo.png",
+    "scheme": "eatfitbymax",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "platforms": [
+      "ios"
+    ],
+    "jsEngine": "hermes",
+    "ios": {
+      "icon": "./assets/images/crown-logo.png",
+      "supportsTablet": true,
+      "bundleIdentifier": "com.eatfitbymax.app",
+      "requireFullScreen": false,
+      "userInterfaceStyle": "automatic",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "NSCameraUsageDescription": "EatFitBy Max utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas.",
+        "NSPhotoLibraryUsageDescription": "EatFitBy Max accède à votre galerie photo pour vous permettre de sélectionner des images de vos repas.",
+        "NSMotionUsageDescription": "EatFitBy Max utilise les capteurs de mouvement pour suivre votre activité physique.",
+        "NSLocationWhenInUseUsausageDescription": "EatFitBy Max utilise votre localisation pour trouver des salles de sport et des restaurants sains près de chez vous.",
+        "NSHealthShareUsageDescription": "EatFitBy Max utilise Apple Health pour synchroniser vos données de santé et fitness afin de vous fournir un suivi personnalisé de votre progression.",
+        "NSHealthUpdateUsageDescription": "EatFitBy Max peut écrire des données dans Apple Health pour garder vos informations de santé à jour.",
+        "UIRequiredDeviceCapabilities": [
+          "healthkit"
+        ]
+      }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "816e280b-c76c-4f13-8d77-1ef1898b8ceb"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "origin": "https://eatfitbymax.app"
+        }
+      ],
+      "expo-web-browser",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "EatFitBy Max utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/crown-logo.png",
+          "color": "#FFD700",
+          "defaultChannel": "default"
+        }
+      ],
+      [
+        "expo-dev-client",
+        {
+          "addGeneratedScheme": false
+        }
+      ],
+      "./plugins/withHealthKit.js"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "owner": "eatfit",
+    "updates": {
+      "url": "https://u.expo.dev/816e280b-c76c-4f13-8d77-1ef1898b8ceb"
+    }
+  }
+}
+```
