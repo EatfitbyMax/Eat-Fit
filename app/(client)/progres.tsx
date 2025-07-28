@@ -1428,18 +1428,85 @@ export default function ProgresScreen() {
       const user = await PersistentStorage.getCurrentUser();
       if (!user) return;
 
-      // Charger les données d'entraînement créées localement
-      const localWorkouts = await PersistentStorage.getWorkouts(user.id);
+      console.log('=== CHARGEMENT DONNÉES SPORT PROGRÈS ===');
+      console.log('User ID:', user.id);
+
+      // Charger les données d'entraînement depuis le serveur VPS avec la même logique que les autres pages
+      let localWorkouts = [];
+      try {
+        const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
+        console.log('🌐 Tentative de connexion au serveur VPS pour les workouts:', VPS_URL);
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 secondes timeout
+
+        const response = await fetch(`${VPS_URL}/api/workouts/${user.id}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        console.log('📊 Response status workouts:', response.status, 'OK:', response.ok);
+
+        if (response.ok) {
+          localWorkouts = await response.json();
+          console.log('✅ Données workouts chargées depuis le serveur VPS pour les progrès:', localWorkouts.length, 'entrées');
+          
+          // Validation des données reçues
+          if (!Array.isArray(localWorkouts)) {
+            console.warn('⚠️ Format de données workouts inattendu, initialisation avec tableau vide');
+            localWorkouts = [];
+          } else {
+            // Afficher les premières entrées pour debug
+            if (localWorkouts.length > 0) {
+              console.log('📊 Premières entrées workouts:', localWorkouts.slice(0, 3).map(w => ({
+                date: w.date,
+                name: w.name,
+                type: w.type,
+                duration: w.duration
+              })));
+            }
+          }
+        } else {
+          throw new Error(`Réponse serveur VPS non-OK pour workouts: ${response.status}`);
+        }
+      } catch (serverError) {
+        console.log('❌ Erreur serveur VPS workouts (progrès):', serverError.message);
+        
+        // Fallback vers PersistentStorage
+        console.log('📱 Fallback vers PersistentStorage pour workouts (progrès)');
+        try {
+          localWorkouts = await PersistentStorage.getWorkouts(user.id);
+          console.log('✅ Données workouts chargées depuis PersistentStorage:', localWorkouts.length, 'entrées');
+        } catch (localError) {
+          console.error('❌ Erreur PersistentStorage workouts:', localError);
+          localWorkouts = [];
+        }
+      }
 
       // Charger les données Strava (entraînements terminés)
       let stravaActivities = [];
       try {
+        console.log('🔄 Chargement données Strava...');
         const stravaDataString = await AsyncStorage.getItem(`strava_activities_${user.id}`);
         if (stravaDataString) {
-          stravaActivities = JSON.parse(stravaDataString);
+          const parsedStrava = JSON.parse(stravaDataString);
+          if (Array.isArray(parsedStrava)) {
+            stravaActivities = parsedStrava;
+            console.log('✅ Données Strava chargées:', stravaActivities.length, 'activités');
+          } else {
+            console.warn('⚠️ Format données Strava invalide');
+          }
+        } else {
+          console.log('⚠️ Aucune donnée Strava trouvée');
         }
       } catch (error) {
-        console.log('Aucune donnée Strava trouvée');
+        console.log('❌ Erreur chargement données Strava:', error);
+        stravaActivities = [];
       }
 
       // Calculer les statistiques des 7 derniers jours
