@@ -13,7 +13,7 @@ if (ErrorRecovery) {
   });
 }
 
-import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
+import { DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -30,23 +30,9 @@ import { AuthProvider, useAuth } from '@/context/AuthContext';
 import AuthGuard from '@/components/AuthGuard';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { setupGlobalErrorHandlers } from '@/utils/errorHandlers';
+import { InAppPurchaseService } from '@/utils/inAppPurchases';
 
-// Import conditionnel sécurisé de Stripe
-let StripeProvider = ({ children }: { children: React.ReactNode }) => <>{children}</>;
-
-try {
-  if (Platform.OS === 'web') {
-    // Sur le web, utiliser le mock Stripe pour éviter les erreurs
-    const StripeMock = require('@/utils/stripe-web-mock');
-    StripeProvider = StripeMock.StripeProvider;
-  } else {
-    // Sur mobile, utiliser le vrai Stripe si disponible
-    const { StripeProvider: RealStripeProvider } = require('@stripe/stripe-react-native');
-    StripeProvider = RealStripeProvider;
-  }
-} catch (error) {
-  console.log('⚠️ Stripe non disponible, utilisation du fallback');
-}
+// Stripe supprimé - utilisation des achats intégrés Apple uniquement
 
 // Configuration du splash screen
 SplashScreen.preventAutoHideAsync();
@@ -105,25 +91,40 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
+   // Initialiser les achats intégrés
+   useEffect(() => {
+    const initializeIAP = async () => {
+      if (Platform.OS === 'ios') {
+        try {
+          await InAppPurchaseService.init();
+          console.log('✅ In-App Purchases initialisés');
+        } catch (error: any) {
+          console.warn('⚠️ Erreur lors de l\'initialisation des achats intégrés:', error.message);
+        }
+      } else {
+        console.log('ℹ️ In-App Purchases non pris en charge sur cette plateforme.');
+      }
+    };
+
+    initializeIAP();
+
+    return () => {
+      if (Platform.OS === 'ios') {
+        InAppPurchaseService.end();
+      }
+    };
+  }, []);
+
   if (!loaded) {
     return <SplashScreenComponent onFinish={() => {}} />;
   }
-
-  const navigationTheme = colorScheme === 'dark' ? DarkTheme : DefaultTheme;
 
   return (
     <ErrorBoundary>
       <LanguageProvider>
         <ThemeProvider>
           <AuthProvider>
-            <StripeProvider 
-              publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_mock_key'}
-              merchantIdentifier="merchant.com.eatfitbymax.app"
-            >
-              <NavigationThemeProvider value={navigationTheme}>
-                <AppNavigator />
-              </NavigationThemeProvider>
-            </StripeProvider>
+            <AppNavigator />
           </AuthProvider>
         </ThemeProvider>
       </LanguageProvider>
