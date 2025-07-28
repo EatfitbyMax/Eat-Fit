@@ -446,18 +446,36 @@ export default function HomeScreen() {
         throw new Error('Impossible de récupérer les données nutritionnelles');
       }
 
-      // 2. Récupérer le nombre de séances terminées depuis Strava
+      // 2. Récupérer le nombre de séances depuis les données locales ET Strava
       let totalWorkouts = 0;
       try {
-        const stravaActivities = await IntegrationsManager.getStravaActivities(currentUser.id);
-        totalWorkouts = stravaActivities.filter((activity: any) => {
-          const activityDate = new Date(activity.date).toISOString().split('T')[0];
-          return activityDate === today;
-        }).length;
-        console.log(`Séances terminées aujourd'hui (Strava): ${totalWorkouts}`);
+        // D'abord récupérer les séances planifiées/terminées depuis le serveur VPS
+        const localWorkouts = await PersistentStorage.getWorkouts(currentUser.id);
+        const todayLocalWorkouts = localWorkouts.filter((workout: any) => workout.date === today);
+        console.log(`Séances planifiées aujourd'hui (VPS): ${todayLocalWorkouts.length}`);
+        
+        totalWorkouts = todayLocalWorkouts.length;
+
+        // Optionnellement, ajouter les séances Strava qui ne sont pas déjà comptées
+        try {
+          const stravaActivities = await IntegrationsManager.getStravaActivities(currentUser.id);
+          const todayStravaActivities = stravaActivities.filter((activity: any) => {
+            const activityDate = new Date(activity.date).toISOString().split('T')[0];
+            return activityDate === today;
+          });
+          console.log(`Séances Strava aujourd'hui: ${todayStravaActivities.length}`);
+          
+          // Ajouter les séances Strava uniquement si pas de séances locales
+          if (todayLocalWorkouts.length === 0) {
+            totalWorkouts = todayStravaActivities.length;
+          }
+        } catch (stravaError) {
+          console.log('Erreur Strava (non critique):', stravaError);
+          // Continuer avec les séances locales seulement
+        }
       } catch (error) {
-        console.error('Erreur récupération séances Strava:', error);
-        throw new Error('Impossible de récupérer les données Strava');
+        console.error('Erreur récupération séances:', error);
+        throw new Error('Impossible de récupérer les données d\'entraînement');
       }
 
       // 3. Récupérer les pas depuis Apple Health
