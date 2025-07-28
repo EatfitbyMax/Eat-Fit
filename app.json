@@ -8,9 +8,10 @@
     "scheme": "eatfitbymax",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "platforms": ["ios"],
+    "platforms": [
+      "ios"
+    ],
     "jsEngine": "hermes",
-
     "ios": {
       "icon": "./assets/images/crown-logo.png",
       "supportsTablet": true,
@@ -24,26 +25,23 @@
         "NSCameraUsageDescription": "EatFitBy Max utilise l'appareil photo pour scanner les codes-barres des aliments et prendre des photos de vos repas.",
         "NSPhotoLibraryUsageDescription": "EatFitBy Max accède à votre galerie photo pour vous permettre de sélectionner des images de vos repas.",
         "NSMotionUsageDescription": "EatFitBy Max utilise les capteurs de mouvement pour suivre votre activité physique.",
-        "NSLocationWhenInUseUsausageDescription": "EatFitBy Max utilise votre localisation pour trouver des salles de sport et des restaurants sains près de chez vous.",
+        "NSLocationWhenInUseUsageDescription": "EatFitBy Max utilise votre localisation pour trouver des salles de sport et des restaurants sains près de chez vous.",
         "NSHealthShareUsageDescription": "EatFitBy Max utilise Apple Health pour synchroniser vos données de santé et fitness afin de vous fournir un suivi personnalisé de votre progression.",
         "NSHealthUpdateUsageDescription": "EatFitBy Max peut écrire des données dans Apple Health pour garder vos informations de santé à jour.",
-        "UIRequiredDeviceCapabilities": ["healthkit"]
+        "UIRequiredDeviceCapabilities": [
+          "healthkit"
+        ]
       }
     },
-
-    
-
     "extra": {
       "router": {},
       "eas": {
         "projectId": "816e280b-c76c-4f13-8d77-1ef1898b8ceb"
       }
     },
-
     "runtimeVersion": {
       "policy": "sdkVersion"
     },
-
     "plugins": [
       [
         "expo-router",
@@ -72,16 +70,12 @@
           "addGeneratedScheme": false
         }
       ],
-      "expo-build-properties",
       "./plugins/withHealthKit.js"
     ],
-
     "experiments": {
       "typedRoutes": true
     },
-
     "owner": "eatfit",
-
     "updates": {
       "url": "https://u.expo.dev/816e280b-c76c-4f13-8d77-1ef1898b8ceb"
     }

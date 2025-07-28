@@ -1,5 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 import { getCurrentUser } from './auth';
+import { InAppPurchaseService } from './inAppPurchases';
 
 // Plans d'abonnement disponibles
 export const SUBSCRIPTION_PLANS = [
@@ -117,7 +119,26 @@ export const getCurrentSubscription = async (userId: string): Promise<Subscripti
   try {
     console.log('🔍 Récupération abonnement pour:', userId);
 
-    // Utiliser checkSubscriptionStatus pour obtenir les données d'abonnement
+    // Sur iOS, utiliser le service IAP en priorité
+    if (Platform.OS === 'ios') {
+      const iapSubscription = await InAppPurchaseService.getCurrentSubscription(userId);
+      
+      if (iapSubscription && iapSubscription.planId !== 'free') {
+        const subscription = {
+          planId: iapSubscription.planId,
+          planName: iapSubscription.planName,
+          status: iapSubscription.status as 'active' | 'inactive' | 'cancelled',
+          price: parseFloat(iapSubscription.price.replace(/[^0-9.,]/g, '').replace(',', '.')),
+          currency: iapSubscription.currency,
+          paymentMethod: iapSubscription.paymentMethod || 'apple_iap'
+        };
+
+        console.log('🍎 Abonnement IAP récupéré:', subscription);
+        return subscription;
+      }
+    }
+
+    // Utiliser checkSubscriptionStatus pour obtenir les données d'abonnement local
     const subscriptionStatus = await checkSubscriptionStatus();
     console.log('🔍 Statut abonnement récupéré:', subscriptionStatus);
 
