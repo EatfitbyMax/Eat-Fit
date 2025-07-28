@@ -11,7 +11,7 @@ import {
   Platform
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { PaymentService, SUBSCRIPTION_PLANS, SubscriptionPlan } from '../utils/payments';
+import { IAP_SUBSCRIPTION_PLANS, IAPSubscriptionPlan, InAppPurchaseService } from '../utils/inAppPurchases';
 
 interface SubscriptionModalProps {
   visible: boolean;
@@ -24,9 +24,9 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
   // Filtrer pour exclure le plan gratuit
-  const premiumPlans = SUBSCRIPTION_PLANS.filter(plan => plan.id !== 'free');
+  const premiumPlans = IAP_SUBSCRIPTION_PLANS.filter(plan => plan.id !== 'free');
 
-  const handleSubscribe = async (plan: SubscriptionPlan) => {
+  const handleSubscribe = async (plan: IAPSubscriptionPlan) => {
     if (loading) return;
 
     setLoading(true);
@@ -36,9 +36,9 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
       let success = false;
 
       if (Platform.OS === 'ios') {
-        success = await PaymentService.presentApplePayPayment(plan, 'current_user_id');
+        success = await InAppPurchaseService.purchaseSubscription(plan.productId);
       } else if (Platform.OS === 'android') {
-        success = await PaymentService.presentGooglePayPayment(plan, 'current_user_id');
+        success = await InAppPurchaseService.purchaseSubscription(plan.productId);
       } else {
         Alert.alert('Erreur', 'Paiement non disponible sur cette plateforme');
         return;
@@ -168,7 +168,7 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
                         </View>
                         <View style={styles.planPriceContainer}>
                           <Text style={styles.planPrice}>
-                            {plan.price.toFixed(2)}€/mois
+                            {plan.price}/{plan.duration}
                           </Text>
                         </View>
                       </View>
