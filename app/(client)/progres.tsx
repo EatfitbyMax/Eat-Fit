@@ -1521,7 +1521,6 @@ export default function ProgresScreen() {
 
       // Calculer les statistiques des 7 derniers jours
       const last7Days = [];
-      const currentDate = new Date();
       
       for (let i = 6; i >= 0; i--) {
         const date = new Date(currentDate.getTime() - (i * 24 * 60 * 60 * 1000));
