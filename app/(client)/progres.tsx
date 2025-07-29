@@ -109,6 +109,7 @@ export default function ProgresScreen() {
       setIsPremium(subscriptionStatus.isPremium);
     } catch (error) {
       console.error('Erreur vérification abonnement:', error);
+      // En cas d'erreur IAP, permettre l'accès de base (poids)
       setIsPremium(false);
     }
   };
