@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { IAP_SUBSCRIPTION_PLANS, IAPSubscriptionPlan, InAppPurchaseService } from '../utils/inAppPurchases';
+import { openPrivacyPolicy, openTermsOfService } from '../utils/legalLinks';
 
 interface SubscriptionModalProps {
   visible: boolean;
@@ -170,6 +171,9 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
                           <Text style={styles.planPrice}>
                             {plan.price}/{plan.duration}
                           </Text>
+                          <Text style={styles.renewalText}>
+                            Renouvellement auto
+                          </Text>
                         </View>
                       </View>
 
@@ -192,6 +196,50 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
                   </TouchableOpacity>
                 );
               })}
+            </View>
+
+            {/* Mentions légales Apple */}
+            <View style={styles.legalSection}>
+              <Text style={styles.legalTitle}>Informations sur l'abonnement</Text>
+              <Text style={styles.legalText}>
+                En vous abonnant à EatFitByMax Premium, vous accédez à tous les programmes personnalisés, 
+                au coaching et aux outils avancés. Abonnement mensuel à renouvellement automatique 
+                (sauf résiliation dans les réglages Apple au moins 24h avant la fin de la période en cours).
+              </Text>
+              
+              <Text style={styles.legalText}>
+                Le paiement sera prélevé sur votre compte iTunes lors de la confirmation d'achat. 
+                L'abonnement se renouvelle automatiquement sauf si le renouvellement automatique 
+                est désactivé au moins 24 heures avant la fin de la période en cours.
+              </Text>
+
+              <Text style={styles.legalText}>
+                Votre compte sera facturé pour le renouvellement dans les 24 heures précédant 
+                la fin de la période en cours.
+              </Text>
+
+              <View style={styles.legalLinks}>
+                <TouchableOpacity 
+                  style={styles.linkButton}
+                  onPress={openPrivacyPolicy}
+                >
+                  <Text style={styles.linkText}>Politique de confidentialité</Text>
+                </TouchableOpacity>
+                
+                <Text style={styles.linkSeparator}> • </Text>
+                
+                <TouchableOpacity 
+                  style={styles.linkButton}
+                  onPress={openTermsOfService}
+                >
+                  <Text style={styles.linkText}>Conditions d'utilisation</Text>
+                </TouchableOpacity>
+              </View>
+
+              <Text style={styles.cancelText}>
+                Pour annuler votre abonnement, rendez-vous dans Réglages {">"} Votre nom {">"} 
+                Abonnements sur votre appareil iOS.
+              </Text>
             </View>
 
             {/* Footer */}
@@ -281,6 +329,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
+  renewalText: {
+    fontSize: 10,
+    color: '#FFFFFF',
+    opacity: 0.8,
+    textAlign: 'right',
+  },
   featuresContainer: {
     gap: 8,
   },
@@ -325,5 +379,52 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#888888',
     textDecorationLine: 'underline',
+  },
+  legalSection: {
+    marginTop: 24,
+    padding: 16,
+    backgroundColor: '#2A2A2A',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#444444',
+  },
+  legalTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  legalText: {
+    fontSize: 12,
+    color: '#CCCCCC',
+    lineHeight: 18,
+    marginBottom: 8,
+    textAlign: 'justify',
+  },
+  legalLinks: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 8,
+  },
+  linkButton: {
+    paddingVertical: 4,
+  },
+  linkText: {
+    fontSize: 12,
+    color: '#4A9EFF',
+    textDecorationLine: 'underline',
+  },
+  linkSeparator: {
+    fontSize: 12,
+    color: '#CCCCCC',
+  },
+  cancelText: {
+    fontSize: 11,
+    color: '#999999',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginTop: 8,
   },
 });
