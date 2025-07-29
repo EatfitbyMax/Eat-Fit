@@ -3,7 +3,7 @@ import { Linking, Alert } from 'react-native';
 
 export const openPrivacyPolicy = async () => {
   try {
-    const url = 'https://eatfitbymax.cloud/privacy-policy';
+    const url = 'https://planet-tea-fb8.notion.site/Politique-de-confidentialit-Eat-Fit-23f4c5464bf9805a9fa7db55c9535cad';
     const supported = await Linking.canOpenURL(url);
     
     if (supported) {
@@ -19,7 +19,7 @@ export const openPrivacyPolicy = async () => {
 
 export const openTermsOfService = async () => {
   try {
-    const url = 'https://eatfitbymax.cloud/terms-of-service';
+    const url = 'https://planet-tea-fb8.notion.site/Conditions-G-n-rales-d-Utilisation-CGU-Eat-Fit-23f4c5464bf980baa80fc94542a0fb67';
     const supported = await Linking.canOpenURL(url);
     
     if (supported) {
