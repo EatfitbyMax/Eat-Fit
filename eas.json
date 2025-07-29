@@ -51,11 +51,8 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "m.pacullmarquie@gmail.com",
-        "ascAppId": "6748567188",
-        "appleTeamId": "U52ZR3HQFP"
-      },
-      
+        
+      }
     }
   }
 }
