@@ -1,23 +1,7 @@
 import { Platform } from 'react-native';
 import { PersistentStorage } from './storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// Mode fantôme pour Expo Go - désactive les IAP en développement
-const IS_EXPO_GO = __DEV__ && !process.env.EXPO_PUBLIC_USE_EAS_BUILD;
-
-// Import conditionnel pour éviter les erreurs dans Expo Go
-let InAppPurchases: any = null;
-if (!IS_EXPO_GO) {
-  try {
-    InAppPurchases = require('expo-in-app-purchases');
-  } catch (error) {
-    console.log('📱 Mode fantôme IAP: expo-in-app-purchases non disponible, utilisation du mock');
-    InAppPurchases = require('./expo-in-app-purchases-mock').default;
-  }
-} else {
-  // Utiliser le mock en mode Expo Go
-  InAppPurchases = require('./expo-in-app-purchases-mock').default;
-}
+import * as InAppPurchases from 'expo-in-app-purchases';
 
 export interface IAPSubscriptionPlan {
   id: string;
@@ -120,12 +104,6 @@ export class InAppPurchaseService {
   private static availableProducts: InAppPurchases.IAPItemDetails[] = [];
 
   static async initialize(): Promise<boolean> {
-    if (IS_EXPO_GO) {
-      console.log('🚫 Mode Expo Go détecté - IAP désactivés');
-      this.isInitialized = false;
-      return false;
-    }
-
     if (this.isInitialized) {
       console.log('✅ IAP déjà initialisés');
       return true;
@@ -139,12 +117,6 @@ export class InAppPurchaseService {
       }
 
       console.log('🔄 Initialisation des IAP...');
-
-      // Utiliser la variable globale InAppPurchases déjà importée
-      if (!InAppPurchases || typeof InAppPurchases.connectAsync !== 'function') {
-        console.warn('⚠️ Module expo-in-app-purchases non disponible');
-        return false;
-      }
 
       const result = await InAppPurchases.connectAsync();
       console.log('✅ IAP initialisés avec succès:', result);
@@ -166,31 +138,10 @@ export class InAppPurchaseService {
 
   static async purchaseSubscription(productId: string, userId: string): Promise<boolean> {
     try {
-      console.log('🛒 Début purchaseSubscription:', { productId, userId, isExpoGo: IS_EXPO_GO, platform: Platform.OS });
-
-      if (IS_EXPO_GO) {
-        console.log('👻 Mode fantôme IAP: Simulation achat réussi pour:', productId);
-        // Simuler un délai d'achat plus réaliste
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Simuler un achat réussi
-        const mockPurchase = {
-          productId,
-          transactionId: `mock_${Date.now()}`,
-          originalTransactionId: `mock_original_${Date.now()}`,
-          transactionDate: Date.now()
-        };
-        await this.handleSuccessfulPurchase(mockPurchase as any, userId);
-        console.log('✅ Mock IAP: Achat simulé réussi');
-        return true;
-      }
+      console.log('🛒 Début purchaseSubscription:', { productId, userId, platform: Platform.OS });
 
       if (Platform.OS !== 'ios' && Platform.OS !== 'android') {
         throw new Error(`IAP non supporté sur la plateforme: ${Platform.OS}`);
-      }
-
-      if (!InAppPurchases) {
-        throw new Error('InAppPurchases non disponible');
       }
 
       if (!this.isInitialized) {
@@ -297,16 +248,7 @@ export class InAppPurchaseService {
 
   static async restorePurchases(userId: string): Promise<boolean> {
     try {
-      if (IS_EXPO_GO) {
-        console.log('👻 Mode fantôme IAP: Simulation restauration (aucun achat trouvé)');
-        return false;
-      }
-
       if (Platform.OS !== 'ios') {
-        return false;
-      }
-
-      if (!InAppPurchases) {
         return false;
       }
 
@@ -389,13 +331,7 @@ export class InAppPurchaseService {
 
   static async disconnect(): Promise<void> {
     try {
-      if (IS_EXPO_GO) {
-        console.log('👻 Mode fantôme IAP: Simulation déconnexion réussie');
-        this.isInitialized = false;
-        return;
-      }
-
-      if (this.isInitialized && InAppPurchases) {
+      if (this.isInitialized) {
         await InAppPurchases.disconnectAsync();
         this.isInitialized = false;
         console.log('✅ Déconnexion IAP réussie');
