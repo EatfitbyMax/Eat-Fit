@@ -35,9 +35,11 @@
       }
     },
     "extra": {
-      "router": {},
+      "router": {
+        "origin": "https://eatfitbymax.app"
+      },
       "eas": {
-        "projectId": "816e280b-c76c-4f13-8d77-1ef1898b8ceb"
+        "projectId": "44ea4230-cfe9-4c7b-9722-2dbaa94d713f"
       }
     },
     "runtimeVersion": {
@@ -76,9 +78,6 @@
     "experiments": {
       "typedRoutes": true
     },
-    
-    "updates": {
-      "url": "https://u.expo.dev/816e280b-c76c-4f13-8d77-1ef1898b8ceb"
-    }
+    "owner": "maxeatfit"
   }
 }
