@@ -7,9 +7,10 @@ interface AuthGuardProps {
 }
 
 export default function AuthGuard({ children }: AuthGuardProps) {
-  const { user, isLoading, isLoggingOut } = useAuth();
+  const { user, isLoading, isLoggingOut, setCurrentUser } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  import AsyncStorage from '@react-native-async-storage/async-storage';
 
   React.useEffect(() => {
     // Ne pas rediriger pendant le chargement
@@ -73,6 +74,34 @@ export default function AuthGuard({ children }: AuthGuardProps) {
       }
     }
   }, [user, segments, isLoading, isLoggingOut, router]);
+
+  React.useEffect(() => {
+    const checkAuthStatus = async () => {
+      try {
+        console.log('🔍 AuthGuard: Vérification du statut d\'authentification...');
+
+        const userData = await AsyncStorage.getItem('currentUser');
+        if (userData) {
+          try {
+            const user = JSON.parse(userData);
+            console.log('✅ AuthGuard: Utilisateur trouvé dans le stockage:', user.email);
+            setCurrentUser(user);
+          } catch (parseError) {
+            console.error('❌ AuthGuard: Erreur parsing des données utilisateur:', parseError);
+            await AsyncStorage.removeItem('currentUser');
+          }
+        } else {
+          console.log('❌ AuthGuard: Aucun utilisateur trouvé dans le stockage');
+        }
+      } catch (error) {
+        console.error('❌ AuthGuard: Erreur vérification auth:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuthStatus();
+  }, []);
 
   return <>{children}</>;
 }

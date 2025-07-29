@@ -1,5 +1,4 @@
 import { Platform } from 'react-native';
-import { PersistentStorage } from './storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as InAppPurchases from 'expo-in-app-purchases';
 

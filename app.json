@@ -18,6 +18,7 @@
       "bundleIdentifier": "com.eatfitbymax.app",
       "requireFullScreen": false,
       "userInterfaceStyle": "automatic",
+      "buildNumber": "1",
       "config": {
         "usesNonExemptEncryption": false
       },

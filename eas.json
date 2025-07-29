@@ -34,9 +34,9 @@
       },
       "ios": {
         "resourceClass": "m-medium",
-        "autoIncrement": true
-      },
-      
+        "autoIncrement": true,
+        "buildConfiguration": "Release"
+      }
     },
     "standalone": {
       "developmentClient": false,
