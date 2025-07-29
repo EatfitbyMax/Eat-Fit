@@ -1,8 +1,3 @@
-` tags.
-
-```python
-# Correcting the initialization logic and adding platform check for IAP.
-<replit_final_file>
 import { Platform } from 'react-native';
 import { PersistentStorage } from './storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
