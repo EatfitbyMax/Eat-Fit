@@ -122,20 +122,25 @@ export class InAppPurchaseService {
   static async initialize(): Promise<boolean> {
     if (IS_EXPO_GO) {
       console.log('🚫 Mode Expo Go détecté - IAP désactivés');
+      this.isInitialized = false;
       return false;
+    }
+
+    if (this.isInitialized) {
+      console.log('✅ IAP déjà initialisés');
+      return true;
     }
 
     try {
       // Vérifier si nous sommes dans un environnement qui supporte les IAP
       if (Platform.OS !== 'ios' && Platform.OS !== 'android') {
-        console.log('🚫 Plateforme non supportée pour les IAP');
+        console.log('🚫 Plateforme non supportée pour les IAP:', Platform.OS);
         return false;
       }
 
-      // Import conditionnel uniquement pour les vraies builds
-      const { InAppPurchases } = await import('expo-in-app-purchases');
+      console.log('🔄 Initialisation des IAP...');
 
-      // Vérifier que le module est bien chargé
+      // Utiliser la variable globale InAppPurchases déjà importée
       if (!InAppPurchases || typeof InAppPurchases.connectAsync !== 'function') {
         console.warn('⚠️ Module expo-in-app-purchases non disponible');
         return false;
@@ -161,8 +166,13 @@ export class InAppPurchaseService {
 
   static async purchaseSubscription(productId: string, userId: string): Promise<boolean> {
     try {
+      console.log('🛒 Début purchaseSubscription:', { productId, userId, isExpoGo: IS_EXPO_GO, platform: Platform.OS });
+
       if (IS_EXPO_GO) {
         console.log('👻 Mode fantôme IAP: Simulation achat réussi pour:', productId);
+        // Simuler un délai d'achat plus réaliste
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
         // Simuler un achat réussi
         const mockPurchase = {
           productId,
@@ -171,11 +181,12 @@ export class InAppPurchaseService {
           transactionDate: Date.now()
         };
         await this.handleSuccessfulPurchase(mockPurchase as any, userId);
+        console.log('✅ Mock IAP: Achat simulé réussi');
         return true;
       }
 
-      if (Platform.OS !== 'ios') {
-        throw new Error('IAP disponible uniquement sur iOS');
+      if (Platform.OS !== 'ios' && Platform.OS !== 'android') {
+        throw new Error(`IAP non supporté sur la plateforme: ${Platform.OS}`);
       }
 
       if (!InAppPurchases) {
@@ -183,6 +194,7 @@ export class InAppPurchaseService {
       }
 
       if (!this.isInitialized) {
+        console.log('🔄 Initialisation requise avant achat...');
         const initialized = await this.initialize();
         if (!initialized) {
           throw new Error('Impossible d\'initialiser les achats intégrés');
@@ -193,6 +205,8 @@ export class InAppPurchaseService {
 
       // Effectuer l'achat
       const { responseCode, results } = await InAppPurchases.purchaseItemAsync(productId);
+
+      console.log('📱 Réponse IAP:', { responseCode, resultsLength: results?.length });
 
       if (responseCode === InAppPurchases.IAPResponseCode.OK && results && results.length > 0) {
         const purchase = results[0];
@@ -209,7 +223,7 @@ export class InAppPurchaseService {
         console.log('ℹ️ Achat annulé par l\'utilisateur');
         return false;
       } else {
-        console.error('❌ Erreur achat IAP:', responseCode);
+        console.error('❌ Erreur achat IAP - Code de réponse:', responseCode);
         return false;
       }
     } catch (error) {

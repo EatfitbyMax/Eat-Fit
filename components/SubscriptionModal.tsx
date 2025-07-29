@@ -13,6 +13,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { IAP_SUBSCRIPTION_PLANS, IAPSubscriptionPlan, InAppPurchaseService } from '../utils/inAppPurchases';
 import { openPrivacyPolicy, openTermsOfService } from '../utils/legalLinks';
+import { getCurrentUser } from '../utils/auth';
 
 interface SubscriptionModalProps {
   visible: boolean;
@@ -30,22 +31,39 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
   const handleSubscribe = async (plan: IAPSubscriptionPlan) => {
     if (loading) return;
 
+    console.log('🔄 Début de l\'achat pour le plan:', plan.name);
     setLoading(true);
     setSelectedPlan(plan.id);
 
     try {
+      // Récupérer l'utilisateur actuel
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        Alert.alert('Erreur', 'Vous devez être connecté pour effectuer un achat.');
+        return;
+      }
+
+      console.log('👤 Utilisateur connecté:', currentUser.email);
+
+      // Initialiser le service IAP
+      const initialized = await InAppPurchaseService.initialize();
+      if (!initialized) {
+        console.warn('⚠️ Service IAP non initialisé, tentative d\'achat quand même...');
+      }
+
       let success = false;
 
-      if (Platform.OS === 'ios') {
-        success = await InAppPurchaseService.purchaseSubscription(plan.productId);
-      } else if (Platform.OS === 'android') {
-        success = await InAppPurchaseService.purchaseSubscription(plan.productId);
+      if (Platform.OS === 'ios' || Platform.OS === 'android') {
+        console.log('📱 Lancement achat IAP pour:', plan.productId);
+        success = await InAppPurchaseService.purchaseSubscription(plan.productId, currentUser.id);
+        console.log('✅ Résultat achat IAP:', success);
       } else {
         Alert.alert('Erreur', 'Paiement non disponible sur cette plateforme');
         return;
       }
 
       if (success) {
+        console.log('🎉 Achat réussi pour:', plan.name);
         Alert.alert(
           'Félicitations !',
           `Votre abonnement ${plan.name} a été activé avec succès.`,
@@ -59,10 +77,22 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
             }
           ]
         );
+      } else {
+        console.log('❌ Achat échoué ou annulé pour:', plan.name);
+        // Ne pas afficher d'erreur si l'utilisateur a annulé
       }
     } catch (error) {
-      console.error('Erreur abonnement:', error);
-      Alert.alert('Erreur', 'Une erreur est survenue lors du traitement de votre paiement.');
+      console.error('❌ Erreur abonnement:', error);
+      Alert.alert(
+        'Erreur', 
+        'Une erreur est survenue lors du traitement de votre paiement. Veuillez réessayer.',
+        [
+          {
+            text: 'OK',
+            style: 'default'
+          }
+        ]
+      );
     } finally {
       setLoading(false);
       setSelectedPlan(null);
