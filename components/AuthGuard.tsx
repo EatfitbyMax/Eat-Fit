@@ -1,6 +1,7 @@
 import React from 'react';
 import { useRouter, useSegments } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -10,7 +11,6 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   const { user, isLoading, isLoggingOut, setCurrentUser } = useAuth();
   const segments = useSegments();
   const router = useRouter();
-  import AsyncStorage from '@react-native-async-storage/async-storage';
 
   React.useEffect(() => {
     // Ne pas rediriger pendant le chargement
