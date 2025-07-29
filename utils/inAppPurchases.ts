@@ -1,4 +1,8 @@
+` tags.
 
+```python
+# Correcting the initialization logic and adding platform check for IAP.
+<replit_final_file>
 import { Platform } from 'react-native';
 import { PersistentStorage } from './storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -121,54 +125,34 @@ export class InAppPurchaseService {
   private static availableProducts: InAppPurchases.IAPItemDetails[] = [];
 
   static async initialize(): Promise<boolean> {
+    if (IS_EXPO_GO) {
+      console.log('🚫 Mode Expo Go détecté - IAP désactivés');
+      return false;
+    }
+
     try {
-      if (IS_EXPO_GO) {
-        console.log('👻 Mode fantôme IAP: Simulation initialisation réussie');
-        this.isInitialized = true;
-        // Simuler des produits pour le développement
-        this.availableProducts = Object.values(IAP_PRODUCT_IDS).map(id => ({
-          productId: id,
-          price: '9.99',
-          currency: 'EUR',
-          title: `Produit ${id}`,
-          description: `Description ${id}`
-        })) as any[];
-        return true;
-      }
-
-      if (Platform.OS !== 'ios') {
-        console.log('ℹ️ IAP disponible uniquement sur iOS');
+      // Vérifier si nous sommes dans un environnement qui supporte les IAP
+      if (Platform.OS !== 'ios' && Platform.OS !== 'android') {
+        console.log('🚫 Plateforme non supportée pour les IAP');
         return false;
       }
 
-      if (!InAppPurchases) {
-        console.log('ℹ️ InAppPurchases non disponible');
+      // Import conditionnel uniquement pour les vraies builds
+      const { InAppPurchases } = await import('expo-in-app-purchases');
+
+      // Vérifier que le module est bien chargé
+      if (!InAppPurchases || typeof InAppPurchases.connectAsync !== 'function') {
+        console.warn('⚠️ Module expo-in-app-purchases non disponible');
         return false;
       }
 
-      if (this.isInitialized) {
-        return true;
-      }
-
-      // Connecter au store
-      await InAppPurchases.connectAsync();
-      console.log('✅ Connexion IAP établie');
-
-      // Récupérer les produits disponibles
-      const productIds = Object.values(IAP_PRODUCT_IDS);
-      const { results, responseCode } = await InAppPurchases.getProductsAsync(productIds);
-
-      if (responseCode === InAppPurchases.IAPResponseCode.OK) {
-        this.availableProducts = results || [];
-        console.log('✅ Produits IAP récupérés:', this.availableProducts.length);
-        this.isInitialized = true;
-        return true;
-      } else {
-        console.error('❌ Erreur récupération produits IAP:', responseCode);
-        return false;
-      }
+      const result = await InAppPurchases.connectAsync();
+      console.log('✅ IAP initialisés avec succès:', result);
+      this.isInitialized = true;
+      return true;
     } catch (error) {
       console.error('❌ Erreur initialisation IAP:', error);
+      this.isInitialized = false;
       return false;
     }
   }
@@ -280,7 +264,7 @@ export class InAppPurchaseService {
   private static async syncSubscriptionWithServer(subscription: any, userId: string): Promise<void> {
     try {
       const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
-      
+
       const response = await fetch(`${serverUrl}/api/subscriptions/sync`, {
         method: 'POST',
         headers: {

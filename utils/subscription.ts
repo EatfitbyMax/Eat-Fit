@@ -122,7 +122,7 @@ export const getCurrentSubscription = async (userId: string): Promise<Subscripti
     // Sur iOS, utiliser le service IAP en priorité
     if (Platform.OS === 'ios') {
       const iapSubscription = await InAppPurchaseService.getCurrentSubscription(userId);
-      
+
       if (iapSubscription && iapSubscription.planId !== 'free') {
         const subscription = {
           planId: iapSubscription.planId,
