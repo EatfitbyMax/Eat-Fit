@@ -1,6 +1,7 @@
 
 import { Platform } from 'react-native';
 import { PersistentStorage } from './storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Mode fantôme pour Expo Go - désactive les IAP en développement
 const IS_EXPO_GO = __DEV__ && !process.env.EXPO_PUBLIC_USE_EAS_BUILD;
@@ -265,7 +266,7 @@ export class InAppPurchaseService {
       };
 
       // Sauvegarder localement
-      await PersistentStorage.setItem(`subscription_${userId}`, JSON.stringify(subscription));
+      await AsyncStorage.setItem(`subscription_${userId}`, JSON.stringify(subscription));
 
       // Sauvegarder sur le serveur VPS
       await this.syncSubscriptionWithServer(subscription, userId);
@@ -351,7 +352,7 @@ export class InAppPurchaseService {
 
   static async getCurrentSubscription(userId: string) {
     try {
-      const subscriptionData = await PersistentStorage.getItem(`subscription_${userId}`);
+      const subscriptionData = await AsyncStorage.getItem(`subscription_${userId}`);
 
       if (subscriptionData) {
         const subscription = JSON.parse(subscriptionData);
@@ -362,7 +363,7 @@ export class InAppPurchaseService {
         } else if (subscription.endDate) {
           // Abonnement expiré
           subscription.status = 'expired';
-          await PersistentStorage.setItem(`subscription_${userId}`, JSON.stringify(subscription));
+          await AsyncStorage.setItem(`subscription_${userId}`, JSON.stringify(subscription));
           return subscription;
         }
 
