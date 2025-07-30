@@ -812,10 +812,7 @@ app.post('/api/coach-register', async (req, res) => {
     const saltedPassword = password + 'eatfitbymax_salt_2025';
     const hashedPassword = crypto.createHash('sha256').update(saltedPassword).digest('hex');
     
-    // Créer le token de vérification email
-    const verificationToken = crypto.randomBytes(32).toString('hex');
-    
-    // Créer le nouveau coach
+    // Créer le nouveau coach - compte actif immédiatement
     const newCoach = {
       id: Date.now().toString(),
       email: email.toLowerCase(),
@@ -829,9 +826,8 @@ app.post('/api/coach-register', async (req, res) => {
       diplomas: diplomas.trim(),
       specialites: specialties,
       experience: experience.trim(),
-      emailVerified: false,
-      emailVerificationToken: verificationToken,
-      status: 'pending_verification',
+      emailVerified: true, // Directement vérifié
+      status: 'active', // Compte actif immédiatement
       createdAt: new Date().toISOString(),
       lastUpdated: new Date().toISOString()
     };
@@ -840,21 +836,10 @@ app.post('/api/coach-register', async (req, res) => {
     users.push(newCoach);
     saveUsers(users);
     
-    // Envoyer l'email de vérification
-    const verificationUrl = `https://${req.get('host')}/verify-email?token=${verificationToken}&email=${encodeURIComponent(email)}`;
-    
-    try {
-      await sendVerificationEmail(email, firstName, verificationUrl);
-      console.log('✅ Email de vérification envoyé à:', email);
-    } catch (emailError) {
-      console.error('⚠️ Erreur envoi email de vérification:', emailError);
-      // Continuer malgré l'erreur d'email
-    }
-    
-    console.log('✅ Coach inscrit avec succès:', email);
+    console.log('✅ Coach inscrit avec succès (compte actif):', email);
     res.json({
       success: true,
-      message: 'Inscription réussie. Vérifiez votre email pour activer votre compte.'
+      message: 'Inscription réussie ! Vous pouvez maintenant vous connecter via l\'application mobile.'
     });
     
   } catch (error) {
@@ -866,187 +851,7 @@ app.post('/api/coach-register', async (req, res) => {
   }
 });
 
-// Vérification email coach
-app.get('/verify-email', async (req, res) => {
-  try {
-    const { token, email } = req.query;
-    
-    if (!token || !email) {
-      return res.status(400).send(`
-        <!DOCTYPE html>
-        <html>
-          <head><title>Erreur de vérification</title></head>
-          <body style="font-family: Arial; text-align: center; padding: 50px;">
-            <h2>❌ Lien de vérification invalide</h2>
-            <p>Les paramètres de vérification sont manquants.</p>
-          </body>
-        </html>
-      `);
-    }
-    
-    // Récupérer les utilisateurs
-    const users = loadUsers();
-    
-    // Trouver l'utilisateur avec ce token
-    const userIndex = users.findIndex(u => 
-      u.email.toLowerCase() === email.toLowerCase() && 
-      u.emailVerificationToken === token &&
-      u.userType === 'coach'
-    );
-    
-    if (userIndex === -1) {
-      return res.status(400).send(`
-        <!DOCTYPE html>
-        <html>
-          <head><title>Erreur de vérification</title></head>
-          <body style="font-family: Arial; text-align: center; padding: 50px;">
-            <h2>❌ Token de vérification invalide</h2>
-            <p>Ce lien de vérification est invalide ou a expiré.</p>
-          </body>
-        </html>
-      `);
-    }
-    
-    // Activer le compte
-    users[userIndex].emailVerified = true;
-    users[userIndex].status = 'active';
-    users[userIndex].emailVerificationToken = null;
-    users[userIndex].lastUpdated = new Date().toISOString();
-    
-    saveUsers(users);
-    
-    console.log('✅ Email vérifié pour le coach:', email);
-    
-    res.send(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Email vérifié - EatFitByMax</title>
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        </head>
-        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5;">
-          <div style="background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 500px; margin: 0 auto;">
-            <h2 style="color: #28a745;">✅ Email vérifié avec succès!</h2>
-            <p>Votre compte coach EatFitByMax est maintenant activé.</p>
-            <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <p style="margin: 0; font-weight: bold; color: #1976d2;">
-                📱 Vous pouvez maintenant vous connecter via l'application mobile EatFitByMax avec :
-              </p>
-              <p style="margin: 10px 0 0 0; color: #666;">
-                Email: ${email}
-              </p>
-            </div>
-            <p style="font-size: 14px; color: #666; margin-top: 30px;">
-              Téléchargez l'application EatFitByMax sur l'App Store ou Google Play.
-            </p>
-          </div>
-        </body>
-      </html>
-    `);
-    
-  } catch (error) {
-    console.error('❌ Erreur vérification email:', error);
-    res.status(500).send(`
-      <!DOCTYPE html>
-      <html>
-        <head><title>Erreur</title></head>
-        <body style="font-family: Arial; text-align: center; padding: 50px;">
-          <h2>❌ Erreur serveur</h2>
-          <p>Une erreur s'est produite lors de la vérification.</p>
-        </body>
-      </html>
-    `);
-  }
-});
 
-// Fonction d'envoi d'email de vérification
-async function sendVerificationEmail(email, firstName, verificationUrl) {
-  // Utiliser un service d'email simple (vous pouvez remplacer par votre service préféré)
-  const nodemailer = require('nodemailer');
-  
-  // Configuration pour un service d'email (à adapter selon vos besoins)
-  const transporter = nodemailer.createTransporter({
-    host: 'smtp.gmail.com', // Ou votre service SMTP
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.SMTP_EMAIL || 'eatfitbymax@gmail.com',
-      pass: process.env.SMTP_PASSWORD || 'votre_mot_de_passe_app'
-    }
-  });
-  
-  const mailOptions = {
-    from: '"EatFitByMax" <eatfitbymax@gmail.com>',
-    to: email,
-    subject: 'Vérification de votre compte coach EatFitByMax',
-    html: `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="UTF-8">
-          <title>Vérification email</title>
-        </head>
-        <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5;">
-          <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-            <div style="background: linear-gradient(135deg, #F5A623 0%, #FF6B6B 100%); padding: 30px; text-align: center;">
-              <h1 style="color: white; margin: 0; font-size: 28px;">EatFitByMax</h1>
-              <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">Vérification de votre compte coach</p>
-            </div>
-            
-            <div style="padding: 40px;">
-              <h2 style="color: #333; margin-bottom: 20px;">Bonjour ${firstName},</h2>
-              
-              <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
-                Merci de vous être inscrit en tant que coach sur EatFitByMax ! 
-              </p>
-              
-              <p style="color: #666; line-height: 1.6; margin-bottom: 30px;">
-                Pour activer votre compte et commencer à utiliser l'application, veuillez cliquer sur le bouton ci-dessous :
-              </p>
-              
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="${verificationUrl}" 
-                   style="background: linear-gradient(135deg, #F5A623 0%, #FF6B6B 100%); 
-                          color: white; 
-                          text-decoration: none; 
-                          padding: 15px 30px; 
-                          border-radius: 8px; 
-                          font-weight: bold; 
-                          display: inline-block;">
-                  ✅ Vérifier mon email
-                </a>
-              </div>
-              
-              <p style="color: #999; font-size: 14px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
-                Si le bouton ne fonctionne pas, copiez et collez ce lien dans votre navigateur :<br>
-                <a href="${verificationUrl}" style="color: #F5A623; word-break: break-all;">${verificationUrl}</a>
-              </p>
-              
-              <p style="color: #999; font-size: 14px; margin-top: 20px;">
-                Ce lien expirera dans 24 heures. Si vous n'avez pas demandé cette inscription, ignorez cet email.
-              </p>
-            </div>
-            
-            <div style="background: #f8f9fa; padding: 20px; text-align: center; border-top: 1px solid #eee;">
-              <p style="color: #666; font-size: 14px; margin: 0;">
-                © 2025 EatFitByMax - Votre coach nutrition et fitness
-              </p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `
-  };
-  
-  try {
-    await transporter.sendMail(mailOptions);
-    console.log('📧 Email de vérification envoyé à:', email);
-  } catch (error) {
-    console.error('❌ Erreur envoi email:', error);
-    // Ne pas faire échouer l'inscription si l'email ne peut pas être envoyé
-    throw error;
-  }
-}
 
 // ========================================
 // 🔔 GESTION DES NOTIFICATIONS
