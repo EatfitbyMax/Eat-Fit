@@ -699,34 +699,7 @@ app.get('/strava-callback', async (req, res) => {
   `);
 });
 
-// Route de test pour l'inscription coach
-app.get('/test-coach-signup', (req, res) => {
-  const fs = require('fs');
-  const path = require('path');
-  
-  try {
-    const htmlPath = path.join(__dirname, 'test-coach-signup.html');
-    const html = fs.readFileSync(htmlPath, 'utf8');
-    res.send(html);
-  } catch (error) {
-    res.send(`
-      <!DOCTYPE html>
-      <html>
-        <head><title>Test Coach Signup</title></head>
-        <body style="font-family: Arial; padding: 20px;">
-          <h1>🧪 Test - Inscription Coach</h1>
-          <div style="background: #f0f0f0; padding: 15px; border-radius: 5px; margin: 20px 0;">
-            <h3>Lien d'inscription coach :</h3>
-            <a href="/coach-signup" style="color: #F5A623; text-decoration: none; font-weight: bold;">
-              https://eatfitbymax.cloud/coach-signup
-            </a>
-          </div>
-          <p>Envoyez ce lien aux futurs coachs pour qu'ils puissent s'inscrire.</p>
-        </body>
-      </html>
-    `);
-  }
-});
+
 
 // Route de test pour Strava
 app.get('/test-strava', (req, res) => {
