@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -29,21 +28,21 @@ const translations = {
     training: 'Entraînement',
     progress: 'Progrès',
     profile: 'Profil',
-    
+
     // Page d'accueil
     today: 'Aujourd\'hui',
     calories: 'Calories',
     water: 'Eau',
     steps: 'Pas',
     training_sessions: 'Séances',
-    
+
     // Nutrition
     breakfast: 'Petit-déjeuner',
     lunch: 'Déjeuner',
     dinner: 'Dîner',
     snacks: 'Collations',
     add_food: 'Ajouter un aliment',
-    
+
     // Entraînement
     workout: 'Entraînement',
     journal: 'Journal',
@@ -57,7 +56,7 @@ const translations = {
     sunday: 'Dimanche',
     no_workout_added: 'Aucun entraînement ajouté',
     add_workout: '+ Ajouter un entraînement',
-    
+
     // Paramètres
     app_settings: 'Paramètres de l\'application',
     appearance: 'Apparence',
@@ -67,7 +66,7 @@ const translations = {
     units: 'Unités',
     metric_units: 'Métrique (kg, cm)',
     imperial_units: 'Impérial (lbs, ft)',
-    
+
     // Actions
     save: 'Sauvegarder',
     cancel: 'Annuler',
@@ -75,7 +74,7 @@ const translations = {
     edit: 'Modifier',
     delete: 'Supprimer',
     back: '←',
-    
+
     // Modal
     new_workout: 'Nouvel entraînement',
     workout_name: 'Nom',
@@ -86,7 +85,7 @@ const translations = {
     exercises: 'Exercices',
     add_exercise: '+ Ajouter',
     no_exercises: 'Aucun exercice ajouté. Cliquez sur "Ajouter" pour créer un exercice.',
-    
+
     // Langues
     french: 'Français',
     english: 'English',
@@ -101,21 +100,21 @@ const translations = {
     training: 'Training',
     progress: 'Progress',
     profile: 'Profile',
-    
+
     // Home page
     today: 'Today',
     calories: 'Calories',
     water: 'Water',
     steps: 'Steps',
     training_sessions: 'Sessions',
-    
+
     // Nutrition
     breakfast: 'Breakfast',
     lunch: 'Lunch',
     dinner: 'Dinner',
     snacks: 'Snacks',
     add_food: 'Add food',
-    
+
     // Training
     workout: 'Workout',
     journal: 'Journal',
@@ -129,7 +128,7 @@ const translations = {
     sunday: 'Sunday',
     no_workout_added: 'No workout added',
     add_workout: '+ Add workout',
-    
+
     // Settings
     app_settings: 'App Settings',
     appearance: 'Appearance',
@@ -139,7 +138,7 @@ const translations = {
     units: 'Units',
     metric_units: 'Metric (kg, cm)',
     imperial_units: 'Imperial (lbs, ft)',
-    
+
     // Actions
     save: 'Save',
     cancel: 'Cancel',
@@ -147,7 +146,7 @@ const translations = {
     edit: 'Edit',
     delete: 'Delete',
     back: '←',
-    
+
     // Modal
     new_workout: 'New workout',
     workout_name: 'Name',
@@ -158,7 +157,7 @@ const translations = {
     exercises: 'Exercises',
     add_exercise: '+ Add',
     no_exercises: 'No exercises added. Click "Add" to create an exercise.',
-    
+
     // Languages
     french: 'Français',
     english: 'English',
@@ -173,21 +172,21 @@ const translations = {
     training: 'Entrenamiento',
     progress: 'Progreso',
     profile: 'Perfil',
-    
+
     // Home page
     today: 'Hoy',
     calories: 'Calorías',
     water: 'Agua',
     steps: 'Pasos',
     training_sessions: 'Sesiones',
-    
+
     // Nutrition
     breakfast: 'Desayuno',
     lunch: 'Almuerzo',
     dinner: 'Cena',
     snacks: 'Meriendas',
     add_food: 'Añadir comida',
-    
+
     // Training
     workout: 'Entrenamiento',
     journal: 'Diario',
@@ -201,7 +200,7 @@ const translations = {
     sunday: 'Domingo',
     no_workout_added: 'Ningún entrenamiento añadido',
     add_workout: '+ Añadir entrenamiento',
-    
+
     // Settings
     app_settings: 'Configuración de la aplicación',
     appearance: 'Apariencia',
@@ -211,7 +210,7 @@ const translations = {
     units: 'Unidades',
     metric_units: 'Métrico (kg, cm)',
     imperial_units: 'Imperial (lbs, ft)',
-    
+
     // Actions
     save: 'Guardar',
     cancel: 'Cancelar',
@@ -219,7 +218,7 @@ const translations = {
     edit: 'Editar',
     delete: 'Eliminar',
     back: '←',
-    
+
     // Modal
     new_workout: 'Nuevo entrenamiento',
     workout_name: 'Nombre',
@@ -230,7 +229,7 @@ const translations = {
     exercises: 'Ejercicios',
     add_exercise: '+ Añadir',
     no_exercises: 'Ningún ejercicio añadido. Haz clic en "Añadir" para crear un ejercicio.',
-    
+
     // Languages
     french: 'Français',
     english: 'English',
@@ -245,21 +244,21 @@ const translations = {
     training: 'Training',
     progress: 'Fortschritt',
     profile: 'Profil',
-    
+
     // Home page
     today: 'Heute',
     calories: 'Kalorien',
     water: 'Wasser',
     steps: 'Schritte',
     training_sessions: 'Sitzungen',
-    
+
     // Nutrition
     breakfast: 'Frühstück',
     lunch: 'Mittagessen',
     dinner: 'Abendessen',
     snacks: 'Snacks',
     add_food: 'Lebensmittel hinzufügen',
-    
+
     // Training
     workout: 'Training',
     journal: 'Tagebuch',
@@ -273,7 +272,7 @@ const translations = {
     sunday: 'Sonntag',
     no_workout_added: 'Kein Training hinzugefügt',
     add_workout: '+ Training hinzufügen',
-    
+
     // Settings
     app_settings: 'App-Einstellungen',
     appearance: 'Erscheinungsbild',
@@ -283,7 +282,7 @@ const translations = {
     units: 'Einheiten',
     metric_units: 'Metrisch (kg, cm)',
     imperial_units: 'Imperial (lbs, ft)',
-    
+
     // Actions
     save: 'Speichern',
     cancel: 'Abbrechen',
@@ -291,7 +290,7 @@ const translations = {
     edit: 'Bearbeiten',
     delete: 'Löschen',
     back: '←',
-    
+
     // Modal
     new_workout: 'Neues Training',
     workout_name: 'Name',
@@ -302,7 +301,7 @@ const translations = {
     exercises: 'Übungen',
     add_exercise: '+ Hinzufügen',
     no_exercises: 'Keine Übungen hinzugefügt. Klicken Sie auf "Hinzufügen", um eine Übung zu erstellen.',
-    
+
     // Languages
     french: 'Français',
     english: 'English',
@@ -312,11 +311,7 @@ const translations = {
   },
 };
 
-interface LanguageProviderProps {
-  children: React.ReactNode;
-}
-
-export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) => {
+const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<SupportedLanguage>('fr');
 
   useEffect(() => {
@@ -338,7 +333,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
     try {
       await AsyncStorage.setItem('app_language', lang);
       setLanguageState(lang);
-      
+
       // Synchroniser avec le serveur VPS
       try {
         const { PersistentStorage } = await import('../utils/storage');
@@ -366,3 +361,5 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
     </LanguageContext.Provider>
   );
 };
+
+export { useLanguage, LanguageProvider };
