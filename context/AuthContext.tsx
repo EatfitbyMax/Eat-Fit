@@ -12,7 +12,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -24,7 +24,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         setIsLoading(true);
         console.log('🔄 Chargement utilisateur avec session persistante...');
-        
+
         const currentUser = await getCurrentUser();
 
         if (isMounted) {
@@ -148,3 +148,5 @@ export function useAuth() {
   }
   return context;
 }
+
+export { useAuth, AuthProvider };
