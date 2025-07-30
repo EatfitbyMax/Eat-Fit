@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { IAPItemDetails, IAPResponseCode, InAppPurchase } from 'expo-in-app-purchases';
+import * as InAppPurchases from 'expo-in-app-purchases';
 
 export interface IAPSubscriptionPlan {
   id: string;
@@ -98,95 +98,245 @@ export const IAP_SUBSCRIPTION_PLANS: IAPSubscriptionPlan[] = [
   }
 ];
 
-// Mock pour Expo Go - les achats in-app ne fonctionnent que dans des builds standalone
-const mockInAppPurchases = {
-  connectAsync: () => Promise.resolve(),
-  disconnectAsync: () => Promise.resolve(),
-  getProductsAsync: () => Promise.resolve([]),
-  purchaseItemAsync: () => Promise.resolve({ responseCode: 0 }),
-  finishTransactionAsync: () => Promise.resolve(),
-  getPurchaseHistoryAsync: () => Promise.resolve([]),
-};
+export class InAppPurchaseService {
+  private static isInitialized = false;
+  private static availableProducts: InAppPurchases.IAPItemDetails[] = [];
 
-// Utiliser le vrai module en production, mock en développement
-let InAppPurchases: any;
-try {
-  InAppPurchases = require('expo-in-app-purchases');
-} catch (error) {
-  console.warn('⚠️ expo-in-app-purchases non disponible dans Expo Go, utilisation du mock');
-  InAppPurchases = mockInAppPurchases;
+  static async initialize(): Promise<boolean> {
+    if (this.isInitialized) {
+      console.log('✅ IAP déjà initialisés');
+      return true;
+    }
+
+    try {
+      // Vérifier si nous sommes dans un environnement qui supporte les IAP
+      if (Platform.OS !== 'ios' && Platform.OS !== 'android') {
+        console.log('🚫 Plateforme non supportée pour les IAP:', Platform.OS);
+        return false;
+      }
+
+      console.log('🔄 Initialisation des IAP...');
+
+      const result = await InAppPurchases.connectAsync();
+      console.log('✅ IAP initialisés avec succès:', result);
+      this.isInitialized = true;
+      return true;
+    } catch (error) {
+      console.error('❌ Erreur initialisation IAP:', error);
+      this.isInitialized = false;
+      return false;
+    }
+  }
+
+  static async getAvailableProducts(): Promise<InAppPurchases.IAPItemDetails[]> {
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+    return this.availableProducts;
+  }
+
+  static async purchaseSubscription(productId: string, userId: string): Promise<boolean> {
+    try {
+      console.log('🛒 Début purchaseSubscription:', { productId, userId, platform: Platform.OS });
+
+      if (Platform.OS !== 'ios' && Platform.OS !== 'android') {
+        throw new Error(`IAP non supporté sur la plateforme: ${Platform.OS}`);
+      }
+
+      if (!this.isInitialized) {
+        console.log('🔄 Initialisation requise avant achat...');
+        const initialized = await this.initialize();
+        if (!initialized) {
+          throw new Error('Impossible d\'initialiser les achats intégrés');
+        }
+      }
+
+      console.log('🔄 Démarrage achat IAP pour:', productId);
+
+      // Effectuer l'achat
+      const { responseCode, results } = await InAppPurchases.purchaseItemAsync(productId);
+
+      console.log('📱 Réponse IAP:', { responseCode, resultsLength: results?.length });
+
+      if (responseCode === InAppPurchases.IAPResponseCode.OK && results && results.length > 0) {
+        const purchase = results[0];
+        console.log('✅ Achat IAP réussi:', purchase.productId);
+
+        // Sauvegarder l'abonnement localement
+        await this.handleSuccessfulPurchase(purchase, userId);
+
+        // Finaliser la transaction
+        await InAppPurchases.finishTransactionAsync(purchase, true);
+
+        return true;
+      } else if (responseCode === InAppPurchases.IAPResponseCode.USER_CANCELED) {
+        console.log('ℹ️ Achat annulé par l\'utilisateur');
+        return false;
+      } else {
+        console.error('❌ Erreur achat IAP - Code de réponse:', responseCode);
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors de l\'achat:', error);
+      return false;
+    }
+  }
+
+  private static async handleSuccessfulPurchase(
+    purchase: InAppPurchases.InAppPurchase,
+    userId: string
+  ): Promise<void> {
+    try {
+      // Trouver le plan correspondant
+      const plan = IAP_SUBSCRIPTION_PLANS.find(p => p.productId === purchase.productId);
+      if (!plan) {
+        throw new Error(`Plan non trouvé pour le produit: ${purchase.productId}`);
+      }
+
+      // Créer l'objet abonnement
+      const subscription = {
+        planId: plan.id,
+        planName: plan.name,
+        price: plan.price,
+        currency: plan.currency,
+        startDate: new Date().toISOString(),
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 jours
+        status: 'active',
+        paymentMethod: 'apple_iap',
+        transactionId: purchase.transactionId,
+        originalTransactionId: purchase.originalTransactionId,
+        purchaseDate: purchase.transactionDate ? new Date(purchase.transactionDate).toISOString() : new Date().toISOString()
+      };
+
+      // Sauvegarder localement
+      await AsyncStorage.setItem(`subscription_${userId}`, JSON.stringify(subscription));
+
+      // Sauvegarder sur le serveur VPS
+      await this.syncSubscriptionWithServer(subscription, userId);
+
+      console.log('✅ Abonnement IAP activé:', subscription);
+    } catch (error) {
+      console.error('Erreur sauvegarde abonnement IAP:', error);
+    }
+  }
+
+  private static async syncSubscriptionWithServer(subscription: any, userId: string): Promise<void> {
+    try {
+      const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
+
+      const response = await fetch(`${serverUrl}/api/subscriptions/sync`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          subscription
+        }),
+      });
+
+      if (response.ok) {
+        console.log('✅ Abonnement synchronisé avec le serveur');
+      } else {
+        console.warn('⚠️ Erreur synchronisation serveur, abonnement sauvé localement');
+      }
+    } catch (error) {
+      console.warn('⚠️ Impossible de synchroniser avec le serveur:', error);
+    }
+  }
+
+  static async restorePurchases(userId: string): Promise<boolean> {
+    try {
+      if (Platform.OS !== 'ios') {
+        return false;
+      }
+
+      if (!this.isInitialized) {
+        await this.initialize();
+      }
+
+      const { responseCode, results } = await InAppPurchases.getPurchaseHistoryAsync();
+
+      if (responseCode === InAppPurchases.IAPResponseCode.OK && results) {
+        console.log('📦 Restauration des achats:', results.length, 'transactions trouvées');
+
+        // Trouver l'abonnement actif le plus récent
+        const activePurchases = results.filter(purchase => {
+          // Vérifier si c'est un de nos produits
+          return Object.values(IAP_PRODUCT_IDS).includes(purchase.productId);
+        });
+
+        if (activePurchases.length > 0) {
+          // Prendre le plus récent
+          const latestPurchase = activePurchases.sort((a, b) => 
+            (b.transactionDate || 0) - (a.transactionDate || 0)
+          )[0];
+
+          await this.handleSuccessfulPurchase(latestPurchase, userId);
+          return true;
+        }
+      }
+
+      return false;
+    } catch (error) {
+      console.error('❌ Erreur restauration achats:', error);
+      return false;
+    }
+  }
+
+  static async getCurrentSubscription(userId: string) {
+    try {
+      const subscriptionData = await AsyncStorage.getItem(`subscription_${userId}`);
+
+      if (subscriptionData) {
+        const subscription = JSON.parse(subscriptionData);
+
+        // Vérifier si l'abonnement est encore valide
+        if (subscription.endDate && new Date(subscription.endDate) > new Date()) {
+          return subscription;
+        } else if (subscription.endDate) {
+          // Abonnement expiré
+          subscription.status = 'expired';
+          await AsyncStorage.setItem(`subscription_${userId}`, JSON.stringify(subscription));
+          return subscription;
+        }
+
+        return subscription;
+      }
+
+      // Aucun abonnement trouvé, retourner gratuit
+      return {
+        planId: 'free',
+        planName: 'Version Gratuite',
+        price: '0,00 €',
+        currency: 'EUR',
+        status: 'active',
+        paymentMethod: 'none'
+      };
+    } catch (error) {
+      console.error('Erreur récupération abonnement IAP:', error);
+
+      // En cas d'erreur, retourner un abonnement gratuit par défaut
+      return {
+        planId: 'free',
+        planName: 'Version Gratuite',
+        price: '0,00 €',
+        currency: 'EUR',
+        status: 'active',
+        paymentMethod: 'none'
+      };
+    }
+  }
+
+  static async disconnect(): Promise<void> {
+    try {
+      if (this.isInitialized) {
+        await InAppPurchases.disconnectAsync();
+        this.isInitialized = false;
+        console.log('✅ Déconnexion IAP réussie');
+      }
+    } catch (error) {
+      console.error('❌ Erreur déconnexion IAP:', error);
+    }
+  }
 }
-
-// Mock pour Expo Go - les achats in-app ne fonctionnent pas dans Expo Go
-const mockPurchaseResult = {
-  responseCode: 0,
-  results: [],
-  errorCode: null
-};
-
-const mockProduct = {
-  productId: 'premium_monthly',
-  price: '9.99',
-  title: 'Premium Monthly',
-  description: 'Premium features for one month',
-  type: 'subscription'
-};
-
-export const initializeInAppPurchases = async () => {
-  console.log('🔄 [MOCK] Initialisation des achats in-app (Expo Go)');
-  return true;
-};
-
-export const getProductsAsync = async (productIds: string[]) => {
-  console.log('🔄 [MOCK] Récupération des produits:', productIds);
-  return {
-    responseCode: 0,
-    results: productIds.map(id => ({ ...mockProduct, productId: id })),
-    errorCode: null
-  };
-};
-
-export const purchaseItemAsync = async (productId: string) => {
-  console.log('🔄 [MOCK] Achat simulé:', productId);
-  return {
-    responseCode: 0,
-    results: [{
-      productId,
-      purchaseTime: Date.now(),
-      transactionId: `mock_${Date.now()}`,
-      acknowledged: true
-    }],
-    errorCode: null
-  };
-};
-
-export const getPurchaseHistoryAsync = async () => {
-  console.log('🔄 [MOCK] Historique des achats (vide en mode Expo Go)');
-  return mockPurchaseResult;
-};
-
-export const finishTransactionAsync = async (purchase: any) => {
-  console.log('🔄 [MOCK] Finalisation de transaction:', purchase);
-  return true;
-};
-
-export const connectAsync = async () => {
-  console.log('🔄 [MOCK] Connexion au service d\'achat');
-  return true;
-};
-
-export const disconnectAsync = async () => {
-  console.log('🔄 [MOCK] Déconnexion du service d\'achat');
-  return true;
-};
-
-// Export par défaut pour la compatibilité
-export default {
-  initializeInAppPurchases,
-  getProductsAsync,
-  purchaseItemAsync,
-  getPurchaseHistoryAsync,
-  finishTransactionAsync,
-  connectAsync,
-  disconnectAsync
-};

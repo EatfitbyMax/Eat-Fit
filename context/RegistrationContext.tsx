@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface RegistrationData {
@@ -36,7 +37,7 @@ const initialData: RegistrationData = {
 
 const RegistrationContext = createContext<RegistrationContextType | undefined>(undefined);
 
-const RegistrationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export function RegistrationProvider({ children }: { children: ReactNode }) {
   const [registrationData, setRegistrationData] = useState<RegistrationData>(initialData);
 
   const updateRegistrationData = (data: Partial<RegistrationData>) => {
@@ -65,5 +66,3 @@ export function useRegistration() {
   }
   return context;
 }
-
-export { useRegistration, RegistrationProvider };
