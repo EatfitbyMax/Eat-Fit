@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -176,7 +175,7 @@
                 flex-direction: column;
                 gap: 0;
             }
-            
+
             .container {
                 padding: 30px 20px;
             }
@@ -264,7 +263,7 @@
             </button>
         </form>
 
-        <div class="info">
+        <div style="display:none" class="info">
             Après inscription, vous recevrez un email de vérification. Une fois votre email confirmé, vous pourrez vous connecter via l'application mobile EatFitByMax.
         </div>
     </div>
@@ -272,18 +271,18 @@
     <script>
         document.getElementById('coachForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+
             const submitBtn = document.querySelector('.submit-btn');
             const messageDiv = document.getElementById('message');
-            
+
             // Désactiver le bouton pendant l'envoi
             submitBtn.disabled = true;
             submitBtn.textContent = 'Création en cours...';
-            
+
             // Récupérer les données du formulaire
             const formData = new FormData(this);
             const coachData = Object.fromEntries(formData);
-            
+
             try {
                 const response = await fetch('/api/coach-register', {
                     method: 'POST',
@@ -292,14 +291,13 @@
                     },
                     body: JSON.stringify(coachData)
                 });
-                
+
                 const result = await response.json();
-                
+
                 if (result.success) {
                     messageDiv.innerHTML = `
                         <div class="message success">
-                            ✅ Inscription réussie ! Un email de vérification a été envoyé à ${coachData.email}. 
-                            Vérifiez votre boîte mail et cliquez sur le lien pour activer votre compte.
+                            ✅ Inscription réussie ! Vous pouvez maintenant vous connecter via l'application mobile.
                         </div>
                     `;
                     document.getElementById('coachForm').style.display = 'none';
@@ -317,7 +315,7 @@
                     </div>
                 `;
             }
-            
+
             // Réactiver le bouton
             submitBtn.disabled = false;
             submitBtn.textContent = 'Créer mon compte coach';
