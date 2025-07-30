@@ -779,11 +779,9 @@ app.post('/api/coach-register', async (req, res) => {
     const { firstName, lastName, email, password, city, country, diplomas, specialties, experience, terms } = req.body;
 
     console.log('👨‍💼 Nouvelle inscription coach:', email);
-    console.log('📋 Données reçues:', { firstName, lastName, email: email ? email.substring(0, 5) + '***' : 'missing', hasPassword: !!password, city, country, terms });
 
     // Validation des champs obligatoires
     if (!firstName || !lastName || !email || !password || !city || !country || !diplomas || !specialties || !experience || !terms) {
-      console.log('❌ Champs manquants:', { firstName: !!firstName, lastName: !!lastName, email: !!email, password: !!password, city: !!city, country: !!country, diplomas: !!diplomas, specialties: !!specialties, experience: !!experience, terms: !!terms });
       return res.status(400).json({
         success: false,
         message: 'Tous les champs obligatoires doivent être remplis'
@@ -793,7 +791,6 @@ app.post('/api/coach-register', async (req, res) => {
     // Validation email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      console.log('❌ Email invalide:', email);
       return res.status(400).json({
         success: false,
         message: 'Format d\'email invalide'
@@ -802,7 +799,6 @@ app.post('/api/coach-register', async (req, res) => {
 
     // Validation mot de passe
     if (password.length < 6) {
-      console.log('❌ Mot de passe trop court:', password.length);
       return res.status(400).json({
         success: false,
         message: 'Le mot de passe doit contenir au moins 6 caractères'
@@ -810,14 +806,11 @@ app.post('/api/coach-register', async (req, res) => {
     }
 
     // Récupérer les utilisateurs existants
-    console.log('📊 Chargement des utilisateurs existants...');
     const users = await loadUsers();
-    console.log('📊 Utilisateurs existants:', users.length);
 
     // Vérifier si l'email existe déjà
     const existingUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    if (existingUser) {
-      console.log('❌ Email déjà existant:', email);
+    if (existingUser{
       return res.status(400).json({
         success: false,
         message: 'Un compte avec cette adresse email existe déjà'
@@ -825,11 +818,9 @@ app.post('/api/coach-register', async (req, res) => {
     }
 
     // Hacher le mot de passe
-    console.log('🔐 Hachage du mot de passe...');
     const crypto = require('crypto');
     const saltedPassword = password + 'eatfitbymax_salt_2025';
     const hashedPassword = crypto.createHash('sha256').update(saltedPassword).digest('hex');
-    console.log('✅ Mot de passe haché, longueur:', hashedPassword.length);
 
     // Créer le nouveau coach - compte actif immédiatement
     const newCoach = {
@@ -851,46 +842,21 @@ app.post('/api/coach-register', async (req, res) => {
       lastUpdated: new Date().toISOString()
     };
 
-    console.log('👨‍💼 Nouvel objet coach créé:', { id: newCoach.id, email: newCoach.email, userType: newCoach.userType, status: newCoach.status });
-
     // Ajouter à la liste des utilisateurs
     users.push(newCoach);
-    console.log('📊 Nombre d\'utilisateurs après ajout:', users.length);
-
-    // Sauvegarder avec vérification
-    console.log('💾 Tentative de sauvegarde...');
     await saveUsers(users);
-    
-    // Vérifier que la sauvegarde a fonctionné
-    console.log('🔍 Vérification post-sauvegarde...');
-    const verificationUsers = await loadUsers();
-    console.log('📊 Utilisateurs après sauvegarde:', verificationUsers.length);
-    
-    const savedCoach = verificationUsers.find(u => u.email === email.toLowerCase());
-    if (savedCoach) {
-      console.log('✅ Coach bien sauvegardé:', savedCoach.email);
-    } else {
-      console.error('❌ ERREUR: Coach non trouvé après sauvegarde!');
-      throw new Error('Échec de la sauvegarde des données');
-    }
 
     console.log('✅ Coach inscrit avec succès (compte actif):', email);
     res.json({
       success: true,
-      message: 'Inscription réussie ! Vous pouvez maintenant vous connecter via l\'application mobile.',
-      debug: {
-        coachId: newCoach.id,
-        usersCount: verificationUsers.length,
-        saved: !!savedCoach
-      }
+      message: 'Inscription réussie ! Vous pouvez maintenant vous connecter via l\'application mobile.'
     });
 
   } catch (error) {
-    console.error('❌ Erreur inscription coach complète:', error);
-    console.error('❌ Stack trace:', error.stack);
+    console.error('❌ Erreur inscription coach:', error);
     res.status(500).json({
       success: false,
-      message: 'Erreur serveur lors de l\'inscription: ' + error.message
+      message: 'Erreur serveur lors de l\'inscription'
     });
   }
 });
