@@ -1,6 +1,18 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as InAppPurchases from 'expo-in-app-purchases';
+
+// Détection automatique du mode mock (Expo Go vs EAS Build)
+let InAppPurchases: any;
+let isUsingMock = false;
+
+try {
+  InAppPurchases = require('expo-in-app-purchases');
+  console.log('✅ Module expo-in-app-purchases natif chargé');
+} catch (error) {
+  console.log('👻 Module expo-in-app-purchases non disponible, utilisation du mock');
+  InAppPurchases = require('./expo-in-app-purchases-mock').default;
+  isUsingMock = true;
+}
 
 export interface IAPSubscriptionPlan {
   id: string;
@@ -102,6 +114,10 @@ export class InAppPurchaseService {
   private static isInitialized = false;
   private static availableProducts: InAppPurchases.IAPItemDetails[] = [];
 
+  static isInMockMode(): boolean {
+    return isUsingMock;
+  }
+
   static async initialize(): Promise<boolean> {
     if (this.isInitialized) {
       console.log('✅ IAP déjà initialisés');
@@ -115,7 +131,11 @@ export class InAppPurchaseService {
         return false;
       }
 
-      console.log('🔄 Initialisation des IAP...');
+      if (isUsingMock) {
+        console.log('👻 Initialisation des IAP en mode mock (Expo Go)');
+      } else {
+        console.log('🔄 Initialisation des IAP natifs (EAS Build)');
+      }
 
       const result = await InAppPurchases.connectAsync();
       console.log('✅ IAP initialisés avec succès:', result);
@@ -137,7 +157,12 @@ export class InAppPurchaseService {
 
   static async purchaseSubscription(productId: string, userId: string): Promise<boolean> {
     try {
-      console.log('🛒 Début purchaseSubscription:', { productId, userId, platform: Platform.OS });
+      console.log('🛒 Début purchaseSubscription:', { 
+        productId, 
+        userId, 
+        platform: Platform.OS, 
+        mockMode: isUsingMock ? 'OUI (Expo Go)' : 'NON (EAS Build)' 
+      });
 
       if (Platform.OS !== 'ios' && Platform.OS !== 'android') {
         throw new Error(`IAP non supporté sur la plateforme: ${Platform.OS}`);

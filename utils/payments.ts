@@ -95,7 +95,11 @@ export const checkAppointmentLimit = async (
 export class PaymentService {
   static async initialize(): Promise<boolean> {
     if (Platform.OS === 'ios') {
-      return await InAppPurchaseService.initialize();
+      const success = await InAppPurchaseService.initialize();
+      if (InAppPurchaseService.isInMockMode()) {
+        console.log('💳 PaymentService en mode MOCK pour le développement');
+      }
+      return success;
     }
     return false;
   }
