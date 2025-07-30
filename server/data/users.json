@@ -1,6 +1,21 @@
-[
-]
-```
 
-```json
-[]
+[
+  {
+    "id": "1753730000000",
+    "email": "m.pacullmarquie@gmail.com",
+    "hashedPassword": "9c4a353b240c27e620ba8b7b3c8f72b2e2076268ab8e0be89e9d44b3c95cbb61",
+    "firstName": "Max",
+    "lastName": "Pacull-Marquie",
+    "name": "Max Pacull-Marquie",
+    "userType": "coach",
+    "city": "Test",
+    "country": "France",
+    "diplomas": "Test",
+    "specialites": ["Nutrition", "Musculation"],
+    "experience": "Test",
+    "emailVerified": true,
+    "status": "active",
+    "createdAt": "2025-01-28T10:00:00.000Z",
+    "lastUpdated": "2025-01-28T10:00:00.000Z"
+  }
+]
