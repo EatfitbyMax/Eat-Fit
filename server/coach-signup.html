@@ -1,0 +1,346 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription Coach - EatFitByMax</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0D1117 0%, #21262D 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: #161B22;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #30363D;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #F5A623, #FF8C00);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: bold;
+            color: #F5A623;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #8B949E;
+            font-size: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #FFFFFF;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #30363D;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #0D1117;
+            color: #FFFFFF;
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: #6A737D;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #F5A623;
+            background: #21262D;
+            box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        select {
+            cursor: pointer;
+        }
+
+        select option {
+            background: #0D1117;
+            color: #FFFFFF;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin-top: 3px;
+            accent-color: #F5A623;
+        }
+
+        .checkbox-group label {
+            flex: 1;
+            margin-bottom: 0;
+            font-size: 14px;
+            line-height: 1.4;
+            color: #8B949E;
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #F5A623 0%, #FF8C00 100%);
+            color: #000000;
+            border: none;
+            padding: 18px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(245, 166, 35, 0.3);
+        }
+
+        .submit-btn:disabled {
+            background: #30363D;
+            color: #6A737D;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .success {
+            background: #1F2937;
+            color: #10B981;
+            border: 1px solid #059669;
+        }
+
+        .error {
+            background: #1F1B1B;
+            color: #EF4444;
+            border: 1px solid #DC2626;
+        }
+
+        .info {
+            background: #1E3A8A;
+            color: #60A5FA;
+            border: 1px solid #3B82F6;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .container {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">EatFitByMax</div>
+            <div class="subtitle">Inscription Coach</div>
+        </div>
+
+        <div id="message"></div>
+
+        <form id="coachForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="firstName">Prénom *</label>
+                    <input type="text" id="firstName" name="firstName" required>
+                </div>
+                <div class="form-group">
+                    <label for="lastName">Nom *</label>
+                    <input type="text" id="lastName" name="lastName" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Adresse email *</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Mot de passe *</label>
+                <input type="password" id="password" name="password" required minlength="6">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="city">Ville *</label>
+                    <input type="text" id="city" name="city" required>
+                </div>
+                <div class="form-group">
+                    <label for="country">Pays *</label>
+                    <input type="text" id="country" name="country" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="diplomas">Diplômes/Certifications *</label>
+                <textarea id="diplomas" name="diplomas" placeholder="Ex: BPJEPS AGFF, Certificat nutrition sportive..." required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="specialties">Spécialités *</label>
+                <select id="specialties" name="specialties" required>
+                    <option value="">Sélectionnez votre spécialité principale</option>
+                    <option value="nutrition">Nutrition</option>
+                    <option value="fitness">Fitness</option>
+                    <option value="musculation">Musculation</option>
+                    <option value="cardio">Cardio-training</option>
+                    <option value="yoga">Yoga</option>
+                    <option value="pilates">Pilates</option>
+                    <option value="crossfit">CrossFit</option>
+                    <option value="preparation_physique">Préparation physique</option>
+                    <option value="rehabilitation">Réhabilitation</option>
+                    <option value="nutrition_fitness">Nutrition & Fitness</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="experience">Expérience professionnelle *</label>
+                <textarea id="experience" name="experience" placeholder="Décrivez votre expérience, vos anciens postes, vos réalisations..." required></textarea>
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="terms" name="terms" required>
+                <label for="terms">
+                    J'accepte les conditions d'utilisation et je confirme que toutes les informations fournies sont exactes. Je m'engage à respecter les standards professionnels d'EatFitByMax.
+                </label>
+            </div>
+
+            <button type="submit" class="submit-btn">
+                Créer mon compte coach
+            </button>
+        </form>
+
+        <div style="display:none" class="info">
+            Après inscription, vous recevrez un email de vérification. Une fois votre email confirmé, vous pourrez vous connecter via l'application mobile EatFitByMax.
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('coachForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const submitBtn = document.querySelector('.submit-btn');
+            const messageDiv = document.getElementById('message');
+
+            // Désactiver le bouton pendant l'envoi
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Création en cours...';
+
+            // Récupérer les données du formulaire
+            const formData = new FormData(this);
+            const coachData = Object.fromEntries(formData);
+
+            try {
+                const response = await fetch('/api/coach-register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(coachData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    messageDiv.innerHTML = `
+                        <div class="message success">
+                            ✅ Inscription réussie ! Vous pouvez maintenant vous connecter via l'application mobile.
+                        </div>
+                    `;
+                    document.getElementById('coachForm').style.display = 'none';
+                } else {
+                    messageDiv.innerHTML = `
+                        <div class="message error">
+                            ❌ ${result.message || 'Erreur lors de l\'inscription'}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                messageDiv.innerHTML = `
+                    <div class="message error">
+                        ❌ Erreur de connexion. Veuillez réessayer.
+                    </div>
+                `;
+            }
+
+            // Réactiver le bouton
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Créer mon compte coach';
+        });
+    </script>
+</body>
+</html>
