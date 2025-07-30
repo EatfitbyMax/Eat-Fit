@@ -96,8 +96,9 @@ export default function RootLayout() {
     const initializeIAP = async () => {
       if (Platform.OS === 'ios') {
         try {
-          await InAppPurchaseService.init();
-          console.log('✅ In-App Purchases initialisés');
+          await InAppPurchaseService.initialize();
+          const mockMode = InAppPurchaseService.isInMockMode() ? ' (MODE MOCK - Expo Go)' : ' (MODE NATIF - EAS Build)';
+          console.log('✅ In-App Purchases initialisés' + mockMode);
         } catch (error: any) {
           console.warn('⚠️ Erreur lors de l\'initialisation des achats intégrés:', error.message);
         }
@@ -110,7 +111,7 @@ export default function RootLayout() {
 
     return () => {
       if (Platform.OS === 'ios') {
-        InAppPurchaseService.end();
+        InAppPurchaseService.disconnect();
       }
     };
   }, []);
