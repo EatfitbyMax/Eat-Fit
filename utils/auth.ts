@@ -383,11 +383,6 @@ export async function login(email: string, password: string): Promise<User | nul
 
     // Vérification spéciale pour les coachs
     if (user.userType === 'coach') {
-      if (!user.emailVerified) {
-        console.log('❌ Email non vérifié pour le coach:', email);
-        throw new Error('Votre email n\'a pas encore été vérifié. Vérifiez votre boîte mail et cliquez sur le lien de vérification.');
-      }
-      
       if (user.status !== 'active') {
         console.log('❌ Compte coach non activé:', email);
         throw new Error('Votre compte coach n\'est pas encore activé. Contactez l\'administrateur.');
