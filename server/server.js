@@ -142,20 +142,30 @@ async function writeJsonFile(filename, data) {
 let users = [];
 
 // Utility function to load users from memory
-const loadUsers = () => {
+const loadUsers = async () => {
+  try {
+    const users = await readJsonFile('users.json', []);
     return users;
+  } catch (error) {
+    console.error('Error loading users from file:', error);
+    return [];
+  }
 };
 
 // Utility function to save users to memory
-const saveUsers = (updatedUsers) => {
-    users = updatedUsers;
+const saveUsers = async (updatedUsers) => {
+  try {
+    await writeJsonFile('users.json', updatedUsers);
+  } catch (error) {
+    console.error('Error saving users to file:', error);
+  }
 };
 
 // Routes pour les utilisateurs
 app.get('/api/users', async (req, res) => {
   try {
     // Utilisez la fonction pour charger les utilisateurs
-    const users = loadUsers();
+    const users = await loadUsers();
     console.log(`📊 Récupération utilisateurs: ${users.length} utilisateurs trouvés`);
     res.json(users);
   } catch (error) {
@@ -169,7 +179,7 @@ app.get('/api/users', async (req, res) => {
 app.post('/api/users', async (req, res) => {
   try {
     // Utilisez la fonction pour sauvegarder les utilisateurs
-    saveUsers(req.body);
+    await saveUsers(req.body);
     console.log('💾 Sauvegarde utilisateurs:', Array.isArray(req.body) ? req.body.length : 'format invalide');
     console.log('✅ Utilisateurs sauvegardés avec succès');
     res.json({ success: true });
@@ -370,7 +380,7 @@ app.post('/api/user-profile/:userId', async (req, res) => {
 });
 
 // Route pour sauvegarder les préférences d'application
-app.post('/api/app-preferences/:userId', (req, res) => {
+app.post('/api/app-preferences/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     const preferences = req.body;
@@ -378,7 +388,7 @@ app.post('/api/app-preferences/:userId', (req, res) => {
     console.log(`📱 Sauvegarde préférences app pour utilisateur ${userId}:`, preferences);
 
     // Charger les utilisateurs existants
-    const users = loadUsers();
+    const users = await loadUsers();
     const userIndex = users.findIndex(user => user.id === userId);
 
     if (userIndex === -1) {
@@ -391,7 +401,7 @@ app.post('/api/app-preferences/:userId', (req, res) => {
     users[userIndex].lastUpdated = new Date().toISOString();
 
     // Sauvegarder dans le fichier
-    saveUsers(users);
+    await saveUsers(users);
 
     console.log(`✅ Préférences app sauvegardées pour ${userId}`);
     res.json({ success: true, message: 'Préférences sauvegardées' });
@@ -403,7 +413,7 @@ app.post('/api/app-preferences/:userId', (req, res) => {
 });
 
 // Routes pour les paramètres de notifications (compatibilité ancienne API)
-app.get('/api/notifications/:userId', (req, res) => {
+app.get('/api/notifications/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     console.log(`🔔 Récupération paramètres notifications pour utilisateur ${userId}`);
@@ -421,7 +431,7 @@ app.get('/api/notifications/:userId', (req, res) => {
     };
 
     // Charger les utilisateurs existants
-    const users = loadUsers();
+    const users = await loadUsers();
     const user = users.find(user => user.id === userId);
 
     if (!user) {
@@ -440,7 +450,7 @@ app.get('/api/notifications/:userId', (req, res) => {
   }
 });
 
-app.post('/api/notifications/:userId', (req, res) => {
+app.post('/api/notifications/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     const settings = req.body;
@@ -448,7 +458,7 @@ app.post('/api/notifications/:userId', (req, res) => {
     console.log(`🔔 Sauvegarde paramètres notifications pour utilisateur ${userId}:`, settings);
 
     // Charger les utilisateurs existants
-    const users = loadUsers();
+    const users = await loadUsers();
     const userIndex = users.findIndex(user => user.id === userId);
 
     if (userIndex === -1) {
@@ -461,7 +471,7 @@ app.post('/api/notifications/:userId', (req, res) => {
     users[userIndex].lastUpdated = new Date().toISOString();
 
     // Sauvegarder dans le fichier
-    saveUsers(users);
+    await saveUsers(users);
 
     console.log(`✅ Paramètres notifications sauvegardés pour ${userId}`);
     res.json({ success: true, message: 'Paramètres notifications sauvegardés' });
@@ -743,7 +753,7 @@ app.get('/test-strava', (req, res) => {
 app.get('/coach-signup', (req, res) => {
   const fs = require('fs');
   const path = require('path');
-  
+
   try {
     const htmlPath = path.join(__dirname, 'coach-signup.html');
     const html = fs.readFileSync(htmlPath, 'utf8');
@@ -767,9 +777,9 @@ app.get('/coach-signup', (req, res) => {
 app.post('/api/coach-register', async (req, res) => {
   try {
     const { firstName, lastName, email, password, city, country, diplomas, specialties, experience, terms } = req.body;
-    
+
     console.log('👨‍💼 Nouvelle inscription coach:', email);
-    
+
     // Validation des champs obligatoires
     if (!firstName || !lastName || !email || !password || !city || !country || !diplomas || !specialties || !experience || !terms) {
       return res.status(400).json({
@@ -777,7 +787,7 @@ app.post('/api/coach-register', async (req, res) => {
         message: 'Tous les champs obligatoires doivent être remplis'
       });
     }
-    
+
     // Validation email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -786,7 +796,7 @@ app.post('/api/coach-register', async (req, res) => {
         message: 'Format d\'email invalide'
       });
     }
-    
+
     // Validation mot de passe
     if (password.length < 6) {
       return res.status(400).json({
@@ -794,24 +804,24 @@ app.post('/api/coach-register', async (req, res) => {
         message: 'Le mot de passe doit contenir au moins 6 caractères'
       });
     }
-    
+
     // Récupérer les utilisateurs existants
-    const users = loadUsers();
-    
+    const users = await loadUsers();
+
     // Vérifier si l'email existe déjà
     const existingUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    if (existingUser) {
+    if (existingUser{
       return res.status(400).json({
         success: false,
         message: 'Un compte avec cette adresse email existe déjà'
       });
     }
-    
+
     // Hacher le mot de passe
     const crypto = require('crypto');
     const saltedPassword = password + 'eatfitbymax_salt_2025';
     const hashedPassword = crypto.createHash('sha256').update(saltedPassword).digest('hex');
-    
+
     // Créer le nouveau coach - compte actif immédiatement
     const newCoach = {
       id: Date.now().toString(),
@@ -831,17 +841,17 @@ app.post('/api/coach-register', async (req, res) => {
       createdAt: new Date().toISOString(),
       lastUpdated: new Date().toISOString()
     };
-    
+
     // Ajouter à la liste des utilisateurs
     users.push(newCoach);
-    saveUsers(users);
-    
+    await saveUsers(users);
+
     console.log('✅ Coach inscrit avec succès (compte actif):', email);
     res.json({
       success: true,
       message: 'Inscription réussie ! Vous pouvez maintenant vous connecter via l\'application mobile.'
     });
-    
+
   } catch (error) {
     console.error('❌ Erreur inscription coach:', error);
     res.status(500).json({
@@ -858,7 +868,7 @@ app.post('/api/coach-register', async (req, res) => {
 // ========================================
 
 // Récupérer les paramètres de notifications d'un utilisateur (nouvelle API)
-app.get('/api/notifications/settings/:userId', (req, res) => {
+app.get('/api/notifications/settings/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     console.log(`🔔 [SETTINGS] Récupération paramètres notifications pour utilisateur: ${userId}`);
@@ -876,7 +886,7 @@ app.get('/api/notifications/settings/:userId', (req, res) => {
     };
 
     // Chercher les paramètres personnalisés dans les données utilisateur
-    const users = loadUsers();
+    const users = await loadUsers();
     const user = users.find(u => u.id === userId);
 
     if (user && user.notificationSettings) {
@@ -902,14 +912,14 @@ app.get('/api/notifications/settings/:userId', (req, res) => {
 });
 
 // Sauvegarder les paramètres de notifications d'un utilisateur (nouvelle API)
-app.post('/api/notifications/settings/:userId', (req, res) => {
+app.post('/api/notifications/settings/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     const { settings } = req.body;
 
     console.log(`🔔 [SETTINGS] Sauvegarde paramètres notifications pour utilisateur: ${userId}`, settings);
 
-    const users = loadUsers();
+    const users = await loadUsers();
     const userIndex = users.findIndex(u => u.id === userId);
 
     if (userIndex === -1) {
@@ -925,7 +935,7 @@ app.post('/api/notifications/settings/:userId', (req, res) => {
     users[userIndex].lastUpdated = new Date().toISOString();
 
     // Sauvegarder
-    saveUsers(users);
+    await saveUsers(users);
 
     console.log(`✅ [SETTINGS] Paramètres notifications sauvegardés pour ${userId}`);
     res.json({
