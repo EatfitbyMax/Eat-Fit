@@ -106,7 +106,7 @@ app.post('/api/integrations/:userId', (req, res) => {
 app.get('/api/health-check', (req, res) => {
   res.status(200).json({ 
     status: 'OK', 
-    message: 'Serveur Replit opérationnel',
+    message: 'Serveur VPS EatFitByMax opérationnel',
     timestamp: new Date().toISOString(),
     port: PORT
   });
@@ -1199,11 +1199,11 @@ async function startServer() {
 
     const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Serveur EatFitByMax démarré sur le port ${PORT}`);
-      console.log(`🌐 API disponible sur: https://eatfitbymax.replit.app`);
+      console.log(`🌐 API disponible sur: https://eatfitbymax.cloud`);
       console.log(`✅ Serveur prêt à recevoir des connexions sur 0.0.0.0:${PORT}`);
 
-      // Serveur prêt pour Replit
-      console.log('📡 Serveur Replit configuré et en ligne');
+      // Serveur prêt pour VPS
+      console.log('📡 Serveur VPS configuré et en ligne');
     });
 
     server.on('error', (error) => {
