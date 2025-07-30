@@ -4,7 +4,16 @@ import { Platform } from 'react-native';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { checkSubscriptionStatus } from '@/utils/subscription';
+// Import conditionnel pour éviter les erreurs Expo Go
+const checkSubscriptionStatus = async () => {
+  try {
+    const { checkSubscriptionStatus: checkSub } = await import('@/utils/subscription');
+    return await checkSub();
+  } catch (error) {
+    console.warn('⚠️ Subscription check non disponible dans Expo Go');
+    return false;
+  }
+};
 import { useAuth } from '@/context/AuthContext';
 
 export default function ClientLayout() {

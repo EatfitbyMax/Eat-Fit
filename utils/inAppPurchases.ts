@@ -98,6 +98,25 @@ export const IAP_SUBSCRIPTION_PLANS: IAPSubscriptionPlan[] = [
   }
 ];
 
+// Mock pour Expo Go - les achats in-app ne fonctionnent que dans des builds standalone
+const mockInAppPurchases = {
+  connectAsync: () => Promise.resolve(),
+  disconnectAsync: () => Promise.resolve(),
+  getProductsAsync: () => Promise.resolve([]),
+  purchaseItemAsync: () => Promise.resolve({ responseCode: 0 }),
+  finishTransactionAsync: () => Promise.resolve(),
+  getPurchaseHistoryAsync: () => Promise.resolve([]),
+};
+
+// Utiliser le vrai module en production, mock en développement
+let InAppPurchases: any;
+try {
+  InAppPurchases = require('expo-in-app-purchases');
+} catch (error) {
+  console.warn('⚠️ expo-in-app-purchases non disponible dans Expo Go, utilisation du mock');
+  InAppPurchases = mockInAppPurchases;
+}
+
 // Mock pour Expo Go - les achats in-app ne fonctionnent pas dans Expo Go
 const mockPurchaseResult = {
   responseCode: 0,

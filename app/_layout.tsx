@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useFonts } from 'expo-font';
+import '../expo-go-config'; // Configuration Expo Go
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
