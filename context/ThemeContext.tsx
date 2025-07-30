@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColorScheme } from 'react-native';
@@ -68,7 +69,7 @@ interface ThemeProviderProps {
   children: React.ReactNode;
 }
 
-const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
+export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const systemColorScheme = useColorScheme();
   const [isDarkMode, setIsDarkMode] = useState<boolean>(systemColorScheme === 'dark');
 
@@ -93,7 +94,7 @@ const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const saveThemePreference = async (isDark: boolean) => {
     try {
       await AsyncStorage.setItem('theme_preference', isDark ? 'dark' : 'light');
-
+      
       // Synchroniser avec le serveur VPS
       try {
         const { PersistentStorage } = await import('../utils/storage');
@@ -130,5 +131,3 @@ const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     </ThemeContext.Provider>
   );
 };
-
-export { useTheme, ThemeProvider };

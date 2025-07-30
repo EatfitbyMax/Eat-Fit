@@ -96,13 +96,6 @@ export default function LoginScreen() {
           >
             <Text style={styles.linkText}>Pas encore de compte ? S'inscrire</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.coachLinkButton}
-            onPress={() => router.push('/auth/register-coach')}
-          >
-            <Text style={styles.coachLinkText}>👨‍💼 Espace Coach - S'inscrire</Text>
-          </TouchableOpacity>
         </View>
       </View>
     </SafeAreaView>
@@ -177,17 +170,5 @@ const styles = StyleSheet.create({
   linkText: {
     color: '#58A6FF',
     fontSize: 14,
-  },
-  coachLinkButton: {
-    alignItems: 'center',
-    marginTop: 15,
-    padding: 10,
-    backgroundColor: '#F5A623',
-    borderRadius: 8,
-  },
-  coachLinkText: {
-    color: '#000000',
-    fontSize: 14,
-    fontWeight: '600',
   },
 });

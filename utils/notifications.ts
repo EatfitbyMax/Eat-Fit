@@ -1,17 +1,4 @@
-// Mock conditionnel pour Expo Go
-let Notifications: any;
-try {
-  Notifications = require('expo-notifications');
-} catch (error) {
-  console.warn('⚠️ expo-notifications limité dans Expo Go');
-  Notifications = {
-    setNotificationHandler: () => {},
-    requestPermissionsAsync: () => Promise.resolve({ status: 'denied' }),
-    scheduleNotificationAsync: () => Promise.resolve('mock-id'),
-    cancelNotificationAsync: () => Promise.resolve(),
-    getAllScheduledNotificationsAsync: () => Promise.resolve([]),
-  };
-}
+import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import { PersistentStorage } from './storage';
