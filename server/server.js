@@ -810,7 +810,7 @@ app.post('/api/coach-register', async (req, res) => {
 
     // Vérifier si l'email existe déjà
     const existingUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    if (existingUser{
+      if (existingUser) {
       return res.status(400).json({
         success: false,
         message: 'Un compte avec cette adresse email existe déjà'
