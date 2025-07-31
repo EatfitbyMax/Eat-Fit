@@ -78,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('✅ Cache auth vidé');
 
       // 3. Forcer un re-render en attendant un tick
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 150));
 
       // 4. Vérification double du cache
       const { getCurrentUser } = await import('@/utils/auth');
@@ -92,12 +92,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('✅ Vérification: Aucun utilisateur en cache');
       }
 
-      // 5. La navigation sera gérée par AuthGuard automatiquement
-      // grâce aux états isLoggingOut et user = null
-      console.log('🔄 AuthGuard va automatiquement rediriger vers /auth/login');
+      // 5. Forcer la navigation IMMÉDIATEMENT vers login
+      console.log('🔄 Redirection forcée vers /auth/login');
+      router.replace('/auth/login');
 
-      // 6. Attendre un tick pour que le contexte se propage
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // 6. Attendre un tick supplémentaire pour que le contexte se propage
+      await new Promise(resolve => setTimeout(resolve, 200));
 
       // 7. Désactiver l'état de déconnexion
       setIsLoggingOut(false);
@@ -111,10 +111,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
       setIsLoggingOut(false);
 
-      // AuthGuard gérera automatiquement la redirection
-      console.log('🔄 AuthGuard va gérer la redirection de secours');
+      // Forcer la redirection en cas d'erreur
+      router.replace('/auth/login');
+      console.log('🔄 Redirection de secours vers /auth/login');
     }
-  }, []);
+  }, [router]);
 
   const refreshUser = useCallback(async () => {
     try {

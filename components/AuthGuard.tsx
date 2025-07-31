@@ -48,8 +48,15 @@ export default function AuthGuard({ children }: AuthGuardProps) {
       }
     }
 
-    // Si utilisateur connecté, gérer les redirections normales
-    if (user && user.email) {
+    // VÉRIFICATION DOUBLE: S'assurer que l'utilisateur n'est pas null/undefined
+    if (!user || !user.email || !user.userType) {
+      console.log('🚫 Utilisateur invalide détecté, redirection vers login');
+      router.replace('/auth/login');
+      return;
+    }
+
+    // Si utilisateur connecté ET VALIDE, gérer les redirections normales
+    if (user && user.email && user.userType) {
       if (isAuthRoute) {
         // Rediriger depuis les pages auth vers l'interface appropriée
         const redirectPath = user.userType === 'coach' ? '/(coach)' : '/(client)';
