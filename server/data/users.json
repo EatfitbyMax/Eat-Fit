@@ -1,21 +1,2 @@
 
-[
-  {
-    "id": "1753628518000",
-    "email": "m.pacullmarquie@gmail.com",
-    "hashedPassword": "a8f5f167f44f4964e6c998dee827110c",
-    "firstName": "Max",
-    "lastName": "Pacull-Marquie",
-    "name": "Max Pacull-Marquie",
-    "userType": "client",
-    "age": 22,
-    "weight": 70,
-    "height": 180,
-    "gender": "Homme",
-    "activityLevel": "leger",
-    "goals": ["perte_poids", "muscle"],
-    "favoriteSport": "Football",
-    "createdAt": "2025-01-30T22:38:00.000Z",
-    "lastUpdated": "2025-01-30T22:38:00.000Z"
-  }
-]
+[]
