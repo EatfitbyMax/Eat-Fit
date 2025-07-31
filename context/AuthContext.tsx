@@ -77,10 +77,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await authLogout();
       console.log('✅ Cache auth vidé');
 
-      // 3. Forcer un re-render en attendant un tick
-      await new Promise(resolve => setTimeout(resolve, 150));
+      // 3. Forcer la navigation IMMÉDIATEMENT vers login AVANT toute autre opération
+      console.log('🔄 Redirection forcée vers /auth/login');
+      router.replace('/auth/login');
 
-      // 4. Vérification double du cache
+      // 4. Attendre que la navigation se termine
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // 5. Vérification double du cache APRÈS redirection
       const { getCurrentUser } = await import('@/utils/auth');
       const checkUser = await getCurrentUser();
       if (checkUser !== null) {
@@ -92,14 +96,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('✅ Vérification: Aucun utilisateur en cache');
       }
 
-      // 5. Forcer la navigation IMMÉDIATEMENT vers login
-      console.log('🔄 Redirection forcée vers /auth/login');
-      router.replace('/auth/login');
+      // 6. Maintenir l'état de déconnexion plus longtemps pour éviter les race conditions
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-      // 6. Attendre un tick supplémentaire pour que le contexte se propage
-      await new Promise(resolve => setTimeout(resolve, 200));
-
-      // 7. Désactiver l'état de déconnexion
+      // 7. Désactiver l'état de déconnexion seulement à la fin
       setIsLoggingOut(false);
       console.log('✅ Déconnexion complète terminée');
 
@@ -109,10 +109,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Forcer la réinitialisation même en cas d'erreur
       setUser(null);
       setIsLoading(false);
-      setIsLoggingOut(false);
 
       // Forcer la redirection en cas d'erreur
       router.replace('/auth/login');
+      
+      // Attendre avant de désactiver l'état de déconnexion
+      setTimeout(() => {
+        setIsLoggingOut(false);
+      }, 500);
+      
       console.log('🔄 Redirection de secours vers /auth/login');
     }
   }, [router]);

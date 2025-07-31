@@ -34,16 +34,26 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     const isClientRoute = currentRoute.startsWith('(client)');
     const isCoachRoute = currentRoute.startsWith('(coach)');
 
-    // PRIORITÉ ABSOLUE : Si pas d'utilisateur connecté OU en cours de déconnexion, rediriger vers login
-    if (!user || isLoggingOut) {
+    // PRIORITÉ ABSOLUE : Si en cours de déconnexion, forcer immédiatement vers login
+    if (isLoggingOut) {
       if (!isAuthRoute) {
-        const reason = isLoggingOut ? 'Déconnexion en cours' : 'Utilisateur NON connecté';
-        console.log(`🔄 PRIORITÉ ABSOLUE - Redirection vers /auth/login - ${reason}`);
+        console.log(`🔄 PRIORITÉ ABSOLUE - Déconnexion en cours, redirection immédiate vers /auth/login`);
         router.replace('/auth/login');
         return;
       } else {
-        const reason = isLoggingOut ? 'déconnexion en cours' : 'utilisateur non connecté';
-        console.log(`🛡️ AuthGuard - Déjà sur route auth, ${reason} - OK`);
+        console.log(`🛡️ AuthGuard - Déconnexion en cours, déjà sur route auth - OK`);
+        return;
+      }
+    }
+
+    // DEUXIÈME PRIORITÉ : Si pas d'utilisateur connecté, rediriger vers login
+    if (!user) {
+      if (!isAuthRoute) {
+        console.log(`🔄 Redirection vers /auth/login - Utilisateur NON connecté`);
+        router.replace('/auth/login');
+        return;
+      } else {
+        console.log(`🛡️ AuthGuard - Déjà sur route auth, utilisateur non connecté - OK`);
         return;
       }
     }
