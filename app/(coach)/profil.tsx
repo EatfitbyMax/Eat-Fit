@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, TextInput, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
-import { logout } from '@/utils/auth';
 import { PersistentStorage } from '@/utils/storage';
+import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getCurrentUser } from '@/utils/auth';
+import { useAuth } from '@/context/AuthContext';
 
 interface CoachInfo {
   prenom: string;
@@ -14,8 +14,9 @@ interface CoachInfo {
   disponibilites: string;
 }
 
-export default function ProfilScreen() {
+export default function CoachProfilScreen() {
   const router = useRouter();
+  const { logout } = useAuth();
   const [coachInfo, setCoachInfo] = useState<CoachInfo>({
     prenom: 'Maxime',
     nom: 'Renard',
@@ -34,7 +35,7 @@ export default function ProfilScreen() {
       // D'abord essayer de charger depuis le serveur
       const users = await PersistentStorage.getUsers();
       const coach = users.find(user => user.userType === 'coach' && user.email === 'eatfitbymax@gmail.com');
-      
+
       if (coach) {
         const serverCoachInfo = {
           prenom: coach.firstName || coach.name.split(' ')[0] || 'Maxime',
@@ -71,11 +72,11 @@ export default function ProfilScreen() {
     try {
       // Sauvegarder localement
       await AsyncStorage.setItem('coachInfo', JSON.stringify(coachInfo));
-      
+
       // Sauvegarder sur le serveur VPS
       const users = await PersistentStorage.getUsers();
       const coachIndex = users.findIndex(user => user.userType === 'coach' && user.email === 'eatfitbymax@gmail.com');
-      
+
       if (coachIndex !== -1) {
         // Mettre à jour les données du coach
         users[coachIndex] = {
@@ -87,12 +88,12 @@ export default function ProfilScreen() {
           specialite: coachInfo.specialite,
           disponibilites: coachInfo.disponibilites
         };
-        
+
         // Sauvegarder sur le serveur
         await PersistentStorage.saveUsers(users);
         console.log('Données coach sauvegardées sur le serveur VPS');
       }
-      
+
       setIsEditing(false);
       Alert.alert('Succès', 'Vos informations ont été sauvegardées');
     } catch (error) {
@@ -102,8 +103,30 @@ export default function ProfilScreen() {
   };
 
   const handleLogout = async () => {
-    await logout();
-    router.replace('/auth/login');
+    Alert.alert(
+      'Déconnexion',
+      'Êtes-vous sûr de vouloir vous déconnecter ?',
+      [
+        {
+          text: 'Annuler',
+          style: 'cancel',
+        },
+        {
+          text: 'Déconnexion',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              console.log('🚪 Bouton déconnexion appuyé - Début de la déconnexion...');
+              await logout();
+              console.log('✅ Déconnexion contexte terminée');
+            } catch (error) {
+              console.error('❌ Erreur lors de la déconnexion:', error);
+              Alert.alert('Erreur', 'Impossible de se déconnecter. Réessayez.');
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -127,13 +150,13 @@ export default function ProfilScreen() {
               <Text style={styles.email}>{coachInfo.email}</Text>
               <Text style={styles.specialite}>{coachInfo.specialite}</Text>
             </View>
-            
+
           </View>
 
           {isEditing && (
             <View style={styles.editSection}>
               <Text style={styles.editTitle}>Modifier mes informations</Text>
-              
+
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Prénom</Text>
                 <TextInput
@@ -207,7 +230,7 @@ export default function ProfilScreen() {
         {/* Informations personnelles */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>📋 Informations personnelles</Text>
-          
+
           <TouchableOpacity 
             style={styles.menuItem}
             onPress={() => setIsEditing(!isEditing)}
@@ -215,29 +238,29 @@ export default function ProfilScreen() {
             <Text style={styles.menuItemText}>Informations personnelles</Text>
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuItemText}>Notifications</Text>
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
         </View>
 
-        
+
 
         {/* Paramètres */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Paramètres</Text>
-          
+
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuItemText}>Paramètres de l'application</Text>
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuItemText}>Sécurité et confidentialité</Text>
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuItemText}>Aide et feedback</Text>
             <Text style={styles.menuItemArrow}>›</Text>
@@ -248,7 +271,7 @@ export default function ProfilScreen() {
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.logoutButtonText}>🚪 Se déconnecter</Text>
         </TouchableOpacity>
-        
+
         <Text style={styles.version}>Version 1.0.0</Text>
       </ScrollView>
     </SafeAreaView>
@@ -313,7 +336,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginTop: 2,
   },
-  
+
   editSection: {
     marginTop: 20,
     backgroundColor: '#0D1117',
@@ -410,8 +433,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#8B949E',
   },
-  
-  
+
+
   logoutButton: {
     margin: 20,
     marginTop: 0,
