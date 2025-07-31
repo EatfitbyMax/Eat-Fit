@@ -300,7 +300,7 @@ export async function login(email: string, password: string): Promise<User | nul
           storedHashPreview: user.hashedPassword.substring(0, 10) + '...'
         });
 
-        // Vérifier d'abord avec le nouveau système HEX
+        // Vérifier d'abord avec le nouveau système HEX (SHA256)
         const hashedInputHex = await Crypto.digestStringAsync(
           Crypto.CryptoDigestAlgorithm.SHA256,
           saltedPassword,
@@ -308,11 +308,11 @@ export async function login(email: string, password: string): Promise<User | nul
         );
         
         isPasswordValid = hashedInputHex === user.hashedPassword;
-        console.log('🔐 Vérification HEX:', isPasswordValid ? 'VALIDE' : 'INVALIDE');
+        console.log('🔐 Vérification SHA256-HEX:', isPasswordValid ? 'VALIDE' : 'INVALIDE');
         
-        // Si échec avec HEX, essayer avec Base64 (ancien système)
+        // Si échec avec SHA256-HEX, essayer avec Base64 (ancien système SHA256)
         if (!isPasswordValid && user.hashedPassword.length === 44) {
-          console.log('🔄 Tentative avec ancien encodage Base64...');
+          console.log('🔄 Tentative avec ancien encodage SHA256-Base64...');
           const hashedInputBase64 = await Crypto.digestStringAsync(
             Crypto.CryptoDigestAlgorithm.SHA256,
             saltedPassword,
@@ -320,11 +320,11 @@ export async function login(email: string, password: string): Promise<User | nul
           );
           
           isPasswordValid = hashedInputBase64 === user.hashedPassword;
-          console.log('🔐 Vérification Base64:', isPasswordValid ? 'VALIDE' : 'INVALIDE');
+          console.log('🔐 Vérification SHA256-Base64:', isPasswordValid ? 'VALIDE' : 'INVALIDE');
           
           // Si connexion réussie avec Base64, migrer vers HEX
           if (isPasswordValid) {
-            console.log('🔄 Migration du hash Base64 vers HEX...');
+            console.log('🔄 Migration du hash SHA256-Base64 vers SHA256-HEX...');
             try {
               // Mettre à jour l'utilisateur avec le nouveau hash HEX
               const updatedUsers = users.map((u: any) => 
@@ -334,10 +334,45 @@ export async function login(email: string, password: string): Promise<User | nul
               );
               
               await PersistentStorage.saveUsers(updatedUsers);
-              console.log('✅ Migration Base64->HEX terminée');
+              console.log('✅ Migration SHA256-Base64->SHA256-HEX terminée');
             } catch (migrationError) {
-              console.error('⚠️ Erreur migration Base64->HEX (connexion maintenue):', migrationError);
+              console.error('⚠️ Erreur migration SHA256-Base64->SHA256-HEX (connexion maintenue):', migrationError);
             }
+          }
+        }
+        
+        // Si échec avec SHA256, essayer avec MD5 (très ancien système)
+        if (!isPasswordValid && user.hashedPassword.length === 32) {
+          console.log('🔄 Tentative avec ancien hash MD5...');
+          try {
+            const hashedInputMD5 = await Crypto.digestStringAsync(
+              Crypto.CryptoDigestAlgorithm.MD5,
+              passwordString, // MD5 sans salt
+              { encoding: Crypto.CryptoEncoding.HEX }
+            );
+            
+            isPasswordValid = hashedInputMD5 === user.hashedPassword;
+            console.log('🔐 Vérification MD5:', isPasswordValid ? 'VALIDE' : 'INVALIDE');
+            
+            // Si connexion réussie avec MD5, migrer vers SHA256-HEX
+            if (isPasswordValid) {
+              console.log('🔄 Migration du hash MD5 vers SHA256-HEX...');
+              try {
+                // Mettre à jour l'utilisateur avec le nouveau hash SHA256-HEX
+                const updatedUsers = users.map((u: any) => 
+                  u.email === email 
+                    ? { ...u, hashedPassword: hashedInputHex }
+                    : u
+                );
+                
+                await PersistentStorage.saveUsers(updatedUsers);
+                console.log('✅ Migration MD5->SHA256-HEX terminée');
+              } catch (migrationError) {
+                console.error('⚠️ Erreur migration MD5->SHA256-HEX (connexion maintenue):', migrationError);
+              }
+            }
+          } catch (md5Error) {
+            console.error('❌ Erreur vérification MD5:', md5Error);
           }
         }
         
