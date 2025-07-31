@@ -1084,27 +1084,3 @@ export async function getCoaches(): Promise<any[]> {
   }
 }
 
-export const PersistentStorage = {
-  getUsers,
-  saveUsers,
-  getCoaches,
-  getMessages,
-  saveMessages,
-  getProgrammes,
-  saveProgrammes,
-  getUserProfile,
-  saveUserProfile,
-  getHealthData,
-  saveHealthData,
-  getWorkouts,
-  saveWorkouts,
-  getStravaActivities,
-  getNutrition,
-  saveNutrition,
-  getWeightData,
-  saveWeightData,
-  getAppPreferences,
-  saveAppPreferences,
-  getNotificationSettings,
-  saveNotificationSettings,
-};
