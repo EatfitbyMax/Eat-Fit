@@ -345,14 +345,28 @@ export async function login(email: string, password: string): Promise<User | nul
         if (!isPasswordValid && user.hashedPassword.length === 32) {
           console.log('🔄 Tentative avec ancien hash MD5...');
           try {
-            const hashedInputMD5 = await Crypto.digestStringAsync(
+            // Essayer d'abord MD5 sans salt (ancien système)
+            const hashedInputMD5NoSalt = await Crypto.digestStringAsync(
               Crypto.CryptoDigestAlgorithm.MD5,
               passwordString, // MD5 sans salt
               { encoding: Crypto.CryptoEncoding.HEX }
             );
             
-            isPasswordValid = hashedInputMD5 === user.hashedPassword;
-            console.log('🔐 Vérification MD5:', isPasswordValid ? 'VALIDE' : 'INVALIDE');
+            isPasswordValid = hashedInputMD5NoSalt === user.hashedPassword;
+            console.log('🔐 Vérification MD5 (sans salt):', isPasswordValid ? 'VALIDE' : 'INVALIDE');
+            
+            // Si échec sans salt, essayer avec salt
+            if (!isPasswordValid) {
+              console.log('🔄 Tentative MD5 avec salt...');
+              const hashedInputMD5WithSalt = await Crypto.digestStringAsync(
+                Crypto.CryptoDigestAlgorithm.MD5,
+                saltedPassword, // MD5 avec salt
+                { encoding: Crypto.CryptoEncoding.HEX }
+              );
+              
+              isPasswordValid = hashedInputMD5WithSalt === user.hashedPassword;
+              console.log('🔐 Vérification MD5 (avec salt):', isPasswordValid ? 'VALIDE' : 'INVALIDE');
+            }
             
             // Si connexion réussie avec MD5, migrer vers SHA256-HEX
             if (isPasswordValid) {
