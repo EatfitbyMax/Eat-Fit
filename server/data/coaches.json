@@ -1,19 +1,2 @@
 
-[
-  {
-    "id": "1753628518001",
-    "email": "maxandre.pacull.marquie@ednh.fr",
-    "hashedPassword": "a8f5f167f44f4964e6c998dee827110c",
-    "firstName": "Maxandre",
-    "lastName": "Pacull-Marquie",
-    "name": "Maxandre Pacull-Marquie",
-    "userType": "coach",
-    "city": "Paris",
-    "country": "France",
-    "diplomas": "BPJEPS AGFF, Certificat nutrition sportive",
-    "specialties": "nutrition_fitness",
-    "experience": "5 ans d'expérience en coaching sportif et nutritionnel",
-    "createdAt": "2025-01-30T22:38:00.000Z",
-    "lastUpdated": "2025-01-30T22:38:00.000Z"
-  }
-]
+[]
