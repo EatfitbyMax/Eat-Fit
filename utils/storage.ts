@@ -955,6 +955,57 @@ export class PersistentStorage {
       throw error;
     }
   }
+
+  // Coaches storage
+  static async getCoaches(): Promise<any[]> {
+    try {
+      await this.ensureConnection();
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+      const response = await fetch(`${SERVER_URL}/api/coaches`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Coaches récupérés depuis le serveur VPS');
+        return data;
+      }
+      throw new Error(`Erreur HTTP ${response.status}`);
+    } catch (error) {
+      console.error('❌ Erreur récupération coaches:', error);
+      throw new Error('Impossible de récupérer les coaches. Vérifiez votre connexion internet.');
+    }
+  }
+
+  static async saveCoaches(coaches: any[]): Promise<void> {
+    try {
+      await this.ensureConnection();
+
+      const response = await fetch(`${SERVER_URL}/api/coaches`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(coaches),
+      });
+
+      if (response.ok) {
+        console.log('✅ Coaches sauvegardés sur le serveur VPS');
+        return;
+      }
+      throw new Error('Erreur sauvegarde coaches sur le serveur');
+    } catch (error) {
+      console.error('❌ Erreur sauvegarde coaches:', error);
+      throw new Error('Impossible de sauvegarder les coaches. Vérifiez votre connexion internet.');
+    }
+  }
 }
 
 // Fonctions utilitaires pour l'export
@@ -1083,4 +1134,3 @@ export async function getCoaches(): Promise<any[]> {
     return [];
   }
 }
-
