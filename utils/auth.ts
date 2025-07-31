@@ -85,9 +85,11 @@ async function loadSession(): Promise<User | null> {
     
     const session = JSON.parse(sessionData);
     
-    // Récupérer les données utilisateur complètes depuis le serveur
+    // Récupérer les données utilisateur complètes depuis le serveur (clients ET coaches)
     const users = await PersistentStorage.getUsers();
-    const user = users.find((u: any) => u.email === session.userEmail && u.id === session.userId);
+    const coaches = await PersistentStorage.getCoaches();
+    const allUsers = [...users, ...coaches];
+    const user = allUsers.find((u: any) => u.email === session.userEmail && u.id === session.userId);
     
     if (!user) {
       console.log('❌ Utilisateur de session non trouvé sur le serveur');
@@ -253,18 +255,23 @@ export async function login(email: string, password: string): Promise<User | nul
   try {
     console.log('🔄 Tentative de connexion pour:', email);
 
-    // Récupérer les utilisateurs depuis le serveur uniquement
+    // Récupérer les utilisateurs ET les coaches depuis le serveur
     const users = await PersistentStorage.getUsers();
+    const coaches = await PersistentStorage.getCoaches();
+    
+    // Combiner les deux listes pour la recherche
+    const allUsers = [...users, ...coaches];
 
     console.log('📊 Nombre d\'utilisateurs récupérés:', users.length);
-    console.log('👥 Utilisateurs disponibles:', users.map((u: any) => ({ 
+    console.log('👨‍💼 Nombre de coaches récupérés:', coaches.length);
+    console.log('👥 Tous les utilisateurs disponibles:', allUsers.map((u: any) => ({ 
       email: u.email, 
       userType: u.userType,
       hashedPassword: u.hashedPassword ? 'OUI' : 'NON'
     })));
 
-    // Trouver l'utilisateur
-    const user = users.find((u: any) => u.email === email);
+    // Trouver l'utilisateur (client ou coach)
+    const user = allUsers.find((u: any) => u.email === email);
     if (!user) {
       console.log('❌ Utilisateur non trouvé pour:', email);
       return null;
@@ -592,29 +599,62 @@ export async function updateUserData(email: string, updateData: {
   targetWeight?: number;
 }): Promise<boolean> {
   try {
-    // Récupérer les utilisateurs depuis le serveur uniquement
+    // Récupérer les utilisateurs ET les coaches depuis le serveur
     const users = await PersistentStorage.getUsers();
+    const coaches = await PersistentStorage.getCoaches();
 
-    // Trouver l'utilisateur à mettre à jour
-    const userIndex = users.findIndex((u: any) => u.email === email);
-    if (userIndex === -1) {
-      console.log('Utilisateur non trouvé pour la mise à jour');
-      return false;
+    // Chercher dans les clients d'abord
+    let userIndex = users.findIndex((u: any) => u.email === email);
+    let isCoach = false;
+    let updatedUser;
+
+    if (userIndex !== -1) {
+      // Utilisateur trouvé dans les clients
+      updatedUser = {
+        ...users[userIndex],
+        ...updateData,
+        name: updateData.firstName && updateData.lastName 
+          ? `${updateData.firstName} ${updateData.lastName}`
+          : users[userIndex].name
+      };
+      users[userIndex] = updatedUser;
+      await PersistentStorage.saveUsers(users);
+    } else {
+      // Chercher dans les coaches
+      userIndex = coaches.findIndex((c: any) => c.email === email);
+      if (userIndex === -1) {
+        console.log('Utilisateur non trouvé pour la mise à jour');
+        return false;
+      }
+      
+      isCoach = true;
+      updatedUser = {
+        ...coaches[userIndex],
+        ...updateData,
+        name: updateData.firstName && updateData.lastName 
+          ? `${updateData.firstName} ${updateData.lastName}`
+          : coaches[userIndex].name
+      };
+      coaches[userIndex] = updatedUser;
+      
+      // Sauvegarder les coaches (fonction à créer)
+      try {
+        const response = await fetch(`${API_URL}/api/coaches`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(coaches)
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+      } catch (error) {
+        console.error('Erreur sauvegarde coaches:', error);
+        throw error;
+      }
     }
-
-    // Mettre à jour les données de l'utilisateur
-    const updatedUser = {
-      ...users[userIndex],
-      ...updateData,
-      name: updateData.firstName && updateData.lastName 
-        ? `${updateData.firstName} ${updateData.lastName}`
-        : users[userIndex].name
-    };
-
-    users[userIndex] = updatedUser;
-
-    // Sauvegarder sur le serveur uniquement
-    await PersistentStorage.saveUsers(users);
 
     // Mettre à jour la session en cache mémoire et persistante
     const { password: _, hashedPassword: __, ...userWithoutPassword } = updatedUser;
