@@ -72,6 +72,21 @@ export default function AuthGuard({ children }: AuthGuardProps) {
         console.log('🛡️ AuthGuard - Accès autorisé pour utilisateur connecté');
       }
     }
+
+    // Si l'utilisateur est connecté, rediriger vers la bonne section selon son type
+        if (user) {
+          if (user.userType === 'coach' && !currentRoute.startsWith('(coach)')) {
+            console.log('🔄 Redirection coach vers /(coach) - Type utilisateur:', user.userType);
+            router.replace('/(coach)');
+            return;
+          }
+
+          if (user.userType === 'client' && !currentRoute.startsWith('(client)')) {
+            console.log('🔄 Redirection client vers /(client) - Type utilisateur:', user.userType);
+            router.replace('/(client)');
+            return;
+          }
+        }
   }, [user, segments, isLoading, isLoggingOut, router]);
 
   // AuthGuard ne fait que gérer la navigation - AuthContext gère déjà l'authentification
