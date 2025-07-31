@@ -68,25 +68,17 @@ export default function AuthGuard({ children }: AuthGuardProps) {
         // Empêcher l'accès coach si pas coach
         console.log('🚫 Accès coach refusé - Type utilisateur:', user.userType);
         router.replace('/(client)');
+      } else if (!isClientRoute && !isCoachRoute && user.userType) {
+        // Si l'utilisateur est sur une route non protégée, rediriger vers sa section
+        const redirectPath = user.userType === 'coach' ? '/(coach)' : '/(client)';
+        console.log('🔄 Redirection utilisateur connecté vers', redirectPath, '- Route actuelle:', currentRoute);
+        router.replace(redirectPath);
       } else {
         console.log('🛡️ AuthGuard - Accès autorisé pour utilisateur connecté');
       }
     }
 
-    // Si l'utilisateur est connecté, rediriger vers la bonne section selon son type
-        if (user) {
-          if (user.userType === 'coach' && !currentRoute.startsWith('(coach)')) {
-            console.log('🔄 Redirection coach vers /(coach) - Type utilisateur:', user.userType);
-            router.replace('/(coach)');
-            return;
-          }
-
-          if (user.userType === 'client' && !currentRoute.startsWith('(client)')) {
-            console.log('🔄 Redirection client vers /(client) - Type utilisateur:', user.userType);
-            router.replace('/(client)');
-            return;
-          }
-        }
+    
   }, [user, segments, isLoading, isLoggingOut, router]);
 
   // AuthGuard ne fait que gérer la navigation - AuthContext gère déjà l'authentification
