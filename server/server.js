@@ -140,8 +140,9 @@ async function writeJsonFile(filename, data) {
 
 // Fake data storage
 let users = [];
+let coaches = [];
 
-// Utility function to load users from memory
+// Utility function to load users (clients) from memory
 const loadUsers = async () => {
   try {
     const users = await readJsonFile('users.json', []);
@@ -152,7 +153,7 @@ const loadUsers = async () => {
   }
 };
 
-// Utility function to save users to memory
+// Utility function to save users (clients) to memory
 const saveUsers = async (updatedUsers) => {
   try {
     await writeJsonFile('users.json', updatedUsers);
@@ -161,31 +162,79 @@ const saveUsers = async (updatedUsers) => {
   }
 };
 
-// Routes pour les utilisateurs
+// Utility function to load coaches from memory
+const loadCoaches = async () => {
+  try {
+    const coaches = await readJsonFile('coaches.json', []);
+    return coaches;
+  } catch (error) {
+    console.error('Error loading coaches from file:', error);
+    return [];
+  }
+};
+
+// Utility function to save coaches to memory
+const saveCoaches = async (updatedCoaches) => {
+  try {
+    await writeJsonFile('coaches.json', updatedCoaches);
+  } catch (error) {
+    console.error('Error saving coaches to file:', error);
+  }
+};
+
+// Routes pour les utilisateurs (clients uniquement)
 app.get('/api/users', async (req, res) => {
   try {
-    // Utilisez la fonction pour charger les utilisateurs
     const users = await loadUsers();
-    console.log(`📊 Récupération utilisateurs: ${users.length} utilisateurs trouvés`);
-    res.json(users);
+    // Filtrer pour ne retourner que les clients
+    const clients = users.filter(user => user.userType === 'client' || !user.userType);
+    console.log(`📊 Récupération clients: ${clients.length} clients trouvés`);
+    res.json(clients);
   } catch (error) {
-    console.error('Erreur lecture utilisateurs:', error);
-    // Retourner un tableau vide au lieu d'une erreur pour permettre l'inscription
-    console.log('📝 Initialisation d\'une liste d\'utilisateurs vide');
+    console.error('Erreur lecture clients:', error);
+    console.log('📝 Initialisation d\'une liste de clients vide');
     res.json([]);
   }
 });
 
 app.post('/api/users', async (req, res) => {
   try {
-    // Utilisez la fonction pour sauvegarder les utilisateurs
-    await saveUsers(req.body);
-    console.log('💾 Sauvegarde utilisateurs:', Array.isArray(req.body) ? req.body.length : 'format invalide');
-    console.log('✅ Utilisateurs sauvegardés avec succès');
+    // Filtrer pour ne sauvegarder que les clients
+    const allUsers = Array.isArray(req.body) ? req.body : [req.body];
+    const clients = allUsers.filter(user => user.userType === 'client' || !user.userType);
+    
+    await saveUsers(clients);
+    console.log('💾 Sauvegarde clients:', clients.length);
+    console.log('✅ Clients sauvegardés avec succès');
     res.json({ success: true });
   } catch (error) {
-    console.error('Erreur sauvegarde utilisateurs:', error);
-    res.status(500).json({ error: 'Erreur sauvegarde utilisateurs' });
+    console.error('Erreur sauvegarde clients:', error);
+    res.status(500).json({ error: 'Erreur sauvegarde clients' });
+  }
+});
+
+// Routes pour les coaches
+app.get('/api/coaches', async (req, res) => {
+  try {
+    const coaches = await loadCoaches();
+    console.log(`👨‍💼 Récupération coaches: ${coaches.length} coaches trouvés`);
+    res.json(coaches);
+  } catch (error) {
+    console.error('Erreur lecture coaches:', error);
+    console.log('📝 Initialisation d\'une liste de coaches vide');
+    res.json([]);
+  }
+});
+
+app.post('/api/coaches', async (req, res) => {
+  try {
+    await saveCoaches(req.body);
+    console.log('💾 Sauvegarde coaches:', Array.isArray(req.body) ? req.body.length : 'format invalide');
+    console.log('✅ Coaches sauvegardés avec succès');
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Erreur sauvegarde coaches:', error);
+    res.status(500).json({ error: 'Erreur sauvegarde coaches' });
   }
 });
 
@@ -387,21 +436,35 @@ app.post('/api/app-preferences/:userId', async (req, res) => {
 
     console.log(`📱 Sauvegarde préférences app pour utilisateur ${userId}:`, preferences);
 
-    // Charger les utilisateurs existants
+    // Charger les clients et coaches
     const users = await loadUsers();
-    const userIndex = users.findIndex(user => user.id === userId);
+    const coaches = await loadCoaches();
+    
+    // Chercher dans les clients
+    let userIndex = users.findIndex(user => user.id === userId);
+    let isCoach = false;
+    
+    // Si pas trouvé dans les clients, chercher dans les coaches
+    if (userIndex === -1) {
+      userIndex = coaches.findIndex(coach => coach.id === userId);
+      isCoach = true;
+    }
 
     if (userIndex === -1) {
       console.error(`❌ Utilisateur ${userId} non trouvé pour sauvegarde préférences app`);
       return res.status(404).json({ error: 'Utilisateur non trouvé' });
     }
 
-    // Mettre à jour les préférences de l'utilisateur
-    users[userIndex].appPreferences = preferences;
-    users[userIndex].lastUpdated = new Date().toISOString();
-
-    // Sauvegarder dans le fichier
-    await saveUsers(users);
+    // Mettre à jour les préférences
+    if (isCoach) {
+      coaches[userIndex].appPreferences = preferences;
+      coaches[userIndex].lastUpdated = new Date().toISOString();
+      await saveCoaches(coaches);
+    } else {
+      users[userIndex].appPreferences = preferences;
+      users[userIndex].lastUpdated = new Date().toISOString();
+      await saveUsers(users);
+    }
 
     console.log(`✅ Préférences app sauvegardées pour ${userId}`);
     res.json({ success: true, message: 'Préférences sauvegardées' });
@@ -430,9 +493,15 @@ app.get('/api/notifications/:userId', async (req, res) => {
       vibrationEnabled: true,
     };
 
-    // Charger les utilisateurs existants
+    // Charger les clients et coaches
     const users = await loadUsers();
-    const user = users.find(user => user.id === userId);
+    const coaches = await loadCoaches();
+    
+    // Chercher l'utilisateur dans les deux listes
+    let user = users.find(user => user.id === userId);
+    if (!user) {
+      user = coaches.find(coach => coach.id === userId);
+    }
 
     if (!user) {
       console.log(`⚠️ Utilisateur ${userId} non trouvé, création avec paramètres par défaut`);
@@ -457,9 +526,19 @@ app.post('/api/notifications/:userId', async (req, res) => {
 
     console.log(`🔔 Sauvegarde paramètres notifications pour utilisateur ${userId}:`, settings);
 
-    // Charger les utilisateurs existants
+    // Charger les clients et coaches
     const users = await loadUsers();
-    const userIndex = users.findIndex(user => user.id === userId);
+    const coaches = await loadCoaches();
+    
+    // Chercher dans les clients
+    let userIndex = users.findIndex(user => user.id === userId);
+    let isCoach = false;
+    
+    // Si pas trouvé dans les clients, chercher dans les coaches
+    if (userIndex === -1) {
+      userIndex = coaches.findIndex(coach => coach.id === userId);
+      isCoach = true;
+    }
 
     if (userIndex === -1) {
       console.log(`⚠️ Utilisateur ${userId} non trouvé, impossible de sauvegarder les paramètres notifications`);
@@ -467,11 +546,15 @@ app.post('/api/notifications/:userId', async (req, res) => {
     }
 
     // Mettre à jour les paramètres de notifications
-    users[userIndex].notificationSettings = settings;
-    users[userIndex].lastUpdated = new Date().toISOString();
-
-    // Sauvegarder dans le fichier
-    await saveUsers(users);
+    if (isCoach) {
+      coaches[userIndex].notificationSettings = settings;
+      coaches[userIndex].lastUpdated = new Date().toISOString();
+      await saveCoaches(coaches);
+    } else {
+      users[userIndex].notificationSettings = settings;
+      users[userIndex].lastUpdated = new Date().toISOString();
+      await saveUsers(users);
+    }
 
     console.log(`✅ Paramètres notifications sauvegardés pour ${userId}`);
     res.json({ success: true, message: 'Paramètres notifications sauvegardés' });
@@ -805,12 +888,17 @@ app.post('/api/coach-register', async (req, res) => {
       });
     }
 
-    // Récupérer les utilisateurs existants
+    // Récupérer les coaches existants
+    const coaches = await loadCoaches();
+    
+    // Récupérer aussi les clients pour vérifier les doublons d'email
     const users = await loadUsers();
 
-    // Vérifier si l'email existe déjà
+    // Vérifier si l'email existe déjà (chez les coaches et les clients)
+    const existingCoach = coaches.find(c => c.email.toLowerCase() === email.toLowerCase());
     const existingUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    if (existingUser) {
+    
+    if (existingCoach || existingUser) {
       return res.status(400).json({
         success: false,
         message: 'Un compte avec cette adresse email existe déjà'
@@ -842,9 +930,9 @@ app.post('/api/coach-register', async (req, res) => {
       lastUpdated: new Date().toISOString()
     };
 
-    // Ajouter à la liste des utilisateurs
-    users.push(newCoach);
-    await saveUsers(users);
+    // Ajouter à la liste des coaches
+    coaches.push(newCoach);
+    await saveCoaches(coaches);
 
     console.log('✅ Coach inscrit avec succès (compte actif):', email);
     res.json({
@@ -887,7 +975,13 @@ app.get('/api/notifications/settings/:userId', async (req, res) => {
 
     // Chercher les paramètres personnalisés dans les données utilisateur
     const users = await loadUsers();
-    const user = users.find(u => u.id === userId);
+    const coaches = await loadCoaches();
+    
+    // Chercher l'utilisateur dans les deux listes
+    let user = users.find(u => u.id === userId);
+    if (!user) {
+      user = coaches.find(c => c.id === userId);
+    }
 
     if (user && user.notificationSettings) {
       console.log('✅ [SETTINGS] Paramètres notifications personnalisés trouvés');
@@ -920,7 +1014,17 @@ app.post('/api/notifications/settings/:userId', async (req, res) => {
     console.log(`🔔 [SETTINGS] Sauvegarde paramètres notifications pour utilisateur: ${userId}`, settings);
 
     const users = await loadUsers();
-    const userIndex = users.findIndex(u => u.id === userId);
+    const coaches = await loadCoaches();
+    
+    // Chercher dans les clients
+    let userIndex = users.findIndex(u => u.id === userId);
+    let isCoach = false;
+    
+    // Si pas trouvé dans les clients, chercher dans les coaches
+    if (userIndex === -1) {
+      userIndex = coaches.findIndex(c => c.id === userId);
+      isCoach = true;
+    }
 
     if (userIndex === -1) {
       console.log(`⚠️ [SETTINGS] Utilisateur ${userId} non trouvé`);
@@ -931,11 +1035,15 @@ app.post('/api/notifications/settings/:userId', async (req, res) => {
     }
 
     // Mettre à jour les paramètres de notifications
-    users[userIndex].notificationSettings = settings;
-    users[userIndex].lastUpdated = new Date().toISOString();
-
-    // Sauvegarder
-    await saveUsers(users);
+    if (isCoach) {
+      coaches[userIndex].notificationSettings = settings;
+      coaches[userIndex].lastUpdated = new Date().toISOString();
+      await saveCoaches(coaches);
+    } else {
+      users[userIndex].notificationSettings = settings;
+      users[userIndex].lastUpdated = new Date().toISOString();
+      await saveUsers(users);
+    }
 
     console.log(`✅ [SETTINGS] Paramètres notifications sauvegardés pour ${userId}`);
     res.json({
