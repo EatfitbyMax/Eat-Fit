@@ -948,8 +948,7 @@ export class PersistentStorage {
 
   static async importData(data: { programmes: any[], users: any[] }): Promise<void> {
     try {
-      await this.saveProgrammes(data.programmes || []);
-      await this.saveUsers(data.users || []);
+      await this.saveProgrammes(data.programmes || []);      await this.saveUsers(data.users || []);
       console.log('✅ Données importées avec succès');
     } catch (error) {
       console.error('❌ Erreur lors de l\'import des données:', error);
@@ -1055,4 +1054,57 @@ const getServerUrl = () => {
   const devUrl = process.env.EXPO_PUBLIC_DEV_SERVER_URL;
 
   return apiUrl || vpsUrl || devUrl || 'https://eatfitbymax.replit.app';
+};
+
+export async function getUsers(): Promise<any[]> {
+  try {
+    const response = await fetch(`${API_URL}/api/users`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const users = await response.json();
+    return Array.isArray(users) ? users : [];
+  } catch (error) {
+    console.error('Erreur récupération utilisateurs:', error);
+    return [];
+  }
+}
+
+export async function getCoaches(): Promise<any[]> {
+  try {
+    const response = await fetch(`${API_URL}/api/coaches`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const coaches = await response.json();
+    return Array.isArray(coaches) ? coaches : [];
+  } catch (error) {
+    console.error('Erreur récupération coaches:', error);
+    return [];
+  }
+}
+
+export const PersistentStorage = {
+  getUsers,
+  saveUsers,
+  getCoaches,
+  getMessages,
+  saveMessages,
+  getProgrammes,
+  saveProgrammes,
+  getUserProfile,
+  saveUserProfile,
+  getHealthData,
+  saveHealthData,
+  getWorkouts,
+  saveWorkouts,
+  getStravaActivities,
+  getNutrition,
+  saveNutrition,
+  getWeightData,
+  saveWeightData,
+  getAppPreferences,
+  saveAppPreferences,
+  getNotificationSettings,
+  saveNotificationSettings,
 };
