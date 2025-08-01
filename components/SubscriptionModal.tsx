@@ -1,781 +1,479 @@
-import React, { useState, useEffect } from 'react';
+` tags.
+
+```xml
+<replit_final_file>
+import React, { useState, useRef, useEffect } from 'react';
 import {
+  Modal,
   View,
   Text,
-  Modal,
+  StyleSheet,
   TouchableOpacity,
   ScrollView,
-  StyleSheet,
   Alert,
   ActivityIndicator,
-  Platform
+  Animated,
+  Dimensions,
+  SafeAreaView,
+  Platform,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { IAP_SUBSCRIPTION_PLANS, IAPSubscriptionPlan, InAppPurchaseService } from '../utils/inAppPurchases';
-import { openPrivacyPolicy, openTermsOfService, openAppleSubscriptionSettings } from '../utils/legalLinks';
-import { getCurrentUser } from '../utils/auth';
+import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
+import { Colors } from '../constants/Colors';
+import { inAppPurchaseService } from '../utils/inAppPurchases';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface SubscriptionModalProps {
   visible: boolean;
   onClose: () => void;
-  onSubscribe?: (plan: IAPSubscriptionPlan) => void;
+  onSubscribe?: () => void;
 }
 
 export default function SubscriptionModal({ visible, onClose, onSubscribe }: SubscriptionModalProps) {
+  const { theme } = useTheme();
+  const colors = Colors[theme];
   const [loading, setLoading] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-  const [availableProducts, setAvailableProducts] = useState<any[]>([]);
+  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly');
+  const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+  const backdropAnim = useRef(new Animated.Value(0)).current;
+
+  const plans = [
+    {
+      id: 'monthly',
+      name: 'Mensuel',
+      price: '9,99 €',
+      period: '/mois',
+      description: 'Parfait pour essayer',
+      features: [
+        'Programmes personnalisés illimités',
+        'Suivi nutritionnel avancé',
+        'Reconnaissance d\'images IA',
+        'Support premium 24/7',
+        'Synchronisation Apple Health'
+      ],
+      popular: false,
+    },
+    {
+      id: 'yearly',
+      name: 'Annuel',
+      price: '79,99 €',
+      period: '/an',
+      description: 'Économisez 33%',
+      features: [
+        'Tous les avantages du plan mensuel',
+        '4 mois gratuits',
+        'Accès prioritaire aux nouvelles fonctionnalités',
+        'Consultation coach mensuelle offerte',
+        'Rapports de progression détaillés'
+      ],
+      popular: true,
+    },
+  ];
 
   useEffect(() => {
     if (visible) {
-      loadAvailableProducts();
+      Animated.parallel([
+        Animated.timing(backdropAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          tension: 100,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(backdropAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: SCREEN_HEIGHT,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
     }
   }, [visible]);
 
-  const loadAvailableProducts = async () => {
+  const handleSubscribe = async () => {
     try {
       setLoading(true);
-      await InAppPurchaseService.initialize();
-      const products = await InAppPurchaseService.getAvailableProducts();
-      setAvailableProducts(products);
-    } catch (error) {
-      console.error('Erreur chargement produits IAP:', error);
-      Alert.alert('Erreur', 'Impossible de charger les abonnements');
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const handlePlanSelect = async (plan: IAPSubscriptionPlan) => {
-    if (loading) return;
-    
-    setLoading(true);
-    setSelectedPlan(plan.id);
-
-    try {
-      // Vérifier si nous sommes en mode mock
-      if (InAppPurchaseService.isInMockMode()) {
-        Alert.alert(
-          'Mode Démo',
-          'Les achats intégrés ne sont pas disponibles en mode développement. Cette fonctionnalité sera activée dans la version App Store.',
-          [
-            { text: 'Annuler', style: 'cancel' },
-            { 
-              text: 'Continuer', 
-              onPress: () => {
-                onSubscribe?.(plan);
-                onClose();
-              }
-            }
-          ]
-        );
-        return;
-      }
-
-      // Achat réel
-      const success = await InAppPurchaseService.purchaseSubscription(plan.productId);
-      
-      if (success) {
-        Alert.alert('Succès', 'Abonnement activé avec succès !');
-        onSubscribe?.(plan);
-        onClose();
-      } else {
-        Alert.alert('Erreur', 'Impossible de traiter l\'abonnement');
-      }
-    } catch (error: any) {
-      console.error('Erreur achat abonnement:', error);
-      
-      if (error.message?.includes('USER_CANCELED')) {
-        // L'utilisateur a annulé, ne pas afficher d'erreur
-        return;
-      }
-      
-      Alert.alert('Erreur', 'Une erreur est survenue lors de l\'achat');
-    } finally {
-      setLoading(false);
-      setSelectedPlan(null);
-    }
-  };
-
-  const renderPlanCard = (plan: IAPSubscriptionPlan) => {
-    const isSelected = selectedPlan === plan.id;
-    const isLoading = loading && isSelected;
-
-    const getGradientColors = (planId: string) => {
-      switch (planId) {
-        case 'bronze': return ['#CD7F32', '#B8860B'];
-        case 'silver': return ['#C0C0C0', '#A9A9A9'];
-        case 'gold': return ['#FFD700', '#FFA500'];
-        case 'diamond': return ['#B9F2FF', '#87CEEB'];
-        default: return ['#CD7F32', '#B8860B'];
-      }
-    };
-
-    return (
-      <TouchableOpacity
-        key={plan.id}
-        onPress={() => handlePlanSelect(plan)}
-        disabled={loading}
-        style={[styles.planCard, isSelected && styles.selectedPlan]}
-      >
-        <LinearGradient
-          colors={getGradientColors(plan.id)}
-          style={styles.planGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
-          <View style={styles.planHeader}>
-            <Text style={styles.planName}>{plan.name}</Text>
-            <Text style={styles.planPrice}>{plan.price}</Text>
-            <Text style={styles.planDuration}>{plan.duration}</Text>
-          </View>
-
-          <View style={styles.featuresContainer}>
-            {plan.features.map((feature, index) => (
-              <View key={index} style={styles.featureRow}>
-                <Text style={styles.checkmark}>✓</Text>
-                <Text style={styles.featureText}>{feature}</Text>
-              </View>
-            ))}
-          </View>
-
-          {isLoading && (
-            <View style={styles.loadingOverlay}>
-              <ActivityIndicator color="#FFF" size="large" />
-            </View>
-          )}
-        </LinearGradient>
-      </TouchableOpacity>
-    );
-  };
-
-  return (
-    <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Choisissez votre abonnement</Text>
-            <Text style={styles.modalSubtitle}>
-              Accédez à tous les services de coaching personnalisé
-            </Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>✕</Text>
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView style={styles.plansContainer} showsVerticalScrollIndicator={false}>
-            {IAP_SUBSCRIPTION_PLANS.map(renderPlanCard)}
-            
-            <View style={styles.legalSection}>
-              <Text style={styles.legalText}>
-                L'abonnement se renouvelle automatiquement. Vous pouvez l'annuler à tout moment dans les réglages de votre compte Apple.
-              </Text>
-              
-              <View style={styles.legalLinks}>
-                <TouchableOpacity onPress={openTermsOfService}>
-                  <Text style={styles.linkText}>Conditions d'utilisation</Text>
-                </TouchableOpacity>
-                <Text style={styles.separator}> • </Text>
-                <TouchableOpacity onPress={openPrivacyPolicy}>
-                  <Text style={styles.linkText}>Politique de confidentialité</Text>
-                </TouchableOpacity>
-              </View>
-
-              <TouchableOpacity 
-                onPress={openAppleSubscriptionSettings}
-                style={styles.manageButton}
-              >
-                <Text style={styles.manageButtonText}>Gérer les abonnements</Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-        </View>
-      </View>
-    </Modal>
-  );
-}
-
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    width: '90%',
-    maxHeight: '85%',
-    backgroundColor: '#1a1a1a',
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  modalHeader: {
-    padding: 20,
-    alignItems: 'center',
-    position: 'relative',
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFF',
-    marginBottom: 8,
-  },
-  modalSubtitle: {
-    fontSize: 16,
-    color: '#CCC',
-    textAlign: 'center',
-  },
-  closeButton: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
-    width: 30,
-    height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closeButtonText: {
-    fontSize: 20,
-    color: '#FFF',
-    fontWeight: 'bold',
-  },
-  plansContainer: {
-    paddingHorizontal: 20,
-  },
-  planCard: {
-    marginBottom: 15,
-    borderRadius: 15,
-    overflow: 'hidden',
-  },
-  selectedPlan: {
-    transform: [{ scale: 0.98 }],
-  },
-  planGradient: {
-    padding: 20,
-    position: 'relative',
-  },
-  planHeader: {
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  planName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFF',
-    textTransform: 'uppercase',
-  },
-  planPrice: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFF',
-    marginTop: 5,
-  },
-  planDuration: {
-    fontSize: 14,
-    color: '#FFF',
-    opacity: 0.8,
-  },
-  featuresContainer: {
-    marginTop: 10,
-  },
-  featureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  checkmark: {
-    fontSize: 16,
-    color: '#FFF',
-    marginRight: 10,
-    fontWeight: 'bold',
-  },
-  featureText: {
-    fontSize: 14,
-    color: '#FFF',
-    flex: 1,
-  },
-  loadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  legalSection: {
-    padding: 20,
-    alignItems: 'center',
-  },
-  legalText: {
-    fontSize: 12,
-    color: '#999',
-    textAlign: 'center',
-    marginBottom: 15,
-    lineHeight: 16,
-  },
-  legalLinks: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  linkText: {
-    fontSize: 12,
-    color: '#4A9EFF',
-    textDecorationLine: 'underline',
-  },
-  separator: {
-    fontSize: 12,
-    color: '#999',
-  },
-  manageButton: {
-    backgroundColor: '#333',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  manageButtonText: {
-    fontSize: 14,
-    color: '#4A9EFF',
-    fontWeight: '500',
-  },
-});
-
-// Interface déjà définie plus haut, suppression de la duplication
-  const [loading, setLoading] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-
-  // Filtrer pour exclure le plan gratuit
-  const premiumPlans = IAP_SUBSCRIPTION_PLANS.filter(plan => plan.id !== 'free');
-
-  const handleSubscribe = async (plan: IAPSubscriptionPlan) => {
-    if (loading) return;
-
-    console.log('🔄 Début de l\'achat pour le plan:', plan.name);
-    setLoading(true);
-    setSelectedPlan(plan.id);
-
-    try {
-      // Récupérer l'utilisateur actuel
-      const currentUser = await getCurrentUser();
-      if (!currentUser) {
-        Alert.alert('Erreur', 'Vous devez être connecté pour effectuer un achat.');
-        return;
-      }
-
-      console.log('👤 Utilisateur connecté:', currentUser.email);
-
-      // Initialiser le service IAP
-      const initialized = await InAppPurchaseService.initialize();
-      if (!initialized) {
-        console.warn('⚠️ Service IAP non initialisé, tentative d\'achat quand même...');
-      }
-
-      let success = false;
-
-      if (Platform.OS === 'ios' || Platform.OS === 'android') {
-        console.log('📱 Lancement achat IAP pour:', plan.productId);
-        success = await InAppPurchaseService.purchaseSubscription(plan.productId, currentUser.id);
-        console.log('✅ Résultat achat IAP:', success);
-      } else {
-        Alert.alert('Erreur', 'Paiement non disponible sur cette plateforme');
-        return;
-      }
+      // Simuler l'achat
+      const success = await inAppPurchaseService.purchaseSubscription(
+        selectedPlan === 'monthly' ? 'monthly_premium' : 'yearly_premium'
+      );
 
       if (success) {
-        console.log('🎉 Achat réussi pour:', plan.name);
         Alert.alert(
-          'Félicitations !',
-          `Votre abonnement ${plan.name} a été activé avec succès.`,
+          'Abonnement activé !',
+          'Merci pour votre abonnement. Vous avez maintenant accès à toutes les fonctionnalités premium.',
           [
             {
-              text: 'OK',
+              text: 'Super !',
               onPress: () => {
-                onSubscribe?.(plan.id);
+                onSubscribe?.();
                 onClose();
-              }
-            }
+              },
+            },
           ]
         );
-      } else {
-        console.log('❌ Achat échoué ou annulé pour:', plan.name);
-        // Ne pas afficher d'erreur si l'utilisateur a annulé
       }
     } catch (error) {
-      console.error('❌ Erreur abonnement:', error);
+      console.error('Erreur abonnement:', error);
       Alert.alert(
-        'Erreur', 
-        'Une erreur est survenue lors du traitement de votre paiement. Veuillez réessayer.',
-        [
-          {
-            text: 'OK',
-            style: 'default'
-          }
-        ]
+        'Erreur',
+        'Une erreur est survenue lors de l\'abonnement. Veuillez réessayer.',
+        [{ text: 'OK' }]
       );
     } finally {
       setLoading(false);
-      setSelectedPlan(null);
     }
   };
 
-  const getPlanIcon = (planId: string) => {
-    switch (planId) {
-      case 'bronze': return '🥉';
-      case 'silver': return '🥈';
-      case 'gold': return '🥇';
-      case 'diamond': return '💎';
-      default: return '⭐';
-    }
+  const handleClose = () => {
+    Animated.parallel([
+      Animated.timing(backdropAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: SCREEN_HEIGHT,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      onClose();
+    });
   };
 
-  const getPlanColors = (planId: string) => {
-    switch (planId) {
-      case 'bronze':
-        return {
-          gradient: ['#CD7F32', '#B8860B', '#A0522D'],
-          border: '#CD7F32',
-          background: '#2D1810'
-        };
-      case 'silver':
-        return {
-          gradient: ['#C0C0C0', '#A8A8A8', '#808080'],
-          border: '#C0C0C0',
-          background: '#1A1A1A'
-        };
-      case 'gold':
-        return {
-          gradient: ['#FFD700', '#FFA500', '#FF8C00'],
-          border: '#FFD700',
-          background: '#2D2416'
-        };
-      case 'diamond':
-        return {
-          gradient: ['#B0E0E6', '#4682B4', '#1E90FF'],
-          border: '#B0E0E6',
-          background: '#2D1A2D'
-        };
-      default:
-        return {
-          gradient: ['#666666', '#555555', '#444444'],
-          border: '#666666',
-          background: '#1A1A1A'
-        };
-    }
-  };
+  if (!visible) {
+    return null;
+  }
 
   return (
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
-      onRequestClose={onClose}
+      animationType="none"
+      statusBarTranslucent
     >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
-          <ScrollView showsVerticalScrollIndicator={false}>
-            {/* Header */}
-            <View style={styles.header}>
-              <Text style={styles.title}>Choisissez votre abonnement</Text>
-              <Text style={styles.subtitle}>
-                Accédez à tous les services de coaching personnalisé
-              </Text>
-            </View>
+      <View style={styles.container}>
+        <Animated.View
+          style={[
+            styles.backdrop,
+            {
+              opacity: backdropAnim,
+            },
+          ]}
+        >
+          <TouchableOpacity
+            style={styles.backdropTouchable}
+            activeOpacity={1}
+            onPress={handleClose}
+          />
+        </Animated.View>
 
-            {/* Plans */}
-            <View style={styles.plansContainer}>
-              {premiumPlans.map((plan) => {
-                const colors = getPlanColors(plan.id);
-                const isLoading = loading && selectedPlan === plan.id;
+        <Animated.View
+          style={[
+            styles.modal,
+            {
+              backgroundColor: colors.background,
+              transform: [{ translateY: slideAnim }],
+            },
+          ]}
+        >
+          <SafeAreaView style={styles.safeArea}>
+            <ScrollView
+              style={styles.scrollView}
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+            >
+              {/* Header */}
+              <View style={styles.header}>
+                <TouchableOpacity
+                  style={[styles.closeButton, { backgroundColor: colors.card }]}
+                  onPress={handleClose}
+                >
+                  <Ionicons name="close" size={24} color={colors.text} />
+                </TouchableOpacity>
+              </View>
 
-                return (
+              {/* Premium Badge */}
+              <View style={styles.premiumBadge}>
+                <Ionicons name="diamond" size={32} color="#FFD700" />
+                <Text style={[styles.premiumTitle, { color: colors.text }]}>
+                  EatFit Premium
+                </Text>
+                <Text style={[styles.premiumSubtitle, { color: colors.textSecondary }]}>
+                  Déverrouillez votre potentiel
+                </Text>
+              </View>
+
+              {/* Plans */}
+              <View style={styles.plansContainer}>
+                {plans.map((plan) => (
                   <TouchableOpacity
                     key={plan.id}
                     style={[
                       styles.planCard,
-                      { 
-                        backgroundColor: colors.background,
-                        borderColor: colors.border
-                      }
+                      {
+                        backgroundColor: colors.card,
+                        borderColor: selectedPlan === plan.id ? '#FFD700' : colors.border,
+                        borderWidth: selectedPlan === plan.id ? 2 : 1,
+                      },
                     ]}
-                    onPress={() => handleSubscribe(plan)}
-                    disabled={loading}
-                    activeOpacity={0.8}
+                    onPress={() => setSelectedPlan(plan.id as 'monthly' | 'yearly')}
                   >
-                    <LinearGradient
-                      colors={colors.gradient}
-                      style={styles.planGradient}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                    >
-                      <View style={styles.planHeader}>
-                        <View style={styles.planIconContainer}>
-                          <Text style={styles.planIcon}>
-                            {getPlanIcon(plan.id)}
-                          </Text>
-                        </View>
-                        <View style={styles.planTitleContainer}>
-                          <Text style={styles.planName}>{plan.name}</Text>
-                        </View>
-                        <View style={styles.planPriceContainer}>
-                          <Text style={styles.planPrice}>
-                            {plan.price}/{plan.duration}
-                          </Text>
-                          <Text style={styles.renewalText}>
-                            Renouvellement auto
-                          </Text>
-                        </View>
+                    {plan.popular && (
+                      <View style={styles.popularBadge}>
+                        <Text style={styles.popularText}>POPULAIRE</Text>
                       </View>
+                    )}
 
-                      <View style={styles.featuresContainer}>
-                        {plan.features.map((feature, index) => (
-                          <View key={index} style={styles.featureRow}>
-                            <Text style={styles.featureCheck}>✓</Text>
-                            <Text style={styles.featureText}>{feature}</Text>
-                          </View>
-                        ))}
+                    <View style={styles.planHeader}>
+                      <View style={styles.planInfo}>
+                        <Text style={[styles.planName, { color: colors.text }]}>
+                          {plan.name}
+                        </Text>
+                        <Text style={[styles.planDescription, { color: colors.textSecondary }]}>
+                          {plan.description}
+                        </Text>
                       </View>
+                      <View style={styles.planPrice}>
+                        <Text style={[styles.price, { color: colors.text }]}>
+                          {plan.price}
+                        </Text>
+                        <Text style={[styles.period, { color: colors.textSecondary }]}>
+                          {plan.period}
+                        </Text>
+                      </View>
+                    </View>
 
-                      {isLoading && (
-                        <View style={styles.loadingOverlay}>
-                          <ActivityIndicator size="large" color="#FFFFFF" />
-                          <Text style={styles.loadingText}>Traitement...</Text>
+                    <View style={styles.featuresContainer}>
+                      {plan.features.map((feature, index) => (
+                        <View key={index} style={styles.featureRow}>
+                          <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
+                          <Text style={[styles.featureText, { color: colors.text }]}>
+                            {feature}
+                          </Text>
                         </View>
-                      )}
-                    </LinearGradient>
+                      ))}
+                    </View>
+
+                    {selectedPlan === plan.id && (
+                      <View style={styles.selectedIndicator}>
+                        <Ionicons name="radio-button-on" size={24} color="#FFD700" />
+                      </View>
+                    )}
                   </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            {/* Mentions légales Apple */}
-            <View style={styles.legalSection}>
-              <Text style={styles.legalTitle}>Informations sur l'abonnement</Text>
-              <Text style={styles.legalText}>
-                En vous abonnant à EatFitByMax Premium, vous accédez à tous les programmes personnalisés, 
-                au coaching et aux outils avancés. Abonnement mensuel à renouvellement automatique 
-                (sauf résiliation dans les réglages Apple au moins 24h avant la fin de la période en cours).
-              </Text>
-              
-              <Text style={styles.legalText}>
-                Le paiement sera prélevé sur votre compte iTunes lors de la confirmation d'achat. 
-                L'abonnement se renouvelle automatiquement sauf si le renouvellement automatique 
-                est désactivé au moins 24 heures avant la fin de la période en cours.
-              </Text>
-
-              <Text style={styles.legalText}>
-                Votre compte sera facturé pour le renouvellement dans les 24 heures précédant 
-                la fin de la période en cours.
-              </Text>
-
-              <View style={styles.legalLinks}>
-                <TouchableOpacity 
-                  style={styles.linkButton}
-                  onPress={openPrivacyPolicy}
-                >
-                  <Text style={styles.linkText}>Politique de confidentialité</Text>
-                </TouchableOpacity>
-                
-                <Text style={styles.linkSeparator}> • </Text>
-                
-                <TouchableOpacity 
-                  style={styles.linkButton}
-                  onPress={openTermsOfService}
-                >
-                  <Text style={styles.linkText}>Conditions d'utilisation</Text>
-                </TouchableOpacity>
+                ))}
               </View>
 
-              <Text style={styles.cancelText}>
-                Pour annuler votre abonnement, rendez-vous dans Réglages {">"} Votre nom {">"} 
-                Abonnements sur votre appareil iOS.
-              </Text>
-            </View>
+              {/* Subscribe Button */}
+              <TouchableOpacity
+                style={[
+                  styles.subscribeButton,
+                  loading && styles.subscribeButtonDisabled,
+                ]}
+                onPress={handleSubscribe}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="white" size="small" />
+                ) : (
+                  <>
+                    <Ionicons name="diamond" size={20} color="white" />
+                    <Text style={styles.subscribeButtonText}>
+                      Commencer l'abonnement {selectedPlan === 'monthly' ? 'mensuel' : 'annuel'}
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
 
-            {/* Footer */}
-            <TouchableOpacity
-              style={styles.laterButton}
-              onPress={onClose}
-              disabled={loading}
-            >
-              <Text style={styles.laterButtonText}>Peut-être plus tard</Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </View>
+              {/* Terms */}
+              <Text style={[styles.termsText, { color: colors.textSecondary }]}>
+                En continuant, vous acceptez nos conditions d'utilisation et notre politique de confidentialité.
+                L'abonnement se renouvelle automatiquement et peut être annulé à tout moment.
+              </Text>
+            </ScrollView>
+          </SafeAreaView>
+        </Animated.View>
       </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContainer: {
-    backgroundColor: '#1E1E1E',
-    borderRadius: 20,
-    padding: 24,
-    margin: 20,
-    maxHeight: '85%',
-    width: '90%',
-    maxWidth: 400,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#CCCCCC',
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  plansContainer: {
-    gap: 16,
-  },
-  planCard: {
-    borderRadius: 16,
-    borderWidth: 2,
-    overflow: 'hidden',
-  },
-  planGradient: {
-    padding: 20,
-    position: 'relative',
-  },
-  planHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  planIconContainer: {
-    marginRight: 12,
-  },
-  planIcon: {
-    fontSize: 24,
-  },
-  planTitleContainer: {
+  container: {
     flex: 1,
   },
-  planName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  planPriceContainer: {
-    alignItems: 'flex-end',
-  },
-  planPrice: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  renewalText: {
-    fontSize: 10,
-    color: '#FFFFFF',
-    opacity: 0.8,
-    textAlign: 'right',
-  },
-  featuresContainer: {
-    gap: 8,
-  },
-  featureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  featureCheck: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    marginRight: 8,
-    fontWeight: 'bold',
-  },
-  featureText: {
-    fontSize: 14,
-    color: '#FFFFFF',
-    flex: 1,
-    lineHeight: 20,
-  },
-  loadingOverlay: {
+  backdrop: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  backdropTouchable: {
+    flex: 1,
+  },
+  modal: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: SCREEN_HEIGHT * 0.9,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -5 },
+        shadowOpacity: 0.25,
+        shadowRadius: 10,
+      },
+      android: {
+        elevation: 10,
+      },
+    }),
+  },
+  safeArea: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    padding: 20,
+    paddingBottom: 0,
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 16,
   },
-  loadingText: {
-    color: '#FFFFFF',
-    marginTop: 8,
-    fontSize: 16,
-  },
-  laterButton: {
-    marginTop: 24,
-    padding: 16,
+  premiumBadge: {
     alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 30,
   },
-  laterButtonText: {
+  premiumTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    marginTop: 12,
+  },
+  premiumSubtitle: {
     fontSize: 16,
-    color: '#888888',
-    textDecorationLine: 'underline',
+    marginTop: 4,
   },
-  legalSection: {
-    marginTop: 24,
-    padding: 16,
-    backgroundColor: '#2A2A2A',
+  plansContainer: {
+    paddingHorizontal: 20,
+    gap: 16,
+  },
+  planCard: {
+    borderRadius: 16,
+    padding: 20,
+    position: 'relative',
+  },
+  popularBadge: {
+    position: 'absolute',
+    top: -8,
+    left: 20,
+    backgroundColor: '#FFD700',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#444444',
   },
-  legalTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  legalText: {
+  popularText: {
+    color: '#000',
     fontSize: 12,
-    color: '#CCCCCC',
-    lineHeight: 18,
-    marginBottom: 8,
-    textAlign: 'justify',
+    fontWeight: '700',
   },
-  legalLinks: {
+  planHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  planInfo: {
+    flex: 1,
+  },
+  planName: {
+    fontSize: 20,
+    fontWeight: '600',
+  },
+  planDescription: {
+    fontSize: 14,
+    marginTop: 4,
+  },
+  planPrice: {
+    alignItems: 'flex-end',
+  },
+  price: {
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  period: {
+    fontSize: 14,
+  },
+  featuresContainer: {
+    gap: 12,
+  },
+  featureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  featureText: {
+    flex: 1,
+    fontSize: 16,
+  },
+  selectedIndicator: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+  },
+  subscribeButton: {
+    backgroundColor: '#FFD700',
+    marginHorizontal: 20,
+    marginTop: 24,
+    paddingVertical: 16,
+    borderRadius: 12,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 8,
+    gap: 8,
   },
-  linkButton: {
-    paddingVertical: 4,
+  subscribeButtonDisabled: {
+    opacity: 0.6,
   },
-  linkText: {
+  subscribeButtonText: {
+    color: '#000',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  termsText: {
     fontSize: 12,
-    color: '#4A9EFF',
-    textDecorationLine: 'underline',
-  },
-  linkSeparator: {
-    fontSize: 12,
-    color: '#CCCCCC',
-  },
-  cancelText: {
-    fontSize: 11,
-    color: '#999999',
     textAlign: 'center',
-    fontStyle: 'italic',
-    marginTop: 8,
+    paddingHorizontal: 32,
+    paddingTop: 16,
+    lineHeight: 16,
   },
 });
