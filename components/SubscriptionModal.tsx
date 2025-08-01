@@ -1,7 +1,4 @@
-` tags.
 
-```xml
-<replit_final_file>
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Modal,
