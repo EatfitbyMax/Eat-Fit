@@ -152,9 +152,15 @@ async function verifyPassword(inputPassword: string, storedHash: string): Promis
   const passwordString = String(inputPassword).trim();
   const saltedPassword = passwordString + 'eatfitbymax_salt_2025';
 
+  console.log('🔍 Debug vérification mot de passe:');
+  console.log('- Mot de passe saisi (longueur):', passwordString.length);
+  console.log('- Hash stocké (longueur):', storedHash.length);
+  console.log('- Hash stocké (début):', storedHash.substring(0, 10) + '...');
+
   try {
     // 1. Nouveau système unifié SHA256-HEX
     const currentHash = await generateSecureHash(inputPassword);
+    console.log('- Hash généré (SHA256-HEX):', currentHash.substring(0, 10) + '...');
     if (currentHash === storedHash) {
       console.log('✅ Hash valide (système actuel SHA256-HEX)');
       return true;
@@ -167,6 +173,7 @@ async function verifyPassword(inputPassword: string, storedHash: string): Promis
         saltedPassword,
         { encoding: Crypto.CryptoEncoding.BASE64 }
       );
+      console.log('- Hash généré (SHA256-Base64):', base64Hash.substring(0, 10) + '...');
       if (base64Hash === storedHash) {
         console.log('✅ Hash valide (ancien système SHA256-Base64)');
         return true;
@@ -181,6 +188,7 @@ async function verifyPassword(inputPassword: string, storedHash: string): Promis
         passwordString,
         { encoding: Crypto.CryptoEncoding.HEX }
       );
+      console.log('- Hash généré (MD5 sans salt):', md5NoSalt);
       if (md5NoSalt === storedHash) {
         console.log('✅ Hash valide (ancien système MD5 sans salt)');
         return true;
@@ -192,18 +200,29 @@ async function verifyPassword(inputPassword: string, storedHash: string): Promis
         saltedPassword,
         { encoding: Crypto.CryptoEncoding.HEX }
       );
+      console.log('- Hash généré (MD5 avec salt):', md5WithSalt);
       if (md5WithSalt === storedHash) {
         console.log('✅ Hash valide (ancien système MD5 avec salt)');
         return true;
       }
     }
 
-    // 4. Mot de passe en clair (système très ancien)
+    // 4. Test avec le système serveur (Node.js crypto)
+    const crypto = require('crypto');
+    const serverHash = crypto.createHash('sha256').update(saltedPassword).digest('hex');
+    console.log('- Hash généré (Node.js SHA256):', serverHash.substring(0, 10) + '...');
+    if (serverHash === storedHash) {
+      console.log('✅ Hash valide (système serveur Node.js)');
+      return true;
+    }
+
+    // 5. Mot de passe en clair (système très ancien)
     if (passwordString === storedHash) {
       console.log('✅ Mot de passe valide (système très ancien - clair)');
       return true;
     }
 
+    console.log('❌ Aucun système de hash ne correspond');
     return false;
   } catch (error) {
     console.error('❌ Erreur vérification mot de passe:', error);
@@ -222,8 +241,9 @@ export async function forceRegenerateUserHash(email: string, currentPassword: st
       return false;
     }
 
-    // Générer le nouveau hash unifié
+    // Générer le nouveau hash unifié avec Expo Crypto
     const hashedPassword = await generateSecureHash(currentPassword);
+    console.log('🔐 Nouveau hash généré:', hashedPassword.substring(0, 10) + '...');
 
     // Mettre à jour l'utilisateur
     users[userIndex] = {
@@ -238,6 +258,38 @@ export async function forceRegenerateUserHash(email: string, currentPassword: st
   } catch (error) {
     console.error('❌ Erreur régénération hash:', error);
     return false;
+  }
+}
+
+// Fonction de debug pour tester les différents systèmes de hash
+export async function debugPasswordHash(email: string, testPassword: string): Promise<void> {
+  try {
+    console.log('🔍 DEBUG - Test de tous les systèmes de hash pour:', email);
+    
+    const users = await PersistentStorage.getUsers();
+    const user = users.find((u: any) => u.email === email);
+    
+    if (!user) {
+      console.log('❌ Utilisateur non trouvé');
+      return;
+    }
+
+    console.log('📋 Hash stocké:', user.hashedPassword);
+    
+    // Test Expo Crypto SHA256-HEX
+    const expoHash = await generateSecureHash(testPassword);
+    console.log('🔐 Expo SHA256-HEX:', expoHash);
+    console.log('✅ Match Expo:', expoHash === user.hashedPassword);
+    
+    // Test Node.js crypto
+    const crypto = require('crypto');
+    const saltedPassword = testPassword.trim() + 'eatfitbymax_salt_2025';
+    const nodeHash = crypto.createHash('sha256').update(saltedPassword).digest('hex');
+    console.log('🔐 Node.js SHA256:', nodeHash);
+    console.log('✅ Match Node.js:', nodeHash === user.hashedPassword);
+    
+  } catch (error) {
+    console.error('❌ Erreur debug hash:', error);
   }
 }
 
