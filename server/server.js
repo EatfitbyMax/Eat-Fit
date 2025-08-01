@@ -873,9 +873,10 @@ app.post('/api/coach-register', async (req, res) => {
       });
     }
 
-    // Hacher le mot de passe
+    // Hacher le mot de passe avec le système unifié
     const crypto = require('crypto');
-    const saltedPassword = password + 'eatfitbymax_salt_2025';
+    const passwordString = String(password).trim();
+    const saltedPassword = passwordString + 'eatfitbymax_salt_2025';
     const hashedPassword = crypto.createHash('sha256').update(saltedPassword).digest('hex');
 
     // Créer le nouveau coach - compte actif immédiatement
@@ -1028,6 +1029,94 @@ app.post('/api/notifications/settings/:userId', async (req, res) => {
 });
 
 
+
+// ========================================
+// 🔧 DIAGNOSTIC ET TEST DES CONNEXIONS
+// ========================================
+
+// Route de diagnostic pour tester les connexions
+app.post('/api/debug-login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email et mot de passe requis' });
+    }
+
+    console.log(`🔍 [DEBUG] Tentative de diagnostic pour: ${email}`);
+
+    // Charger tous les utilisateurs
+    const users = await loadUsers();
+    const coaches = await loadCoaches();
+    const allUsers = [...users, ...coaches];
+
+    // Trouver l'utilisateur
+    const user = allUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+    
+    if (!user) {
+      return res.json({
+        found: false,
+        message: 'Utilisateur non trouvé',
+        totalUsers: allUsers.length,
+        emails: allUsers.map(u => u.email)
+      });
+    }
+
+    // Informations de diagnostic
+    const diagnostic = {
+      found: true,
+      userType: user.userType,
+      hasPassword: !!user.password,
+      hasHashedPassword: !!user.hashedPassword,
+      hashLength: user.hashedPassword ? user.hashedPassword.length : 0,
+      hashSample: user.hashedPassword ? user.hashedPassword.substring(0, 10) + '...' : null,
+      status: user.status || 'non défini'
+    };
+
+    // Test des différents systèmes de hash
+    const passwordString = String(password).trim();
+    const saltedPassword = passwordString + 'eatfitbymax_salt_2025';
+    
+    const tests = {
+      plainText: user.password === password,
+      currentSystem: false,
+      legacyBase64: false,
+      legacyMD5: false
+    };
+
+    if (user.hashedPassword) {
+      // Test système actuel
+      const currentHash = crypto.createHash('sha256').update(saltedPassword).digest('hex');
+      tests.currentSystem = currentHash === user.hashedPassword;
+
+      // Test ancien système Base64 (simulé)
+      if (user.hashedPassword.length === 44) {
+        tests.legacyBase64 = true; // Marqueur
+      }
+
+      // Test ancien système MD5
+      if (user.hashedPassword.length === 32) {
+        const md5Hash = crypto.createHash('md5').update(passwordString).digest('hex');
+        const md5SaltHash = crypto.createHash('md5').update(saltedPassword).digest('hex');
+        tests.legacyMD5 = md5Hash === user.hashedPassword || md5SaltHash === user.hashedPassword;
+      }
+    }
+
+    res.json({
+      ...diagnostic,
+      passwordTests: tests,
+      recommendation: tests.currentSystem ? 'Connexion OK' : 
+                     tests.plainText ? 'Migration nécessaire depuis mot de passe clair' :
+                     tests.legacyMD5 ? 'Migration nécessaire depuis MD5' :
+                     tests.legacyBase64 ? 'Migration nécessaire depuis Base64' :
+                     'Mot de passe incorrect ou système non reconnu'
+    });
+
+  } catch (error) {
+    console.error('❌ [DEBUG] Erreur diagnostic:', error);
+    res.status(500).json({ error: 'Erreur serveur diagnostic' });
+  }
+});
 
 // ========================================
 // 🔄 GESTION DES MISES À JOUR EAS
