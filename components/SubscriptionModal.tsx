@@ -12,8 +12,335 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { IAP_SUBSCRIPTION_PLANS, IAPSubscriptionPlan, InAppPurchaseService } from '../utils/inAppPurchases';
-import { openPrivacyPolicy, openTermsOfService } from '../utils/legalLinks';
+import { openPrivacyPolicy, openTermsOfService, openAppleSubscriptionSettings } from '../utils/legalLinks';
 import { getCurrentUser } from '../utils/auth';
+
+interface SubscriptionModalProps {
+  visible: boolean;
+  onClose: () => void;
+  onSubscribe?: (plan: IAPSubscriptionPlan) => void;
+}
+
+export default function SubscriptionModal({ visible, onClose, onSubscribe }: SubscriptionModalProps) {
+  const [loading, setLoading] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [availableProducts, setAvailableProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (visible) {
+      loadAvailableProducts();
+    }
+  }, [visible]);
+
+  const loadAvailableProducts = async () => {
+    try {
+      setLoading(true);
+      await InAppPurchaseService.initialize();
+      const products = await InAppPurchaseService.getAvailableProducts();
+      setAvailableProducts(products);
+    } catch (error) {
+      console.error('Erreur chargement produits IAP:', error);
+      Alert.alert('Erreur', 'Impossible de charger les abonnements');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePlanSelect = async (plan: IAPSubscriptionPlan) => {
+    if (loading) return;
+    
+    setLoading(true);
+    setSelectedPlan(plan.id);
+
+    try {
+      // Vérifier si nous sommes en mode mock
+      if (InAppPurchaseService.isInMockMode()) {
+        Alert.alert(
+          'Mode Démo',
+          'Les achats intégrés ne sont pas disponibles en mode développement. Cette fonctionnalité sera activée dans la version App Store.',
+          [
+            { text: 'Annuler', style: 'cancel' },
+            { 
+              text: 'Continuer', 
+              onPress: () => {
+                onSubscribe?.(plan);
+                onClose();
+              }
+            }
+          ]
+        );
+        return;
+      }
+
+      // Achat réel
+      const success = await InAppPurchaseService.purchaseSubscription(plan.productId);
+      
+      if (success) {
+        Alert.alert('Succès', 'Abonnement activé avec succès !');
+        onSubscribe?.(plan);
+        onClose();
+      } else {
+        Alert.alert('Erreur', 'Impossible de traiter l\'abonnement');
+      }
+    } catch (error: any) {
+      console.error('Erreur achat abonnement:', error);
+      
+      if (error.message?.includes('USER_CANCELED')) {
+        // L'utilisateur a annulé, ne pas afficher d'erreur
+        return;
+      }
+      
+      Alert.alert('Erreur', 'Une erreur est survenue lors de l\'achat');
+    } finally {
+      setLoading(false);
+      setSelectedPlan(null);
+    }
+  };
+
+  const renderPlanCard = (plan: IAPSubscriptionPlan) => {
+    const isSelected = selectedPlan === plan.id;
+    const isLoading = loading && isSelected;
+
+    const getGradientColors = (planId: string) => {
+      switch (planId) {
+        case 'bronze': return ['#CD7F32', '#B8860B'];
+        case 'silver': return ['#C0C0C0', '#A9A9A9'];
+        case 'gold': return ['#FFD700', '#FFA500'];
+        case 'diamond': return ['#B9F2FF', '#87CEEB'];
+        default: return ['#CD7F32', '#B8860B'];
+      }
+    };
+
+    return (
+      <TouchableOpacity
+        key={plan.id}
+        onPress={() => handlePlanSelect(plan)}
+        disabled={loading}
+        style={[styles.planCard, isSelected && styles.selectedPlan]}
+      >
+        <LinearGradient
+          colors={getGradientColors(plan.id)}
+          style={styles.planGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <View style={styles.planHeader}>
+            <Text style={styles.planName}>{plan.name}</Text>
+            <Text style={styles.planPrice}>{plan.price}</Text>
+            <Text style={styles.planDuration}>{plan.duration}</Text>
+          </View>
+
+          <View style={styles.featuresContainer}>
+            {plan.features.map((feature, index) => (
+              <View key={index} style={styles.featureRow}>
+                <Text style={styles.checkmark}>✓</Text>
+                <Text style={styles.featureText}>{feature}</Text>
+              </View>
+            ))}
+          </View>
+
+          {isLoading && (
+            <View style={styles.loadingOverlay}>
+              <ActivityIndicator color="#FFF" size="large" />
+            </View>
+          )}
+        </LinearGradient>
+      </TouchableOpacity>
+    );
+  };
+
+  return (
+    <Modal visible={visible} animationType="slide" transparent>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Choisissez votre abonnement</Text>
+            <Text style={styles.modalSubtitle}>
+              Accédez à tous les services de coaching personnalisé
+            </Text>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <Text style={styles.closeButtonText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={styles.plansContainer} showsVerticalScrollIndicator={false}>
+            {IAP_SUBSCRIPTION_PLANS.map(renderPlanCard)}
+            
+            <View style={styles.legalSection}>
+              <Text style={styles.legalText}>
+                L'abonnement se renouvelle automatiquement. Vous pouvez l'annuler à tout moment dans les réglages de votre compte Apple.
+              </Text>
+              
+              <View style={styles.legalLinks}>
+                <TouchableOpacity onPress={openTermsOfService}>
+                  <Text style={styles.linkText}>Conditions d'utilisation</Text>
+                </TouchableOpacity>
+                <Text style={styles.separator}> • </Text>
+                <TouchableOpacity onPress={openPrivacyPolicy}>
+                  <Text style={styles.linkText}>Politique de confidentialité</Text>
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity 
+                onPress={openAppleSubscriptionSettings}
+                style={styles.manageButton}
+              >
+                <Text style={styles.manageButtonText}>Gérer les abonnements</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '90%',
+    maxHeight: '85%',
+    backgroundColor: '#1a1a1a',
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    padding: 20,
+    alignItems: 'center',
+    position: 'relative',
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFF',
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 16,
+    color: '#CCC',
+    textAlign: 'center',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    fontSize: 20,
+    color: '#FFF',
+    fontWeight: 'bold',
+  },
+  plansContainer: {
+    paddingHorizontal: 20,
+  },
+  planCard: {
+    marginBottom: 15,
+    borderRadius: 15,
+    overflow: 'hidden',
+  },
+  selectedPlan: {
+    transform: [{ scale: 0.98 }],
+  },
+  planGradient: {
+    padding: 20,
+    position: 'relative',
+  },
+  planHeader: {
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  planName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFF',
+    textTransform: 'uppercase',
+  },
+  planPrice: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFF',
+    marginTop: 5,
+  },
+  planDuration: {
+    fontSize: 14,
+    color: '#FFF',
+    opacity: 0.8,
+  },
+  featuresContainer: {
+    marginTop: 10,
+  },
+  featureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  checkmark: {
+    fontSize: 16,
+    color: '#FFF',
+    marginRight: 10,
+    fontWeight: 'bold',
+  },
+  featureText: {
+    fontSize: 14,
+    color: '#FFF',
+    flex: 1,
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  legalSection: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  legalText: {
+    fontSize: 12,
+    color: '#999',
+    textAlign: 'center',
+    marginBottom: 15,
+    lineHeight: 16,
+  },
+  legalLinks: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  linkText: {
+    fontSize: 12,
+    color: '#4A9EFF',
+    textDecorationLine: 'underline',
+  },
+  separator: {
+    fontSize: 12,
+    color: '#999',
+  },
+  manageButton: {
+    backgroundColor: '#333',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  manageButtonText: {
+    fontSize: 14,
+    color: '#4A9EFF',
+    fontWeight: '500',
+  },
+});
 
 interface SubscriptionModalProps {
   visible: boolean;
