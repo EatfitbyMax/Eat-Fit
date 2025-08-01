@@ -36,38 +36,19 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const backdropAnim = useRef(new Animated.Value(0)).current;
 
-  const plans = [
-    {
-      id: 'monthly',
-      name: 'Mensuel',
-      price: '9,99 €',
-      period: '/mois',
-      description: 'Parfait pour essayer',
-      features: [
-        'Programmes personnalisés illimités',
-        'Suivi nutritionnel avancé',
-        'Reconnaissance d\'images IA',
-        'Support premium 24/7',
-        'Synchronisation Apple Health'
-      ],
-      popular: false,
-    },
-    {
-      id: 'yearly',
-      name: 'Annuel',
-      price: '79,99 €',
-      period: '/an',
-      description: 'Économisez 33%',
-      features: [
-        'Tous les avantages du plan mensuel',
-        '4 mois gratuits',
-        'Accès prioritaire aux nouvelles fonctionnalités',
-        'Consultation coach mensuelle offerte',
-        'Rapports de progression détaillés'
-      ],
-      popular: true,
-    },
-  ];
+  // Utiliser les vrais plans IAP (exclure le plan gratuit)
+  const plans = IAP_SUBSCRIPTION_PLANS.filter(plan => plan.id !== 'free').map(plan => ({
+    ...plan,
+    description: plan.id === 'bronze' ? 'Idéal pour débuter' :
+                 plan.id === 'silver' ? 'Le plus populaire' :
+                 plan.id === 'gold' ? 'Pour les sportifs sérieux' :
+                 plan.id === 'diamond' ? 'L\'expérience complète' : '',
+    popular: plan.id === 'silver', // Silver est populaire
+    icon: plan.id === 'bronze' ? 'medal' :
+          plan.id === 'silver' ? 'star' :
+          plan.id === 'gold' ? 'trophy' :
+          plan.id === 'diamond' ? 'diamond' : 'checkmark-circle'
+  }));
 
   useEffect(() => {
     if (visible) {
@@ -100,19 +81,33 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
     }
   }, [visible]);
 
-  const handleSubscribe = async () => {
+  const handleSubscribe = async (planId: string) => {
     try {
       setLoading(true);
 
-      // Simuler l'achat
-      const success = await inAppPurchaseService.purchaseSubscription(
-        selectedPlan === 'monthly' ? 'monthly_premium' : 'yearly_premium'
-      );
+      // Récupérer l'utilisateur connecté
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        Alert.alert('Erreur', 'Vous devez être connecté pour vous abonner.');
+        return;
+      }
+
+      // Trouver le plan dans les plans IAP
+      const plan = IAP_SUBSCRIPTION_PLANS.find(p => p.id === planId);
+      if (!plan || !plan.productId) {
+        Alert.alert('Erreur', 'Plan d\'abonnement introuvable.');
+        return;
+      }
+
+      console.log('🛒 Démarrage achat pour:', plan.name, plan.productId);
+
+      // Effectuer l'achat via Apple Pay / IAP
+      const success = await PaymentService.presentApplePayPayment(plan, currentUser.id);
 
       if (success) {
         Alert.alert(
           'Abonnement activé !',
-          'Merci pour votre abonnement. Vous avez maintenant accès à toutes les fonctionnalités premium.',
+          `Merci pour votre abonnement ${plan.name}. Vous avez maintenant accès à toutes les fonctionnalités premium.`,
           [
             {
               text: 'Super !',
@@ -123,9 +118,11 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
             },
           ]
         );
+      } else {
+        console.log('❌ Achat annulé ou échoué');
       }
     } catch (error) {
-      console.error('Erreur abonnement:', error);
+      console.error('❌ Erreur abonnement:', error);
       Alert.alert(
         'Erreur',
         'Une erreur est survenue lors de l\'abonnement. Veuillez réessayer.',
@@ -219,17 +216,16 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
               {/* Plans */}
               <View style={styles.plansContainer}>
                 {plans.map((plan) => (
-                  <TouchableOpacity
+                  <View
                     key={plan.id}
                     style={[
                       styles.planCard,
                       {
                         backgroundColor: colors.card,
-                        borderColor: selectedPlan === plan.id ? '#FFD700' : colors.border,
-                        borderWidth: selectedPlan === plan.id ? 2 : 1,
+                        borderColor: plan.popular ? '#FFD700' : colors.border,
+                        borderWidth: plan.popular ? 2 : 1,
                       },
                     ]}
-                    onPress={() => setSelectedPlan(plan.id as 'monthly' | 'yearly')}
                   >
                     {plan.popular && (
                       <View style={styles.popularBadge}>
@@ -239,19 +235,34 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
 
                     <View style={styles.planHeader}>
                       <View style={styles.planInfo}>
-                        <Text style={[styles.planName, { color: colors.text }]}>
-                          {plan.name}
-                        </Text>
+                        <View style={styles.planTitleRow}>
+                          <Ionicons 
+                            name={plan.icon as any} 
+                            size={24} 
+                            color={plan.id === 'bronze' ? '#CD7F32' :
+                                   plan.id === 'silver' ? '#C0C0C0' :
+                                   plan.id === 'gold' ? '#FFD700' :
+                                   plan.id === 'diamond' ? '#B9F2FF' : '#4CAF50'} 
+                          />
+                          <Text style={[styles.planName, { color: colors.text }]}>
+                            {plan.name}
+                          </Text>
+                        </View>
                         <Text style={[styles.planDescription, { color: colors.textSecondary }]}>
                           {plan.description}
                         </Text>
+                        {plan.appointmentLimits.monthly > 0 && (
+                          <Text style={[styles.appointmentLimit, { color: colors.textSecondary }]}>
+                            {plan.appointmentLimits.monthly} rendez-vous/mois
+                          </Text>
+                        )}
                       </View>
                       <View style={styles.planPrice}>
                         <Text style={[styles.price, { color: colors.text }]}>
                           {plan.price}
                         </Text>
                         <Text style={[styles.period, { color: colors.textSecondary }]}>
-                          {plan.period}
+                          /{plan.duration}
                         </Text>
                       </View>
                     </View>
@@ -267,35 +278,35 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
                       ))}
                     </View>
 
-                    {selectedPlan === plan.id && (
-                      <View style={styles.selectedIndicator}>
-                        <Ionicons name="radio-button-on" size={24} color="#FFD700" />
-                      </View>
-                    )}
-                  </TouchableOpacity>
+                    {/* Bouton d'achat individuel pour chaque plan */}
+                    <TouchableOpacity
+                      style={[
+                        styles.planSubscribeButton,
+                        {
+                          backgroundColor: plan.popular ? '#FFD700' : colors.primary,
+                        },
+                        loading && styles.subscribeButtonDisabled,
+                      ]}
+                      onPress={() => handleSubscribe(plan.id)}
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <ActivityIndicator color="white" size="small" />
+                      ) : (
+                        <>
+                          <Ionicons name="card" size={18} color={plan.popular ? '#000' : 'white'} />
+                          <Text style={[
+                            styles.planSubscribeButtonText,
+                            { color: plan.popular ? '#000' : 'white' }
+                          ]}>
+                            {Platform.OS === 'ios' ? '🍎 Pay' : 'S\'abonner'}
+                          </Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </View>
                 ))}
               </View>
-
-              {/* Subscribe Button */}
-              <TouchableOpacity
-                style={[
-                  styles.subscribeButton,
-                  loading && styles.subscribeButtonDisabled,
-                ]}
-                onPress={handleSubscribe}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color="white" size="small" />
-                ) : (
-                  <>
-                    <Ionicons name="diamond" size={20} color="white" />
-                    <Text style={styles.subscribeButtonText}>
-                      Commencer l'abonnement {selectedPlan === 'monthly' ? 'mensuel' : 'annuel'}
-                    </Text>
-                  </>
-                )}
-              </TouchableOpacity>
 
               {/* Terms */}
               <Text style={[styles.termsText, { color: colors.textSecondary }]}>
@@ -413,6 +424,11 @@ const styles = StyleSheet.create({
   planInfo: {
     flex: 1,
   },
+  planTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   planName: {
     fontSize: 20,
     fontWeight: '600',
@@ -420,6 +436,11 @@ const styles = StyleSheet.create({
   planDescription: {
     fontSize: 14,
     marginTop: 4,
+  },
+  appointmentLimit: {
+    fontSize: 12,
+    marginTop: 2,
+    fontStyle: 'italic',
   },
   planPrice: {
     alignItems: 'flex-end',
@@ -447,6 +468,19 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 20,
     right: 20,
+  },
+  planSubscribeButton: {
+    marginTop: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+  },
+  planSubscribeButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   subscribeButton: {
     backgroundColor: '#FFD700',
