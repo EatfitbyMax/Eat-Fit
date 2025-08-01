@@ -1,2 +1,25 @@
-
-[]
+[
+  {
+    "email": "m.pacullmarquie@gmail.com",
+    "name": "Maxandre Marquie",
+    "firstName": "Maxandre",
+    "lastName": "Marquie",
+    "goals": [
+      "Perdre du poids",
+      "Me muscler",
+      "Planifier mes repas",
+      "Gagner en performance"
+    ],
+    "gender": "Homme",
+    "age": 22,
+    "height": 175,
+    "weight": 78,
+    "activityLevel": "leger",
+    "userType": "client",
+    "favoriteSport": "triathlon",
+    "id": "1753964117339",
+    "hashedPassword": "9c4a353b24e5394ac7be44b7be82897d4d294eab34e377bf9f4a5d2adb870144",
+    "password": "BKHiCQQX8t1z",
+    "needsPasswordReset": true
+  }
+]

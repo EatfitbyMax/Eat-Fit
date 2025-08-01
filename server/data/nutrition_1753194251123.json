@@ -1,0 +1,117 @@
+[
+  {
+    "id": "1753264175063",
+    "product": {
+      "id": "3564707000246",
+      "name": "Lait demi-écrémé",
+      "brand": "Bio Village, Marque Repère",
+      "barcode": "3564707000246",
+      "nutriments": {
+        "energy_kcal": 47,
+        "proteins": 3.3,
+        "carbohydrates": 4.8,
+        "fat": 1.6,
+        "fiber": 0,
+        "sugars": 4.8,
+        "salt": 0.09
+      },
+      "image_url": "https://images.openfoodfacts.org/images/products/356/470/700/0246/front_fr.132.400.jpg",
+      "quantity": "1 L",
+      "categories": "Produits laitiers, Laits, Laits homogénéisés, Laits demi-écrémés, Laits UHT, Laits de vache, Laits demi-écrémés biologiques",
+      "ingredients_text": "Lait demi-écrémé stérilisé UHT issu de l'agriculture biologique."
+    },
+    "quantity": 100,
+    "mealType": "Petit-déjeuner",
+    "date": "2025-07-23",
+    "calories": 47,
+    "proteins": 3.3,
+    "carbohydrates": 4.8,
+    "fat": 1.6
+  },
+  {
+    "id": "1753431656758",
+    "product": {
+      "id": "3564707097963",
+      "name": "100% Pur Jus d'orange",
+      "brand": "Bio Village, Marque Repère",
+      "barcode": "3564707097963",
+      "nutriments": {
+        "energy_kcal": 43,
+        "proteins": 0.7,
+        "carbohydrates": 10,
+        "fat": 0.5,
+        "fiber": 0.5,
+        "sugars": 10,
+        "salt": 0.01
+      },
+      "image_url": "https://images.openfoodfacts.org/images/products/356/470/709/7963/front_fr.51.400.jpg",
+      "quantity": "20 cl",
+      "categories": "Aliments et boissons à base de végétaux, Boissons, Boissons à base de végétaux, Boissons aux fruits, Jus et nectars, Jus de fruits, Jus d'orange, Jus de fruits pur jus, Jus d'orange pur jus",
+      "ingredients_text": "Jus d'orange"
+    },
+    "quantity": 100,
+    "mealType": "Petit-déjeuner",
+    "date": "2025-07-25",
+    "calories": 43,
+    "proteins": 0.7,
+    "carbohydrates": 10,
+    "fat": 0.5
+  },
+  {
+    "id": "1753548390541",
+    "product": {
+      "id": "3564707000246",
+      "name": "Lait demi-écrémé",
+      "brand": "Bio Village, Marque Repère",
+      "barcode": "3564707000246",
+      "nutriments": {
+        "energy_kcal": 47,
+        "proteins": 3.3,
+        "carbohydrates": 4.8,
+        "fat": 1.6,
+        "fiber": 0,
+        "sugars": 4.8,
+        "salt": 0.09
+      },
+      "image_url": "https://images.openfoodfacts.org/images/products/356/470/700/0246/front_fr.132.400.jpg",
+      "quantity": "1 L",
+      "categories": "Produits laitiers, Laits, Laits homogénéisés, Laits demi-écrémés, Laits UHT, Laits de vache, Laits demi-écrémés biologiques",
+      "ingredients_text": "Lait demi-écrémé stérilisé UHT issu de l'agriculture biologique."
+    },
+    "quantity": 100,
+    "mealType": "Petit-déjeuner",
+    "date": "2025-07-26",
+    "calories": 47,
+    "proteins": 3.3,
+    "carbohydrates": 4.8,
+    "fat": 1.6
+  },
+  {
+    "id": "1753723989442",
+    "product": {
+      "id": "20491321",
+      "name": "Chips de pomme de terre au piment piquant",
+      "brand": "Sol & Mar",
+      "barcode": "20491321",
+      "nutriments": {
+        "energy_kcal": 540,
+        "proteins": 6,
+        "carbohydrates": 50.5,
+        "fat": 34,
+        "sugars": 1.8,
+        "salt": 1.3
+      },
+      "image_url": "https://images.openfoodfacts.org/images/products/000/002/049/1321/front_fr.4.400.jpg",
+      "quantity": "200g e",
+      "categories": "Aliments et boissons à base de végétaux, Aliments d'origine végétale, Snacks, Céréales et pommes de terre, Snacks salés, Amuse-gueules, Chips et frites, Chips, Chips de pommes de terre, Chips de pommes de terre aromatisées, Chips de pommes de terre à l'huile de tournesol",
+      "ingredients_text": "59% pommes de terre, 34% huile de tournesol, farine de maïs, sel, dextrose, sucre, épices, 0,4% piment jalapeño en poudre, 0,3% piment en poudre, extrait de levure, persil, arômes, acidifiants: acide citrique, acide malique; champignons en poudre, colorant: extrait de paprika; chlorure de potassium. Peut contenir des traces de céréales contenant du gluten (blé, seigle, orge), de lait, de soja et de céleri."
+    },
+    "quantity": 100,
+    "mealType": "Petit-déjeuner",
+    "date": "2025-07-28",
+    "calories": 540,
+    "proteins": 6,
+    "carbohydrates": 50.5,
+    "fat": 34
+  }
+]
