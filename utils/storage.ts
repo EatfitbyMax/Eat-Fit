@@ -1076,8 +1076,10 @@ export const testApiConnection = async (): Promise<{ success: boolean; message: 
       return { success: false, message: 'Timeout connexion API' };
     }
     console.error('Erreur connexion API:', error);
-    return { success: false, message: 'Erreur connexion API' };exion API');
-      return { success: false, message: 'Timeout de connexion (10s)' };
+    return { success: false, message: 'Erreur connexion API' };
+  } catch (timeoutError) {
+    console.error('Timeout de connexion:', timeoutError);
+    return { success: false, message: 'Timeout de connexion (10s)' };
     }
 
     console.error('[ERROR] Test connexion API échoué:', error);
