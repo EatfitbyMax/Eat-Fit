@@ -49,10 +49,30 @@ export default function SecuriteConfidentialiteScreen() {
     saveSecuritySettings(newSettings);
   };
 
+  const deactivateAccount = () => {
+    Alert.alert(
+      'Désactiver temporairement le compte',
+      'Votre compte sera temporairement désactivé. Vous pourrez le réactiver à tout moment en vous reconnectant. Vos données seront conservées.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Désactiver',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'Compte désactivé', 
+              'Votre compte a été temporairement désactivé. Vous pouvez le réactiver à tout moment en vous reconnectant.'
+            );
+          }
+        }
+      ]
+    );
+  };
+
   const deleteAccount = () => {
     Alert.alert(
       'Supprimer le compte',
-      'Pour supprimer votre compte, veuillez contacter notre support à support@eatfitbymax.com. Nous traiterons votre demande dans les plus brefs délais.',
+      'Pour supprimer définitivement votre compte, veuillez contacter notre support à support@eatfitbymax.com. Cette action est irréversible.',
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -347,6 +367,17 @@ export default function SecuriteConfidentialiteScreen() {
           <Text style={[styles.sectionTitle, styles.dangerTitle]}>⚠️ Zone de danger</Text>
 
           <TouchableOpacity 
+            style={[styles.settingItem, styles.warningItem, { backgroundColor: theme.card }]} 
+            onPress={deactivateAccount}
+          >
+            <View style={styles.settingInfo}>
+              <Text style={[styles.settingTitle, styles.warningText]}>Désactiver temporairement le compte</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Désactivation temporaire, réactivation possible</Text>
+            </View>
+            <Text style={[styles.settingArrow, { color: theme.textSecondary }]}>›</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
             style={[styles.settingItem, styles.dangerItem, { backgroundColor: theme.card }]} 
             onPress={deleteAccount}
           >
@@ -453,6 +484,9 @@ const styles = StyleSheet.create({
   dangerItem: {
     borderColor: '#F85149',
   },
+  warningItem: {
+    borderColor: '#F5A623',
+  },
   settingInfo: {
     flex: 1,
   },
@@ -472,6 +506,9 @@ const styles = StyleSheet.create({
   },
   dangerText: {
     color: '#F85149',
+  },
+  warningText: {
+    color: '#F5A623',
   },
   statusBadge: {
     backgroundColor: '#F5A623',
