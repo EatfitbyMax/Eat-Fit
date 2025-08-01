@@ -1,0 +1,26 @@
+[
+  {
+    "id": "1753718513687",
+    "name": "Test 2",
+    "date": "2025-07-30",
+    "type": "Triathlon",
+    "specificity": "",
+    "difficulty": "",
+    "duration": 0,
+    "calories": 0,
+    "time": "",
+    "exercises": []
+  },
+  {
+    "id": "1753723818543",
+    "name": "Test 1",
+    "date": "2025-07-28",
+    "type": "Triathlon",
+    "specificity": "",
+    "difficulty": "",
+    "duration": 0,
+    "calories": 0,
+    "time": "",
+    "exercises": []
+  }
+]
