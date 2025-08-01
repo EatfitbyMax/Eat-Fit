@@ -290,16 +290,6 @@ export async function login(email: string, password: string): Promise<User | nul
     if (user.hashedPassword) {
       // Nouveau système avec hash
       try {
-        const passwordString = String(password).trim();
-        const saltedPassword = passwordString + 'eatfitbymax_salt_2025';
-
-        console.log('🔍 Debug hash comparison:', {
-          inputLength: passwordString.length,
-          saltedLength: saltedPassword.length,
-          storedHashLength: user.hashedPassword.length,
-          storedHashPreview: user.hashedPassword.substring(0, 10) + '...'
-        });
-
         // Vérifier d'abord avec le nouveau système HEX (SHA256)
         const hashedInputHex = await Crypto.digestStringAsync(
           Crypto.CryptoDigestAlgorithm.SHA256,
@@ -308,11 +298,9 @@ export async function login(email: string, password: string): Promise<User | nul
         );
 
         isPasswordValid = hashedInputHex === user.hashedPassword;
-        console.log('🔐 Vérification SHA256-HEX:', isPasswordValid ? 'VALIDE' : 'INVALIDE');
 
         // Si échec avec SHA256-HEX, essayer avec Base64 (ancien système SHA256)
         if (!isPasswordValid && user.hashedPassword.length === 44) {
-          console.log('🔄 Tentative avec ancien encodage SHA256-Base64...');
           const hashedInputBase64 = await Crypto.digestStringAsync(
             Crypto.CryptoDigestAlgorithm.SHA256,
             saltedPassword,
@@ -320,11 +308,10 @@ export async function login(email: string, password: string): Promise<User | nul
           );
 
           isPasswordValid = hashedInputBase64 === user.hashedPassword;
-          console.log('🔐 Vérification SHA256-Base64:', isPasswordValid ? 'VALIDE' : 'INVALIDE');
 
           // Si connexion réussie avec Base64, migrer vers HEX
           if (isPasswordValid) {
-            console.log('🔄 Migration du hash SHA256-Base64 vers SHA256-HEX...');
+            console.log('Migration vers nouveau système de hashage...');
             try {
               // Mettre à jour l'utilisateur avec le nouveau hash HEX
               const updatedUsers = users.map((u: any) => 
