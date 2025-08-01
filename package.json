@@ -4,7 +4,6 @@
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
-    "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
@@ -13,7 +12,9 @@
     "prebuild-check": "node ./scripts/prebuild-check-ios.js",
     "build:preview": "npm run prebuild-check && npx eas build --platform ios --profile preview --clear-cache",
     "build:production": "npm run prebuild-check && npx eas build --platform ios --profile production",
-    "postinstall": "node ./scripts/postinstall.js"
+    "postinstall": "node ./scripts/postinstall.js",
+    "backup": "node scripts/backup-app.js",
+    "restore": "node scripts/restore-backup.js"
   },
   "jest": {
     "preset": "jest-expo"

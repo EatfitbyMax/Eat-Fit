@@ -794,39 +794,7 @@ app.get('/strava-callback', async (req, res) => {
 
 
 
-// Route de test pour Strava
-app.get('/test-strava', (req, res) => {
-  res.send(`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>Test Strava Configuration</title>
-      </head>
-      <body style="font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5;">
-        <div style="max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px;">
-          <h1>🔧 Test Configuration Strava</h1>
-          <h3>Configuration actuelle :</h3>
-          <ul>
-            <li><strong>Client ID:</strong> ${process.env.STRAVA_CLIENT_ID || 'Non configuré'}</li>
-            <li><strong>Client Secret:</strong> ${process.env.STRAVA_CLIENT_SECRET ? 'Configuré ✅' : 'Non configuré ❌'}</li>
-            <li><strong>Redirect URI:</strong> https://eatfitbymax.cloud/strava-callback</li>
-          </ul>
 
-          <h3>Test de connexion Strava :</h3>
-          <a href="https://www.strava.com/oauth/authorize?client_id=${process.env.STRAVA_CLIENT_ID || 'MISSING'}&response_type=code&redirect_uri=https://eatfitbymax.cloud/strava-callback&approval_prompt=force&scope=read,activity:read_all" 
-             style="display: inline-block; background: #FC4C02; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold;">
-            🔗 Tester la connexion Strava
-          </a>
-
-          <p style="margin-top: 20px; font-size: 14px; color: #666;">
-            Ce lien vous redirigera vers Strava pour tester la configuration.
-          </p>
-        </div>
-      </body>
-    </html>
-  `);
-});
 
 // ========================================
 // 👨‍💼 GESTION DES INSCRIPTIONS COACH
@@ -1059,25 +1027,7 @@ app.post('/api/notifications/settings/:userId', async (req, res) => {
   }
 });
 
-// Test de notification
-app.post('/api/notifications/test/:userId', (req, res) => {
-  try {
-    const { userId } = req.params;
-    console.log(`🧪 Test notification pour utilisateur: ${userId}`);
 
-    // Simuler l'envoi d'une notification de test
-    res.json({
-      success: true,
-      message: 'Notification de test envoyée avec succès'
-    });
-  } catch (error) {
-    console.error('❌ Erreur test notification:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Erreur lors du test de notification'
-    });
-  }
-});
 
 // ========================================
 // 🔄 GESTION DES MISES À JOUR EAS

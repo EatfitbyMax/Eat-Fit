@@ -1,4 +1,3 @@
-
 // Service Apple Health compatible avec iOS uniquement
 import { Platform } from 'react-native';
 
@@ -16,11 +15,11 @@ class HealthKitService {
       console.log('ℹ️ Apple Health disponible uniquement sur iOS');
       return false;
     }
-    
+
     try {
       // Vérifier si nous sommes en mode EAS Build
       const isEASBuild = process.env.EXPO_PUBLIC_USE_EAS_BUILD === 'true';
-      
+
       if (isEASBuild) {
         const AppleHealthKit = require('rn-apple-healthkit');
         const available = AppleHealthKit.isAvailable();
@@ -39,7 +38,7 @@ class HealthKitService {
   static async requestPermissions(): Promise<boolean> {
     try {
       const AppleHealthKit = require('rn-apple-healthkit');
-      
+
       const permissions = {
         permissions: {
           read: [
@@ -76,7 +75,7 @@ class HealthKitService {
   static async getSteps(date: Date): Promise<number> {
     try {
       const AppleHealthKit = require('rn-apple-healthkit');
-      
+
       const options = {
         startDate: new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString(),
         endDate: new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1).toISOString(),
@@ -101,7 +100,7 @@ class HealthKitService {
   static async getHeartRate(): Promise<number> {
     try {
       const AppleHealthKit = require('rn-apple-healthkit');
-      
+
       const options = {
         startDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
         endDate: new Date().toISOString(),
@@ -128,7 +127,7 @@ class HealthKitService {
   static async writeWeight(weight: number): Promise<boolean> {
     try {
       const AppleHealthKit = require('rn-apple-healthkit');
-      
+
       const options = {
         value: weight,
         startDate: new Date().toISOString(),
@@ -155,7 +154,7 @@ class HealthKitService {
   static async getActiveEnergyBurned(date: Date): Promise<number> {
     try {
       const AppleHealthKit = require('rn-apple-healthkit');
-      
+
       const options = {
         startDate: new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString(),
         endDate: new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1).toISOString(),
@@ -181,7 +180,7 @@ class HealthKitService {
   static async getDistanceWalkingRunning(date: Date): Promise<number> {
     try {
       const AppleHealthKit = require('rn-apple-healthkit');
-      
+
       const options = {
         startDate: new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString(),
         endDate: new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1).toISOString(),
@@ -202,6 +201,38 @@ class HealthKitService {
       console.log('Erreur récupération de la distance:', error);
       return 0;
     }
+  }
+
+  static async getSimulatedHealthData(): Promise<HealthData[]> {
+    try {
+      // Mode simulation pour le développement
+      console.log('⚠️ Mode simulation Apple Health');
+      const simulatedData = this.generateSimulatedHealthData();
+      return simulatedData;
+    } catch (error) {
+      console.error('❌ Erreur lecture données Apple Health:', error);
+      return this.generateSimulatedHealthData();
+    }
+  }
+
+  // Méthode de simulation pour développement
+  private static generateSimulatedHealthData(): HealthData[] {
+    const now = new Date();
+    const simulatedData: HealthData[] = [];
+
+    // Générer 7 jours de données de base
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      simulatedData.push({
+        steps: Math.floor(Math.random() * 10000),
+        heartRate: Math.floor(Math.random() * 70 + 60),
+        weight: Math.floor(Math.random() * 20 + 70),
+        calories: Math.floor(Math.random() * 500 + 1500),
+        distance: Math.floor(Math.random() * 5 + 1),
+      });
+    }
+
+    return simulatedData;
   }
 }
 

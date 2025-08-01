@@ -1051,8 +1051,6 @@ export const getClients = async (): Promise<any[]> => {
 // Test de connexion à l'API
 export const testApiConnection = async (): Promise<{ success: boolean; message: string }> => {
   try {
-    console.log(`[DEBUG] Test de connexion API: ${SERVER_URL}/api/health`);
-
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
@@ -1068,14 +1066,17 @@ export const testApiConnection = async (): Promise<{ success: boolean; message: 
 
     if (response.ok) {
       const data = await response.json();
-      console.log('[DEBUG] API connectée:', data);
       return { success: true, message: 'Connexion API réussie' };
     } else {
       return { success: false, message: `Erreur HTTP: ${response.status}` };
     }
   } catch (error: any) {
     if (error.name === 'AbortError') {
-      console.error('[ERROR] Timeout connexion API');
+      console.error('Timeout connexion API');
+      return { success: false, message: 'Timeout connexion API' };
+    }
+    console.error('Erreur connexion API:', error);
+    return { success: false, message: 'Erreur connexion API' };exion API');
       return { success: false, message: 'Timeout de connexion (10s)' };
     }
 
