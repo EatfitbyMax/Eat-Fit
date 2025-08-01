@@ -9,6 +9,8 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 5000;
 const DATA_DIR = path.join(__dirname, 'data');
+const CLIENT_DIR = path.join(DATA_DIR, 'Client');
+const COACH_DIR = path.join(DATA_DIR, 'Coach');
 
 // Middleware de base
 app.use(cors({
@@ -26,13 +28,15 @@ app.use((req, res, next) => {
   next();
 });
 
-// Créer le dossier data s'il n'existe pas
-async function ensureDataDir() {
+// Créer les dossiers s'ils n'existent pas
+async function ensureDataDirs() {
   try {
     await fs.mkdir(DATA_DIR, { recursive: true });
-    console.log('📁 Répertoire data vérifié');
+    await fs.mkdir(CLIENT_DIR, { recursive: true });
+    await fs.mkdir(COACH_DIR, { recursive: true });
+    console.log('📁 Répertoires data/Client et data/Coach vérifiés');
   } catch (error) {
-    console.error('Erreur création répertoire data:', error);
+    console.error('Erreur création répertoires:', error);
   }
 }
 
@@ -112,100 +116,81 @@ app.get('/api/health-check', (req, res) => {
   });
 });
 
-// Fonction utilitaire pour lire les fichiers JSON
-async function readJsonFile(filename, defaultValue = {}) {
+// Fonction pour lire le fichier utilisateur (client ou coach)
+async function readUserFile(userId, userType = 'client') {
   try {
-    const filePath = path.join(DATA_DIR, filename);
+    const userDir = userType === 'coach' ? COACH_DIR : CLIENT_DIR;
+    const filePath = path.join(userDir, `${userId}.json`);
     const data = await fs.readFile(filePath, 'utf8');
     return JSON.parse(data);
   } catch (error) {
     if (error.code === 'ENOENT') {
-      return defaultValue;
+      return null; // Utilisateur non trouvé
     }
     throw error;
   }
 }
 
-// Fonction utilitaire pour écrire les fichiers JSON
-async function writeJsonFile(filename, data) {
+// Fonction pour écrire le fichier utilisateur
+async function writeUserFile(userId, userData, userType = 'client') {
   try {
-    const filePath = path.join(DATA_DIR, filename);
-    await fs.writeFile(filePath, JSON.stringify(data, null, 2));
+    const userDir = userType === 'coach' ? COACH_DIR : CLIENT_DIR;
+    const filePath = path.join(userDir, `${userId}.json`);
+    await fs.writeFile(filePath, JSON.stringify(userData, null, 2));
     return true;
   } catch (error) {
-    console.error(`Erreur écriture ${filename}:`, error);
+    console.error(`Erreur écriture utilisateur ${userId}:`, error);
     throw error;
   }
 }
 
-// Fake data storage
-let users = [];
-let coaches = [];
-
-// Utility function to load users (clients) from memory
-const loadUsers = async () => {
+// Fonction pour lister tous les utilisateurs d'un type
+async function getAllUsers(userType = 'client') {
   try {
-    const users = await readJsonFile('users.json', []);
+    const userDir = userType === 'coach' ? COACH_DIR : CLIENT_DIR;
+    const files = await fs.readdir(userDir);
+    const users = [];
+
+    for (const file of files) {
+      if (file.endsWith('.json')) {
+        const userId = file.replace('.json', '');
+        const userData = await readUserFile(userId, userType);
+        if (userData) {
+          users.push(userData);
+        }
+      }
+    }
+
     return users;
   } catch (error) {
-    console.error('Error loading users from file:', error);
+    console.error(`Erreur lecture utilisateurs ${userType}:`, error);
     return [];
   }
-};
+}
 
-// Utility function to save users (clients) to memory
-const saveUsers = async (updatedUsers) => {
-  try {
-    await writeJsonFile('users.json', updatedUsers);
-  } catch (error) {
-    console.error('Error saving users to file:', error);
-  }
-};
-
-// Utility function to load coaches from memory
-const loadCoaches = async () => {
-  try {
-    const coaches = await readJsonFile('coaches.json', []);
-    return coaches;
-  } catch (error) {
-    console.error('Error loading coaches from file:', error);
-    return [];
-  }
-};
-
-// Utility function to save coaches to memory
-const saveCoaches = async (updatedCoaches) => {
-  try {
-    await writeJsonFile('coaches.json', updatedCoaches);
-  } catch (error) {
-    console.error('Error saving coaches to file:', error);
-  }
-};
-
-// Routes pour les utilisateurs (clients uniquement)
+// Routes pour les utilisateurs (clients)
 app.get('/api/users', async (req, res) => {
   try {
-    const users = await loadUsers();
-    // Filtrer pour ne retourner que les clients
-    const clients = users.filter(user => user.userType === 'client' || !user.userType);
+    const clients = await getAllUsers('client');
     console.log(`📊 Récupération clients: ${clients.length} clients trouvés`);
     res.json(clients);
   } catch (error) {
     console.error('Erreur lecture clients:', error);
-    console.log('📝 Initialisation d\'une liste de clients vide');
     res.json([]);
   }
 });
 
 app.post('/api/users', async (req, res) => {
   try {
-    // Filtrer pour ne sauvegarder que les clients
-    const allUsers = Array.isArray(req.body) ? req.body : [req.body];
-    const clients = allUsers.filter(user => user.userType === 'client' || !user.userType);
-    
-    await saveUsers(clients);
+    const clients = Array.isArray(req.body) ? req.body : [req.body];
+
+    for (const client of clients) {
+      if (client.id && (client.userType === 'client' || !client.userType)) {
+        await writeUserFile(client.id, client, 'client');
+      }
+    }
+
     console.log('💾 Sauvegarde clients:', clients.length);
-    console.log('✅ Clients sauvegardés avec succès');
     res.json({ success: true });
   } catch (error) {
     console.error('Erreur sauvegarde clients:', error);
@@ -216,21 +201,26 @@ app.post('/api/users', async (req, res) => {
 // Routes pour les coaches
 app.get('/api/coaches', async (req, res) => {
   try {
-    const coaches = await loadCoaches();
+    const coaches = await getAllUsers('coach');
     console.log(`👨‍💼 Récupération coaches: ${coaches.length} coaches trouvés`);
     res.json(coaches);
   } catch (error) {
     console.error('Erreur lecture coaches:', error);
-    console.log('📝 Initialisation d\'une liste de coaches vide');
     res.json([]);
   }
 });
 
 app.post('/api/coaches', async (req, res) => {
   try {
-    await saveCoaches(req.body);
-    console.log('💾 Sauvegarde coaches:', Array.isArray(req.body) ? req.body.length : 'format invalide');
-    console.log('✅ Coaches sauvegardés avec succès');
+    const coaches = Array.isArray(req.body) ? req.body : [req.body];
+
+    for (const coach of coaches) {
+      if (coach.id) {
+        await writeUserFile(coach.id, coach, 'coach');
+      }
+    }
+
+    console.log('💾 Sauvegarde coaches:', coaches.length);
     res.json({ success: true });
   } catch (error) {
     console.error('Erreur sauvegarde coaches:', error);
@@ -238,135 +228,90 @@ app.post('/api/coaches', async (req, res) => {
   }
 });
 
-// Routes pour les programmes
-app.get('/api/programmes', async (req, res) => {
+// Route universelle pour récupérer les données d'un utilisateur
+app.get('/api/user-data/:userId', async (req, res) => {
   try {
-    const programmes = await readJsonFile('programmes.json', []);
-    res.json(programmes);
+    const { userId } = req.params;
+
+    // Chercher d'abord dans les clients
+    let userData = await readUserFile(userId, 'client');
+    let userType = 'client';
+
+    // Si pas trouvé, chercher dans les coaches
+    if (!userData) {
+      userData = await readUserFile(userId, 'coach');
+      userType = 'coach';
+    }
+
+    if (!userData) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    console.log(`📊 Données utilisateur récupérées: ${userId} (${userType})`);
+    res.json(userData);
   } catch (error) {
-    console.error('Erreur lecture programmes:', error);
+    console.error(`Erreur récupération utilisateur ${req.params.userId}:`, error);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
-app.post('/api/programmes', async (req, res) => {
+// Route universelle pour sauvegarder les données d'un utilisateur
+app.post('/api/user-data/:userId', async (req, res) => {
   try {
-    await writeJsonFile('programmes.json', req.body);
+    const { userId } = req.params;
+    const userData = req.body;
+
+    // Déterminer le type d'utilisateur
+    const userType = userData.userType === 'coach' ? 'coach' : 'client';
+
+    // S'assurer que l'ID correspond
+    userData.id = userId;
+    userData.lastUpdated = new Date().toISOString();
+
+    await writeUserFile(userId, userData, userType);
+
+    console.log(`💾 Données utilisateur sauvegardées: ${userId} (${userType})`);
     res.json({ success: true });
   } catch (error) {
-    console.error('Erreur sauvegarde programmes:', error);
-    res.status(500).json({ error: 'Erreur sauvegarde programmes' });
+    console.error(`Erreur sauvegarde utilisateur ${userId}:`, error);
+    res.status(500).json({ error: 'Erreur sauvegarde données utilisateur' });
   }
 });
 
-// Routes pour les messages par utilisateur
-app.get('/api/messages/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const messages = await readJsonFile(`messages_${userId}.json`, []);
-    res.json(messages);
-  } catch (error) {
-    console.error(`Erreur lecture messages utilisateur ${req.params.userId}:`, error);
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
-
-app.post('/api/messages/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    await writeJsonFile(`messages_${userId}.json`, req.body);
-    res.json({ success: true });
-  } catch (error) {
-    console.error(`Erreur sauvegarde messages utilisateur ${userId}:`, error);
-    res.status(500).json({ error: 'Erreur sauvegarde messages' });
-  }
-});
-
-// Routes pour les données de santé Apple Health
-app.get('/api/health/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const healthData = await readJsonFile(`health_${userId}.json`, []);
-    res.json(healthData);
-  } catch (error) {
-    console.error(`Erreur lecture données santé utilisateur ${req.params.userId}:`, error);
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
-
-app.post('/api/health/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    await writeJsonFile(`health_${userId}.json`, req.body);
-    res.json({ success: true });
-  } catch (error) {
-    console.error(`Erreur sauvegarde données santé utilisateur ${userId}:`, error);
-    res.status(500).json({ error: 'Erreur sauvegarde données Apple Health' });
-  }
-});
-
-// Routes pour les entraînements
-app.get('/api/workouts/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const workouts = await readJsonFile(`workouts_${userId}.json`, []);
-    res.json(workouts);
-  } catch (error) {
-    console.error(`Erreur lecture entraînements utilisateur ${req.params.userId}:`, error);
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
-
-app.post('/api/workouts/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    await writeJsonFile(`workouts_${userId}.json`, req.body);
-    res.json({ success: true });
-  } catch (error) {
-    console.error(`Erreur sauvegarde entraînements utilisateur ${userId}:`, error);
-    res.status(500).json({ error: 'Erreur sauvegarde entraînements' });
-  }
-});
-
-// Routes pour les données Strava
-app.get('/api/strava/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const stravaData = await readJsonFile(`strava_${userId}.json`, []);
-    res.json(stravaData);
-  } catch (error) {
-    console.error(`Erreur lecture données Strava utilisateur ${req.params.userId}:`, error);
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
-
-app.post('/api/strava/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    await writeJsonFile(`strava_${userId}.json`, req.body);
-    res.json({ success: true });
-  } catch (error) {
-    console.error(`Erreur sauvegarde données Strava utilisateur ${userId}:`, error);
-    res.status(500).json({ error: 'Erreur sauvegarde données Strava' });
-  }
-});
-
-// Routes pour les données nutritionnelles
+// Routes spécifiques pour les différents types de données (compatibilité)
 app.get('/api/nutrition/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const nutritionData = await readJsonFile(`nutrition_${userId}.json`, []);
+    let userData = await readUserFile(userId, 'client');
+    if (!userData) userData = await readUserFile(userId, 'coach');
+
+    const nutritionData = userData?.nutrition || [];
     res.json(nutritionData);
   } catch (error) {
     console.error(`Erreur lecture nutrition utilisateur ${req.params.userId}:`, error);
-    res.status(500).json({ error: 'Erreur serveur' });
+    res.json([]);
   }
 });
 
 app.post('/api/nutrition/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    await writeJsonFile(`nutrition_${userId}.json`, req.body);
+    let userData = await readUserFile(userId, 'client');
+    let userType = 'client';
+
+    if (!userData) {
+      userData = await readUserFile(userId, 'coach');
+      userType = 'coach';
+    }
+
+    if (!userData) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    userData.nutrition = req.body;
+    userData.lastUpdated = new Date().toISOString();
+
+    await writeUserFile(userId, userData, userType);
     res.json({ success: true });
   } catch (error) {
     console.error(`Erreur sauvegarde nutrition utilisateur ${userId}:`, error);
@@ -374,10 +319,12 @@ app.post('/api/nutrition/:userId', async (req, res) => {
   }
 });
 
-// Routes pour les données de poids
 app.get('/api/weight/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
+    let userData = await readUserFile(userId, 'client');
+    if (!userData) userData = await readUserFile(userId, 'coach');
+
     const defaultWeight = {
       startWeight: 0,
       currentWeight: 0,
@@ -386,18 +333,41 @@ app.get('/api/weight/:userId', async (req, res) => {
       targetAsked: false,
       weightHistory: []
     };
-    const weightData = await readJsonFile(`weight_${userId}.json`, defaultWeight);
+
+    const weightData = userData?.weight || defaultWeight;
     res.json(weightData);
   } catch (error) {
     console.error(`Erreur lecture poids utilisateur ${req.params.userId}:`, error);
-    res.status(500).json({ error: 'Erreur serveur' });
+    res.json({
+      startWeight: 0,
+      currentWeight: 0,
+      targetWeight: 0,
+      lastWeightUpdate: null,
+      targetAsked: false,
+      weightHistory: []
+    });
   }
 });
 
 app.post('/api/weight/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    await writeJsonFile(`weight_${userId}.json`, req.body);
+    let userData = await readUserFile(userId, 'client');
+    let userType = 'client';
+
+    if (!userData) {
+      userData = await readUserFile(userId, 'coach');
+      userType = 'coach';
+    }
+
+    if (!userData) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    userData.weight = req.body;
+    userData.lastUpdated = new Date().toISOString();
+
+    await writeUserFile(userId, userData, userType);
     res.json({ success: true });
   } catch (error) {
     console.error(`Erreur sauvegarde poids utilisateur ${userId}:`, error);
@@ -405,83 +375,173 @@ app.post('/api/weight/:userId', async (req, res) => {
   }
 });
 
-// Routes pour les profils utilisateur
-app.get('/api/user-profile/:userId', async (req, res) => {
+app.get('/api/workouts/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const profileData = await readJsonFile(`user_profile_${userId}.json`, null);
-    res.json(profileData);
+    let userData = await readUserFile(userId, 'client');
+    if (!userData) userData = await readUserFile(userId, 'coach');
+
+    const workouts = userData?.workouts || [];
+    res.json(workouts);
   } catch (error) {
-    console.error(`Erreur lecture profil utilisateur ${req.params.userId}:`, error);
-    res.status(500).json({ error: 'Erreur serveur' });
+    console.error(`Erreur lecture entraînements utilisateur ${req.params.userId}:`, error);
+    res.json([]);
   }
 });
 
-app.post('/api/user-profile/:userId', async (req, res) => {
+app.post('/api/workouts/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    await writeJsonFile(`user_profile_${userId}.json`, req.body);
-    res.json({ success: true });
-  } catch (error) {
-    console.error(`Erreur sauvegarde profil utilisateur ${userId}:`, error);
-    res.status(500).json({ error: 'Erreur sauvegarde profil utilisateur' });
-  }
-});
+    let userData = await readUserFile(userId, 'client');
+    let userType = 'client';
 
-// Route pour sauvegarder les préférences d'application
-app.post('/api/app-preferences/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const preferences = req.body;
-
-    console.log(`📱 Sauvegarde préférences app pour utilisateur ${userId}:`, preferences);
-
-    // Charger les clients et coaches
-    const users = await loadUsers();
-    const coaches = await loadCoaches();
-    
-    // Chercher dans les clients
-    let userIndex = users.findIndex(user => user.id === userId);
-    let isCoach = false;
-    
-    // Si pas trouvé dans les clients, chercher dans les coaches
-    if (userIndex === -1) {
-      userIndex = coaches.findIndex(coach => coach.id === userId);
-      isCoach = true;
+    if (!userData) {
+      userData = await readUserFile(userId, 'coach');
+      userType = 'coach';
     }
 
-    if (userIndex === -1) {
-      console.error(`❌ Utilisateur ${userId} non trouvé pour sauvegarde préférences app`);
+    if (!userData) {
       return res.status(404).json({ error: 'Utilisateur non trouvé' });
     }
 
-    // Mettre à jour les préférences
-    if (isCoach) {
-      coaches[userIndex].appPreferences = preferences;
-      coaches[userIndex].lastUpdated = new Date().toISOString();
-      await saveCoaches(coaches);
-    } else {
-      users[userIndex].appPreferences = preferences;
-      users[userIndex].lastUpdated = new Date().toISOString();
-      await saveUsers(users);
-    }
+    userData.workouts = req.body;
+    userData.lastUpdated = new Date().toISOString();
 
-    console.log(`✅ Préférences app sauvegardées pour ${userId}`);
-    res.json({ success: true, message: 'Préférences sauvegardées' });
-
+    await writeUserFile(userId, userData, userType);
+    res.json({ success: true });
   } catch (error) {
-    console.error('❌ Erreur sauvegarde préférences app:', error);
-    res.status(500).json({ error: 'Erreur sauvegarde préférences app' });
+    console.error(`Erreur sauvegarde entraînements utilisateur ${userId}:`, error);
+    res.status(500).json({ error: 'Erreur sauvegarde entraînements' });
   }
 });
 
-// Routes pour les paramètres de notifications (compatibilité ancienne API)
+app.get('/api/health/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    let userData = await readUserFile(userId, 'client');
+    if (!userData) userData = await readUserFile(userId, 'coach');
+
+    const healthData = userData?.health || [];
+    res.json(healthData);
+  } catch (error) {
+    console.error(`Erreur lecture données santé utilisateur ${req.params.userId}:`, error);
+    res.json([]);
+  }
+});
+
+app.post('/api/health/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    let userData = await readUserFile(userId, 'client');
+    let userType = 'client';
+
+    if (!userData) {
+      userData = await readUserFile(userId, 'coach');
+      userType = 'coach';
+    }
+
+    if (!userData) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    userData.health = req.body;
+    userData.lastUpdated = new Date().toISOString();
+
+    await writeUserFile(userId, userData, userType);
+    res.json({ success: true });
+  } catch (error) {
+    console.error(`Erreur sauvegarde données santé utilisateur ${userId}:`, error);
+    res.status(500).json({ error: 'Erreur sauvegarde données Apple Health' });
+  }
+});
+
+app.get('/api/strava/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    let userData = await readUserFile(userId, 'client');
+    if (!userData) userData = await readUserFile(userId, 'coach');
+
+    const stravaData = userData?.strava || [];
+    res.json(stravaData);
+  } catch (error) {
+    console.error(`Erreur lecture données Strava utilisateur ${req.params.userId}:`, error);
+    res.json([]);
+  }
+});
+
+app.post('/api/strava/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    let userData = await readUserFile(userId, 'client');
+    let userType = 'client';
+
+    if (!userData) {
+      userData = await readUserFile(userId, 'coach');
+      userType = 'coach';
+    }
+
+    if (!userData) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    userData.strava = req.body;
+    userData.lastUpdated = new Date().toISOString();
+
+    await writeUserFile(userId, userData, userType);
+    res.json({ success: true });
+  } catch (error) {
+    console.error(`Erreur sauvegarde données Strava utilisateur ${userId}:`, error);
+    res.status(500).json({ error: 'Erreur sauvegarde données Strava' });
+  }
+});
+
+app.get('/api/messages/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    let userData = await readUserFile(userId, 'client');
+    if (!userData) userData = await readUserFile(userId, 'coach');
+
+    const messages = userData?.messages || [];
+    res.json(messages);
+  } catch (error) {
+    console.error(`Erreur lecture messages utilisateur ${req.params.userId}:`, error);
+    res.json([]);
+  }
+});
+
+app.post('/api/messages/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    let userData = await readUserFile(userId, 'client');
+    let userType = 'client';
+
+    if (!userData) {
+      userData = await readUserFile(userId, 'coach');
+      userType = 'coach';
+    }
+
+    if (!userData) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    userData.messages = req.body;
+    userData.lastUpdated = new Date().toISOString();
+
+    await writeUserFile(userId, userData, userType);
+    res.json({ success: true });
+  } catch (error) {
+    console.error(`Erreur sauvegarde messages utilisateur ${userId}:`, error);
+    res.status(500).json({ error: 'Erreur sauvegarde messages' });
+  }
+});
+
+// Routes pour les notifications
 app.get('/api/notifications/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    console.log(`🔔 Récupération paramètres notifications pour utilisateur ${userId}`);
+    let userData = await readUserFile(userId, 'client');
+    if (!userData) userData = await readUserFile(userId, 'coach');
 
-    // Paramètres par défaut (notifications activées par défaut)
     const defaultSettings = {
       pushNotifications: true,
       mealReminders: true,
@@ -493,29 +553,20 @@ app.get('/api/notifications/:userId', async (req, res) => {
       vibrationEnabled: true,
     };
 
-    // Charger les clients et coaches
-    const users = await loadUsers();
-    const coaches = await loadCoaches();
-    
-    // Chercher l'utilisateur dans les deux listes
-    let user = users.find(user => user.id === userId);
-    if (!user) {
-      user = coaches.find(coach => coach.id === userId);
-    }
-
-    if (!user) {
-      console.log(`⚠️ Utilisateur ${userId} non trouvé, création avec paramètres par défaut`);
-      return res.json(defaultSettings);
-    }
-
-    // Retourner les paramètres de notification ou les paramètres par défaut
-    const notificationSettings = user.notificationSettings || defaultSettings;
-    console.log(`✅ Paramètres notifications récupérés pour ${userId}:`, notificationSettings);
+    const notificationSettings = userData?.notificationSettings || defaultSettings;
     res.json(notificationSettings);
-
   } catch (error) {
-    console.error('❌ Erreur récupération paramètres notifications:', error);
-    res.status(500).json({ error: 'Erreur récupération paramètres notifications' });
+    console.error('Erreur récupération paramètres notifications:', error);
+    res.json({
+      pushNotifications: true,
+      mealReminders: true,
+      workoutReminders: true,
+      progressUpdates: true,
+      coachMessages: true,
+      weeklyReports: true,
+      soundEnabled: true,
+      vibrationEnabled: true,
+    });
   }
 });
 
@@ -524,56 +575,59 @@ app.post('/api/notifications/:userId', async (req, res) => {
     const { userId } = req.params;
     const settings = req.body;
 
-    console.log(`🔔 Sauvegarde paramètres notifications pour utilisateur ${userId}:`, settings);
+    let userData = await readUserFile(userId, 'client');
+    let userType = 'client';
 
-    // Charger les clients et coaches
-    const users = await loadUsers();
-    const coaches = await loadCoaches();
-    
-    // Chercher dans les clients
-    let userIndex = users.findIndex(user => user.id === userId);
-    let isCoach = false;
-    
-    // Si pas trouvé dans les clients, chercher dans les coaches
-    if (userIndex === -1) {
-      userIndex = coaches.findIndex(coach => coach.id === userId);
-      isCoach = true;
+    if (!userData) {
+      userData = await readUserFile(userId, 'coach');
+      userType = 'coach';
     }
 
-    if (userIndex === -1) {
-      console.log(`⚠️ Utilisateur ${userId} non trouvé, impossible de sauvegarder les paramètres notifications`);
-      return res.status(404).json({ error: 'Utilisateur non trouvé. Les paramètres de notifications ne peuvent pas être sauvegardés.' });
+    if (!userData) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
     }
 
-    // Mettre à jour les paramètres de notifications
-    if (isCoach) {
-      coaches[userIndex].notificationSettings = settings;
-      coaches[userIndex].lastUpdated = new Date().toISOString();
-      await saveCoaches(coaches);
-    } else {
-      users[userIndex].notificationSettings = settings;
-      users[userIndex].lastUpdated = new Date().toISOString();
-      await saveUsers(users);
-    }
+    userData.notificationSettings = settings;
+    userData.lastUpdated = new Date().toISOString();
+
+    await writeUserFile(userId, userData, userType);
 
     console.log(`✅ Paramètres notifications sauvegardés pour ${userId}`);
     res.json({ success: true, message: 'Paramètres notifications sauvegardés' });
-
   } catch (error) {
-    console.error('❌ Erreur sauvegarde paramètres notifications:', error);
+    console.error('Erreur sauvegarde paramètres notifications:', error);
     res.status(500).json({ error: 'Erreur sauvegarde paramètres notifications' });
   }
 });
 
-// Gestion des erreurs globales
-app.use((err, req, res, next) => {
-  console.error('Erreur serveur:', err);
-  res.status(500).json({ error: 'Erreur interne du serveur' });
+// Routes pour les programmes (fichier global)
+app.get('/api/programmes', async (req, res) => {
+  try {
+    const programmesPath = path.join(DATA_DIR, 'programmes.json');
+    const data = await fs.readFile(programmesPath, 'utf8');
+    res.json(JSON.parse(data));
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      res.json([]);
+    } else {
+      console.error('Erreur lecture programmes:', error);
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
 });
 
-// Paiements gérés exclusivement par Apple App Store via In-App Purchases
+app.post('/api/programmes', async (req, res) => {
+  try {
+    const programmesPath = path.join(DATA_DIR, 'programmes.json');
+    await fs.writeFile(programmesPath, JSON.stringify(req.body, null, 2));
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Erreur sauvegarde programmes:', error);
+    res.status(500).json({ error: 'Erreur sauvegarde programmes' });
+  }
+});
 
-// Routes pour les intégrations Strava
+// Routes d'intégrations
 app.post('/api/strava/exchange-token', async (req, res) => {
   try {
     const { code, userId } = req.body;
@@ -763,7 +817,7 @@ app.get('/strava-callback', async (req, res) => {
             }, 1000);
           </script>
         </body>
-      The code adds new endpoints for managing notification settings, including retrieval, saving, and testing.      </html>
+      </html>
     `);
   }
 
@@ -795,10 +849,105 @@ app.get('/strava-callback', async (req, res) => {
 
 
 
-
 // ========================================
 // 👨‍💼 GESTION DES INSCRIPTIONS COACH
 // ========================================
+
+// Inscription coach
+app.post('/api/coach-register', async (req, res) => {
+  try {
+    const { firstName, lastName, email, password, city, country, diplomas, specialties, experience, terms } = req.body;
+
+    if (!firstName || !lastName || !email || !password || !city || !country || !diplomas || !specialties || !experience || !terms) {
+      return res.status(400).json({
+        success: false,
+        message: 'Tous les champs obligatoires doivent être remplis'
+      });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Format d\'email invalide'
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Le mot de passe doit contenir au moins 6 caractères'
+      });
+    }
+
+    // Vérifier les doublons
+    const coaches = await getAllUsers('coach');
+    const clients = await getAllUsers('client');
+
+    const existingCoach = coaches.find(c => c.email.toLowerCase() === email.toLowerCase());
+    const existingClient = clients.find(u => u.email.toLowerCase() === email.toLowerCase());
+
+    if (existingCoach || existingClient) {
+      return res.status(400).json({
+        success: false,
+        message: 'Un compte avec cette adresse email existe déjà'
+      });
+    }
+
+    // Hacher le mot de passe
+    const crypto = require('crypto');
+    const passwordString = String(password).trim();
+    const saltedPassword = passwordString + 'eatfitbymax_salt_2025';
+    const hashedPassword = crypto.createHash('sha256').update(saltedPassword).digest('hex');
+
+    const newCoach = {
+      id: Date.now().toString(),
+      email: email.toLowerCase(),
+      hashedPassword: hashedPassword,
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      name: `${firstName.trim()} ${lastName.trim()}`,
+      userType: 'coach',
+      city: city.trim(),
+      country: country.trim(),
+      diplomas: diplomas.trim(),
+      specialites: specialties,
+      experience: experience.trim(),
+      emailVerified: true,
+      status: 'active',
+      createdAt: new Date().toISOString(),
+      lastUpdated: new Date().toISOString(),
+      // Initialiser les données vides
+      messages: [],
+      notifications: [],
+      notificationSettings: {
+        pushNotifications: true,
+        mealReminders: true,
+        workoutReminders: true,
+        progressUpdates: true,
+        coachMessages: true,
+        weeklyReports: true,
+        soundEnabled: true,
+        vibrationEnabled: true
+      }
+    };
+
+    await writeUserFile(newCoach.id, newCoach, 'coach');
+
+    console.log('✅ Coach inscrit avec succès:', email);
+    res.json({
+      success: true,
+      message: 'Inscription réussie ! Vous pouvez maintenant vous connecter via l\'application mobile.'
+    });
+
+  } catch (error) {
+    console.error('❌ Erreur inscription coach:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur serveur lors de l\'inscription'
+    });
+  }
+});
 
 // Page d'inscription coach
 app.get('/coach-signup', (req, res) => {
@@ -824,303 +973,11 @@ app.get('/coach-signup', (req, res) => {
   }
 });
 
-// API d'inscription coach
-app.post('/api/coach-register', async (req, res) => {
-  try {
-    const { firstName, lastName, email, password, city, country, diplomas, specialties, experience, terms } = req.body;
-
-    console.log('👨‍💼 Nouvelle inscription coach:', email);
-
-    // Validation des champs obligatoires
-    if (!firstName || !lastName || !email || !password || !city || !country || !diplomas || !specialties || !experience || !terms) {
-      return res.status(400).json({
-        success: false,
-        message: 'Tous les champs obligatoires doivent être remplis'
-      });
-    }
-
-    // Validation email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Format d\'email invalide'
-      });
-    }
-
-    // Validation mot de passe
-    if (password.length < 6) {
-      return res.status(400).json({
-        success: false,
-        message: 'Le mot de passe doit contenir au moins 6 caractères'
-      });
-    }
-
-    // Récupérer les coaches existants
-    const coaches = await loadCoaches();
-    
-    // Récupérer aussi les clients pour vérifier les doublons d'email
-    const users = await loadUsers();
-
-    // Vérifier si l'email existe déjà (chez les coaches et les clients)
-    const existingCoach = coaches.find(c => c.email.toLowerCase() === email.toLowerCase());
-    const existingUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    
-    if (existingCoach || existingUser) {
-      return res.status(400).json({
-        success: false,
-        message: 'Un compte avec cette adresse email existe déjà'
-      });
-    }
-
-    // Hacher le mot de passe avec le système unifié
-    const crypto = require('crypto');
-    const passwordString = String(password).trim();
-    const saltedPassword = passwordString + 'eatfitbymax_salt_2025';
-    const hashedPassword = crypto.createHash('sha256').update(saltedPassword).digest('hex');
-
-    // Créer le nouveau coach - compte actif immédiatement
-    const newCoach = {
-      id: Date.now().toString(),
-      email: email.toLowerCase(),
-      hashedPassword: hashedPassword,
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      name: `${firstName.trim()} ${lastName.trim()}`,
-      userType: 'coach',
-      city: city.trim(),
-      country: country.trim(),
-      diplomas: diplomas.trim(),
-      specialites: specialties,
-      experience: experience.trim(),
-      emailVerified: true, // Directement vérifié
-      status: 'active', // Compte actif immédiatement
-      createdAt: new Date().toISOString(),
-      lastUpdated: new Date().toISOString()
-    };
-
-    // Ajouter à la liste des coaches
-    coaches.push(newCoach);
-    await saveCoaches(coaches);
-
-    console.log('✅ Coach inscrit avec succès (compte actif):', email);
-    res.json({
-      success: true,
-      message: 'Inscription réussie ! Vous pouvez maintenant vous connecter via l\'application mobile.'
-    });
-
-  } catch (error) {
-    console.error('❌ Erreur inscription coach:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erreur serveur lors de l\'inscription'
-    });
-  }
+// Gestion des erreurs globales
+app.use((err, req, res, next) => {
+  console.error('Erreur serveur:', err);
+  res.status(500).json({ error: 'Erreur interne du serveur' });
 });
-
-
-
-// ========================================
-// 🔔 GESTION DES NOTIFICATIONS
-// ========================================
-
-// Récupérer les paramètres de notifications d'un utilisateur (nouvelle API)
-app.get('/api/notifications/settings/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    console.log(`🔔 [SETTINGS] Récupération paramètres notifications pour utilisateur: ${userId}`);
-
-    // Paramètres par défaut
-    const defaultSettings = {
-      pushNotifications: true,
-      mealReminders: true,
-      workoutReminders: true,
-      progressUpdates: true,
-      coachMessages: true,
-      weeklyReports: true,
-      soundEnabled: true,
-      vibrationEnabled: true
-    };
-
-    // Chercher les paramètres personnalisés dans les données utilisateur
-    const users = await loadUsers();
-    const coaches = await loadCoaches();
-    
-    // Chercher l'utilisateur dans les deux listes
-    let user = users.find(u => u.id === userId);
-    if (!user) {
-      user = coaches.find(c => c.id === userId);
-    }
-
-    if (user && user.notificationSettings) {
-      console.log('✅ [SETTINGS] Paramètres notifications personnalisés trouvés');
-      res.json({
-        success: true,
-        settings: { ...defaultSettings, ...user.notificationSettings }
-      });
-    } else {
-      console.log('📝 [SETTINGS] Utilisation des paramètres notifications par défaut');
-      res.json({
-        success: true,
-        settings: defaultSettings
-      });
-    }
-  } catch (error) {
-    console.error('❌ [SETTINGS] Erreur récupération paramètres notifications:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Erreur serveur lors de la récupération des paramètres'
-    });
-  }
-});
-
-// Sauvegarder les paramètres de notifications d'un utilisateur (nouvelle API)
-app.post('/api/notifications/settings/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const { settings } = req.body;
-
-    console.log(`🔔 [SETTINGS] Sauvegarde paramètres notifications pour utilisateur: ${userId}`, settings);
-
-    const users = await loadUsers();
-    const coaches = await loadCoaches();
-    
-    // Chercher dans les clients
-    let userIndex = users.findIndex(u => u.id === userId);
-    let isCoach = false;
-    
-    // Si pas trouvé dans les clients, chercher dans les coaches
-    if (userIndex === -1) {
-      userIndex = coaches.findIndex(c => c.id === userId);
-      isCoach = true;
-    }
-
-    if (userIndex === -1) {
-      console.log(`⚠️ [SETTINGS] Utilisateur ${userId} non trouvé`);
-      return res.status(404).json({
-        success: false,
-        error: 'Utilisateur non trouvé'
-      });
-    }
-
-    // Mettre à jour les paramètres de notifications
-    if (isCoach) {
-      coaches[userIndex].notificationSettings = settings;
-      coaches[userIndex].lastUpdated = new Date().toISOString();
-      await saveCoaches(coaches);
-    } else {
-      users[userIndex].notificationSettings = settings;
-      users[userIndex].lastUpdated = new Date().toISOString();
-      await saveUsers(users);
-    }
-
-    console.log(`✅ [SETTINGS] Paramètres notifications sauvegardés pour ${userId}`);
-    res.json({
-      success: true,
-      message: 'Paramètres notifications mis à jour'
-    });
-  } catch (error) {
-    console.error('❌ [SETTINGS] Erreur sauvegarde paramètres notifications:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Erreur serveur lors de la sauvegarde'
-    });
-  }
-});
-
-
-
-// ========================================
-// 🔧 DIAGNOSTIC ET TEST DES CONNEXIONS
-// ========================================
-
-// Route de diagnostic pour tester les connexions
-app.post('/api/debug-login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email et mot de passe requis' });
-    }
-
-    console.log(`🔍 [DEBUG] Tentative de diagnostic pour: ${email}`);
-
-    // Charger tous les utilisateurs
-    const users = await loadUsers();
-    const coaches = await loadCoaches();
-    const allUsers = [...users, ...coaches];
-
-    // Trouver l'utilisateur
-    const user = allUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
-    
-    if (!user) {
-      return res.json({
-        found: false,
-        message: 'Utilisateur non trouvé',
-        totalUsers: allUsers.length,
-        emails: allUsers.map(u => u.email)
-      });
-    }
-
-    // Informations de diagnostic
-    const diagnostic = {
-      found: true,
-      userType: user.userType,
-      hasPassword: !!user.password,
-      hasHashedPassword: !!user.hashedPassword,
-      hashLength: user.hashedPassword ? user.hashedPassword.length : 0,
-      hashSample: user.hashedPassword ? user.hashedPassword.substring(0, 10) + '...' : null,
-      status: user.status || 'non défini'
-    };
-
-    // Test des différents systèmes de hash
-    const passwordString = String(password).trim();
-    const saltedPassword = passwordString + 'eatfitbymax_salt_2025';
-    
-    const tests = {
-      plainText: user.password === password,
-      currentSystem: false,
-      legacyBase64: false,
-      legacyMD5: false
-    };
-
-    if (user.hashedPassword) {
-      // Test système actuel
-      const currentHash = crypto.createHash('sha256').update(saltedPassword).digest('hex');
-      tests.currentSystem = currentHash === user.hashedPassword;
-
-      // Test ancien système Base64 (simulé)
-      if (user.hashedPassword.length === 44) {
-        tests.legacyBase64 = true; // Marqueur
-      }
-
-      // Test ancien système MD5
-      if (user.hashedPassword.length === 32) {
-        const md5Hash = crypto.createHash('md5').update(passwordString).digest('hex');
-        const md5SaltHash = crypto.createHash('md5').update(saltedPassword).digest('hex');
-        tests.legacyMD5 = md5Hash === user.hashedPassword || md5SaltHash === user.hashedPassword;
-      }
-    }
-
-    res.json({
-      ...diagnostic,
-      passwordTests: tests,
-      recommendation: tests.currentSystem ? 'Connexion OK' : 
-                     tests.plainText ? 'Migration nécessaire depuis mot de passe clair' :
-                     tests.legacyMD5 ? 'Migration nécessaire depuis MD5' :
-                     tests.legacyBase64 ? 'Migration nécessaire depuis Base64' :
-                     'Mot de passe incorrect ou système non reconnu'
-    });
-
-  } catch (error) {
-    console.error('❌ [DEBUG] Erreur diagnostic:', error);
-    res.status(500).json({ error: 'Erreur serveur diagnostic' });
-  }
-});
-
-// ========================================
-// 🔄 GESTION DES MISES À JOUR EAS
-// ========================================
 
 // Route 404
 app.use('*', (req, res) => {
@@ -1130,15 +987,12 @@ app.use('*', (req, res) => {
 // Démarrage du serveur
 async function startServer() {
   try {
-    await ensureDataDir();
+    await ensureDataDirs();
 
     const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Serveur EatFitByMax démarré sur le port ${PORT}`);
       console.log(`🌐 API disponible sur: https://eatfitbymax.cloud`);
-      console.log(`✅ Serveur prêt à recevoir des connexions sur 0.0.0.0:${PORT}`);
-
-      // Serveur prêt pour VPS
-      console.log('📡 Serveur VPS configuré et en ligne');
+      console.log(`✅ Nouvelle structure: Client/ et Coach/ avec fichiers unifiés`);
     });
 
     server.on('error', (error) => {
