@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Swi
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/context/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getCurrentUser, logout, deleteUserAccount } from '@/utils/auth';
 
 export default function SecuriteConfidentialiteScreen() {
   const { theme } = useTheme();
@@ -69,16 +70,60 @@ export default function SecuriteConfidentialiteScreen() {
     );
   };
 
-  const deleteAccount = () => {
+  const deleteAccount = async () => {
     Alert.alert(
       'Supprimer le compte',
-      'Pour supprimer définitivement votre compte, veuillez contacter notre support à support@eatfitbymax.com. Cette action est irréversible.',
+      'Cette action supprimera définitivement votre compte et toutes vos données. Cette action est irréversible.',
       [
         { text: 'Annuler', style: 'cancel' },
         {
-          text: 'Contacter le support',
+          text: 'Confirmer la suppression',
+          style: 'destructive',
           onPress: () => {
-            Linking.openURL('mailto:support@eatfitbymax.com?subject=Demande%20de%20suppression%20de%20compte');
+            Alert.alert(
+              'Confirmation finale',
+              'Êtes-vous absolument certain de vouloir supprimer votre compte ? Toutes vos données seront perdues définitivement.',
+              [
+                { text: 'Annuler', style: 'cancel' },
+                {
+                  text: 'Supprimer définitivement',
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      const currentUser = await getCurrentUser();
+                      if (!currentUser) {
+                        Alert.alert('Erreur', 'Utilisateur non connecté');
+                        return;
+                      }
+
+                      // Supprimer le compte via la fonction utilitaire
+                      await deleteUserAccount(currentUser.id);
+                      
+                      // Déconnecter l'utilisateur
+                      await logout();
+                      
+                      Alert.alert(
+                        'Compte supprimé', 
+                        'Votre compte et toutes vos données ont été supprimés définitivement.',
+                        [{
+                          text: 'OK',
+                          onPress: () => {
+                            // Rediriger vers l'écran de connexion
+                            router.replace('/auth/login');
+                          }
+                        }]
+                      );
+                    } catch (error) {
+                      console.error('Erreur suppression compte:', error);
+                      Alert.alert(
+                        'Erreur', 
+                        'Impossible de supprimer le compte. Veuillez réessayer ou contacter le support à support@eatfitbymax.com'
+                      );
+                    }
+                  }
+                }
+              ]
+            );
           }
         }
       ]

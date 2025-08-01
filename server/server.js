@@ -278,6 +278,55 @@ app.post('/api/user-data/:userId', async (req, res) => {
   }
 });
 
+// Route universelle pour supprimer un utilisateur
+app.delete('/api/user-data/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Chercher dans les clients d'abord
+    let userData = await readUserFile(userId, 'client');
+    let userType = 'client';
+
+    // Si pas trouvé, chercher dans les coaches
+    if (!userData) {
+      userData = await readUserFile(userId, 'coach');
+      userType = 'coach';
+    }
+
+    if (!userData) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    // Supprimer le fichier utilisateur
+    const userDir = userType === 'coach' ? COACH_DIR : CLIENT_DIR;
+    const filePath = path.join(userDir, `${userId}.json`);
+    
+    try {
+      await fs.unlink(filePath);
+      console.log(`🗑️ Fichier utilisateur supprimé: ${filePath}`);
+    } catch (unlinkError) {
+      if (unlinkError.code !== 'ENOENT') {
+        throw unlinkError;
+      }
+    }
+
+    // Supprimer aussi les fichiers de tokens Strava s'ils existent
+    try {
+      const stravaTokenPath = path.join(DATA_DIR, `strava_tokens_${userId}.json`);
+      await fs.unlink(stravaTokenPath);
+      console.log(`🗑️ Tokens Strava supprimés pour: ${userId}`);
+    } catch (stravaError) {
+      // Ignorer si le fichier n'existe pas
+    }
+
+    console.log(`✅ Utilisateur supprimé définitivement: ${userId} (${userType})`);
+    res.json({ success: true, message: 'Utilisateur supprimé définitivement' });
+  } catch (error) {
+    console.error(`❌ Erreur suppression utilisateur ${userId}:`, error);
+    res.status(500).json({ error: 'Erreur suppression utilisateur' });
+  }
+});
+
 // Routes spécifiques pour les différents types de données (compatibilité)
 app.get('/api/nutrition/:userId', async (req, res) => {
   try {

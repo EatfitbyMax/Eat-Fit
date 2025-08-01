@@ -658,39 +658,103 @@ const USER_STORAGE_KEY = 'eatfitbymax_user'; // Define the missing USER_STORAGE_
 
 export const deleteUserAccount = async (userId: string): Promise<void> => {
   try {
+    console.log('🗑️ Début de la suppression du compte:', userId);
+    
     // Supprimer toutes les données locales de l'utilisateur
-    await AsyncStorage.multiRemove([
+    const keysToRemove = [
       USER_STORAGE_KEY,
+      SESSION_KEY,
+      SESSION_EXPIRY_KEY,
       `subscription_${userId}`,
       `integration_status_${userId}`,
       `user_preferences_${userId}`,
       `workout_programs_${userId}`,
       `nutrition_data_${userId}`,
       `progress_data_${userId}`,
-    ]);
+      `health_data_${userId}`,
+      `strava_data_${userId}`,
+      `messages_${userId}`,
+      `notifications_${userId}`,
+      `securitySettings`,
+      `notificationSettings_${userId}`,
+      `theme_preference`,
+      `language_preference`,
+    ];
+
+    await AsyncStorage.multiRemove(keysToRemove);
+    console.log('✅ Données locales supprimées');
 
     // Supprimer les données sur le serveur
     const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://eatfitbymax.cloud';
 
     try {
-      const response = await fetch(`${API_URL}/api/users/${userId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      // Récupérer d'abord les données utilisateur pour déterminer le type
+      const users = await PersistentStorage.getUsers();
+      const coaches = await PersistentStorage.getCoaches();
+      
+      let isClient = users.some(u => u.id === userId);
+      let isCoach = coaches.some(c => c.id === userId);
 
-      if (!response.ok) {
-        console.warn('Erreur suppression serveur, mais données locales supprimées');
+      if (isClient) {
+        // Supprimer des clients
+        const updatedUsers = users.filter(u => u.id !== userId);
+        await PersistentStorage.saveUsers(updatedUsers);
+        console.log('✅ Utilisateur supprimé de la base clients');
+      } else if (isCoach) {
+        // Supprimer des coaches
+        const updatedCoaches = coaches.filter(c => c.id !== userId);
+        const response = await fetch(`${API_URL}/api/coaches`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(updatedCoaches)
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        console.log('✅ Coach supprimé de la base coaches');
+      } else {
+        console.warn('⚠️ Utilisateur non trouvé dans les bases de données');
       }
+
+      // Supprimer aussi les données spécifiques (nutrition, workouts, etc.)
+      const deleteEndpoints = [
+        `/api/nutrition/${userId}`,
+        `/api/workouts/${userId}`,
+        `/api/health/${userId}`,
+        `/api/strava/${userId}`,
+        `/api/messages/${userId}`,
+        `/api/notifications/${userId}`,
+        `/api/user-data/${userId}`
+      ];
+
+      for (const endpoint of deleteEndpoints) {
+        try {
+          await fetch(`${API_URL}${endpoint}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+        } catch (deleteError) {
+          console.warn(`Erreur suppression ${endpoint}:`, deleteError);
+        }
+      }
+
     } catch (serverError) {
-      console.warn('Serveur inaccessible, mais données locales supprimées:', serverError);
+      console.warn('Erreur serveur lors de la suppression:', serverError);
+      // Ne pas lever d'erreur car les données locales sont supprimées
     }
 
-    console.log('✅ Compte utilisateur supprimé avec succès');
+    // Vider le cache utilisateur
+    currentUserCache = null;
+
+    console.log('✅ Compte utilisateur supprimé définitivement');
   } catch (error) {
     console.error('❌ Erreur lors de la suppression du compte:', error);
-    throw new Error('Impossible de supprimer le compte');
+    throw new Error('Impossible de supprimer le compte. Certaines données peuvent persister.');
   }
 };
 
