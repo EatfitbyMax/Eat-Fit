@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Modal,
@@ -17,7 +16,9 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { Colors } from '../constants/Colors';
-import { inAppPurchaseService } from '../utils/inAppPurchases';
+import { InAppPurchaseService, IAP_SUBSCRIPTION_PLANS } from '../utils/inAppPurchases';
+import { PaymentService } from '../utils/payments';
+import { getCurrentUser } from '../utils/auth';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
