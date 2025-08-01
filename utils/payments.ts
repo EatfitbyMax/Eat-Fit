@@ -1,4 +1,3 @@
-
 import { Platform } from 'react-native';
 import { InAppPurchaseService, IAP_SUBSCRIPTION_PLANS, IAPSubscriptionPlan } from './inAppPurchases';
 
@@ -38,7 +37,7 @@ export const checkAppointmentLimit = async (
     apt.status !== 'cancelled'
   );
 
-  // Vérification limite mensuelle (Argent)
+  // Vérification limite mensuelle
   if (limits.monthly > 0) {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -51,7 +50,8 @@ export const checkAppointmentLimit = async (
     if (monthlyAppointments.length >= limits.monthly) {
       return { 
         canBook: false, 
-        reason: `Vous avez atteint votre limite mensuelle de ${limits.monthly} rendez-vous.` 
+        reason: `Limite mensuelle atteinte (${limits.monthly} rendez-vous/mois)`,
+        remaining: 0
       };
     }
 
@@ -61,44 +61,13 @@ export const checkAppointmentLimit = async (
     };
   }
 
-  // Vérification limite hebdomadaire (Or et Diamant)
-  if (limits.weekly > 0) {
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - now.getDay() + 1); // Lundi
-    startOfWeek.setHours(0, 0, 0, 0);
-
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6); // Dimanche
-    endOfWeek.setHours(23, 59, 59, 999);
-
-    const weeklyAppointments = userAppointments.filter(apt => {
-      const aptDate = new Date(apt.date);
-      return aptDate >= startOfWeek && aptDate <= endOfWeek;
-    });
-
-    if (weeklyAppointments.length >= limits.weekly) {
-      return { 
-        canBook: false, 
-        reason: `Vous avez atteint votre limite hebdomadaire de ${limits.weekly} rendez-vous.` 
-      };
-    }
-
-    return { 
-      canBook: true, 
-      remaining: limits.weekly - weeklyAppointments.length 
-    };
-  }
-
-  return { canBook: false, reason: 'Plan non reconnu.' };
+  return { canBook: true };
 };
 
 export class PaymentService {
   static async initialize(): Promise<boolean> {
     if (Platform.OS === 'ios') {
       const success = await InAppPurchaseService.initialize();
-      if (InAppPurchaseService.isInMockMode()) {
-        console.log('💳 PaymentService en mode MOCK pour le développement');
-      }
       return success;
     }
     return false;
@@ -139,15 +108,13 @@ export class PaymentService {
     if (Platform.OS === 'ios') {
       return await InAppPurchaseService.getCurrentSubscription(userId);
     }
+    return null;
+  }
 
-    // Fallback pour autres plateformes
-    return {
-      planId: 'free',
-      planName: 'Version Gratuite',
-      price: '0,00 €',
-      currency: 'EUR',
-      status: 'active',
-      paymentMethod: 'none'
-    };
+  static async cancelSubscription(userId: string): Promise<boolean> {
+    if (Platform.OS === 'ios') {
+      return await InAppPurchaseService.cancelSubscription(userId);
+    }
+    return false;
   }
 }

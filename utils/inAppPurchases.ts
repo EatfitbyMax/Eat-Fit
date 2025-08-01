@@ -1,18 +1,9 @@
+
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Détection automatique du mode mock (Expo Go vs EAS Build)
-let InAppPurchases: any;
-let isUsingMock = false;
-
-try {
-  InAppPurchases = require('expo-in-app-purchases');
-  console.log('✅ Module expo-in-app-purchases natif chargé');
-} catch (error) {
-  console.log('👻 Module expo-in-app-purchases non disponible, utilisation du mock');
-  InAppPurchases = require('./expo-in-app-purchases-mock').default;
-  isUsingMock = true;
-}
+// Import direct du module natif - fonctionne uniquement avec EAS Build
+import * as InAppPurchases from 'expo-in-app-purchases';
 
 export interface IAPSubscriptionPlan {
   id: string;
@@ -115,7 +106,7 @@ export class InAppPurchaseService {
   private static availableProducts: InAppPurchases.IAPItemDetails[] = [];
 
   static isInMockMode(): boolean {
-    return isUsingMock;
+    return false; // Plus de mock, uniquement natif
   }
 
   static async initialize(): Promise<boolean> {
@@ -131,18 +122,15 @@ export class InAppPurchaseService {
         return false;
       }
 
-      if (isUsingMock) {
-        console.log('👻 Initialisation des IAP en mode mock (Expo Go)');
-      } else {
-        console.log('🔄 Initialisation des IAP natifs (EAS Build)');
-      }
+      console.log('🔄 Initialisation des IAP natifs (EAS Build uniquement)');
 
-      const result = await InAppPurchases.connectAsync();
-      console.log('✅ IAP initialisés avec succès:', result);
+      await InAppPurchases.connectAsync();
+      console.log('✅ IAP initialisés avec succès');
       this.isInitialized = true;
       return true;
     } catch (error) {
       console.error('❌ Erreur initialisation IAP:', error);
+      console.log('ℹ️ Les achats intégrés nécessitent EAS Build, pas Expo Go');
       this.isInitialized = false;
       return false;
     }
@@ -150,9 +138,35 @@ export class InAppPurchaseService {
 
   static async getAvailableProducts(): Promise<InAppPurchases.IAPItemDetails[]> {
     if (!this.isInitialized) {
-      await this.initialize();
+      const initialized = await this.initialize();
+      if (!initialized) {
+        console.log('⚠️ IAP non disponibles, retour de produits vides');
+        return [];
+      }
     }
-    return this.availableProducts;
+
+    if (this.availableProducts.length > 0) {
+      return this.availableProducts;
+    }
+
+    try {
+      const productIds = Object.values(IAP_PRODUCT_IDS);
+      console.log('🔍 Récupération des produits IAP:', productIds);
+
+      const { responseCode, results } = await InAppPurchases.getProductsAsync(productIds);
+
+      if (responseCode === InAppPurchases.IAPResponseCode.OK && results) {
+        this.availableProducts = results;
+        console.log('✅ Produits IAP récupérés:', results.length);
+        return results;
+      } else {
+        console.error('❌ Erreur récupération produits - Code:', responseCode);
+        return [];
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors de la récupération des produits:', error);
+      return [];
+    }
   }
 
   static async purchaseSubscription(productId: string, userId?: string): Promise<boolean> {
@@ -167,8 +181,7 @@ export class InAppPurchaseService {
       console.log('🛒 Début purchaseSubscription:', { 
         productId, 
         userId, 
-        platform: Platform.OS, 
-        mockMode: isUsingMock ? 'OUI (Expo Go)' : 'NON (EAS Build)' 
+        platform: Platform.OS
       });
 
       if (Platform.OS !== 'ios' && Platform.OS !== 'android') {
@@ -179,7 +192,7 @@ export class InAppPurchaseService {
         console.log('🔄 Initialisation requise avant achat...');
         const initialized = await this.initialize();
         if (!initialized) {
-          throw new Error('Impossible d\'initialiser les achats intégrés');
+          throw new Error('Les achats intégrés ne sont disponibles qu\'avec EAS Build');
         }
       }
 
@@ -210,7 +223,7 @@ export class InAppPurchaseService {
       }
     } catch (error) {
       console.error('❌ Erreur lors de l\'achat:', error);
-      return false;
+      throw error;
     }
   }
 
@@ -225,44 +238,43 @@ export class InAppPurchaseService {
         throw new Error(`Plan non trouvé pour le produit: ${purchase.productId}`);
       }
 
-      // Créer l'objet abonnement
+      // Créer l'abonnement
       const subscription = {
+        userId,
         planId: plan.id,
         planName: plan.name,
-        price: plan.price,
-        currency: plan.currency,
-        startDate: new Date().toISOString(),
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 jours
-        status: 'active',
-        paymentMethod: 'apple_iap',
+        productId: purchase.productId,
         transactionId: purchase.transactionId,
         originalTransactionId: purchase.originalTransactionId,
-        purchaseDate: purchase.transactionDate ? new Date(purchase.transactionDate).toISOString() : new Date().toISOString()
+        purchaseDate: new Date(purchase.transactionDate || Date.now()).toISOString(),
+        expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 jours
+        isActive: true,
+        autoRenew: true,
+        receipt: purchase.transactionReceipt
       };
 
       // Sauvegarder localement
-      await AsyncStorage.setItem(`subscription_${userId}`, JSON.stringify(subscription));
+      await AsyncStorage.setItem('currentSubscription', JSON.stringify(subscription));
+      console.log('✅ Abonnement sauvé localement:', plan.name);
 
-      // Sauvegarder sur le serveur VPS
-      await this.syncSubscriptionWithServer(subscription, userId);
+      // Synchroniser avec le serveur
+      await this.syncSubscriptionWithServer(subscription);
 
-      console.log('✅ Abonnement IAP activé:', subscription);
     } catch (error) {
-      console.error('Erreur sauvegarde abonnement IAP:', error);
+      console.error('❌ Erreur traitement achat réussi:', error);
+      throw error;
     }
   }
 
-  private static async syncSubscriptionWithServer(subscription: any, userId: string): Promise<void> {
+  private static async syncSubscriptionWithServer(subscription: any): Promise<void> {
     try {
-      const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
-
-      const response = await fetch(`${serverUrl}/api/subscriptions/sync`, {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/subscriptions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId,
+          userId: subscription.userId,
           subscription
         }),
       });
@@ -316,59 +328,39 @@ export class InAppPurchaseService {
     }
   }
 
-  static async getCurrentSubscription(userId: string) {
+  static async getCurrentSubscription(userId: string): Promise<any> {
     try {
-      const subscriptionData = await AsyncStorage.getItem(`subscription_${userId}`);
-
+      const subscriptionData = await AsyncStorage.getItem('currentSubscription');
       if (subscriptionData) {
         const subscription = JSON.parse(subscriptionData);
-
+        
         // Vérifier si l'abonnement est encore valide
-        if (subscription.endDate && new Date(subscription.endDate) > new Date()) {
+        const expiryDate = new Date(subscription.expiryDate);
+        const now = new Date();
+        
+        if (expiryDate > now && subscription.isActive) {
           return subscription;
-        } else if (subscription.endDate) {
-          // Abonnement expiré
-          subscription.status = 'expired';
-          await AsyncStorage.setItem(`subscription_${userId}`, JSON.stringify(subscription));
-          return subscription;
+        } else {
+          // Supprimer l'abonnement expiré
+          await AsyncStorage.removeItem('currentSubscription');
         }
-
-        return subscription;
       }
-
-      // Aucun abonnement trouvé, retourner gratuit
-      return {
-        planId: 'free',
-        planName: 'Version Gratuite',
-        price: '0,00 €',
-        currency: 'EUR',
-        status: 'active',
-        paymentMethod: 'none'
-      };
+      
+      return null;
     } catch (error) {
-      console.error('Erreur récupération abonnement IAP:', error);
-
-      // En cas d'erreur, retourner un abonnement gratuit par défaut
-      return {
-        planId: 'free',
-        planName: 'Version Gratuite',
-        price: '0,00 €',
-        currency: 'EUR',
-        status: 'active',
-        paymentMethod: 'none'
-      };
+      console.error('❌ Erreur récupération abonnement:', error);
+      return null;
     }
   }
 
-  static async disconnect(): Promise<void> {
+  static async cancelSubscription(userId: string): Promise<boolean> {
     try {
-      if (this.isInitialized) {
-        await InAppPurchases.disconnectAsync();
-        this.isInitialized = false;
-        console.log('✅ Déconnexion IAP réussie');
-      }
+      await AsyncStorage.removeItem('currentSubscription');
+      console.log('✅ Abonnement annulé localement');
+      return true;
     } catch (error) {
-      console.error('❌ Erreur déconnexion IAP:', error);
+      console.error('❌ Erreur annulation abonnement:', error);
+      return false;
     }
   }
 }
