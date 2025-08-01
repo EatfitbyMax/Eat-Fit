@@ -49,10 +49,7 @@
     },
     "plugins": [
       [
-        "expo-router",
-        {
-          "origin": "https://eatfitbymax.app"
-        }
+        "expo-router"
       ],
       "expo-web-browser",
       [
