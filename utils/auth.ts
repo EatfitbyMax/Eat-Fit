@@ -46,16 +46,16 @@ async function saveSession(user: User): Promise<void> {
   try {
     const sessionToken = await createSessionToken(user.email);
     const expiryTime = Date.now() + SESSION_DURATION;
-    
+
     await AsyncStorage.setItem(SESSION_KEY, JSON.stringify({
       token: sessionToken,
       userEmail: user.email,
       userId: user.id,
       userType: user.userType
     }));
-    
+
     await AsyncStorage.setItem(SESSION_EXPIRY_KEY, expiryTime.toString());
-    
+
     console.log('💾 Session sauvegardée avec succès, expire le:', new Date(expiryTime).toLocaleString());
   } catch (error) {
     console.error('❌ Erreur sauvegarde session:', error);
@@ -67,36 +67,36 @@ async function loadSession(): Promise<User | null> {
   try {
     const sessionData = await AsyncStorage.getItem(SESSION_KEY);
     const expiryData = await AsyncStorage.getItem(SESSION_EXPIRY_KEY);
-    
+
     if (!sessionData || !expiryData) {
       console.log('📱 Aucune session sauvegardée');
       return null;
     }
-    
+
     const expiryTime = parseInt(expiryData);
     const currentTime = Date.now();
-    
+
     // Vérifier si la session a expiré
     if (currentTime > expiryTime) {
       console.log('⏰ Session expirée, suppression...');
       await clearSession();
       return null;
     }
-    
+
     const session = JSON.parse(sessionData);
-    
+
     // Récupérer les données utilisateur complètes depuis le serveur (clients ET coaches)
     const users = await PersistentStorage.getUsers();
     const coaches = await PersistentStorage.getCoaches();
     const allUsers = [...users, ...coaches];
     const user = allUsers.find((u: any) => u.email === session.userEmail && u.id === session.userId);
-    
+
     if (!user) {
       console.log('❌ Utilisateur de session non trouvé sur le serveur');
       await clearSession();
       return null;
     }
-    
+
     // Créer l'objet utilisateur sans le mot de passe
     const userWithoutPassword: User = {
       id: user.id,
@@ -113,10 +113,10 @@ async function loadSession(): Promise<User | null> {
       favoriteSport: user.favoriteSport,
       profileImage: user.profileImage
     };
-    
+
     console.log('✅ Session restaurée pour:', user.email, '- Expire le:', new Date(expiryTime).toLocaleString());
     return userWithoutPassword;
-    
+
   } catch (error) {
     console.error('❌ Erreur chargement session:', error);
     await clearSession();
@@ -138,17 +138,17 @@ async function clearSession(): Promise<void> {
 export async function forceRegenerateUserHash(email: string, currentPassword: string): Promise<boolean> {
   try {
     console.log('🔄 Régénération forcée du hash pour:', email);
-    
+
     // Récupérer les utilisateurs
     const users = await PersistentStorage.getUsers();
-    
+
     // Trouver l'utilisateur
     const userIndex = users.findIndex((u: any) => u.email === email);
     if (userIndex === -1) {
       console.log('❌ Utilisateur non trouvé pour la régénération');
       return false;
     }
-    
+
     // Générer le nouveau hash avec le système actuel (HEX)
     const passwordString = String(currentPassword).trim();
     const saltedPassword = passwordString + 'eatfitbymax_salt_2025';
@@ -157,17 +157,17 @@ export async function forceRegenerateUserHash(email: string, currentPassword: st
       saltedPassword,
       { encoding: Crypto.CryptoEncoding.HEX }
     );
-    
+
     // Mettre à jour l'utilisateur
     users[userIndex] = {
       ...users[userIndex],
       hashedPassword: hashedPassword,
       password: undefined // Supprimer l'ancien mot de passe en clair
     };
-    
+
     // Sauvegarder
     await PersistentStorage.saveUsers(users);
-    
+
     console.log('✅ Hash régénéré avec succès pour:', email);
     return true;
   } catch (error) {
@@ -179,17 +179,17 @@ export async function forceRegenerateUserHash(email: string, currentPassword: st
 export async function resetUserPasswordHash(email: string, newPassword: string): Promise<boolean> {
   try {
     console.log('🔄 Réinitialisation du hash pour:', email);
-    
+
     // Récupérer les utilisateurs
     const users = await PersistentStorage.getUsers();
-    
+
     // Trouver l'utilisateur
     const userIndex = users.findIndex((u: any) => u.email === email);
     if (userIndex === -1) {
       console.log('❌ Utilisateur non trouvé pour la réinitialisation');
       return false;
     }
-    
+
     // Générer le nouveau hash
     const passwordString = String(newPassword).trim();
     const saltedPassword = passwordString + 'eatfitbymax_salt_2025';
@@ -198,17 +198,17 @@ export async function resetUserPasswordHash(email: string, newPassword: string):
       saltedPassword,
       { encoding: Crypto.CryptoEncoding.HEX }
     );
-    
+
     // Mettre à jour l'utilisateur
     users[userIndex] = {
       ...users[userIndex],
       hashedPassword: hashedPassword,
       password: undefined // Supprimer l'ancien mot de passe en clair
     };
-    
+
     // Sauvegarder
     await PersistentStorage.saveUsers(users);
-    
+
     console.log('✅ Hash réinitialisé avec succès pour:', email);
     return true;
   } catch (error) {
@@ -232,12 +232,12 @@ export async function getCurrentUser(): Promise<User | null> {
   if (currentUserCache) {
     return currentUserCache;
   }
-  
+
   // Si pas de cache mémoire, essayer de charger depuis la session persistante
   try {
     console.log('🔄 Tentative de restauration de session...');
     const sessionUser = await loadSession();
-    
+
     if (sessionUser) {
       // Mettre en cache mémoire
       currentUserCache = sessionUser;
@@ -247,7 +247,7 @@ export async function getCurrentUser(): Promise<User | null> {
   } catch (error) {
     console.error('❌ Erreur restauration session:', error);
   }
-  
+
   return null;
 }
 
@@ -258,7 +258,7 @@ export async function login(email: string, password: string): Promise<User | nul
     // Récupérer les utilisateurs ET les coaches depuis le serveur
     const users = await PersistentStorage.getUsers();
     const coaches = await PersistentStorage.getCoaches();
-    
+
     // Combiner les deux listes pour la recherche
     const allUsers = [...users, ...coaches];
 
@@ -292,7 +292,7 @@ export async function login(email: string, password: string): Promise<User | nul
       try {
         const passwordString = String(password).trim();
         const saltedPassword = passwordString + 'eatfitbymax_salt_2025';
-        
+
         console.log('🔍 Debug hash comparison:', {
           inputLength: passwordString.length,
           saltedLength: saltedPassword.length,
@@ -306,10 +306,10 @@ export async function login(email: string, password: string): Promise<User | nul
           saltedPassword,
           { encoding: Crypto.CryptoEncoding.HEX }
         );
-        
+
         isPasswordValid = hashedInputHex === user.hashedPassword;
         console.log('🔐 Vérification SHA256-HEX:', isPasswordValid ? 'VALIDE' : 'INVALIDE');
-        
+
         // Si échec avec SHA256-HEX, essayer avec Base64 (ancien système SHA256)
         if (!isPasswordValid && user.hashedPassword.length === 44) {
           console.log('🔄 Tentative avec ancien encodage SHA256-Base64...');
@@ -318,10 +318,10 @@ export async function login(email: string, password: string): Promise<User | nul
             saltedPassword,
             { encoding: Crypto.CryptoEncoding.BASE64 }
           );
-          
+
           isPasswordValid = hashedInputBase64 === user.hashedPassword;
           console.log('🔐 Vérification SHA256-Base64:', isPasswordValid ? 'VALIDE' : 'INVALIDE');
-          
+
           // Si connexion réussie avec Base64, migrer vers HEX
           if (isPasswordValid) {
             console.log('🔄 Migration du hash SHA256-Base64 vers SHA256-HEX...');
@@ -332,7 +332,7 @@ export async function login(email: string, password: string): Promise<User | nul
                   ? { ...u, hashedPassword: hashedInputHex }
                   : u
               );
-              
+
               await PersistentStorage.saveUsers(updatedUsers);
               console.log('✅ Migration SHA256-Base64->SHA256-HEX terminée');
             } catch (migrationError) {
@@ -340,7 +340,7 @@ export async function login(email: string, password: string): Promise<User | nul
             }
           }
         }
-        
+
         // Si échec avec SHA256, essayer avec MD5 (très ancien système)
         if (!isPasswordValid && user.hashedPassword.length === 32) {
           console.log('🔄 Tentative avec ancien hash MD5...');
@@ -351,10 +351,10 @@ export async function login(email: string, password: string): Promise<User | nul
               passwordString, // MD5 sans salt
               { encoding: Crypto.CryptoEncoding.HEX }
             );
-            
+
             isPasswordValid = hashedInputMD5NoSalt === user.hashedPassword;
             console.log('🔐 Vérification MD5 (sans salt):', isPasswordValid ? 'VALIDE' : 'INVALIDE');
-            
+
             // Si échec sans salt, essayer avec salt
             if (!isPasswordValid) {
               console.log('🔄 Tentative MD5 avec salt...');
@@ -363,11 +363,11 @@ export async function login(email: string, password: string): Promise<User | nul
                 saltedPassword, // MD5 avec salt
                 { encoding: Crypto.CryptoEncoding.HEX }
               );
-              
+
               isPasswordValid = hashedInputMD5WithSalt === user.hashedPassword;
               console.log('🔐 Vérification MD5 (avec salt):', isPasswordValid ? 'VALIDE' : 'INVALIDE');
             }
-            
+
             // Si connexion réussie avec MD5, migrer vers SHA256-HEX
             if (isPasswordValid) {
               console.log('🔄 Migration du hash MD5 vers SHA256-HEX...');
@@ -378,7 +378,7 @@ export async function login(email: string, password: string): Promise<User | nul
                     ? { ...u, hashedPassword: hashedInputHex }
                     : u
                 );
-                
+
                 await PersistentStorage.saveUsers(updatedUsers);
                 console.log('✅ Migration MD5->SHA256-HEX terminée');
               } catch (migrationError) {
@@ -389,7 +389,7 @@ export async function login(email: string, password: string): Promise<User | nul
             console.error('❌ Erreur vérification MD5:', md5Error);
           }
         }
-        
+
         if (!isPasswordValid) {
           console.log('❌ Hash mismatch détecté - tentative avec ancien système mot de passe');
         }
@@ -401,7 +401,7 @@ export async function login(email: string, password: string): Promise<User | nul
       // Ancien système (temporaire)
       isPasswordValid = user.password === password;
       console.log('🔓 Vérification ancien système:', isPasswordValid ? 'VALIDE' : 'INVALIDE');
-      
+
       // Si la connexion réussit avec l'ancien système, migrer vers le nouveau hash
       if (isPasswordValid) {
         console.log('🔄 Migration du mot de passe vers le nouveau système de hash...');
@@ -413,14 +413,14 @@ export async function login(email: string, password: string): Promise<User | nul
             saltedPassword,
             { encoding: Crypto.CryptoEncoding.HEX }
           );
-          
+
           // Mettre à jour l'utilisateur dans la base
           const updatedUsers = users.map((u: any) => 
             u.email === email 
               ? { ...u, hashedPassword: newHashedPassword, password: undefined }
               : u
           );
-          
+
           await PersistentStorage.saveUsers(updatedUsers);
           console.log('✅ Migration du hash terminée');
         } catch (migrationError) {
@@ -573,16 +573,16 @@ export async function register(userData: Omit<User, 'id'> & { password: string }
 export async function logout(): Promise<void> {
   try {
     console.log('🔄 Fonction logout appelée - Vidage du cache et de la session...');
-    
+
     // 1. Vider IMMÉDIATEMENT le cache utilisateur en premier
     currentUserCache = null;
-    
+
     // 2. Supprimer la session persistante
     await clearSession();
-    
+
     // 3. Vider à nouveau le cache par sécurité
     currentUserCache = null;
-    
+
     // 4. Force garbage collection si possible
     if (global && global.gc) {
       try {
@@ -591,10 +591,10 @@ export async function logout(): Promise<void> {
         // Ignore si gc n'est pas disponible
       }
     }
-    
+
     // 5. Attendre un tick pour que le changement se propage
     await new Promise(resolve => setTimeout(resolve, 50));
-    
+
     // 6. Vérification finale UNIQUE (pour éviter les race conditions)
     const testUser = await getCurrentUser();
     if (testUser === null) {
@@ -605,9 +605,9 @@ export async function logout(): Promise<void> {
       currentUserCache = null;
       await clearSession();
     }
-    
+
     console.log('✅ Déconnexion réussie - Cache utilisateur complètement vidé');
-    
+
   } catch (error) {
     console.error('❌ Erreur déconnexion:', error);
     // S'assurer que le cache est vidé même en cas d'erreur
@@ -615,6 +615,46 @@ export async function logout(): Promise<void> {
     await clearSession();
   }
 }
+
+const USER_STORAGE_KEY = 'eatfitbymax_user'; // Define the missing USER_STORAGE_KEY
+
+export const deleteUserAccount = async (userId: string): Promise<void> => {
+  try {
+    // Supprimer toutes les données locales de l'utilisateur
+    await AsyncStorage.multiRemove([
+      USER_STORAGE_KEY,
+      `subscription_${userId}`,
+      `integration_status_${userId}`,
+      `user_preferences_${userId}`,
+      `workout_programs_${userId}`,
+      `nutrition_data_${userId}`,
+      `progress_data_${userId}`,
+    ]);
+
+    // Supprimer les données sur le serveur
+    const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://eatfitbymax.cloud';
+
+    try {
+      const response = await fetch(`${API_URL}/api/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        console.warn('Erreur suppression serveur, mais données locales supprimées');
+      }
+    } catch (serverError) {
+      console.warn('Serveur inaccessible, mais données locales supprimées:', serverError);
+    }
+
+    console.log('✅ Compte utilisateur supprimé avec succès');
+  } catch (error) {
+    console.error('❌ Erreur lors de la suppression du compte:', error);
+    throw new Error('Impossible de supprimer le compte');
+  }
+};
 
 export async function updateUserData(email: string, updateData: {
   firstName?: string;
@@ -654,7 +694,7 @@ export async function updateUserData(email: string, updateData: {
         console.log('Utilisateur non trouvé pour la mise à jour');
         return false;
       }
-      
+
       isCoach = true;
       updatedUser = {
         ...coaches[userIndex],
@@ -664,7 +704,7 @@ export async function updateUserData(email: string, updateData: {
           : coaches[userIndex].name
       };
       coaches[userIndex] = updatedUser;
-      
+
       // Sauvegarder les coaches (fonction à créer)
       try {
         const response = await fetch(`${API_URL}/api/coaches`, {
@@ -674,7 +714,7 @@ export async function updateUserData(email: string, updateData: {
           },
           body: JSON.stringify(coaches)
         });
-        
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }

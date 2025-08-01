@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Switch, Alert, Linking, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -129,7 +128,7 @@ export default function SecuriteConfidentialiteScreen() {
         {/* Sécurité */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>🔐 Sécurité</Text>
-          
+
           <View style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
             <View style={styles.settingInfo}>
               <Text style={[styles.settingTitle, { color: theme.text }]}>Authentification biométrique</Text>
@@ -184,7 +183,7 @@ export default function SecuriteConfidentialiteScreen() {
         {/* Protection des données */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>🛡️ Protection des données</Text>
-          
+
           <View style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
             <View style={styles.settingInfo}>
               <Text style={[styles.settingTitle, { color: theme.text }]}>Chiffrement des données</Text>
@@ -220,7 +219,7 @@ export default function SecuriteConfidentialiteScreen() {
         {/* Confidentialité */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>👁️ Confidentialité</Text>
-          
+
           <View style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
             <View style={styles.settingInfo}>
               <Text style={[styles.settingTitle, { color: theme.text }]}>Partage de données anonymes</Text>
@@ -290,7 +289,7 @@ export default function SecuriteConfidentialiteScreen() {
         {/* Mes données */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>📊 Mes données</Text>
-          
+
           <TouchableOpacity 
             style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]} 
             onPress={exportData}
@@ -350,7 +349,7 @@ export default function SecuriteConfidentialiteScreen() {
         {/* Zone de danger */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, styles.dangerTitle]}>⚠️ Zone de danger</Text>
-          
+
           <TouchableOpacity 
             style={[styles.settingItem, styles.dangerItem, { backgroundColor: theme.card }]} 
             onPress={deleteAccount}
@@ -540,5 +539,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#8B949E',
     fontWeight: '500',
+  },
+  arrow: {
+    fontSize: 18,
+    color: '#666',
+  },
+  dangerItem: {
+    borderLeftWidth: 3,
+    borderLeftColor: '#FF6B6B',
+  },
+  dangerText: {
+    color: '#FF6B6B',
   },
 });
