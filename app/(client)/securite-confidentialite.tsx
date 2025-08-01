@@ -52,17 +52,13 @@ export default function SecuriteConfidentialiteScreen() {
   const deleteAccount = () => {
     Alert.alert(
       'Supprimer le compte',
-      'Cette action supprimera définitivement votre compte et toutes vos données. Cette action est irréversible.\n\nVous recevrez un email de confirmation avant la suppression définitive.',
+      'Pour supprimer votre compte, veuillez contacter notre support à support@eatfitbymax.com. Nous traiterons votre demande dans les plus brefs délais.',
       [
         { text: 'Annuler', style: 'cancel' },
         {
-          text: 'Supprimer',
-          style: 'destructive',
+          text: 'Contacter le support',
           onPress: () => {
-            Alert.alert(
-              'Confirmation envoyée', 
-              'Un email de confirmation a été envoyé à votre adresse. Suivez les instructions pour confirmer la suppression de votre compte.'
-            );
+            Linking.openURL('mailto:support@eatfitbymax.com?subject=Demande%20de%20suppression%20de%20compte');
           }
         }
       ]
