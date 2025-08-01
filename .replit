@@ -69,5 +69,14 @@ mode = "sequential"
 task = "shell.exec"
 args = "npm run prebuild-check"
 
+[[workflows.workflow]]
+name = "EAS Build Production iOS"
+author = 42598128
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx eas build --platform ios --profile production --non-interactive"
+
 [deployment]
 run = ["sh", "-c", "cd server && PORT=5000 node server.js"]

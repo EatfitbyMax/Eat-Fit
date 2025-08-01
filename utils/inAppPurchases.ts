@@ -155,8 +155,15 @@ export class InAppPurchaseService {
     return this.availableProducts;
   }
 
-  static async purchaseSubscription(productId: string, userId: string): Promise<boolean> {
+  static async purchaseSubscription(productId: string, userId?: string): Promise<boolean> {
     try {
+      // Récupérer l'utilisateur si non fourni
+      if (!userId) {
+        const { getCurrentUser } = require('./auth');
+        const currentUser = await getCurrentUser();
+        userId = currentUser?.id || 'anonymous';
+      }
+
       console.log('🛒 Début purchaseSubscription:', { 
         productId, 
         userId, 
