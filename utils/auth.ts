@@ -135,39 +135,104 @@ async function clearSession(): Promise<void> {
   }
 }
 
+// Fonction unifiée pour générer un hash sécurisé
+async function generateSecureHash(password: string): Promise<string> {
+  const passwordString = String(password).trim();
+  const saltedPassword = passwordString + 'eatfitbymax_salt_2025';
+  
+  return await Crypto.digestStringAsync(
+    Crypto.CryptoDigestAlgorithm.SHA256,
+    saltedPassword,
+    { encoding: Crypto.CryptoEncoding.HEX }
+  );
+}
+
+// Fonction pour vérifier un mot de passe avec tous les systèmes de hash
+async function verifyPassword(inputPassword: string, storedHash: string): Promise<boolean> {
+  const passwordString = String(inputPassword).trim();
+  const saltedPassword = passwordString + 'eatfitbymax_salt_2025';
+
+  try {
+    // 1. Nouveau système unifié SHA256-HEX
+    const currentHash = await generateSecureHash(inputPassword);
+    if (currentHash === storedHash) {
+      console.log('✅ Hash valide (système actuel SHA256-HEX)');
+      return true;
+    }
+
+    // 2. Ancien système SHA256-Base64
+    if (storedHash.length === 44) {
+      const base64Hash = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.SHA256,
+        saltedPassword,
+        { encoding: Crypto.CryptoEncoding.BASE64 }
+      );
+      if (base64Hash === storedHash) {
+        console.log('✅ Hash valide (ancien système SHA256-Base64)');
+        return true;
+      }
+    }
+
+    // 3. Très ancien système MD5
+    if (storedHash.length === 32) {
+      // MD5 sans salt
+      const md5NoSalt = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.MD5,
+        passwordString,
+        { encoding: Crypto.CryptoEncoding.HEX }
+      );
+      if (md5NoSalt === storedHash) {
+        console.log('✅ Hash valide (ancien système MD5 sans salt)');
+        return true;
+      }
+
+      // MD5 avec salt
+      const md5WithSalt = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.MD5,
+        saltedPassword,
+        { encoding: Crypto.CryptoEncoding.HEX }
+      );
+      if (md5WithSalt === storedHash) {
+        console.log('✅ Hash valide (ancien système MD5 avec salt)');
+        return true;
+      }
+    }
+
+    // 4. Mot de passe en clair (système très ancien)
+    if (passwordString === storedHash) {
+      console.log('✅ Mot de passe valide (système très ancien - clair)');
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    console.error('❌ Erreur vérification mot de passe:', error);
+    return false;
+  }
+}
+
 export async function forceRegenerateUserHash(email: string, currentPassword: string): Promise<boolean> {
   try {
     console.log('🔄 Régénération forcée du hash pour:', email);
 
-    // Récupérer les utilisateurs
     const users = await PersistentStorage.getUsers();
-
-    // Trouver l'utilisateur
     const userIndex = users.findIndex((u: any) => u.email === email);
     if (userIndex === -1) {
       console.log('❌ Utilisateur non trouvé pour la régénération');
       return false;
     }
 
-    // Générer le nouveau hash avec le système actuel (HEX)
-    const passwordString = String(currentPassword).trim();
-    const saltedPassword = passwordString + 'eatfitbymax_salt_2025';
-    const hashedPassword = await Crypto.digestStringAsync(
-      Crypto.CryptoDigestAlgorithm.SHA256,
-      saltedPassword,
-      { encoding: Crypto.CryptoEncoding.HEX }
-    );
+    // Générer le nouveau hash unifié
+    const hashedPassword = await generateSecureHash(currentPassword);
 
     // Mettre à jour l'utilisateur
     users[userIndex] = {
       ...users[userIndex],
       hashedPassword: hashedPassword,
-      password: undefined // Supprimer l'ancien mot de passe en clair
+      password: undefined
     };
 
-    // Sauvegarder
     await PersistentStorage.saveUsers(users);
-
     console.log('✅ Hash régénéré avec succès pour:', email);
     return true;
   } catch (error) {
@@ -180,35 +245,24 @@ export async function resetUserPasswordHash(email: string, newPassword: string):
   try {
     console.log('🔄 Réinitialisation du hash pour:', email);
 
-    // Récupérer les utilisateurs
     const users = await PersistentStorage.getUsers();
-
-    // Trouver l'utilisateur
     const userIndex = users.findIndex((u: any) => u.email === email);
     if (userIndex === -1) {
       console.log('❌ Utilisateur non trouvé pour la réinitialisation');
       return false;
     }
 
-    // Générer le nouveau hash
-    const passwordString = String(newPassword).trim();
-    const saltedPassword = passwordString + 'eatfitbymax_salt_2025';
-    const hashedPassword = await Crypto.digestStringAsync(
-      Crypto.CryptoDigestAlgorithm.SHA256,
-      saltedPassword,
-      { encoding: Crypto.CryptoEncoding.HEX }
-    );
+    // Générer le nouveau hash unifié
+    const hashedPassword = await generateSecureHash(newPassword);
 
     // Mettre à jour l'utilisateur
     users[userIndex] = {
       ...users[userIndex],
       hashedPassword: hashedPassword,
-      password: undefined // Supprimer l'ancien mot de passe en clair
+      password: undefined
     };
 
-    // Sauvegarder
     await PersistentStorage.saveUsers(users);
-
     console.log('✅ Hash réinitialisé avec succès pour:', email);
     return true;
   } catch (error) {
@@ -284,134 +338,92 @@ export async function login(email: string, password: string): Promise<User | nul
       hasHashedPassword: user.hashedPassword ? 'OUI' : 'NON'
     });
 
-    // Vérifier le mot de passe
+    // Vérifier le mot de passe avec le nouveau système unifié
     let isPasswordValid = false;
+    const passwordString = String(password).trim();
 
     if (user.hashedPassword) {
-      // Nouveau système avec hash
-      try {
-        // Vérifier d'abord avec le nouveau système HEX (SHA256)
-        const hashedInputHex = await Crypto.digestStringAsync(
-          Crypto.CryptoDigestAlgorithm.SHA256,
-          saltedPassword,
-          { encoding: Crypto.CryptoEncoding.HEX }
-        );
-
-        isPasswordValid = hashedInputHex === user.hashedPassword;
-
-        // Si échec avec SHA256-HEX, essayer avec Base64 (ancien système SHA256)
-        if (!isPasswordValid && user.hashedPassword.length === 44) {
-          const hashedInputBase64 = await Crypto.digestStringAsync(
-            Crypto.CryptoDigestAlgorithm.SHA256,
-            saltedPassword,
-            { encoding: Crypto.CryptoEncoding.BASE64 }
-          );
-
-          isPasswordValid = hashedInputBase64 === user.hashedPassword;
-
-          // Si connexion réussie avec Base64, migrer vers HEX
-          if (isPasswordValid) {
-            console.log('Migration vers nouveau système de hashage...');
-            try {
-              // Mettre à jour l'utilisateur avec le nouveau hash HEX
+      // Utiliser la fonction de vérification unifiée
+      isPasswordValid = await verifyPassword(password, user.hashedPassword);
+      
+      // Si le mot de passe est valide mais utilise un ancien système, migrer automatiquement
+      if (isPasswordValid) {
+        const currentHash = await generateSecureHash(password);
+        if (currentHash !== user.hashedPassword) {
+          console.log('🔄 Migration automatique vers le nouveau système de hash...');
+          try {
+            // Mise à jour dans la liste appropriée (users ou coaches)
+            const isInUsers = users.some(u => u.email === email);
+            
+            if (isInUsers) {
               const updatedUsers = users.map((u: any) => 
                 u.email === email 
-                  ? { ...u, hashedPassword: hashedInputHex }
+                  ? { ...u, hashedPassword: currentHash, password: undefined }
                   : u
               );
-
               await PersistentStorage.saveUsers(updatedUsers);
-              console.log('✅ Migration SHA256-Base64->SHA256-HEX terminée');
-            } catch (migrationError) {
-              console.error('⚠️ Erreur migration SHA256-Base64->SHA256-HEX (connexion maintenue):', migrationError);
-            }
-          }
-        }
-
-        // Si échec avec SHA256, essayer avec MD5 (très ancien système)
-        if (!isPasswordValid && user.hashedPassword.length === 32) {
-          console.log('🔄 Tentative avec ancien hash MD5...');
-          try {
-            // Essayer d'abord MD5 sans salt (ancien système)
-            const hashedInputMD5NoSalt = await Crypto.digestStringAsync(
-              Crypto.CryptoDigestAlgorithm.MD5,
-              passwordString, // MD5 sans salt
-              { encoding: Crypto.CryptoEncoding.HEX }
-            );
-
-            isPasswordValid = hashedInputMD5NoSalt === user.hashedPassword;
-            console.log('🔐 Vérification MD5 (sans salt):', isPasswordValid ? 'VALIDE' : 'INVALIDE');
-
-            // Si échec sans salt, essayer avec salt
-            if (!isPasswordValid) {
-              console.log('🔄 Tentative MD5 avec salt...');
-              const hashedInputMD5WithSalt = await Crypto.digestStringAsync(
-                Crypto.CryptoDigestAlgorithm.MD5,
-                saltedPassword, // MD5 avec salt
-                { encoding: Crypto.CryptoEncoding.HEX }
+            } else {
+              const updatedCoaches = coaches.map((c: any) => 
+                c.email === email 
+                  ? { ...c, hashedPassword: currentHash, password: undefined }
+                  : c
               );
-
-              isPasswordValid = hashedInputMD5WithSalt === user.hashedPassword;
-              console.log('🔐 Vérification MD5 (avec salt):', isPasswordValid ? 'VALIDE' : 'INVALIDE');
-            }
-
-            // Si connexion réussie avec MD5, migrer vers SHA256-HEX
-            if (isPasswordValid) {
-              console.log('🔄 Migration du hash MD5 vers SHA256-HEX...');
-              try {
-                // Mettre à jour l'utilisateur avec le nouveau hash SHA256-HEX
-                const updatedUsers = users.map((u: any) => 
-                  u.email === email 
-                    ? { ...u, hashedPassword: hashedInputHex }
-                    : u
-                );
-
-                await PersistentStorage.saveUsers(updatedUsers);
-                console.log('✅ Migration MD5->SHA256-HEX terminée');
-              } catch (migrationError) {
-                console.error('⚠️ Erreur migration MD5->SHA256-HEX (connexion maintenue):', migrationError);
+              // Sauvegarder les coaches via l'API
+              const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://eatfitbymax.cloud';
+              const response = await fetch(`${API_URL}/api/coaches`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedCoaches)
+              });
+              if (!response.ok) {
+                throw new Error('Erreur sauvegarde coaches');
               }
             }
-          } catch (md5Error) {
-            console.error('❌ Erreur vérification MD5:', md5Error);
+            console.log('✅ Migration automatique terminée');
+          } catch (migrationError) {
+            console.error('⚠️ Erreur migration automatique (connexion maintenue):', migrationError);
           }
         }
-
-        if (!isPasswordValid) {
-          console.log('❌ Hash mismatch détecté - tentative avec ancien système mot de passe');
-        }
-      } catch (compareError) {
-        console.error('❌ Erreur comparaison hash:', compareError);
-        isPasswordValid = false;
       }
     } else if (user.password) {
-      // Ancien système (temporaire)
+      // Système très ancien (mot de passe en clair)
       isPasswordValid = user.password === password;
-      console.log('🔓 Vérification ancien système:', isPasswordValid ? 'VALIDE' : 'INVALIDE');
+      console.log('🔓 Vérification ancien système (clair):', isPasswordValid ? 'VALIDE' : 'INVALIDE');
 
-      // Si la connexion réussit avec l'ancien système, migrer vers le nouveau hash
+      // Migration obligatoire vers le nouveau système
       if (isPasswordValid) {
-        console.log('🔄 Migration du mot de passe vers le nouveau système de hash...');
+        console.log('🔄 Migration obligatoire du mot de passe en clair...');
         try {
-          const passwordString = String(password).trim();
-          const saltedPassword = passwordString + 'eatfitbymax_salt_2025';
-          const newHashedPassword = await Crypto.digestStringAsync(
-            Crypto.CryptoDigestAlgorithm.SHA256,
-            saltedPassword,
-            { encoding: Crypto.CryptoEncoding.HEX }
-          );
-
-          // Mettre à jour l'utilisateur dans la base
-          const updatedUsers = users.map((u: any) => 
-            u.email === email 
-              ? { ...u, hashedPassword: newHashedPassword, password: undefined }
-              : u
-          );
-
-          await PersistentStorage.saveUsers(updatedUsers);
-          console.log('✅ Migration du hash terminée');
+          const newHashedPassword = await generateSecureHash(password);
+          
+          const isInUsers = users.some(u => u.email === email);
+          
+          if (isInUsers) {
+            const updatedUsers = users.map((u: any) => 
+              u.email === email 
+                ? { ...u, hashedPassword: newHashedPassword, password: undefined }
+                : u
+            );
+            await PersistentStorage.saveUsers(updatedUsers);
+          } else {
+            const updatedCoaches = coaches.map((c: any) => 
+              c.email === email 
+                ? { ...c, hashedPassword: newHashedPassword, password: undefined }
+                : c
+            );
+            const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://eatfitbymax.cloud';
+            const response = await fetch(`${API_URL}/api/coaches`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(updatedCoaches)
+            });
+            if (!response.ok) {
+              throw new Error('Erreur sauvegarde coaches');
+            }
+          }
+          console.log('✅ Migration du mot de passe en clair terminée');
         } catch (migrationError) {
-          console.error('⚠️ Erreur migration hash (connexion maintenue):', migrationError);
+          console.error('⚠️ Erreur migration mot de passe en clair (connexion maintenue):', migrationError);
         }
       }
     } else {
@@ -483,27 +495,14 @@ export async function register(userData: Omit<User, 'id'> & { password: string }
       return null;
     }
 
-    // Hacher le mot de passe avec validation
+    // Hacher le mot de passe avec le nouveau système unifié
     console.log('🔐 Hachage du mot de passe...', `Type: ${typeof userData.password}, Longueur: ${userData.password.length}`);
 
     let hashedPassword: string;
     try {
-      const passwordString = String(userData.password).trim();
-
-      console.log('🔧 Préparation hachage:', {
-        passwordString: passwordString.substring(0, 3) + '***',
-        method: 'expo-crypto-sha256'
-      });
-
-      // Hachage sécurisé avec expo-crypto
-      const saltedPassword = passwordString + 'eatfitbymax_salt_2025';
-      hashedPassword = await Crypto.digestStringAsync(
-        Crypto.CryptoDigestAlgorithm.SHA256,
-        saltedPassword,
-        { encoding: Crypto.CryptoEncoding.HEX }
-      );
-
-      console.log('✅ Hachage réussi avec expo-crypto, longueur:', hashedPassword.length);
+      console.log('🔧 Utilisation du système de hash unifié');
+      hashedPassword = await generateSecureHash(userData.password);
+      console.log('✅ Hachage réussi avec système unifié, longueur:', hashedPassword.length);
     } catch (hashError) {
       console.error('❌ Erreur détaillée hachage:', hashError);
       throw new Error(`Erreur hachage mot de passe: ${hashError.message}`);
