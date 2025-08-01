@@ -278,42 +278,7 @@ export class PersistentStorage {
     }
   }
 
-  // Workouts methods
-  static async saveWorkouts(userId: string, workouts: any[]): Promise<void> {
-    try {
-      await this.ensureConnection();
-
-      const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(workouts),
-      });
-      if (!response.ok) {
-        throw new Error('Erreur sauvegarde entraînements');
-      }
-      console.log('✅ Entraînements sauvegardés sur le serveur VPS');
-    } catch (error) {
-      console.error('❌ Erreur sauvegarde entraînements:', error);
-      throw new Error('Impossible de sauvegarder les entraînements. Vérifiez votre connexion internet.');
-    }
-  }
-
-  static async getWorkouts(userId: string): Promise<any[]> {
-    try {
-      await this.ensureConnection();
-
-      const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`);
-      if (response.ok) {
-        const data = await response.json();
-        console.log('✅ Entraînements récupérés depuis le serveur VPS');
-        return data;
-      }
-      throw new Error('Erreur récupération entraînements');
-    } catch (error) {
-      console.error('❌ Erreur récupération entraînements:', error);
-      throw new Error('Impossible de récupérer les entraînements. Vérifiez votre connexion internet.');
-    }
-  }
+  
 
   // User forme methods
   static async getUserForme(userId: string, date: string): Promise<any> {
@@ -948,7 +913,8 @@ export class PersistentStorage {
 
   static async importData(data: { programmes: any[], users: any[] }): Promise<void> {
     try {
-      await this.saveProgrammes(data.programmes || []);      await this.saveUsers(data.users || []);
+      await this.saveProgrammes(data.programmes || []);
+      await this.saveUsers(data.users || []);
       console.log('✅ Données importées avec succès');
     } catch (error) {
       console.error('❌ Erreur lors de l\'import des données:', error);

@@ -1,3 +1,4 @@
+
 const { getDefaultConfig } = require('expo/metro-config');
 
 const config = getDefaultConfig(__dirname);
@@ -5,9 +6,8 @@ const config = getDefaultConfig(__dirname);
 // Configuration de base minimale
 config.resolver.assetExts.push('db', 'json');
 
-// Supprimer complètement les alias problématiques
-// et laisser Metro gérer les modules natifs
-config.resolver.alias = {};
+// Configuration resolver simple
+config.resolver.resolverMainFields = ['react-native', 'browser', 'main'];
 
 // Configuration transformer basique
 config.transformer.getTransformOptions = async () => ({
@@ -16,8 +16,5 @@ config.transformer.getTransformOptions = async () => ({
     inlineRequires: false,
   },
 });
-
-// Configuration resolver simple
-config.resolver.resolverMainFields = ['react-native', 'browser', 'main'];
 
 module.exports = config;
