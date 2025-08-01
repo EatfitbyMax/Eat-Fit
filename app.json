@@ -75,6 +75,14 @@
           "addGeneratedScheme": false
         }
       ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "newArchEnabled": true
+          }
+        }
+      ],
       "./plugins/withHealthKit.js"
     ],
     "experiments": {
