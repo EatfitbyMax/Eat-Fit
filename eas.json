@@ -22,8 +22,7 @@
         "simulator": false,
         "resourceClass": "m-medium",
         "buildConfiguration": "Release"
-      },
-      
+      }
     },
     "production": {
       "developmentClient": false,
