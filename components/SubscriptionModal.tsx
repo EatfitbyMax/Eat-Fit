@@ -342,13 +342,7 @@ const styles = StyleSheet.create({
   },
 });
 
-interface SubscriptionModalProps {
-  visible: boolean;
-  onClose: () => void;
-  onSubscribe?: (planId: string) => void;
-}
-
-export default function SubscriptionModal({ visible, onClose, onSubscribe }: SubscriptionModalProps) {
+// Interface déjà définie plus haut, suppression de la duplication
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 

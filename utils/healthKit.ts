@@ -13,15 +13,26 @@ export interface HealthData {
 class HealthKitService {
   static async isAvailable(): Promise<boolean> {
     if (Platform.OS !== 'ios') {
+      console.log('ℹ️ Apple Health disponible uniquement sur iOS');
       return false;
     }
     
     try {
-      const AppleHealthKit = require('rn-apple-healthkit');
-      return AppleHealthKit.isAvailable();
+      // Vérifier si nous sommes en mode EAS Build
+      const isEASBuild = process.env.EXPO_PUBLIC_USE_EAS_BUILD === 'true';
+      
+      if (isEASBuild) {
+        const AppleHealthKit = require('rn-apple-healthkit');
+        const available = AppleHealthKit.isAvailable();
+        console.log('✅ Apple Health disponible (EAS Build):', available);
+        return available;
+      } else {
+        console.log('👻 Mode simulation Apple Health (Expo Go)');
+        return true; // Mode simulation en développement
+      }
     } catch (error) {
-      console.log('ℹ️ rn-apple-healthkit non disponible, mode simulation');
-      return true; // Retourner true pour permettre le mode simulation
+      console.log('⚠️ rn-apple-healthkit non disponible:', error);
+      return false;
     }
   }
 

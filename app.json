@@ -31,7 +31,9 @@
         "NSHealthUpdateUsageDescription": "EatFitBy Max peut écrire des données dans Apple Health pour garder vos informations de santé à jour.",
         "UIRequiredDeviceCapabilities": [
           "healthkit"
-        ]
+        ],
+        "com.apple.developer.healthkit": true,
+        "com.apple.developer.in-app-payments": []
       }
     },
     "extra": {
