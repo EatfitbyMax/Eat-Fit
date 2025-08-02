@@ -18,8 +18,8 @@ import SubscriptionModal from '../../components/SubscriptionModal';
 
 export default function ProfilScreen() {
   const { currentUser, signOut } = useAuth();
-  const { theme, toggleTheme } = useTheme();
-  const colors = theme?.colors || {
+  const { theme, isDarkMode, toggleTheme } = useTheme();
+  const colors = theme || {
     background: '#000000',
     card: '#1A1A1A',
     text: '#FFFFFF',
@@ -145,10 +145,10 @@ export default function ProfilScreen() {
             </Text>
             <Switch
               trackColor={{ false: colors.inactive, true: colors.primary }}
-              thumbColor={theme.mode === 'dark' ? colors.background : colors.card}
+              thumbColor={isDarkMode ? colors.background : colors.card}
               ios_backgroundColor={colors.inactive}
               onValueChange={toggleTheme}
-              value={theme.mode === 'dark'}
+              value={isDarkMode}
             />
           </View>
         </View>
