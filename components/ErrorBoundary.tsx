@@ -1,4 +1,3 @@
-
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import * as ErrorRecovery from 'expo-error-recovery';
@@ -44,7 +43,7 @@ export class ErrorBoundary extends Component<Props, State> {
     // Tentative de récupération automatique si pas trop d'essais
     if (this.state.recoveryAttempts < this.maxRecoveryAttempts) {
       console.log('🔄 Tentative de récupération automatique...');
-      
+
       this.setState(prevState => ({
         recoveryAttempts: prevState.recoveryAttempts + 1
       }));
@@ -60,6 +59,10 @@ export class ErrorBoundary extends Component<Props, State> {
       }, 3000);
     } else {
       console.log('🚫 Erreurs trop fréquentes - arrêt des tentatives de récupération');
+    }
+        // Log l'erreur pour debug
+    if (error.message.includes('subscription') || error.message.includes('payment')) {
+      console.error('🚨 Erreur liée aux abonnements/paiements:', error);
     }
   }
 

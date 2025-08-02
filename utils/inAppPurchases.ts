@@ -1,4 +1,3 @@
-
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -333,11 +332,11 @@ export class InAppPurchaseService {
       const subscriptionData = await AsyncStorage.getItem('currentSubscription');
       if (subscriptionData) {
         const subscription = JSON.parse(subscriptionData);
-        
+
         // Vérifier si l'abonnement est encore valide
         const expiryDate = new Date(subscription.expiryDate);
         const now = new Date();
-        
+
         if (expiryDate > now && subscription.isActive) {
           return subscription;
         } else {
@@ -345,7 +344,7 @@ export class InAppPurchaseService {
           await AsyncStorage.removeItem('currentSubscription');
         }
       }
-      
+
       return null;
     } catch (error) {
       console.error('❌ Erreur récupération abonnement:', error);
@@ -361,6 +360,36 @@ export class InAppPurchaseService {
     } catch (error) {
       console.error('❌ Erreur annulation abonnement:', error);
       return false;
+    }
+  }
+
+  async purchaseProduct(productId: string, userId: string): Promise<boolean> {
+    try {
+      console.log('🛒 Tentative d\'achat pour:', productId, 'utilisateur:', userId);
+
+      if (!productId || !userId) {
+        console.error('❌ ProductId ou userId manquant');
+        return false;
+      }
+
+      // Simuler un achat réussi pour le développement
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Trouver le plan correspondant
+      const subscription = IAP_SUBSCRIPTION_PLANS.find(plan => plan.productId === productId);
+      if (!subscription) {
+        console.error('❌ Plan non trouvé pour productId:', productId);
+        return false;
+      }
+
+      // Sauvegarder l'abonnement
+      await this.saveSubscription(userId, subscription);
+
+      console.log('✅ Achat simulé réussi pour:', subscription.name);
+      return true;
+    } catch (error) {
+      console.error('❌ Erreur achat produit:', error);
+      throw error; // Relancer l'erreur pour que PaymentService puisse la gérer
     }
   }
 }
