@@ -39,9 +39,6 @@
     "extra": {
       "router": {
         "origin": "https://eatfitbymax.app"
-      },
-      "eas": {
-        "projectId": "44ea4230-cfe9-4c7b-9722-2dbaa94d713f"
       }
     },
     "runtimeVersion": {
