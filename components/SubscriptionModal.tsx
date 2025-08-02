@@ -17,7 +17,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { Colors } from '../constants/Colors';
 import { InAppPurchaseService, IAP_SUBSCRIPTION_PLANS } from '../utils/inAppPurchases';
-import { PaymentService } from '../utils/payments';
 import { getCurrentUser } from '../utils/auth';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -106,10 +105,10 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
         return;
       }
 
-      console.log('🛒 Démarrage achat pour:', plan.name, plan.productId);
+      console.log('🛒 Achat IAP natif pour:', plan.name, plan.productId);
 
-      // Effectuer l'achat via Apple Pay / IAP
-      const success = await PaymentService.presentApplePayPayment(plan, currentUser.id);
+      // Achat direct via les IAP natifs
+      const success = await InAppPurchaseService.purchaseSubscription(plan.productId, currentUser.id);
 
       if (success) {
         Alert.alert(
@@ -126,13 +125,13 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
           ]
         );
       } else {
-        console.log('❌ Achat annulé ou échoué');
+        console.log('ℹ️ Achat annulé par l\'utilisateur');
       }
     } catch (error) {
       console.error('❌ Erreur abonnement:', error);
       Alert.alert(
         'Erreur',
-        'Une erreur est survenue lors de l\'abonnement. Veuillez réessayer.',
+        error.message || 'Une erreur est survenue lors de l\'abonnement. Veuillez réessayer.',
         [{ text: 'OK' }]
       );
     } finally {
@@ -306,7 +305,7 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
                             styles.planSubscribeButtonText,
                             { color: plan.popular ? '#000' : 'white' }
                           ]}>
-                            {Platform.OS === 'ios' ? '🍎 Pay' : 'S\'abonner'}
+                            S'abonner
                           </Text>
                         </>
                       )}

@@ -15,7 +15,6 @@ import { useTheme } from '../../context/ThemeContext';
 import { useRouter } from 'expo-router';
 import { getCurrentSubscription } from '../../utils/subscription';
 import SubscriptionModal from '../../components/SubscriptionModal';
-import { testSubscriptionFlow, simulateSuccessfulPurchase } from '../../utils/subscriptionTest';
 
 export default function ProfilScreen() {
   const { currentUser, signOut } = useAuth();
@@ -184,48 +183,7 @@ export default function ProfilScreen() {
           }}
         />
 
-            {/* Section Debug Abonnement (à supprimer en production) */}
-            {__DEV__ && (
-              <View style={[styles.section, { backgroundColor: colors.card }]}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                  🧪 Debug Abonnement
-                </Text>
-                <View style={styles.debugButtons}>
-                  <TouchableOpacity
-                    style={[styles.debugButton, { backgroundColor: '#4CAF50' }]}
-                    onPress={async () => {
-                      if (currentUser) {
-                        try {
-                          const result = await testSubscriptionFlow(currentUser.id);
-                          Alert.alert('Test Résultat', JSON.stringify(result, null, 2));
-                        } catch (error) {
-                          Alert.alert('Erreur Test', error.message);
-                        }
-                      }
-                    }}
-                  >
-                    <Text style={styles.debugButtonText}>Test Complet</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[styles.debugButton, { backgroundColor: '#FF9800' }]}
-                    onPress={async () => {
-                      if (currentUser) {
-                        try {
-                          await simulateSuccessfulPurchase(currentUser.id, 'gold');
-                          await checkPremiumStatus();
-                          Alert.alert('Succès', 'Abonnement Gold simulé !');
-                        } catch (error) {
-                          Alert.alert('Erreur', error.message);
-                        }
-                      }
-                    }}
-                  >
-                    <Text style={styles.debugButtonText}>Simuler Achat</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
+            
           </View>
         </ScrollView>
   );
@@ -325,21 +283,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  debugButtons: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 12,
-  },
-  debugButton: {
-    flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  debugButtonText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
-  },
+  
 });
