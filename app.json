@@ -18,7 +18,6 @@
       "bundleIdentifier": "com.eatfitbymax.app",
       "requireFullScreen": false,
       "userInterfaceStyle": "automatic",
-      "buildNumber": "1",
       "config": {
         "usesNonExemptEncryption": false
       },
@@ -29,14 +28,12 @@
         "NSLocationWhenInUseUsageDescription": "EatFitBy Max utilise votre localisation pour trouver des salles de sport et des restaurants sains près de chez vous.",
         "NSHealthShareUsageDescription": "EatFitBy Max utilise Apple Health pour synchroniser vos données de santé et fitness afin de vous fournir un suivi personnalisé de votre progression.",
         "NSHealthUpdateUsageDescription": "EatFitBy Max peut écrire des données dans Apple Health pour garder vos informations de santé à jour.",
+        "ITSAppUsesNonExemptEncryption": false,
         "UIRequiredDeviceCapabilities": [
           "healthkit"
         ],
         "com.apple.developer.healthkit": true,
         "com.apple.developer.in-app-payments": []
-      },
-      "config": {
-        "usesApplePay": true
       }
     },
     "extra": {
