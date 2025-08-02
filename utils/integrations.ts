@@ -29,49 +29,29 @@ export class IntegrationsManager {
   // Méthodes pour Apple Health
   static async connectAppleHealth(userId: string, permissions?: string[]): Promise<boolean> {
     try {
-      // Vérifier la disponibilité d'Apple Health (via rn-apple-healthkit)
-      const AppleHealthKit = require('rn-apple-healthkit');
-      const available = AppleHealthKit.isAvailable();
-
-      if (!available) {
-        console.log('❌ Apple Health non disponible sur cet appareil');
-        throw new Error('Apple Health n\'est pas disponible sur cet appareil');
+      if (Platform.OS !== 'ios') {
+        throw new Error('Apple Health est uniquement disponible sur iOS');
       }
 
-      // Demander les permissions
-      const healthKitPermissions = {
-        permissions: {
-          read: [
-            AppleHealthKit.Constants.Permissions.Steps,
-            AppleHealthKit.Constants.Permissions.ActiveEnergyBurned,
-            AppleHealthKit.Constants.Permissions.HeartRate,
-            AppleHealthKit.Constants.Permissions.Weight,
-            AppleHealthKit.Constants.Permissions.DistanceWalkingRunning,
-          ],
-          write: [
-            AppleHealthKit.Constants.Permissions.Weight,
-            AppleHealthKit.Constants.Permissions.ActiveEnergyBurned,
-          ],
-        },
-      };
+      // Importer HealthKitService
+      const HealthKitService = require('../utils/healthKit').default;
+      
+      // Vérifier la disponibilité d'Apple Health
+      const isAvailable = await HealthKitService.isAvailable();
+      if (!isAvailable) {
+        throw new Error('Apple Health n\'est pas disponible sur cet appareil ou l\'app n\'est pas buildée nativement');
+      }
 
-      const granted = await new Promise<boolean>((resolve) => {
-        AppleHealthKit.initHealthKit(healthKitPermissions, (error: any) => {
-          if (error) {
-            console.log('⚠️ Erreur permissions HealthKit:', error);
-            resolve(false);
-          } else {
-            console.log('✅ Permissions HealthKit accordées');
-            resolve(true);
-          }
-        });
-      });
+      // Demander les permissions via HealthKitService
+      console.log('🔐 Demande des permissions Apple Health via HealthKitService...');
+      const granted = await HealthKitService.requestPermissions();
 
       if (granted) {
-        // Sauvegarder le statut de connexion sur le serveur uniquement
+        // Sauvegarder le statut de connexion
         const status = await this.getIntegrationStatus(userId);
         status.appleHealth = {
           connected: true,
+          lastSync: new Date().toISOString(),
           permissions: permissions || [
             'Steps',
             'ActiveEnergyBurned',
@@ -81,15 +61,15 @@ export class IntegrationsManager {
           ]
         };
         await PersistentStorage.saveIntegrationStatus(userId, status);
-        console.log('✅ Apple Health connecté');
+        console.log('✅ Apple Health connecté avec succès');
         return true;
       } else {
-        console.log('❌ Permissions Apple Health refusées');
+        console.log('❌ Permissions Apple Health refusées par l\'utilisateur');
         return false;
       }
     } catch (error) {
       console.error('❌ Erreur connexion Apple Health:', error);
-      throw new Error('Impossible de se connecter à Apple Health. Vérifiez votre connexion internet.');
+      throw error;
     }
   }
 

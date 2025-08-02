@@ -23,14 +23,26 @@ class HealthKitService {
       console.log('✅ Apple Health disponible (Production):', available);
       return available;
     } catch (error) {
-      console.log('⚠️ rn-apple-healthkit non disponible, mode simulation:', error);
-      return true; // Fallback en mode simulation
+      console.log('⚠️ rn-apple-healthkit non disponible en développement:', error);
+      // En développement (Expo Go), retourner false car HealthKit n'est pas supporté
+      return false;
     }
   }
 
   static async requestPermissions(): Promise<boolean> {
     try {
+      if (Platform.OS !== 'ios') {
+        console.log('❌ Apple Health non disponible sur cette plateforme');
+        return false;
+      }
+
       const AppleHealthKit = require('rn-apple-healthkit');
+
+      // Vérifier d'abord si HealthKit est disponible
+      if (!AppleHealthKit.isAvailable()) {
+        console.log('❌ Apple Health non disponible sur cet appareil');
+        throw new Error('Apple Health n\'est pas disponible sur cet appareil');
+      }
 
       const permissions = {
         permissions: {
@@ -49,19 +61,23 @@ class HealthKitService {
       };
 
       return new Promise((resolve) => {
+        console.log('🔐 Demande des permissions Apple Health...');
         AppleHealthKit.initHealthKit(permissions, (error: any) => {
           if (error) {
             console.log('⚠️ Erreur permissions HealthKit:', error);
+            if (error.message && error.message.includes('denied')) {
+              console.log('❌ Permissions refusées par l\'utilisateur');
+            }
             resolve(false);
           } else {
-            console.log('✅ Permissions HealthKit accordées en production');
+            console.log('✅ Permissions HealthKit accordées avec succès');
             resolve(true);
           }
         });
       });
     } catch (error) {
-      console.log('⚠️ Erreur permissions HealthKit:', error);
-      return false; // Retourner false en cas d'erreur en production
+      console.log('⚠️ Erreur lors de la demande de permissions HealthKit:', error);
+      throw error;
     }
   }
 
