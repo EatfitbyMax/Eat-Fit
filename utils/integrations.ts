@@ -39,26 +39,11 @@ export class IntegrationsManager {
       // Vérifier la disponibilité d'Apple Health
       const isAvailable = await HealthKitService.isAvailable();
       if (!isAvailable) {
-        console.log('⚠️ Apple Health non disponible, connexion simulée');
-        // En mode simulation, on autorise quand même la connexion
-        const status = await this.getIntegrationStatus(userId);
-        status.appleHealth = {
-          connected: true,
-          lastSync: new Date().toISOString(),
-          permissions: permissions || [
-            'Steps',
-            'ActiveEnergyBurned', 
-            'HeartRate',
-            'Weight',
-            'DistanceWalkingRunning'
-          ]
-        };
-        await PersistentStorage.saveIntegrationStatus(userId, status);
-        return true;
+        throw new Error('Apple Health n\'est pas disponible sur cet appareil');
       }
 
       // Demander les permissions via HealthKitService
-      console.log('🔐 Demande des permissions Apple Health via HealthKitService...');
+      console.log('🔐 Demande des permissions Apple Health...');
       const granted = await HealthKitService.requestPermissions();
 
       if (granted) {

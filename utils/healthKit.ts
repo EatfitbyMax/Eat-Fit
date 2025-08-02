@@ -215,18 +215,16 @@ class HealthKitService {
   static async getHealthData(date: Date): Promise<HealthData> {
     try {
       if (Platform.OS !== 'ios') {
-        console.log('⚠️ Apple Health non disponible - Mode simulation');
-        return this.generateSimulatedHealthData()[0];
+        throw new Error('Apple Health n\'est disponible que sur iOS');
       }
 
       const isAvailable = await this.isAvailable();
       if (!isAvailable) {
-        console.log('⚠️ Apple Health non disponible - Mode simulation');
-        return this.generateSimulatedHealthData()[0];
+        throw new Error('Apple Health n\'est pas disponible sur cet appareil');
       }
 
-      // Mode production - récupération réelle des données
-      console.log('✅ Récupération des données Apple Health en mode production');
+      // Récupération des données Apple Health
+      console.log('✅ Récupération des données Apple Health');
       const [steps, heartRate, calories, distance] = await Promise.all([
         this.getSteps(date),
         this.getHeartRate(),
@@ -242,7 +240,7 @@ class HealthKitService {
       };
     } catch (error) {
       console.error('❌ Erreur lecture données Apple Health:', error);
-      return this.generateSimulatedHealthData()[0];
+      throw error;
     }
   }
 

@@ -151,10 +151,10 @@ export default function ProfilScreen() {
       setIsLoading(true);
 
       if (integrationStatus.appleHealth.connected) {
-        // Déconnexion sécurisée
+        // Déconnexion
         Alert.alert(
           "Déconnecter Apple Health",
-          "Vos données ne seront plus synchronisées.",
+          "Vos données ne seront plus synchronisées avec EatFitByMax.",
           [
             { 
               text: "Annuler", 
@@ -173,8 +173,8 @@ export default function ProfilScreen() {
                   }));
                   Alert.alert("Succès", "Apple Health déconnecté");
                 } catch (error) {
-                  console.warn("Erreur déconnexion:", error);
-                  Alert.alert("Information", "Déconnexion effectuée");
+                  console.error("Erreur déconnexion:", error);
+                  Alert.alert("Erreur", "Impossible de déconnecter Apple Health");
                 } finally {
                   setIsLoading(false);
                 }
@@ -183,41 +183,41 @@ export default function ProfilScreen() {
           ]
         );
       } else {
-        // Connexion sécurisée
-        Alert.alert(
-          "Connecter Apple Health",
-          "Mode simulation uniquement (sécurisé pour iOS)",
-          [
-            { 
-              text: "Annuler", 
-              style: "cancel", 
-              onPress: () => setIsLoading(false) 
-            },
-            { 
-              text: "Connecter", 
-              onPress: async () => {
-                try {
-                  const success = await IntegrationsManager.connectAppleHealth(user.id);
-                  if (success) {
-                    await loadIntegrationStatus();
-                    Alert.alert("Succès", "Apple Health connecté avec succès");
-                  } else {
-                    Alert.alert("Erreur", "Impossible de connecter Apple Health. Vérifiez que vous êtes sur un appareil iOS avec Apple Health disponible.");
-                  }
-                } catch (error) {
-                  console.warn("Erreur connexion:", error);
-                  Alert.alert("Erreur", "Échec de la connexion à Apple Health. Veuillez réessayer.");
-                } finally {
-                  setIsLoading(false);
-                }
-              }
-            }
-          ]
-        );
+        // Connexion directe - laisse Apple Health gérer les permissions
+        try {
+          const success = await IntegrationsManager.connectAppleHealth(user.id);
+          if (success) {
+            await loadIntegrationStatus();
+            Alert.alert(
+              "Succès", 
+              "Apple Health connecté avec succès. Vos données de santé seront synchronisées avec EatFitByMax."
+            );
+          } else {
+            Alert.alert(
+              "Connexion échouée", 
+              "La connexion à Apple Health a échoué. Assurez-vous d'autoriser l'accès aux données de santé."
+            );
+          }
+        } catch (error) {
+          console.error("Erreur connexion Apple Health:", error);
+          if (error.message?.includes('disponible')) {
+            Alert.alert(
+              "Apple Health non disponible", 
+              "Apple Health n'est disponible que sur les appareils iOS avec l'application Santé installée."
+            );
+          } else {
+            Alert.alert(
+              "Erreur de connexion", 
+              "Impossible de se connecter à Apple Health. Veuillez réessayer."
+            );
+          }
+        } finally {
+          setIsLoading(false);
+        }
       }
     } catch (error) {
-      console.warn("Erreur toggle Apple Health:", error);
-      Alert.alert("Information", "Service temporairement indisponible");
+      console.error("Erreur toggle Apple Health:", error);
+      Alert.alert("Erreur", "Une erreur est survenue lors de la connexion à Apple Health");
       setIsLoading(false);
     }
   };
