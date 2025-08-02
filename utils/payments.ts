@@ -93,7 +93,24 @@ export class PaymentService {
       }
     } catch (error) {
       console.error('❌ Erreur paiement Apple Pay:', error);
-      throw error;
+      throw erimport { Platform } from 'react-native';
+import { InAppPurchaseService, IAPSubscriptionPlan } from './inAppPurchases';
+
+export class PaymentService {
+  static async presentApplePayPayment(plan: IAPSubscriptionPlan, userId: string): Promise<boolean> {
+    try {
+      if (Platform.OS !== 'ios') {
+        console.log('⚠️ Apple Pay non disponible sur cette plateforme');
+        return false;
+      }
+
+      console.log('🍎 Lancement Apple Pay pour:', plan.name);
+      
+      // Utiliser directement le service IAP pour l'achat
+      return await InAppPurchaseService.purchaseSubscription(plan.productId, userId);
+    } catch (error) {
+      console.error('❌ Erreur Apple Pay:', error);
+      return false;
     }
   }
 
@@ -116,5 +133,7 @@ export class PaymentService {
       return await InAppPurchaseService.cancelSubscription(userId);
     }
     return false;
+  }
+}eturn false;
   }
 }
