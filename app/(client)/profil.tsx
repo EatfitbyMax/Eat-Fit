@@ -18,7 +18,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { logout, getCurrentUser } from '@/utils/auth';
 import { IntegrationsManager, IntegrationStatus } from '@/utils/integrations';
 import { checkSubscriptionStatus } from '@/utils/subscription';
-import { PaymentService } from '@/utils/payments';
+import { InAppPurchaseService } from '@/utils/inAppPurchases';
 import SubscriptionModal from '@/components/SubscriptionModal';
 import { allSports } from '@/utils/sportPrograms';
 
@@ -100,8 +100,8 @@ export default function ProfilScreen() {
       const currentUser = await getCurrentUser();
       if (!currentUser) return;
 
-      // Utiliser getCurrentSubscription au lieu de checkSubscriptionStatus
-      const subscription = await PaymentService.getCurrentSubscription(currentUser.id);
+      // Utiliser getCurrentSubscription du service IAP
+      const subscription = await InAppPurchaseService.getCurrentSubscription(currentUser.id);
       console.log('🔍 Abonnement actuel récupéré:', subscription);
 
       if (subscription && subscription.planId !== 'free') {
@@ -122,7 +122,7 @@ export default function ProfilScreen() {
 
   const loadSubscriptionData = async (userId: string) => {
     try {
-      const subscription = await PaymentService.getCurrentSubscription(userId);
+      const subscription = await InAppPurchaseService.getCurrentSubscription(userId);
       setCurrentSubscription(subscription);
     } catch (error) {
       console.error('Erreur chargement abonnement:', error);
@@ -695,6 +695,7 @@ export default function ProfilScreen() {
         visible={subscriptionModalVisible}
         onClose={() => setSubscriptionModalVisible(false)}
         onSubscribe={() => {
+          setSubscriptionModalVisible(false);
           loadSubscriptionStatus();
           loadUserData();
         }}
