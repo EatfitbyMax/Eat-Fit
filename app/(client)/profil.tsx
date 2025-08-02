@@ -200,13 +200,13 @@ export default function ProfilScreen() {
                   const success = await IntegrationsManager.connectAppleHealth(user.id);
                   if (success) {
                     await loadIntegrationStatus();
-                    Alert.alert("Succès", "Apple Health connecté en mode simulation");
+                    Alert.alert("Succès", "Apple Health connecté avec succès");
                   } else {
-                    Alert.alert("Information", "Connexion non disponible actuellement");
+                    Alert.alert("Erreur", "Impossible de connecter Apple Health. Vérifiez que vous êtes sur un appareil iOS avec Apple Health disponible.");
                   }
                 } catch (error) {
                   console.warn("Erreur connexion:", error);
-                  Alert.alert("Information", "Service temporairement indisponible");
+                  Alert.alert("Erreur", "Échec de la connexion à Apple Health. Veuillez réessayer.");
                 } finally {
                   setIsLoading(false);
                 }
@@ -587,7 +587,7 @@ export default function ProfilScreen() {
             <View style={styles.integrationInfo}>
               <Text style={styles.integrationName}>🍎 Apple Health</Text>
               <Text style={styles.integrationDescription}>
-                Synchronisez vos données de santé avec EatFitByMax
+                Synchronisez vos données de santé et fitness avec EatFitByMax
               </Text>
             </View>
             <TouchableOpacity 

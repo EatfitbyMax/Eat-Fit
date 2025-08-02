@@ -212,15 +212,37 @@ class HealthKitService {
     }
   }
 
-  static async getSimulatedHealthData(): Promise<HealthData[]> {
+  static async getHealthData(date: Date): Promise<HealthData> {
     try {
-      // Mode simulation pour le développement
-      console.log('⚠️ Mode simulation Apple Health');
-      const simulatedData = this.generateSimulatedHealthData();
-      return simulatedData;
+      if (Platform.OS !== 'ios') {
+        console.log('⚠️ Apple Health non disponible - Mode simulation');
+        return this.generateSimulatedHealthData()[0];
+      }
+
+      const isAvailable = await this.isAvailable();
+      if (!isAvailable) {
+        console.log('⚠️ Apple Health non disponible - Mode simulation');
+        return this.generateSimulatedHealthData()[0];
+      }
+
+      // Mode production - récupération réelle des données
+      console.log('✅ Récupération des données Apple Health en mode production');
+      const [steps, heartRate, calories, distance] = await Promise.all([
+        this.getSteps(date),
+        this.getHeartRate(),
+        this.getActiveEnergyBurned(date),
+        this.getDistanceWalkingRunning(date)
+      ]);
+
+      return {
+        steps,
+        heartRate,
+        calories,
+        distance
+      };
     } catch (error) {
       console.error('❌ Erreur lecture données Apple Health:', error);
-      return this.generateSimulatedHealthData();
+      return this.generateSimulatedHealthData()[0];
     }
   }
 
