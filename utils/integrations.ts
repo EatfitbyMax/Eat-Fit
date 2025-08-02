@@ -34,8 +34,8 @@ export class IntegrationsManager {
       const available = AppleHealthKit.isAvailable();
 
       if (!available) {
-        console.log('Apple Health non disponible');
-        return false;
+        console.log('❌ Apple Health non disponible sur cet appareil');
+        throw new Error('Apple Health n\'est pas disponible sur cet appareil');
       }
 
       // Demander les permissions
