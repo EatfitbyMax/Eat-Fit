@@ -33,7 +33,6 @@ export default function ProfilScreen() {
   const [editingObjectifs, setEditingObjectifs] = useState(false);
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
   const [isPremium, setIsPremium] = useState(false);
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [currentSubscription, setCurrentSubscription] = useState<any>(null);
   const [subscriptionModalVisible, setSubscriptionModalVisible] = useState(false);
 
@@ -315,14 +314,7 @@ export default function ProfilScreen() {
     }
   };
 
-  const handleSubscribe = (plan: string) => {
-    setShowSubscriptionModal(false);
-    Alert.alert(
-      'Abonnement Premium',
-      `Vous avez sélectionné le plan ${plan}. Fonctionnalité d'abonnement en cours de développement.`,
-      [{ text: 'OK' }]
-    );
-  };
+  
 
   const handleLogout = () => {
     Alert.alert(
@@ -702,84 +694,12 @@ export default function ProfilScreen() {
       <SubscriptionModal
         visible={subscriptionModalVisible}
         onClose={() => setSubscriptionModalVisible(false)}
-        userId={user?.id || ''}
-        currentPlanId={currentSubscription?.planId}
-        onSubscriptionUpdate={loadSubscriptionData}
+        onSubscribe={() => {
+          loadSubscriptionStatus();
+          loadUserData();
+        }}
       />
-       {/* Modal d'abonnement */}
-       <Modal
-        visible={showSubscriptionModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowSubscriptionModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.subscriptionModal}>
-            <Text style={styles.modalTitle}>Choisissez votre abonnement</Text>
-            <Text style={styles.modalSubtitle}>
-              Accédez à tous les services de coaching personnalisé
-            </Text>
-
-            {/* Plan Bronze */}
-            <TouchableOpacity 
-              style={[styles.subscriptionPlan, styles.bronzePlan]}
-              onPress={() => handleSubscribe('Bronze')}
-            >
-              <View style={styles.planHeader}>
-                <Text style={styles.planName}>🥉 BRONZE</Text>
-                <Text style={styles.planPrice}>19,99€/mois</Text>
-              </View>
-              <View style={styles.planFeatures}>
-                <Text style={styles.planFeature}>✓ Messagerie avec le coach</Text>
-                <Text style={styles.planFeature}>✓ 1 programme nutrition de base</Text>
-                <Text style={styles.planFeature}>✓ Suivi hebdomadaire</Text>
-              </View>
-            </TouchableOpacity>
-
-            {/* Plan Argent */}
-            <TouchableOpacity 
-              style={[styles.subscriptionPlan, styles.silverPlan]}
-              onPress={() => handleSubscribe('Argent')}
-            >
-              <View style={styles.planHeader}>
-                <Text style={styles.planName}>🥈 ARGENT</Text>
-                <Text style={styles.planPrice}>39,99€/mois</Text>
-              </View>
-              <View style={styles.planFeatures}>
-                <Text style={styles.planFeature}>✓ Tout du plan Bronze</Text>
-                <Text style={styles.planFeature}>✓ Programmes nutrition personnalisés</Text>
-                <Text style={styles.planFeature}>✓ Programmes d'entraînement</Text>
-                <Text style={styles.planFeature}>✓ Rendez-vous vidéo (2/mois)</Text>
-              </View>
-            </TouchableOpacity>
-
-            {/* Plan Or */}
-            <TouchableOpacity 
-              style={[styles.subscriptionPlan, styles.goldPlan]}
-              onPress={() => handleSubscribe('Or')}
-            >
-              <View style={styles.planHeader}>
-                <Text style={styles.planName}>🥇 OR</Text>
-                <Text style={styles.planPrice}>69,99€/mois</Text>
-              </View>
-              <View style={styles.planFeatures}>
-                <Text style={styles.planFeature}>✓ Tout du plan Argent</Text>
-                <Text style={styles.planFeature}>✓ Coaching 24h/24 7j/7</Text>
-                <Text style={styles.planFeature}>✓ Programmes ultra-personnalisés</Text>
-                <Text style={styles.planFeature}>✓ Rendez-vous vidéo illimités</Text>
-                <Text style={styles.planFeature}>✓ Suivi en temps réel</Text>
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.closeModalButton}
-              onPress={() => setShowSubscriptionModal(false)}
-            >
-              <Text style={styles.closeModalButtonText}>Fermer</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+       
     </SafeAreaView>
   );
 }
@@ -1407,101 +1327,5 @@ const styles = StyleSheet.create({
     color: '#000000',
     marginLeft: 8,
   },
-  // Styles pour le modal d'abonnement
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  subscriptionModal: {
-    backgroundColor: '#161B22',
-    borderRadius: 16,
-    padding: 24,
-    width: '100%',
-    maxWidth: 400,
-    borderWidth: 1,
-    borderColor: '#21262D',
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  modalSubtitle: {
-    fontSize: 16,
-    color: '#8B949E',
-    textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 22,
-  },
-  subscriptionPlan: {
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 2,
-  },
-  bronzePlan: {
-    backgroundColor: '#2D1810',
-    borderColor: '#CD7F32',
-  },
-  silverPlan: {
-    backgroundColor: '#1A1A1A',
-    borderColor: '#C0C0C0',
-  },
-  goldPlan: {
-    backgroundColor: '#2D2416',
-    borderColor: '#FFD700',
-  },
-  planHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  planName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  planPrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#F5A623',
-  },
-  planFeatures: {
-    gap: 6,
-  },
-  planFeature: {
-    fontSize: 14,
-    color: '#FFFFFF',
-    lineHeight: 20,
-  },
-   planDescription: {
-    fontSize: 14,
-    color: '#CCCCCC',
-    marginBottom: 16,
-  },
-  expiredText: {
-    fontSize: 12,
-    color: '#FF6B6B',
-    fontWeight: '600',
-    marginTop: 4,
-  },
-  closeModalButton: {
-    backgroundColor: '#21262D',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    marginTop: 16,
-    alignItems: 'center',
-  },
-  closeModalButtonText: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    fontWeight: '500',
-  },
+  
 });
