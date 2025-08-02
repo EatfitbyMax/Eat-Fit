@@ -1,7 +1,7 @@
+
 // Service Apple Health compatible avec iOS uniquement
 import { Platform, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as ExpoHealth from 'expo-health';
 
 export interface HealthData {
   steps?: number;
@@ -267,54 +267,69 @@ class HealthKitService {
   }
 }
 
+// Fonction pour connecter Apple Health (utilisée dans l'UI)
 export const connectToAppleHealth = async (): Promise<boolean> => {
   try {
     console.log('🍎 Tentative de connexion à Apple Health...');
 
-    // En production, utiliser les vraies APIs HealthKit
-    if (Platform.OS === 'ios') {
-      // Utiliser expo-health pour les permissions HealthKit
-      const { status } = await ExpoHealth.requestPermissionsAsync({
-        read: [
-          ExpoHealth.HealthDataType.Steps,
-          ExpoHealth.HealthDataType.Weight,
-          ExpoHealth.HealthDataType.Height,
-          ExpoHealth.HealthDataType.HeartRate,
-          ExpoHealth.HealthDataType.ActiveEnergyBurned,
-        ],
-      });
+    if (Platform.OS !== 'ios') {
+      console.log('❌ Apple Health disponible uniquement sur iOS');
+      return false;
+    }
 
-      if (status === 'granted') {
+    // En mode développement, afficher une alerte de simulation
+    if (__DEV__) {
+      console.log('📱 Mode développement - Simulation Apple Health');
+      
+      return new Promise((resolve) => {
+        Alert.alert(
+          'Connecter Apple Health',
+          'Mode simulation uniquement (sécurisé pour iOS)',
+          [
+            { 
+              text: 'Annuler', 
+              style: 'cancel',
+              onPress: () => resolve(false)
+            },
+            { 
+              text: 'Connecter', 
+              onPress: async () => {
+                try {
+                  await AsyncStorage.setItem('appleHealthConnected', 'true');
+                  console.log('✅ Apple Health connecté (simulé)');
+                  resolve(true);
+                } catch (error) {
+                  console.error('Erreur sauvegarde:', error);
+                  resolve(false);
+                }
+              }
+            }
+          ]
+        );
+      });
+    }
+
+    // En production, utiliser les vraies APIs HealthKit
+    try {
+      const hasPermissions = await HealthKitService.requestPermissions();
+      
+      if (hasPermissions) {
         await AsyncStorage.setItem('appleHealthConnected', 'true');
         console.log('✅ Apple Health connecté avec succès');
         return true;
       } else {
-        console.log('❌ Permission Apple Health refusée');
+        console.log('❌ Permissions Apple Health refusées');
         return false;
       }
+    } catch (error) {
+      console.error('❌ Erreur connexion Apple Health:', error);
+      return false;
     }
-
-    // Fallback pour le développement
-    if (__DEV__) {
-      console.log('📱 Mode développement - Simulation Apple Health');
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      Alert.alert(
-        'Connecter Apple Health',
-        'Mode simulation uniquement (sécurisé pour iOS)',
-        [
-          { text: 'Annuler', style: 'cancel' },
-          { 
-            text: 'Connecter', 
-            onPress: async () => {
-              await AsyncStorage.setItem('appleHealthConnected', 'true');
-              console.log('✅ Apple Health connecté (simulé)');
-            }
-          }
-        ]
-      );
-      return true;
-    }
-}
+    
+  } catch (error) {
+    console.error('❌ Erreur générale connexion Apple Health:', error);
+    return false;
+  }
+};
 
 export default HealthKitService;
