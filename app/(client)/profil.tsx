@@ -19,7 +19,15 @@ import SubscriptionModal from '../../components/SubscriptionModal';
 export default function ProfilScreen() {
   const { currentUser, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const colors = theme.colors;
+  const colors = theme?.colors || {
+    background: '#000000',
+    card: '#1A1A1A',
+    text: '#FFFFFF',
+    textSecondary: '#CCCCCC',
+    primary: '#F5A623',
+    secondary: '#666666',
+    inactive: '#333333'
+  };
   const router = useRouter();
 
   const [isPremium, setIsPremium] = useState(false);
