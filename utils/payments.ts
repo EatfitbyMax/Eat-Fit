@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+import { Platform, Alert } from 'react-native';
 import { InAppPurchaseService, IAP_SUBSCRIPTION_PLANS, IAPSubscriptionPlan } from './inAppPurchases';
 
 // Utiliser les plans IAP comme référence principale
@@ -82,18 +82,14 @@ export class PaymentService {
         return false;
       }
 
-      // Vérifier la disponibilité d'Apple Pay
-      try {
-        const isAvailable = await InAppPurchaseService.isAvailable();
-        if (!isAvailable) {
-          console.error('❌ Apple Pay non disponible');
+      // Vérifier l'initialisation des IAP
+      if (!InAppPurchaseService.isInitialized) {
+        const initialized = await InAppPurchaseService.initialize();
+        if (!initialized) {
+          console.error('❌ IAP non disponibles');
           Alert.alert('Erreur', 'Les achats in-app ne sont pas disponibles sur cet appareil.');
           return false;
         }
-      } catch (availabilityError) {
-        console.error('❌ Erreur vérification disponibilité:', availabilityError);
-        Alert.alert('Erreur', 'Impossible de vérifier la disponibilité des achats in-app.');
-        return false;
       }
 
       // Effectuer l'achat

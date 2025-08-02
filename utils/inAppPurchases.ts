@@ -104,6 +104,10 @@ export class InAppPurchaseService {
   private static isInitialized = false;
   private static availableProducts: InAppPurchases.IAPItemDetails[] = [];
 
+  static get isInitialized(): boolean {
+    return this.isInitialized;
+  }
+
   static isInMockMode(): boolean {
     return false; // Plus de mock, uniquement natif
   }
@@ -363,33 +367,19 @@ export class InAppPurchaseService {
     }
   }
 
-  async purchaseProduct(productId: string, userId: string): Promise<boolean> {
+  static async disconnect(): Promise<void> {
     try {
-      console.log('🛒 Tentative d\'achat pour:', productId, 'utilisateur:', userId);
-
-      if (!productId || !userId) {
-        console.error('❌ ProductId ou userId manquant');
-        return false;
+      if (this.isInitialized) {
+        await InAppPurchases.disconnectAsync();
+        this.isInitialized = false;
+        console.log('✅ IAP déconnectés');
       }
-
-      // Simuler un achat réussi pour le développement
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Trouver le plan correspondant
-      const subscription = IAP_SUBSCRIPTION_PLANS.find(plan => plan.productId === productId);
-      if (!subscription) {
-        console.error('❌ Plan non trouvé pour productId:', productId);
-        return false;
-      }
-
-      // Sauvegarder l'abonnement
-      await this.saveSubscription(userId, subscription);
-
-      console.log('✅ Achat simulé réussi pour:', subscription.name);
-      return true;
     } catch (error) {
-      console.error('❌ Erreur achat produit:', error);
-      throw error; // Relancer l'erreur pour que PaymentService puisse la gérer
+      console.error('❌ Erreur déconnexion IAP:', error);
     }
+  }
+
+  static async purchaseProduct(productId: string, userId: string): Promise<boolean> {
+    return await this.purchaseSubscription(productId, userId);
   }
 }
