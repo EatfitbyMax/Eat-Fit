@@ -1,5 +1,7 @@
 // Service Apple Health compatible avec iOS uniquement
-import { Platform } from 'react-native';
+import { Platform, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ExpoHealth from 'expo-health';
 
 export interface HealthData {
   steps?: number;
@@ -263,6 +265,56 @@ class HealthKitService {
 
     return simulatedData;
   }
+}
+
+export const connectToAppleHealth = async (): Promise<boolean> => {
+  try {
+    console.log('🍎 Tentative de connexion à Apple Health...');
+
+    // En production, utiliser les vraies APIs HealthKit
+    if (Platform.OS === 'ios') {
+      // Utiliser expo-health pour les permissions HealthKit
+      const { status } = await ExpoHealth.requestPermissionsAsync({
+        read: [
+          ExpoHealth.HealthDataType.Steps,
+          ExpoHealth.HealthDataType.Weight,
+          ExpoHealth.HealthDataType.Height,
+          ExpoHealth.HealthDataType.HeartRate,
+          ExpoHealth.HealthDataType.ActiveEnergyBurned,
+        ],
+      });
+
+      if (status === 'granted') {
+        await AsyncStorage.setItem('appleHealthConnected', 'true');
+        console.log('✅ Apple Health connecté avec succès');
+        return true;
+      } else {
+        console.log('❌ Permission Apple Health refusée');
+        return false;
+      }
+    }
+
+    // Fallback pour le développement
+    if (__DEV__) {
+      console.log('📱 Mode développement - Simulation Apple Health');
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      Alert.alert(
+        'Connecter Apple Health',
+        'Mode simulation uniquement (sécurisé pour iOS)',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          { 
+            text: 'Connecter', 
+            onPress: async () => {
+              await AsyncStorage.setItem('appleHealthConnected', 'true');
+              console.log('✅ Apple Health connecté (simulé)');
+            }
+          }
+        ]
+      );
+      return true;
+    }
 }
 
 export default HealthKitService;
