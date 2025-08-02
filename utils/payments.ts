@@ -67,47 +67,22 @@ export const checkAppointmentLimit = async (
 export class PaymentService {
   static async initialize(): Promise<boolean> {
     if (Platform.OS === 'ios') {
-      const success = await InAppPurchaseService.initialize();
-      return success;
+      return await InAppPurchaseService.initialize();
     }
     return false;
   }
 
   static async presentApplePayPayment(plan: SubscriptionPlan, userId: string): Promise<boolean> {
     try {
-      if (Platform.OS !== 'ios') {
-        throw new Error('Apple Pay disponible uniquement sur iOS');
-      }
+      if (Platform.OS === 'ios') {
+        console.log('🍎 Lancement Apple Pay pour:', plan.name);
 
-      console.log('🍎 Démarrage paiement Apple Pay pour:', plan.name);
-
-      // Utiliser le service IAP pour l'achat
-      const success = await InAppPurchaseService.purchaseSubscription(plan.productId, userId);
-
-      if (success) {
-        console.log('✅ Paiement Apple Pay réussi pour:', plan.name);
-        return true;
+        // Utiliser directement le service IAP pour l'achat
+        return await InAppPurchaseService.purchaseSubscription(plan.productId, userId);
       } else {
-        console.log('❌ Paiement Apple Pay échoué pour:', plan.name);
-        return false;
-      }
-    } catch (error) {
-      console.error('❌ Erreur paiement Apple Pay:', error);
-      throw erimport { Platform } from 'react-native';
-import { InAppPurchaseService, IAPSubscriptionPlan } from './inAppPurchases';
-
-export class PaymentService {
-  static async presentApplePayPayment(plan: IAPSubscriptionPlan, userId: string): Promise<boolean> {
-    try {
-      if (Platform.OS !== 'ios') {
         console.log('⚠️ Apple Pay non disponible sur cette plateforme');
         return false;
       }
-
-      console.log('🍎 Lancement Apple Pay pour:', plan.name);
-      
-      // Utiliser directement le service IAP pour l'achat
-      return await InAppPurchaseService.purchaseSubscription(plan.productId, userId);
     } catch (error) {
       console.error('❌ Erreur Apple Pay:', error);
       return false;
@@ -133,7 +108,5 @@ export class PaymentService {
       return await InAppPurchaseService.cancelSubscription(userId);
     }
     return false;
-  }
-}eturn false;
   }
 }
