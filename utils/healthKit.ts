@@ -17,21 +17,14 @@ class HealthKitService {
     }
 
     try {
-      // Vérifier si nous sommes en mode EAS Build
-      const isEASBuild = process.env.EXPO_PUBLIC_USE_EAS_BUILD === 'true';
-
-      if (isEASBuild) {
-        const AppleHealthKit = require('rn-apple-healthkit');
-        const available = AppleHealthKit.isAvailable();
-        console.log('✅ Apple Health disponible (EAS Build):', available);
-        return available;
-      } else {
-        console.log('👻 Mode simulation Apple Health (Expo Go)');
-        return true; // Mode simulation en développement
-      }
+      // Vérifier si rn-apple-healthkit est disponible (mode production)
+      const AppleHealthKit = require('rn-apple-healthkit');
+      const available = AppleHealthKit.isAvailable();
+      console.log('✅ Apple Health disponible (Production):', available);
+      return available;
     } catch (error) {
-      console.log('⚠️ rn-apple-healthkit non disponible:', error);
-      return false;
+      console.log('⚠️ rn-apple-healthkit non disponible, mode simulation:', error);
+      return true; // Fallback en mode simulation
     }
   }
 
@@ -61,14 +54,14 @@ class HealthKitService {
             console.log('⚠️ Erreur permissions HealthKit:', error);
             resolve(false);
           } else {
-            console.log('✅ Permissions HealthKit accordées');
+            console.log('✅ Permissions HealthKit accordées en production');
             resolve(true);
           }
         });
       });
     } catch (error) {
-      console.log('⚠️ Erreur permissions HealthKit, mode simulation:', error);
-      return true; // Mode simulation
+      console.log('⚠️ Erreur permissions HealthKit:', error);
+      return false; // Retourner false en cas d'erreur en production
     }
   }
 

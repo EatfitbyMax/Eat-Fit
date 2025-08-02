@@ -191,7 +191,7 @@ export default function ProfileScreen() {
         // Connexion sécurisée
         Alert.alert(
           "Connecter Apple Health",
-          "Mode simulation uniquement (sécurisé pour iOS)",
+          "Autorisez l'accès à vos données de santé pour un suivi personnalisé",
           [
             { 
               text: "Annuler", 
@@ -205,13 +205,13 @@ export default function ProfileScreen() {
                   const success = await IntegrationsManager.connectAppleHealth(user.id);
                   if (success) {
                     await loadIntegrationStatus();
-                    Alert.alert("Succès", "Apple Health connecté en mode simulation");
+                    Alert.alert("Succès", "Apple Health connecté avec succès ! Vos données de santé seront synchronisées.");
                   } else {
-                    Alert.alert("Information", "Connexion non disponible actuellement");
+                    Alert.alert("Erreur", "Impossible de se connecter à Apple Health. Vérifiez que l'app Apple Santé est disponible.");
                   }
                 } catch (error) {
                   console.warn("Erreur connexion:", error);
-                  Alert.alert("Information", "Service temporairement indisponible");
+                  Alert.alert("Erreur", "Impossible de se connecter à Apple Health. Vérifiez les permissions dans Réglages > Confidentialité et sécurité > Santé.");
                 } finally {
                   setIsLoading(false);
                 }
