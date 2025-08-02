@@ -34,6 +34,9 @@
         ],
         "com.apple.developer.healthkit": true,
         "com.apple.developer.in-app-payments": []
+      },
+      "config": {
+        "usesApplePay": true
       }
     },
     "extra": {
