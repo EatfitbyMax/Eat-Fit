@@ -80,13 +80,7 @@
           }
         }
       ],
-      [
-        "expo-health",
-        {
-          "healthSharePermission": "EatFitBy Max utilise Apple Health pour synchroniser vos données de santé et fitness afin de vous fournir un suivi personnalisé de votre progression.",
-          "healthUpdatePermission": "EatFitBy Max peut écrire des données dans Apple Health pour garder vos informations de santé à jour."
-        }
-      ],
+      
       "./plugins/withHealthKit.js"
     ],
     "experiments": {
