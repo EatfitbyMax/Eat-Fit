@@ -94,8 +94,15 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
 
       // Trouver le plan dans les plans IAP
       const plan = IAP_SUBSCRIPTION_PLANS.find(p => p.id === planId);
-      if (!plan || !plan.productId) {
+      if (!plan) {
+        console.error('❌ Plan introuvable:', planId);
         Alert.alert('Erreur', 'Plan d\'abonnement introuvable.');
+        return;
+      }
+
+      if (!plan.productId) {
+        console.error('❌ ProductId manquant pour le plan:', plan.id);
+        Alert.alert('Erreur', 'Configuration du produit manquante.');
         return;
       }
 

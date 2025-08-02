@@ -74,17 +74,45 @@ export class PaymentService {
 
   static async presentApplePayPayment(plan: SubscriptionPlan, userId: string): Promise<boolean> {
     try {
-      if (Platform.OS === 'ios') {
-        console.log('🍎 Lancement Apple Pay pour:', plan.name);
+      console.log('🛒 Démarrage Apple Pay pour:', plan.name, plan.productId);
 
-        // Utiliser directement le service IAP pour l'achat
-        return await InAppPurchaseService.purchaseSubscription(plan.productId, userId);
-      } else {
-        console.log('⚠️ Apple Pay non disponible sur cette plateforme');
+      if (!plan.productId) {
+        console.error('❌ ProductId manquant pour le plan:', plan.id);
+        Alert.alert('Erreur', 'Configuration du produit manquante.');
         return false;
       }
+
+      // Vérifier la disponibilité d'Apple Pay
+      try {
+        const isAvailable = await InAppPurchaseService.isAvailable();
+        if (!isAvailable) {
+          console.error('❌ Apple Pay non disponible');
+          Alert.alert('Erreur', 'Les achats in-app ne sont pas disponibles sur cet appareil.');
+          return false;
+        }
+      } catch (availabilityError) {
+        console.error('❌ Erreur vérification disponibilité:', availabilityError);
+        Alert.alert('Erreur', 'Impossible de vérifier la disponibilité des achats in-app.');
+        return false;
+      }
+
+      // Effectuer l'achat
+      const success = await InAppPurchaseService.purchaseProduct(plan.productId, userId);
+
+      if (success) {
+        console.log('✅ Achat Apple Pay réussi pour:', plan.name);
+      } else {
+        console.log('❌ Achat Apple Pay échoué pour:', plan.name);
+      }
+
+      return success;
     } catch (error) {
       console.error('❌ Erreur Apple Pay:', error);
+      Alert.alert(
+        'Erreur de paiement',
+        'Une erreur est survenue lors du paiement. Veuillez réessayer.',
+        [{ text: 'OK' }]
+      );
       return false;
     }
   }
