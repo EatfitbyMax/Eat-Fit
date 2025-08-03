@@ -10,25 +10,38 @@ module.exports = function withHealthKit(config) {
       config.modResults.UIRequiredDeviceCapabilities.push('healthkit');
     }
 
-    // Descriptions d'usage pour rn-apple-healthkit
+    // Descriptions d'usage pour rn-apple-healthkit (OBLIGATOIRES)
     config.modResults.NSHealthShareUsageDescription = 
       "EatFitBy Max utilise Apple Health pour synchroniser vos données de santé et fitness afin de vous fournir un suivi personnalisé de votre progression.";
     
     config.modResults.NSHealthUpdateUsageDescription = 
       "EatFitBy Max peut écrire des données dans Apple Health pour garder vos informations de santé à jour.";
 
-    // Configuration HealthKit
+    // Configuration HealthKit (ESSENTIELLE POUR PRODUCTION)
     config.modResults['com.apple.developer.healthkit'] = true;
-    config.modResults['com.apple.developer.healthkit.access'] = [];
+    
+    // Spécifier les types de données HealthKit utilisés
+    config.modResults['com.apple.developer.healthkit.access'] = [
+      'health-records'
+    ];
+
+    // Configuration pour rn-apple-healthkit
+    config.modResults.NSHealthShareUsageDescription = config.modResults.NSHealthShareUsageDescription;
+    config.modResults.NSHealthUpdateUsageDescription = config.modResults.NSHealthUpdateUsageDescription;
 
     return config;
   });
 
-  // Configuration Entitlements
+  // Configuration Entitlements (CRITIQUE POUR PRODUCTION)
   config = withEntitlementsPlist(config, (config) => {
+    // Entitlement HealthKit obligatoire
     config.modResults['com.apple.developer.healthkit'] = true;
-    config.modResults['com.apple.developer.healthkit.access'] = [];
     
+    // Accès aux enregistrements de santé
+    config.modResults['com.apple.developer.healthkit.access'] = [
+      'health-records'
+    ];
+
     return config;
   });
 

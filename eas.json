@@ -34,7 +34,11 @@
       "ios": {
         "resourceClass": "m-medium",
         "autoIncrement": true,
-        "buildConfiguration": "Release"
+        "buildConfiguration": "Release",
+        "entitlements": {
+          "com.apple.developer.healthkit": true,
+          "com.apple.developer.healthkit.access": ["health-records"]
+        }
       }
     },
     "standalone": {

@@ -22,12 +22,26 @@ class HealthKitService {
       // Vérifier si rn-apple-healthkit est disponible (mode production)
       const AppleHealthKit = require('rn-apple-healthkit');
       
+      // En production, vérifier explicitement les capabilities
+      if (!__DEV__) {
+        console.log('🏭 Mode production détecté - vérification HealthKit...');
+        
+        // Vérifier si l'appareil supporte HealthKit
+        if (!AppleHealthKit.isAvailable()) {
+          console.log('❌ HealthKit non disponible sur cet appareil');
+          throw new Error('Apple Health n\'est pas disponible sur cet appareil. Assurez-vous que l\'application Santé est installée et que votre appareil supporte HealthKit.');
+        }
+        
+        console.log('✅ HealthKit disponible en production');
+        return true;
+      }
+      
       // Vérifier si HealthKit est disponible sur l'appareil
       const available = AppleHealthKit.isAvailable();
-      console.log('✅ Apple Health disponible (Production):', available);
+      console.log('✅ Apple Health disponible:', available);
       return available;
     } catch (error) {
-      console.log('⚠️ rn-apple-healthkit non disponible:', error);
+      console.log('⚠️ Erreur vérification HealthKit:', error);
       
       // En mode développement avec Expo Go, HealthKit n'est pas supporté
       if (__DEV__) {
@@ -36,8 +50,8 @@ class HealthKitService {
       }
       
       // En production, si le module n'est pas trouvé, c'est un problème de build
-      console.error('❌ rn-apple-healthkit manquant en production - vérifier la configuration du build');
-      return false;
+      console.error('❌ Problème HealthKit en production:', error.message);
+      throw error;
     }
   }
 
