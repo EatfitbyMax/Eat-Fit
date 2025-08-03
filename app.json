@@ -2,7 +2,7 @@
   "expo": {
     "name": "Eat Fit",
     "slug": "eatfit-mdhreoaka-2025",
-    "version": "1.5.0",
+    "version": "1.4.0",
     "orientation": "portrait",
     "icon": "./assets/images/crown-logo.png",
     "scheme": "eatfitbymax",
@@ -39,9 +39,6 @@
     "extra": {
       "router": {
         "origin": "https://eatfitbymax.app"
-      },
-      "eas": {
-        "projectId": "1ba29ecc-6302-4828-b790-86e5e7663237"
       }
     },
     "runtimeVersion": {
@@ -80,12 +77,11 @@
           }
         }
       ],
-      
       "./plugins/withHealthKit.js"
     ],
     "experiments": {
       "typedRoutes": true
     },
-    "owner": "eatfitapp"
+    "owner": "mdhreoaka"
   }
 }

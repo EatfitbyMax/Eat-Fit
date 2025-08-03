@@ -18,7 +18,7 @@ localPort = 8082
 externalPort = 3000
 
 [workflows]
-runButton = "EAS Init"
+runButton = "EAS Build Production iOS"
 
 [[workflows.workflow]]
 name = "Dev Server"
@@ -42,7 +42,7 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npx eas-cli@latest update --auto"
+args = "npx eas update --auto"
 
 [[workflows.workflow]]
 name = "EAS Publish Preview iOS"
@@ -50,7 +50,7 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npx eas-cli@latest build --platform ios --profile preview"
+args = "npx eas build --platform ios --profile preview"
 
 [[workflows.workflow]]
 name = "EAS Publish Preview Android"
@@ -76,7 +76,7 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npx eas-cli@latest build --platform ios --profile production --non-interactive"
+args = "npx eas build --platform ios --profile production --non-interactive"
 
 [[workflows.workflow]]
 name = "EAS Build Production iOS Clean"
