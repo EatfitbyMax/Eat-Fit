@@ -29,10 +29,8 @@ module.exports = function withHealthKit(config) {
     // Entitlement HealthKit obligatoire
     config.modResults['com.apple.developer.healthkit'] = true;
     
-    // Accès aux enregistrements de santé
-    config.modResults['com.apple.developer.healthkit.access'] = [
-      'health-records'
-    ];
+    // Configuration plus simple et compatible
+    config.modResults['com.apple.developer.healthkit.access'] = [];
 
     return config;
   });

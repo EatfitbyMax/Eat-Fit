@@ -19,29 +19,28 @@ class HealthKitService {
     }
 
     try {
-      // Vérifier si rn-apple-healthkit est disponible (mode production)
+      // Vérifier si rn-apple-healthkit est disponible
       const AppleHealthKit = require('rn-apple-healthkit');
       
-      // En production, vérifier explicitement les capabilities
-      if (!__DEV__) {
-        console.log('🏭 Mode production détecté - vérification HealthKit...');
-        
-        // Vérifier si l'appareil supporte HealthKit
-        if (!AppleHealthKit.isAvailable()) {
-          console.log('❌ HealthKit non disponible sur cet appareil');
-          throw new Error('Apple Health n\'est pas disponible sur cet appareil. Assurez-vous que l\'application Santé est installée et que votre appareil supporte HealthKit.');
-        }
-        
-        console.log('✅ HealthKit disponible en production');
-        return true;
+      console.log('🔍 Vérification disponibilité HealthKit...');
+      
+      // Vérifier si l'appareil supporte HealthKit
+      const available = AppleHealthKit.isAvailable();
+      console.log('📱 HealthKit disponible sur appareil:', available);
+      
+      if (!available) {
+        console.log('❌ HealthKit non disponible - raisons possibles:');
+        console.log('   - Appareil ne supporte pas HealthKit');
+        console.log('   - Application Santé non installée');
+        console.log('   - Entitlements manquants');
+        return false;
       }
       
-      // Vérifier si HealthKit est disponible sur l'appareil
-      const available = AppleHealthKit.isAvailable();
-      console.log('✅ Apple Health disponible:', available);
-      return available;
+      console.log('✅ HealthKit disponible et prêt');
+      return true;
+      
     } catch (error) {
-      console.log('⚠️ Erreur vérification HealthKit:', error);
+      console.error('⚠️ Erreur critique vérification HealthKit:', error);
       
       // En mode développement avec Expo Go, HealthKit n'est pas supporté
       if (__DEV__) {
@@ -49,9 +48,14 @@ class HealthKitService {
         return false;
       }
       
-      // En production, si le module n'est pas trouvé, c'est un problème de build
-      console.error('❌ Problème HealthKit en production:', error.message);
-      throw error;
+      // En production, logger l'erreur complète
+      console.error('❌ Erreur HealthKit en production:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+      
+      return false;
     }
   }
 
@@ -65,11 +69,13 @@ class HealthKitService {
       const AppleHealthKit = require('rn-apple-healthkit');
 
       // Vérifier d'abord si HealthKit est disponible
+      console.log('🔍 Vérification disponibilité avant permissions...');
       if (!AppleHealthKit.isAvailable()) {
         console.log('❌ Apple Health non disponible sur cet appareil');
         throw new Error('Apple Health n\'est pas disponible sur cet appareil');
       }
 
+      // Configuration permissions simplifiée
       const permissions = {
         permissions: {
           read: [
@@ -86,24 +92,37 @@ class HealthKitService {
         },
       };
 
+      console.log('🔐 Initialisation HealthKit avec permissions...');
+      console.log('📋 Permissions demandées:', Object.keys(permissions.permissions.read).length + Object.keys(permissions.permissions.write).length);
+
       return new Promise((resolve) => {
-        console.log('🔐 Demande des permissions Apple Health...');
         AppleHealthKit.initHealthKit(permissions, (error: any) => {
           if (error) {
-            console.log('⚠️ Erreur permissions HealthKit:', error);
+            console.error('⚠️ Erreur détaillée permissions HealthKit:', {
+              message: error.message,
+              code: error.code,
+              domain: error.domain,
+              userInfo: error.userInfo
+            });
+            
             if (error.message && error.message.includes('denied')) {
               console.log('❌ Permissions refusées par l\'utilisateur');
+            } else if (error.message && error.message.includes('not available')) {
+              console.log('❌ HealthKit non disponible sur ce simulateur/appareil');
+            } else {
+              console.error('❌ Erreur inconnue HealthKit:', error);
             }
             resolve(false);
           } else {
-            console.log('✅ Permissions HealthKit accordées avec succès');
+            console.log('✅ HealthKit initialisé avec succès');
+            console.log('✅ Permissions accordées');
             resolve(true);
           }
         });
       });
     } catch (error) {
-      console.log('⚠️ Erreur lors de la demande de permissions HealthKit:', error);
-      throw error;
+      console.error('⚠️ Exception lors de la demande de permissions HealthKit:', error);
+      return false;
     }
   }
 

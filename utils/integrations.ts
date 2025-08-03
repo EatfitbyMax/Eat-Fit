@@ -33,18 +33,22 @@ export class IntegrationsManager {
         throw new Error('Apple Health est uniquement disponible sur iOS');
       }
 
+      console.log('🍎 Début connexion Apple Health pour utilisateur:', userId);
+
       // Importer HealthKitService
       const HealthKitService = require('../utils/healthKit').default;
 
       // Vérifier la disponibilité d'Apple Health
+      console.log('🔍 Vérification disponibilité Apple Health...');
       const isAvailable = await HealthKitService.isAvailable();
       if (!isAvailable) {
-        throw new Error('Apple Health n\'est pas disponible sur cet appareil');
+        console.log('❌ Apple Health non disponible');
+        throw new Error('Apple Health n\'est pas disponible sur cet appareil. Vérifiez que l\'application Santé est installée et que HealthKit est supporté.');
       }
 
       // Demander les permissions via HealthKitService
       console.log('🔐 Demande des permissions Apple Health...');
-      const granted = await HealthKitService.requestPermissions();
+      const granted = await HealthKitService.requestPermissions();ssions();
 
       if (granted) {
         // Sauvegarder le statut de connexion
