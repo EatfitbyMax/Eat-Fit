@@ -200,19 +200,13 @@ export class InAppPurchaseService {
         throw new Error(`IAP non supporté sur la plateforme: ${Platform.OS}`);
       }
 
-      // Éviter l'initialisation récursive
-      let initAttempts = 0;
-      while (!this.isInitialized && initAttempts < 2) {
-        console.log('🔄 Tentative d\'initialisation:', initAttempts + 1);
+      // Initialisation simple sans boucle
+      if (!this.isInitialized) {
+        console.log('🔄 Initialisation IAP requise');
         const initialized = await this.initialize();
         if (!initialized) {
           throw new Error('Les achats intégrés ne sont disponibles qu\'avec EAS Build');
         }
-        initAttempts++;
-      }
-
-      if (!this.isInitialized) {
-        throw new Error('Impossible d\'initialiser les IAP après 2 tentatives');
       }
 
       console.log('🔄 Démarrage achat IAP pour:', productId);

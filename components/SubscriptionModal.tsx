@@ -89,6 +89,9 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
       setLoading(true);
       console.log('🛒 Début handleSubscribe pour:', planId);
 
+      // Petite pause pour éviter les problèmes de stack
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       // Récupérer l'utilisateur connecté
       const currentUser = await getCurrentUser();
       if (!currentUser) {
