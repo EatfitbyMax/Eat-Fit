@@ -2,7 +2,7 @@
   "expo": {
     "name": "Eat Fit",
     "slug": "eatfit",
-    "version": "1.4.0",
+    "version": "1.4.1",
     "orientation": "portrait",
     "icon": "./assets/images/crown-logo.png",
     "scheme": "eatfitbymax",
@@ -42,7 +42,7 @@
         "projectId": "38beb82e-34b3-48d3-b1a1-f70f3c6ff386"
       }
     },
-    "runtimeVersion": "1.4.0",
+    "runtimeVersion": "1.4.1",
     "plugins": [
       [
         "expo-router"
