@@ -31,9 +31,7 @@
         "ITSAppUsesNonExemptEncryption": false,
         "UIRequiredDeviceCapabilities": [
           "healthkit"
-        ],
-        "com.apple.developer.healthkit": true,
-        "com.apple.developer.in-app-payments": []
+        ]
       }
     },
     "extra": {
