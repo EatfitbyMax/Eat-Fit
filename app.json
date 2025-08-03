@@ -83,6 +83,13 @@
     "experiments": {
       "typedRoutes": true
     },
-    "owner": "maxandre_pm"
+    "owner": "maxandre_pm",
+    "android": {
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.eatfitbymax.app"
+    }
   }
 }
