@@ -89,9 +89,6 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
       setLoading(true);
       console.log('🛒 Début handleSubscribe pour:', planId);
 
-      // Petite pause pour éviter les problèmes de stack
-      await new Promise(resolve => setTimeout(resolve, 100));
-
       // Récupérer l'utilisateur connecté
       const currentUser = await getCurrentUser();
       if (!currentUser) {
@@ -115,14 +112,8 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
 
       console.log('🛒 Achat IAP natif pour:', plan.name, plan.productId);
 
-      // Timeout pour éviter les blocages
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout - Achat trop long')), 30000)
-      );
-
-      // Achat avec timeout
-      const purchasePromise = InAppPurchaseService.purchaseSubscription(plan.productId, currentUser.id);
-      const success = await Promise.race([purchasePromise, timeoutPromise]);
+      // Achat direct sans timeout complexe pour éviter les problèmes de stack
+      const success = await InAppPurchaseService.purchaseSubscription(plan.productId, currentUser.id);
 
       if (success) {
         Alert.alert(
@@ -145,10 +136,10 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
       console.error('❌ Erreur abonnement:', error);
       
       // Gestion spécifique des erreurs de stack
-      if (error.message?.includes('stack') || error.message?.includes('depth')) {
+      if (error.message?.includes('stack') || error.message?.includes('depth') || error.message?.includes('Maximum call stack')) {
         Alert.alert(
           'Erreur technique',
-          'Un problème technique est survenu. Veuillez redémarrer l\'application et réessayer.',
+          'Un problème technique est survenu. Veuillez fermer et redémarrer complètement l\'application.',
           [{ text: 'OK' }]
         );
       } else {
@@ -159,10 +150,10 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
         );
       }
     } finally {
-      // Délai avant de réactiver pour éviter les appels rapides
+      // Délai plus court pour éviter les blocages
       setTimeout(() => {
         setLoading(false);
-      }, 1000);
+      }, 500);
     }
   };
 
