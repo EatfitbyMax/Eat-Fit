@@ -31,6 +31,77 @@ const SUBSCRIPTION_PRODUCTS = {
   DIAMOND: 'com.eatfitbymax.app.diamond_monthly'
 };
 
+// Plans d'abonnement pour l'interface utilisateur
+export const IAP_SUBSCRIPTION_PLANS = [
+  {
+    id: 'free',
+    name: 'Version Gratuite',
+    price: '0€',
+    duration: 'mois',
+    productId: null,
+    features: [
+      'Fonctionnalités de base',
+      'Suivi nutritionnel limité'
+    ],
+    appointmentLimits: { monthly: 0, yearly: 0 }
+  },
+  {
+    id: 'bronze',
+    name: 'BRONZE',
+    price: '9,99€',
+    duration: 'mois',
+    productId: SUBSCRIPTION_PRODUCTS.BRONZE,
+    features: [
+      'Coach personnel par messages',
+      'Programmes d\'entraînement de base',
+      'Suivi nutritionnel'
+    ],
+    appointmentLimits: { monthly: 1, yearly: 12 }
+  },
+  {
+    id: 'silver',
+    name: 'SILVER',
+    price: '19,99€',
+    duration: 'mois',
+    productId: SUBSCRIPTION_PRODUCTS.SILVER,
+    features: [
+      'Tout du plan Bronze',
+      'Programmes d\'entraînement avancés',
+      'Analyses de forme détaillées',
+      'Rendez-vous vidéo'
+    ],
+    appointmentLimits: { monthly: 2, yearly: 24 }
+  },
+  {
+    id: 'gold',
+    name: 'GOLD',
+    price: '49,99€',
+    duration: 'mois',
+    productId: SUBSCRIPTION_PRODUCTS.GOLD,
+    features: [
+      'Tout du plan Silver',
+      'Coaching personnalisé 24h/24',
+      'Programmes ultra-personnalisés',
+      'Analyses vidéo de mouvement'
+    ],
+    appointmentLimits: { monthly: 4, yearly: 48 }
+  },
+  {
+    id: 'diamond',
+    name: 'DIAMOND',
+    price: '99,99€',
+    duration: 'mois',
+    productId: SUBSCRIPTION_PRODUCTS.DIAMOND,
+    features: [
+      'Tout du plan Gold',
+      'Accès prioritaire au coach',
+      'Consultations illimitées',
+      'Suivi en temps réel'
+    ],
+    appointmentLimits: { monthly: -1, yearly: -1 } // -1 = illimité
+  }
+];;
+
 class InAppPurchaseManager {
   private isConnected = false;
   private products: IAPItemDetails[] = [];
