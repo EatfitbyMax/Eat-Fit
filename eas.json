@@ -1,4 +1,3 @@
-
 {
   "cli": {
     "version": ">= 3.0.0",
@@ -20,9 +19,8 @@
         "EXPO_PUBLIC_USE_EAS_BUILD": "true"
       },
       "ios": {
-        "simulator": false,
         "resourceClass": "m-medium",
-        "buildConfiguration": "Release"
+        "bundleIdentifier": "com.eatfitbymax.app"
       }
     },
     "production": {
@@ -35,22 +33,18 @@
       "ios": {
         "resourceClass": "m-medium",
         "autoIncrement": true,
+        "bundleIdentifier": "com.eatfitbymax.app",
         "buildConfiguration": "Release"
-      }
-    },
-    "standalone": {
-      "developmentClient": false,
-      "distribution": "store",
-      "channel": "production",
-      "ios": {
-        "resourceClass": "m-medium",
-        "autoIncrement": true
       }
     }
   },
   "submit": {
     "production": {
-      "ios": {}
+      "ios": {
+        "appleId": "m.pacullmarquie@gmail.com",
+        "ascAppId": "6737764978",
+        "appleTeamId": "2H8T73P8LN"
+      }
     }
   }
 }

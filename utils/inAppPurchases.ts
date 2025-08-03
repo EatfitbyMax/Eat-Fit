@@ -110,27 +110,44 @@ class InAppPurchaseManager {
     try {
       console.log('💳 Tentative d\'achat:', productId);
 
-      if (!this.isConnected && !this.isInitializing) {
+      // Vérifier la connexion une seule fois
+      if (!this.isConnected) {
+        console.log('🔄 Initialisation du service d\'achat...');
         const connected = await this.initialize();
         if (!connected) {
           return { success: false, error: 'Service d\'achat non disponible' };
         }
       }
 
+      // Vérifier que le produit existe
+      const product = this.products.find(p => p.productId === productId);
+      if (!product) {
+        console.error('❌ Produit non trouvé:', productId);
+        return { success: false, error: 'Produit non disponible' };
+      }
+
+      console.log('🛒 Lancement achat pour produit:', product.title);
+
       const result = await purchaseItemAsync(productId);
       console.log('💳 Résultat achat:', result);
 
-      if (result.responseCode === IAPResponseCode.OK && result.results) {
+      if (result.responseCode === IAPResponseCode.OK && result.results && result.results.length > 0) {
         const purchase = result.results[0];
 
-        // Finaliser la transaction
-        await finishTransactionAsync(purchase, false);
+        try {
+          // Finaliser la transaction
+          await finishTransactionAsync(purchase, false);
+          console.log('✅ Transaction finalisée');
 
-        // Sauvegarder l'achat
-        await this.savePurchase(purchase);
+          // Sauvegarder l'achat
+          await this.savePurchase(purchase);
+          console.log('💾 Achat sauvegardé');
 
-        console.log('✅ Achat réussi:', purchase);
-        return { success: true };
+          return { success: true };
+        } catch (finishError) {
+          console.error('❌ Erreur finalisation transaction:', finishError);
+          return { success: false, error: 'Erreur lors de la finalisation' };
+        }
       } else {
         console.error('❌ Achat échoué:', result);
         return { 
@@ -140,9 +157,18 @@ class InAppPurchaseManager {
       }
     } catch (error) {
       console.error('❌ Erreur lors de l\'achat:', error);
+      
+      // Éviter la récursion - ne pas réessayer automatiquement
+      if (error.message?.includes('Maximum call stack')) {
+        return { 
+          success: false, 
+          error: 'Erreur système: Redémarrez l\'application' 
+        };
+      }
+      
       return { 
         success: false, 
-        error: 'Erreur technique: Veuillez redémarrer l\'application' 
+        error: 'Erreur technique: Veuillez réessayer' 
       };
     }
   }

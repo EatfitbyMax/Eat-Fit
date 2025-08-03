@@ -134,7 +134,7 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
       }
     } catch (error) {
       console.error('❌ Erreur abonnement:', error);
-      
+
       // Gestion spécifique des erreurs de stack
       if (error.message?.includes('stack') || error.message?.includes('depth') || error.message?.includes('Maximum call stack')) {
         Alert.alert(
