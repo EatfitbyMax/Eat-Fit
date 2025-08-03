@@ -17,14 +17,6 @@ module.exports = function withHealthKit(config) {
     config.modResults.NSHealthUpdateUsageDescription = 
       "EatFitBy Max peut écrire des données dans Apple Health pour garder vos informations de santé à jour.";
 
-    // Configuration HealthKit (ESSENTIELLE POUR PRODUCTION)
-    config.modResults['com.apple.developer.healthkit'] = true;
-    
-    // Spécifier les types de données HealthKit utilisés
-    config.modResults['com.apple.developer.healthkit.access'] = [
-      'health-records'
-    ];
-
     // Configuration pour rn-apple-healthkit
     config.modResults.NSHealthShareUsageDescription = config.modResults.NSHealthShareUsageDescription;
     config.modResults.NSHealthUpdateUsageDescription = config.modResults.NSHealthUpdateUsageDescription;
