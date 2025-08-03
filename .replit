@@ -18,7 +18,7 @@ localPort = 8082
 externalPort = 3000
 
 [workflows]
-runButton = "EAS Init"
+runButton = "Test flight"
 
 [[workflows.workflow]]
 name = "Dev Server"
