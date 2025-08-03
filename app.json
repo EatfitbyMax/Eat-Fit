@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Eat Fit",
-    "slug": "eatfit-pacullmarquie-2025",
+    "slug": "eatfit",
     "version": "1.4.0",
     "orientation": "portrait",
     "icon": "./assets/images/crown-logo.png",
