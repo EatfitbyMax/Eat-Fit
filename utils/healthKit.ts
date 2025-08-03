@@ -20,9 +20,21 @@ class HealthKitService {
 
     try {
       // Vérifier si rn-apple-healthkit est disponible
-      const AppleHealthKit = require('rn-apple-healthkit');
+      let AppleHealthKit;
+      try {
+        AppleHealthKit = require('rn-apple-healthkit');
+      } catch (requireError) {
+        console.log('❌ Package rn-apple-healthkit non trouvé:', requireError.message);
+        return false;
+      }
       
       console.log('🔍 Vérification disponibilité HealthKit...');
+      
+      // Vérifier si les méthodes HealthKit existent
+      if (!AppleHealthKit || typeof AppleHealthKit.isAvailable !== 'function') {
+        console.log('❌ API HealthKit non disponible - méthodes manquantes');
+        return false;
+      }
       
       // Vérifier si l'appareil supporte HealthKit
       const available = AppleHealthKit.isAvailable();
@@ -66,7 +78,14 @@ class HealthKitService {
         return false;
       }
 
-      const AppleHealthKit = require('rn-apple-healthkit');
+      // Import sécurisé
+      let AppleHealthKit;
+      try {
+        AppleHealthKit = require('rn-apple-healthkit');
+      } catch (error) {
+        console.log('❌ Package rn-apple-healthkit non disponible');
+        return false;
+      }
 
       // Vérifier d'abord si HealthKit est disponible
       console.log('🔍 Vérification disponibilité avant permissions...');
