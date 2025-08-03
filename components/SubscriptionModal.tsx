@@ -15,7 +15,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
-import { Colors } from '../constants/Colors';
 import { InAppPurchaseService, IAP_SUBSCRIPTION_PLANS } from '../utils/inAppPurchases';
 import { getCurrentUser } from '../utils/auth';
 
@@ -28,8 +27,7 @@ interface SubscriptionModalProps {
 }
 
 export default function SubscriptionModal({ visible, onClose, onSubscribe }: SubscriptionModalProps) {
-  const { theme } = useTheme();
-  const colors = Colors[theme];
+  const { theme: colors } = useTheme(); // Utiliser directement l'objet theme du contexte
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly');
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
