@@ -26,12 +26,18 @@ module.exports = function withHealthKit(config) {
 
   // Configuration Entitlements (CRITIQUE POUR PRODUCTION)
   config = withEntitlementsPlist(config, (config) => {
+    // S'assurer que les entitlements existent
+    if (!config.modResults) {
+      config.modResults = {};
+    }
+    
     // Entitlement HealthKit obligatoire
     config.modResults['com.apple.developer.healthkit'] = true;
     
-    // Configuration plus simple et compatible
+    // Configuration access (vide pour autoriser tous les types)
     config.modResults['com.apple.developer.healthkit.access'] = [];
-
+    
+    console.log('✅ Plugin HealthKit: Entitlements configurés');
     return config;
   });
 

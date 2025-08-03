@@ -19,32 +19,57 @@ class HealthKitService {
     }
 
     try {
-      // Vérifier si rn-apple-healthkit est disponible
+      // Import conditionnel plus robuste
       let AppleHealthKit;
+      
       try {
-        AppleHealthKit = require('rn-apple-healthkit');
+        // Essayer d'importer le module natif
+        AppleHealthKit = require('rn-apple-healthkit').default || require('rn-apple-healthkit');
+        
+        // Vérification supplémentaire de l'objet
+        if (!AppleHealthKit) {
+          throw new Error('Module rn-apple-healthkit non disponible');
+        }
+        
+        console.log('📦 Module rn-apple-healthkit chargé avec succès');
+        
       } catch (requireError) {
-        console.log('❌ Package rn-apple-healthkit non trouvé:', requireError.message);
+        console.log('❌ Erreur import rn-apple-healthkit:', requireError.message);
+        
+        // En production, essayer des chemins alternatifs
+        try {
+          AppleHealthKit = require('rn-apple-healthkit/RNAppleHealthKit');
+        } catch (fallbackError) {
+          console.log('❌ Aucun chemin d\'import fonctionnel pour rn-apple-healthkit');
+          return false;
+        }
+      }
+      
+      console.log('🔍 Vérification API HealthKit...');
+      
+      // Vérifications plus robustes des méthodes
+      const requiredMethods = ['isAvailable', 'initHealthKit'];
+      for (const method of requiredMethods) {
+        if (!AppleHealthKit[method] || typeof AppleHealthKit[method] !== 'function') {
+          console.log(`❌ Méthode ${method} manquante dans AppleHealthKit`);
+          return false;
+        }
+      }
+      
+      console.log('✅ Toutes les méthodes HealthKit disponibles');
+      
+      // Vérifier la disponibilité sur l'appareil
+      let deviceSupported = false;
+      try {
+        deviceSupported = AppleHealthKit.isAvailable();
+        console.log('📱 Support HealthKit sur appareil:', deviceSupported);
+      } catch (availabilityError) {
+        console.log('❌ Erreur vérification support appareil:', availabilityError.message);
         return false;
       }
       
-      console.log('🔍 Vérification disponibilité HealthKit...');
-      
-      // Vérifier si les méthodes HealthKit existent
-      if (!AppleHealthKit || typeof AppleHealthKit.isAvailable !== 'function') {
-        console.log('❌ API HealthKit non disponible - méthodes manquantes');
-        return false;
-      }
-      
-      // Vérifier si l'appareil supporte HealthKit
-      const available = AppleHealthKit.isAvailable();
-      console.log('📱 HealthKit disponible sur appareil:', available);
-      
-      if (!available) {
-        console.log('❌ HealthKit non disponible - raisons possibles:');
-        console.log('   - Appareil ne supporte pas HealthKit');
-        console.log('   - Application Santé non installée');
-        console.log('   - Entitlements manquants');
+      if (!deviceSupported) {
+        console.log('❌ HealthKit non supporté sur cet appareil');
         return false;
       }
       
@@ -54,17 +79,18 @@ class HealthKitService {
     } catch (error) {
       console.error('⚠️ Erreur critique vérification HealthKit:', error);
       
-      // En mode développement avec Expo Go, HealthKit n'est pas supporté
+      // En mode développement
       if (__DEV__) {
-        console.log('📱 Mode développement - HealthKit non supporté dans Expo Go');
+        console.log('📱 Mode développement - HealthKit limité');
         return false;
       }
       
-      // En production, logger l'erreur complète
-      console.error('❌ Erreur HealthKit en production:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
+      // En production, plus de détails
+      console.error('❌ Erreur HealthKit production:', {
+        message: error?.message || 'Erreur inconnue',
+        stack: error?.stack || 'Stack non disponible',
+        name: error?.name || 'Erreur sans nom',
+        toString: error?.toString() || 'toString non disponible'
       });
       
       return false;
@@ -78,12 +104,15 @@ class HealthKitService {
         return false;
       }
 
-      // Import sécurisé
+      // Import sécurisé et robuste
       let AppleHealthKit;
       try {
-        AppleHealthKit = require('rn-apple-healthkit');
+        AppleHealthKit = require('rn-apple-healthkit').default || require('rn-apple-healthkit');
+        if (!AppleHealthKit) {
+          throw new Error('Module vide');
+        }
       } catch (error) {
-        console.log('❌ Package rn-apple-healthkit non disponible');
+        console.log('❌ Erreur import dans requestPermissions:', error.message);
         return false;
       }
 
@@ -147,7 +176,7 @@ class HealthKitService {
 
   static async getSteps(date: Date): Promise<number> {
     try {
-      const AppleHealthKit = require('rn-apple-healthkit');
+      const AppleHealthKit = require('rn-apple-healthkit').default || require('rn-apple-healthkit');
 
       const options = {
         startDate: new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString(),
@@ -172,7 +201,7 @@ class HealthKitService {
 
   static async getHeartRate(): Promise<number> {
     try {
-      const AppleHealthKit = require('rn-apple-healthkit');
+      const AppleHealthKit = require('rn-apple-healthkit').default || require('rn-apple-healthkit');
 
       const options = {
         startDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
@@ -199,7 +228,7 @@ class HealthKitService {
 
   static async writeWeight(weight: number): Promise<boolean> {
     try {
-      const AppleHealthKit = require('rn-apple-healthkit');
+      const AppleHealthKit = require('rn-apple-healthkit').default || require('rn-apple-healthkit');
 
       const options = {
         value: weight,
@@ -226,7 +255,7 @@ class HealthKitService {
 
   static async getActiveEnergyBurned(date: Date): Promise<number> {
     try {
-      const AppleHealthKit = require('rn-apple-healthkit');
+      const AppleHealthKit = require('rn-apple-healthkit').default || require('rn-apple-healthkit');
 
       const options = {
         startDate: new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString(),
@@ -252,7 +281,7 @@ class HealthKitService {
 
   static async getDistanceWalkingRunning(date: Date): Promise<number> {
     try {
-      const AppleHealthKit = require('rn-apple-healthkit');
+      const AppleHealthKit = require('rn-apple-healthkit').default || require('rn-apple-healthkit');
 
       const options = {
         startDate: new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString(),
