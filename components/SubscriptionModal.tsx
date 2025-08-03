@@ -164,6 +164,7 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
       transparent
       animationType="none"
       statusBarTranslucent
+      presentationStyle="overFullScreen"
     >
       <View style={styles.container}>
         <Animated.View
