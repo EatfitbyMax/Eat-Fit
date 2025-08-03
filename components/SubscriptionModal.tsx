@@ -76,11 +76,18 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
         }),
       ]).start();
     }
-  }, [visible]);
+  }, [visible, backdropAnim, slideAnim]);
 
   const handleSubscribe = async (planId: string) => {
+    // Éviter les appels multiples
+    if (loading) {
+      console.log('⏳ Achat déjà en cours, ignoré');
+      return;
+    }
+
     try {
       setLoading(true);
+      console.log('🛒 Début handleSubscribe pour:', planId);
 
       // Récupérer l'utilisateur connecté
       const currentUser = await getCurrentUser();
@@ -105,8 +112,14 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
 
       console.log('🛒 Achat IAP natif pour:', plan.name, plan.productId);
 
-      // Achat direct via les IAP natifs
-      const success = await InAppPurchaseService.purchaseSubscription(plan.productId, currentUser.id);
+      // Timeout pour éviter les blocages
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout - Achat trop long')), 30000)
+      );
+
+      // Achat avec timeout
+      const purchasePromise = InAppPurchaseService.purchaseSubscription(plan.productId, currentUser.id);
+      const success = await Promise.race([purchasePromise, timeoutPromise]);
 
       if (success) {
         Alert.alert(
@@ -127,13 +140,26 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
       }
     } catch (error) {
       console.error('❌ Erreur abonnement:', error);
-      Alert.alert(
-        'Erreur',
-        error.message || 'Une erreur est survenue lors de l\'abonnement. Veuillez réessayer.',
-        [{ text: 'OK' }]
-      );
+      
+      // Gestion spécifique des erreurs de stack
+      if (error.message?.includes('stack') || error.message?.includes('depth')) {
+        Alert.alert(
+          'Erreur technique',
+          'Un problème technique est survenu. Veuillez redémarrer l\'application et réessayer.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert(
+          'Erreur',
+          error.message || 'Une erreur est survenue lors de l\'abonnement. Veuillez réessayer.',
+          [{ text: 'OK' }]
+        );
+      }
     } finally {
-      setLoading(false);
+      // Délai avant de réactiver pour éviter les appels rapides
+      setTimeout(() => {
+        setLoading(false);
+      }, 1000);
     }
   };
 

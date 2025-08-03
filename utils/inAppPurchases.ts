@@ -127,7 +127,14 @@ export class InAppPurchaseService {
 
       console.log('🔄 Initialisation des IAP natifs (EAS Build uniquement)');
 
-      await InAppPurchases.connectAsync();
+      // Timeout pour l'initialisation
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout initialisation IAP')), 10000)
+      );
+
+      const initPromise = InAppPurchases.connectAsync();
+      await Promise.race([initPromise, timeoutPromise]);
+
       console.log('✅ IAP initialisés avec succès');
       this.isInitialized = true;
       return true;
@@ -135,6 +142,8 @@ export class InAppPurchaseService {
       console.error('❌ Erreur initialisation IAP:', error);
       console.log('ℹ️ Les achats intégrés nécessitent EAS Build, pas Expo Go');
       this.isInitialized = false;
+      
+      // Ne pas relancer automatiquement pour éviter les boucles
       return false;
     }
   }
@@ -191,18 +200,31 @@ export class InAppPurchaseService {
         throw new Error(`IAP non supporté sur la plateforme: ${Platform.OS}`);
       }
 
-      if (!this.isInitialized) {
-        console.log('🔄 Initialisation requise avant achat...');
+      // Éviter l'initialisation récursive
+      let initAttempts = 0;
+      while (!this.isInitialized && initAttempts < 2) {
+        console.log('🔄 Tentative d\'initialisation:', initAttempts + 1);
         const initialized = await this.initialize();
         if (!initialized) {
           throw new Error('Les achats intégrés ne sont disponibles qu\'avec EAS Build');
         }
+        initAttempts++;
+      }
+
+      if (!this.isInitialized) {
+        throw new Error('Impossible d\'initialiser les IAP après 2 tentatives');
       }
 
       console.log('🔄 Démarrage achat IAP pour:', productId);
 
-      // Effectuer l'achat
-      const { responseCode, results } = await InAppPurchases.purchaseItemAsync(productId);
+      // Timeout pour l'achat
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout achat IAP')), 25000)
+      );
+
+      // Effectuer l'achat avec timeout
+      const purchasePromise = InAppPurchases.purchaseItemAsync(productId);
+      const { responseCode, results } = await Promise.race([purchasePromise, timeoutPromise]);
 
       console.log('📱 Réponse IAP:', { responseCode, resultsLength: results?.length });
 
@@ -226,6 +248,12 @@ export class InAppPurchaseService {
       }
     } catch (error) {
       console.error('❌ Erreur lors de l\'achat:', error);
+      
+      // Gestion spécifique des erreurs de stack
+      if (error.message?.includes('stack') || error.message?.includes('depth')) {
+        throw new Error('Erreur technique: Veuillez redémarrer l\'application');
+      }
+      
       throw error;
     }
   }
