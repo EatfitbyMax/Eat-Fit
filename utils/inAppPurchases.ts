@@ -25,9 +25,10 @@ export interface SubscriptionProduct {
 
 // Configuration des produits (IDs définis dans App Store Connect)
 const SUBSCRIPTION_PRODUCTS = {
-  BRONZE: 'com.eatfitbymax.subscription.bronze.monthly',
-  ARGENT: 'com.eatfitbymax.subscription.argent.monthly',
-  OR: 'com.eatfitbymax.subscription.or.monthly'
+  BRONZE: 'com.eatfitbymax.app.bronze_monthly',
+  SILVER: 'com.eatfitbymax.app.silver_monthly',
+  GOLD: 'com.eatfitbymax.app.gold_monthly',
+  DIAMOND: 'com.eatfitbymax.app.diamond_monthly'
 };
 
 class InAppPurchaseManager {

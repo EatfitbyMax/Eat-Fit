@@ -37,6 +37,9 @@ module.exports = function withHealthKit(config) {
     // Configuration access (vide pour autoriser tous les types)
     config.modResults['com.apple.developer.healthkit.access'] = [];
     
+    // Entitlement pour les achats in-app (OBLIGATOIRE pour production)
+    config.modResults['com.apple.developer.in-app-payments'] = [];
+    
     console.log('✅ Plugin HealthKit: Entitlements configurés');
     return config;
   });

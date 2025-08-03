@@ -6,22 +6,28 @@
 ### 1. Abonnements Auto-Renouvelables
 
 #### BRONZE
-- **Product ID**: `com.eatfitbymax.subscription.bronze.monthly`
-- **Reference Name**: EatFit Bronze Monthly
+- **Product ID**: `com.eatfitbymax.app.bronze_monthly`
+- **Reference Name**: Plan Bronze
 - **Duration**: 1 mois
 - **Prix**: 9,99 €
 
-#### ARGENT  
-- **Product ID**: `com.eatfitbymax.subscription.argent.monthly`
-- **Reference Name**: EatFit Argent Monthly
+#### SILVER  
+- **Product ID**: `com.eatfitbymax.app.silver_monthly`
+- **Reference Name**: Plan Argent
 - **Duration**: 1 mois
 - **Prix**: 19,99 €
 
-#### OR
-- **Product ID**: `com.eatfitbymax.subscription.or.monthly`
-- **Reference Name**: EatFit Or Monthly
+#### GOLD
+- **Product ID**: `com.eatfitbymax.app.gold_monthly`
+- **Reference Name**: Plan Or
 - **Duration**: 1 mois
 - **Prix**: 49,99 €
+
+#### DIAMOND
+- **Product ID**: `com.eatfitbymax.app.diamond_monthly`
+- **Reference Name**: Plan Diamant
+- **Duration**: 1 mois
+- **Prix**: 99,99 €
 
 ## Étapes de configuration
 
