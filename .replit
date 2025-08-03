@@ -70,13 +70,13 @@ task = "shell.exec"
 args = "node scripts/prebuild-check-ios.js"
 
 [[workflows.workflow]]
-name = "EAS Build Production iOS"
+name = "Test flight"
 author = 42598128
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npx eas build --platform ios --profile production --non-interactive"
+args = "npx eas build -p ios --profile production"
 
 [[workflows.workflow]]
 name = "EAS Build Production iOS Clean"
