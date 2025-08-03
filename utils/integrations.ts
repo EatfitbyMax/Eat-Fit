@@ -35,7 +35,7 @@ export class IntegrationsManager {
 
       // Importer HealthKitService
       const HealthKitService = require('../utils/healthKit').default;
-      
+
       // Vérifier la disponibilité d'Apple Health
       const isAvailable = await HealthKitService.isAvailable();
       if (!isAvailable) {
@@ -107,13 +107,13 @@ export class IntegrationsManager {
       for (let i = 0; i < 7; i++) {
         const currentDate = new Date(startDate);
         currentDate.setDate(startDate.getDate() + i);
-        
+
         const stepsForDay = await new Promise<number>((resolve) => {
           const options = {
             startDate: new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate()).toISOString(),
             endDate: new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() + 1).toISOString(),
           };
-          
+
           AppleHealthKit.getStepCount(options, (callbackError: any, results: any) => {
             resolve(callbackError ? 0 : results?.value || 0);
           });
@@ -132,7 +132,7 @@ export class IntegrationsManager {
           endDate: endDate.toISOString(),
           limit: 100,
         };
-        
+
         AppleHealthKit.getHeartRateSamples(options, (callbackError: any, results: any) => {
           resolve(callbackError ? [] : results || []);
         });
@@ -236,14 +236,14 @@ export class IntegrationsManager {
         return false;
       } else if (result.type === 'dismiss') {
         console.log('📱 WebBrowser fermé, vérification du statut Strava...');
-        
+
         // Attendre un peu puis vérifier si la connexion a réussi côté serveur
         await new Promise(resolve => setTimeout(resolve, 2000));
-        
+
         const serverStatus = await this.getStravaStatusFromServer(userId);
         if (serverStatus && serverStatus.connected) {
           console.log('✅ Connexion Strava confirmée côté serveur');
-          
+
           // Mettre à jour le statut local
           const status = await this.getIntegrationStatus(userId);
           status.strava = {
@@ -251,7 +251,7 @@ export class IntegrationsManager {
             athlete: serverStatus.athlete
           };
           await PersistentStorage.saveIntegrationStatus(userId, status);
-          
+
           return true;
         }
       }

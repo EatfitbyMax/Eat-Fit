@@ -21,12 +21,22 @@ class HealthKitService {
     try {
       // Vérifier si rn-apple-healthkit est disponible (mode production)
       const AppleHealthKit = require('rn-apple-healthkit');
+      
+      // Vérifier si HealthKit est disponible sur l'appareil
       const available = AppleHealthKit.isAvailable();
       console.log('✅ Apple Health disponible (Production):', available);
       return available;
     } catch (error) {
-      console.log('⚠️ rn-apple-healthkit non disponible en développement:', error);
-      // En développement (Expo Go), retourner false car HealthKit n'est pas supporté
+      console.log('⚠️ rn-apple-healthkit non disponible:', error);
+      
+      // En mode développement avec Expo Go, HealthKit n'est pas supporté
+      if (__DEV__) {
+        console.log('📱 Mode développement - HealthKit non supporté dans Expo Go');
+        return false;
+      }
+      
+      // En production, si le module n'est pas trouvé, c'est un problème de build
+      console.error('❌ rn-apple-healthkit manquant en production - vérifier la configuration du build');
       return false;
     }
   }
@@ -277,40 +287,18 @@ export const connectToAppleHealth = async (): Promise<boolean> => {
       return false;
     }
 
-    // En mode développement, afficher une alerte de simulation
-    if (__DEV__) {
-      console.log('📱 Mode développement - Simulation Apple Health');
-      
-      return new Promise((resolve) => {
-        Alert.alert(
-          'Connecter Apple Health',
-          'Mode simulation uniquement (sécurisé pour iOS)',
-          [
-            { 
-              text: 'Annuler', 
-              style: 'cancel',
-              onPress: () => resolve(false)
-            },
-            { 
-              text: 'Connecter', 
-              onPress: async () => {
-                try {
-                  await AsyncStorage.setItem('appleHealthConnected', 'true');
-                  console.log('✅ Apple Health connecté (simulé)');
-                  resolve(true);
-                } catch (error) {
-                  console.error('Erreur sauvegarde:', error);
-                  resolve(false);
-                }
-              }
-            }
-          ]
-        );
-      });
-    }
-
-    // En production, utiliser les vraies APIs HealthKit
+    // Toujours utiliser les vraies APIs HealthKit en production
     try {
+      const isAvailable = await HealthKitService.isAvailable();
+      if (!isAvailable) {
+        console.log('❌ Apple Health non disponible sur cet appareil');
+        Alert.alert(
+          'Apple Health non disponible',
+          'Apple Health n\'est pas disponible sur cet appareil. Assurez-vous que l\'application Santé est installée et que votre appareil supporte HealthKit.'
+        );
+        return false;
+      }
+
       const hasPermissions = await HealthKitService.requestPermissions();
       
       if (hasPermissions) {
@@ -319,10 +307,47 @@ export const connectToAppleHealth = async (): Promise<boolean> => {
         return true;
       } else {
         console.log('❌ Permissions Apple Health refusées');
+        Alert.alert(
+          'Permissions requises',
+          'L\'accès à Apple Health est nécessaire pour synchroniser vos données de santé. Veuillez autoriser l\'accès dans les réglages.'
+        );
         return false;
       }
     } catch (error) {
       console.error('❌ Erreur connexion Apple Health:', error);
+      
+      // En développement seulement, proposer une simulation comme fallback
+      if (__DEV__) {
+        console.log('📱 Mode développement - Fallback simulation Apple Health');
+        
+        return new Promise((resolve) => {
+          Alert.alert(
+            'Apple Health (Mode Dev)',
+            'HealthKit non disponible en développement. Utiliser la simulation ?',
+            [
+              { 
+                text: 'Annuler', 
+                style: 'cancel',
+                onPress: () => resolve(false)
+              },
+              { 
+                text: 'Simuler', 
+                onPress: async () => {
+                  try {
+                    await AsyncStorage.setItem('appleHealthConnected', 'true');
+                    console.log('✅ Apple Health connecté (simulé)');
+                    resolve(true);
+                  } catch (error) {
+                    console.error('Erreur sauvegarde:', error);
+                    resolve(false);
+                  }
+                }
+              }
+            ]
+          );
+        });
+      }
+      
       return false;
     }
     
