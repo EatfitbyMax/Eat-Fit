@@ -31,54 +31,61 @@ export default function ComingSoonModal({ visible, onClose, feature, description
             <View style={styles.placeholder} />
           </View>
 
-          {/* Content */}
-          <View style={styles.body}>
-            <View style={styles.iconContainer}>
-              <Text style={styles.comingSoonIcon}>🚀</Text>
-            </View>
+          {/* Content avec ScrollView */}
+          <ScrollView 
+            style={styles.scrollContainer}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            bounces={true}
+          >
+            <View style={styles.body}>
+              <View style={styles.iconContainer}>
+                <Text style={styles.comingSoonIcon}>🚀</Text>
+              </View>
 
-            <Text style={[styles.featureTitle, { color: theme.text }]}>{feature}</Text>
-            <Text style={[styles.featureDescription, { color: theme.textSecondary }]}>
-              {description}
-            </Text>
-
-            <View style={[styles.infoBox, { backgroundColor: theme.card, borderColor: theme.border }]}>
-              <Text style={[styles.infoTitle, { color: '#F5A623' }]}>📅 Prochaine mise à jour</Text>
-              <Text style={[styles.infoText, { color: theme.textSecondary }]}>
-                Cette fonctionnalité sera disponible dans une prochaine version de l'application. 
-                Nous travaillons activement pour vous offrir la meilleure expérience possible.
+              <Text style={[styles.featureTitle, { color: theme.text }]}>{feature}</Text>
+              <Text style={[styles.featureDescription, { color: theme.textSecondary }]}>
+                {description}
               </Text>
-            </View>
 
-            <View style={[styles.benefitsContainer, { backgroundColor: theme.card, borderColor: theme.border }]}>
-              <Text style={[styles.benefitsTitle, { color: theme.text }]}>Ce qui vous attend :</Text>
-              <View style={styles.benefitsList}>
-                <Text style={[styles.benefitItem, { color: theme.textSecondary }]}>
-                  • Synchronisation automatique de vos données de santé
-                </Text>
-                <Text style={[styles.benefitItem, { color: theme.textSecondary }]}>
-                  • Suivi en temps réel de votre activité physique
-                </Text>
-                <Text style={[styles.benefitItem, { color: theme.textSecondary }]}>
-                  • Analyses personnalisées de vos performances
-                </Text>
-                <Text style={[styles.benefitItem, { color: theme.textSecondary }]}>
-                  • Intégration complète avec l'écosystème Apple
+              <View style={[styles.infoBox, { backgroundColor: theme.card, borderColor: theme.border }]}>
+                <Text style={[styles.infoTitle, { color: '#F5A623' }]}>📅 Prochaine mise à jour</Text>
+                <Text style={[styles.infoText, { color: theme.textSecondary }]}>
+                  Cette fonctionnalité sera disponible dans une prochaine version de l'application. 
+                  Nous travaillons activement pour vous offrir la meilleure expérience possible.
                 </Text>
               </View>
+
+              <View style={[styles.benefitsContainer, { backgroundColor: theme.card, borderColor: theme.border }]}>
+                <Text style={[styles.benefitsTitle, { color: theme.text }]}>Ce qui vous attend :</Text>
+                <View style={styles.benefitsList}>
+                  <Text style={[styles.benefitItem, { color: theme.textSecondary }]}>
+                    • Synchronisation automatique de vos données de santé
+                  </Text>
+                  <Text style={[styles.benefitItem, { color: theme.textSecondary }]}>
+                    • Suivi en temps réel de votre activité physique
+                  </Text>
+                  <Text style={[styles.benefitItem, { color: theme.textSecondary }]}>
+                    • Analyses personnalisées de vos performances
+                  </Text>
+                  <Text style={[styles.benefitItem, { color: theme.textSecondary }]}>
+                    • Intégration complète avec l'écosystème Apple
+                  </Text>
+                </View>
+              </View>
+
+              <TouchableOpacity 
+                style={[styles.notifyButton, { backgroundColor: '#F5A623' }]}
+                onPress={onClose}
+              >
+                <Text style={styles.notifyButtonText}>J'ai compris</Text>
+              </TouchableOpacity>
+
+              <Text style={[styles.footerText, { color: theme.textSecondary }]}>
+                Merci de votre patience et de votre confiance ! 🙏
+              </Text>
             </View>
-
-            <TouchableOpacity 
-              style={[styles.notifyButton, { backgroundColor: '#F5A623' }]}
-              onPress={onClose}
-            >
-              <Text style={styles.notifyButtonText}>J'ai compris</Text>
-            </TouchableOpacity>
-
-            <Text style={[styles.footerText, { color: theme.textSecondary }]}>
-              Merci de votre patience et de votre confiance ! 🙏
-            </Text>
-          </View>
+          </ScrollView>
         </View>
       </SafeAreaView>
     </Modal>
@@ -120,8 +127,13 @@ const styles = StyleSheet.create({
   placeholder: {
     width: 40,
   },
-  body: {
+  scrollContainer: {
     flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 20,
+  },
+  body: {
     padding: 20,
     alignItems: 'center',
   },
