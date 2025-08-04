@@ -6,7 +6,7 @@ import { useFocusEffect } from 'expo-router';
 import { checkSubscriptionStatus } from '@/utils/subscription';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PersistentStorage } from '@/utils/storage';
-import SubscriptionModal from '@/components/SubscriptionModal';
+import ComingSoonModal from '@/components/ComingSoonModal';
 
 const { width } = Dimensions.get('window');
 
@@ -17,7 +17,7 @@ export default function ProgresScreen() {
   const [selectedPeriod, setSelectedPeriod] = useState('Mois');
   const progressAnimation = useSharedValue(0);
   const [userData, setUserData] = useState<any>(null);
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [showComingSoonModal, setShowComingSoonModal] = useState(false);
   const [weightData, setWeightData] = useState({
     startWeight: 0,
     currentWeight: 0,
@@ -2232,7 +2232,7 @@ export default function ProgresScreen() {
               style={[styles.measurementTab, selectedMeasurementTab === 'Mensurations' && styles.activeMeasurementTab]}
               onPress={() => {
                 if (!isPremium) {
-                  setShowSubscriptionModal(true);
+                  setShowComingSoonModal(true);
                   return;
                 }
                 setSelectedMeasurementTab('Mensurations');
@@ -3371,14 +3371,12 @@ export default function ProgresScreen() {
         </View>
       </Modal>
 
-      {/* Modal d'abonnement */}
-      <SubscriptionModal
-        visible={showSubscriptionModal}
-        onClose={() => setShowSubscriptionModal(false)}
-        onSubscriptionSuccess={() => {
-          setShowSubscriptionModal(false);
-          checkUserSubscription(); // Recharger le statut d'abonnement
-        }}
+      {/* Modal Coming Soon pour Premium */}
+      <ComingSoonModal
+        visible={showComingSoonModal}
+        onClose={() => setShowComingSoonModal(false)}
+        feature="📏 Mensurations Premium"
+        description="Suivez l'évolution de vos mensurations corporelles avec des graphiques détaillés et des comparaisons avant/après."
       />
     </SafeAreaView>
   );
