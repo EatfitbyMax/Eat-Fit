@@ -105,41 +105,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       console.log('🚪 Début de la déconnexion...');
 
-      // 1. IMMÉDIATEMENT activer l'état de déconnexion (AVANT de vider l'utilisateur)
+      // 1. IMMÉDIATEMENT activer l'état de déconnexion et vider l'utilisateur
       setIsLoggingOut(true);
-      console.log('🔄 État de déconnexion activé');
-
-      // 2. Attendre un tick pour que l'état se propage dans l'AuthGuard
-      await new Promise(resolve => setTimeout(resolve, 50));
-
-      // 3. Vider l'utilisateur et le cache auth
       setUser(null);
       setIsLoading(false);
-      console.log('🔄 Utilisateur vidé du contexte');
+      console.log('🔄 État de déconnexion activé et utilisateur vidé');
 
+      // 2. Vider le cache auth
       const { logout: authLogout } = await import('@/utils/auth');
       await authLogout();
       console.log('✅ Cache auth vidé');
 
-      // 4. Navigation vers login (mais l'AuthGuard devrait déjà s'en occuper)
+      // 3. Navigation vers login de manière synchrone
       console.log('🔄 Redirection vers /auth/login');
       router.replace('/auth/login');
 
-      // 5. Attendre que tout se stabilise
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // 4. Attendre un court délai pour la stabilisation
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-      // 6. Vérification finale
-      const { getCurrentUser } = await import('@/utils/auth');
-      const checkUser = await getCurrentUser();
-      if (checkUser !== null) {
-        console.error('⚠️ ATTENTION: Utilisateur encore en cache après logout!');
-        await authLogout();
-        console.log('🔄 Cache forcé à null une seconde fois');
-      } else {
-        console.log('✅ Vérification: Aucun utilisateur en cache');
-      }
-
-      // 7. Désactiver l'état de déconnexion
+      // 5. Désactiver l'état de déconnexion
       setIsLoggingOut(false);
       console.log('✅ Déconnexion complète terminée');
 
@@ -149,12 +133,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Forcer la réinitialisation même en cas d'erreur
       setUser(null);
       setIsLoading(false);
+      setIsLoggingOut(false);
       router.replace('/auth/login');
-
-      // Désactiver l'état de déconnexion après un délai
-      setTimeout(() => {
-        setIsLoggingOut(false);
-      }, 1000);
 
       console.log('🔄 Redirection de secours vers /auth/login');
     }

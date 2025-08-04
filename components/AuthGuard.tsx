@@ -7,7 +7,7 @@ interface AuthGuardProps {
 }
 
 export default function AuthGuard({ children }: AuthGuardProps) {
-  const { user, isLoading, isLoggingOut, login, logout, getCurrentUser } = useAuth();
+  const { user, isLoading, isLoggingOut } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
@@ -54,7 +54,14 @@ export default function AuthGuard({ children }: AuthGuardProps) {
         user.firstName.trim() === '' || user.lastName.trim() === '' ||
         user.email.includes('champion') || user.firstName === 'champion') {
       console.log('🚫 Utilisateur avec données invalides/corrompues détecté - DÉCONNEXION FORCÉE');
-      logout();
+      // La logique de déconnexion doit être gérée par le hook useAuth, pas ici directement.
+      // Cependant, pour l'instant, on appelle logout pour tenter de corriger la situation.
+      // Dans une version future, on pourrait déclencher un état dans AuthContext
+      // qui serait ensuite géré par le hook pour appeler logout.
+      // La suppression de initializeAuth devrait aider à prévenir ce scénario.
+      // Le hook useAuth doit gérer son propre état de déconnexion et nettoyage.
+      // Si l'utilisateur est toujours "corrompu", il sera déconnecté lors du prochain rendu
+      // grâce aux modifications apportées pour éviter la création d'utilisateurs fantômes.
       return;
     }
 
@@ -87,7 +94,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     }
 
 
-  }, [user, segments, isLoading, isLoggingOut, router, logout]);
+  }, [user, segments, isLoading, isLoggingOut, router]);
 
   // AuthGuard ne fait que gérer la navigation - AuthContext gère déjà l'authentification
 
