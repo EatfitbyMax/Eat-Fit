@@ -116,11 +116,18 @@ export default function SecuriteConfidentialiteScreen() {
                         return;
                       }
 
+                      console.log('🗑️ Début suppression compte pour:', currentUser.email);
+
                       // Supprimer le compte via la fonction utilitaire
                       await deleteUserAccount(currentUser.id);
+                      console.log('✅ Compte supprimé côté serveur');
                       
-                      // Déconnecter l'utilisateur
+                      // Déconnecter complètement l'utilisateur (vide le cache)
                       await logout();
+                      console.log('✅ Déconnexion complète terminée');
+                      
+                      // Attendre un peu pour que tout se stabilise
+                      await new Promise(resolve => setTimeout(resolve, 500));
                       
                       Alert.alert(
                         'Compte supprimé', 
@@ -128,13 +135,14 @@ export default function SecuriteConfidentialiteScreen() {
                         [{
                           text: 'OK',
                           onPress: () => {
-                            // Rediriger vers l'écran de connexion
+                            console.log('🔄 Redirection forcée vers /auth/login');
+                            // Force la redirection vers login
                             router.replace('/auth/login');
                           }
                         }]
                       );
                     } catch (error) {
-                      console.error('Erreur suppression compte:', error);
+                      console.error('❌ Erreur suppression compte:', error);
                       Alert.alert(
                         'Erreur', 
                         'Impossible de supprimer le compte. Veuillez réessayer ou contacter le support à support@eatfitbymax.com'
