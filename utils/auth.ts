@@ -97,9 +97,25 @@ async function loadSession(): Promise<User | null> {
       return null;
     }
 
-    // Validation stricte des données utilisateur
-    if (!user.email || !user.firstName || !user.lastName || user.email.includes('champion')) {
-      console.log('❌ Données utilisateur invalides ou corrompues détectées');
+    // Validation ULTRA-STRICTE des données utilisateur
+    if (!user.email || 
+        !user.firstName || 
+        !user.lastName || 
+        !user.userType ||
+        user.firstName.trim() === '' || 
+        user.lastName.trim() === '' ||
+        user.email.includes('champion') || 
+        user.firstName === 'champion' ||
+        user.lastName === 'champion' ||
+        user.email === '' ||
+        user.firstName === 'bonjour' ||
+        user.lastName === 'bonjour') {
+      console.log('❌ REJET: Données utilisateur invalides ou corrompues détectées', {
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        userType: user.userType
+      });
       await clearSession();
       return null;
     }

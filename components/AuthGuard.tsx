@@ -12,24 +12,6 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter();
 
   React.useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        const currentUser = await getCurrentUser();
-        if (currentUser && currentUser.email && currentUser.firstName &&
-            !currentUser.email.includes('champion') && currentUser.firstName !== 'champion') {
-          login(currentUser);
-        } else if (currentUser) {
-          // Nettoyer les données corrompues
-          console.log('🧹 Nettoyage des données utilisateur corrompues');
-          await logout();
-        }
-      } catch (error) {
-        console.error('Erreur initialisation auth:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     const currentRoute = segments.join('/') || 'index';
     const isAuthRoute = currentRoute.startsWith('auth');
 
@@ -45,18 +27,6 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     // PRIORITÉ ABSOLUE 2 : Ne pas rediriger pendant le chargement
     if (isLoading) {
       console.log('🛡️ AuthGuard - En cours de chargement...');
-      // Si l'utilisateur n'est pas encore chargé, on ne fait rien
-      // Mais on doit appeler initializeAuth pour démarrer le processus
-      if (!user) {
-        initializeAuth();
-      }
-      return;
-    }
-
-    // Si l'utilisateur n'est pas encore chargé après le chargement initial (peu probable mais sécuritaire)
-    if (!user && !isLoading) {
-      console.log('🛡️ AuthGuard - Utilisateur non chargé après isLoading, initialisation...');
-      initializeAuth();
       return;
     }
 
@@ -67,25 +37,25 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     const isClientRoute = currentRoute.startsWith('(client)');
     const isCoachRoute = currentRoute.startsWith('(coach)');
 
-    // Si pas d'utilisateur connecté OU utilisateur invalide, rediriger vers login
-    if (!user || !user.email || !user.userType) {
+    // Si pas d'utilisateur connecté, rediriger vers login (SANS CRÉER D'UTILISATEUR TEMPORAIRE)
+    if (!user) {
       if (!isAuthRoute) {
-        console.log(`🔄 Redirection vers /auth/login - Utilisateur NON connecté ou invalide`);
+        console.log(`🔄 Redirection vers /auth/login - Aucun utilisateur connecté`);
         router.replace('/auth/login');
         return;
       } else {
-        console.log(`🛡️ AuthGuard - Déjà sur route auth, utilisateur non connecté - OK`);
+        console.log(`🛡️ AuthGuard - Sur route auth, pas d'utilisateur - OK`);
         return;
       }
     }
 
-    // Protection supplémentaire: vérifier que l'utilisateur a des données valides
-    if (user && (!user.firstName || user.firstName.trim() === '' || !user.lastName || user.lastName.trim() === '')) {
-      console.log('🚫 Utilisateur avec données incomplètes détecté, redirection vers login');
-      if (!isAuthRoute) {
-        router.replace('/auth/login');
-        return;
-      }
+    // Validation STRICTE des données utilisateur - REJETER tout utilisateur invalide
+    if (!user.email || !user.userType || !user.firstName || !user.lastName ||
+        user.firstName.trim() === '' || user.lastName.trim() === '' ||
+        user.email.includes('champion') || user.firstName === 'champion') {
+      console.log('🚫 Utilisateur avec données invalides/corrompues détecté - DÉCONNEXION FORCÉE');
+      logout();
+      return;
     }
 
     // Si utilisateur connecté ET VALIDE, gérer les redirections normales
@@ -117,7 +87,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     }
 
 
-  }, [user, segments, isLoading, isLoggingOut, router, login, logout, getCurrentUser]);
+  }, [user, segments, isLoading, isLoggingOut, router, logout]);
 
   // AuthGuard ne fait que gérer la navigation - AuthContext gère déjà l'authentification
 

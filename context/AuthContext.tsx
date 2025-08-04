@@ -30,19 +30,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const currentUser = await getCurrentUser();
 
         if (isMounted) {
-          if (currentUser && currentUser.email && currentUser.firstName && currentUser.lastName) {
-            // Vérifier que l'utilisateur a des données valides
-            if (currentUser.firstName.trim() !== '' && currentUser.lastName.trim() !== '') {
-              setUser(currentUser);
-              console.log('✅ Utilisateur connecté (session restaurée):', currentUser.email);
-            } else {
-              console.log('🚫 Utilisateur avec données invalides, nettoyage de la session');
+          // Validation ULTRA-STRICTE - ne jamais accepter d'utilisateur invalide
+          if (currentUser && 
+              currentUser.email && 
+              currentUser.firstName && 
+              currentUser.lastName && 
+              currentUser.userType &&
+              currentUser.firstName.trim() !== '' && 
+              currentUser.lastName.trim() !== '' &&
+              !currentUser.email.includes('champion') && 
+              currentUser.firstName !== 'champion') {
+            
+            setUser(currentUser);
+            console.log('✅ Utilisateur valide connecté (session restaurée):', currentUser.email);
+          } else {
+            // SI L'UTILISATEUR EST INVALIDE, NETTOYER IMMÉDIATEMENT
+            if (currentUser) {
+              console.log('🚫 Utilisateur avec données invalides/corrompues détecté - NETTOYAGE IMMÉDIAT');
               const { logout: authLogout } = await import('@/utils/auth');
               await authLogout();
-              setUser(null);
+            } else {
+              console.log('📱 Aucune session trouvée');
             }
-          } else {
-            console.log('📱 Aucune session valide trouvée, redirection vers login');
             setUser(null);
           }
         }
@@ -66,16 +75,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback((userData: User) => {
-    // Validation stricte des données utilisateur
-    if (!userData || !userData.email || !userData.firstName || !userData.lastName ||
-        userData.email.includes('champion') || userData.firstName === 'champion') {
-      console.error('❌ Tentative de connexion avec des données utilisateur invalides');
+    // Validation ULTRA-STRICTE - rejeter tout utilisateur invalide
+    if (!userData || 
+        !userData.email || 
+        !userData.firstName || 
+        !userData.lastName || 
+        !userData.userType ||
+        userData.firstName.trim() === '' || 
+        userData.lastName.trim() === '' ||
+        userData.email.includes('champion') || 
+        userData.firstName === 'champion' ||
+        userData.lastName === 'champion') {
+      console.error('❌ REJET: Tentative de connexion avec des données utilisateur invalides', {
+        hasEmail: !!userData?.email,
+        hasFirstName: !!userData?.firstName,
+        hasLastName: !!userData?.lastName,
+        hasUserType: !!userData?.userType,
+        firstNameContent: userData?.firstName,
+        lastNameContent: userData?.lastName
+      });
       return;
     }
 
     setUser(userData);
-    // setIsAuthenticated(true); // Note: setIsAuthenticated is not defined in the original code. Assuming it was a typo or intended for another part.
-    console.log('✅ Utilisateur connecté via contexte:', userData.email);
+    console.log('✅ Utilisateur VALIDE connecté via contexte:', userData.email);
   }, []);
 
   const logout = useCallback(async () => {
