@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Modal, Alert } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import FoodSearchModal from '@/components/FoodSearchModal';
-import SubscriptionModal from '@/components/SubscriptionModal';
+import ComingSoonModal from '@/components/ComingSoonModal';
 import { FoodProduct, OpenFoodFactsService, FoodEntry } from '@/utils/openfoodfacts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getCurrentUser } from '@/utils/auth';
@@ -13,7 +13,7 @@ function NutritionScreen() {
   const [selectedTab, setSelectedTab] = useState('Journal');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [hasNutritionProgram, setHasNutritionProgram] = useState(false); // Assuming default is no access
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [showComingSoonModal, setShowComingSoonModal] = useState(false);
   const [showFoodModal, setShowFoodModal] = useState(false);
   const [selectedMealType, setSelectedMealType] = useState<string>('');
   const [foodEntries, setFoodEntries] = useState<FoodEntry[]>([]);
@@ -291,7 +291,7 @@ function NutritionScreen() {
 
   const handleTabPress = (tabName: string) => {
     if (tabName === 'Programme' && !hasNutritionProgram) {
-      setShowSubscriptionModal(true);
+      setShowComingSoonModal(true);
     } else {
       setSelectedTab(tabName);
     }
@@ -1393,15 +1393,12 @@ function NutritionScreen() {
           )}
         </View>
 
-        {/* Modal d'abonnement */}
-        <SubscriptionModal
-          visible={showSubscriptionModal}
-          onClose={() => setShowSubscriptionModal(false)}
-          onSubscribe={(planId) => {
-            console.log('Plan sélectionné:', planId);
-            // Vous pouvez ajouter ici la logique pour gérer l'abonnement
-            setShowSubscriptionModal(false);
-          }}
+        {/* Modal Coming Soon pour Programme Nutrition */}
+        <ComingSoonModal
+          visible={showComingSoonModal}
+          onClose={() => setShowComingSoonModal(false)}
+          feature="🍽️ Programme Nutrition Premium"
+          description="Accédez à des programmes nutritionnels personnalisés créés par nos coaches certifiés pour atteindre vos objectifs plus rapidement."
         />
 
         {/* Modal de recherche d'aliments */}
