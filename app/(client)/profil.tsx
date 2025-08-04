@@ -982,8 +982,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   checkmark: {
-    fontSize: 1```text
-6,
+    fontSize: 16,
     color: '#FFFFFF',
     fontWeight: 'bold',
   },
