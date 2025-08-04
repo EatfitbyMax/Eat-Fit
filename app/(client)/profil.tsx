@@ -18,7 +18,6 @@ import { logout, getCurrentUser } from '@/utils/auth';
 import { IntegrationsManager, IntegrationStatus } from '@/utils/integrations';
 import { checkSubscriptionStatus } from '@/utils/subscription';
 import { InAppPurchaseService } from '@/utils/inAppPurchases';
-import SubscriptionModal from '@/components/SubscriptionModal';
 import { allSports } from '@/utils/sportPrograms';
 import ComingSoonModal from '@/components/ComingSoonModal';
 
@@ -34,8 +33,8 @@ export default function ProfilScreen() {
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
   const [isPremium, setIsPremium] = useState(false);
   const [currentSubscription, setCurrentSubscription] = useState<any>(null);
-  const [subscriptionModalVisible, setSubscriptionModalVisible] = useState(false);
   const [showComingSoonModal, setShowComingSoonModal] = useState(false);
+  const [showPremiumComingSoonModal, setShowPremiumComingSoonModal] = useState(false);
 
   const availableGoals = [
     'Perdre du poids',
@@ -474,7 +473,7 @@ export default function ProfilScreen() {
                 {/* CTA Button */}
                 <TouchableOpacity 
                   style={styles.compactUpgradeButton}
-                  onPress={() => setSubscriptionModalVisible(true)}
+                  onPress={() => setShowPremiumComingSoonModal(true)}
                   activeOpacity={0.8}
                 >
                   <LinearGradient
@@ -613,21 +612,18 @@ export default function ProfilScreen() {
         </View>
       </ScrollView>
 
-      <SubscriptionModal
-        visible={subscriptionModalVisible}
-        onClose={() => setSubscriptionModalVisible(false)}
-        onSubscribe={() => {
-          setSubscriptionModalVisible(false);
-          loadSubscriptionStatus();
-          loadUserData();
-        }}
-      />
-
       <ComingSoonModal
         visible={showComingSoonModal}
         onClose={() => setShowComingSoonModal(false)}
         feature="🍎 Connexion Apple Health"
         description="Synchronisez automatiquement vos données de santé et fitness avec EatFitByMax pour un suivi personnalisé optimal."
+      />
+
+      <ComingSoonModal
+        visible={showPremiumComingSoonModal}
+        onClose={() => setShowPremiumComingSoonModal(false)}
+        feature="💎 Plans Premium"
+        description="Débloquez votre coach personnel 24h/24, des programmes ultra-personnalisés et tous nos services premium pour atteindre vos objectifs plus rapidement."
       />
     </SafeAreaView>
   );

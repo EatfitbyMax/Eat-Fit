@@ -13,7 +13,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { SUBSCRIPTION_PLANS, checkAppointmentLimit, getAppointmentLimits, PaymentService } from '../../utils/payments';
-import SubscriptionModal from '../../components/SubscriptionModal';
+import ComingSoonModal from '@/components/ComingSoonModal';
 import { useNavigation } from '@react-navigation/native';
 
 interface Message {
@@ -448,7 +448,7 @@ export default function CoachScreen() {
   const [messageText, setMessageText] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isPremium, setIsPremium] = useState(false);
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [showPremiumComingSoonModal, setShowPremiumComingSoonModal] = useState(false);
   const [coachInfo, setCoachInfo] = useState<CoachInfo>({
     prenom: 'Maxime',
     nom: 'Renard',
@@ -475,7 +475,7 @@ export default function CoachScreen() {
   // Afficher la modal d'abonnement immédiatement pour les utilisateurs FREE
   useEffect(() => {
     if (currentUser && !isPremium) {
-      setShowSubscriptionModal(true);
+      setShowPremiumComingSoonModal(true);
     }
   }, [currentUser, isPremium]);
 
@@ -483,7 +483,7 @@ export default function CoachScreen() {
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
       if (currentUser && !isPremium) {
-        setShowSubscriptionModal(true);
+        setShowPremiumComingSoonModal(true);
       }
     });
 
@@ -612,7 +612,7 @@ export default function CoachScreen() {
 
   const sendMessage = async () => {
     if (!isPremium) {
-      setShowSubscriptionModal(true);
+      setShowPremiumComingSoonModal(true);
       return;
     }
 
@@ -805,7 +805,7 @@ export default function CoachScreen() {
   };
 
   const handleCloseSubscriptionModal = () => {
-    setShowSubscriptionModal(false);
+    setShowPremiumComingSoonModal(false);
     // Si l'utilisateur n'est pas Premium, le rediriger vers l'accueil avec un petit délai
     if (!isPremium) {
       setTimeout(() => {
@@ -860,7 +860,7 @@ export default function CoachScreen() {
                           appointmentLimitCheck?.reason || 'Vous ne pouvez pas prendre de rendez-vous.',
                           [
                             { text: 'OK', style: 'default' },
-                            { text: 'Voir les abonnements', onPress: () => setShowSubscriptionModal(true) }
+                            { text: 'Voir les abonnements', onPress: () => setShowPremiumComingSoonModal(true) }
                           ]
                         );
                         return;
@@ -869,7 +869,7 @@ export default function CoachScreen() {
                       if (isPremium) {
                         setShowAppointmentModal(true);
                       } else {
-                        setShowSubscriptionModal(true);
+                        setShowPremiumComingSoonModal(true);
                       }
                     }}
                   >
@@ -925,7 +925,8 @@ export default function CoachScreen() {
                     renderItem={renderMessage}
                     keyExtractor={(item) => item.id}
                     style={styles.messagesList}
-                    contentContainerStyle={styles.messagesListContent}
+                    ```text
+contentContainerStyle={styles.messagesListContent}
                     showsVerticalScrollIndicator={false}
                     inverted={false}
                     keyboardShouldPersistTaps="handled"
@@ -1020,11 +1021,13 @@ export default function CoachScreen() {
         </View>
         </KeyboardAvoidingView>
 
-        {/* Modal d'abonnement */}
-        <SubscriptionModal
-          visible={showSubscriptionModal}
-          onClose={handleCloseSubscriptionModal}
-        />
+        {/* Modal Coming Soon pour Premium */}
+      <ComingSoonModal
+        visible={showPremiumComingSoonModal}
+        onClose={() => setShowPremiumComingSoonModal(false)}
+        feature="💎 Plans Premium"
+        description="Débloquez votre coach personnel 24h/24, des programmes ultra-personnalisés et tous nos services premium pour atteindre vos objectifs plus rapidement."
+      />
 
         {/* Modal de prise de rendez-vous */}
         <AppointmentModal 

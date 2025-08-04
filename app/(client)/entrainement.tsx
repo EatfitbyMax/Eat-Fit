@@ -9,7 +9,7 @@ import { getUserData, PersistentStorage } from '@/utils/storage';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { getRecommendedPrograms, getSportEmoji, getSportName, WorkoutProgram } from '@/utils/sportPrograms';
-import SubscriptionModal from '@/components/SubscriptionModal';
+import ComingSoonModal from '@/components/ComingSoonModal';
 
 export default function EntrainementScreen() {
   const router = useRouter();
@@ -1020,8 +1020,8 @@ export default function EntrainementScreen() {
         </View>
       )}
 
-      {/* Modal d'abonnement */}
-      <SubscriptionModal
+      {/* Modal Coming Soon pour Premium */}
+      <ComingSoonModal
         visible={showSubscriptionModal}
         onClose={() => setShowSubscriptionModal(false)}
         onSubscribe={(planId) => {
