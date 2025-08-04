@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -21,6 +20,7 @@ import { checkSubscriptionStatus } from '@/utils/subscription';
 import { InAppPurchaseService } from '@/utils/inAppPurchases';
 import SubscriptionModal from '@/components/SubscriptionModal';
 import { allSports } from '@/utils/sportPrograms';
+import ComingSoonModal from '@/components/ComingSoonModal';
 
 export default function ProfilScreen() {
   const router = useRouter();
@@ -35,6 +35,7 @@ export default function ProfilScreen() {
   const [isPremium, setIsPremium] = useState(false);
   const [currentSubscription, setCurrentSubscription] = useState<any>(null);
   const [subscriptionModalVisible, setSubscriptionModalVisible] = useState(false);
+  const [showComingSoonModal, setShowComingSoonModal] = useState(false);
 
   const availableGoals = [
     'Perdre du poids',
@@ -139,86 +140,7 @@ export default function ProfilScreen() {
   };
 
   const handleAppleHealthToggle = async () => {
-    if (!user) {
-      Alert.alert("Erreur", "Utilisateur non connecté");
-      return;
-    }
-
-    if (isLoading) return; // Éviter les double-clics
-
-    try {
-      setIsLoading(true);
-
-      if (integrationStatus.appleHealth.connected) {
-        // Déconnexion
-        Alert.alert(
-          "Déconnecter Apple Health",
-          "Vos données ne seront plus synchronisées avec EatFitByMax.",
-          [
-            { 
-              text: "Annuler", 
-              style: "cancel", 
-              onPress: () => setIsLoading(false) 
-            },
-            { 
-              text: "Déconnecter", 
-              style: "destructive",
-              onPress: async () => {
-                try {
-                  await IntegrationsManager.disconnectAppleHealth(user.id);
-                  setIntegrationStatus(prev => ({
-                    ...prev,
-                    appleHealth: { connected: false, lastSync: null, permissions: [] }
-                  }));
-                  Alert.alert("Succès", "Apple Health déconnecté");
-                } catch (error) {
-                  console.error("Erreur déconnexion:", error);
-                  Alert.alert("Erreur", "Impossible de déconnecter Apple Health");
-                } finally {
-                  setIsLoading(false);
-                }
-              }
-            }
-          ]
-        );
-      } else {
-        // Connexion directe - laisse Apple Health gérer les permissions
-        try {
-          const success = await IntegrationsManager.connectAppleHealth(user.id);
-          if (success) {
-            await loadIntegrationStatus();
-            Alert.alert(
-              "Succès", 
-              "Apple Health connecté avec succès. Vos données de santé seront synchronisées avec EatFitByMax."
-            );
-          } else {
-            Alert.alert(
-              "Connexion échouée", 
-              "La connexion à Apple Health a échoué. Assurez-vous d'autoriser l'accès aux données de santé."
-            );
-          }
-        } catch (error) {
-          console.error("Erreur connexion Apple Health:", error);
-          if (error.message?.includes('disponible')) {
-            Alert.alert(
-              "Apple Health non disponible", 
-              "Apple Health n'est disponible que sur les appareils iOS avec l'application Santé installée."
-            );
-          } else {
-            Alert.alert(
-              "Erreur de connexion", 
-              "Impossible de se connecter à Apple Health. Veuillez réessayer."
-            );
-          }
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    } catch (error) {
-      console.error("Erreur toggle Apple Health:", error);
-      Alert.alert("Erreur", "Une erreur est survenue lors de la connexion à Apple Health");
-      setIsLoading(false);
-    }
+    setShowComingSoonModal(true);
   };
 
   const handleStravaToggle = async () => {
@@ -314,7 +236,7 @@ export default function ProfilScreen() {
     }
   };
 
-  
+
 
   const handleLogout = () => {
     Alert.alert(
@@ -587,8 +509,8 @@ export default function ProfilScreen() {
               onPress={() => handleAppleHealthToggle()}
               disabled={isLoading}
             >
-              <Text style={[styles.connectButtonText, integrationStatus.appleHealth.connected && styles.connectedButtonText]}>
-                {integrationStatus.appleHealth.connected ? 'Connecté' : 'Connecter'}
+              <Text style={[styles.connectButtonText]}>
+                Bientôt disponible
               </Text>
             </TouchableOpacity>
           </View>
@@ -700,7 +622,13 @@ export default function ProfilScreen() {
           loadUserData();
         }}
       />
-       
+
+      <ComingSoonModal
+        visible={showComingSoonModal}
+        onClose={() => setShowComingSoonModal(false)}
+        feature="🍎 Connexion Apple Health"
+        description="Synchronisez automatiquement vos données de santé et fitness avec EatFitByMax pour un suivi personnalisé optimal."
+      />
     </SafeAreaView>
   );
 }
@@ -1058,7 +986,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   checkmark: {
-    fontSize: 16,
+    fontSize: 1```text
+6,
     color: '#FFFFFF',
     fontWeight: 'bold',
   },
@@ -1328,5 +1257,5 @@ const styles = StyleSheet.create({
     color: '#000000',
     marginLeft: 8,
   },
-  
+
 });
