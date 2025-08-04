@@ -59,11 +59,31 @@ export default function SecuriteConfidentialiteScreen() {
         {
           text: 'Désactiver',
           style: 'destructive',
-          onPress: () => {
-            Alert.alert(
-              'Compte désactivé', 
-              'Votre compte a été temporairement désactivé. Vous pouvez le réactiver à tout moment en vous reconnectant.'
-            );
+          onPress: async () => {
+            try {
+              // Déconnecter l'utilisateur
+              await logout();
+              
+              Alert.alert(
+                'Compte désactivé', 
+                'Votre compte a été temporairement désactivé. Vous pouvez le réactiver à tout moment en vous reconnectant.',
+                [
+                  {
+                    text: 'OK',
+                    onPress: () => {
+                      // Rediriger vers la page de connexion
+                      router.replace('/auth/login');
+                    }
+                  }
+                ]
+              );
+            } catch (error) {
+              console.error('Erreur désactivation compte:', error);
+              Alert.alert(
+                'Erreur', 
+                'Impossible de désactiver le compte. Veuillez réessayer.'
+              );
+            }
           }
         }
       ]
