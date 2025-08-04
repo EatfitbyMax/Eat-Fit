@@ -30,9 +30,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const currentUser = await getCurrentUser();
 
         if (isMounted) {
-          if (currentUser && currentUser.email) {
-            setUser(currentUser);
-            console.log('✅ Utilisateur connecté (session restaurée):', currentUser.email);
+          if (currentUser && currentUser.email && currentUser.firstName && currentUser.lastName) {
+            // Vérifier que l'utilisateur a des données valides
+            if (currentUser.firstName.trim() !== '' && currentUser.lastName.trim() !== '') {
+              setUser(currentUser);
+              console.log('✅ Utilisateur connecté (session restaurée):', currentUser.email);
+            } else {
+              console.log('🚫 Utilisateur avec données invalides, nettoyage de la session');
+              const { logout: authLogout } = await import('@/utils/auth');
+              await authLogout();
+              setUser(null);
+            }
           } else {
             console.log('📱 Aucune session valide trouvée, redirection vers login');
             setUser(null);
@@ -111,12 +119,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       setIsLoading(false);
       router.replace('/auth/login');
-      
+
       // Désactiver l'état de déconnexion après un délai
       setTimeout(() => {
         setIsLoggingOut(false);
       }, 1000);
-      
+
       console.log('🔄 Redirection de secours vers /auth/login');
     }
   }, [router]);

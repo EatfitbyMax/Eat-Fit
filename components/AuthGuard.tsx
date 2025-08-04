@@ -49,6 +49,15 @@ export default function AuthGuard({ children }: AuthGuardProps) {
       }
     }
 
+    // Protection supplémentaire: vérifier que l'utilisateur a des données valides
+    if (user && (!user.firstName || user.firstName.trim() === '' || !user.lastName || user.lastName.trim() === '')) {
+      console.log('🚫 Utilisateur avec données incomplètes détecté, redirection vers login');
+      if (!isAuthRoute) {
+        router.replace('/auth/login');
+        return;
+      }
+    }
+
     // Si utilisateur connecté ET VALIDE, gérer les redirections normales
     if (isAuthRoute) {
       // Rediriger depuis les pages auth vers l'interface appropriée
