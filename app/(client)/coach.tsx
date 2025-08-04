@@ -925,8 +925,7 @@ export default function CoachScreen() {
                     renderItem={renderMessage}
                     keyExtractor={(item) => item.id}
                     style={styles.messagesList}
-                    ```text
-contentContainerStyle={styles.messagesListContent}
+                    contentContainerStyle={styles.messagesListContent}
                     showsVerticalScrollIndicator={false}
                     inverted={false}
                     keyboardShouldPersistTaps="handled"
