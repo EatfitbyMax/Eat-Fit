@@ -7,14 +7,32 @@ interface AuthGuardProps {
 }
 
 export default function AuthGuard({ children }: AuthGuardProps) {
-  const { user, isLoading, isLoggingOut } = useAuth();
+  const { user, isLoading, isLoggingOut, login, logout, getCurrentUser } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
   React.useEffect(() => {
+    const initializeAuth = async () => {
+      try {
+        const currentUser = await getCurrentUser();
+        if (currentUser && currentUser.email && currentUser.firstName &&
+            !currentUser.email.includes('champion') && currentUser.firstName !== 'champion') {
+          login(currentUser);
+        } else if (currentUser) {
+          // Nettoyer les données corrompues
+          console.log('🧹 Nettoyage des données utilisateur corrompues');
+          await logout();
+        }
+      } catch (error) {
+        console.error('Erreur initialisation auth:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     const currentRoute = segments.join('/') || 'index';
     const isAuthRoute = currentRoute.startsWith('auth');
-    
+
     // PRIORITÉ ABSOLUE 1 : Si déconnexion en cours, forcer immédiatement vers login
     if (isLoggingOut) {
       console.log('🛡️ AuthGuard - DÉCONNEXION EN COURS - Force redirection vers /auth/login');
@@ -27,6 +45,18 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     // PRIORITÉ ABSOLUE 2 : Ne pas rediriger pendant le chargement
     if (isLoading) {
       console.log('🛡️ AuthGuard - En cours de chargement...');
+      // Si l'utilisateur n'est pas encore chargé, on ne fait rien
+      // Mais on doit appeler initializeAuth pour démarrer le processus
+      if (!user) {
+        initializeAuth();
+      }
+      return;
+    }
+
+    // Si l'utilisateur n'est pas encore chargé après le chargement initial (peu probable mais sécuritaire)
+    if (!user && !isLoading) {
+      console.log('🛡️ AuthGuard - Utilisateur non chargé après isLoading, initialisation...');
+      initializeAuth();
       return;
     }
 
@@ -86,8 +116,8 @@ export default function AuthGuard({ children }: AuthGuardProps) {
       console.log('🛡️ AuthGuard - Accès autorisé pour utilisateur connecté');
     }
 
-    
-  }, [user, segments, isLoading, isLoggingOut, router]);
+
+  }, [user, segments, isLoading, isLoggingOut, router, login, logout, getCurrentUser]);
 
   // AuthGuard ne fait que gérer la navigation - AuthContext gère déjà l'authentification
 

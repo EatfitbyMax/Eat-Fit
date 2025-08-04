@@ -66,7 +66,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback((userData: User) => {
+    // Validation stricte des données utilisateur
+    if (!userData || !userData.email || !userData.firstName || !userData.lastName ||
+        userData.email.includes('champion') || userData.firstName === 'champion') {
+      console.error('❌ Tentative de connexion avec des données utilisateur invalides');
+      return;
+    }
+
     setUser(userData);
+    // setIsAuthenticated(true); // Note: setIsAuthenticated is not defined in the original code. Assuming it was a typo or intended for another part.
     console.log('✅ Utilisateur connecté via contexte:', userData.email);
   }, []);
 
