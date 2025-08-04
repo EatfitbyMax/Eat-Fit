@@ -1,0 +1,83 @@
+env: load .env.production .env
+env: export EXPO_PUBLIC_STRAVA_CLIENT_ID EXPO_PUBLIC_STRAVA_CLIENT_SECRET EXPO_PUBLIC_CLARIFAI_API_KEY EXPO_PUBLIC_GOOGLE_VISION_API_KEY EXPO_PUBLIC_EMAILJS_SERVICE_ID EXPO_PUBLIC_EMAILJS_TEMPLATE_ID EXPO_PUBLIC_EMAILJS_PUBLIC_KEY EXPO_PUBLIC_API_URL EXPO_PUBLIC_VPS_URL EXPO_PUBLIC_DEV_SERVER_URL EXPO_PUBLIC_APP_STORE_URL EXPO_PUBLIC_SUPPORT_EMAIL
+Starting Metro Bundler
+iOS node_modules/expo-router/entry.js ▓▓▓▓▓▓░░░░░░░░░░ 39.7% (400/635)
+iOS node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 90.9% (1433/1503)
+iOS Bundling failed 6060ms node_modules/expo-router/entry.js (1611 modules)
+SyntaxError: /Users/expo/workingdir/build/app/(client)/coach.tsx: Unexpected token (928:20)
+
+[0m [90m 926 |[39m                     keyExtractor[33m=[39m{(item) [33m=>[39m item[33m.[39mid}
+ [90m 927 |[39m                     style[33m=[39m{styles[33m.[39mmessagesList}
+[31m[1m>[22m[39m[90m 928 |[39m                     [32m``[39m[32m`text[39m
+ [90m     |[39m                     [31m[1m^[22m[39m
+ [90m 929 |[39m [32mcontentContainerStyle={styles.messagesListContent}[39m
+ [90m 930 |[39m [32m                    showsVerticalScrollIndicator={false}[39m
+ [90m 931 |[39m [32m                    inverted={false}[39m[0m
+SyntaxError: SyntaxError: /Users/expo/workingdir/build/app/(client)/coach.tsx: Unexpected token (928:20)
+
+[0m [90m 926 |[39m                     keyExtractor[33m=[39m{(item) [33m=>[39m item[33m.[39mid}
+ [90m 927 |[39m                     style[33m=[39m{styles[33m.[39mmessagesList}
+[31m[1m>[22m[39m[90m 928 |[39m                     [32m``[39m[32m`text[39m
+ [90m     |[39m                     [31m[1m^[22m[39m
+ [90m 929 |[39m [32mcontentContainerStyle={styles.messagesListContent}[39m
+ [90m 930 |[39m [32m                    showsVerticalScrollIndicator={false}[39m
+ [90m 931 |[39m [32m                    inverted={false}[39m[0m
+SyntaxError: /Users/expo/workingdir/build/app/(client)/coach.tsx: Unexpected token (928:20)
+
+[0m [90m 926 |[39m                     keyExtractor[33m=[39m{(item) [33m=>[39m item[33m.[39mid}
+ [90m 927 |[39m                     style[33m=[39m{styles[33m.[39mmessagesList}
+[31m[1m>[22m[39m[90m 928 |[39m                     [32m``[39m[32m`text[39m
+ [90m     |[39m                     [31m[1m^[22m[39m
+ [90m 929 |[39m [32mcontentContainerStyle={styles.messagesListContent}[39m
+ [90m 930 |[39m [32m                    showsVerticalScrollIndicator={false}[39m
+ [90m 931 |[39m [32m                    inverted={false}[39m[0m
+    at constructor (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:367:19)
+    at TypeScriptParserMixin.raise (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:6627:19)
+    at TypeScriptParserMixin.unexpected (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:6647:16)
+    at TypeScriptParserMixin.jsxParseIdentifier (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:4599:12)
+    at TypeScriptParserMixin.jsxParseNamespacedName (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:4606:23)
+    at TypeScriptParserMixin.jsxParseAttribute (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:4682:22)
+    at TypeScriptParserMixin.jsxParseOpeningElementAfterName (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:4697:28)
+    at TypeScriptParserMixin.jsxParseOpeningElementAfterName (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:10062:18)
+    at TypeScriptParserMixin.jsxParseOpeningElementAt (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:4692:17)
+    at TypeScriptParserMixin.jsxParseElementAt (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:4716:33)
+    at TypeScriptParserMixin.jsxParseElementAt (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:4728:32)
+    at TypeScriptParserMixin.jsxParseElement (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:4779:17)
+    at TypeScriptParserMixin.parseExprAtom (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:4789:19)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:11076:23)
+    at TypeScriptParserMixin.parseUpdate (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:11061:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:11041:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:9852:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:10894:61)
+    at TypeScriptParserMixin.parseExprOps (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:10899:23)
+    at TypeScriptParserMixin.parseMaybeConditional (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:10876:23)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:10826:21)
+    at /Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:9790:39
+    at TypeScriptParserMixin.tryParse (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:6935:20)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:9790:18)
+    at /Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:10795:39
+    at TypeScriptParserMixin.allowInAnd (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:12427:12)
+    at TypeScriptParserMixin.parseMaybeAssignAllowIn (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:10795:17)
+    at TypeScriptParserMixin.parseMaybeAssignAllowInOrVoidPattern (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:12494:17)
+    at TypeScriptParserMixin.parseParenAndDistinguishExpression (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:11674:28)
+    at TypeScriptParserMixin.parseExprAtom (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:11326:23)
+    at TypeScriptParserMixin.parseExprAtom (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:4794:20)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:11076:23)
+    at TypeScriptParserMixin.parseUpdate (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:11061:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:11041:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:9852:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:10894:61)
+    at TypeScriptParserMixin.parseExprOps (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:10899:23)
+    at TypeScriptParserMixin.parseMaybeConditional (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:10876:23)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:10826:21)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:9801:20)
+    at /Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:10795:39
+    at TypeScriptParserMixin.allowInAnd (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:12427:12)
+    at TypeScriptParserMixin.parseMaybeAssignAllowIn (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:10795:17)
+    at TypeScriptParserMixin.parseConditional (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:10886:30)
+    at TypeScriptParserMixin.parseConditional (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:9626:18)
+    at TypeScriptParserMixin.parseMaybeConditional (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:10880:17)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:10826:21)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:9801:20)
+    at TypeScriptParserMixin.parseExpressionBase (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:10779:23)
+    at /Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:10775:39
