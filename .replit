@@ -1,2 +1,18 @@
+modules = ["nodejs-20"]
 [deployment]
 run = ["sh", "-c", "cd server && PORT=5000 node server.js"]
+
+[workflows]
+runButton = "Test Flight"
+
+[[workflows.workflow]]
+name = "Test Flight"
+mode = "sequential"
+author = 42598128
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "eas build --platform ios --profile production"
+
+[nix]
+packages = ["openssh"]
