@@ -685,9 +685,13 @@ app.post('/api/strava/exchange-token', async (req, res) => {
       return res.status(400).json({ error: 'Code et userId requis' });
     }
 
-    // Vérifier la configuration Strava
-    if (!process.env.STRAVA_CLIENT_ID || !process.env.STRAVA_CLIENT_SECRET) {
+    // Vérifier la configuration Strava (essayer différentes variables d'environnement)
+    const stravaClientId = process.env.STRAVA_CLIENT_ID || process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID;
+    const stravaClientSecret = process.env.STRAVA_CLIENT_SECRET || process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET;
+    
+    if (!stravaClientId || !stravaClientSecret) {
       console.error('❌ Configuration Strava manquante sur le serveur');
+      console.error('Variables disponibles:', Object.keys(process.env).filter(k => k.includes('STRAVA')));
       return res.status(500).json({ error: 'Configuration Strava manquante sur le serveur' });
     }
 
@@ -700,8 +704,8 @@ app.post('/api/strava/exchange-token', async (req, res) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        client_id: process.env.STRAVA_CLIENT_ID,
-        client_secret: process.env.STRAVA_CLIENT_SECRET,
+        client_id: stravaClientId,
+        client_secret: stravaClientSecret,
         code: code,
         grant_type: 'authorization_code'
       })
