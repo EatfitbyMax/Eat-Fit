@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring } from 'react-native-reanimated';
 import { useFocusEffect } from 'expo-router';
 import { checkSubscriptionStatus } from '@/utils/subscription';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import { PersistentStorage } from '@/utils/storage';
 import ComingSoonModal from '@/components/ComingSoonModal';
 
@@ -142,7 +142,7 @@ export default function ProgresScreen() {
         // Charger les données de poids depuis le serveur VPS
         let saved = null;
         try {
-          saved = await PersistentStorage.getUserWeight(user.id);
+          saved = await PersistentStorage.getWeightData(user.id);
           console.log('✅ Données de poids chargées depuis le serveur VPS:', saved);
         } catch (serverError) {
           console.log('📱 Erreur serveur, création de nouvelles données:', serverError);
@@ -228,16 +228,7 @@ export default function ProgresScreen() {
       };
 
       if (userData?.id) {
-        const response = await fetch(`https://eatfitbymax.cloud/api/weight/${userData.id}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(validatedData)
-        });
-
-        if (!response.ok) {
-          throw new Error('Erreur sauvegarde données poids');
-        }
-
+        await PersistentStorage.saveWeightData(userData.id, validatedData);
         console.log('✅ Données de poids sauvegardées sur le serveur VPS');
       }
     } catch (error) {
@@ -367,8 +358,7 @@ export default function ProgresScreen() {
             await PersistentStorage.saveUsers(users);
           }
 
-          // Mettre à jour l'utilisateur local
-          await AsyncStorage.setItem('currentUser', JSON.stringify(updatedUser));
+          // Pas besoin de sauvegarde locale - tout est géré par le serveur VPS
           setUserData(updatedUser);
 
           console.log('✅ Objectif sauvegardé dans le profil utilisateur:', target);
@@ -399,47 +389,25 @@ export default function ProgresScreen() {
   const loadMensurationData = async () => {
     try {
       if (userData) {
-        const mensurationDataString = await AsyncStorage.getItem(`mensuration_data_${userData.id}`);
-        if (mensurationDataString) {
-          const saved = JSON.parse(mensurationDataString);
+        const saved = await PersistentStorage.getMensurationData(userData.id);
+        if (saved) {
           setMensurationData(saved);
         }
       }
     } catch (error) {
-      console.error('Erreur chargement données mensurations:', error);
+      console.error('Erreur chargement données mensurations depuis VPS:', error);
     }
   };
 
   const saveMensurationData = async (newData: any) => {
     try {
       if (userData) {
-        // Sauvegarder localement d'abord
-        await AsyncStorage.setItem(`mensuration_data_${userData.id}`, JSON.stringify(newData));
-
-        // Sauvegarder sur le serveur VPS
-        try {
-          const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
-          const response = await fetch(`${VPS_URL}/api/mensurations/${userData.id}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(newData),
-          });
-
-          if (response.ok) {
-            console.log('Données de mensurations sauvegardées sur le serveur VPS');
-          } else {
-            console.warn('Échec sauvegarde mensurations sur serveur VPS, données conservées localement');
-          }
-        } catch (serverError) {
-          console.warn('Erreur serveur VPS mensurations:', serverError);
-        }
-
+        await PersistentStorage.saveMensurationData(userData.id, newData);
         setMensurationData(newData);
+        console.log('Données de mensurations sauvegardées sur le serveur VPS');
       }
     } catch (error) {
-      console.error('Erreur sauvegarde données mensurations:', error);
+      console.error('Erreur sauvegarde données mensurations sur VPS:', error);
     }
   };
 

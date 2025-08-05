@@ -213,20 +213,15 @@ export default function ProfilScreen() {
         return;
       }
 
-      // Importer PersistentStorage
-      const { PersistentStorage } = require('@/utils/storage');
+      // Importer PersistentStorage (ceci devrait être géré plus haut ou par un context global)
+      // Pour l'instant, on le garde ici pour le contexte de la modification demandée.
+      const { updateUserData } = require('@/utils/user'); // Supposons que cette fonction existe pour mettre à jour les données utilisateur sur le serveur
 
-      // Récupérer les utilisateurs et mettre à jour
-      const users = await PersistentStorage.getUsers();
-      const userIndex = users.findIndex((u: any) => u.email === currentUser.email);
-
-      if (userIndex !== -1) {
-        users[userIndex] = { ...users[userIndex], goals: selectedGoals };
-        await PersistentStorage.saveUsers(users);
-        await PersistentStorage.setCurrentUser(users[userIndex]);
-        setUser(users[userIndex]);
-        Alert.alert('Succès', 'Objectifs mis à jour avec succès');
-      }
+      // Mettre à jour les objectifs sur le serveur
+      await updateUserData(currentUser.id, { goals: selectedGoals });
+      
+      setUser(prevUser => ({ ...prevUser, goals: selectedGoals })); // Mettre à jour l'état local
+      Alert.alert('Succès', 'Objectifs mis à jour avec succès');
     } catch (error) {
       console.error('Erreur sauvegarde objectifs:', error);
       Alert.alert('Erreur', 'Impossible de sauvegarder les modifications');
@@ -582,7 +577,7 @@ export default function ProfilScreen() {
             style={styles.menuItem}
             onPress={() => router.push('/(client)/parametres-application')}
           >
-            <Text style={styles.menuItemText}>⚙️ Paramètres de l'application</Text>
+            <Text style={styles.menuItemText}>⚙️ Paramètres de l\'application</Text>
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
 

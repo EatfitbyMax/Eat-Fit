@@ -4,7 +4,7 @@ import Svg, { Circle } from 'react-native-svg';
 import FoodSearchModal from '@/components/FoodSearchModal';
 import ComingSoonModal from '@/components/ComingSoonModal';
 import { FoodProduct, OpenFoodFactsService, FoodEntry } from '@/utils/openfoodfacts';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import { getCurrentUser } from '@/utils/auth';
 
 const { width } = Dimensions.get('window');
@@ -136,12 +136,11 @@ function NutritionScreen() {
         baseGoal = Math.ceil(baseGoal / 250) * 250;
       }
 
-      // Récupérer les entraînements du jour
+      // Récupérer les entraînements du jour depuis le serveur VPS
       const dateString = selectedDate.toISOString().split('T')[0];
-      const workoutsStored = await AsyncStorage.getItem(`workouts_${user.id}`);
-
-      if (workoutsStored) {
-        const workouts = JSON.parse(workoutsStored);
+      
+      try {
+        const workouts = await PersistentStorage.getWorkouts(user.id);
         const dayWorkouts = workouts.filter((workout: any) => {
           const workoutDate = new Date(workout.date).toISOString().split('T')[0];
           return workoutDate === dateString;
@@ -165,6 +164,8 @@ function NutritionScreen() {
         if (dayWorkouts.length > 0) {
           console.log(`${dayWorkouts.length} séance(s) d'entraînement détectée(s) le ${dateString}`);
         }
+      } catch (error) {
+        console.error('Erreur récupération workouts depuis VPS:', error);
       }
 
       // Arrondir pour être réalisable avec les boutons disponibles (250ml, 500ml, 1000ml)
@@ -216,32 +217,29 @@ function NutritionScreen() {
       totalCalories -= 200; // Déficit de 200 kcal
     }
 
-    // Vérifier s'il y a un entraînement programmé le jour sélectionné
+    // Vérifier s'il y a un entraînement programmé le jour sélectionné depuis le serveur VPS
     try {
       const dateString = selectedDate.toISOString().split('T')[0];
-      const workoutsStored = await AsyncStorage.getItem(`workouts_${user.id}`);
+      const workouts = await PersistentStorage.getWorkouts(user.id);
+      
+      const hasWorkoutToday = workouts.some((workout: any) => {
+        const workoutDate = new Date(workout.date).toISOString().split('T')[0];
+        return workoutDate === dateString;
+      });
 
-      if (workoutsStored) {
-        const workouts = JSON.parse(workoutsStored);
-        const hasWorkoutToday = workouts.some((workout: any) => {
+      if (hasWorkoutToday) {
+        // Ajouter 150 kcal pour le premier entraînement + 50 kcal par séance supplémentaire
+        const workoutCount = workouts.filter((workout: any) => {
           const workoutDate = new Date(workout.date).toISOString().split('T')[0];
           return workoutDate === dateString;
-        });
+        }).length;
 
-        if (hasWorkoutToday) {
-          // Ajouter 150 kcal pour le premier entraînement + 50 kcal par séance supplémentaire
-          const workoutCount = workouts.filter((workout: any) => {
-            const workoutDate = new Date(workout.date).toISOString().split('T')[0];
-            return workoutDate === dateString;
-          }).length;
-
-          const bonusCalories = 150 + (workoutCount - 1) * 50;
-          totalCalories += bonusCalories;
-          console.log(`${workoutCount} entraînement(s) détecté(s) le ${dateString} - Ajout de ${bonusCalories} kcal`);
-        }
+        const bonusCalories = 150 + (workoutCount - 1) * 50;
+        totalCalories += bonusCalories;
+        console.log(`${workoutCount} entraînement(s) détecté(s) le ${dateString} - Ajout de ${bonusCalories} kcal`);
       }
     } catch (error) {
-      console.error('Erreur vérification entraînements:', error);
+      console.error('Erreur vérification entraînements depuis VPS:', error);
     }
 
     // Calcul des macronutriments selon les objectifs
@@ -346,56 +344,13 @@ function NutritionScreen() {
       const updatedEntries = [...foodEntries, newEntry];
       setFoodEntries(updatedEntries);
 
-      // Sauvegarder localement et sur le serveur
+      // Sauvegarder uniquement sur le serveur VPS
       try {
-        // Toujours sauvegarder en local d'abord
-        await AsyncStorage.setItem(`food_entries_${user.id}`, JSON.stringify(updatedEntries));
-        console.log('Sauvegarde locale réussie');
-
-        // Sauvegarder sur le serveur VPS avec retry
-      try {
-        const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 secondes timeout
-
-        const response = await fetch(`${VPS_URL}/api/nutrition/${user.id}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(updatedEntries),
-          signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-
-        if (response.ok) {
-          console.log('✅ Données nutrition sauvegardées sur le serveur VPS');
-        } else {
-          throw new Error(`Erreur serveur: ${response.status}`);
-        }
-      } catch (serverError) {
-        console.warn('⚠️ Erreur serveur nutrition, retry dans 5s:', serverError);
-        // Retry après 5 secondes
-        setTimeout(async () => {
-          try {
-            const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud'; // Re-déclaré pour la portée du setTimeout
-            const response = await fetch(`${VPS_URL}/api/nutrition/${user.id}`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(updatedEntries),
-            });
-            if (response.ok) {
-              console.log('✅ Données nutrition sauvegardées (retry réussi)');
-            }
-          } catch (retryError) {
-            console.warn('⚠️ Retry échoué, données conservées localement');
-          }
-        }, 5000);
-      }
+        await PersistentStorage.saveNutrition(user.id, updatedEntries);
+        console.log('✅ Données nutrition sauvegardées sur le serveur VPS');
       } catch (storageError) {
-        console.error('Erreur sauvegarde nutrition:', storageError);
-        Alert.alert('Erreur', 'Impossible de sauvegarder les données nutrition');
+        console.error('Erreur sauvegarde nutrition sur VPS:', storageError);
+        Alert.alert('Erreur', 'Impossible de sauvegarder les données nutrition. Vérifiez votre connexion internet.');
         return;
       }
 
@@ -666,36 +621,23 @@ function NutritionScreen() {
       const waterGoal = await calculateDailyWaterGoal();
       setDailyWaterGoal(waterGoal);
 
-      // Essayer de charger depuis le serveur VPS d'abord
+      // Charger depuis le serveur VPS uniquement
       try {
-        const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
-        const response = await fetch(`${VPS_URL}/api/nutrition/${user.id}`);
-
-        if (response.ok) {
-          const serverEntries = await response.json();
-          console.log('Données nutrition chargées depuis le serveur VPS');
-          setFoodEntries(serverEntries);
-          calculateDailyTotals(serverEntries);
-          // Sauvegarder en local comme backup
-          await AsyncStorage.setItem(`food_entries_${user.id}`, JSON.stringify(serverEntries));
-        } else {
-          throw new Error('Serveur indisponible');
-        }
+        const serverEntries = await PersistentStorage.getNutrition(user.id);
+        console.log('Données nutrition chargées depuis le serveur VPS');
+        setFoodEntries(serverEntries);
+        calculateDailyTotals(serverEntries);
       } catch (serverError) {
-        console.log('Fallback vers le stockage local pour la nutrition');
-        const stored = await AsyncStorage.getItem(`food_entries_${user.id}`);
-        if (stored) {
-          const entries = JSON.parse(stored);
-          setFoodEntries(entries);
-          calculateDailyTotals(entries);
-        }
+        console.error('Erreur chargement nutrition depuis VPS:', serverError);
+        setFoodEntries([]);
       }
 
-      // Charger les données d'hydratation
-      const waterStored = await AsyncStorage.getItem(`water_intake_${user.id}_${selectedDate.toISOString().split('T')[0]}`);
-      if (waterStored) {
-        setWaterIntake(parseInt(waterStored));
-      } else {
+      // Charger les données d'hydratation depuis le serveur VPS
+      try {
+        const waterData = await PersistentStorage.getWaterIntake(user.id, selectedDate.toISOString().split('T')[0]);
+        setWaterIntake(waterData || 0);
+      } catch (error) {
+        console.error('Erreur chargement hydratation depuis VPS:', error);
         setWaterIntake(0);
       }
     } catch (error) {
@@ -712,7 +654,7 @@ function NutritionScreen() {
       setWaterIntake(newWaterIntake);
 
       const dateKey = selectedDate.toISOString().split('T')[0];
-      await AsyncStorage.setItem(`water_intake_${user.id}_${dateKey}`, newWaterIntake.toString());
+      await PersistentStorage.saveWaterIntake(user.id, dateKey, newWaterIntake);
     } catch (error) {
       console.error('Erreur ajout eau:', error);
     }
@@ -725,7 +667,7 @@ function NutritionScreen() {
 
       setWaterIntake(0);
       const dateKey = selectedDate.toISOString().split('T')[0];
-      await AsyncStorage.setItem(`water_intake_${user.id}_${dateKey}`, '0');
+      await PersistentStorage.saveWaterIntake(user.id, dateKey, 0);
     } catch (error) {
       console.error('Erreur reset eau:', error);
     }
@@ -748,29 +690,10 @@ function NutritionScreen() {
       const updatedEntries = foodEntries.filter(entry => entry.id !== entryId);
       setFoodEntries(updatedEntries);
 
-      // Sauvegarder localement
-      await AsyncStorage.setItem(`food_entries_${user.id}`, JSON.stringify(updatedEntries));
+      // Sauvegarder uniquement sur le serveur VPS
+      await PersistentStorage.saveNutrition(user.id, updatedEntries);
       calculateDailyTotals(updatedEntries);
-
-      // Sauvegarder sur le serveur VPS
-      try {
-        const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
-        const response = await fetch(`${VPS_URL}/api/nutrition/${user.id}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(updatedEntries),
-        });
-
-        if (response.ok) {
-          console.log('Suppression aliment synchronisée sur le serveur VPS');
-        } else {
-          console.warn('Échec synchronisation suppression sur serveur VPS');
-        }
-      } catch (serverError) {
-        console.warn('Erreur serveur lors de la suppression:', serverError);
-      }
+      console.log('Suppression aliment synchronisée sur le serveur VPS');
     } catch (error) {
       console.error('Erreur suppression aliment:', error);
       Alert.alert('Erreur', 'Impossible de supprimer l\'aliment');

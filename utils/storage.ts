@@ -311,6 +311,96 @@ export class PersistentStorage {
     }
   }
 
+  // Water intake
+  static async getWaterIntake(userId: string, date: string): Promise<number> {
+    const response = await fetch(`${SERVER_URL}/api/water/${userId}/${date}`);
+    return response.ok ? await response.json() : 0;
+  }
+
+  static async saveWaterIntake(userId: string, date: string, amount: number): Promise<void> {
+    const response = await fetch(`${SERVER_URL}/api/water/${userId}/${date}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount })
+    });
+
+    if (!response.ok) {
+      throw new Error('Erreur sauvegarde hydratation');
+    }
+  }
+
+  // Mensuration data
+  static async getMensurationData(userId: string): Promise<any> {
+    const response = await fetch(`${SERVER_URL}/api/mensurations/${userId}`);
+    return response.ok ? await response.json() : null;
+  }
+
+  static async saveMensurationData(userId: string, data: any): Promise<void> {
+    const response = await fetch(`${SERVER_URL}/api/mensurations/${userId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    if (!response.ok) {
+      throw new Error('Erreur sauvegarde mensurations');
+    }
+  }
+
+  // Activity ratings  
+  static async getActivityRatings(userId: string): Promise<any> {
+    const response = await fetch(`${SERVER_URL}/api/activity-ratings/${userId}`);
+    return response.ok ? await response.json() : {};
+  }
+
+  static async saveActivityRatings(userId: string, ratings: any): Promise<void> {
+    const response = await fetch(`${SERVER_URL}/api/activity-ratings/${userId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(ratings)
+    });
+
+    if (!response.ok) {
+      throw new Error('Erreur sauvegarde notes RPE');
+    }
+  }
+
+  // Forme data
+  static async getFormeData(userId: string, date: string): Promise<any> {
+    const response = await fetch(`${SERVER_URL}/api/forme/${userId}/${date}`);
+    return response.ok ? await response.json() : null;
+  }
+
+  static async saveFormeData(userId: string, date: string, data: any): Promise<void> {
+    const response = await fetch(`${SERVER_URL}/api/forme/${userId}/${date}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    if (!response.ok) {
+      throw new Error('Erreur sauvegarde données forme');
+    }
+  }
+
+  // Recent sports
+  static async getRecentSports(userId: string): Promise<string[]> {
+    const response = await fetch(`${SERVER_URL}/api/recent-sports/${userId}`);
+    return response.ok ? await response.json() : [];
+  }
+
+  static async saveRecentSports(userId: string, sports: string[]): Promise<void> {
+    const response = await fetch(`${SERVER_URL}/api/recent-sports/${userId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(sports)
+    });
+
+    if (!response.ok) {
+      throw new Error('Erreur sauvegarde sports récents');
+    }
+  }
+
   // Alias methods pour compatibilité
   static async getIntegrationStatus(userId: string): Promise<any> {
     return await this.getUserIntegrationStatus(userId);
@@ -330,5 +420,9 @@ export class PersistentStorage {
 
   static async saveUserNutrition(userId: string, nutritionData: any[]): Promise<void> {
     return await this.saveNutrition(userId, nutritionData);
+  }
+
+  static async getUserWeight(userId: string): Promise<any> {
+    return await this.getWeightData(userId);
   }
 }

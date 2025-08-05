@@ -25,7 +25,7 @@ import { getCurrentUser } from '@/utils/auth';
 import { syncWithExternalApps, IntegrationsManager } from '@/utils/integrations';
 import { PersistentStorage } from '@/utils/storage';
 import { checkSubscriptionStatus } from '@/utils/subscription';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 const { width, height } = Dimensions.get('window');
 
@@ -234,25 +234,23 @@ export default function HomeScreen() {
 
       const today = new Date().toISOString().split('T')[0];
 
-      // Récupérer le score calculé et sauvegardé par la page Forme
+      // Récupérer le score depuis le serveur VPS uniquement
       try {
-        const savedScore = await AsyncStorage.getItem(`forme_score_${currentUser.id}_${today}`);
-        if (savedScore) {
-          const score = parseInt(savedScore);
-          setFormeScore(score);
-          console.log(`📊 Score de forme récupéré: ${score}/100`);
+        const formeData = await PersistentStorage.getFormeData(currentUser.id, today);
+        if (formeData && formeData.calculatedScore) {
+          setFormeScore(formeData.calculatedScore);
+          console.log(`📊 Score de forme récupéré du serveur VPS: ${formeData.calculatedScore}/100`);
         } else {
-          // Si aucun score sauvegardé, utiliser une valeur par défaut
           setFormeScore(75);
           console.log('📊 Score de forme par défaut: 75/100');
         }
       } catch (error) {
-        console.log('❌ Erreur récupération score de forme, utilisation du score par défaut');
+        console.log('❌ Erreur récupération score de forme depuis le serveur VPS');
         setFormeScore(75);
       }
     } catch (error: any) {
       console.error('❌ Erreur récupération score de forme:', error);
-      setFormeScore(75); // Valeur par défaut
+      setFormeScore(75);
     }
   };
 

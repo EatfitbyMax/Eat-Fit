@@ -130,7 +130,7 @@ export default function FormeScreen() {
     }
   }, [userData]);
 
-  // Recharger les données quand l'écran devient visible
+  // Recharger les données quand l\'écran devient visible
   useFocusEffect(
     useCallback(() => {
       if (userData) {
@@ -304,17 +304,9 @@ export default function FormeScreen() {
     try {
       if (!userData) return;
 
-      // Sauvegarder d'abord en local pour garantir la persistance
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-      await AsyncStorage.setItem(`forme_data_${userData.id}_${newData.date}`, JSON.stringify(newData));
-
-      // Puis essayer de sauvegarder sur le serveur VPS
-      try {
-        await PersistentStorage.saveFormeData(userData.id, newData.date, newData);
-        console.log('Données de forme sauvegardées sur le serveur VPS');
-      } catch (serverError) {
-        console.log('Serveur indisponible, sauvegarde locale effectuée');
-      }
+      // Sauvegarder uniquement sur le serveur VPS
+      await PersistentStorage.saveFormeData(userData.id, newData.date, newData);
+      console.log('Données de forme sauvegardées sur le serveur VPS');
 
       // Mettre à jour l'état local
       setFormeData(newData);
@@ -1500,7 +1492,7 @@ export default function FormeScreen() {
       // Plans Bronze, Argent, Or, Diamant
       weights.training = 0;
 
-      // Ajuster les poids pour les plans premium
+      // Ajustements spécifiques pour les plans premium
       weights.heartRate = 0.10; // FC repos
       weights.rpe = 0.10;       // RPE
       weights.calories = 0.05; // Calories (moins important dans les plans avancés)
@@ -2219,7 +2211,7 @@ export default function FormeScreen() {
 
               {formeScore > 80 && (
                 <Text style={styles.recommendation}>
-                  • Excellente forme ! C'est le moment idéal pour un entraînement intensif
+                  • Excellente forme ! C\'est le moment idéal pour un entraînement intensif
                 </Text>
               )}
             </View>

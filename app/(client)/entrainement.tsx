@@ -72,7 +72,7 @@ export default function EntrainementScreen() {
     }, {});
 
     console.log('Workouts par date:', workoutsByDate);
-    console.log('=== FIN DEBUG SEMAINE ===');
+    console.log('=== FIN DEBUG SEINE ===');
 
     // Forcer un petit délai pour s'assurer que l'UI se met à jour
     setTimeout(() => {
@@ -280,7 +280,7 @@ export default function EntrainementScreen() {
     console.log('=== DEBUG ABONNEMENT ===');
     console.log('hasSubscription (boolean):', hasSubscription);
     console.log('========================');
-    
+
     if (!hasSubscription) {
       setShowSubscriptionModal(true);
       return; // Ne pas changer d'onglet

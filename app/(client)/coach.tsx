@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Tex
 import { getMessages, saveMessages, PersistentStorage, testApiConnection } from '../../utils/storage';
 import { getCurrentUser } from '../../utils/auth';
 import { checkSubscriptionStatusBoolean } from '../../utils/subscription';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import { PanGestureHandler, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
   useAnimatedGestureHandler,
