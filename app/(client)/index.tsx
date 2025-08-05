@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -23,6 +24,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { getCurrentUser } from '@/utils/auth';
 import { syncWithExternalApps, IntegrationsManager } from '@/utils/integrations';
 import { PersistentStorage } from '@/utils/storage';
+import { checkSubscriptionStatus } from '@/utils/subscription';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
 
@@ -32,6 +35,14 @@ interface User {
   firstName?: string;
   lastName?: string;
   userType: 'client' | 'coach';
+  weight?: number;
+  targetWeight?: number;
+  age?: number;
+  height?: number;
+  gender?: string;
+  activityLevel?: string;
+  goals?: string[];
+  createdAt?: string;
 }
 
 export default function HomeScreen() {
@@ -39,6 +50,7 @@ export default function HomeScreen() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [isPremium, setIsPremium] = useState(false);
   const [todayStats, setTodayStats] = useState({
     calories: 0,
     workouts: 0,
@@ -51,6 +63,12 @@ export default function HomeScreen() {
     proteins: 171,
     carbohydrates: 257,
     fat: 64,
+  });
+  const [weeklyWorkouts, setWeeklyWorkouts] = useState(0);
+  const [weightData, setWeightData] = useState({
+    startWeight: 0,
+    currentWeight: 0,
+    targetWeight: 0,
   });
 
   // Animation values
@@ -76,30 +94,18 @@ export default function HomeScreen() {
     loadUserData();
     startAnimations();
     generateRandomTip();
-    loadFormeScore();
-    loadWeightData();
-    calculateWeeklyWorkouts();
   }, []);
-
-  // Générer un nouveau conseil seulement quand on clique sur le bouton refresh
-  const handleRefreshTip = () => {
-    generateRandomTip();
-  };
 
   // Rechargement automatique quand l'écran est focalisé
   useFocusEffect(
     React.useCallback(() => {
       const loadDataOnFocus = async () => {
         try {
-          // Recharger les données utilisateur d'abord
           await loadUserData();
-
-          // Ensuite charger les autres données
           await loadTodayStats();
           await loadFormeScore();
           await loadWeightData();
           await calculateWeeklyWorkouts();
-
           setConnectionError(null);
         } catch (error: any) {
           console.error('Erreur chargement données:', error);
@@ -116,7 +122,11 @@ export default function HomeScreen() {
     setCurrentTip(tips[randomIndex]);
   };
 
-  const calculatePersonalizedGoals = (user: any) => {
+  const handleRefreshTip = () => {
+    generateRandomTip();
+  };
+
+  const calculatePersonalizedGoals = (user: User) => {
     if (!user || !user.age || !user.weight || !user.height || !user.gender) {
       return {
         calories: 2286,
@@ -143,7 +153,7 @@ export default function HomeScreen() {
       'extreme': 1.9
     };
 
-    const activityFactor = activityFactors[user.activityLevel] || 1.2;
+    const activityFactor = activityFactors[user.activityLevel as keyof typeof activityFactors] || 1.2;
     let totalCalories = Math.round(bmr * activityFactor);
 
     // Ajustements selon les objectifs
@@ -159,12 +169,10 @@ export default function HomeScreen() {
     let fatRatio = 0.30;     // 30% par défaut
 
     if (goals.includes('Me muscler')) {
-      // Augmenter les protéines, réduire les lipides
       proteinRatio = 0.30; // 30%
       carbRatio = 0.45;    // 45%
       fatRatio = 0.25;     // 25%
     } else if (goals.includes('Gagner en performance')) {
-      // Ratio glucides/protéines optimal pour la performance
       proteinRatio = 0.25; // 25%
       carbRatio = 0.55;    // 55%
       fatRatio = 0.20;     // 20%
@@ -183,31 +191,34 @@ export default function HomeScreen() {
     };
   };
 
-  
-
   const loadUserData = async () => {
     try {
       setConnectionError(null);
+      console.log('🔄 Chargement des données utilisateur...');
+      
       const currentUser = await getCurrentUser();
       if (currentUser) {
-        // Toujours mettre à jour l'état utilisateur avec les dernières données
         setUser(currentUser);
-        console.log('Données utilisateur rechargées:', currentUser.firstName, currentUser.lastName);
+        console.log('👤 Utilisateur chargé:', currentUser.firstName, currentUser.lastName);
 
         // Vérifier le statut premium
-        const { checkSubscriptionStatus } = await import('@/utils/subscription');
-        const subscription = await checkSubscriptionStatus();
-        setIsPremium(subscription.isPremium);
-        console.log(`Statut Premium Accueil: ${subscription.isPremium ? 'OUI' : 'NON'} (Plan: ${subscription.planId})`);
+        try {
+          const subscription = await checkSubscriptionStatus();
+          setIsPremium(subscription.isPremium);
+          console.log(`📱 Statut Premium Accueil: ${subscription.isPremium ? 'OUI' : 'NON'}`);
+        } catch (error) {
+          console.error('❌ Erreur vérification premium:', error);
+          setIsPremium(false);
+        }
 
         // Calculer les objectifs personnalisés
         const personalizedGoals = calculatePersonalizedGoals(currentUser);
         setCalorieGoals(personalizedGoals);
-
-        await loadTodayStats();
+      } else {
+        throw new Error('Aucun utilisateur connecté');
       }
     } catch (error: any) {
-      console.error('Erreur chargement utilisateur:', error);
+      console.error('❌ Erreur chargement utilisateur:', error);
       setConnectionError(error.message || 'Erreur de connexion au serveur');
     } finally {
       setLoading(false);
@@ -220,7 +231,6 @@ export default function HomeScreen() {
       if (!currentUser) return;
 
       const today = new Date().toISOString().split('T')[0];
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
 
       // Récupérer le score calculé et sauvegardé par la page Forme
       try {
@@ -228,24 +238,21 @@ export default function HomeScreen() {
         if (savedScore) {
           const score = parseInt(savedScore);
           setFormeScore(score);
-          console.log(`Score de forme récupéré depuis la page Forme: ${score}/100`);
+          console.log(`📊 Score de forme récupéré: ${score}/100`);
         } else {
           // Si aucun score sauvegardé, utiliser une valeur par défaut
           setFormeScore(75);
-          console.log('Aucun score de forme trouvé, utilisation de la valeur par défaut: 75/100');
+          console.log('📊 Score de forme par défaut: 75/100');
         }
       } catch (error) {
-        console.log('Erreur récupération score de forme, utilisation du score par défaut');
+        console.log('❌ Erreur récupération score de forme, utilisation du score par défaut');
         setFormeScore(75);
       }
     } catch (error: any) {
-      console.error('Erreur récupération score de forme:', error);
-      setConnectionError(error.message || 'Erreur de connexion');
+      console.error('❌ Erreur récupération score de forme:', error);
       setFormeScore(75); // Valeur par défaut
     }
   };
-
-  
 
   const loadTodayStats = async () => {
     try {
@@ -253,59 +260,33 @@ export default function HomeScreen() {
       if (!currentUser) return;
 
       const today = new Date().toISOString().split('T')[0];
-      console.log('🏠 [ACCUEIL] Chargement statistiques pour:', currentUser.email, 'Date:', today);
-      console.log('🌐 [ACCUEIL] URL serveur utilisée:', process.env.EXPO_PUBLIC_VPS_URL);
+      console.log('📊 Chargement statistiques pour:', currentUser.email, 'Date:', today);
 
-      // 1. Récupérer les calories depuis la nutrition sur le serveur
+      // 1. Récupérer les calories depuis la nutrition
       let totalCalories = 0;
       try {
-        console.log('🍽️ [ACCUEIL] Récupération données nutrition...');
         const nutritionEntries = await PersistentStorage.getUserNutrition(currentUser.id);
-        console.log('🍽️ [ACCUEIL] Entrées nutrition récupérées:', nutritionEntries.length);
-
         const todayEntries = nutritionEntries.filter((entry: any) => entry.date === today);
-        console.log('🍽️ [ACCUEIL] Entrées d\'aujourd\'hui:', todayEntries.length);
-
         totalCalories = todayEntries.reduce((sum: number, entry: any) => sum + (entry.calories || 0), 0);
-        console.log('🔥 [ACCUEIL] Total calories calculé:', totalCalories);
+        console.log('🔥 Total calories calculé:', totalCalories);
       } catch (error) {
-        console.error('❌ [ACCUEIL] Erreur récupération calories:', error);
-        throw new Error('Impossible de récupérer les données nutritionnelles');
+        console.error('❌ Erreur récupération calories:', error);
+        totalCalories = 0;
       }
 
-      // 2. Récupérer le nombre de séances depuis les données locales ET Strava
+      // 2. Récupérer le nombre de séances
       let totalWorkouts = 0;
       try {
-        // D'abord récupérer les séances planifiées/terminées depuis le serveur VPS
         const localWorkouts = await PersistentStorage.getWorkouts(currentUser.id);
         const todayLocalWorkouts = localWorkouts.filter((workout: any) => workout.date === today);
-        console.log(`Séances planifiées aujourd'hui (VPS): ${todayLocalWorkouts.length}`);
-        
         totalWorkouts = todayLocalWorkouts.length;
-
-        // Optionnellement, ajouter les séances Strava qui ne sont pas déjà comptées
-        try {
-          const stravaActivities = await IntegrationsManager.getStravaActivities(currentUser.id);
-          const todayStravaActivities = stravaActivities.filter((activity: any) => {
-            const activityDate = new Date(activity.date).toISOString().split('T')[0];
-            return activityDate === today;
-          });
-          console.log(`Séances Strava aujourd'hui: ${todayStravaActivities.length}`);
-          
-          // Ajouter les séances Strava uniquement si pas de séances locales
-          if (todayLocalWorkouts.length === 0) {
-            totalWorkouts = todayStravaActivities.length;
-          }
-        } catch (stravaError) {
-          console.log('Erreur Strava (non critique):', stravaError);
-          // Continuer avec les séances locales seulement
-        }
+        console.log(`💪 Séances aujourd'hui: ${totalWorkouts}`);
       } catch (error) {
-        console.error('Erreur récupération séances:', error);
-        throw new Error('Impossible de récupérer les données d\'entraînement');
+        console.error('❌ Erreur récupération séances:', error);
+        totalWorkouts = 0;
       }
 
-      // 3. Récupérer les pas depuis Apple Health
+      // 3. Récupérer les pas depuis Apple Health (optionnel)
       let totalSteps = 0;
       try {
         const healthData = await IntegrationsManager.getHealthData(currentUser.id);
@@ -314,8 +295,8 @@ export default function HomeScreen() {
           totalSteps = todayHealthData.steps || 0;
         }
       } catch (error) {
-        console.error('Erreur récupération pas Apple Health:', error);
-        throw new Error('Impossible de récupérer les données Apple Health');
+        console.log('⚠️ Pas de données Apple Health disponibles');
+        totalSteps = 0;
       }
 
       setTodayStats({
@@ -324,11 +305,9 @@ export default function HomeScreen() {
         steps: totalSteps,
       });
 
-      console.log(`Statistiques du jour chargées: ${Math.round(totalCalories)} calories, ${totalWorkouts} séances, ${totalSteps} pas`);
+      console.log(`✅ Statistiques chargées: ${Math.round(totalCalories)} calories, ${totalWorkouts} séances, ${totalSteps} pas`);
     } catch (error: any) {
-      console.error('Erreur chargement statistiques du jour:', error);
-      setConnectionError(error.message || 'Erreur de connexion');
-      // En cas d'erreur, garder des valeurs par défaut
+      console.error('❌ Erreur chargement statistiques:', error);
       setTodayStats({
         calories: 0,
         workouts: 0,
@@ -337,100 +316,28 @@ export default function HomeScreen() {
     }
   };
 
-  // États pour les données de poids
-  const [weightData, setWeightData] = useState({
-    startWeight: 0,
-    currentWeight: 0,
-    targetWeight: 0,
-  });
-
-  // État pour stocker le nombre de séances hebdomadaires
-  const [weeklyWorkouts, setWeeklyWorkouts] = useState(0);
-
-  // Fonction synchrone pour obtenir les séances hebdomadaires
-  const getWeeklyWorkouts = () => {
-    return weeklyWorkouts;
-  };
-
-  // Fonction pour calculer l'objectif d'entraînement personnalisé basé sur les données réelles
-  const getTrainingGoal = () => {
-    if (!user) return Math.max(weeklyWorkouts, 1);
-
-    let baseGoal = Math.max(weeklyWorkouts, 1);
-
-    if (user.goals?.includes('Me muscler') || user.goals?.includes('Gagner en performance')) {
-      baseGoal = Math.max(baseGoal, weeklyWorkouts + 1);
-    }
-
-    if (user.goals?.includes('Perdre du poids')) {
-      baseGoal = Math.max(baseGoal, 2);
-    }
-
-    if (weeklyWorkouts === 0) {
-      return user.goals?.includes('Perdre du poids') ? 2 : 1;
-    }
-
-    return baseGoal;
-  };
-
-  // Charger les données de poids depuis le serveur uniquement
   const loadWeightData = async () => {
     try {
       const currentUser = await getCurrentUser();
       if (!currentUser) return;
 
+      console.log('⚖️ Chargement données de poids...');
       const data = await PersistentStorage.getUserWeight(currentUser.id);
       setWeightData(data);
+      console.log('⚖️ Données poids chargées:', data);
     } catch (error: any) {
-      console.error('Erreur chargement données poids:', error);
-      setConnectionError(error.message || 'Erreur de connexion');
+      console.error('❌ Erreur chargement données poids:', error);
+      // Utiliser les données du profil utilisateur si disponibles
+      if (user) {
+        setWeightData({
+          startWeight: user.weight || 0,
+          currentWeight: user.weight || 0,
+          targetWeight: user.targetWeight || 0,
+        });
+      }
     }
   };
 
-  // Fonctions pour les objectifs de perte de poids
-  const getWeightLossProgress = () => {
-    if (!weightData.targetWeight || !weightData.startWeight) return 'À définir';
-
-    const totalLoss = weightData.startWeight - weightData.targetWeight;
-    const currentLoss = weightData.startWeight - weightData.currentWeight;
-
-    if (totalLoss <= 0) return 'À définir';
-
-    return `${Math.round(currentLoss * 10) / 10}/${Math.round(totalLoss * 10) / 10} kg`;
-  };
-
-  const getWeightLossPercentage = () => {
-    if (!weightData.targetWeight || !weightData.startWeight) return 0;
-
-    const totalLoss = weightData.startWeight - weightData.targetWeight;
-    const currentLoss = weightData.startWeight - weightData.currentWeight;
-
-    if (totalLoss <= 0) return 0;
-
-    return Math.min(100, Math.max(0, (currentLoss / totalLoss) * 100));
-  };
-
-  const getWeightLossDescription = () => {
-    if (!weightData.targetWeight || !weightData.startWeight) {
-      return 'Définissez votre objectif de poids dans Progrès';
-    }
-
-    const totalLoss = weightData.startWeight - weightData.targetWeight;
-    const currentLoss = weightData.startWeight - weightData.currentWeight;
-    const remaining = totalLoss - currentLoss;
-
-    if (totalLoss <= 0) {
-      return 'Objectif de poids non défini';
-    }
-
-    if (remaining <= 0) {
-      return 'Objectif atteint ! Félicitations !';
-    }
-
-    return `${Math.round(remaining * 10) / 10} kg restants à perdre`;
-  };
-
-  // Fonction asynchrone pour calculer et mettre à jour les séances hebdomadaires
   const calculateWeeklyWorkouts = async () => {
     try {
       const currentUser = await getCurrentUser();
@@ -448,34 +355,28 @@ export default function HomeScreen() {
       endOfWeek.setDate(startOfWeek.getDate() + 6);
       endOfWeek.setHours(23, 59, 59, 999);
 
-      console.log(`Calcul séances semaine du ${startOfWeek.toISOString().split('T')[0]} au ${endOfWeek.toISOString().split('T')[0]}`);
+      console.log(`💪 Calcul séances semaine du ${startOfWeek.toISOString().split('T')[0]} au ${endOfWeek.toISOString().split('T')[0]}`);
 
       let weeklyWorkoutsCount = 0;
       try {
         const workouts = await PersistentStorage.getWorkouts(currentUser.id);
-        console.log(`Total entraînements trouvés: ${workouts.length}`);
-
-        // Filtrer les entraînements de la semaine en cours
+        
         const weekWorkouts = workouts.filter((workout: any) => {
           const workoutDate = new Date(workout.date + 'T00:00:00');
-          const isInWeek = workoutDate >= startOfWeek && workoutDate <= endOfWeek;
-          if (isInWeek) {
-            console.log(`Séance trouvée: ${workout.name} le ${workout.date}`);
-          }
-          return isInWeek;
+          return workoutDate >= startOfWeek && workoutDate <= endOfWeek;
         });
 
         weeklyWorkoutsCount = weekWorkouts.length;
-        console.log(`Séances planifiées cette semaine: ${weeklyWorkoutsCount}`);
+        console.log(`💪 Séances cette semaine: ${weeklyWorkoutsCount}`);
       } catch (error) {
-        console.error('Erreur récupération workouts:', error);
-        throw new Error('Impossible de récupérer les entraînements');
+        console.error('❌ Erreur récupération workouts:', error);
+        weeklyWorkoutsCount = 0;
       }
 
       setWeeklyWorkouts(weeklyWorkoutsCount);
     } catch (error: any) {
-      console.error('Erreur calcul séances hebdomadaires:', error);
-      setConnectionError(error.message || 'Erreur de connexion');
+      console.error('❌ Erreur calcul séances hebdomadaires:', error);
+      setWeeklyWorkouts(0);
     }
   };
 
@@ -523,6 +424,8 @@ export default function HomeScreen() {
                 await syncWithExternalApps(user?.id || '');
                 Alert.alert('Succès', 'Synchronisation terminée');
                 setConnectionError(null);
+                // Recharger les données après synchronisation
+                await loadTodayStats();
               } catch (error: any) {
                 setConnectionError(error.message || 'Erreur de synchronisation');
                 Alert.alert('Erreur', error.message || 'Impossible de synchroniser les données');
@@ -549,6 +452,69 @@ export default function HomeScreen() {
     }
   };
 
+  // Fonctions pour les objectifs de perte de poids
+  const getWeightLossProgress = () => {
+    if (!weightData.targetWeight || !weightData.startWeight) return 'À définir';
+
+    const totalLoss = weightData.startWeight - weightData.targetWeight;
+    const currentLoss = weightData.startWeight - weightData.currentWeight;
+
+    if (totalLoss <= 0) return 'À définir';
+
+    return `${Math.round(currentLoss * 10) / 10}/${Math.round(totalLoss * 10) / 10} kg`;
+  };
+
+  const getWeightLossPercentage = () => {
+    if (!weightData.targetWeight || !weightData.startWeight) return 0;
+
+    const totalLoss = weightData.startWeight - weightData.targetWeight;
+    const currentLoss = weightData.startWeight - weightData.currentWeight;
+
+    if (totalLoss <= 0) return 0;
+
+    return Math.min(100, Math.max(0, (currentLoss / totalLoss) * 100));
+  };
+
+  const getWeightLossDescription = () => {
+    if (!weightData.targetWeight || !weightData.startWeight) {
+      return 'Définissez votre objectif de poids dans Progrès';
+    }
+
+    const totalLoss = weightData.startWeight - weightData.targetWeight;
+    const currentLoss = weightData.startWeight - weightData.currentWeight;
+    const remaining = totalLoss - currentLoss;
+
+    if (totalLoss <= 0) {
+      return 'Objectif de poids non défini';
+    }
+
+    if (remaining <= 0) {
+      return 'Objectif atteint ! Félicitations !';
+    }
+
+    return `${Math.round(remaining * 10) / 10} kg restants à perdre`;
+  };
+
+  const getTrainingGoal = () => {
+    if (!user) return Math.max(weeklyWorkouts, 1);
+
+    let baseGoal = Math.max(weeklyWorkouts, 1);
+
+    if (user.goals?.includes('Me muscler') || user.goals?.includes('Gagner en performance')) {
+      baseGoal = Math.max(baseGoal, weeklyWorkouts + 1);
+    }
+
+    if (user.goals?.includes('Perdre du poids')) {
+      baseGoal = Math.max(baseGoal, 2);
+    }
+
+    if (weeklyWorkouts === 0) {
+      return user.goals?.includes('Perdre du poids') ? 2 : 1;
+    }
+
+    return baseGoal;
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -563,9 +529,7 @@ export default function HomeScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorTitle}>Connexion requise</Text>
-          <Text style={styles.errorMessage}>
-            {connectionError}
-          </Text>
+          <Text style={styles.errorMessage}>{connectionError}</Text>
           <Text style={styles.errorSubMessage}>
             Cette application nécessite une connexion internet pour fonctionner.
           </Text>
@@ -610,16 +574,9 @@ export default function HomeScreen() {
                 style={styles.profileButton}
                 onPress={() => router.push('/(client)/profil')}
               >
-                {user?.profileImage ? (
-                  <Image 
-                    source={{ uri: user.profileImage }} 
-                    style={styles.profileImage}
-                  />
-                ) : (
-                  <Text style={styles.profileInitial}>
-                    {user?.firstName?.charAt(0) || 'U'}
-                  </Text>
-                )}
+                <Text style={styles.profileInitial}>
+                  {user?.firstName?.charAt(0) || 'U'}
+                </Text>
               </TouchableOpacity>
             </View>
           </LinearGradient>
@@ -724,7 +681,7 @@ export default function HomeScreen() {
 
         {/* Objectifs de la semaine */}
         <View style={styles.goalsContainer}>
-          <Text style={styles.sectionTitle}>Mes objectifs </Text>
+          <Text style={styles.sectionTitle}>Mes objectifs</Text>
 
           {/* Objectif Nutrition */}
           <View style={styles.goalCard}>
@@ -753,23 +710,23 @@ export default function HomeScreen() {
           <View style={styles.goalCard}>
             <View style={styles.goalHeader}>
               <Text style={styles.goalTitle}>💪 Objectif d'entraînements</Text>
-              <Text style={styles.goalProgress}>{getWeeklyWorkouts()}/{getTrainingGoal()}</Text>
+              <Text style={styles.goalProgress}>{weeklyWorkouts}/{getTrainingGoal()}</Text>
             </View>
             <View style={styles.progressBar}>
               <View style={[
                 styles.progressFill, 
                 { 
-                  width: `${Math.min((getWeeklyWorkouts() / getTrainingGoal()) * 100, 100)}%`,
-                  backgroundColor: getWeeklyWorkouts() >= getTrainingGoal() ? '#28A745' : '#F5A623'
+                  width: `${Math.min((weeklyWorkouts / getTrainingGoal()) * 100, 100)}%`,
+                  backgroundColor: weeklyWorkouts >= getTrainingGoal() ? '#28A745' : '#F5A623'
                 }
               ]} />
             </View>
             <Text style={styles.goalSubtext}>
-              {getWeeklyWorkouts() >= getTrainingGoal() 
+              {weeklyWorkouts >= getTrainingGoal() 
                 ? 'Objectif hebdomadaire atteint ! 🎉' 
                 : weeklyWorkouts === 0 
                   ? 'Planifiez vos séances dans Entraînement'
-                  : `${Math.max(0, getTrainingGoal() - getWeeklyWorkouts())} séance${getTrainingGoal() - getWeeklyWorkouts() > 1 ? 's' : ''} supplémentaire${getTrainingGoal() - getWeeklyWorkouts() > 1 ? 's' : ''} suggérée${getTrainingGoal() - getWeeklyWorkouts() > 1 ? 's' : ''}`
+                  : `${Math.max(0, getTrainingGoal() - weeklyWorkouts)} séance${getTrainingGoal() - weeklyWorkouts > 1 ? 's' : ''} supplémentaire${getTrainingGoal() - weeklyWorkouts > 1 ? 's' : ''} suggérée${getTrainingGoal() - weeklyWorkouts > 1 ? 's' : ''}`
               }
             </Text>
           </View>
@@ -999,11 +956,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#2D3748',
   },
-  profileImage: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-  },
   actionIcon: {
     marginBottom: 12,
   },
@@ -1107,5 +1059,3 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-
-export default HomeScreen;

@@ -131,110 +131,82 @@ export default function ProgresScreen() {
     try {
       console.log('🔄 Chargement des données utilisateur et poids...');
       
-      // Récupérer les données utilisateur
-      const currentUserString = await AsyncStorage.getItem('currentUser');
-      if (currentUserString) {
-        const user = JSON.parse(currentUserString);
+      // Récupérer les données utilisateur depuis l'auth context
+      const { getCurrentUser } = await import('@/utils/auth');
+      const user = await getCurrentUser();
+      
+      if (user) {
         setUserData(user);
-        console.log('👤 Utilisateur chargé:', user.name, 'Poids profil:', user.weight, 'Objectif profil:', user.targetWeight);
+        console.log('👤 Utilisateur chargé:', user.firstName, user.lastName, 'Poids profil:', user.weight, 'Objectif profil:', user.targetWeight);
 
-        // Charger les données de poids depuis le serveur VPS d'abord
+        // Charger les données de poids depuis le serveur VPS
         let saved = null;
         try {
-          const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
-          const response = await fetch(`${VPS_URL}/api/weight/${user.id}`);
-          if (response.ok) {
-            saved = await response.json();
-            console.log('✅ Données de poids chargées depuis le serveur VPS:', saved);
-            // Sauvegarder en local comme backup
-            await AsyncStorage.setItem(`weight_data_${user.id}`, JSON.stringify(saved));
-          } else {
-            console.log('⚠️ Serveur VPS indisponible, utilisation du stockage local');
-            throw new Error('Serveur VPS indisponible');
-          }
+          saved = await PersistentStorage.getUserWeight(user.id);
+          console.log('✅ Données de poids chargées depuis le serveur VPS:', saved);
         } catch (serverError) {
-          console.log('📱 Fallback vers le stockage local pour les données de poids');
-          const weightDataString = await AsyncStorage.getItem(`weight_data_${user.id}`);
-          if (weightDataString) {
-            saved = JSON.parse(weightDataString);
-            console.log('📱 Données poids locales récupérées:', saved);
-          }
+          console.log('📱 Erreur serveur, création de nouvelles données:', serverError);
+          // Créer des données par défaut basées sur le profil utilisateur
+          saved = {
+            startWeight: user.weight || 0,
+            currentWeight: user.weight || 0,
+            targetWeight: user.targetWeight || 0,
+            lastWeightUpdate: null,
+            targetAsked: (user.targetWeight && user.targetWeight > 0) ? true : false,
+            weightHistory: (user.weight && user.weight > 0) ? [{ 
+              weight: user.weight, 
+              date: user.createdAt || new Date().toISOString() 
+            }] : [],
+          };
         }
 
-        if (saved && saved.startWeight > 0) {
-          console.log('📊 Utilisation des données de poids existantes');
-          
-          // Synchroniser avec le profil utilisateur si nécessaire
-          const userWeight = user.weight || 0;
-          const userTargetWeight = user.targetWeight || 0;
-          
-          let needsUpdate = false;
-          
-          // Vérifier si le poids de départ doit être mis à jour
-          if (userWeight > 0 && Math.abs(saved.startWeight - userWeight) > 0.1) {
-            console.log(`🔄 Mise à jour poids de départ: ${saved.startWeight} → ${userWeight}`);
-            saved.startWeight = userWeight;
-            if (!saved.currentWeight || saved.currentWeight === 0) {
-              saved.currentWeight = userWeight;
-            }
-            needsUpdate = true;
-          }
+        // Synchroniser avec les données du profil utilisateur
+        let needsUpdate = false;
+        const userWeight = user.weight || 0;
+        const userTargetWeight = user.targetWeight || 0;
 
-          // Synchroniser avec l'objectif du profil utilisateur
-          if (userTargetWeight > 0 && Math.abs(saved.targetWeight - userTargetWeight) > 0.1) {
-            console.log(`🎯 Mise à jour objectif: ${saved.targetWeight} → ${userTargetWeight}`);
-            saved.targetWeight = userTargetWeight;
-            saved.targetAsked = true;
-            needsUpdate = true;
+        // Si les données serveur sont vides mais le profil a des données
+        if (userWeight > 0 && (!saved.startWeight || saved.startWeight === 0)) {
+          console.log(`🔄 Initialisation poids de départ: ${userWeight}kg`);
+          saved.startWeight = userWeight;
+          saved.currentWeight = userWeight;
+          if (!saved.weightHistory || saved.weightHistory.length === 0) {
+            saved.weightHistory = [{ 
+              weight: userWeight, 
+              date: user.createdAt || new Date().toISOString() 
+            }];
           }
+          needsUpdate = true;
+        }
 
-          if (needsUpdate) {
-            await saveWeightData(saved);
-          }
+        // Synchroniser l'objectif
+        if (userTargetWeight > 0 && (!saved.targetWeight || saved.targetWeight === 0)) {
+          console.log(`🎯 Initialisation objectif: ${userTargetWeight}kg`);
+          saved.targetWeight = userTargetWeight;
+          saved.targetAsked = true;
+          needsUpdate = true;
+        }
 
-          setWeightData(saved);
-          
-          // Calculer le pourcentage de progression
-          if (saved.targetWeight && saved.startWeight) {
-            const totalLoss = saved.startWeight - saved.targetWeight;
-            const currentLoss = saved.startWeight - saved.currentWeight;
+        if (needsUpdate) {
+          await saveWeightData(saved);
+        }
+
+        setWeightData(saved);
+        
+        // Calculer le pourcentage de progression
+        if (saved.targetWeight && saved.startWeight && saved.targetWeight > 0 && saved.startWeight > 0) {
+          const totalLoss = saved.startWeight - saved.targetWeight;
+          const currentLoss = saved.startWeight - saved.currentWeight;
+          if (totalLoss > 0) {
             const progress = Math.max(0, Math.min(1, currentLoss / totalLoss));
             progressAnimation.value = withSpring(progress);
           }
-        } else {
-          console.log('🆕 Première utilisation - initialisation des données de poids');
-          
-          // Première utilisation - utiliser les données du profil utilisateur
-          const startWeight = user.weight || 0;
-          const existingTargetWeight = user.targetWeight || 0;
+        }
 
-          console.log(`📊 Initialisation: poids=${startWeight}kg, objectif=${existingTargetWeight}kg`);
-
-          const initialData = {
-            startWeight: startWeight,
-            currentWeight: startWeight,
-            targetWeight: existingTargetWeight,
-            lastWeightUpdate: null,
-            targetAsked: existingTargetWeight > 0,
-            weightHistory: startWeight > 0 ? [{ weight: startWeight, date: user.createdAt || new Date().toISOString() }] : [],
-          };
-          
-          setWeightData(initialData);
-          await saveWeightData(initialData);
-          console.log('💾 Données initiales sauvegardées:', initialData);
-
-          // Calculer le pourcentage de progression si objectif déjà défini
-          if (existingTargetWeight > 0 && startWeight > 0) {
-            const totalLoss = startWeight - existingTargetWeight;
-            const progress = 0; // Pas encore de perte au début
-            progressAnimation.value = withSpring(progress);
-          }
-
-          // Demander de définir l'objectif seulement si jamais défini
-          if (existingTargetWeight === 0 && startWeight > 0) {
-            console.log('❓ Aucun objectif défini, demande à l\'utilisateur');
-            setTimeout(() => setShowTargetModal(true), 1500);
-          }
+        // Demander de définir l'objectif si pas encore fait
+        if ((!saved.targetWeight || saved.targetWeight === 0) && saved.startWeight > 0 && !saved.targetAsked) {
+          console.log('❓ Demande définition objectif après chargement');
+          setTimeout(() => setShowTargetModal(true), 1500);
         }
       }
     } catch (error) {

@@ -326,6 +326,11 @@ export default function FormeScreen() {
   };
 
   const calculateFormeScore = async () => {
+    if (!userData) {
+      console.log('❌ Pas de données utilisateur pour calculer le score');
+      return;
+    }
+
     let totalScore = 0;
     let totalWeight = 0;
 
@@ -353,24 +358,23 @@ export default function FormeScreen() {
       weights.training = 0.20;
       weights.calories = 0.15;
     } else {
-      // Plans Bronze, Argent, Or, Diamant
+      // Plans Premium: sommeil, stress, FC, RPE, calories, cycle
       weights.training = 0;
-
-      // Ajuster les poids pour les plans premium
       weights.heartRate = 0.10; // FC repos
       weights.rpe = 0.10;       // RPE
       weights.calories = 0.05; // Calories (moins important dans les plans avancés)
-
-      // Ajustements spécifiques pour les plans Or et Diamant peuvent être ajoutés ici
     }
 
     // Normaliser les poids pour que la somme soit égale à 1 (ou 100%)
     const totalBaseWeight = Object.values(weights).reduce((sum, weight) => sum + weight, 0);
-    for (const key in weights) {
-      weights[key] = weights[key] / totalBaseWeight;
+    if (totalBaseWeight > 0) {
+      for (const key in weights) {
+        weights[key] = weights[key] / totalBaseWeight;
+      }
     }
-    console.log("Subscription Status:", isPremium);
-    console.log("Calculated Weights:", weights);
+
+    console.log("🔄 Calcul score de forme - Premium:", isPremium);
+    console.log("📊 Poids calculés:", weights);
 
     // Sommeil
     if (formeData.sleep.hours > 0) {
@@ -601,12 +605,23 @@ export default function FormeScreen() {
       totalWeight += weights.cycle;
     }
 
+    console.log("📊 Données de calcul:", {
+      sommeil: { heures: formeData.sleep.hours, qualité: formeData.sleep.quality },
+      stress: formeData.stress.level,
+      calories: formeData.actualCalories,
+      heartRate: formeData.heartRate.resting,
+      rpe: formeData.rpe.value,
+      cycle: formeData.cycle?.phase
+    });
+
     // Calculer le score final
     let finalScore;
     if (totalWeight === 0) {
       finalScore = 50; // Score par défaut si aucune donnée
+      console.log("⚠️ Aucune donnée disponible, score par défaut: 50");
     } else {
       finalScore = totalScore / totalWeight;
+      console.log(`📊 Score calculé: ${totalScore}/${totalWeight} = ${finalScore}`);
     }
 
     // S'assurer que le score est entre 0 et 100
@@ -615,14 +630,12 @@ export default function FormeScreen() {
 
     // Sauvegarder le score calculé pour que l'écran accueil puisse le récupérer
     try {
-      if (userData) {
-        const today = new Date().toISOString().split('T')[0];
-        const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-        await AsyncStorage.setItem(`forme_score_${userData.id}_${today}`, finalScore.toString());
-        console.log(`Score de forme sauvegardé pour l'accueil: ${finalScore}/100`);
-      }
+      const today = new Date().toISOString().split('T')[0];
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+      await AsyncStorage.setItem(`forme_score_${userData.id}_${today}`, finalScore.toString());
+      console.log(`✅ Score de forme sauvegardé: ${finalScore}/100 pour ${today}`);
     } catch (error) {
-      console.error('Erreur sauvegarde score de forme:', error);
+      console.error('❌ Erreur sauvegarde score de forme:', error);
     }
   };
 

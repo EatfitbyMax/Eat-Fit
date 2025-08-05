@@ -105,39 +105,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       console.log('🚪 Début de la déconnexion...');
 
-      // 1. IMMÉDIATEMENT activer l'état de déconnexion et vider l'utilisateur
-      setIsLoggingOut(true);
+      // 1. IMMÉDIATEMENT vider l'utilisateur et activer l'état de déconnexion
       setUser(null);
       setIsLoading(false);
-      console.log('🔄 État de déconnexion activé et utilisateur vidé');
+      setIsLoggingOut(true);
+      console.log('🔄 Utilisateur vidé et état de déconnexion activé');
 
-      // 2. Vider le cache auth
-      const { logout: authLogout } = await import('@/utils/auth');
-      await authLogout();
-      console.log('✅ Cache auth vidé');
+      // 2. Vider le cache auth en parallèle
+      try {
+        const { logout: authLogout } = await import('@/utils/auth');
+        await authLogout();
+        console.log('✅ Cache auth vidé');
+      } catch (authError) {
+        console.error('⚠️ Erreur vidage cache auth:', authError);
+      }
 
-      // 3. Navigation vers login - double redirection pour forcer
-      console.log('🔄 Redirection vers /auth/login');
+      // 3. Redirection immédiate et forcée vers login
+      console.log('🔄 Redirection forcée vers /auth/login');
       router.replace('/auth/login');
       
-      // 4. Attendre un court délai et forcer une seconde redirection si nécessaire
-      await new Promise(resolve => setTimeout(resolve, 100));
-      router.replace('/auth/login');
+      // 4. Attendre très brièvement puis forcer une seconde redirection si nécessaire
+      setTimeout(() => {
+        console.log('🔄 Redirection de sécurité vers /auth/login');
+        router.replace('/auth/login');
+        setIsLoggingOut(false);
+      }, 50);
 
-      // 5. Désactiver l'état de déconnexion
-      setIsLoggingOut(false);
-      console.log('✅ Déconnexion complète terminée');
+      console.log('✅ Déconnexion initiée avec succès');
 
     } catch (error) {
       console.error('❌ Erreur lors de la déconnexion:', error);
 
-      // Forcer la réinitialisation même en cas d'erreur
+      // Forcer la réinitialisation complète même en cas d'erreur
       setUser(null);
       setIsLoading(false);
       setIsLoggingOut(false);
-      router.replace('/auth/login');
-
+      
+      // Redirection de secours
       console.log('🔄 Redirection de secours vers /auth/login');
+      router.replace('/auth/login');
     }
   }, [router]);
 
