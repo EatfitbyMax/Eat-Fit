@@ -60,12 +60,7 @@
           "defaultChannel": "default"
         }
       ],
-      [
-        "expo-dev-client",
-        {
-          "addGeneratedScheme": false
-        }
-      ],
+      
       [
         "expo-build-properties",
         {
