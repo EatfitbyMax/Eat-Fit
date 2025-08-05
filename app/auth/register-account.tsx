@@ -15,81 +15,109 @@ export default function RegisterAccountScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email) && !email.includes('champion') && email.length >= 5;
+  };
+
   const handleFinish = async () => {
-    if (email.trim() && password.trim() && password === confirmPassword) {
-      try {
-        console.log('🔧 Validation données inscription:', {
-          email: email.trim(),
-          passwordLength: password.length,
-          passwordType: typeof password,
-          firstName: registrationData.firstName,
-          lastName: registrationData.lastName
-        });
+    if (!email || !password || !confirmPassword) {
+      Alert.alert('Erreur', 'Veuillez remplir tous les champs');
+      return;
+    }
 
-        // Mettre à jour les données d'inscription avec email/password
-        updateRegistrationData({
-          email: email.trim().toLowerCase(),
-          password: password.trim(),
-        });
+    // Validation stricte des données personnelles
+    if (!registrationData.firstName || !registrationData.lastName || 
+        registrationData.firstName.trim().length < 2 || registrationData.lastName.trim().length < 2 ||
+        registrationData.firstName.toLowerCase().includes('champion') || 
+        registrationData.lastName.toLowerCase().includes('champion')) {
+      Alert.alert('Erreur', 'Prénom et nom requis (minimum 2 caractères)');
+      router.push('/auth/register');
+      return;
+    }
 
-        // Créer l'objet utilisateur complet avec toutes les informations
-        const userData = {
-          email: email.trim().toLowerCase(),
-          password: password.trim(),
-          name: `${registrationData.firstName} ${registrationData.lastName}`,
-          firstName: registrationData.firstName,
-          lastName: registrationData.lastName,
-          goals: registrationData.goals,
-          gender: registrationData.gender,
-          age: parseInt(registrationData.age),
-          height: parseInt(registrationData.height),
-          weight: parseInt(registrationData.weight),
-          activityLevel: registrationData.activityLevel,
-          userType: 'client' as const,
-          favoriteSport: registrationData.favoriteSport,
-        };
+    if (!validateEmail(email.trim())) {
+      Alert.alert('Erreur', 'Veuillez entrer une adresse email valide.');
+      return;
+    }
 
-        console.log('📋 Données utilisateur préparées:', {
-          ...userData,
-          password: '***'
-        });
+    if (password !== confirmPassword) {
+      Alert.alert('Erreur', 'Les mots de passe ne correspondent pas.');
+      return;
+    }
 
-        // Créer le compte avec toutes les informations
-        const user = await register(userData);
+    try {
+      console.log('🔧 Validation données inscription:', {
+        email: email.trim(),
+        passwordLength: password.length,
+        passwordType: typeof password,
+        firstName: registrationData.firstName,
+        lastName: registrationData.lastName
+      });
 
-        if (user) {
-          // Connecter l'utilisateur dans le contexte d'authentification
-          login(user);
+      // Mettre à jour les données d'inscription avec email/password
+      updateRegistrationData({
+        email: email.trim().toLowerCase(),
+        password: password.trim(),
+      });
 
-          // Réinitialiser les données d'inscription
-          resetRegistrationData();
+      // Créer l'objet utilisateur complet avec toutes les informations
+      const userData = {
+        email: email.trim().toLowerCase(),
+        password: password.trim(),
+        name: `${registrationData.firstName} ${registrationData.lastName}`,
+        firstName: registrationData.firstName,
+        lastName: registrationData.lastName,
+        goals: registrationData.goals,
+        gender: registrationData.gender,
+        age: parseInt(registrationData.age),
+        height: parseInt(registrationData.height),
+        weight: parseInt(registrationData.weight),
+        activityLevel: registrationData.activityLevel,
+        userType: 'client' as const,
+        favoriteSport: registrationData.favoriteSport,
+      };
 
-          Alert.alert(
-            'Compte créé !',
-            'Votre compte client a été créé avec succès.',
-            [
-              {
-                text: 'OK',
-                onPress: () => {
-                  // Rediriger directement vers l'application client
-                  router.replace('/(client)');
-                }
+      console.log('📋 Données utilisateur préparées:', {
+        ...userData,
+        password: '***'
+      });
+
+      // Créer le compte avec toutes les informations
+      const user = await register(userData);
+
+      if (user) {
+        // Connecter l'utilisateur dans le contexte d'authentification
+        login(user);
+
+        // Réinitialiser les données d'inscription
+        resetRegistrationData();
+
+        Alert.alert(
+          'Compte créé !',
+          'Votre compte client a été créé avec succès.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                // Rediriger directement vers l'application client
+                router.replace('/(client)');
               }
-            ]
-          );
-        } else {
-          Alert.alert(
-            'Erreur',
-            'Cet email est déjà utilisé.'
-          );
-        }
-      } catch (error) {
+            }
+          ]
+        );
+      } else {
         Alert.alert(
           'Erreur',
-          'Une erreur est survenue lors de la création du compte.'
+          'Cet email est déjà utilisé.'
         );
-        console.error('Erreur création compte:', error);
       }
+    } catch (error) {
+      Alert.alert(
+        'Erreur',
+        'Impossible de créer le compte. Vérifiez votre connexion et réessayez.'
+      );
+      console.error('Erreur création compte:', error);
     }
   };
 
@@ -172,10 +200,10 @@ export default function RegisterAccountScreen() {
         <TouchableOpacity 
           style={[
             styles.nextButton, 
-            (!email.trim() || !password.trim() || password !== confirmPassword) && styles.disabledButton
+            (!email.trim() || !password.trim() || password !== confirmPassword || !validateEmail(email.trim())) && styles.disabledButton
           ]}
           onPress={handleFinish}
-          disabled={!email.trim() || !password.trim() || password !== confirmPassword}
+          disabled={!email.trim() || !password.trim() || password !== confirmPassword || !validateEmail(email.trim())}
         >
           <Text style={styles.nextButtonText}>Créer le compte</Text>
         </TouchableOpacity>
