@@ -2,7 +2,7 @@ import { PersistentStorage } from './storage';
 import { Platform } from 'react-native';
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Importation nécessaire pour la modification
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Configuration Strava sécurisée pour la production
 const STRAVA_CLIENT_ID = process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID || '';
