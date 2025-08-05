@@ -1,6 +1,5 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type SupportedLanguage = 'fr' | 'en' | 'es' | 'de';
 
@@ -320,39 +319,50 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
   const [language, setLanguageState] = useState<SupportedLanguage>('fr');
 
   useEffect(() => {
-    loadLanguage();
+    loadLanguageFromVPS();
   }, []);
 
-  const loadLanguage = async () => {
+  const loadLanguageFromVPS = async () => {
     try {
-      const savedLanguage = await AsyncStorage.getItem('app_language');
-      if (savedLanguage && ['fr', 'en', 'es', 'de'].includes(savedLanguage)) {
-        setLanguageState(savedLanguage as SupportedLanguage);
+      const { PersistentStorage } = await import('../utils/storage');
+      const currentUser = await PersistentStorage.getCurrentUser();
+      
+      if (currentUser?.id) {
+        const preferences = await PersistentStorage.getAppPreferences(currentUser.id);
+        if (preferences.language && ['fr', 'en', 'es', 'de'].includes(preferences.language)) {
+          setLanguageState(preferences.language as SupportedLanguage);
+          console.log('✅ Langue chargée depuis VPS:', preferences.language);
+        } else {
+          console.log('📱 Langue par défaut utilisée: fr');
+        }
       }
     } catch (error) {
-      console.error('Erreur chargement langue:', error);
+      console.error('❌ Erreur chargement langue depuis VPS:', error);
+      // Garder la langue par défaut (fr) en cas d'erreur
     }
   };
 
   const setLanguage = async (lang: SupportedLanguage) => {
     try {
-      await AsyncStorage.setItem('app_language', lang);
+      // Mise à jour immédiate de l'état local
       setLanguageState(lang);
+      console.log('🔄 Langue mise à jour:', lang);
       
-      // Synchroniser avec le serveur VPS
-      try {
-        const { PersistentStorage } = await import('../utils/storage');
-        const currentUser = await PersistentStorage.getCurrentUser();
-        if (currentUser?.id) {
-          const preferences = await PersistentStorage.getAppPreferences(currentUser.id);
-          preferences.language = lang;
-          await PersistentStorage.saveAppPreferences(currentUser.id, preferences);
-        }
-      } catch (error) {
-        console.warn('Impossible de synchroniser la langue avec le serveur:', error);
+      // Synchronisation avec le serveur VPS
+      const { PersistentStorage } = await import('../utils/storage');
+      const currentUser = await PersistentStorage.getCurrentUser();
+      
+      if (currentUser?.id) {
+        const preferences = await PersistentStorage.getAppPreferences(currentUser.id);
+        preferences.language = lang;
+        await PersistentStorage.saveAppPreferences(currentUser.id, preferences);
+        console.log('✅ Langue synchronisée avec VPS:', lang);
+      } else {
+        console.warn('⚠️ Utilisateur non connecté - langue non sauvegardée sur VPS');
       }
     } catch (error) {
-      console.error('Erreur sauvegarde langue:', error);
+      console.error('❌ Erreur sauvegarde langue sur VPS:', error);
+      // La langue reste changée localement même si la sync VPS échoue
     }
   };
 

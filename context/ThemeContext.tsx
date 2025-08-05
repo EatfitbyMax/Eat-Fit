@@ -1,6 +1,5 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColorScheme } from 'react-native';
 
 export interface ThemeColors {
@@ -74,53 +73,64 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState<boolean>(systemColorScheme === 'dark');
 
   useEffect(() => {
-    loadThemePreference();
+    loadThemeFromVPS();
   }, []);
 
-  const loadThemePreference = async () => {
+  const loadThemeFromVPS = async () => {
     try {
-      const savedTheme = await AsyncStorage.getItem('theme_preference');
-      if (savedTheme !== null) {
-        setIsDarkMode(savedTheme === 'dark');
+      const { PersistentStorage } = await import('../utils/storage');
+      const currentUser = await PersistentStorage.getCurrentUser();
+      
+      if (currentUser?.id) {
+        const preferences = await PersistentStorage.getAppPreferences(currentUser.id);
+        if (preferences.theme === 'dark' || preferences.theme === 'light') {
+          setIsDarkMode(preferences.theme === 'dark');
+          console.log('✅ Thème chargé depuis VPS:', preferences.theme);
+        } else {
+          // Utiliser le thème système si pas de préférence sur VPS
+          setIsDarkMode(systemColorScheme === 'dark');
+          console.log('📱 Thème système utilisé:', systemColorScheme === 'dark' ? 'dark' : 'light');
+        }
       } else {
-        // Si pas de préférence sauvegardée, utiliser le thème système
+        // Utiliser le thème système si pas d'utilisateur connecté
         setIsDarkMode(systemColorScheme === 'dark');
+        console.log('📱 Thème système utilisé (pas connecté):', systemColorScheme === 'dark' ? 'dark' : 'light');
       }
     } catch (error) {
-      console.error('Erreur lors du chargement des préférences de thème:', error);
+      console.error('❌ Erreur chargement thème depuis VPS:', error);
+      // Utiliser le thème système en cas d'erreur
+      setIsDarkMode(systemColorScheme === 'dark');
     }
   };
 
-  const saveThemePreference = async (isDark: boolean) => {
+  const saveThemeToVPS = async (isDark: boolean) => {
     try {
-      await AsyncStorage.setItem('theme_preference', isDark ? 'dark' : 'light');
+      const { PersistentStorage } = await import('../utils/storage');
+      const currentUser = await PersistentStorage.getCurrentUser();
       
-      // Synchroniser avec le serveur VPS
-      try {
-        const { PersistentStorage } = await import('../utils/storage');
-        const currentUser = await PersistentStorage.getCurrentUser();
-        if (currentUser?.id) {
-          const preferences = await PersistentStorage.getAppPreferences(currentUser.id);
-          preferences.theme = isDark ? 'dark' : 'light';
-          await PersistentStorage.saveAppPreferences(currentUser.id, preferences);
-        }
-      } catch (error) {
-        console.warn('Impossible de synchroniser le thème avec le serveur:', error);
+      if (currentUser?.id) {
+        const preferences = await PersistentStorage.getAppPreferences(currentUser.id);
+        preferences.theme = isDark ? 'dark' : 'light';
+        await PersistentStorage.saveAppPreferences(currentUser.id, preferences);
+        console.log('✅ Thème synchronisé avec VPS:', preferences.theme);
+      } else {
+        console.warn('⚠️ Utilisateur non connecté - thème non sauvegardé sur VPS');
       }
     } catch (error) {
-      console.error('Erreur lors de la sauvegarde des préférences de thème:', error);
+      console.error('❌ Erreur sauvegarde thème sur VPS:', error);
+      // Le thème reste changé localement même si la sync VPS échoue
     }
   };
 
   const toggleTheme = () => {
     const newTheme = !isDarkMode;
     setIsDarkMode(newTheme);
-    saveThemePreference(newTheme);
+    saveThemeToVPS(newTheme);
   };
 
   const setTheme = (isDark: boolean) => {
     setIsDarkMode(isDark);
-    saveThemePreference(isDark);
+    saveThemeToVPS(isDark);
   };
 
   const theme = isDarkMode ? darkTheme : lightTheme;
