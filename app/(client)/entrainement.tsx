@@ -93,14 +93,20 @@ export default function EntrainementScreen() {
     }, [])
   );
 
-  // Rafraîchissement automatique constant toutes les 3 secondes
+  // Rafraîchissement automatique optimisé toutes les 10 secondes
   useEffect(() => {
     const interval = setInterval(() => {
       console.log('=== RAFRAÎCHISSEMENT AUTOMATIQUE ===');
       loadWorkouts();
-      // Forcer un re-render subtil
-      setCurrentWeek(prev => new Date(prev.getTime()));
-    }, 3000); // Rafraîchit toutes les 3 secondes
+      // Forcer un re-render subtil seulement si nécessaire
+      setCurrentWeek(prev => {
+        const now = new Date();
+        if (Math.abs(now.getTime() - prev.getTime()) > 1000 * 60 * 60) { // Plus d'1 heure
+          return now;
+        }
+        return prev;
+      });
+    }, 10000); // Rafraîchit toutes les 10 secondes (plus économe)
 
     return () => clearInterval(interval);
   }, []);
@@ -137,8 +143,16 @@ export default function EntrainementScreen() {
         // Forcer la mise à jour de l'état même si les données sont identiques
         setWorkouts([...workouts]);
       } catch (error) {
-        console.error('Erreur chargement entraînements depuis serveur VPS:', error);
-        setWorkouts([]);
+        console.error('❌ Erreur chargement entraînements depuis serveur VPS:', error);
+        // Essayer de charger depuis le cache local en cas d'erreur serveur
+        try {
+          const fallbackWorkouts = await PersistentStorage.getWorkoutsFromCache(currentUser.id);
+          setWorkouts(fallbackWorkouts || []);
+          console.log('📱 Fallback vers cache local réussi');
+        } catch (cacheError) {
+          console.error('❌ Aucun cache disponible:', cacheError);
+          setWorkouts([]);
+        }
       }
 
       console.log('=== FIN CHARGEMENT TOUS LES ENTRAINEMENTS ===');

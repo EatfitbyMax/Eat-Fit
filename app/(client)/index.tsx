@@ -160,7 +160,9 @@ export default function HomeScreen() {
     const goals = user.goals || [];
 
     if (goals.includes('Perdre du poids')) {
-      totalCalories -= 200; // Déficit de 200 kcal
+      totalCalories -= 300; // Déficit de 300 kcal pour perte de poids
+    } else if (goals.includes('Prendre du muscle')) {
+      totalCalories += 200; // Surplus de 200 kcal pour prise de muscle
     }
 
     // Calcul des macronutriments selon les objectifs
@@ -308,11 +310,12 @@ export default function HomeScreen() {
       console.log(`✅ Statistiques chargées: ${Math.round(totalCalories)} calories, ${totalWorkouts} séances, ${totalSteps} pas`);
     } catch (error: any) {
       console.error('❌ Erreur chargement statistiques:', error);
-      setTodayStats({
-        calories: 0,
-        workouts: 0,
-        steps: 0,
-      });
+      // Maintenir les valeurs existantes en cas d'erreur
+      setTodayStats(prevStats => ({
+        calories: prevStats.calories || 0,
+        workouts: prevStats.workouts || 0,
+        steps: prevStats.steps || 0,
+      }));
     }
   };
 

@@ -259,6 +259,24 @@ export default function ProgresScreen() {
         return;
       }
 
+      // Validation supplémentaire pour des changements de poids réalistes
+      if (weightData.currentWeight > 0) {
+        const weightDifference = Math.abs(weight - weightData.currentWeight);
+        if (weightDifference > 20) {
+          const confirmed = await new Promise((resolve) => {
+            Alert.alert(
+              'Changement important détecté',
+              `Différence de ${weightDifference.toFixed(1)} kg par rapport au poids précédent. Confirmer ?`,
+              [
+                { text: 'Annuler', onPress: () => resolve(false) },
+                { text: 'Confirmer', onPress: () => resolve(true) }
+              ]
+            );
+          });
+          if (!confirmed) return;
+        }
+      }
+
       const now = new Date();
       const nowISO = now.toISOString();
 

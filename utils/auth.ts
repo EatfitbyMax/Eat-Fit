@@ -162,7 +162,7 @@ async function clearSession(): Promise<void> {
 async function generateSecureHash(password: string): Promise<string> {
   const passwordString = String(password).trim();
   const saltedPassword = passwordString + 'eatfitbymax_salt_2025';
-  
+
   return await Crypto.digestStringAsync(
     Crypto.CryptoDigestAlgorithm.SHA256,
     saltedPassword,
@@ -288,29 +288,29 @@ export async function forceRegenerateUserHash(email: string, currentPassword: st
 export async function debugPasswordHash(email: string, testPassword: string): Promise<void> {
   try {
     console.log('🔍 DEBUG - Test de tous les systèmes de hash pour:', email);
-    
+
     const users = await PersistentStorage.getUsers();
     const user = users.find((u: any) => u.email === email);
-    
+
     if (!user) {
       console.log('❌ Utilisateur non trouvé');
       return;
     }
 
     console.log('📋 Hash stocké:', user.hashedPassword);
-    
+
     // Test Expo Crypto SHA256-HEX
     const expoHash = await generateSecureHash(testPassword);
     console.log('🔐 Expo SHA256-HEX:', expoHash);
     console.log('✅ Match Expo:', expoHash === user.hashedPassword);
-    
+
     // Test Node.js crypto
     const crypto = require('crypto');
     const saltedPassword = testPassword.trim() + 'eatfitbymax_salt_2025';
     const nodeHash = crypto.createHash('sha256').update(saltedPassword).digest('hex');
     console.log('🔐 Node.js SHA256:', nodeHash);
     console.log('✅ Match Node.js:', nodeHash === user.hashedPassword);
-    
+
   } catch (error) {
     console.error('❌ Erreur debug hash:', error);
   }
@@ -420,7 +420,7 @@ export async function login(email: string, password: string): Promise<User | nul
     if (user.hashedPassword) {
       // Utiliser la fonction de vérification unifiée
       isPasswordValid = await verifyPassword(password, user.hashedPassword);
-      
+
       // Si le mot de passe est valide mais utilise un ancien système, migrer automatiquement
       if (isPasswordValid) {
         const currentHash = await generateSecureHash(password);
@@ -429,7 +429,7 @@ export async function login(email: string, password: string): Promise<User | nul
           try {
             // Mise à jour dans la liste appropriée (users ou coaches)
             const isInUsers = users.some(u => u.email === email);
-            
+
             if (isInUsers) {
               const updatedUsers = users.map((u: any) => 
                 u.email === email 
@@ -470,9 +470,9 @@ export async function login(email: string, password: string): Promise<User | nul
         console.log('🔄 Migration obligatoire du mot de passe en clair...');
         try {
           const newHashedPassword = await generateSecureHash(password);
-          
+
           const isInUsers = users.some(u => u.email === email);
-          
+
           if (isInUsers) {
             const updatedUsers = users.map((u: any) => 
               u.email === email 
@@ -682,7 +682,7 @@ const USER_STORAGE_KEY = 'eatfitbymax_user'; // Define the missing USER_STORAGE_
 export const deleteUserAccount = async (userId: string): Promise<void> => {
   try {
     console.log('🗑️ Début de la suppression du compte:', userId);
-    
+
     // Supprimer toutes les données locales de l'utilisateur
     const keysToRemove = [
       USER_STORAGE_KEY,
@@ -714,7 +714,7 @@ export const deleteUserAccount = async (userId: string): Promise<void> => {
       // Récupérer d'abord les données utilisateur pour déterminer le type
       const users = await PersistentStorage.getUsers();
       const coaches = await PersistentStorage.getCoaches();
-      
+
       let isClient = users.some(u => u.id === userId);
       let isCoach = coaches.some(c => c.id === userId);
 

@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SERVER_URL = 'https://eatfitbymax.cloud';
 
@@ -112,8 +113,42 @@ export class PersistentStorage {
 
   // Workouts
   static async getWorkouts(userId: string): Promise<any[]> {
-    const response = await fetch(`${SERVER_URL}/api/workouts/${userId}`);
-    return response.ok ? await response.json() : [];
+    try {
+      const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
+      const response = await fetch(`${VPS_URL}/api/workouts/${userId}`);
+
+      if (response.ok) {
+        const workouts = await response.json();
+        // Sauvegarder en cache local avec validation
+        await AsyncStorage.setItem(`workouts_cache_${userId}`, JSON.stringify({
+          data: Array.isArray(workouts) ? workouts : [],
+          timestamp: Date.now()
+        }));
+        return Array.isArray(workouts) ? workouts : [];
+      }
+      throw new Error('Serveur indisponible');
+    } catch (error) {
+      console.error('Erreur getWorkouts:', error);
+      // Fallback vers cache
+      return await this.getWorkoutsFromCache(userId);
+    }
+  }
+
+  static async getWorkoutsFromCache(userId: string): Promise<any[]> {
+    try {
+      const cached = await AsyncStorage.getItem(`workouts_cache_${userId}`);
+      if (cached) {
+        const { data, timestamp } = JSON.parse(cached);
+        // Cache valide pendant 24h
+        if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
+          return Array.isArray(data) ? data : [];
+        }
+      }
+      return [];
+    } catch (error) {
+      console.error('Erreur cache workouts:', error);
+      return [];
+    }
   }
 
   static async saveWorkouts(userId: string, workouts: any[]): Promise<void> {

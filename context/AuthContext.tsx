@@ -31,16 +31,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (isMounted) {
           // Validation ULTRA-STRICTE - ne jamais accepter d'utilisateur invalide
-          if (currentUser && 
-              currentUser.email && 
-              currentUser.firstName && 
-              currentUser.lastName && 
+          if (currentUser &&
+              currentUser.email &&
+              currentUser.firstName &&
+              currentUser.lastName &&
               currentUser.userType &&
-              currentUser.firstName.trim() !== '' && 
+              currentUser.firstName.trim() !== '' &&
               currentUser.lastName.trim() !== '' &&
-              !currentUser.email.includes('champion') && 
+              !currentUser.email.includes('champion') &&
               currentUser.firstName !== 'champion') {
-            
+
             setUser(currentUser);
             console.log('✅ Utilisateur valide connecté (session restaurée):', currentUser.email);
           } else {
@@ -76,14 +76,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback((userData: User) => {
     // Validation ULTRA-STRICTE - rejeter tout utilisateur invalide
-    if (!userData || 
-        !userData.email || 
-        !userData.firstName || 
-        !userData.lastName || 
+    if (!userData ||
+        !userData.email ||
+        !userData.firstName ||
+        !userData.lastName ||
         !userData.userType ||
-        userData.firstName.trim() === '' || 
+        userData.firstName.trim() === '' ||
         userData.lastName.trim() === '' ||
-        userData.email.includes('champion') || 
+        userData.email.includes('champion') ||
         userData.firstName === 'champion' ||
         userData.lastName === 'champion') {
       console.error('❌ REJET: Tentative de connexion avec des données utilisateur invalides', {
@@ -123,7 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // 3. Redirection immédiate et forcée vers login
       console.log('🔄 Redirection forcée vers /auth/login');
       router.replace('/auth/login');
-      
+
       // 4. Attendre très brièvement puis forcer une seconde redirection si nécessaire
       setTimeout(() => {
         console.log('🔄 Redirection de sécurité vers /auth/login');
@@ -135,15 +135,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     } catch (error) {
       console.error('❌ Erreur lors de la déconnexion:', error);
-
-      // Forcer la réinitialisation complète même en cas d'erreur
-      setUser(null);
-      setIsLoading(false);
       setIsLoggingOut(false);
-      
-      // Redirection de secours
-      console.log('🔄 Redirection de secours vers /auth/login');
+      // Forcer la redirection même en cas d'erreur
       router.replace('/auth/login');
+      throw error;
     }
   }, [router]);
 

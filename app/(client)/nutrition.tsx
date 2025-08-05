@@ -352,32 +352,47 @@ function NutritionScreen() {
         await AsyncStorage.setItem(`food_entries_${user.id}`, JSON.stringify(updatedEntries));
         console.log('Sauvegarde locale réussie');
 
-        // Sauvegarder sur le serveur VPS
-        try {
-          const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 secondes timeout
+        // Sauvegarder sur le serveur VPS avec retry
+      try {
+        const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 secondes timeout
 
-          const response = await fetch(`${VPS_URL}/api/nutrition/${user.id}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(updatedEntries),
-            signal: controller.signal
-          });
+        const response = await fetch(`${VPS_URL}/api/nutrition/${user.id}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(updatedEntries),
+          signal: controller.signal
+        });
 
-          clearTimeout(timeoutId);
+        clearTimeout(timeoutId);
 
-          if (response.ok) {
-            console.log('Données nutrition sauvegardées sur le serveur VPS');
-          } else {
-            console.warn('Échec sauvegarde nutrition sur serveur VPS, données conservées localement');
-          }
-        } catch (serverError) {
-          console.warn('Erreur serveur nutrition:', serverError);
-          console.log('Les données nutrition restent disponibles localement');
+        if (response.ok) {
+          console.log('✅ Données nutrition sauvegardées sur le serveur VPS');
+        } else {
+          throw new Error(`Erreur serveur: ${response.status}`);
         }
+      } catch (serverError) {
+        console.warn('⚠️ Erreur serveur nutrition, retry dans 5s:', serverError);
+        // Retry après 5 secondes
+        setTimeout(async () => {
+          try {
+            const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud'; // Re-déclaré pour la portée du setTimeout
+            const response = await fetch(`${VPS_URL}/api/nutrition/${user.id}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(updatedEntries),
+            });
+            if (response.ok) {
+              console.log('✅ Données nutrition sauvegardées (retry réussi)');
+            }
+          } catch (retryError) {
+            console.warn('⚠️ Retry échoué, données conservées localement');
+          }
+        }, 5000);
+      }
       } catch (storageError) {
         console.error('Erreur sauvegarde nutrition:', storageError);
         Alert.alert('Erreur', 'Impossible de sauvegarder les données nutrition');
