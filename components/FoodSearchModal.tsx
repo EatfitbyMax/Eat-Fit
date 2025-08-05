@@ -81,12 +81,18 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
       const { getCurrentUser } = require('@/utils/auth');
       const user = await getCurrentUser();
       if (user) {
-        const favorites = await OpenFoodFactsService.getFavoriteFoods(user.id);
-        setFavoriteFoods(favorites);
-        if (favorites.length > 0) {
-          setSearchResults(favorites);
+        // Charger favoris depuis le serveur VPS uniquement
+        const response = await fetch(`${process.env.EXPO_PUBLIC_VPS_URL}/api/nutrition/favorites/${user.id}`);
+        if (response.ok) {
+          const favorites = await response.json();
+          setFavoriteFoods(favorites);
+          if (favorites.length > 0) {
+            setSearchResults(favorites);
+          } else {
+            const popularFoods = OpenFoodFactsService.getPopularFoods();
+            setSearchResults(popularFoods);
+          }
         } else {
-          // Si pas de favoris, afficher les aliments populaires
           const popularFoods = OpenFoodFactsService.getPopularFoods();
           setSearchResults(popularFoods);
         }
@@ -95,7 +101,7 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
         setSearchResults(popularFoods);
       }
     } catch (error) {
-      console.error('Erreur chargement favoris:', error);
+      console.error('Erreur chargement favoris VPS:', error);
       const popularFoods = OpenFoodFactsService.getPopularFoods();
       setSearchResults(popularFoods);
     }
@@ -275,15 +281,22 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
       return;
     }
 
-    // Ajouter aux favoris si ce n'est pas déjà fait
+    // Ajouter aux favoris sur le serveur VPS uniquement
     try {
       const { getCurrentUser } = require('@/utils/auth');
       const user = await getCurrentUser();
       if (user) {
-        await OpenFoodFactsService.addToFavorites(user.id, selectedProduct);
+        await fetch(`${process.env.EXPO_PUBLIC_VPS_URL}/api/nutrition/favorites`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            product: selectedProduct
+          })
+        });
       }
     } catch (error) {
-      console.error('Erreur ajout favori:', error);
+      console.error('Erreur ajout favori VPS:', error);
     }
 
     // Fermer la modal de quantité d'abord

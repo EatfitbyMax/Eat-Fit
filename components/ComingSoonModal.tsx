@@ -95,7 +95,6 @@ export default function ComingSoonModal({ visible, onClose, feature, description
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0D1117',
   },
   content: {
     flex: 1,

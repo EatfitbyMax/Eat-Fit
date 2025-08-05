@@ -40,30 +40,18 @@ export class ErrorBoundary extends Component<Props, State> {
       errorInfo,
     });
 
-    // Tentative de récupération automatique si pas trop d'essais
+    // Tentative de récupération automatique limitée
     if (this.state.recoveryAttempts < this.maxRecoveryAttempts) {
       console.log('🔄 Tentative de récupération automatique...');
-
       this.setState(prevState => ({
-        recoveryAttempts: prevState.recoveryAttempts + 1
+        recoveryAttempts: prevState.recoveryAttempts + 1,
+        hasError: false,
+        error: undefined,
+        errorInfo: undefined
       }));
-
-      setTimeout(() => {
-        if (this.state.hasError) {
-          this.setState({ 
-            hasError: false, 
-            error: undefined, 
-            errorInfo: undefined 
-          });
-        }
-      }, 3000);
-    } else {
-      console.log('🚫 Erreurs trop fréquentes - arrêt des tentatives de récupération');
     }
-        // Log l'erreur pour debug
-    if (error.message.includes('subscription') || error.message.includes('payment')) {
-      console.error('🚨 Erreur liée aux abonnements/paiements:', error);
-    }
+        // Log minimal en production
+    console.error('ErrorBoundary:', error.message);
   }
 
   resetError = () => {

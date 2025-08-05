@@ -49,19 +49,11 @@ export default function AuthGuard({ children }: AuthGuardProps) {
       }
     }
 
-    // Validation STRICTE des données utilisateur - REJETER tout utilisateur invalide
+    // Validation des données utilisateur obligatoires
     if (!user.email || !user.userType || !user.firstName || !user.lastName ||
-        user.firstName.trim() === '' || user.lastName.trim() === '' ||
-        user.email.includes('champion') || user.firstName === 'champion') {
-      console.log('🚫 Utilisateur avec données invalides/corrompues détecté - DÉCONNEXION FORCÉE');
-      // La logique de déconnexion doit être gérée par le hook useAuth, pas ici directement.
-      // Cependant, pour l'instant, on appelle logout pour tenter de corriger la situation.
-      // Dans une version future, on pourrait déclencher un état dans AuthContext
-      // qui serait ensuite géré par le hook pour appeler logout.
-      // La suppression de initializeAuth devrait aider à prévenir ce scénario.
-      // Le hook useAuth doit gérer son propre état de déconnexion et nettoyage.
-      // Si l'utilisateur est toujours "corrompu", il sera déconnecté lors du prochain rendu
-      // grâce aux modifications apportées pour éviter la création d'utilisateurs fantômes.
+        user.firstName.trim() === '' || user.lastName.trim() === '') {
+      console.log('🚫 Utilisateur avec données invalides détecté');
+      router.replace('/auth/login');
       return;
     }
 

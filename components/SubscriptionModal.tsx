@@ -135,25 +135,13 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
     } catch (error) {
       console.error('❌ Erreur abonnement:', error);
 
-      // Gestion spécifique des erreurs de stack
-      if (error.message?.includes('stack') || error.message?.includes('depth') || error.message?.includes('Maximum call stack')) {
-        Alert.alert(
-          'Erreur technique',
-          'Un problème technique est survenu. Veuillez fermer et redémarrer complètement l\'application.',
-          [{ text: 'OK' }]
-        );
-      } else {
-        Alert.alert(
-          'Erreur',
-          error.message || 'Une erreur est survenue lors de l\'abonnement. Veuillez réessayer.',
-          [{ text: 'OK' }]
-        );
-      }
+      Alert.alert(
+        'Erreur',
+        error.message || 'Une erreur est survenue lors de l\'abonnement. Veuillez réessayer.',
+        [{ text: 'OK' }]
+      );
     } finally {
-      // Délai plus court pour éviter les blocages
-      setTimeout(() => {
-        setLoading(false);
-      }, 500);
+      setLoading(false);
     }
   };
 

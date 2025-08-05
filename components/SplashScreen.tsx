@@ -39,16 +39,16 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
         withTiming(1, { duration: 200 })
       );
 
-      // 2. Titre apparaît après l'animation de la couronne (3 secondes)
-      titleOpacity.value = withDelay(3000, withTiming(1, { duration: 800 }));
+      // 2. Titre apparaît après l'animation de la couronne (2 secondes)
+      titleOpacity.value = withDelay(2000, withTiming(1, { duration: 600 }));
 
       // 3. Sous-titre apparaît après le titre
-      subtitleOpacity.value = withDelay(3800, withTiming(1, { duration: 800 }));
+      subtitleOpacity.value = withDelay(2600, withTiming(1, { duration: 600 }));
 
-      // 4. Terminer le splash screen après toutes les animations
+      // 4. Terminer le splash screen après toutes les animations (réduit à 4 secondes)
       setTimeout(() => {
         onFinish();
-      }, 6000);
+      }, 4000);
     };
 
     startAnimation();
