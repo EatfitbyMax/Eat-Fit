@@ -183,8 +183,7 @@ export default function HomeScreen() {
     };
   };
 
-  const [isPremium, setIsPremium] = useState(false);
-  const [formeData, setFormeData] = useState(null);
+  
 
   const loadUserData = async () => {
     try {
@@ -221,204 +220,32 @@ export default function HomeScreen() {
       if (!currentUser) return;
 
       const today = new Date().toISOString().split('T')[0];
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
 
-      // Récupérer les données de forme depuis le serveur uniquement
+      // Récupérer le score calculé et sauvegardé par la page Forme
       try {
-        const todayData = await PersistentStorage.getFormeData(currentUser.id, today);
-        console.log('✅ Données de forme chargées depuis le serveur VPS pour l\'accueil');
-
-        if (todayData) {
-          // Récupérer les données nutritionnelles réelles
-          const nutritionData = await getTodayNutritionData();
-          const enrichedData = {
-            ...todayData,
-            actualCalories: nutritionData.calories,
-            actualMacros: {
-              proteins: nutritionData.proteins,
-              carbohydrates: nutritionData.carbohydrates,
-              fat: nutritionData.fat
-            }
-          };
-
-          // Calculer le score de forme
-          const realScore = calculateRealFormeScore(enrichedData, currentUser);
-          setFormeScore(realScore);
-          console.log(`Score de forme calculé pour l'accueil: ${realScore}/100`);
+        const savedScore = await AsyncStorage.getItem(`forme_score_${currentUser.id}_${today}`);
+        if (savedScore) {
+          const score = parseInt(savedScore);
+          setFormeScore(score);
+          console.log(`Score de forme récupéré depuis la page Forme: ${score}/100`);
         } else {
-          setFormeScore(75); // Valeur par défaut
+          // Si aucun score sauvegardé, utiliser une valeur par défaut
+          setFormeScore(75);
+          console.log('Aucun score de forme trouvé, utilisation de la valeur par défaut: 75/100');
         }
       } catch (error) {
-        console.log('Aucune donnée de forme trouvée, utilisation du score par défaut');
-        setFormeScore(75); // Valeur par défaut si aucune donnée
+        console.log('Erreur récupération score de forme, utilisation du score par défaut');
+        setFormeScore(75);
       }
     } catch (error: any) {
-      console.error('Erreur calcul score de forme:', error);
+      console.error('Erreur récupération score de forme:', error);
       setConnectionError(error.message || 'Erreur de connexion');
       setFormeScore(75); // Valeur par défaut
     }
   };
 
-  // Fonction pour récupérer les données nutritionnelles du jour depuis le serveur uniquement
-  const getTodayNutritionData = async () => {
-    try {
-      const currentUser = await getCurrentUser();
-      if (!currentUser) return { calories: 0, proteins: 0, carbohydrates: 0, fat: 0 };
-
-      const today = new Date().toISOString().split('T')[0];
-
-      // Récupérer depuis le serveur Replit uniquement
-      const nutritionEntries = await PersistentStorage.getUserNutrition(currentUser.id);
-      const todayEntries = nutritionEntries.filter((entry: any) => entry.date === today);
-
-      const totals = todayEntries.reduce((sum: any, entry: any) => ({
-        calories: sum.calories + (entry.calories || 0),
-        proteins: sum.proteins + (entry.proteins || 0),
-        carbohydrates: sum.carbohydrates + (entry.carbohydrates || 0),
-        fat: sum.fat + (entry.fat || 0)
-      }), { calories: 0, proteins: 0, carbohydrates: 0, fat: 0 });
-
-      console.log(`Nutrition depuis serveur: ${totals.calories} kcal, ${totals.proteins}g protéines`);
-      return totals;
-    } catch (error) {
-      console.error('Erreur récupération données nutrition:', error);
-      throw new Error('Impossible de récupérer les données nutritionnelles. Vérifiez votre connexion internet.');
-    }
-  };
-
-  // Fonction pour calculer le score de forme réel (même logique que forme.tsx)
-  const calculateRealFormeScore = (formeData: any, userData: any) => {
-    let totalScore = 0;
-    let totalWeight = 0;
-
-    // Adaptation des poids selon le genre
-    const isWoman = userData?.gender === 'Femme';
-
-    // Définir les poids de base
-    let baseWeights = {
-      sleep: 0.35,
-      stress: 0.30,
-      heartRate: 0.0,
-      rpe: 0.0,
-      cycle: isWoman ? 0.05 : 0,
-      macros: 0.0,
-      micros: 0.0
-    };
-
-    // Ajuster les poids selon le plan
-    let weights = { ...baseWeights };
-
-    if (isPremium) {
-      const userPlanId = 'premium_gold';
-
-      switch (userPlanId) {
-        case 'premium_bronze':
-          weights.heartRate = 0.20;
-          weights.rpe = 0.15;
-          weights.sleep = 0.25;
-          weights.stress = 0.25;
-          break;
-        case 'premium_silver':
-          weights.heartRate = 0.20;
-          weights.rpe = 0.15;
-          break;
-        case 'premium_gold':
-          weights.heartRate = 0.20;
-          weights.rpe = 0.15;
-          weights.macros = 0.05;
-          weights.micros = 0.05;
-          break;
-        case 'premium_diamond':
-          weights.heartRate = 0.20;
-          weights.rpe = 0.15;
-          weights.macros = 0.10;
-          weights.micros = 0.10;
-          break;
-        default:
-          weights = {
-            sleep: 0.5,
-            stress: 0.5,
-            heartRate: 0,
-            rpe: 0,
-            cycle: 0,
-            macros: 0,
-            micros: 0
-          };
-          break;
-      }
-    } else {
-      weights = {
-        sleep: 0.5,
-        stress: 0.5,
-        heartRate: 0,
-        rpe: 0,
-        cycle: 0,
-        macros: 0,
-        micros: 0
-      };
-    }
-
-    // Sommeil
-    if (formeData.sleep?.hours > 0) {
-      let sleepHoursScore;
-      if (formeData.sleep.hours >= 7 && formeData.sleep.hours <= 9) {
-        sleepHoursScore = 100;
-      } else if (formeData.sleep.hours >= 6 && formeData.sleep.hours <= 10) {
-        sleepHoursScore = 80;
-      } else if (formeData.sleep.hours >= 5 && formeData.sleep.hours <= 11) {
-        sleepHoursScore = 60;
-      } else {
-        sleepHoursScore = 30;
-      }
-
-      const qualityMultiplier = {
-        'Excellent': 1.0,
-        'Bien': 0.85,
-        'Moyen': 0.65,
-        'Mauvais': 0.4
-      };
-
-      let sleepScore = sleepHoursScore * (qualityMultiplier[formeData.sleep.quality] || 0.65);
-
-      if (isWoman && formeData.cycle) {
-        const cycleMultiplier = {
-          'Menstruel': 0.9,
-          'Folliculaire': 1.0,
-          'Ovulation': 1.05,
-          'Lutéal': 0.85
-        };
-        sleepScore *= (cycleMultiplier[formeData.cycle.phase] || 1.0);
-      }
-
-      totalScore += sleepScore * weights.sleep;
-      totalWeight += weights.sleep;
-    }
-
-    // Stress - inversé (1 = excellent, 10 = très mauvais)
-    let stressScore = Math.max(0, ((10 - (formeData.stress?.level || 5)) / 9) * 100);
-
-    if (isWoman && formeData.cycle) {
-      const stressCycleMultiplier = {
-        'Menstruel': 0.8,
-        'Folliculaire': 1.1,
-        'Ovulation': 1.15,
-        'Lutéal': 0.7
-      };
-      stressScore *= (stressCycleMultiplier[formeData.cycle.phase] || 1.0);
-    }
-
-    totalScore += stressScore * weights.stress;
-    totalWeight += weights.stress;
-
-    // Calculer le score final
-    let finalScore;
-    if (totalWeight === 0) {
-      finalScore = 50;
-    } else {
-      finalScore = totalScore / totalWeight;
-    }
-
-    return Math.max(0, Math.min(100, Math.round(finalScore)));
-  };
+  
 
   const loadTodayStats = async () => {
     try {
