@@ -116,12 +116,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await authLogout();
       console.log('✅ Cache auth vidé');
 
-      // 3. Navigation vers login de manière synchrone
+      // 3. Navigation vers login - double redirection pour forcer
       console.log('🔄 Redirection vers /auth/login');
       router.replace('/auth/login');
-
-      // 4. Attendre un court délai pour la stabilisation
-      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // 4. Attendre un court délai et forcer une seconde redirection si nécessaire
+      await new Promise(resolve => setTimeout(resolve, 100));
+      router.replace('/auth/login');
 
       // 5. Désactiver l'état de déconnexion
       setIsLoggingOut(false);
