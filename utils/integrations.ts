@@ -203,8 +203,12 @@ export class IntegrationsManager {
     try {
       const clientId = process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID;
 
-      if (!clientId) {
-        throw new Error('Configuration Strava manquante');
+      console.log('🔍 Vérification configuration Strava...');
+      console.log('Client ID présent:', !!clientId);
+      console.log('Client ID (masqué):', clientId ? clientId.substring(0, 6) + '...' : 'MANQUANT');
+
+      if (!clientId || clientId.includes('your_')) {
+        throw new Error('Configuration Strava invalide: CLIENT_ID manquant ou non configuré. Vérifiez votre fichier .env');
       }
 
       // Créer l'URL d'autorisation Strava

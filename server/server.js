@@ -685,6 +685,12 @@ app.post('/api/strava/exchange-token', async (req, res) => {
       return res.status(400).json({ error: 'Code et userId requis' });
     }
 
+    // Vérifier la configuration Strava
+    if (!process.env.STRAVA_CLIENT_ID || !process.env.STRAVA_CLIENT_SECRET) {
+      console.error('❌ Configuration Strava manquante sur le serveur');
+      return res.status(500).json({ error: 'Configuration Strava manquante sur le serveur' });
+    }
+
     console.log('🔄 Échange du code Strava pour utilisateur:', userId);
 
     // Échanger le code contre un token d'accès
