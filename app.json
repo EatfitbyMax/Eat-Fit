@@ -8,9 +8,7 @@
     "scheme": "eatfitbymax",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "platforms": [
-      "ios"
-    ],
+    "platforms": ["ios"],
     "jsEngine": "hermes",
     "ios": {
       "icon": "./assets/images/crown-logo.png",
@@ -81,13 +79,6 @@
     "experiments": {
       "typedRoutes": true
     },
-    "owner": "maxandre_pm",
-    "android": {
-      "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
-      ],
-      "package": "com.eatfitbymax.app"
-    }
+    "owner": "maxandre_pm"
   }
 }
