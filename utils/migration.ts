@@ -4,31 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export class DataMigration {
 
   static async migrateToNewStorage(): Promise<void> {
-    try {
-      console.log('Début de la migration des données...');
-
-      // Vérifier la connectivité au serveur VPS
-      const isConnected = await PersistentStorage.testConnection();
-      if (!isConnected) {
-        console.log('⚠️ Serveur VPS indisponible, migration différée');
-        return;
-      }
-
-      // Vérifier s'il y a des données existantes
-      const existingProgrammes = await PersistentStorage.getProgrammes();
-      const existingUsers = await PersistentStorage.getUsers();
-
-      if (existingProgrammes.length > 0 || existingUsers.length > 0) {
-        console.log(`Migration: ${existingProgrammes.length} programmes et ${existingUsers.length} utilisateurs déjà présents`);
-        return;
-      }
-
-      console.log('Migration terminée');
-
-    } catch (error) {
-      console.warn('Migration échouée - serveur VPS non accessible, données conservées localement:', error);
-      // Ne pas rethrow l'erreur pour permettre à l'app de continuer
-    }
+    console.log('✅ Migration non nécessaire - Données déjà sur VPS');
   }
 
   static async initializeDefaultData(): Promise<void> {
@@ -56,24 +32,3 @@ export class DataMigration {
 
 // Exporter la fonction pour l'utiliser dans _layout.tsx
 export const migrateExistingData = DataMigration.migrateToNewStorage;
-
-const migrateToVPS = async (): Promise<void> => {
-  try {
-    console.log('Début de la migration des données...');
-
-    const vpsUrl = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
-    const isVPSAvailable = await testServerConnection(vpsUrl);
-
-    if (!isVPSAvailable) {
-      console.log('⚠️ Serveur VPS indisponible, migration différée');
-      return;
-    }
-
-    // Migration logic here...
-
-  } catch (error) {
-    console.error('Erreur lors de la migration:', error);
-    // Ne pas faire planter l'app pour une erreur de migration
-    return;
-  }
-};

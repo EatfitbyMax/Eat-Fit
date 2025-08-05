@@ -130,11 +130,11 @@ export default function ProgresScreen() {
   const loadUserData = async () => {
     try {
       console.log('🔄 Chargement des données utilisateur et poids...');
-      
+
       // Récupérer les données utilisateur depuis l'auth context
       const { getCurrentUser } = await import('@/utils/auth');
       const user = await getCurrentUser();
-      
+
       if (user) {
         setUserData(user);
         console.log('👤 Utilisateur chargé:', user.firstName, user.lastName, 'Poids profil:', user.weight, 'Objectif profil:', user.targetWeight);
@@ -192,7 +192,7 @@ export default function ProgresScreen() {
         }
 
         setWeightData(saved);
-        
+
         // Calculer le pourcentage de progression
         if (saved.targetWeight && saved.startWeight && saved.targetWeight > 0 && saved.startWeight > 0) {
           const totalLoss = saved.startWeight - saved.targetWeight;
@@ -214,60 +214,31 @@ export default function ProgresScreen() {
     }
   };
 
-  const saveWeightData = async (newData: any) => {
+  const saveWeightData = async (data: any) => {
     try {
-      if (userData) {
-        console.log('💾 Sauvegarde données poids:', newData);
-        
-        // Valider les données avant sauvegarde
-        const validatedData = {
-          startWeight: parseFloat(newData.startWeight) || 0,
-          currentWeight: parseFloat(newData.currentWeight) || 0,
-          targetWeight: parseFloat(newData.targetWeight) || 0,
-          lastWeightUpdate: newData.lastWeightUpdate,
-          targetAsked: newData.targetAsked || false,
-          weightHistory: newData.weightHistory || [],
-        };
+      console.log('💾 Sauvegarde données poids:', data);
 
-        console.log('✅ Données validées:', validatedData);
-        
-        // Mettre à jour l'état immédiatement pour un affichage instantané
-        setWeightData(validatedData);
-        
-        // Sauvegarder localement d'abord
-        await AsyncStorage.setItem(`weight_data_${userData.id}`, JSON.stringify(validatedData));
-        console.log('📱 Données sauvegardées localement');
-        
-        // Sauvegarder sur le serveur VPS
-        try {
-          const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
-          
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 10000);
+      const validatedData = {
+        startWeight: Number(data.startWeight) || 0,
+        currentWeight: Number(data.currentWeight) || 0,
+        targetWeight: Number(data.targetWeight) || 0,
+        lastWeightUpdate: data.lastWeightUpdate || null,
+        targetAsked: Boolean(data.targetAsked),
+        weightHistory: Array.isArray(data.weightHistory) ? data.weightHistory : []
+      };
 
-          const response = await fetch(`${VPS_URL}/api/weight/${userData.id}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(validatedData),
-            signal: controller.signal
-          });
+      if (userData?.id) {
+        const response = await fetch(`https://eatfitbymax.cloud/api/weight/${userData.id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(validatedData)
+        });
 
-          clearTimeout(timeoutId);
-
-          if (response.ok) {
-            console.log('✅ Données de poids sauvegardées sur le serveur VPS');
-          } else {
-            console.warn(`⚠️ Échec sauvegarde serveur VPS (${response.status}), données conservées localement`);
-          }
-        } catch (serverError) {
-          if (serverError.name === 'AbortError') {
-            console.warn('⚠️ Timeout sauvegarde serveur VPS, données conservées localement');
-          } else {
-            console.warn('⚠️ Erreur serveur VPS poids:', serverError.message);
-          }
+        if (!response.ok) {
+          throw new Error('Erreur sauvegarde données poids');
         }
+
+        console.log('✅ Données de poids sauvegardées sur le serveur VPS');
       }
     } catch (error) {
       console.error('❌ Erreur sauvegarde données poids:', error);
@@ -278,11 +249,11 @@ export default function ProgresScreen() {
   const handleWeightUpdate = async () => {
     try {
       console.log('🔄 Mise à jour du poids actuel:', tempWeight);
-      
+
       // Remplacer la virgule par un point pour la conversion
       const normalizedWeight = tempWeight.replace(',', '.');
       const weight = parseFloat(normalizedWeight);
-      
+
       if (isNaN(weight) || weight <= 0 || weight > 500) {
         Alert.alert('Erreur', 'Veuillez entrer un poids valide (entre 1 et 500 kg)');
         return;
@@ -317,7 +288,7 @@ export default function ProgresScreen() {
       setTempWeight('');
       setShowWeightModal(false);
       Alert.alert('Succès', `Votre poids a été mis à jour : ${formatWeight(weight)} kg`);
-      
+
     } catch (error) {
       console.error('❌ Erreur mise à jour poids:', error);
       Alert.alert('Erreur', 'Impossible de sauvegarder votre poids. Vérifiez votre connexion.');
@@ -327,11 +298,11 @@ export default function ProgresScreen() {
   const handleTargetUpdate = async () => {
     try {
       console.log('🎯 Mise à jour de l\'objectif:', tempTarget);
-      
+
       // Remplacer la virgule par un point pour la conversion
       const normalizedTarget = tempTarget.replace(',', '.');
       const target = parseFloat(normalizedTarget);
-      
+
       if (isNaN(target) || target <= 0 || target > 500) {
         Alert.alert('Erreur', 'Veuillez entrer un objectif valide (entre 1 et 500 kg)');
         return;
@@ -400,7 +371,7 @@ export default function ProgresScreen() {
       setTempTarget('');
       setShowTargetModal(false);
       Alert.alert('Succès', `Votre objectif a été défini : ${formatWeight(target)} kg`);
-      
+
     } catch (error) {
       console.error('❌ Erreur mise à jour objectif:', error);
       Alert.alert('Erreur', 'Impossible de sauvegarder votre objectif. Vérifiez votre connexion.');
@@ -426,7 +397,7 @@ export default function ProgresScreen() {
       if (userData) {
         // Sauvegarder localement d'abord
         await AsyncStorage.setItem(`mensuration_data_${userData.id}`, JSON.stringify(newData));
-        
+
         // Sauvegarder sur le serveur VPS
         try {
           const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
@@ -446,7 +417,7 @@ export default function ProgresScreen() {
         } catch (serverError) {
           console.warn('Erreur serveur VPS mensurations:', serverError);
         }
-        
+
         setMensurationData(newData);
       }
     } catch (error) {
@@ -649,7 +620,7 @@ export default function ProgresScreen() {
     // Calculer les valeurs min et max de l'axe Y
     const maxYValue = parseInt(yAxisLabels[0]); // Premier label = valeur max
     const minYValue = parseInt(yAxisLabels[yAxisLabels.length - 1]); // Dernier label = valeur min
-    
+
     // Le dégradé couvre maintenant toute la hauteur du graphique
     let gradientStartY = 1; // Haut du graphique
     let gradientEndY = 100;   // Bas du graphique
@@ -658,7 +629,7 @@ export default function ProgresScreen() {
     processedData.forEach((entry, index) => {
       const position = getDataPointPosition(entry.weight, index, processedData.length, allLabels);
       const label = allLabels[index] || '';
-      
+
       dataPoints.push(
         <View 
           key={`weight-${entry.date.toISOString()}-${index}`} 
@@ -700,15 +671,46 @@ export default function ProgresScreen() {
     const minDataWeight = Math.min(...weights.filter(w => w > 0));
     const maxDataWeight = Math.max(...weights.filter(w => w > 0));
 
+    // Déterminer l'objectif de l'utilisateur en temps réel
+    const currentUserGoals = userData?.goals || [];
+    const isWeightLoss = currentUserGoals.includes('Perdre du poids');
+    const isMuscleGain = currentUserGoals.includes('Me muscler') || currentUserGoals.includes('Prendre du muscle');
+
+    let minWeight, maxWeight;
+
+    if (isWeightLoss) {
+      // Pour la perte de poids : commencer à +5kg au-dessus du poids de départ
+      const startReference = weightData.startWeight;
+      maxWeight = Math.ceil((startReference + 5) / 5) * 5; // Arrondir au multiple de 5 supérieur
+      minWeight = maxWeight - 20; // Plage de 20kg vers le bas
+    } else if (isMuscleGain) {
+      // Pour la prise de masse : commencer à -5kg en-dessous du poids de départ
+      const startReference = weightData.startWeight;
+      minWeight = Math.floor((startReference - 5) / 5) * 5; // Arrondir au multiple de 5 inférieur
+      maxWeight = minWeight + 20; // Plage de 20kg vers le haut
+    } else {
+      // Comportement par défaut (maintien ou autre objectif)
+      const centerWeight = (minDataWeight + maxDataWeight) / 2;
+      minWeight = Math.floor((centerWeight - 10) / 5) * 5;
+      maxWeight = minWeight + 20;
+    }
+
+    // Générer exactement 5 labels avec 5kg d'écart
+    const labels = [];
+    for (let i = 0; i < 5; i++) {
+      const weight = maxWeight - (i * 5);
+      labels.push(weight.toString());
+    }
+
     // Utiliser exactement la même logique que generateYAxisLabels
-    const centerWeight = (minDataWeight + maxDataWeight) / 2;
-    const minWeight = Math.floor((centerWeight - 10) / 5) * 5;
-    const maxWeight = minWeight + 20;
+    const centerWeightForRange = (minWeight + maxWeight) / 2;
+    const minWeightForRange = Math.floor((centerWeightForRange - 10) / 5) * 5;
+    const maxWeightForRange = minWeightForRange + 20;
 
     // Générer les mêmes 5 labels que dans generateYAxisLabels
     const yAxisValues = [];
     for (let i = 0; i < 5; i++) {
-      const weight = maxWeight - (i * 5);
+      const weight = maxWeightForRange - (i * 5);
       yAxisValues.push(weight);
     }
 
@@ -869,7 +871,7 @@ export default function ProgresScreen() {
       if (entry.calories > 0) {
         const position = getNutritionDataPointPosition(entry.calories, index, processedData.length, allLabels);
         const label = allLabels[index] || '';
-        
+
         dataPoints.push(
           <View 
             key={`nutrition-${entry.date.toISOString()}-${index}`} 
@@ -917,7 +919,7 @@ export default function ProgresScreen() {
       if (entry.minutes > 0) {
         const position = getTrainingDataPointPosition(entry.minutes, index, processedData.length, allLabels);
         const label = allLabels[index] || '';
-        
+
         dataPoints.push(
           <View 
             key={`training-${entry.date.toISOString()}-${index}`} 
@@ -980,7 +982,7 @@ export default function ProgresScreen() {
     if (selectedNutritionPeriod === 'Jours') {
       // Toujours générer les labels pour les 7 derniers jours
       const currentDate = new Date();
-      
+
       for (let i = 6; i >= 0; i--) {
         const targetDate = new Date(currentDate);
         targetDate.setDate(currentDate.getDate() - i);
@@ -990,47 +992,48 @@ export default function ProgresScreen() {
         });
         labels.push(dayMonth);
       }
-      
+
       console.log('Labels générés pour les jours:', labels);
       return labels;
-      
+
     } else if (selectedNutritionPeriod === 'Semaine') {
       const processedData = getProcessedNutritionData();
-      
+
       processedData.forEach(entry => {
         const weekNumber = getISOWeekNumber(entry.date);
-        labels.push(`S${weekNumber}`);
+        const weekLabel = `S${weekNumber}`;
+        labels.push(weekLabel);
       });
 
       if (labels.length < 6) {
         const currentDate = new Date();
         const existingWeeks = new Set(labels.map(l => l.substring(1)));
-        
+
         let weeksToAdd = 6 - labels.length;
         let dateOffset = 0;
-        
+
         while (weeksToAdd > 0) {
           const targetDate = new Date(currentDate);
           targetDate.setDate(currentDate.getDate() - (dateOffset * 7));
-          
+
           const weekNumber = getISOWeekNumber(targetDate);
           const weekLabel = `S${weekNumber}`;
-          
+
           if (!existingWeeks.has(weekNumber.toString())) {
             labels.unshift(weekLabel);
             weeksToAdd--;
           }
-          
+
           dateOffset++;
           if (dateOffset > 52) break;
         }
       }
 
       return labels.slice(-6);
-      
+
     } else if (selectedNutritionPeriod === 'Mois') {
       const processedData = getProcessedNutritionData();
-      
+
       processedData.forEach(entry => {
         const monthName = monthNames[entry.date.getMonth()];
         if (!labels.includes(monthName)) {
@@ -1041,12 +1044,12 @@ export default function ProgresScreen() {
       if (labels.length < 6) {
         const currentDate = new Date();
         const existingMonths = new Set(labels);
-        
+
         for (let i = 5; i >= 0; i--) {
           const targetDate = new Date(currentDate);
           targetDate.setMonth(currentDate.getMonth() - i);
           const monthName = monthNames[targetDate.getMonth()];
-          
+
           if (!existingMonths.has(monthName)) {
             labels.push(monthName);
           }
@@ -1081,23 +1084,23 @@ export default function ProgresScreen() {
         const date = new Date(currentDate);
         date.setDate(currentDate.getDate() - i);
         date.setHours(0, 0, 0, 0);
-        
+
         // Chercher les données existantes pour ce jour
         const existingData = processedData.find(entry => {
           const entryDate = new Date(entry.date);
           entryDate.setHours(0, 0, 0, 0);
           return entryDate.getTime() === date.getTime();
         });
-        
+
         last7Days.push({
           calories: existingData ? existingData.calories : 0,
           date: new Date(date)
         });
       }
-      
+
       console.log('Données des 7 derniers jours:', last7Days.map(d => ({ date: d.date.toISOString().split('T')[0], calories: d.calories })));
       return last7Days;
-      
+
     } else if (selectedNutritionPeriod === 'Semaine') {
       const sixWeeksAgo = new Date(currentDate.getTime() - (6 * 7 * 24 * 60 * 60 * 1000));
       return processedData.filter(entry => entry.date >= sixWeeksAgo).slice(-6);
@@ -1105,7 +1108,7 @@ export default function ProgresScreen() {
       // Traiter par semaine puis regrouper par mois
       const sixMonthsAgo = new Date(currentDate.getTime() - (6 * 30 * 24 * 60 * 60 * 1000));
       const monthlyData = processedData.filter(entry => entry.date >= sixMonthsAgo);
-      
+
       // Regrouper par mois
       const monthlyAverages = new Map();
       monthlyData.forEach(entry => {
@@ -1141,25 +1144,25 @@ export default function ProgresScreen() {
       if (!date || isNaN(date.getTime())) {
         return 1; // Retourner semaine 1 par défaut
       }
-      
+
       const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-      
+
       // Vérifier que la nouvelle date est valide
       if (isNaN(d.getTime())) {
         return 1;
       }
-      
+
       const dayNum = d.getUTCDay() || 7;
       d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-      
+
       // Vérifier que la date ajustée est valide
       if (isNaN(d.getTime())) {
         return 1;
       }
-      
+
       const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
       const weekNumber = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-      
+
       // S'assurer que le numéro de semaine est valide
       return Math.max(1, Math.min(53, weekNumber));
     } catch (error) {
@@ -1176,12 +1179,12 @@ export default function ProgresScreen() {
     if (selectedPeriod === 'Semaines') {
       // Pour les semaines, créer les labels basés sur les vraies données
       const uniqueWeeks = new Map();
-      
+
       processedData.forEach(entry => {
         const weekNumber = getISOWeekNumber(entry.date);
         const weekLabel = `S${weekNumber}`;
         const weekKey = `${entry.date.getFullYear()}-${weekNumber}`;
-        
+
         if (!uniqueWeeks.has(weekKey)) {
           uniqueWeeks.set(weekKey, {
             label: weekLabel,
@@ -1196,10 +1199,10 @@ export default function ProgresScreen() {
         .sort((a, b) => a.date.getTime() - b.date.getTime());
 
       return sortedWeeks.map(week => week.label);
-      
+
     } else if (selectedPeriod === 'Mois') {
       const processedData = getProcessedWeightData();
-      
+
       // Générer les labels basés sur les vraies dates des données
       processedData.forEach(entry => {
         const monthName = monthNames[entry.date.getMonth()];
@@ -1212,12 +1215,12 @@ export default function ProgresScreen() {
       if (labels.length < 6) {
         const currentDate = new Date();
         const existingMonths = new Set(labels);
-        
+
         for (let i = 5; i >= 0; i--) {
           const targetDate = new Date(currentDate);
           targetDate.setMonth(currentDate.getMonth() - i);
           const monthName = monthNames[targetDate.getMonth()];
-          
+
           if (!existingMonths.has(monthName)) {
             labels.push(monthName);
           }
@@ -1225,10 +1228,10 @@ export default function ProgresScreen() {
       }
 
       return labels.slice(-6);
-      
+
     } else { // Années
       const processedData = getProcessedWeightData();
-      
+
       // Générer les labels basés sur les vraies dates des données
       processedData.forEach(entry => {
         const year = entry.date.getFullYear().toString();
@@ -1241,7 +1244,7 @@ export default function ProgresScreen() {
       if (labels.length < 6) {
         const currentYear = new Date().getFullYear();
         const existingYears = new Set(labels);
-        
+
         for (let i = 5; i >= 0; i--) {
           const year = (currentYear - i).toString();
           if (!existingYears.has(year)) {
@@ -1302,7 +1305,7 @@ export default function ProgresScreen() {
 
     // Filtrer l'historique selon la période MAIS toujours garder le point de départ
     const startDate = userData?.createdAt ? new Date(userData.createdAt) : null;
-    
+
     if (selectedPeriod === 'Semaines') {
       const sixWeeksAgo = new Date(currentDate.getTime() - (6 * 7 * 24 * 60 * 60 * 1000));
       filteredHistory = completeHistory.filter(entry => {
@@ -1334,7 +1337,7 @@ export default function ProgresScreen() {
 
     // Traitement selon la période sélectionnée
     if (selectedPeriod === 'Semaines') {
-      // Pour les semaines, on garde les données individuelles (échantillonnage si nécessaire)
+      // Pour les semaines, on garde les données individuelles (échantillonage si nécessaire)
       if (filteredHistory.length > 6) {
         const step = Math.floor(filteredHistory.length / 6);
         const sampledHistory = [];
@@ -1497,7 +1500,7 @@ export default function ProgresScreen() {
       try {
         const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
         console.log('🌐 Tentative de connexion au serveur VPS pour les workouts:', VPS_URL);
-        
+
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 secondes timeout
 
@@ -1516,7 +1519,7 @@ export default function ProgresScreen() {
         if (response.ok) {
           localWorkouts = await response.json();
           console.log('✅ Données workouts chargées depuis le serveur VPS pour les progrès:', localWorkouts.length, 'entrées');
-          
+
           // Validation des données reçues
           if (!Array.isArray(localWorkouts)) {
             console.warn('⚠️ Format de données workouts inattendu, initialisation avec tableau vide');
@@ -1537,7 +1540,7 @@ export default function ProgresScreen() {
         }
       } catch (serverError) {
         console.log('❌ Erreur serveur VPS workouts (progrès):', serverError.message);
-        
+
         // Fallback vers PersistentStorage
         console.log('📱 Fallback vers PersistentStorage pour workouts (progrès)');
         try {
@@ -1572,7 +1575,7 @@ export default function ProgresScreen() {
 
       // Calculer les statistiques des 7 derniers jours
       const last7Days = [];
-      
+
       for (let i = 6; i >= 0; i--) {
         const date = new Date(currentDate.getTime() - (i * 24 * 60 * 60 * 1000));
         const dateString = date.toISOString().split('T')[0];
@@ -1643,7 +1646,7 @@ export default function ProgresScreen() {
           if (!activity.start_date) return;
           const activityDate = new Date(activity.start_date);
           if (isNaN(activityDate.getTime())) return;
-          
+
           const validDateString = activityDate.toISOString().split('T')[0];
 
           // Distance la plus longue depuis Strava
@@ -1660,7 +1663,7 @@ export default function ProgresScreen() {
             const hours = Math.floor(activity.moving_time / 3600);
             const minutes = Math.floor((activity.moving_time % 3600) / 60);
             const seconds = activity.moving_time % 60;
-            
+
             if (!bestTime5k.value) {
               bestTime5k = {
                 value: `${hours > 0 ? hours + ':' : ''}${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`,
@@ -1737,44 +1740,44 @@ export default function ProgresScreen() {
     // Obtenir toutes les données selon la période sélectionnée
     const processedData = getProcessedTrainingData();
     const allMinutes = processedData.map(entry => entry.minutes);
-    
+
     // Trouver la valeur maximale dans les données réelles
     const maxMinutesInData = Math.max(...allMinutes, 0);
-    
+
     // Valeur par défaut si aucune donnée ou données très faibles
     if (maxMinutesInData === 0 || maxMinutesInData < 30) {
       return selectedPeriod === 'Jours' ? 120 : 
              selectedPeriod === 'Semaines' ? 300 : 600; // Valeurs par défaut adaptées à la période
     }
-    
+
     // Ajouter 20% de marge au-dessus de la valeur max
     const marginValue = maxMinutesInData * 1.2;
-    
+
     // Arrondir au multiple approprié selon la période
     const roundingStep = selectedPeriod === 'Jours' ? 30 : 
                         selectedPeriod === 'Semaines' ? 60 : 120;
-    
+
     const roundedValue = Math.ceil(marginValue / roundingStep) * roundingStep;
-    
+
     // S'assurer que la valeur est dans une plage raisonnable
     const minValue = selectedPeriod === 'Jours' ? 60 : 
                     selectedPeriod === 'Semaines' ? 120 : 240;
     const maxValue = selectedPeriod === 'Jours' ? 300 : 
                     selectedPeriod === 'Semaines' ? 600 : 1200;
-    
+
     return Math.max(minValue, Math.min(maxValue, roundedValue));
   };
 
   const generateTrainingYAxisLabels = () => {
     const maxValue = getTrainingChartMaxValue();
     const step = maxValue / 5; // 6 labels (0 inclus)
-    
+
     const labels = [];
     for (let i = 5; i >= 0; i--) {
       const value = Math.round(i * step);
       labels.push(value.toString());
     }
-    
+
     return labels;
   };
 
@@ -1788,12 +1791,12 @@ export default function ProgresScreen() {
 
       // Charger les données nutritionnelles réelles avec priorité sur le serveur VPS
       let nutritionEntries = [];
-      
+
       // Charger depuis le serveur VPS avec la même logique que nutrition.tsx
       try {
         const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
         console.log('🌐 Tentative de connexion au serveur VPS:', VPS_URL);
-        
+
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 secondes timeout comme nutrition.tsx
 
@@ -1812,7 +1815,7 @@ export default function ProgresScreen() {
         if (response.ok) {
           nutritionEntries = await response.json();
           console.log('✅ Données nutrition chargées depuis le serveur VPS pour les progrès:', nutritionEntries.length, 'entrées');
-          
+
           // Validation des données reçues
           if (!Array.isArray(nutritionEntries)) {
             console.warn('⚠️ Format de données inattendu, initialisation avec tableau vide');
@@ -1827,7 +1830,7 @@ export default function ProgresScreen() {
               })));
             }
           }
-          
+
           // Sauvegarder en local comme backup
           await AsyncStorage.setItem(`food_entries_${user.id}`, JSON.stringify(nutritionEntries));
           console.log('💾 Sauvegarde locale effectuée');
@@ -1836,7 +1839,7 @@ export default function ProgresScreen() {
         }
       } catch (serverError) {
         console.log('❌ Erreur serveur VPS nutrition (progrès):', serverError.message);
-        
+
         // Fallback vers le stockage local
         console.log('📱 Fallback vers le stockage local pour nutrition (progrès)');
         try {
@@ -1880,7 +1883,7 @@ export default function ProgresScreen() {
 
       console.log(`=== ANALYSE DONNÉES NUTRITION (${nutritionEntries.length} entrées) ===`);
       console.log('Début de semaine:', startOfWeek.toISOString().split('T')[0]);
-      
+
       // Afficher toutes les dates disponibles
       const availableDates = [...new Set(nutritionEntries.map((entry: any) => entry.date))].sort();
       console.log('Dates disponibles dans les données:', availableDates);
@@ -2098,61 +2101,61 @@ export default function ProgresScreen() {
     } else if (selectedPeriod === 'Semaines') {
       // Pour les 6 dernières semaines, calculer à partir des vraies données
       const weeklyAverages = new Map();
-      
+
       // Traiter toutes les données hebdomadaires actuelles pour créer des moyennes sur 6 semaines
       for (let weekOffset = 5; weekOffset >= 0; weekOffset--) {
         const weekStartDate = new Date(currentDate);
         weekStartDate.setDate(currentDate.getDate() - (weekOffset * 7));
-        
+
         // Calculer la plage de dates pour cette semaine
         const weekEndDate = new Date(weekStartDate);
         weekEndDate.setDate(weekStartDate.getDate() + 6);
-        
+
         const weekKey = getISOWeekNumber(weekStartDate);
-        
+
         // Calculer la somme des minutes pour cette semaine basée sur weeklyData
         let weekMinutes = 0;
         let daysInWeek = 0;
-        
+
         // Simuler des données basées sur la moyenne actuelle de weeklyData
         const currentWeekAverage = weeklyData.length > 0 ? 
           weeklyData.reduce((sum, day) => sum + day.minutes, 0) / weeklyData.length : 0;
-        
+
         // Utiliser la moyenne actuelle avec une variation réaliste
         const variation = (Math.random() - 0.5) * 0.4; // ±20% de variation
         weekMinutes = Math.max(0, Math.round(currentWeekAverage * 7 * (1 + variation)));
-        
+
         weeklyAverages.set(weekKey, {
           minutes: weekMinutes,
           date: new Date(weekStartDate)
         });
       }
-      
+
       return Array.from(weeklyAverages.values()).sort((a, b) => a.date.getTime() - b.date.getTime());
-      
+
     } else { // Mois
       // Pour les 6 derniers mois, calculer à partir des vraies données
       const monthlyAverages = [];
-      
+
       for (let monthOffset = 5; monthOffset >= 0; monthOffset--) {
         const monthDate = new Date(currentDate);
         monthDate.setMonth(currentDate.getMonth() - monthOffset);
         monthDate.setDate(1);
-        
+
         // Calculer basé sur la moyenne actuelle des weeklyData
         const currentWeeklyAverage = weeklyData.length > 0 ? 
           weeklyData.reduce((sum, day) => sum + day.minutes, 0) / weeklyData.length : 0;
-        
+
         // Estimer les minutes mensuelles (moyenne hebdomadaire * 30 jours)
         const variation = (Math.random() - 0.5) * 0.3; // ±15% de variation
         const monthlyMinutes = Math.max(0, Math.round(currentWeeklyAverage * 30 * (1 + variation)));
-        
+
         monthlyAverages.push({
           minutes: monthlyMinutes,
           date: new Date(monthDate)
         });
       }
-      
+
       return monthlyAverages.sort((a, b) => a.date.getTime() - b.date.getTime());
     }
   };
@@ -2171,7 +2174,7 @@ export default function ProgresScreen() {
         });
         labels.push(dayMonth);
       });
-      
+
       // S'assurer qu'on a exactement 7 labels
       if (labels.length < 7) {
         const currentDate = new Date();
@@ -2185,7 +2188,7 @@ export default function ProgresScreen() {
           labels.unshift(dayMonth);
         }
       }
-      
+
     } else if (selectedPeriod === 'Semaines') {
       // Labels pour les 6 dernières semaines
       const processedData = getProcessedTrainingData();
@@ -2193,7 +2196,7 @@ export default function ProgresScreen() {
         const weekNumber = getISOWeekNumber(entry.date);
         labels.push(`S${weekNumber}`);
       });
-      
+
     } else { // Mois
       // Labels pour les 6 derniers mois
       const processedData = getProcessedTrainingData();
@@ -2421,13 +2424,13 @@ export default function ProgresScreen() {
                 <View style={styles.objectiveHeader}>
                   <Text style={styles.objectiveLabel}>Régularité</Text>
                   <Text style={styles.objectiveProgress}>
-                    {Math.round((weeklyData.filter(d => d.workouts > 0).length / 7) * 100)}%
+                    {weeklyData.length > 0 ? Math.round((weeklyData.filter(d => d.workouts > 0).length / 7) * 100) : 0}%
                   </Text>
                 </View>
                 <View style={styles.objectiveBar}>
                   <View style={[
                     styles.objectiveBarFill, 
-                    { width: `${(weeklyData.filter(d => d.workouts > 0).length / 7) * 100}%` }
+                    { width: `${Math.min((weeklyData.filter(d => d.workouts > 0).length / 7) * 100, 100)}%` }
                   ]} />
                 </View>
               </View>
@@ -2507,8 +2510,8 @@ export default function ProgresScreen() {
                   <Text style={styles.summaryLabel}>Minutes totales</Text>
                 </View>
                 <View style={styles.summaryItem}>
-                  <Text style={[styles.summaryValue, { color: '#F5A623' }]}>
-                    {Math.round((weeklyData.filter(d => d.workouts > 0).length / 7) * 100)}%
+                  <Text style={[styles.summaryValue, { color: '#4ECDC4' }]}>
+                    {weeklyData.length > 0 ? Math.round((weeklyData.filter(d => d.workouts > 0).length / 7) * 100) : 0}%
                   </Text>
                   <Text style={styles.summaryLabel}>Régularité</Text>
                 </View>
@@ -2521,7 +2524,7 @@ export default function ProgresScreen() {
                   {(() => {
                     const activeDays = weeklyData.filter(d => d.workouts > 0).length;
                     const totalMinutes = weeklyData.reduce((sum, day) => sum + day.minutes, 0);
-                    
+
                     if (personalRecords.totalWorkouts === 0) {
                       return "Commencez votre parcours fitness ! Créez votre premier entraînement dans l'onglet Entraînement.";
                     } else if (activeDays >= 5) {
@@ -2540,365 +2543,60 @@ export default function ProgresScreen() {
           </View>
         )}
 
-        {/* Statistiques selon l'onglet sélectionné */}
-        {selectedTab === 'Nutrition' && (
-          <View style={styles.nutritionContainer}>
-            {/* Graphique d'évolution calorique */}
-            <View style={styles.nutritionChartContainer}>
-              <View style={styles.chartHeader}>
-                <Text style={styles.chartTitle}>Évolution de l'apport calorique</Text>
-              </View>
-
-              {/* Onglets de période */}
-              <View style={styles.periodTabsContainer}>
-                {['Jours', 'Semaine', 'Mois'].map((period) => (
-                  <TouchableOpacity 
-                    key={period}
-                    style={[styles.periodTab, selectedNutritionPeriod === period && styles.activePeriodTab]}
-                    onPress={() => setSelectedNutritionPeriod(period)}
-                  >
-                    <Text style={[styles.periodTabText, selectedNutritionPeriod === period && styles.activePeriodTabText]}>
-                      {period}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              {/* Graphique avec scroll horizontal */}
-              <View style={styles.chartArea}>
-                <View style={styles.nutritionYAxis}>
-                  {generateNutritionYAxisLabels().map((label, index) => (
-                    <Text key={index} style={styles.nutritionYAxisLabel}>{label}</Text>
-                  ))}
-                </View>
-
-                <ScrollView 
-                  horizontal 
-                  showsHorizontalScrollIndicator={true}
-                  style={styles.chartScrollView}
-                  contentContainerStyle={styles.chartScrollContent}
-                >
-                  <View style={styles.chartContent}>
-                    {/* Grille */}
-                    <View style={styles.gridContainer}>
-                      {[...Array(5)].map((_, i) => (
-                        <View key={i} style={styles.gridLine} />
-                      ))}
-                    </View>
-
-                    {/* Ligne et points de calories */}
-                    {renderNutritionChart()}
-                  </View>
-                </ScrollView>
-              </View>
-            </View>
-
-            {/* Statistiques nutritionnelles */}
-            <View style={styles.nutritionStatsContainer}>
-              <View style={styles.nutritionStatCard}>
-                <View style={styles.statIcon}>
-                  <Text style={styles.iconText}>🔥</Text>
-                </View>
-                <Text style={styles.statLabel}>Calories moyennes</Text>
-                <Text style={styles.statValue}>{nutritionStats.averageCalories} kcal</Text>
-                {nutritionStats.averageCalories > 0 && (
-                  <Text style={[styles.statTrend, { 
-                    color: nutritionStats.averageCalories >= 1800 ? '#28A745' : '#F5A623'
-                  }]}>
-                    {nutritionStats.averageCalories >= 1800 ? 
-                      `✓ Objectif atteint (${Math.round((nutritionStats.averageCalories / 2200) * 100)}%)` : 
-                      `${Math.round((nutritionStats.averageCalories / 2200) * 100)}% de l'objectif`
-                    }
-                  </Text>
-                )}
-              </View>
-
-              <View style={styles.nutritionStatCard}>
-                <View style={styles.statIcon}>
-                  <Text style={styles.iconText}>💪</Text>
-                </View>
-                <Text style={styles.statLabel}>Protéines moyennes</Text>
-                <Text style={styles.statValue}>{nutritionStats.averageProteins}g</Text>
-                {nutritionStats.averageProteins > 0 && (
-                  <Text style={[styles.statTrend, { 
-                    color: nutritionStats.averageProteins >= 100 ? '#28A745' : '#F5A623'
-                  }]}>
-                    {nutritionStats.averageProteins >= 100 ? 
-                      `✓ Excellent apport (${Math.round((nutritionStats.averageProteins / 120) * 100)}%)` : 
-                      `${Math.round((nutritionStats.averageProteins / 120) * 100)}% de l'objectif`
-                    }
-                  </Text>
-                )}
-              </View>
-
-              <View style={styles.nutritionStatCard}>
-                <View style={styles.statIcon}>
-                  <Text style={styles.iconText}>🌾</Text>
-                </View>
-                <Text style={styles.statLabel}>Glucides moyens</Text>
-                <Text style={styles.statValue}>{nutritionStats.averageCarbs}g</Text>
-                {nutritionStats.averageCarbs > 0 && (
-                  <Text style={[styles.statTrend, { 
-                    color: nutritionStats.averageCarbs >= 200 && nutritionStats.averageCarbs <= 350 ? '#28A745' : '#F5A623'
-                  }]}>
-                    {nutritionStats.averageCarbs >= 200 && nutritionStats.averageCarbs <= 350 ? 
-                      '✓ Équilibre optimal' : 
-                      nutritionStats.averageCarbs < 200 ? 'Apport faible' : 'Apport élevé'
-                    }
-                  </Text>
-                )}
-              </View>
-
-              <View style={styles.nutritionStatCard}>
-                <View style={styles.statIcon}>
-                  <Text style={styles.iconText}>🥑</Text>
-                </View>
-                <Text style={styles.statLabel}>Lipides moyens</Text>
-                <Text style={styles.statValue}>{nutritionStats.averageFat}g</Text>
-                {nutritionStats.averageFat > 0 && (
-                  <Text style={[styles.statTrend, { 
-                    color: nutritionStats.averageFat >= 50 && nutritionStats.averageFat <= 100 ? '#28A745' : '#F5A623'
-                  }]}>
-                    {nutritionStats.averageFat >= 50 && nutritionStats.averageFat <= 100 ? 
-                      '✓ Équilibre optimal' : 
-                      nutritionStats.averageFat < 50 ? 'Apport insuffisant' : 'Apport élevé'
-                    }
-                  </Text>
-                )}
-              </View>
-            </View>
-
-            {/* Répartition des macronutriments */}
-            <View style={styles.macroDistributionCard}>
-              <Text style={styles.chartTitle}>Répartition des macronutriments</Text>
-              <Text style={styles.chartSubtitle}>Moyenne des 7 derniers jours</Text>
-
-              <View style={styles.macroCircularChart}>
-                <View style={styles.macroCircle}>
-                  <Text style={styles.macroMainText}>{nutritionStats.averageCalories.toLocaleString()}</Text>
-                  <Text style={styles.macroSubText}>kcal moy.</Text>
-                </View>
-              </View>
-
-              <View style={styles.macroLegend}>
-                <View style={styles.macroLegendItem}>
-                  <View style={[styles.macroLegendColor, { backgroundColor: '#FF6B6B' }]} />
-                  <Text style={styles.macroLegendText}>
-                    Protéines {nutritionStats.averageCalories > 0 ? 
-                      Math.round((nutritionStats.averageProteins * 4 / nutritionStats.averageCalories) * 100) : 0}%
-                  </Text>
-                </View>
-                <View style={styles.macroLegendItem}>
-                  <View style={[styles.macroLegendColor, { backgroundColor: '#4ECDC4' }]} />
-                  <Text style={styles.macroLegendText}>
-                    Glucides {nutritionStats.averageCalories > 0 ? 
-                      Math.round((nutritionStats.averageCarbs * 4 / nutritionStats.averageCalories) * 100) : 0}%
-                  </Text>
-                </View>
-                <View style={styles.macroLegendItem}>
-                  <View style={[styles.macroLegendColor, { backgroundColor: '#FFE66D' }]} />
-                  <Text style={styles.macroLegendText}>
-                    Lipides {nutritionStats.averageCalories > 0 ? 
-                      Math.round((nutritionStats.averageFat * 9 / nutritionStats.averageCalories) * 100) : 0}%
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Hydratation */}
-            <View style={styles.hydrationProgressCard}>
-              <View style={styles.chartHeader}>
-                <Text style={styles.chartTitle}>💧 Hydratation hebdomadaire</Text>
-              </View>
-
-              <View style={styles.hydrationBars}>
-                {nutritionStats.weeklyHydration.map((dayData, index) => {
-                  // Calculer l'objectif personnalisé pour chaque jour (même logique que nutrition)
-                  const calculateDailyGoal = () => {
-                    if (!userData?.weight || !userData?.age) return 2000;
-                    
-                    let baseGoal = userData.weight * 35;
-                    
-                    if (userData.age > 65) {
-                      baseGoal += 300;
-                    } else if (userData.age > 50) {
-                      baseGoal += 200;
-                    }
-                    
-                    // Arrondir au multiple de 250ml supérieur comme dans nutrition
-                    return Math.ceil(baseGoal / 250) * 250;
-                  };
-
-                  const dailyGoal = calculateDailyGoal();
-                  
-                  const percentage = dailyGoal > 0 ? (dayData.water / dailyGoal) * 100 : 0;
-                  const achieved = percentage >= 100;
-                  return (
-                    <View key={dayData.day} style={styles.hydrationBarContainer}>
-                      <View style={styles.hydrationBarBackground}>
-                        <View 
-                          style={[
-                            styles.hydrationBarFill, 
-                            { 
-                              height: `${Math.min(percentage, 100)}%`,
-                              backgroundColor: achieved ? '#4ECDC4' : '#F5A623'
-                            }
-                          ]} 
-                        />
-                      </View>
-                      <Text style={styles.hydrationBarText}>{Math.round(percentage)}%</Text>
-                      <Text style={styles.dayLabel}>{dayData.day}</Text>
-                    </View>
-                  );
-                })}
-              </View>
-
-              {/* Objectif personnalisé centré sous les jours */}
-              <View style={styles.hydrationObjectiveContainer}>
-                <Text style={styles.hydrationObjectiveText}>
-                  Objectif: {(() => {
-                    // Utiliser la même logique que dans nutrition pour calculer l'objectif
-                    if (!userData?.weight || !userData?.age) return '2000ml/jour';
-                    
-                    let baseGoal = userData.weight * 35;
-                    
-                    if (userData.age > 65) {
-                      baseGoal += 300;
-                    } else if (userData.age > 50) {
-                      baseGoal += 200;
-                    }
-                    
-                    // Arrondir au multiple de 250ml supérieur comme dans nutrition
-                    const finalGoal = Math.ceil(baseGoal / 250) * 250;
-                    
-                    return `${finalGoal}ml/jour`;
-                  })()}
-                </Text>
-                {(!userData?.weight || !userData?.age) && (
-                  <Text style={styles.hydrationObjectiveSubtext}>
-                    Objectif standard
-                  </Text>
-                )}
-              </View>
-            </View>
-
-            {/* Résumé nutritionnel */}
-            <View style={styles.nutritionSummaryCard}>
-              <Text style={styles.summaryTitle}>Résumé de la semaine</Text>
-              <View style={styles.summaryStats}>
-                <View style={styles.summaryItem}>
-                  <Text style={[styles.summaryValue, { color: nutritionStats.daysWithData >= 5 ? '#28A745' : nutritionStats.daysWithData >= 3 ? '#F5A623' : '#DC3545' }]}>
-                    {nutritionStats.daysWithData}/7
-                  </Text>
-                  <Text style={styles.summaryLabel}>Jours avec données</Text>
-                </View>
-                <View style={styles.summaryItem}>
-                  <Text style={[styles.summaryValue, { 
-                    color: nutritionStats.weeklyCalories.reduce((sum, day) => sum + day.calories, 0) >= 12000 ? '#28A745' : '#F5A623'
-                  }]}>
-                    {Math.round(nutritionStats.weeklyCalories.reduce((sum, day) => sum + day.calories, 0)).toLocaleString()}
-                  </Text>
-                  <Text style={styles.summaryLabel}>Calories totales</Text>
-                </View>
-                <View style={styles.summaryItem}>
-                  <Text style={[styles.summaryValue, { color: '#4ECDC4' }]}>
-                    {(() => {
-                      // Calculer l'objectif personnalisé pour la moyenne (même logique que nutrition)
-                      if (!userData?.weight || !userData?.age) return nutritionStats.averageHydration > 0 ? Math.round((nutritionStats.averageHydration / 2000) * 100) : 0;
-                      
-                      let personalGoal = userData.weight * 35;
-                      
-                      if (userData.age > 65) {
-                        personalGoal += 300;
-                      } else if (userData.age > 50) {
-                        personalGoal += 200;
-                      }
-                      
-                      const finalGoal = Math.ceil(personalGoal / 250) * 250;
-                      
-                      return nutritionStats.averageHydration > 0 ? Math.round((nutritionStats.averageHydration / finalGoal) * 100) : 0;
-                    })()}%
-                  </Text>
-                  <Text style={styles.summaryLabel}>Hydratation moyenne</Text>
-                </View>
-              </View>
-
-              {/* Indicateur de régularité */}
-              <View style={styles.regularityIndicator}>
-                <Text style={styles.regularityTitle}>📊 Régularité du suivi</Text>
-                <View style={styles.regularityBar}>
-                  <View style={[styles.regularityBarFill, { 
-                    width: `${Math.round((nutritionStats.daysWithData / 7) * 100)}%`,
-                    backgroundColor: nutritionStats.daysWithData >= 5 ? '#28A745' : nutritionStats.daysWithData >= 3 ? '#F5A623' : '#DC3545'
-                  }]} />
-                </View>
-                <Text style={styles.regularityText}>
-                  {nutritionStats.daysWithData === 0 ? 
-                    'Commencez à enregistrer vos repas dans l\'onglet Nutrition pour suivre vos progrès !' :
-                    nutritionStats.daysWithData >= 5 ? 'Excellent suivi !' : 
-                    nutritionStats.daysWithData >= 3 ? 'Suivi correct, continuez !' : 
-                    'Pensez à enregistrer vos repas plus régulièrement'
-                  }
-                </Text>
-              </View>
-            </View>
-          </View>
-        )}
-
         {selectedTab === 'Mesures' && selectedMeasurementTab === 'Poids' && (
-          <View style={styles.statsContainer}>
-            <TouchableOpacity 
-              style={[styles.statCard, styles.currentWeightCard]}
-              onPress={() => {
-                const updateStatus = canUpdateWeight();
-                if (updateStatus.canUpdate) {
-                  setShowWeightModal(true);
-                } else {
-                  Alert.alert(
-                    'Mise à jour limitée',
-                    updateStatus.reason,
-                    [{ text: 'OK' }]
-                  );
-                }
-              }}
-            >
-              <View style={styles.statIcon}>
-                <Text style={styles.iconText}>⚖️</Text>
-              </View>
-              <Text style={styles.statLabel}>Poids actuel</Text>
-              <Text style={styles.statValue}>{formatWeight(weightData.currentWeight)} kg</Text>
-              <Text style={styles.updateHint}>
-                Appuyez pour mettre à jour
-              </Text>
-            </TouchableOpacity>
-
-            <View style={styles.statCard}>
-              <View style={styles.statIcon}>
-                <Text style={styles.iconText}>🎯</Text>
-              </View>
-              <Text style={styles.statLabel}>Poids de départ</Text>
-              <Text style={styles.statValue}>{formatWeight(weightData.startWeight)} kg</Text>
+        <View style={styles.statsContainer}>
+          <TouchableOpacity 
+            style={[styles.statCard, styles.currentWeightCard]}
+            onPress={() => {
+              const updateStatus = canUpdateWeight();
+              if (updateStatus.canUpdate) {
+                setShowWeightModal(true);
+              } else {
+                Alert.alert(
+                  'Mise à jour limitée',
+                  updateStatus.reason,
+                  [{ text: 'OK' }]
+                );
+              }
+            }}
+          >
+            <View style={styles.statIcon}>
+              <Text style={styles.iconText}>⚖️</Text>
             </View>
+            <Text style={styles.statLabel}>Poids actuel</Text>
+            <Text style={styles.statValue}>{formatWeight(weightData.currentWeight)} kg</Text>
+            <Text style={styles.updateHint}>
+              Appuyez pour mettre à jour
+            </Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity 
-              style={styles.statCard}
-              onPress={() => setShowTargetModal(true)}
-            >
-              <View style={styles.statIcon}>
-                <Text style={styles.iconText}>🏆</Text>
-              </View>
-              <Text style={styles.statLabel}>Objectif</Text>
-              <Text style={styles.statValue}>
-                {weightData.targetWeight ? `${formatWeight(weightData.targetWeight)} kg` : 'À définir'}
-              </Text>
-              {weightData.targetWeight > 0 && (
-                <Text style={styles.statSubtext}>
-                  {formatWeight(Math.abs(weightData.currentWeight - weightData.targetWeight))} kg restants
-                </Text>
-              )}
-              <Text style={styles.updateHint}>Appuyez pour modifier</Text>
-            </TouchableOpacity>
+          <View style={styles.statCard}>
+            <View style={styles.statIcon}>
+              <Text style={styles.iconText}>🎯</Text>
+            </View>
+            <Text style={styles.statLabel}>Poids de départ</Text>
+            <Text style={styles.statValue}>{formatWeight(weightData.startWeight)} kg</Text>
           </View>
+
+          <TouchableOpacity 
+            style={styles.statCard}
+            onPress={() => setShowTargetModal(true)}
+          >
+            <View style={styles.statIcon}>
+              <Text style={styles.iconText}>🏆</Text>
+            </View>
+            <Text style={styles.statLabel}>Objectif</Text>
+            <Text style={styles.statValue}>
+              {weightData.targetWeight ? `${formatWeight(weightData.targetWeight)} kg` : 'À définir'}
+            </Text>
+            {weightData.targetWeight > 0 && (
+              <Text style={styles.statSubtext}>
+                {formatWeight(Math.abs(weightData.currentWeight - weightData.targetWeight))} kg restants
+              </Text>
+            )}
+            <Text style={styles.updateHint}>Appuyez pour modifier</Text>
+          </TouchableOpacity>
+        </View>
         )}
 
         {/* Mensurations musculaires (Premium uniquement) */}
@@ -3020,7 +2718,13 @@ export default function ProgresScreen() {
           <View style={styles.progressHeader}>
             <Text style={styles.progressTitle}>Progression vers l'objectif</Text>
             <Text style={styles.progressPercentage}>
-              {Math.round(((weightData.startWeight - weightData.currentWeight) / (weightData.startWeight - weightData.targetWeight)) * 100)}%
+              {(() => {
+                const weightDiff = weightData.startWeight - weightData.currentWeight;
+                const targetDiff = weightData.startWeight - weightData.targetWeight;
+                if (targetDiff === 0) return '0%';
+                const percentage = (weightDiff / targetDiff) * 100;
+                return `${Math.round(Math.max(0, Math.min(100, percentage)))}%`;
+              })()}
             </Text>
           </View>
 
@@ -3088,12 +2792,12 @@ export default function ProgresScreen() {
                 {/* Enhanced Weight Line with Gradient */}
                 {renderWeightChart()}
 
-                
+
               </View>
             </ScrollView>
           </View>
 
-          
+
         </View>
         )}
 
@@ -4055,7 +3759,7 @@ flexDirection: 'row',
     borderColor: '#21262D',
     alignItems: 'center',
   },
-  
+
   sportBars: {
     flex: 1,
     flexDirection: 'row',
@@ -4208,14 +3912,14 @@ flexDirection: 'row',
   nutritionChartArea: {
     flexDirection: 'row',
     height: 180,
-    paddingBottom: 35,
+    marginBottom: 25,
   },
   caloriesBars: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
-    paddingBottom: 0,
+    paddingBottom: 25,
     paddingHorizontal: 5,
   },
   barContainer: {
@@ -4547,7 +4251,7 @@ flexDirection: 'row',
     paddingHorizontal: 20,
   },
 
-  // Styles spécifiques pour l'axe Y du graphique nutrition
+  // Styles spécifiques pour le graphique d'entraînement
   nutritionYAxis: {
     justifyContent: 'space-between',
     width: 50,
