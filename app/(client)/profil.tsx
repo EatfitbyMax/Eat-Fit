@@ -159,12 +159,20 @@ export default function ProfilScreen() {
         }));
         Alert.alert("Succès", "Strava déconnecté");
       } else {
-        const success = await IntegrationsManager.connectStrava(currentUser.id);
-        if (success) {
-          await loadIntegrationStatus();
-          Alert.alert("Succès", "Strava connecté avec succès");
-        } else {
-          Alert.alert("Erreur", "Impossible de connecter Strava");
+        try {
+          const success = await IntegrationsManager.connectStrava(currentUser.id);
+          if (success) {
+            await loadIntegrationStatus();
+            Alert.alert("Succès", "Strava connecté avec succès !");
+          } else {
+            Alert.alert("Erreur", "La connexion Strava a échoué. Veuillez réessayer.");
+          }
+        } catch (connectError) {
+          console.error("Erreur détaillée connexion Strava:", connectError);
+          Alert.alert(
+            "Erreur de connexion Strava", 
+            connectError.message || "Impossible de connecter Strava. Vérifiez votre connexion internet et réessayez."
+          );
         }
       }
     } catch (error) {

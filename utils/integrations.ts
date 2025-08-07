@@ -229,11 +229,22 @@ export class IntegrationsManager {
       const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
 
       console.log('🔍 Vérification configuration Strava...');
-      console.log('Client ID présent:', !!clientId);
+      console.log('Client ID:', clientId);
       console.log('Serveur URL:', serverUrl);
 
       if (!clientId || clientId.includes('your_')) {
-        throw new Error('Configuration Strava manquante. Contactez le support technique.');
+        console.error('❌ Configuration Strava manquante:', { clientId });
+        throw new Error('Configuration Strava manquante. Veuillez contacter le support technique.');
+      }
+
+      // Tester d'abord la connexion au serveur
+      const testResponse = await fetch(`${serverUrl}/api/health`, {
+        method: 'GET',
+        timeout: 5000
+      }).catch(() => null);
+
+      if (!testResponse || !testResponse.ok) {
+        throw new Error('Serveur indisponible. Vérifiez votre connexion internet.');
       }
 
       // Créer l'URL d'autorisation Strava vers notre serveur
