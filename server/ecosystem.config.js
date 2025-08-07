@@ -3,7 +3,7 @@ module.exports = {
   apps: [{
     name: 'eatfitbymax-server',
     script: 'server.js',
-    cwd: '/home/ubuntu/eatfitbymax/server',
+    cwd: '/home/ubuntu/Eat-Fit/server',
     instances: 1,
     autorestart: true,
     watch: false,
