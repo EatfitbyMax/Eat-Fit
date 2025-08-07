@@ -325,7 +325,8 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
   const loadLanguageFromVPS = async () => {
     try {
       const { PersistentStorage } = await import('../utils/storage');
-      const currentUser = await PersistentStorage.getCurrentUser();
+      const { getCurrentUser } = await import('../utils/auth');
+      const currentUser = await getCurrentUser();
       
       if (currentUser?.id) {
         const preferences = await PersistentStorage.getAppPreferences(currentUser.id);
@@ -350,7 +351,8 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
       
       // Synchronisation avec le serveur VPS
       const { PersistentStorage } = await import('../utils/storage');
-      const currentUser = await PersistentStorage.getCurrentUser();
+      const { getCurrentUser } = await import('../utils/auth');
+      const currentUser = await getCurrentUser();
       
       if (currentUser?.id) {
         const preferences = await PersistentStorage.getAppPreferences(currentUser.id);

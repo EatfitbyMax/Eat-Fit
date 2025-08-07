@@ -4,7 +4,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring } from 'react-native-reanimated';
 import { useFocusEffect } from 'expo-router';
 import { checkSubscriptionStatus } from '@/utils/subscription';
-
 import { PersistentStorage } from '@/utils/storage';
 import ComingSoonModal from '@/components/ComingSoonModal';
 
@@ -29,6 +28,9 @@ export default function ProgresScreen() {
 
   // Fonction pour formater le poids avec la précision appropriée
   const formatWeight = (weight: number) => {
+    if (!weight || isNaN(weight)) {
+      return '0';
+    }
     if (weight % 1 === 0) {
       return weight.toFixed(0); // Pas de décimales si c'est un nombre entier
     } else if ((weight * 10) % 1 === 0) {
@@ -424,7 +426,7 @@ export default function ProgresScreen() {
   };
 
   const formatMensuration = (value: number) => {
-    if (value === 0) return '0.0';
+    if (!value || isNaN(value) || value === 0) return '0.0';
     return value % 1 === 0 ? value.toFixed(1) : value.toFixed(1);
   };
 
@@ -1465,7 +1467,8 @@ export default function ProgresScreen() {
 
   const loadProgressData = async () => {
     try {
-      const user = await PersistentStorage.getCurrentUser();
+      const { getCurrentUser } = await import('@/utils/auth');
+      const user = await getCurrentUser();
       if (!user) return;
 
       console.log('=== CHARGEMENT DONNÉES SPORT PROGRÈS ===');
@@ -1769,7 +1772,8 @@ export default function ProgresScreen() {
 
   const loadNutritionData = async () => {
     try {
-      const user = await PersistentStorage.getCurrentUser();
+      const { getCurrentUser } = await import('@/utils/auth');
+      const user = await getCurrentUser();
       if (!user) return;
 
       console.log('=== CHARGEMENT DONNÉES NUTRITION PROGRÈS ===');

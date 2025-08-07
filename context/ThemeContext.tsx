@@ -79,7 +79,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const loadThemeFromVPS = async () => {
     try {
       const { PersistentStorage } = await import('../utils/storage');
-      const currentUser = await PersistentStorage.getCurrentUser();
+      const { getCurrentUser } = await import('../utils/auth');
+      const currentUser = await getCurrentUser();
       
       if (currentUser?.id) {
         const preferences = await PersistentStorage.getAppPreferences(currentUser.id);
@@ -106,7 +107,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const saveThemeToVPS = async (isDark: boolean) => {
     try {
       const { PersistentStorage } = await import('../utils/storage');
-      const currentUser = await PersistentStorage.getCurrentUser();
+      const { getCurrentUser } = await import('../utils/auth');
+      const currentUser = await getCurrentUser();
       
       if (currentUser?.id) {
         const preferences = await PersistentStorage.getAppPreferences(currentUser.id);

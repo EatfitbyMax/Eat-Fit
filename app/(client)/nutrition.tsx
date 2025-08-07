@@ -4,8 +4,9 @@ import Svg, { Circle } from 'react-native-svg';
 import FoodSearchModal from '@/components/FoodSearchModal';
 import ComingSoonModal from '@/components/ComingSoonModal';
 import { FoodProduct, OpenFoodFactsService, FoodEntry } from '@/utils/openfoodfacts';
-
+import { PersistentStorage } from '@/utils/storage';
 import { getCurrentUser } from '@/utils/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 
