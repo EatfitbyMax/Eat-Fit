@@ -264,20 +264,48 @@ export default function EntrainementScreen() {
         console.log('📊 Statut Strava:', integrationStatus.strava.connected ? 'Connecté' : 'Non connecté');
         
         if (integrationStatus.strava.connected) {
-          const activities = await IntegrationsManager.getStravaActivities(currentUser.id);
-          console.log(`✅ ${activities.length} activités Strava récupérées`);
+          // 1. D'abord essayer de récupérer depuis le serveur VPS
+          try {
+            console.log('🔄 Récupération activités depuis serveur VPS...');
+            const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
+            const response = await fetch(`${serverUrl}/api/strava/${currentUser.id}`);
+            
+            if (response.ok) {
+              const serverActivities = await response.json();
+              if (Array.isArray(serverActivities) && serverActivities.length > 0) {
+                console.log(`✅ ${serverActivities.length} activités récupérées depuis le serveur VPS`);
+                setStravaActivities(serverActivities);
+                
+                // Sauvegarder en cache local
+                await AsyncStorage.setItem(`strava_activities_${currentUser.id}`, JSON.stringify(serverActivities));
+                
+                // Debug détaillé
+                console.log('📋 Activités depuis serveur VPS:');
+                serverActivities.forEach((activity, index) => {
+                  console.log(`  ${index + 1}. ${activity.name} - ${new Date(activity.date).toLocaleDateString('fr-FR')} (${activity.type})`);
+                });
+                
+                return; // Sortir ici si on a trouvé des activités
+              }
+            }
+          } catch (serverError) {
+            console.log('⚠️ Erreur serveur VPS, fallback vers cache/sync:', serverError);
+          }
           
-          // Debug détaillé des activités
+          // 2. Ensuite essayer le cache local
+          const activities = await IntegrationsManager.getStravaActivities(currentUser.id);
+          console.log(`📱 ${activities.length} activités depuis cache local`);
+          
           if (activities.length > 0) {
-            console.log('📋 Liste des activités Strava:');
+            // Debug détaillé des activités
+            console.log('📋 Liste des activités Strava (cache):');
             activities.forEach((activity, index) => {
               console.log(`  ${index + 1}. ${activity.name} - ${new Date(activity.date).toLocaleDateString('fr-FR')} (${activity.type})`);
             });
-          }
-          
-          setStravaActivities(activities);
-          
-          if (activities.length === 0) {
+            
+            setStravaActivities(activities);
+          } else {
+            // 3. Finalement, essayer de synchroniser
             console.log('🔄 Aucune activité trouvée, tentative de synchronisation...');
             try {
               await IntegrationsManager.syncStravaActivities(currentUser.id);
@@ -385,11 +413,28 @@ export default function EntrainementScreen() {
   const getStravaActivitiesForCurrentWeek = () => {
     const { start, end } = getWeekRange();
 
-    console.log('=== DEBUG ACTIVITÉS STRAVA ===');
+    console.log('=== DEBUG ACTIVITÉS STRAVA SEMAINE COURANTE ===');
     console.log(`Période recherchée: ${start.toISOString().split('T')[0]} à ${end.toISOString().split('T')[0]}`);
-    console.log(`Total activités Strava: ${stravaActivities.length}`);
+    console.log(`Total activités Strava disponibles: ${stravaActivities.length}`);
+    
+    if (stravaActivities.length === 0) {
+      console.log('⚠️ Aucune activité Strava disponible pour filtrer');
+      return [];
+    }
+
+    // Debug de toutes les activités avant filtrage
+    console.log('📋 Toutes les activités Strava disponibles:');
+    stravaActivities.forEach((activity, index) => {
+      const activityDate = new Date(activity.date);
+      console.log(`  ${index + 1}. "${activity.name}" - ${activityDate.toISOString().split('T')[0]} (${activityDate.toLocaleDateString('fr-FR')})`);
+    });
 
     const filteredActivities = stravaActivities.filter(activity => {
+      if (!activity || !activity.date) {
+        console.log('⚠️ Activité invalide détectée:', activity);
+        return false;
+      }
+
       // Normaliser la date d'activité pour éviter les problèmes de fuseau horaire
       const activityDate = new Date(activity.date);
       activityDate.setHours(0, 0, 0, 0);
@@ -402,13 +447,19 @@ export default function EntrainementScreen() {
 
       const isInRange = activityDate >= startDate && activityDate <= endDate;
       
-      console.log(`Activité "${activity.name}" du ${activityDate.toISOString().split('T')[0]} - Dans la semaine: ${isInRange}`);
+      console.log(`🔍 Activité "${activity.name}" du ${activityDate.toISOString().split('T')[0]} - Dans la semaine (${start.toISOString().split('T')[0]} à ${end.toISOString().split('T')[0]}): ${isInRange ? '✅ OUI' : '❌ NON'}`);
       
       return isInRange;
     });
 
-    console.log(`Activités trouvées pour cette semaine: ${filteredActivities.length}`);
-    console.log('=== FIN DEBUG ACTIVITÉS STRAVA ===');
+    console.log(`🎯 Activités filtrées pour cette semaine: ${filteredActivities.length}`);
+    if (filteredActivities.length > 0) {
+      console.log('📋 Activités de la semaine courante:');
+      filteredActivities.forEach((activity, index) => {
+        console.log(`  ${index + 1}. "${activity.name}" - ${new Date(activity.date).toLocaleDateString('fr-FR')} (${activity.type})`);
+      });
+    }
+    console.log('=== FIN DEBUG ACTIVITÉS STRAVA SEMAINE COURANTE ===');
 
     return filteredActivities;
   };
@@ -946,6 +997,30 @@ export default function EntrainementScreen() {
                 <Text style={styles.sectionSubtitle}>
                   {getStravaActivitiesForCurrentWeek().length} activité{getStravaActivitiesForCurrentWeek().length > 1 ? 's' : ''} cette semaine
                 </Text>
+                <TouchableOpacity 
+                  style={styles.syncButton}
+                  onPress={async () => {
+                    const currentUser = await getCurrentUser();
+                    if (currentUser) {
+                      setIsLoading(true);
+                      try {
+                        console.log('🔄 Synchronisation manuelle Strava...');
+                        await IntegrationsManager.syncStravaActivities(currentUser.id);
+                        await loadStravaActivities();
+                        console.log('✅ Synchronisation manuelle terminée');
+                      } catch (error) {
+                        console.error('❌ Erreur synchronisation manuelle:', error);
+                      } finally {
+                        setIsLoading(false);
+                      }
+                    }
+                  }}
+                  disabled={isLoading}
+                >
+                  <Text style={styles.syncButtonText}>
+                    {isLoading ? '🔄 Sync...' : '🔄 Synchroniser'}
+                  </Text>
+                </TouchableOpacity>
               </View>
 
               {isLoading ? (
@@ -1420,6 +1495,18 @@ const styles = StyleSheet.create({
   sectionSubtitle: {
     fontSize: 14,
     color: '#8B949E',
+  },
+  syncButton: {
+    backgroundColor: '#F5A623',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    marginTop: 8,
+  },
+  syncButtonText: {
+    fontSize: 12,
+    color: '#000000',
+    fontWeight: '600',
   },
   loadingContainer: {
     flex: 1,

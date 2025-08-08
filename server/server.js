@@ -596,6 +596,47 @@ app.get('/api/messages/:userId', async (req, res) => {
   }
 });
 
+// Routes pour les notes RPE des activités
+app.get('/api/activity-ratings/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    let userData = await readUserFile(userId, 'client');
+    if (!userData) userData = await readUserFile(userId, 'coach');
+
+    const activityRatings = userData?.activityRatings || {};
+    res.json(activityRatings);
+  } catch (error) {
+    console.error(`Erreur lecture notes RPE utilisateur ${req.params.userId}:`, error);
+    res.json({});
+  }
+});
+
+app.post('/api/activity-ratings/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    let userData = await readUserFile(userId, 'client');
+    let userType = 'client';
+
+    if (!userData) {
+      userData = await readUserFile(userId, 'coach');
+      userType = 'coach';
+    }
+
+    if (!userData) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    userData.activityRatings = req.body;
+    userData.lastUpdated = new Date().toISOString();
+
+    await writeUserFile(userId, userData, userType);
+    res.json({ success: true });
+  } catch (error) {
+    console.error(`Erreur sauvegarde notes RPE utilisateur ${userId}:`, error);
+    res.status(500).json({ error: 'Erreur sauvegarde notes RPE' });
+  }
+});
+
 app.post('/api/messages/:userId', async (req, res) => {
   try {
     const { userId } = req.params;

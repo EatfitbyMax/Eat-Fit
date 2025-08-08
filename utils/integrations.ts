@@ -721,7 +721,47 @@ export class IntegrationsManager {
 
   static async getStravaActivities(userId: string): Promise<StravaActivity[]> {
     try {
-      // Essayer de récupérer depuis le cache local d'abord
+      console.log(`🔍 [GET_STRAVA_ACTIVITIES] Début pour utilisateur: ${userId}`);
+      
+      // 1. Essayer de récupérer depuis le serveur VPS d'abord
+      try {
+        const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
+        const response = await fetch(`${serverUrl}/api/strava/${userId}`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 5000
+        });
+        
+        if (response.ok) {
+          const serverActivities = await response.json();
+          if (Array.isArray(serverActivities) && serverActivities.length > 0) {
+            console.log(`✅ [SERVEUR] ${serverActivities.length} activités récupérées depuis serveur VPS`);
+            
+            // Valider et formater les activités
+            const validServerActivities = serverActivities.filter(activity =>
+              activity &&
+              typeof activity === 'object' &&
+              activity.id &&
+              activity.name &&
+              activity.date
+            ).map(activity => ({
+              ...activity,
+              avgHeartRate: activity.avgHeartRate || activity.averageHeartrate
+            }));
+            
+            // Mettre à jour le cache local
+            await AsyncStorage.setItem(`strava_activities_${userId}`, JSON.stringify(validServerActivities));
+            console.log(`💾 [CACHE] ${validServerActivities.length} activités sauvées en cache`);
+            
+            return validServerActivities;
+          }
+        }
+        console.log('⚠️ [SERVEUR] Aucune activité trouvée sur le serveur, essai cache local...');
+      } catch (serverError) {
+        console.log('⚠️ [SERVEUR] Erreur serveur, fallback vers cache:', serverError);
+      }
+
+      // 2. Essayer de récupérer depuis le cache local
       const stored = await AsyncStorage.getItem(`strava_activities_${userId}`);
       if (stored) {
         const parsed = JSON.parse(stored);
@@ -734,43 +774,48 @@ export class IntegrationsManager {
             activity.date
           ).map(activity => ({
             ...activity,
-            // S'assurer que avgHeartRate est disponible pour l'affichage
             avgHeartRate: activity.avgHeartRate || activity.averageHeartrate
           }));
           
           if (validActivities.length > 0) {
-            console.log(`📱 ${validActivities.length} activités Strava chargées depuis le cache local`);
+            console.log(`📱 [CACHE] ${validActivities.length} activités chargées depuis le cache local`);
             return validActivities;
           }
         }
       }
 
-      // Si pas de cache local, essayer de synchroniser
-      console.log('🔄 Aucune activité en cache, tentative de synchronisation...');
+      // 3. Si pas de cache local, essayer de synchroniser
+      console.log('🔄 [SYNC] Aucune activité en cache, tentative de synchronisation...');
       const integrationStatus = await this.getIntegrationStatus(userId);
       
       if (integrationStatus.strava.connected) {
         try {
           await this.syncStravaActivities(userId);
+          
           // Réessayer de lire le cache après synchronisation
           const newStored = await AsyncStorage.getItem(`strava_activities_${userId}`);
           if (newStored) {
             const newParsed = JSON.parse(newStored);
             if (Array.isArray(newParsed)) {
-              return newParsed.map(activity => ({
+              const syncedActivities = newParsed.map(activity => ({
                 ...activity,
                 avgHeartRate: activity.avgHeartRate || activity.averageHeartrate
               }));
+              console.log(`✅ [SYNC] ${syncedActivities.length} activités après synchronisation`);
+              return syncedActivities;
             }
           }
         } catch (syncError) {
-          console.error('❌ Erreur lors de la synchronisation automatique:', syncError);
+          console.error('❌ [SYNC] Erreur lors de la synchronisation automatique:', syncError);
         }
+      } else {
+        console.log('⚠️ [SYNC] Strava non connecté, impossible de synchroniser');
       }
 
+      console.log('📭 [FINAL] Aucune activité trouvée');
       return [];
     } catch (error) {
-      console.error('❌ Erreur chargement activités Strava:', error);
+      console.error('❌ [ERROR] Erreur chargement activités Strava:', error);
       // Nettoyer les données corrompues
       await AsyncStorage.removeItem(`strava_activities_${userId}`);
       return [];
