@@ -384,140 +384,40 @@ export async function login(email: string, password: string): Promise<User | nul
   try {
     console.log('🔄 Tentative de connexion pour:', email);
 
-    // Récupérer les utilisateurs ET les coaches depuis le serveur
-    const users = await PersistentStorage.getUsers();
-    const coaches = await PersistentStorage.getCoaches();
+    // Utiliser l'API serveur directement
+    const API_URL = process.env.EXPO_PUBLIC_API_URL || process.env.EXPO_PUBLIC_VPS_URL || 'http://localhost:5000';
+    console.log('🌐 URL API utilisée:', API_URL);
 
-    // Combiner les deux listes pour la recherche
-    const allUsers = [...users, ...coaches];
-
-    console.log('📊 Nombre d\'utilisateurs récupérés:', users.length);
-    console.log('👨‍💼 Nombre de coaches récupérés:', coaches.length);
-    console.log('👥 Tous les utilisateurs disponibles:', allUsers.map((u: any) => ({ 
-      email: u.email, 
-      userType: u.userType,
-      hashedPassword: u.hashedPassword ? 'OUI' : 'NON'
-    })));
-
-    // Trouver l'utilisateur (client ou coach)
-    const user = allUsers.find((u: any) => u.email === email);
-    if (!user) {
-      console.log('❌ Utilisateur non trouvé pour:', email);
-      return null;
-    }
-
-    console.log('👤 Utilisateur trouvé:', {
-      email: user.email,
-      userType: user.userType,
-      hasPassword: user.password ? 'OUI' : 'NON',
-      hasHashedPassword: user.hashedPassword ? 'OUI' : 'NON'
+    const response = await fetch(`${API_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: email.trim().toLowerCase(),
+        password: password
+      })
     });
 
-    // Vérifier le mot de passe avec le nouveau système unifié
-    let isPasswordValid = false;
-    const passwordString = String(password).trim();
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.log('❌ Erreur serveur:', errorData);
+      throw new Error(errorData.error || 'Erreur de connexion au serveur');
+    }
 
-    if (user.hashedPassword) {
-      // Utiliser la fonction de vérification unifiée
-      isPasswordValid = await verifyPassword(password, user.hashedPassword);
-
-      // Si le mot de passe est valide mais utilise un ancien système, migrer automatiquement
-      if (isPasswordValid) {
-        const currentHash = await generateSecureHash(password);
-        if (currentHash !== user.hashedPassword) {
-          console.log('🔄 Migration automatique vers le nouveau système de hash...');
-          try {
-            // Mise à jour dans la liste appropriée (users ou coaches)
-            const isInUsers = users.some(u => u.email === email);
-
-            if (isInUsers) {
-              const updatedUsers = users.map((u: any) => 
-                u.email === email 
-                  ? { ...u, hashedPassword: currentHash, password: undefined }
-                  : u
-              );
-              await PersistentStorage.saveUsers(updatedUsers);
-            } else {
-              const updatedCoaches = coaches.map((c: any) => 
-                c.email === email 
-                  ? { ...c, hashedPassword: currentHash, password: undefined }
-                  : c
-              );
-              // Sauvegarder les coaches via l'API
-              const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://eatfitbymax.cloud';
-              const response = await fetch(`${API_URL}/api/coaches`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updatedCoaches)
-              });
-              if (!response.ok) {
-                throw new Error('Erreur sauvegarde coaches');
-              }
-            }
-            console.log('✅ Migration automatique terminée');
-          } catch (migrationError) {
-            console.error('⚠️ Erreur migration automatique (connexion maintenue):', migrationError);
-          }
-        }
-      }
-    } else if (user.password) {
-      // Système très ancien (mot de passe en clair)
-      isPasswordValid = user.password === password;
-      console.log('🔓 Vérification ancien système (clair):', isPasswordValid ? 'VALIDE' : 'INVALIDE');
-
-      // Migration obligatoire vers le nouveau système
-      if (isPasswordValid) {
-        console.log('🔄 Migration obligatoire du mot de passe en clair...');
-        try {
-          const newHashedPassword = await generateSecureHash(password);
-
-          const isInUsers = users.some(u => u.email === email);
-
-          if (isInUsers) {
-            const updatedUsers = users.map((u: any) => 
-              u.email === email 
-                ? { ...u, hashedPassword: newHashedPassword, password: undefined }
-                : u
-            );
-            await PersistentStorage.saveUsers(updatedUsers);
-          } else {
-            const updatedCoaches = coaches.map((c: any) => 
-              c.email === email 
-                ? { ...c, hashedPassword: newHashedPassword, password: undefined }
-                : c
-            );
-            const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://eatfitbymax.cloud';
-            const response = await fetch(`${API_URL}/api/coaches`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(updatedCoaches)
-            });
-            if (!response.ok) {
-              throw new Error('Erreur sauvegarde coaches');
-            }
-          }
-          console.log('✅ Migration du mot de passe en clair terminée');
-        } catch (migrationError) {
-          console.error('⚠️ Erreur migration mot de passe en clair (connexion maintenue):', migrationError);
-        }
-      }
-    } else {
-      console.log('❌ Aucun mot de passe défini pour cet utilisateur');
+    const data = await response.json();
+    if (!data.success || !data.user) {
+      console.log('❌ Réponse serveur invalide:', data);
       return null;
     }
 
-    if (!isPasswordValid) {
-      console.log('❌ Mot de passe incorrect pour:', email);
-      return null;
-    }
+    const user = data.user;
 
-    // Vérification spéciale pour les coachs
-    if (user.userType === 'coach') {
-      if (user.status !== 'active') {
-        console.log('❌ Compte coach non activé:', email);
-        throw new Error('Votre compte coach n\'est pas encore activé. Contactez l\'administrateur.');
-      }
-    }
+    console.log('👤 Utilisateur authentifié:', {
+      email: user.email,
+      userType: user.userType,
+      id: user.id
+    });
 
     // Créer l'objet utilisateur sans le mot de passe
     const userWithoutPassword: User = {
@@ -559,47 +459,38 @@ export async function register(userData: Omit<User, 'id'> & { password: string }
       throw new Error('Mot de passe requis');
     }
 
-    // Récupérer les utilisateurs existants depuis le serveur uniquement
-    const users = await PersistentStorage.getUsers();
-    console.log('📊 Utilisateurs récupérés depuis le serveur:', users.length);
+    // Utiliser l'API serveur directement
+    const API_URL = process.env.EXPO_PUBLIC_API_URL || process.env.EXPO_PUBLIC_VPS_URL || 'http://localhost:5000';
+    console.log('🌐 URL API utilisée:', API_URL);
 
-    // Vérifier si l'utilisateur existe déjà
-    const existingUser = users.find((u: any) => u.email === userData.email);
-    if (existingUser) {
-      console.log('❌ Utilisateur déjà existant:', userData.email);
+    const response = await fetch(`${API_URL}/api/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...userData,
+        email: userData.email.trim().toLowerCase()
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.log('❌ Erreur serveur:', errorData);
+      if (response.status === 409) {
+        throw new Error('Un compte avec cet email existe déjà');
+      }
+      throw new Error(errorData.error || 'Erreur lors de l\'inscription');
+    }
+
+    const data = await response.json();
+    if (!data.success || !data.user) {
+      console.log('❌ Réponse serveur invalide:', data);
       return null;
     }
 
-    // Hacher le mot de passe avec le nouveau système unifié
-    console.log('🔐 Hachage du mot de passe...', `Type: ${typeof userData.password}, Longueur: ${userData.password.length}`);
-
-    let hashedPassword: string;
-    try {
-      console.log('🔧 Utilisation du système de hash unifié');
-      hashedPassword = await generateSecureHash(userData.password);
-      console.log('✅ Hachage réussi avec système unifié, longueur:', hashedPassword.length);
-    } catch (hashError) {
-      console.error('❌ Erreur détaillée hachage:', hashError);
-      throw new Error(`Erreur hachage mot de passe: ${hashError.message}`);
-    }
-
-    // Créer le nouvel utilisateur
-    const newUser = {
-      ...userData,
-      id: Date.now().toString(),
-      hashedPassword: hashedPassword,
-      // S'assurer que le sport favori est inclus
-      favoriteSport: userData.favoriteSport || '',
-      // Ne pas stocker le mot de passe en clair
-      password: undefined
-    };
-
-    // Ajouter à la liste des utilisateurs
-    users.push(newUser);
-
-    // Sauvegarder sur le serveur
-    await PersistentStorage.saveUsers(users);
-    console.log('✅ Utilisateurs sauvegardés sur le serveur');
+    const newUser = data.user;
+    console.log('✅ Inscription réussie sur le serveur');
 
     // Créer l'objet de retour sans les mots de passe
     const userWithoutPassword: User = {
