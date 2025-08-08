@@ -401,6 +401,65 @@ export class PersistentStorage {
     }
   }
 
+  // Forme data
+  static async getFormeData(userId: string, date: string): Promise<any> {
+    const response = await fetch(`${SERVER_URL}/api/forme/${userId}/${date}`);
+
+    if (!response.ok) {
+      throw new Error('Données de forme non trouvées');
+    }
+
+    return await response.json();
+  }
+
+  static async saveFormeData(userId: string, date: string, data: any): Promise<void> {
+    const response = await fetch(`${SERVER_URL}/api/forme/${userId}/${date}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    if (!response.ok) {
+      throw new Error('Erreur sauvegarde données forme');
+    }
+  }
+
+  // Activity ratings
+  static async getActivityRatings(userId: string): Promise<any> {
+    const response = await fetch(`${SERVER_URL}/api/activity-ratings/${userId}`);
+    return response.ok ? await response.json() : {};
+  }
+
+  static async saveActivityRatings(userId: string, ratings: any): Promise<void> {
+    const response = await fetch(`${SERVER_URL}/api/activity-ratings/${userId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(ratings)
+    });
+
+    if (!response.ok) {
+      throw new Error('Erreur sauvegarde notes RPE');
+    }
+  }
+
+  // Water intake
+  static async getWaterIntake(userId: string, date: string): Promise<number> {
+    const response = await fetch(`${SERVER_URL}/api/water/${userId}/${date}`);
+    return response.ok ? await response.json() : 0;
+  }
+
+  static async saveWaterIntake(userId: string, date: string, amount: number): Promise<void> {
+    const response = await fetch(`${SERVER_URL}/api/water/${userId}/${date}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount })
+    });
+
+    if (!response.ok) {
+      throw new Error('Erreur sauvegarde hydratation');
+    }
+  }
+
   // Alias methods pour compatibilité
   static async getIntegrationStatus(userId: string): Promise<any> {
     return await this.getUserIntegrationStatus(userId);

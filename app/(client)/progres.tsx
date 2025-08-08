@@ -1782,13 +1782,13 @@ export default function ProgresScreen() {
       // Charger les données nutritionnelles réelles avec priorité sur le serveur VPS
       let nutritionEntries = [];
 
-      // Charger depuis le serveur VPS avec la même logique que nutrition.tsx
+      // Charger depuis le serveur VPS uniquement
       try {
         const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
         console.log('🌐 Tentative de connexion au serveur VPS:', VPS_URL);
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 secondes timeout comme nutrition.tsx
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
 
         const response = await fetch(`${VPS_URL}/api/nutrition/${user.id}`, {
           method: 'GET',
@@ -1820,37 +1820,12 @@ export default function ProgresScreen() {
               })));
             }
           }
-
-          // Sauvegarder en local comme backup
-          await AsyncStorage.setItem(`food_entries_${user.id}`, JSON.stringify(nutritionEntries));
-          console.log('💾 Sauvegarde locale effectuée');
         } else {
           throw new Error(`Réponse serveur VPS non-OK: ${response.status}`);
         }
       } catch (serverError) {
         console.log('❌ Erreur serveur VPS nutrition (progrès):', serverError.message);
-
-        // Fallback vers le stockage local
-        console.log('📱 Fallback vers le stockage local pour nutrition (progrès)');
-        try {
-          const stored = await AsyncStorage.getItem(`food_entries_${user.id}`);
-          if (stored) {
-            const parsedData = JSON.parse(stored);
-            if (Array.isArray(parsedData)) {
-              nutritionEntries = parsedData;
-              console.log('✅ Données nutrition chargées depuis le stockage local:', nutritionEntries.length, 'entrées');
-            } else {
-              console.warn('⚠️ Données locales invalides, initialisation avec tableau vide');
-              nutritionEntries = [];
-            }
-          } else {
-            console.log('⚠️ Aucune donnée nutritionnelle trouvée en local');
-            nutritionEntries = [];
-          }
-        } catch (localError) {
-          console.error('❌ Erreur lecture stockage local:', localError);
-          nutritionEntries = [];
-        }
+        nutritionEntries = [];
       }
 
       // Calculer les statistiques de la semaine courante (lundi à dimanche)
@@ -1926,10 +1901,9 @@ export default function ProgresScreen() {
           fat: dayFat
         });
 
-        // Données d'hydratation
+        // Données d'hydratation depuis le serveur VPS
         try {
-          const waterStored = await AsyncStorage.getItem(`water_intake_${user.id}_${dateString}`);
-          const dayWater = waterStored ? parseInt(waterStored) : 0;
+          const dayWater = await PersistentStorage.getWaterIntake(user.id, dateString);
 
           if (dayWater > 0) {
             totalHydrationWeek += dayWater;

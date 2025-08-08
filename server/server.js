@@ -300,7 +300,7 @@ app.delete('/api/user-data/:userId', async (req, res) => {
     // Supprimer le fichier utilisateur
     const userDir = userType === 'coach' ? COACH_DIR : CLIENT_DIR;
     const filePath = path.join(userDir, `${userId}.json`);
-    
+
     try {
       await fs.unlink(filePath);
       console.log(`🗑️ Fichier utilisateur supprimé: ${filePath}`);
@@ -688,7 +688,7 @@ app.post('/api/strava/exchange-token', async (req, res) => {
     // Vérifier la configuration Strava (essayer différentes variables d'environnement)
     const stravaClientId = process.env.STRAVA_CLIENT_ID || process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID;
     const stravaClientSecret = process.env.STRAVA_CLIENT_SECRET || process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET;
-    
+
     if (!stravaClientId || !stravaClientSecret) {
       console.error('❌ Configuration Strava manquante sur le serveur');
       console.error('Variables disponibles:', Object.keys(process.env).filter(k => k.includes('STRAVA')));

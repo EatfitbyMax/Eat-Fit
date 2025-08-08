@@ -4,7 +4,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring } from 'react-native-reanimated';
 import { useFocusEffect } from 'expo-router';
 import { checkSubscriptionStatus } from '@/utils/subscription';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PersistentStorage } from '@/utils/storage';
 import { IntegrationsManager } from '@/utils/integrations';
 
@@ -146,9 +145,9 @@ export default function FormeScreen() {
 
   const loadUserData = async () => {
     try {
-      const currentUserString = await AsyncStorage.getItem('currentUser');
-      if (currentUserString) {
-        const user = JSON.parse(currentUserString);
+      const { getCurrentUser } = await import('@/utils/auth');
+      const user = await getCurrentUser();
+      if (user) {
         setUserData(user);
 
         // Vérifier le statut premium
@@ -167,32 +166,23 @@ export default function FormeScreen() {
       if (!userData) return;
 
       const today = new Date().toISOString().split('T')[0];
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
 
-      // Essayer d'abord le stockage local
+      // Charger uniquement depuis le serveur VPS
       let todayData = null;
-      const localDataString = await AsyncStorage.getItem(`forme_data_${userData.id}_${today}`);
-
-      if (localDataString) {
-        todayData = JSON.parse(localDataString);
-        console.log('Données de forme chargées depuis le stockage local');
-      } else {
-        // Fallback vers le serveur si pas de données locales
-        try {
-          todayData = await PersistentStorage.getFormeData(userData.id, today);
-          console.log('Données de forme chargées depuis le serveur VPS');
-        } catch (serverError) {
-          // Créer des données par défaut si rien n'est trouvé
-          todayData = {
-            sleep: { hours: 0, quality: 'Moyen', bedTime: '', wakeTime: '' },
-            stress: { level: 5, factors: [], notes: '' },
-            heartRate: { resting: 0, variability: 0 },
-            rpe: { value: 5, notes: '' },
-            cycle: userData?.gender === 'Femme' ? { phase: 'Menstruel', dayOfCycle: 1, symptoms: [], notes: '' } : undefined,
-            date: today
-          };
-          console.log('Création de nouvelles données de forme par défaut');
-        }
+      try {
+        todayData = await PersistentStorage.getFormeData(userData.id, today);
+        console.log('Données de forme chargées depuis le serveur VPS');
+      } catch (serverError) {
+        // Créer des données par défaut si rien n'est trouvé
+        todayData = {
+          sleep: { hours: 0, quality: 'Moyen', bedTime: '', wakeTime: '' },
+          stress: { level: 5, factors: [], notes: '' },
+          heartRate: { resting: 0, variability: 0 },
+          rpe: { value: 5, notes: '' },
+          cycle: userData?.gender === 'Femme' ? { phase: 'Menstruel', dayOfCycle: 1, symptoms: [], notes: '' } : undefined,
+          date: today
+        };
+        console.log('Création de nouvelles données de forme par défaut');
       }
 
       // Récupérer les données nutritionnelles réelles depuis la nutrition
@@ -269,26 +259,20 @@ export default function FormeScreen() {
         date.setDate(date.getDate() - i);
         const dateString = date.toISOString().split('T')[0];
 
-        // Essayer d'abord le stockage local pour chaque jour
-        const dayLocalDataString = await AsyncStorage.getItem(`forme_data_${userData.id}_${dateString}`);
+        // Charger uniquement depuis le serveur VPS
         let dayData;
-
-        if (dayLocalDataString) {
-          dayData = JSON.parse(dayLocalDataString);
-        } else {
-          try {
-            dayData = await PersistentStorage.getFormeData(userData.id, dateString);
-          } catch (error) {
-            // Données par défaut si aucune donnée trouvée
-            dayData = {
-              sleep: { hours: 0, quality: 'Moyen', bedTime: '', wakeTime: '' },
-              stress: { level: 5, factors: [], notes: '' },
-              heartRate: { resting: 0, variability: 0 },
-              rpe: { value: 5, notes: '' },
-              cycle: userData?.gender === 'Femme' ? { phase: 'Menstruel', dayOfCycle: 1, symptoms: [], notes: '' } : undefined,
-              date: dateString
-            };
-          }
+        try {
+          dayData = await PersistentStorage.getFormeData(userData.id, dateString);
+        } catch (error) {
+          // Données par défaut si aucune donnée trouvée
+          dayData = {
+            sleep: { hours: 0, quality: 'Moyen', bedTime: '', wakeTime: '' },
+            stress: { level: 5, factors: [], notes: '' },
+            heartRate: { resting: 0, variability: 0 },
+            rpe: { value: 5, notes: '' },
+            cycle: userData?.gender === 'Femme' ? { phase: 'Menstruel', dayOfCycle: 1, symptoms: [], notes: '' } : undefined,
+            date: dateString
+          };
         }
 
         weekData.push(dayData);
@@ -620,11 +604,15 @@ export default function FormeScreen() {
     finalScore = Math.max(0, Math.min(100, Math.round(finalScore)));
     setFormeScore(finalScore);
 
-    // Sauvegarder le score calculé pour que l'écran accueil puisse le récupérer
+    // Sauvegarder le score calculé avec les données de forme
     try {
       const today = new Date().toISOString().split('T')[0];
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-      await AsyncStorage.setItem(`forme_score_${userData.id}_${today}`, finalScore.toString());
+      const updatedFormeData = {
+        ...formeData,
+        formeScore: finalScore,
+        lastScoreUpdate: new Date().toISOString()
+      };
+      await PersistentStorage.saveFormeData(userData.id, today, updatedFormeData);
       console.log(`✅ Score de forme sauvegardé: ${finalScore}/100 pour ${today}`);
     } catch (error) {
       console.error('❌ Erreur sauvegarde score de forme:', error);
@@ -931,9 +919,12 @@ export default function FormeScreen() {
 
       // Charger depuis le serveur VPS
       try {
-        const VPS_URL = 'http://51.178.29.220:5000';
-        const response = await fetch(`${VPS_URL}/api/nutrition/${userData.id}`, { 
-          timeout: 5000 
+        const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
+        const response = await fetch(`${VPS_URL}/api/nutrition/${userData.id}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          }
         });
 
         if (response.ok) {
@@ -999,72 +990,7 @@ export default function FormeScreen() {
           return totals;
         }
       } catch (serverError) {
-        console.log('Serveur nutrition indisponible, utilisation stockage local');
-      }
-
-      // Fallback vers le stockage local
-      const storedEntries = await AsyncStorage.getItem(`food_entries_${userData.id}`);
-      if (storedEntries) {
-        const entries = JSON.parse(storedEntries);
-        const todayEntries = entries.filter((entry: any) => entry.date === today);
-
-        const totals = todayEntries.reduce((sum: any, entry: any) => {
-          const estimatedMicros = estimateMicronutrients(entry);
-          return {
-            calories: sum.calories + (entry.calories || 0),
-            proteins: sum.proteins + (entry.proteins || 0),
-            carbohydrates: sum.carbohydrates + (entry.carbohydrates || 0),
-            fat: sum.fat + (entry.fat || 0),
-            // Vitamines
-            vitaminA: sum.vitaminA + estimatedMicros.vitaminA,
-            vitaminC: sum.vitaminC + estimatedMicros.vitaminC,
-            vitaminD: sum.vitaminD + estimatedMicros.vitaminD,
-            vitaminE: sum.vitaminE + estimatedMicros.vitaminE,
-            vitaminK: sum.vitaminK + estimatedMicros.vitaminK,
-            vitaminB1: sum.vitaminB1 + estimatedMicros.vitaminB1,
-            vitaminB2: sum.vitaminB2 + estimatedMicros.vitaminB2,
-            vitaminB3: sum.vitaminB3 + estimatedMicros.vitaminB3,
-            vitaminB5: sum.vitaminB5 + estimatedMicros.vitaminB5,
-            vitaminB6: sum.vitaminB6 + estimatedMicros.vitaminB6,
-            vitaminB7: sum.vitaminB7 + estimatedMicros.vitaminB7,
-            vitaminB9: sum.vitaminB9 + estimatedMicros.vitaminB9,
-            vitaminB12: sum.vitaminB12 + estimatedMicros.vitaminB12,
-            // Minéraux
-            calcium: sum.calcium + estimatedMicros.calcium,
-            iron: sum.iron + estimatedMicros.iron,
-            magnesium: sum.magnesium + estimatedMicros.magnesium,
-            potassium: sum.potassium + estimatedMicros.potassium,
-            zinc: sum.zinc + estimatedMicros.zinc,
-            sodium: sum.sodium + estimatedMicros.sodium,
-            phosphorus: sum.phosphorus + estimatedMicros.phosphorus,
-            selenium: sum.selenium + estimatedMicros.selenium,
-            copper: sum.copper + estimatedMicros.copper,
-            manganese: sum.manganese + estimatedMicros.manganese,
-            iodine: sum.iodine + estimatedMicros.iodine,
-            chromium: sum.chromium + estimatedMicros.chromium,
-            molybdenum: sum.molybdenum + estimatedMicros.molybdenum,
-            // Autres
-            caffeine: sum.caffeine + estimatedMicros.caffeine,
-            fiber: sum.fiber + estimatedMicros.fiber,
-            omega3: sum.omega3 + estimatedMicros.omega3,
-            omega6: sum.omega6 + estimatedMicros.omega6,
-          };
-        }, { 
-          calories: 0, proteins: 0, carbohydrates: 0, fat: 0,
-          // Vitamines
-          vitaminA: 0, vitaminC: 0, vitaminD: 0, vitaminE: 0, vitaminK: 0,
-          vitaminB1: 0, vitaminB2: 0, vitaminB3: 0, vitaminB5: 0, vitaminB6: 0,
-          vitaminB7: 0, vitaminB9: 0, vitaminB12: 0,
-          // Minéraux
-          calcium: 0, iron: 0, magnesium: 0, potassium: 0, zinc: 0,
-          sodium: 0, phosphorus: 0, selenium: 0, copper: 0, manganese: 0,
-          iodine: 0, chromium: 0, molybdenum: 0,
-          // Autres
-          caffeine: 0, fiber: 0, omega3: 0, omega6: 0
-        });
-
-        console.log(`Nutrition complète depuis stockage local: ${totals.calories} kcal, ${totals.proteins}g protéines, ${totals.vitaminC}mg vitC, ${totals.calcium}mg calcium`);
-        return totals;
+        console.log('Serveur nutrition indisponible:', serverError.message);
       }
 
       console.log('Aucune donnée nutrition trouvée');
@@ -1232,15 +1158,15 @@ export default function FormeScreen() {
     try {
       if (!userData) return null;
 
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-      const storedRatings = await AsyncStorage.getItem(`activity_ratings_${userData.id}`);
+      // Charger les notes RPE depuis le serveur VPS
+      const storedRatings = await PersistentStorage.getActivityRatings(userData.id);
 
-      if (!storedRatings) {
-        console.log('Aucune note RPE trouvée dans le stockage');
+      if (!storedRatings || Object.keys(storedRatings).length === 0) {
+        console.log('Aucune note RPE trouvée sur le serveur');
         return null;
       }
 
-      const ratings = JSON.parse(storedRatings);
+      const ratings = storedRatings;
 
       // Date du jour en format YYYY-MM-DD dans le timezone local
       const today = new Date();
