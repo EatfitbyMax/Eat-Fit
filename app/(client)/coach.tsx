@@ -1009,13 +1009,49 @@ export default function CoachScreen() {
               )}
             </>
           ) : (
-            /* Affichage minimal pour les utilisateurs FREE - la modal s'affiche automatiquement */
-            <View style={styles.freeUserContainer}>
-              <View style={styles.premiumIcon}>
-                <Text style={styles.premiumIconText}>👑</Text>
+            /* Affichage pour les utilisateurs FREE - la modal s'affiche automatiquement */
+            <ScrollView style={styles.freeUserScrollContainer}>
+              <View style={styles.freeUserContainer}>
+                <View style={styles.premiumExplanationCard}>
+                  <View style={styles.premiumIconContainer}>
+                    <Text style={styles.premiumIconText}>👑</Text>
+                  </View>
+                  <Text style={styles.premiumTitle}>Débloquez le potentiel de votre Coach</Text>
+                  <Text style={styles.premiumSubtitle}>Accès Premium à venir !</Text>
+                  <View style={styles.explanationContent}>
+                    <Text style={styles.explanationText}>
+                      Cette section est réservée à nos membres Premium. Elle vous permettra d'accéder à des fonctionnalités exclusives pour un accompagnement encore plus poussé avec votre coach.
+                    </Text>
+                    <View style={styles.featuresList}>
+                      <View style={styles.featureItem}>
+                        <Text style={[styles.featureIcon, { color: '#FF8C42' }]}>⭐</Text>
+                        <Text style={styles.featureText}>Programmes personnalisés avancés</Text>
+                      </View>
+                      <View style={styles.featureItem}>
+                        <Text style={[styles.featureIcon, { color: '#FF8C42' }]}>📈</Text>
+                        <Text style={styles.featureText}>Suivi détaillé des progrès</Text>
+                      </View>
+                      <View style={styles.featureItem}>
+                        <Text style={[styles.featureIcon, { color: '#FF8C42' }]}>💬</Text>
+                        <Text style={styles.featureText}>Priorité dans les réponses du coach</Text>
+                      </View>
+                    </View>
+                    <TouchableOpacity style={styles.learnMoreButton} onPress={() => setShowPremiumComingSoonModal(true)}>
+                      <Text style={styles.learnMoreText}>Découvrir les plans Premium</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.comingSoonText}>
+                      Bientôt disponible dans une prochaine mise à jour !
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.encouragementCard}>
+                  <Text style={styles.encouragementTitle}>En attendant, restez motivé !</Text>
+                  <Text style={styles.encouragementText}>
+                    Continuez à suivre votre programme actuel. Chaque pas compte pour atteindre vos objectifs de santé et de bien-être. Nous travaillons dur pour vous offrir bientôt encore plus de valeur.
+                  </Text>
+                </View>
               </View>
-              <Text style={styles.freeUserText}>Chargement des options d'abonnement...</Text>
-            </View>
+            </ScrollView>
           )}
         </View>
         </KeyboardAvoidingView>
@@ -1559,6 +1595,132 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#000000',
+    textAlign: 'center',
+  },
+  // Nouveaux styles pour l'interface FREE améliorée
+  freeUserScrollContainer: {
+    flex: 1,
+  },
+  freeUserContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
+  premiumExplanationCard: {
+    backgroundColor: '#21262D',
+    borderRadius: 20,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: '#30363D',
+    marginBottom: 20,
+  },
+  premiumIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#FF8C42',
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
+  premiumIconText: {
+    fontSize: 32,
+    color: '#FFFFFF',
+  },
+  premiumTitle: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  premiumSubtitle: {
+    color: '#FF8C42',
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 24,
+    fontWeight: '600',
+  },
+  explanationContent: {
+    gap: 20,
+  },
+  explanationText: {
+    color: '#8B949E',
+    fontSize: 16,
+    lineHeight: 24,
+    textAlign: 'center',
+  },
+  featuresList: {
+    gap: 16,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  featureIcon: {
+    fontSize: 20,
+    marginRight: 12,
+    width: 24,
+  },
+  featureText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    flex: 1,
+  },
+  comingSoonBadge: {
+    backgroundColor: 'rgba(255, 140, 66, 0.1)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    alignSelf: 'center',
+    borderWidth: 1,
+    borderColor: '#FF8C42',
+  },
+  comingSoonText: {
+    color: '#FF8C42',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  updateInfo: {
+    color: '#8B949E',
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+    fontStyle: 'italic',
+  },
+  learnMoreButton: {
+    backgroundColor: '#FF8C42',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderRadius: 12,
+    marginBottom: 20,
+  },
+  learnMoreText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  encouragementCard: {
+    backgroundColor: '#161B22',
+    padding: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  encouragementTitle: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  encouragementText: {
+    color: '#8B949E',
+    fontSize: 15,
+    lineHeight: 22,
     textAlign: 'center',
   },
 });
