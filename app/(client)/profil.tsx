@@ -35,6 +35,7 @@ export default function ProfilScreen() {
   const [currentSubscription, setCurrentSubscription] = useState<any>(null);
   const [showComingSoonModal, setShowComingSoonModal] = useState(false);
   const [showPremiumComingSoonModal, setShowPremiumComingSoonModal] = useState(false);
+  const [stravaConnecting, setStravaConnecting] = useState(false); // Ajout pour gérer l'état de connexion Strava
 
   const availableGoals = [
     'Perdre du poids',
@@ -159,26 +160,68 @@ export default function ProfilScreen() {
         }));
         Alert.alert("Succès", "Strava déconnecté");
       } else {
-        try {
-          const success = await IntegrationsManager.connectStrava(currentUser.id);
-          if (success) {
-            await loadIntegrationStatus();
-            Alert.alert("Succès", "Strava connecté avec succès !");
-          } else {
-            Alert.alert("Erreur", "La connexion Strava a échoué. Veuillez réessayer.");
-          }
-        } catch (connectError) {
-          console.error("Erreur détaillée connexion Strava:", connectError);
-          Alert.alert(
-            "Erreur de connexion Strava", 
-            connectError.message || "Impossible de connecter Strava. Vérifiez votre connexion internet et réessayez."
-          );
-        }
+        // Appel à la nouvelle fonction gérant la connexion Strava avec une meilleure gestion des erreurs
+        await handleConnectStrava();
       }
     } catch (error) {
       console.error("Failed to toggle Strava:", error);
       Alert.alert("Erreur", "Impossible de connecter/déconnecter Strava.");
     } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Nouvelle fonction pour gérer la connexion Strava avec une meilleure gestion des erreurs et feedback utilisateur
+  const handleConnectStrava = async () => {
+    try {
+      setIsLoading(true); // Utiliser setIsLoading pour l'indicateur global
+      setStravaConnecting(true); // Garder un état spécifique si nécessaire, mais setIsLoading est suffisant pour la UI générale
+
+      // Afficher un indicateur de progression
+      console.log('🔄 Début de la connexion Strava...');
+
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        Alert.alert("Erreur", "Utilisateur non connecté");
+        setStravaConnecting(false);
+        setIsLoading(false);
+        return;
+      }
+
+      const success = await IntegrationsManager.connectStrava(currentUser.id);
+
+      if (success) {
+        console.log('✅ Connexion Strava réussie');
+        await loadIntegrationStatus();
+        Alert.alert(
+          'Connexion réussie', 
+          'Strava a été connecté avec succès! Vous pouvez maintenant synchroniser vos activités.',
+          [{ text: 'OK', style: 'default' }]
+        );
+      } else {
+        console.log('❌ Connexion Strava échouée');
+        Alert.alert(
+          'Connexion échouée', 
+          'La connexion à Strava a échoué. Veuillez vérifier que vous avez autorisé l\'accès et réessayer.',
+          [
+            { text: 'Réessayer', onPress: () => handleConnectStrava(), style: 'default' },
+            { text: 'Annuler', style: 'cancel' }
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('❌ Erreur connexion Strava:', error);
+      const errorMessage = error?.message || 'Impossible de se connecter à Strava';
+      Alert.alert(
+        'Erreur de connexion', 
+        errorMessage,
+        [
+          { text: 'Réessayer', onPress: () => handleConnectStrava(), style: 'default' },
+          { text: 'Annuler', style: 'cancel' }
+        ]
+      );
+    } finally {
+      setStravaConnecting(false);
       setIsLoading(false);
     }
   };
@@ -227,7 +270,7 @@ export default function ProfilScreen() {
 
       // Mettre à jour les objectifs sur le serveur
       await updateUserData(currentUser.id, { goals: selectedGoals });
-      
+
       setUser(prevUser => ({ ...prevUser, goals: selectedGoals })); // Mettre à jour l'état local
       Alert.alert('Succès', 'Objectifs mis à jour avec succès');
     } catch (error) {
@@ -527,7 +570,7 @@ export default function ProfilScreen() {
             <TouchableOpacity 
               style={[styles.connectButton, integrationStatus.strava.connected && styles.connectedButton]}
               onPress={() => handleStravaToggle()}
-              disabled={isLoading}
+              disabled={isLoading || stravaConnecting}
             >
               <Text style={[styles.connectButtonText, integrationStatus.strava.connected && styles.connectedButtonText]}>
                 {integrationStatus.strava.connected ? 'Connecté' : 'Connecter'}

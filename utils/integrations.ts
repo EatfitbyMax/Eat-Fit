@@ -264,11 +264,35 @@ export class IntegrationsManager {
 
       console.log('🔄 Résultat WebBrowser:', result.type);
 
-      // Toujours vérifier le statut côté serveur après tentative de connexion
-      await new Promise(resolve => setTimeout(resolve, 3000)); // Attendre 3 secondes
+      // Vérifier le statut côté serveur après tentative de connexion
+      // Attendre un peu plus longtemps pour que le serveur traite la requête
+      console.log('⏳ Attente du traitement côté serveur...');
+      await new Promise(resolve => setTimeout(resolve, 5000)); // Attendre 5 secondes
 
-      const serverStatus = await this.getStravaStatusFromServer(userId);
-      console.log('📡 Statut serveur Strava:', serverStatus);
+      // Essayer plusieurs fois si nécessaire
+      let attempts = 0;
+      const maxAttempts = 3;
+      let serverStatus = null;
+
+      while (attempts < maxAttempts && (!serverStatus || !serverStatus.connected)) {
+        attempts++;
+        console.log(`🔄 Tentative ${attempts}/${maxAttempts} de vérification du statut Strava...`);
+        
+        try {
+          serverStatus = await this.getStravaStatusFromServer(userId);
+          console.log('📡 Statut serveur Strava:', serverStatus);
+          
+          if (serverStatus && serverStatus.connected) {
+            break;
+          }
+        } catch (error) {
+          console.log(`⚠️ Erreur tentative ${attempts}:`, error);
+        }
+        
+        if (attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 2000)); // Attendre 2 secondes entre les tentatives
+        }
+      }
 
       if (serverStatus && serverStatus.connected) {
         console.log('✅ Connexion Strava confirmée côté serveur');
@@ -283,7 +307,7 @@ export class IntegrationsManager {
 
         return true;
       } else {
-        console.log('❌ Connexion Strava échouée');
+        console.log('❌ Connexion Strava échouée après', attempts, 'tentatives');
         return false;
       }
 
@@ -529,29 +553,42 @@ export class IntegrationsManager {
 
   static async getStravaStatusFromServer(userId: string): Promise<any> {
     try {
-      const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
+      const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
+
+      console.log(`🔍 Vérification statut Strava sur ${serverUrl} pour userId: ${userId}`);
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 secondes timeout
 
       const response = await fetch(`${serverUrl}/api/strava/status/${userId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Statut Strava récupéré du serveur VPS:', data);
+        console.log('✅ Statut Strava récupéré du serveur:', data);
         return data;
       } else if (response.status === 404) {
-        console.log('Statut Strava non trouvé sur le serveur pour:', userId);
-        return { connected: false }; // Si le serveur ne trouve pas le statut, considérer comme déconnecté
+        console.log('📝 Statut Strava non trouvé sur le serveur pour:', userId);
+        return { connected: false };
       } else {
-        console.error(`Erreur serveur VPS pour /api/strava/status/${userId}: Statut ${response.status}`);
-        return { connected: false }; // En cas d'autre erreur, considérer comme déconnecté
+        const errorText = await response.text().catch(() => 'Erreur inconnue');
+        console.error(`❌ Erreur serveur pour /api/strava/status/${userId}: Statut ${response.status}, Réponse: ${errorText}`);
+        return { connected: false };
       }
     } catch (error) {
-      console.error('❌ Erreur récupération statut Strava du serveur:', error);
-      return { connected: false }; // En cas d'erreur réseau, considérer comme déconnecté
+      if (error.name === 'AbortError') {
+        console.error('⏰ Timeout lors de la récupération du statut Strava');
+      } else {
+        console.error('❌ Erreur récupération statut Strava du serveur:', error);
+      }
+      return { connected: false };
     }
   }
 

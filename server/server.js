@@ -838,42 +838,26 @@ app.get('/strava-callback', async (req, res) => {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>Connexion Strava réussie</title>
         </head>
-        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5;">
-          <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto;">
-            <h2 style="color: #FC4C02;">🎉 Connexion Strava réussie!</h2>
-            <p>Votre compte Strava a été connecté avec succès à <strong>EatFit By Max</strong>.</p>
-            <p style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <strong>Code d'autorisation:</strong><br>
-              <code style="font-size: 12px; color: #666;">${code.substring(0, 15)}...</code>
+        <body style="font-family: Arial, sans-serif; text-align: center; padding: 30px; background: #f5f5f5;">
+          <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 350px; margin: 0 auto;">
+            <h2 style="color: #FC4C02; margin-bottom: 20px;">✅ Connexion réussie!</h2>
+            <p style="font-size: 16px; color: #333; margin-bottom: 25px;">
+              Strava connecté à <strong>EatFit By Max</strong>
             </p>
-            <div style="border: 2px dashed #28a745; padding: 20px; border-radius: 8px; background: #f8fff8; margin: 20px 0;">
-              <p style="margin: 0; font-weight: bold; color: #28a745;">
-                ✓ Vous pouvez maintenant fermer cette fenêtre et retourner dans l'application mobile.
+            <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 0; font-weight: bold; color: #2d5a3d; font-size: 14px;">
+                Vous pouvez fermer cette fenêtre et retourner dans l'application.
               </p>
             </div>
-            <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <p style="margin: 0; font-size: 14px; color: #1976d2;">
-                💡 <strong>Instructions:</strong><br>
-                1. Fermez cette fenêtre<br>
-                2. Retournez dans l'app EatFit By Max<br>
-                3. Votre connexion Strava sera automatiquement mise à jour
-              </p>
-            </div>
-            <button onclick="window.close()" style="background: #FC4C02; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-size: 16px; cursor: pointer; margin-top: 20px;">
-              Fermer cette fenêtre
+            <button onclick="window.close()" style="background: #FC4C02; color: white; border: none; padding: 14px 28px; border-radius: 8px; font-size: 16px; cursor: pointer; font-weight: 600;">
+              Fermer
             </button>
           </div>
           <script>
-            console.log('📱 Code Strava reçu et traité côté serveur');
-
-            // Tentative de redirection vers l'app (optionnel)
+            // Fermeture automatique après 3 secondes
             setTimeout(() => {
-              try {
-                window.location.href = 'eatfitbymax://strava-success';
-              } catch (e) {
-                console.log('⚠️ Redirection deep link non supportée');
-              }
-            }, 1000);
+              window.close();
+            }, 3000);
           </script>
         </body>
       </html>
