@@ -17,7 +17,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { logout, getCurrentUser } from '@/utils/auth';
 import { IntegrationsManager, IntegrationStatus, syncWithExternalApps } from '@/utils/integrations';
 import { checkSubscriptionStatus } from '@/utils/subscription';
-import { InAppPurchaseService } from '@/utils/inAppPurchaseService';
+import { InAppPurchaseService } from '@/utils/inAppPurchases';
 import { allSports } from '@/utils/sportPrograms';
 import ComingSoonModal from '@/components/ComingSoonModal';
 
