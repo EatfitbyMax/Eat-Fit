@@ -1,3 +1,4 @@
+
 // Charger les variables d'environnement en premier
 require('dotenv').config();
 
@@ -11,6 +12,10 @@ const PORT = process.env.PORT || 5000;
 const DATA_DIR = path.join(__dirname, 'data');
 const CLIENT_DIR = path.join(DATA_DIR, 'Client');
 const COACH_DIR = path.join(DATA_DIR, 'Coach');
+
+// Configuration Strava avec les vraies valeurs
+const STRAVA_CLIENT_ID = '159394';
+const STRAVA_CLIENT_SECRET = '0a8889616f64a229949082240702228cba150700';
 
 // Middleware de base
 app.use(cors({
@@ -69,8 +74,6 @@ app.get('/api/integrations/:userId', (req, res) => {
   const { userId } = req.params;
 
   try {
-    // Pour l'instant, retourner les valeurs par défaut
-    // Plus tard, vous pourrez récupérer depuis une base de données
     const defaultIntegrations = {
       appleHealth: {
         connected: false,
@@ -97,8 +100,6 @@ app.post('/api/integrations/:userId', (req, res) => {
   const integrationStatus = req.body;
 
   try {
-    // Pour l'instant, juste confirmer la sauvegarde
-    // Plus tard, vous pourrez sauvegarder dans une base de données
     console.log(`💾 Sauvegarde intégrations pour utilisateur ${userId}:`, integrationStatus);
     res.json({ success: true, message: 'Intégrations sauvegardées' });
   } catch (error) {
@@ -347,9 +348,6 @@ app.delete('/api/user-data/:userId', async (req, res) => {
         throw unlinkError;
       }
     }
-
-    // Les tokens Strava sont maintenant dans le fichier utilisateur principal, 
-    // donc ils seront supprimés automatiquement avec le fichier utilisateur
 
     console.log(`✅ Utilisateur supprimé définitivement: ${userId} (${userType})`);
     res.json({ success: true, message: 'Utilisateur supprimé définitivement' });
@@ -749,7 +747,7 @@ app.post('/api/programmes', async (req, res) => {
   }
 });
 
-// Routes d'intégrations
+// Routes d'intégrations Strava avec les vraies valeurs
 app.post('/api/strava/exchange-token', async (req, res) => {
   try {
     const { code, userId } = req.body;
@@ -758,17 +756,8 @@ app.post('/api/strava/exchange-token', async (req, res) => {
       return res.status(400).json({ error: 'Code et userId requis' });
     }
 
-    // Vérifier la configuration Strava (essayer différentes variables d'environnement)
-    const stravaClientId = process.env.STRAVA_CLIENT_ID || process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID;
-    const stravaClientSecret = process.env.STRAVA_CLIENT_SECRET || process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET;
-
-    if (!stravaClientId || !stravaClientSecret) {
-      console.error('❌ Configuration Strava manquante sur le serveur');
-      console.error('Variables disponibles:', Object.keys(process.env).filter(k => k.includes('STRAVA')));
-      return res.status(500).json({ error: 'Configuration Strava manquante sur le serveur' });
-    }
-
     console.log('🔄 Échange du code Strava pour utilisateur:', userId);
+    console.log('🔧 Configuration Strava - Client ID:', STRAVA_CLIENT_ID);
 
     // Échanger le code contre un token d'accès
     const tokenResponse = await fetch('https://www.strava.com/oauth/token', {
@@ -777,14 +766,16 @@ app.post('/api/strava/exchange-token', async (req, res) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        client_id: stravaClientId,
-        client_secret: stravaClientSecret,
+        client_id: STRAVA_CLIENT_ID,
+        client_secret: STRAVA_CLIENT_SECRET,
         code: code,
         grant_type: 'authorization_code'
       })
     });
 
     if (!tokenResponse.ok) {
+      const errorText = await tokenResponse.text();
+      console.error('❌ Erreur Strava OAuth:', errorText);
       throw new Error('Erreur lors de l\'authentification Strava');
     }
 
@@ -913,76 +904,9 @@ app.post('/api/strava/disconnect/:userId', async (req, res) => {
     console.error('❌ [SERVEUR] Erreur déconnexion Strava:', error);
     res.status(500).json({ success: false, error: 'Erreur serveur' });
   }
-}); le fichier utilisateur principal
-    let userData = await readUserFile(userId, 'client');
-    if (!userData) {
-      userData = await readUserFile(userId, 'coach');
-    }
-
-    // Utiliser stravaIntegration pour vérifier le statut
-    if (userData && userData.stravaIntegration && userData.stravaIntegration.connected) {
-      console.log(`✅ [SERVEUR] Strava connecté pour: ${userId}`, {
-        hasAccessToken: !!userData.stravaIntegration.accessToken,
-        hasRefreshToken: !!userData.stravaIntegration.refreshToken,
-        athleteId: userData.stravaIntegration.athlete?.id
-      });
-      res.json({ 
-        connected: true, 
-        athlete: userData.stravaIntegration.athlete,
-        lastSync: userData.stravaIntegration.lastSync || null,
-        accessToken: userData.stravaIntegration.accessToken,
-        refreshToken: userData.stravaIntegration.refreshToken,
-        expiresAt: userData.stravaIntegration.expiresAt
-      });
-    } else {
-      console.log(`📝 [SERVEUR] Strava non connecté pour: ${userId}`);
-      res.json({ connected: false });
-    }
-  } catch (error) {
-    console.error('❌ [SERVEUR] Erreur statut Strava:', error);
-    res.json({ connected: false });
-  }
 });
 
-// Endpoint de déconnexion Strava
-app.post('/api/strava/disconnect/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    console.log(`🔄 [SERVEUR] Déconnexion Strava pour: ${userId}`);
-
-    // Nettoyer les données utilisateur Strava
-    let userData = await readUserFile(userId, 'client');
-    let userType = 'client';
-
-    if (!userData) {
-      userData = await readUserFile(userId, 'coach');
-      userType = 'coach';
-    }
-
-    if (userData) {
-      // Supprimer les tokens et données Strava de l'utilisateur
-      delete userData.stravaIntegration;
-      delete userData.stravaTokens; // Nettoyer aussi l'ancienne clé
-      delete userData.strava; // Nettoyer aussi l'ancienne clé
-      userData.lastUpdated = new Date().toISOString();
-      await writeUserFile(userId, userData, userType);
-      console.log(`🧹 [SERVEUR] Données Strava nettoyées pour: ${userId}`);
-    }
-
-    res.json({ 
-      success: true, 
-      message: 'Strava déconnecté avec succès' 
-    });
-  } catch (error) {
-    console.error('❌ [SERVEUR] Erreur déconnexion Strava:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Erreur lors de la déconnexion Strava' 
-    });
-  }
-});
-
-// Callback Strava - Route principale
+// Callback Strava - Route principale avec les vraies valeurs
 app.get('/strava-callback', async (req, res) => {
   const { code, error, state } = req.query;
 
@@ -1023,15 +947,6 @@ app.get('/strava-callback', async (req, res) => {
       try {
         console.log('🔄 Traitement automatique du token pour utilisateur:', state);
 
-        // Vérifier la configuration Strava
-        const stravaClientId = process.env.STRAVA_CLIENT_ID || process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID;
-        const stravaClientSecret = process.env.STRAVA_CLIENT_SECRET || process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET;
-
-        if (!stravaClientId || !stravaClientSecret) {
-          console.error('❌ Configuration Strava manquante dans callback');
-          throw new Error('Configuration Strava manquante');
-        }
-
         // Échanger le code contre un token d'accès avec timeout optimisé
         const tokenResponse = await fetch('https://www.strava.com/oauth/token', {
           method: 'POST',
@@ -1039,8 +954,8 @@ app.get('/strava-callback', async (req, res) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            client_id: stravaClientId,
-            client_secret: stravaClientSecret,
+            client_id: STRAVA_CLIENT_ID,
+            client_secret: STRAVA_CLIENT_SECRET,
             code: code,
             grant_type: 'authorization_code'
           })
@@ -1072,7 +987,6 @@ app.get('/strava-callback', async (req, res) => {
             if (userData.stravaTokens) {
               delete userData.stravaTokens;
             }
-            // Nettoyer aussi si 'strava' existe directement
             if (userData.strava) {
               delete userData.strava;
             }
@@ -1104,14 +1018,11 @@ app.get('/strava-callback', async (req, res) => {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>Connexion Strava réussie</title>
           <script>
-            // Redirection vers l'application mobile en priorité
             function redirectToApp() {
               try {
-                // 1. Essayer le deep link spécifique Strava d'abord
                 const stravaCallbackScheme = 'eatfitbymax://strava-callback?success=true&connected=true';
                 console.log('Tentative de redirection Strava callback:', stravaCallbackScheme);
 
-                // Créer un lien invisible pour déclencher la redirection
                 const stravaLink = document.createElement('a');
                 stravaLink.href = stravaCallbackScheme;
                 stravaLink.style.display = 'none';
@@ -1119,7 +1030,6 @@ app.get('/strava-callback', async (req, res) => {
                 stravaLink.click();
                 document.body.removeChild(stravaLink);
 
-                // Fallback vers l'app principale après 500ms
                 setTimeout(() => {
                   const appScheme = 'eatfitbymax://';
                   console.log('Fallback vers application principale:', appScheme);
@@ -1131,7 +1041,6 @@ app.get('/strava-callback', async (req, res) => {
                   link.click();
                   document.body.removeChild(link);
 
-                  // Fermer après un délai réduit
                   setTimeout(() => {
                     closeWindow();
                   }, 500);
@@ -1144,20 +1053,16 @@ app.get('/strava-callback', async (req, res) => {
             }
 
             function closeWindow() {
-              // Essayer plusieurs méthodes de fermeture
               try {
-                // 1. Méthode standard
                 window.close();
               } catch (e) {
                 console.log('window.close() failed:', e);
               }
 
               try {
-                // 2. Fermeture via l'historique (pour les webviews)
                 if (window.history && window.history.length > 1) {
                   window.history.back();
                 } else {
-                  // 3. Redirection vers une page vide
                   window.location.href = 'about:blank';
                 }
               } catch (e) {
@@ -1165,7 +1070,6 @@ app.get('/strava-callback', async (req, res) => {
               }
             }
 
-            // Redirection automatique immédiate
             setTimeout(() => {
               redirectToApp();
             }, 500);
@@ -1195,7 +1099,6 @@ app.get('/strava-callback', async (req, res) => {
             </button>
           </div>
           <script>
-            // Compte à rebours visuel
             let seconds = 1;
             const countdownElement = document.getElementById('countdown');
 
@@ -1215,7 +1118,6 @@ app.get('/strava-callback', async (req, res) => {
     `);
   }
 
-  // Cas où ni code ni erreur ne sont présents
   console.warn('⚠️ Callback Strava sans paramètres valides');
   res.status(400).send(`
     <!DOCTYPE html>
@@ -1239,9 +1141,6 @@ app.get('/strava-callback', async (req, res) => {
     </html>
   `);
 });
-
-
-
 
 // ========================================
 // 👨‍💼 GESTION DES INSCRIPTIONS COACH
@@ -1386,6 +1285,7 @@ async function startServer() {
     const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Serveur EatFitByMax démarré sur le port ${PORT}`);
       console.log(`🌐 API disponible sur: https://eatfitbymax.cloud`);
+      console.log(`🔧 Configuration Strava - Client ID: ${STRAVA_CLIENT_ID}`);
       console.log(`✅ Nouvelle structure: Client/ et Coach/ avec fichiers unifiés`);
     });
 
