@@ -180,7 +180,7 @@ export default function ProfilScreen() {
     } catch (error) {
       console.error("❌ Erreur toggle Strava:", error);
       Alert.alert(
-        "Erreur", 
+        "Erreur",
         "Une erreur s'est produite. Veuillez réessayer.",
         [{ text: 'OK', style: 'default' }]
       );
@@ -201,38 +201,71 @@ export default function ProfilScreen() {
       const success = await IntegrationsManager.connectStrava(userId);
 
       if (success) {
-        console.log('✅ Connexion Strava réussie');
+        console.log('✅ Connexion Strava réussie côté OAuth');
 
-        // Recharger le statut d'intégration
+        // Attendre un peu puis vérifier le statut réel côté serveur
+        console.log('🔍 Vérification statut serveur...');
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Attendre 2 secondes
+
+        // Synchroniser le statut depuis le serveur
+        await IntegrationsManager.syncStravaStatusFromServer(userId);
+
+        // Recharger le statut des intégrations
         await loadIntegrationStatus();
 
-        Alert.alert(
-          '🎉 Connexion réussie!', 
-          'Strava a été connecté avec succès. Vos activités peuvent maintenant être synchronisées automatiquement.',
-          [{ 
-            text: 'Parfait!', 
-            style: 'default',
-            onPress: () => {
-              // Optionnel: déclencher une synchronisation immédiate
-              console.log('Connexion Strava confirmée par l\'utilisateur');
-            }
-          }]
-        );
+        // Vérifier si la connexion est réellement établie
+        const finalStatus = await IntegrationsManager.getIntegrationStatus(userId);
+
+        if (finalStatus.strava.connected) {
+          console.log('✅ Connexion Strava confirmée côté serveur');
+
+          Alert.alert(
+            '🎉 Connexion réussie!',
+            'Strava a été connecté avec succès. Vos activités peuvent maintenant être synchronisées automatiquement.',
+            [{
+              text: 'Parfait!',
+              style: 'default',
+              onPress: () => {
+                console.log('Connexion Strava confirmée par l\'utilisateur');
+              }
+            }]
+          );
+        } else {
+          console.log('⚠️ OAuth réussi mais pas de connexion serveur');
+
+          Alert.alert(
+            'Connexion en cours...',
+            'L\'autorisation Strava a été accordée, mais la synchronisation des données est en cours. Veuillez patienter quelques instants puis vérifier à nouveau.',
+            [
+              {
+                text: 'Vérifier maintenant',
+                onPress: async () => {
+                  await loadIntegrationStatus();
+                },
+                style: 'default'
+              },
+              {
+                text: 'OK',
+                style: 'cancel'
+              }
+            ]
+          );
+        }
       } else {
         console.log('❌ Connexion Strava échouée');
 
         Alert.alert(
-          'Connexion échouée', 
+          'Connexion échouée',
           'La connexion à Strava n\'a pas pu être établie. Assurez-vous d\'avoir autorisé l\'accès dans l\'application Strava.',
           [
-            { 
-              text: 'Réessayer', 
-              onPress: () => handleStravaConnect(userId), 
-              style: 'default' 
+            {
+              text: 'Réessayer',
+              onPress: () => handleStravaConnect(userId),
+              style: 'default'
             },
-            { 
-              text: 'Annuler', 
-              style: 'cancel' 
+            {
+              text: 'Annuler',
+              style: 'cancel'
             }
           ]
         );
@@ -251,17 +284,17 @@ export default function ProfilScreen() {
       }
 
       Alert.alert(
-        'Erreur de connexion', 
+        'Erreur de connexion',
         errorMessage,
         [
-          { 
-            text: 'Réessayer', 
-            onPress: () => handleStravaConnect(userId), 
-            style: 'default' 
+          {
+            text: 'Réessayer',
+            onPress: () => handleStravaConnect(userId),
+            style: 'default'
           },
-          { 
-            text: 'Annuler', 
-            style: 'cancel' 
+          {
+            text: 'Annuler',
+            style: 'cancel'
           }
         ]
       );
@@ -293,15 +326,15 @@ export default function ProfilScreen() {
                 // Mettre à jour l'état local
                 setIntegrationStatus(prev => ({
                   ...prev,
-                  strava: { 
-                    connected: false, 
-                    lastSync: null, 
-                    athleteId: null 
+                  strava: {
+                    connected: false,
+                    lastSync: null,
+                    athleteId: null
                   }
                 }));
 
                 Alert.alert(
-                  '✅ Déconnecté', 
+                  '✅ Déconnecté',
                   'Strava a été déconnecté avec succès.',
                   [{ text: 'OK', style: 'default' }]
                 );
@@ -310,7 +343,7 @@ export default function ProfilScreen() {
               } catch (disconnectError) {
                 console.error('❌ Erreur déconnexion Strava:', disconnectError);
                 Alert.alert(
-                  'Erreur', 
+                  'Erreur',
                   'Impossible de déconnecter Strava. Veuillez réessayer.',
                   [{ text: 'OK', style: 'default' }]
                 );
@@ -348,8 +381,8 @@ export default function ProfilScreen() {
   };
 
   const toggleGoal = (goal: string) => {
-    setSelectedGoals(prev => 
-      prev.includes(goal) 
+    setSelectedGoals(prev =>
+      prev.includes(goal)
         ? prev.filter(g => g !== goal)
         : [...prev, goal]
     );
@@ -406,6 +439,48 @@ export default function ProfilScreen() {
     );
   };
 
+  /**
+   * Gestion des achats intégrés et abonnements
+   */
+  const handleSubscription = () => {
+    setShowComingSoonModal(true);
+  };
+
+  /**
+   * Vérification manuelle du statut Strava
+   */
+  const handleCheckStravaStatus = async () => {
+    if (isLoading) return;
+
+    setIsLoading(true);
+    try {
+      const currentUser = await getCurrentUser();
+      if (!currentUser) return;
+
+      console.log('🔍 Vérification manuelle du statut Strava...');
+
+      // Synchroniser depuis le serveur
+      await IntegrationsManager.syncStravaStatusFromServer(currentUser.id);
+
+      // Recharger le statut local
+      await loadIntegrationStatus();
+
+      const status = await IntegrationsManager.getIntegrationStatus(currentUser.id);
+
+      if (status.strava.connected) {
+        Alert.alert('✅ Statut vérifié', 'Strava est bien connecté!');
+      } else {
+        Alert.alert('⚠️ Statut vérifié', 'Strava n\'est pas connecté. Essayez de vous reconnecter.');
+      }
+    } catch (error) {
+      console.error('❌ Erreur vérification statut:', error);
+      Alert.alert('Erreur', 'Impossible de vérifier le statut de connexion.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
@@ -416,14 +491,14 @@ export default function ProfilScreen() {
           <View style={styles.userAvatar}>
             <Text style={styles.userAvatarText}>
               {user ? (
-                (user.firstName?.[0] || user.name?.[0] || '?').toUpperCase() + 
+                (user.firstName?.[0] || user.name?.[0] || '?').toUpperCase() +
                 (user.lastName?.[0] || user.name?.split(' ')?.[1]?.[0] || '').toUpperCase()
               ) : '?'}
             </Text>
           </View>
           <Text style={styles.userName}>
             {user ? (
-              user.firstName && user.lastName 
+              user.firstName && user.lastName
                 ? `${user.firstName} ${user.lastName}`
                 : user.name || 'Utilisateur'
             ) : 'Chargement...'}
@@ -437,7 +512,7 @@ export default function ProfilScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Informations personnelles</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => router.push('/informations-personnelles')}
               style={styles.modifyButton}
             >
@@ -483,7 +558,7 @@ export default function ProfilScreen() {
         <View style={[styles.section, {marginTop: 20}]}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}> Mes objectifs</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => setEditingObjectifs(!editingObjectifs)}
               style={styles.modifyButton}
             >
@@ -516,7 +591,7 @@ export default function ProfilScreen() {
                 </TouchableOpacity>
               ))}
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.saveButton}
                 onPress={handleSaveObjectifs}
               >
@@ -545,7 +620,7 @@ export default function ProfilScreen() {
             /* Affichage Premium */
             <View style={styles.premiumSubscriptionCard}>
               <LinearGradient
-                colors={currentSubscription.planName === 'DIAMANT' ? 
+                colors={currentSubscription.planName === 'DIAMANT' ?
                   ['#4169E1', '#1E90FF', '#0080FF'] : // Bleu pour Diamant
                   ['#FFD700', '#FFA500', '#FF8C00']    // Or pour les autres
                 }
@@ -616,7 +691,7 @@ export default function ProfilScreen() {
                 </Text>
 
                 {/* CTA Button */}
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.compactUpgradeButton}
                   onPress={() => setShowPremiumComingSoonModal(true)}
                   activeOpacity={0.8}
@@ -648,7 +723,7 @@ export default function ProfilScreen() {
                 Synchronisez vos données de santé et fitness avec EatFitByMax
               </Text>
             </View>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.connectButton, integrationStatus.appleHealth.connected && styles.connectedButton]}
               onPress={() => handleAppleHealthToggle()}
               disabled={isLoading}
@@ -666,7 +741,7 @@ export default function ProfilScreen() {
                 Synchronisez vos activités sportives avec EatFitByMax
               </Text>
             </View>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.connectButton, integrationStatus.strava.connected && styles.connectedButton]}
               onPress={() => handleStravaToggle()}
               disabled={isLoading || stravaConnecting}
@@ -679,7 +754,7 @@ export default function ProfilScreen() {
 
           {/* Synchronisation globale */}
           {(integrationStatus.appleHealth.connected || integrationStatus.strava.connected) && (
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.syncAllButton}
               onPress={handleSyncAllData}
               disabled={isLoading}
@@ -695,8 +770,8 @@ export default function ProfilScreen() {
             <View style={styles.statusCard}>
               <Text style={styles.statusTitle}>📱 Apple Health</Text>
               <Text style={styles.statusDescription}>
-                Dernière synchronisation : {integrationStatus.appleHealth.lastSync ? 
-                  new Date(integrationStatus.appleHealth.lastSync).toLocaleDateString('fr-FR') : 
+                Dernière synchronisation : {integrationStatus.appleHealth.lastSync ?
+                  new Date(integrationStatus.appleHealth.lastSync).toLocaleDateString('fr-FR') :
                   'Jamais'
                 }
               </Text>
@@ -710,8 +785,8 @@ export default function ProfilScreen() {
                 Athlete #{integrationStatus.strava.athleteId || '24854648'} connecté à EatFitByMax.
               </Text>
               <Text style={styles.statusDescription}>
-                Dernière synchronisation : {integrationStatus.strava.lastSync ? 
-                  new Date(integrationStatus.strava.lastSync).toLocaleDateString('fr-FR') : 
+                Dernière synchronisation : {integrationStatus.strava.lastSync ?
+                  new Date(integrationStatus.strava.lastSync).toLocaleDateString('fr-FR') :
                   'Jamais'
                 }
               </Text>
@@ -723,7 +798,7 @@ export default function ProfilScreen() {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, {marginBottom: 16}]}>Paramètres</Text>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.menuItem}
             onPress={() => router.push('/(client)/parametres-application')}
           >
@@ -731,7 +806,7 @@ export default function ProfilScreen() {
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.menuItem}
             onPress={() => router.push('/(client)/securite-confidentialite')}
           >
@@ -739,7 +814,7 @@ export default function ProfilScreen() {
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.menuItem}
             onPress={() => router.push('/(client)/aide-feedback')}
           >
@@ -971,7 +1046,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#FFFFFF',
     fontWeight: '600',
-  },  testButton: {
+  },
+  testButton: {
     backgroundColor: '#6C757D',
     paddingVertical: 10,
     paddingHorizontal: 16,

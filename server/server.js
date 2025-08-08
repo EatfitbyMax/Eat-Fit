@@ -931,6 +931,15 @@ app.get('/strava-callback', async (req, res) => {
       try {
         console.log('🔄 Traitement automatique du token pour utilisateur:', state);
 
+        // Vérifier la configuration Strava
+        const stravaClientId = process.env.STRAVA_CLIENT_ID || process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID;
+        const stravaClientSecret = process.env.STRAVA_CLIENT_SECRET || process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET;
+
+        if (!stravaClientId || !stravaClientSecret) {
+          console.error('❌ Configuration Strava manquante dans callback');
+          throw new Error('Configuration Strava manquante');
+        }
+
         // Échanger le code contre un token d'accès
         const tokenResponse = await fetch('https://www.strava.com/oauth/token', {
           method: 'POST',
@@ -938,8 +947,8 @@ app.get('/strava-callback', async (req, res) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            client_id: process.env.STRAVA_CLIENT_ID,
-            client_secret: process.env.STRAVA_CLIENT_SECRET,
+            client_id: stravaClientId,
+            client_secret: stravaClientSecret,
             code: code,
             grant_type: 'authorization_code'
           })
@@ -950,15 +959,44 @@ app.get('/strava-callback', async (req, res) => {
 
           // Sauvegarder les tokens
           const tokenFilePath = `strava_tokens_${state}.json`;
-          await writeJsonFile(tokenFilePath, {
+          const tokenInfo = {
             accessToken: tokenData.access_token,
             refreshToken: tokenData.refresh_token,
             expiresAt: tokenData.expires_at,
             athlete: tokenData.athlete,
-            connected: true
+            connected: true,
+            lastSync: new Date().toISOString()
+          };
+
+          await writeJsonFile(tokenFilePath, tokenInfo);
+          console.log('✅ Tokens Strava sauvegardés automatiquement pour utilisateur:', state, {
+            athleteId: tokenData.athlete?.id,
+            expiresAt: new Date(tokenData.expires_at * 1000).toISOString()
           });
 
-          console.log('✅ Tokens Strava sauvegardés automatiquement pour utilisateur:', state);
+          // Aussi sauvegarder dans les données utilisateur pour la cohérence
+          let userData = await readUserFile(state, 'client');
+          let userType = 'client';
+
+          if (!userData) {
+            userData = await readUserFile(state, 'coach');
+            userType = 'coach';
+          }
+
+          if (userData) {
+            userData.stravaIntegration = {
+              connected: true,
+              athlete: tokenData.athlete,
+              lastSync: new Date().toISOString()
+            };
+            userData.lastUpdated = new Date().toISOString();
+            await writeUserFile(state, userData, userType);
+            console.log('✅ Statut Strava mis à jour dans les données utilisateur');
+          }
+
+        } else {
+          const errorText = await tokenResponse.text();
+          console.error('❌ Erreur échange token Strava:', errorText);
         }
       } catch (error) {
         console.error('❌ Erreur traitement automatique token:', error);
