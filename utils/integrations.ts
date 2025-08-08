@@ -32,7 +32,7 @@ export interface IntegrationConfig {
 }
 
 // Interface pour les activités Strava, utilisée dans getStravaActivities
-interface StravaActivity {
+export interface StravaActivity {
   id: string;
   name: string;
   type: string;

@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert, TextInput } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { IntegrationsManager, StravaActivity } from '../../utils/integrations';
+import { IntegrationsManager } from '../../utils/integrations';
+import type { StravaActivity } from '../../utils/integrations';
 import { getCurrentUser } from '../../utils/auth';
 import { checkSubscriptionStatus } from '../../utils/subscription';
 import { getUserData, PersistentStorage } from '@/utils/storage';
@@ -265,6 +266,15 @@ export default function EntrainementScreen() {
         if (integrationStatus.strava.connected) {
           const activities = await IntegrationsManager.getStravaActivities(currentUser.id);
           console.log(`✅ ${activities.length} activités Strava récupérées`);
+          
+          // Debug détaillé des activités
+          if (activities.length > 0) {
+            console.log('📋 Liste des activités Strava:');
+            activities.forEach((activity, index) => {
+              console.log(`  ${index + 1}. ${activity.name} - ${new Date(activity.date).toLocaleDateString('fr-FR')} (${activity.type})`);
+            });
+          }
+          
           setStravaActivities(activities);
           
           if (activities.length === 0) {
@@ -273,6 +283,14 @@ export default function EntrainementScreen() {
               await IntegrationsManager.syncStravaActivities(currentUser.id);
               const newActivities = await IntegrationsManager.getStravaActivities(currentUser.id);
               console.log(`✅ ${newActivities.length} activités après synchronisation`);
+              
+              if (newActivities.length > 0) {
+                console.log('📋 Nouvelles activités synchronisées:');
+                newActivities.forEach((activity, index) => {
+                  console.log(`  ${index + 1}. ${activity.name} - ${new Date(activity.date).toLocaleDateString('fr-FR')} (${activity.type})`);
+                });
+              }
+              
               setStravaActivities(newActivities);
             } catch (syncError) {
               console.error('❌ Erreur synchronisation:', syncError);
@@ -367,7 +385,11 @@ export default function EntrainementScreen() {
   const getStravaActivitiesForCurrentWeek = () => {
     const { start, end } = getWeekRange();
 
-    return stravaActivities.filter(activity => {
+    console.log('=== DEBUG ACTIVITÉS STRAVA ===');
+    console.log(`Période recherchée: ${start.toISOString().split('T')[0]} à ${end.toISOString().split('T')[0]}`);
+    console.log(`Total activités Strava: ${stravaActivities.length}`);
+
+    const filteredActivities = stravaActivities.filter(activity => {
       // Normaliser la date d'activité pour éviter les problèmes de fuseau horaire
       const activityDate = new Date(activity.date);
       activityDate.setHours(0, 0, 0, 0);
@@ -378,8 +400,17 @@ export default function EntrainementScreen() {
       startDate.setHours(0, 0, 0, 0);
       endDate.setHours(23, 59, 59, 999);
 
-      return activityDate >= startDate && activityDate <= endDate;
+      const isInRange = activityDate >= startDate && activityDate <= endDate;
+      
+      console.log(`Activité "${activity.name}" du ${activityDate.toISOString().split('T')[0]} - Dans la semaine: ${isInRange}`);
+      
+      return isInRange;
     });
+
+    console.log(`Activités trouvées pour cette semaine: ${filteredActivities.length}`);
+    console.log('=== FIN DEBUG ACTIVITÉS STRAVA ===');
+
+    return filteredActivities;
   };
 
   const navigateWeek = (direction: 'prev' | 'next') => {
