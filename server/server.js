@@ -348,14 +348,8 @@ app.delete('/api/user-data/:userId', async (req, res) => {
       }
     }
 
-    // Supprimer aussi les fichiers de tokens Strava s'ils existent
-    try {
-      const stravaTokenPath = path.join(DATA_DIR, `strava_tokens_${userId}.json`);
-      await fs.unlink(stravaTokenPath);
-      console.log(`🗑️ Tokens Strava supprimés pour: ${userId}`);
-    } catch (stravaError) {
-      // Ignorer si le fichier n'existe pas
-    }
+    // Les tokens Strava sont maintenant dans le fichier utilisateur principal, 
+    // donc ils seront supprimés automatiquement avec le fichier utilisateur
 
     console.log(`✅ Utilisateur supprimé définitivement: ${userId} (${userType})`);
     res.json({ success: true, message: 'Utilisateur supprimé définitivement' });
@@ -796,17 +790,29 @@ app.post('/api/strava/exchange-token', async (req, res) => {
 
     const tokenData = await tokenResponse.json();
 
-    // Sauvegarder les tokens
-    const tokenFilePath = `strava_tokens_${userId}.json`;
-    await writeJsonFile(tokenFilePath, {
-      accessToken: tokenData.access_token,
-      refreshToken: tokenData.refresh_token,
-      expiresAt: tokenData.expires_at,
-      athlete: tokenData.athlete,
-      connected: true
-    });
+    // Sauvegarder les tokens dans le fichier utilisateur principal
+    let userData = await readUserFile(userId, 'client');
+    let userType = 'client';
 
-    console.log('✅ Tokens Strava sauvegardés pour utilisateur:', userId);
+    if (!userData) {
+      userData = await readUserFile(userId, 'coach');
+      userType = 'coach';
+    }
+
+    if (userData) {
+      userData.stravaTokens = {
+        accessToken: tokenData.access_token,
+        refreshToken: tokenData.refresh_token,
+        expiresAt: tokenData.expires_at,
+        athlete: tokenData.athlete,
+        connected: true,
+        lastSync: new Date().toISOString()
+      };
+      userData.lastUpdated = new Date().toISOString();
+      await writeUserFile(userId, userData, userType);
+    }
+
+    console.log('✅ Tokens Strava sauvegardés dans le fichier utilisateur:', userId);
     res.json({ success: true, athlete: tokenData.athlete });
   } catch (error) {
     console.error('❌ Erreur échange token Strava:', error);
@@ -819,21 +825,25 @@ app.get('/api/strava/status/:userId', async (req, res) => {
     const { userId } = req.params;
     console.log(`🔍 [SERVEUR] Vérification statut Strava pour: ${userId}`);
 
-    const tokenData = await readJsonFile(`strava_tokens_${userId}.json`, null);
+    // Chercher dans le fichier utilisateur principal
+    let userData = await readUserFile(userId, 'client');
+    if (!userData) {
+      userData = await readUserFile(userId, 'coach');
+    }
 
-    if (tokenData && tokenData.connected) {
+    if (userData && userData.stravaTokens && userData.stravaTokens.connected) {
       console.log(`✅ [SERVEUR] Strava connecté pour: ${userId}`, {
-        hasAccessToken: !!tokenData.accessToken,
-        hasRefreshToken: !!tokenData.refreshToken,
-        athleteId: tokenData.athlete?.id
+        hasAccessToken: !!userData.stravaTokens.accessToken,
+        hasRefreshToken: !!userData.stravaTokens.refreshToken,
+        athleteId: userData.stravaTokens.athlete?.id
       });
       res.json({ 
         connected: true, 
-        athlete: tokenData.athlete,
-        lastSync: tokenData.lastSync || null,
-        accessToken: tokenData.accessToken,
-        refreshToken: tokenData.refreshToken,
-        expiresAt: tokenData.expiresAt
+        athlete: userData.stravaTokens.athlete,
+        lastSync: userData.stravaTokens.lastSync || null,
+        accessToken: userData.stravaTokens.accessToken,
+        refreshToken: userData.stravaTokens.refreshToken,
+        expiresAt: userData.stravaTokens.expiresAt
       });
     } else {
       console.log(`📝 [SERVEUR] Strava non connecté pour: ${userId}`);
@@ -851,15 +861,6 @@ app.post('/api/strava/disconnect/:userId', async (req, res) => {
     const { userId } = req.params;
     console.log(`🔄 [SERVEUR] Déconnexion Strava pour: ${userId}`);
 
-    // Supprimer le fichier de tokens
-    const tokenFilePath = `strava_tokens_${userId}.json`;
-    try {
-      await deleteJsonFile(tokenFilePath);
-      console.log(`🗑️ [SERVEUR] Tokens Strava supprimés pour: ${userId}`);
-    } catch (deleteError) {
-      console.log(`⚠️ [SERVEUR] Fichier tokens non trouvé pour: ${userId}`);
-    }
-
     // Nettoyer les données utilisateur Strava
     let userData = await readUserFile(userId, 'client');
     let userType = 'client';
@@ -870,7 +871,8 @@ app.post('/api/strava/disconnect/:userId', async (req, res) => {
     }
 
     if (userData) {
-      // Supprimer les données Strava de l'utilisateur
+      // Supprimer les tokens et données Strava de l'utilisateur
+      delete userData.stravaTokens;
       delete userData.strava;
       userData.lastUpdated = new Date().toISOString();
       await writeUserFile(userId, userData, userType);
@@ -957,23 +959,7 @@ app.get('/strava-callback', async (req, res) => {
         if (tokenResponse.ok) {
           const tokenData = await tokenResponse.json();
 
-          // Sauvegarder les tokens immédiatement
-          const tokenFilePath = `strava_tokens_${state}.json`;
-          const tokenInfo = {
-            accessToken: tokenData.access_token,
-            refreshToken: tokenData.refresh_token,
-            expiresAt: tokenData.expires_at,
-            athlete: tokenData.athlete,
-            connected: true,
-            lastSync: new Date().toISOString()
-          };
-
-          // Traitement en parallèle pour plus de rapidité
-          const savePromises = [
-            writeJsonFile(tokenFilePath, tokenInfo)
-          ];
-
-          // Sauvegarder dans les données utilisateur en parallèle
+          // Sauvegarder les tokens directement dans le fichier utilisateur principal
           let userData = await readUserFile(state, 'client');
           let userType = 'client';
 
@@ -983,17 +969,22 @@ app.get('/strava-callback', async (req, res) => {
           }
 
           if (userData) {
+            userData.stravaTokens = {
+              accessToken: tokenData.access_token,
+              refreshToken: tokenData.refresh_token,
+              expiresAt: tokenData.expires_at,
+              athlete: tokenData.athlete,
+              connected: true,
+              lastSync: new Date().toISOString()
+            };
             userData.stravaIntegration = {
               connected: true,
               athlete: tokenData.athlete,
               lastSync: new Date().toISOString()
             };
             userData.lastUpdated = new Date().toISOString();
-            savePromises.push(writeUserFile(state, userData, userType));
+            await writeUserFile(state, userData, userType);
           }
-
-          // Attendre toutes les sauvegardes en parallèle
-          await Promise.all(savePromises);
 
           console.log('✅ Tokens Strava sauvegardés automatiquement pour utilisateur:', state, {
             athleteId: tokenData.athlete?.id,
