@@ -925,10 +925,31 @@ app.get('/strava-callback', async (req, res) => {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>Connexion Strava réussie</title>
           <script>
-            // Fermeture automatique après 2 secondes
-            setTimeout(() => {
-              closeWindow();
-            }, 2000);
+            // Redirection vers l'application mobile en priorité
+            function redirectToApp() {
+              try {
+                // 1. Essayer de rediriger vers l'application mobile
+                const appScheme = 'eatfitbymax://';
+                console.log('Tentative de redirection vers l\'application:', appScheme);
+                
+                // Créer un lien invisible pour déclencher la redirection
+                const link = document.createElement('a');
+                link.href = appScheme;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // Après un délai, fermer la fenêtre
+                setTimeout(() => {
+                  closeWindow();
+                }, 1000);
+                
+              } catch (e) {
+                console.log('Redirection vers app failed, fermeture directe:', e);
+                closeWindow();
+              }
+            }
 
             function closeWindow() {
               // Essayer plusieurs méthodes de fermeture
@@ -951,6 +972,11 @@ app.get('/strava-callback', async (req, res) => {
                 console.log('Alternative close methods failed:', e);
               }
             }
+
+            // Redirection automatique après 1 seconde
+            setTimeout(() => {
+              redirectToApp();
+            }, 1000);
           </script>
         </head>
         <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f8f9fa;">
@@ -962,15 +988,15 @@ app.get('/strava-callback', async (req, res) => {
               Vous pouvez fermer cette fenêtre et retourner dans l'application.
             </div>
             <p style="color: #666; font-size: 14px; margin-bottom: 20px;">
-              Cette fenêtre se fermera automatiquement dans <span id="countdown">2</span> secondes...
+              Redirection vers l'application dans <span id="countdown">1</span> seconde...
             </p>
-            <button onclick="closeWindow()" style="background: #FC4C02; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 600;">
-              Fermer
+            <button onclick="redirectToApp()" style="background: #FC4C02; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 600;">
+              Retour à l'app
             </button>
           </div>
           <script>
             // Compte à rebours visuel
-            let seconds = 2;
+            let seconds = 1;
             const countdownElement = document.getElementById('countdown');
 
             const countdown = setInterval(() => {
