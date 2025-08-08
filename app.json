@@ -81,7 +81,7 @@
     "experiments": {
       "typedRoutes": true
     },
-    "owner": "maxandre_pm",
+    "owner": "votre_nouveau_nom_utilisateur",
     "android": {
       "permissions": [
         "android.permission.CAMERA",
