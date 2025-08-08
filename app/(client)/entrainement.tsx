@@ -259,6 +259,9 @@ export default function EntrainementScreen() {
       if (currentUser) {
         console.log('🔄 Chargement des activités Strava pour:', currentUser.email);
         
+        // Synchroniser le statut Strava depuis le serveur avant de vérifier
+        await IntegrationsManager.syncStravaStatusFromServer(currentUser.id);
+        
         // Vérifier le statut de connexion Strava
         const integrationStatus = await IntegrationsManager.getIntegrationStatus(currentUser.id);
         console.log('📊 Statut Strava:', integrationStatus.strava.connected ? 'Connecté' : 'Non connecté');

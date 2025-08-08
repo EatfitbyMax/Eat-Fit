@@ -862,6 +862,12 @@ export class IntegrationsManager {
           connected: data.connected, 
           athleteId: data.athlete?.id 
         });
+
+        // Mettre à jour automatiquement le statut local si le serveur indique une connexion
+        if (data.connected) {
+          await this.updateLocalStravaStatus(userId, data);
+        }
+
         return data;
       } else if (response.status === 404) {
         console.log('📝 [STRAVA] Statut non trouvé sur serveur (normal pour nouveau compte)');
@@ -878,6 +884,41 @@ export class IntegrationsManager {
         console.error('❌ [STRAVA] Erreur récupération statut serveur:', error);
       }
       return { connected: false };
+    }
+  }
+
+  /**
+   * Synchroniser le statut Strava depuis le serveur
+   * @param userId - ID utilisateur
+   */
+  static async syncStravaStatusFromServer(userId: string): Promise<void> {
+    try {
+      console.log('🔄 [STRAVA] Synchronisation statut depuis serveur...');
+      
+      // Récupérer le statut depuis le serveur
+      const serverStatus = await this.getStravaStatusFromServer(userId);
+      
+      // Récupérer le statut local actuel
+      const localStatus = await this.getIntegrationStatus(userId);
+      
+      // Mettre à jour le statut local si différent du serveur
+      if (serverStatus.connected !== localStatus.strava.connected) {
+        console.log(`📝 [STRAVA] Mise à jour statut local: ${localStatus.strava.connected} -> ${serverStatus.connected}`);
+        
+        localStatus.strava = {
+          connected: serverStatus.connected,
+          athlete: serverStatus.athlete || null,
+          lastSync: serverStatus.connected ? new Date().toISOString() : null,
+          athleteId: serverStatus.athlete?.id?.toString() || null
+        };
+        
+        await PersistentStorage.saveIntegrationStatus(userId, localStatus);
+        console.log('✅ [STRAVA] Statut local synchronisé avec le serveur');
+      } else {
+        console.log('ℹ️ [STRAVA] Statut local déjà synchronisé');
+      }
+    } catch (error) {
+      console.error('❌ [STRAVA] Erreur synchronisation statut depuis serveur:', error);
     }
   }
 

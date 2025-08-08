@@ -17,7 +17,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { logout, getCurrentUser } from '@/utils/auth';
 import { IntegrationsManager, IntegrationStatus, syncWithExternalApps } from '@/utils/integrations';
 import { checkSubscriptionStatus } from '@/utils/subscription';
-import { InAppPurchaseService } from '@/utils/inAppPurchases';
+import { InAppPurchaseService } from '@/utils/inAppPurchaseService';
 import { allSports } from '@/utils/sportPrograms';
 import ComingSoonModal from '@/components/ComingSoonModal';
 
@@ -89,21 +89,18 @@ export default function ProfilScreen() {
       const currentUser = await getCurrentUser();
       if (!currentUser) return;
 
+      console.log('🔄 Chargement statut intégrations pour:', currentUser.email);
+
+      // Synchroniser le statut Strava depuis le serveur d'abord
+      await IntegrationsManager.syncStravaStatusFromServer(currentUser.id);
+
       const status = await IntegrationsManager.getIntegrationStatus(currentUser.id);
-
-      // Vérifier le statut Strava côté serveur pour s'assurer de la synchronisation
-      const serverStravaStatus = await IntegrationsManager.getStravaStatusFromServer(currentUser.id);
-      if (serverStravaStatus && serverStravaStatus.connected !== status.strava.connected) {
-        console.log('🔄 Synchronisation statut Strava depuis le serveur...');
-        status.strava = {
-          connected: serverStravaStatus.connected,
-          athlete: serverStravaStatus.athlete,
-          lastSync: serverStravaStatus.lastSync || new Date().toISOString()
-        };
-        await IntegrationsManager.updateIntegrationStatus(currentUser.id, status);
-      }
-
       setIntegrationStatus(status);
+
+      console.log('📊 Statuts chargés:', {
+        appleHealth: status.appleHealth.connected,
+        strava: status.strava.connected
+      });
     } catch (error) {
       console.error('Erreur chargement statut intégrations:', error);
     }
@@ -339,7 +336,7 @@ export default function ProfilScreen() {
       }
 
       await syncWithExternalApps(currentUser.id);
-      
+
       Alert.alert("Succès", "Synchronisation terminée");
       await loadIntegrationStatus();
     } catch (error) {
