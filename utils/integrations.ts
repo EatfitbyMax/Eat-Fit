@@ -391,33 +391,38 @@ export class IntegrationsManager {
   }
 
   /**
-   * Vérification de la connexion côté serveur avec retry
+   * Vérification de la connexion côté serveur avec retry optimisé
    * @param userId - ID utilisateur
    * @param serverUrl - URL du serveur
    * @returns Promise<object> - Résultat de la vérification
    */
   private static async verifyStravaConnection(userId: string, serverUrl: string): Promise<{ success: boolean; data?: any }> {
-    console.log('⏳ [STRAVA] Vérification connexion côté serveur...');
+    console.log('⚡ [STRAVA] Vérification connexion instantanée...');
     
-    // Délai initial réduit à 1 seconde
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Délai initial très réduit pour plus de réactivité
+    await new Promise(resolve => setTimeout(resolve, 300));
 
-    const maxAttempts = 6; // Plus de tentatives avec des délais plus courts
-    const retryDelay = 800; // Délai réduit à 800ms
+    const maxAttempts = 8; // Plus de tentatives mais plus rapides
+    const retryDelay = 400; // Délai encore plus réduit à 400ms
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        console.log(`🔄 [STRAVA] Tentative ${attempt}/${maxAttempts} de vérification...`);
+        console.log(`⚡ [STRAVA] Vérification ${attempt}/${maxAttempts}...`);
         
         const serverStatus = await this.getStravaStatusFromServer(userId);
         
         if (serverStatus && serverStatus.connected) {
-          console.log('✅ [STRAVA] Connexion confirmée côté serveur');
+          console.log('✅ [STRAVA] Connexion confirmée instantanément !');
+          
+          // Déclencher la synchronisation immédiatement après connexion
+          this.triggerImmediateSync(userId).catch(err => 
+            console.log('⚠️ [STRAVA] Sync en arrière-plan échoué:', err)
+          );
+          
           return { success: true, data: serverStatus };
         }
 
         if (attempt < maxAttempts) {
-          console.log(`⏳ [STRAVA] Attente ${retryDelay}ms avant nouvelle tentative...`);
           await new Promise(resolve => setTimeout(resolve, retryDelay));
         }
       } catch (error) {
@@ -429,6 +434,20 @@ export class IntegrationsManager {
     }
 
     return { success: false };
+  }
+
+  /**
+   * Déclenchement de la synchronisation immédiate en arrière-plan
+   * @param userId - ID utilisateur
+   */
+  private static async triggerImmediateSync(userId: string): Promise<void> {
+    try {
+      console.log('🔄 [STRAVA] Démarrage synchronisation immédiate...');
+      await this.syncStravaActivities(userId);
+      console.log('✅ [STRAVA] Synchronisation immédiate réussie');
+    } catch (error) {
+      console.error('❌ [STRAVA] Erreur synchronisation immédiate:', error);
+    }
   }
 
   /**
@@ -851,7 +870,7 @@ export class IntegrationsManager {
   }
 
   /**
-   * Récupération du statut Strava depuis le serveur
+   * Récupération du statut Strava depuis le serveur (optimisée)
    * @param userId - ID utilisateur
    * @returns Promise<any> - Statut Strava ou null si erreur
    */
@@ -859,16 +878,17 @@ export class IntegrationsManager {
     try {
       const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
 
-      console.log(`🔍 [STRAVA] Vérification statut serveur pour utilisateur: ${userId}`);
+      console.log(`⚡ [STRAVA] Vérification rapide statut serveur: ${userId}`);
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout réduit à 5 secondes
+      const timeoutId = setTimeout(() => controller.abort(), 3000); // Timeout encore plus réduit à 3 secondes
 
       const response = await fetch(`${serverUrl}/api/strava/status/${userId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache'
+          'Cache-Control': 'no-cache',
+          'Accept': 'application/json'
         },
         signal: controller.signal
       });
@@ -877,20 +897,20 @@ export class IntegrationsManager {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ [STRAVA] Statut récupéré du serveur:', { 
+        console.log('⚡ [STRAVA] Statut récupéré instantanément:', { 
           connected: data.connected, 
           athleteId: data.athlete?.id,
           hasToken: !!data.accessToken
         });
 
-        // Mettre à jour automatiquement le statut local si le serveur indique une connexion
+        // Mettre à jour automatiquement et immédiatement le statut local
         if (data.connected) {
           await this.updateLocalStravaStatus(userId, data);
         }
 
         return data;
       } else if (response.status === 404) {
-        console.log('📝 [STRAVA] Statut non trouvé sur serveur (normal pour nouveau compte)');
+        console.log('📝 [STRAVA] Statut non trouvé (normal pour nouveau compte)');
         return { connected: false };
       } else {
         const errorText = await response.text().catch(() => 'Erreur inconnue');
@@ -899,7 +919,7 @@ export class IntegrationsManager {
       }
     } catch (error) {
       if (error.name === 'AbortError') {
-        console.error('⏰ [STRAVA] Timeout récupération statut serveur');
+        console.error('⏰ [STRAVA] Timeout (3s) récupération statut');
       } else {
         console.error('❌ [STRAVA] Erreur récupération statut serveur:', error);
       }

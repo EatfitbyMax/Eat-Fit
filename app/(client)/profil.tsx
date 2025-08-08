@@ -36,6 +36,21 @@ export default function ProfilScreen() {
   const [showComingSoonModal, setShowComingSoonModal] = useState(false);
   const [showPremiumComingSoonModal, setShowPremiumComingSoonModal] = useState(false);
   const [stravaConnecting, setStravaConnecting] = useState(false); // Ajout pour gérer l'état de connexion Strava
+  const [loadingModalVisible, setLoadingModalVisible] = useState(false);
+  const [loadingModalTitle, setLoadingModalTitle] = useState('');
+  const [loadingModalMessage, setLoadingModalMessage] = useState('');
+
+  // Fonction pour afficher le modal de chargement
+  const showModal = (title: string, message: string) => {
+    setLoadingModalTitle(title);
+    setLoadingModalMessage(message);
+    setLoadingModalVisible(true);
+  };
+
+  // Fonction pour masquer le modal de chargement
+  const hideModal = () => {
+    setLoadingModalVisible(false);
+  };
 
   const availableGoals = [
     'Perdre du poids',
@@ -196,54 +211,68 @@ export default function ProfilScreen() {
     setStravaConnecting(true);
 
     try {
-      console.log('🔄 Début connexion Strava...');
+      console.log('⚡ Connexion Strava instantanée pour:', userId);
 
-      const success = await IntegrationsManager.connectStrava(userId);
+      // Tenter la connexion avec feedback immédiat
+      const isConnected = await IntegrationsManager.connectStrava(userId);
 
-      if (success) {
-        console.log('✅ Connexion Strava réussie côté OAuth');
+      if (isConnected) {
+        console.log('✅ Connexion Strava réussie !');
 
-        // Vérification plus rapide du statut serveur
-        console.log('🔍 Vérification statut serveur...');
-        
-        // Synchroniser le statut depuis le serveur immédiatement
-        await IntegrationsManager.syncStravaStatusFromServer(userId);
+        // Mise à jour immédiate de l'interface utilisateur
+        showModal('Connexion en cours...', 'Synchronisation des données Strava en cours. Cette opération ne prendra que quelques secondes.');
 
-        // Recharger le statut des intégrations
-        await loadIntegrationStatus();
+        // Synchronisation immédiate en parallèle
+        const syncPromise = IntegrationsManager.syncStravaStatusFromServer(userId);
+        const loadPromise = loadIntegrationStatus();
 
-        // Vérifier si la connexion est réellement établie
+        // Attendre la synchronisation ET le rechargement
+        await Promise.all([syncPromise, loadPromise]);
+
+        // Vérifier le statut final
         const finalStatus = await IntegrationsManager.getIntegrationStatus(userId);
 
         if (finalStatus.strava.connected) {
           console.log('✅ Connexion Strava confirmée côté serveur');
 
-          // Lancer la synchronisation des activités immédiatement
+          // Déclencher la synchronisation immédiatement
+          console.log('🔄 Synchronisation immédiate des données...');
+
           try {
-            console.log('🔄 Démarrage synchronisation automatique des activités...');
-            await IntegrationsManager.syncStravaActivities(userId);
-            console.log('✅ Synchronisation des activités terminée');
-            
+            // Synchronisation en arrière-plan sans attendre
+            syncWithExternalApps(userId).then(() => {
+              console.log('✅ Synchronisation automatique terminée');
+            }).catch(err => {
+              console.log('⚠️ Synchronisation automatique échouée:', err);
+            });
+
+            // Afficher succès immédiatement
             Alert.alert(
-              '🎉 Connexion réussie!',
-              'Strava a été connecté avec succès et vos activités ont été synchronisées automatiquement.',
-              [{
-                text: 'Parfait!',
-                style: 'default',
-                onPress: () => {
-                  console.log('Connexion Strava confirmée par l\'utilisateur');
+              '✅ Strava connecté !',
+              `Bonjour ${finalStatus.strava.athlete?.firstname || 'Athlète'} ! Votre compte Strava est maintenant connecté. La synchronisation de vos activités est en cours automatiquement.`,
+              [
+                {
+                  text: 'Voir mes activités',
+                  onPress: () => {
+                    // Ici on pourrait naviguer vers une page d'activités
+                    console.log('Navigation vers activités...');
+                  },
+                  style: 'default'
+                },
+                {
+                  text: 'Parfait',
+                  style: 'cancel'
                 }
-              }]
+              ]
             );
           } catch (syncError) {
-            console.error('⚠️ Erreur synchronisation automatique:', syncError);
+            console.error('⚠️ Erreur sync immédiate:', syncError);
+
+            // Même si la sync échoue, on affiche le succès de connexion
             Alert.alert(
-              '🎉 Connexion réussie!',
-              'Strava a été connecté avec succès. La synchronisation des activités est en cours.',
-              [{
-                text: 'Parfait!',
-                style: 'default'
-              }]
+              '✅ Strava connecté !',
+              `Bonjour ${finalStatus.strava.athlete?.firstname || 'Athlète'} ! Votre compte Strava est connecté. La synchronisation sera effectuée automatiquement.`,
+              [{ text: 'Parfait', style: 'cancel' }]
             );
           }
         } else {
@@ -316,6 +345,7 @@ export default function ProfilScreen() {
       );
     } finally {
       setStravaConnecting(false);
+      hideModal(); // Masquer le modal de chargement à la fin
     }
   };
 
@@ -847,6 +877,21 @@ export default function ProfilScreen() {
           <Text style={styles.versionText}>Version 1.0.0</Text>
         </View>
       </ScrollView>
+
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={loadingModalVisible}
+        onRequestClose={hideModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <ActivityIndicator size="large" color="#FFFFFF" />
+            <Text style={styles.modalTitle}>{loadingModalTitle}</Text>
+            <Text style={styles.modalMessage}>{loadingModalMessage}</Text>
+          </View>
+        </View>
+      </Modal>
 
       <ComingSoonModal
         visible={showComingSoonModal}
@@ -1489,5 +1534,32 @@ const styles = StyleSheet.create({
     color: '#000000',
     marginLeft: 8,
   },
-
+  // Styles pour le modal de chargement
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  modalContent: {
+    backgroundColor: '#161B22',
+    padding: 30,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  modalMessage: {
+    fontSize: 14,
+    color: '#8B949E',
+    textAlign: 'center',
+  },
 });
