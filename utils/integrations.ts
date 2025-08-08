@@ -570,7 +570,8 @@ export class IntegrationsManager {
         },
         body: JSON.stringify({
           code: code,
-          userId: userId
+          userId: userId,
+          useStravaIntegration: true // Indiquer au serveur d'utiliser la nouvelle structure
         }),
         timeout: 10000
       });

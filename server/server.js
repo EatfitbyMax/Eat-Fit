@@ -790,7 +790,7 @@ app.post('/api/strava/exchange-token', async (req, res) => {
 
     const tokenData = await tokenResponse.json();
 
-    // Sauvegarder les tokens dans le fichier utilisateur principal
+    // Sauvegarder les tokens dans le fichier utilisateur
     let userData = await readUserFile(userId, 'client');
     let userType = 'client';
 
@@ -800,7 +800,8 @@ app.post('/api/strava/exchange-token', async (req, res) => {
     }
 
     if (userData) {
-      userData.stravaTokens = {
+      // Sauvegarder les tokens dans le fichier utilisateur avec la nouvelle structure
+      userData.stravaIntegration = {
         accessToken: tokenData.access_token,
         refreshToken: tokenData.refresh_token,
         expiresAt: tokenData.expires_at,
@@ -808,6 +809,12 @@ app.post('/api/strava/exchange-token', async (req, res) => {
         connected: true,
         lastSync: new Date().toISOString()
       };
+
+      // Nettoyer l'ancienne structure si elle existe
+      if (userData.stravaTokens) {
+        delete userData.stravaTokens;
+      }
+
       userData.lastUpdated = new Date().toISOString();
       await writeUserFile(userId, userData, userType);
     }
@@ -831,19 +838,20 @@ app.get('/api/strava/status/:userId', async (req, res) => {
       userData = await readUserFile(userId, 'coach');
     }
 
-    if (userData && userData.stravaTokens && userData.stravaTokens.connected) {
+    // Utiliser stravaIntegration pour vérifier le statut
+    if (userData && userData.stravaIntegration && userData.stravaIntegration.connected) {
       console.log(`✅ [SERVEUR] Strava connecté pour: ${userId}`, {
-        hasAccessToken: !!userData.stravaTokens.accessToken,
-        hasRefreshToken: !!userData.stravaTokens.refreshToken,
-        athleteId: userData.stravaTokens.athlete?.id
+        hasAccessToken: !!userData.stravaIntegration.accessToken,
+        hasRefreshToken: !!userData.stravaIntegration.refreshToken,
+        athleteId: userData.stravaIntegration.athlete?.id
       });
       res.json({ 
         connected: true, 
-        athlete: userData.stravaTokens.athlete,
-        lastSync: userData.stravaTokens.lastSync || null,
-        accessToken: userData.stravaTokens.accessToken,
-        refreshToken: userData.stravaTokens.refreshToken,
-        expiresAt: userData.stravaTokens.expiresAt
+        athlete: userData.stravaIntegration.athlete,
+        lastSync: userData.stravaIntegration.lastSync || null,
+        accessToken: userData.stravaIntegration.accessToken,
+        refreshToken: userData.stravaIntegration.refreshToken,
+        expiresAt: userData.stravaIntegration.expiresAt
       });
     } else {
       console.log(`📝 [SERVEUR] Strava non connecté pour: ${userId}`);
@@ -872,8 +880,9 @@ app.post('/api/strava/disconnect/:userId', async (req, res) => {
 
     if (userData) {
       // Supprimer les tokens et données Strava de l'utilisateur
-      delete userData.stravaTokens;
-      delete userData.strava;
+      delete userData.stravaIntegration;
+      delete userData.stravaTokens; // Nettoyer aussi l'ancienne clé
+      delete userData.strava; // Nettoyer aussi l'ancienne clé
       userData.lastUpdated = new Date().toISOString();
       await writeUserFile(userId, userData, userType);
       console.log(`🧹 [SERVEUR] Données Strava nettoyées pour: ${userId}`);
@@ -969,7 +978,7 @@ app.get('/strava-callback', async (req, res) => {
           }
 
           if (userData) {
-            userData.stravaTokens = {
+            userData.stravaIntegration = {
               accessToken: tokenData.access_token,
               refreshToken: tokenData.refresh_token,
               expiresAt: tokenData.expires_at,
@@ -977,11 +986,16 @@ app.get('/strava-callback', async (req, res) => {
               connected: true,
               lastSync: new Date().toISOString()
             };
-            userData.stravaIntegration = {
-              connected: true,
-              athlete: tokenData.athlete,
-              lastSync: new Date().toISOString()
-            };
+            
+            // Nettoyer l'ancienne structure si elle existe
+            if (userData.stravaTokens) {
+              delete userData.stravaTokens;
+            }
+            // Nettoyer aussi si 'strava' existe directement
+            if (userData.strava) {
+              delete userData.strava;
+            }
+
             userData.lastUpdated = new Date().toISOString();
             await writeUserFile(state, userData, userType);
           }
@@ -1265,7 +1279,7 @@ app.get('/coach-signup', (req, res) => {
         <head><title>Erreur</title></head>
         <body style="font-family: Arial; text-align: center; padding: 50px;">
           <h2>Erreur temporaire</h2>
-          <p>La page d'inscription coach n'est pas disponible actuellement.</p>
+          <p>La page d\'inscription coach n\'est pas disponible actuellement.</p>
         </body>
       </html>
     `);
