@@ -928,21 +928,34 @@ app.get('/strava-callback', async (req, res) => {
             // Redirection vers l'application mobile en priorité
             function redirectToApp() {
               try {
-                // 1. Essayer de rediriger vers l'application mobile
-                const appScheme = 'eatfitbymax://';
-                console.log('Tentative de redirection vers l\'application:', appScheme);
+                // 1. Essayer le deep link spécifique Strava d'abord
+                const stravaCallbackScheme = 'eatfitbymax://strava-callback?success=true';
+                console.log('Tentative de redirection Strava callback:', stravaCallbackScheme);
                 
                 // Créer un lien invisible pour déclencher la redirection
-                const link = document.createElement('a');
-                link.href = appScheme;
-                link.style.display = 'none';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                const stravaLink = document.createElement('a');
+                stravaLink.href = stravaCallbackScheme;
+                stravaLink.style.display = 'none';
+                document.body.appendChild(stravaLink);
+                stravaLink.click();
+                document.body.removeChild(stravaLink);
                 
-                // Après un délai, fermer la fenêtre
+                // Fallback vers l'app principale après 1 seconde
                 setTimeout(() => {
-                  closeWindow();
+                  const appScheme = 'eatfitbymax://';
+                  console.log('Fallback vers application principale:', appScheme);
+                  
+                  const link = document.createElement('a');
+                  link.href = appScheme;
+                  link.style.display = 'none';
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                  
+                  // Fermer après un autre délai
+                  setTimeout(() => {
+                    closeWindow();
+                  }, 1000);
                 }, 1000);
                 
               } catch (e) {
