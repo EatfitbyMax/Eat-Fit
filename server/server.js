@@ -822,11 +822,18 @@ app.get('/api/strava/status/:userId', async (req, res) => {
     const tokenData = await readJsonFile(`strava_tokens_${userId}.json`, null);
 
     if (tokenData && tokenData.connected) {
-      console.log(`✅ [SERVEUR] Strava connecté pour: ${userId}`);
+      console.log(`✅ [SERVEUR] Strava connecté pour: ${userId}`, {
+        hasAccessToken: !!tokenData.accessToken,
+        hasRefreshToken: !!tokenData.refreshToken,
+        athleteId: tokenData.athlete?.id
+      });
       res.json({ 
         connected: true, 
         athlete: tokenData.athlete,
-        lastSync: tokenData.lastSync || null 
+        lastSync: tokenData.lastSync || null,
+        accessToken: tokenData.accessToken,
+        refreshToken: tokenData.refreshToken,
+        expiresAt: tokenData.expiresAt
       });
     } else {
       console.log(`📝 [SERVEUR] Strava non connecté pour: ${userId}`);

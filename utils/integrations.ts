@@ -628,10 +628,29 @@ export class IntegrationsManager {
 
   static async getValidStravaToken(userId: string): Promise<string> {
     try {
+      // D'abord, synchroniser le statut depuis le serveur
+      await this.syncStravaStatusFromServer(userId);
+      
       const status = await this.getIntegrationStatus(userId);
 
       if (!status.strava.connected) {
         throw new Error('Strava non connecté');
+      }
+
+      // Vérifier si on a un access token
+      if (!status.strava.accessToken) {
+        console.log('⚠️ Pas d\'access token, vérification serveur...');
+        const serverStatus = await this.getStravaStatusFromServer(userId);
+        if (serverStatus && serverStatus.connected && serverStatus.accessToken) {
+          // Mettre à jour le statut local avec les données du serveur
+          status.strava.accessToken = serverStatus.accessToken;
+          status.strava.refreshToken = serverStatus.refreshToken;
+          status.strava.expiresAt = serverStatus.expiresAt;
+          await PersistentStorage.saveIntegrationStatus(userId, status);
+          return serverStatus.accessToken;
+        } else {
+          throw new Error('Strava non connecté');
+        }
       }
 
       const now = Math.floor(Date.now() / 1000);
@@ -642,10 +661,10 @@ export class IntegrationsManager {
       }
 
       console.log('Utilisation du token Strava existant.');
-      return status.strava.accessToken!; // L'opérateur ! est sûr ici car nous avons déjà vérifié connected et le refresh est géré.
+      return status.strava.accessToken;
     } catch (error) {
       console.error('❌ Erreur récupération token Strava:', error);
-      throw error; // Propager l'erreur pour que l'appelant puisse la gérer
+      throw error;
     }
   }
 
@@ -860,7 +879,8 @@ export class IntegrationsManager {
         const data = await response.json();
         console.log('✅ [STRAVA] Statut récupéré du serveur:', { 
           connected: data.connected, 
-          athleteId: data.athlete?.id 
+          athleteId: data.athlete?.id,
+          hasToken: !!data.accessToken
         });
 
         // Mettre à jour automatiquement le statut local si le serveur indique une connexion
