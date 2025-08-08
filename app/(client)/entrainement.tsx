@@ -9,6 +9,7 @@ import { checkSubscriptionStatus } from '../../utils/subscription';
 import { getUserData, PersistentStorage } from '@/utils/storage';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getRecommendedPrograms, getSportEmoji, getSportName, WorkoutProgram } from '@/utils/sportPrograms';
 import ComingSoonModal from '@/components/ComingSoonModal';
 
@@ -984,21 +985,7 @@ export default function EntrainementScreen() {
                 <Text style={styles.sectionSubtitle}>
                   {getStravaActivitiesForCurrentWeek().length} activité{getStravaActivitiesForCurrentWeek().length > 1 ? 's' : ''} cette semaine
                 </Text>
-                {/* Bouton de synchronisation supprimé - synchronisation uniquement dans le profil */}
-                        console.log('✅ Synchronisation manuelle terminée');
-                      } catch (error) {
-                        console.error('❌ Erreur synchronisation manuelle:', error);
-                      } finally {
-                        setIsLoading(false);
-                      }
-                    }
-                  }}
-                  disabled={isLoading}
-                >
-                  <Text style={styles.syncButtonText}>
-                    {isLoading ? '🔄 Sync...' : '🔄 Synchroniser'}
-                  </Text>
-                </TouchableOpacity>
+                {/* Synchronisation gérée uniquement depuis le profil */}
               </View>
 
               {isLoading ? (

@@ -832,7 +832,88 @@ app.get('/api/strava/status/:userId', async (req, res) => {
     const { userId } = req.params;
     console.log(`🔍 [SERVEUR] Vérification statut Strava pour: ${userId}`);
 
-    // Chercher dans le fichier utilisateur principal
+    // Chercher dans les clients d'abord
+    let userData = await readUserFile(userId, 'client');
+    let userType = 'client';
+
+    if (!userData) {
+      userData = await readUserFile(userId, 'coach');
+      userType = 'coach';
+    }
+
+    if (!userData) {
+      console.log(`❌ Utilisateur ${userId} non trouvé`);
+      return res.status(404).json({ connected: false, error: 'Utilisateur non trouvé' });
+    }
+
+    // Vérifier la nouvelle structure stravaIntegration
+    if (userData.stravaIntegration && userData.stravaIntegration.connected) {
+      console.log(`✅ [SERVEUR] Strava connecté pour ${userId}: ${userData.stravaIntegration.athlete?.firstname || 'Athlète'}`);
+      
+      res.json({
+        connected: true,
+        athlete: userData.stravaIntegration.athlete,
+        accessToken: userData.stravaIntegration.accessToken,
+        refreshToken: userData.stravaIntegration.refreshToken,
+        expiresAt: userData.stravaIntegration.expiresAt,
+        lastSync: userData.stravaIntegration.lastSync
+      });
+    } else {
+      console.log(`📝 [SERVEUR] Strava non connecté pour ${userId}`);
+      res.json({ connected: false });
+    }
+  } catch (error) {
+    console.error('❌ [SERVEUR] Erreur vérification statut Strava:', error);
+    res.status(500).json({ connected: false, error: 'Erreur serveur' });
+  }
+});
+
+// Endpoint pour déconnecter Strava
+app.post('/api/strava/disconnect/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log(`🔄 [SERVEUR] Déconnexion Strava pour: ${userId}`);
+
+    // Chercher l'utilisateur
+    let userData = await readUserFile(userId, 'client');
+    let userType = 'client';
+
+    if (!userData) {
+      userData = await readUserFile(userId, 'coach');
+      userType = 'coach';
+    }
+
+    if (userData) {
+      // Supprimer les données Strava
+      if (userData.stravaIntegration) {
+        userData.stravaIntegration = {
+          connected: false,
+          athlete: null,
+          accessToken: null,
+          refreshToken: null,
+          expiresAt: null,
+          lastSync: null
+        };
+      }
+
+      // Nettoyer l'ancienne structure si elle existe
+      if (userData.stravaTokens) {
+        delete userData.stravaTokens;
+      }
+
+      userData.lastUpdated = new Date().toISOString();
+      await writeUserFile(userId, userData, userType);
+
+      console.log(`✅ [SERVEUR] Strava déconnecté pour: ${userId}`);
+      res.json({ success: true, message: 'Strava déconnecté avec succès' });
+    } else {
+      res.status(404).json({ success: false, error: 'Utilisateur non trouvé' });
+    }
+  } catch (error) {
+    console.error('❌ [SERVEUR] Erreur déconnexion Strava:', error);
+    res.status(500).json({ success: false, error: 'Erreur serveur' });
+  }
+}); le fichier utilisateur principal
     let userData = await readUserFile(userId, 'client');
     if (!userData) {
       userData = await readUserFile(userId, 'coach');

@@ -16,28 +16,42 @@ export default function StravaCallbackScreen() {
   const handleCallback = async () => {
     try {
       if (error) {
-        console.error('Erreur callback Strava:', error);
-        router.replace('/(client)/profil');
+        console.error('❌ Erreur callback Strava:', error);
+        // Attendre un peu avant de rediriger pour que l'utilisateur voie le message
+        setTimeout(() => {
+          router.replace('/(client)/profil');
+        }, 1000);
         return;
       }
 
       if (code && typeof code === 'string') {
+        console.log('✅ Code d\'autorisation Strava reçu');
         const currentUser = await getCurrentUser();
         if (currentUser) {
-          const success = await IntegrationsManager.exchangeStravaCode(code, currentUser.id);
-          if (success) {
-            console.log('✅ Connexion Strava réussie');
-          } else {
-            console.error('❌ Échec de la connexion Strava');
+          try {
+            const success = await IntegrationsManager.exchangeStravaCode(code, currentUser.id);
+            if (success) {
+              console.log('✅ Connexion Strava réussie dans callback');
+            } else {
+              console.error('❌ Échec de l\'échange de token Strava');
+            }
+          } catch (exchangeError) {
+            console.error('❌ Erreur lors de l\'échange du code:', exchangeError);
           }
+        } else {
+          console.error('❌ Utilisateur non trouvé lors du callback');
         }
       }
 
-      // Rediriger vers le profil
-      router.replace('/(client)/profil');
+      // Attendre un peu puis rediriger vers le profil
+      setTimeout(() => {
+        router.replace('/(client)/profil');
+      }, 500);
     } catch (error) {
-      console.error('Erreur traitement callback Strava:', error);
-      router.replace('/(client)/profil');
+      console.error('❌ Erreur traitement callback Strava:', error);
+      setTimeout(() => {
+        router.replace('/(client)/profil');
+      }, 1000);
     }
   };
 

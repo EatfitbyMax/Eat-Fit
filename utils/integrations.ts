@@ -509,13 +509,18 @@ export class IntegrationsManager {
     try {
       const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
       const response = await fetch(`${serverUrl}/api/strava/disconnect/${userId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        timeout: 5000
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         console.log('📡 [STRAVA] Serveur notifié de la déconnexion');
@@ -561,6 +566,9 @@ export class IntegrationsManager {
     try {
       const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
       const response = await fetch(`${serverUrl}/api/strava/exchange-token`, {
         method: 'POST',
         headers: {
@@ -571,8 +579,10 @@ export class IntegrationsManager {
           userId: userId,
           useStravaIntegration: true // Indiquer au serveur d'utiliser la nouvelle structure
         }),
-        timeout: 10000
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`Erreur serveur: ${response.status}`);
