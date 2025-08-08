@@ -87,15 +87,11 @@ export default function RegisterAccountScreen() {
       const user = await register(userData);
 
       if (user) {
-        console.log('✅ Inscription réussie pour:', user.email);
-        
         // Connecter l'utilisateur dans le contexte d'authentification
         login(user);
 
         // Réinitialiser les données d'inscription
         resetRegistrationData();
-        
-        console.log('✅ Redirection vers l\'application principale...');RegistrationData();
 
         Alert.alert(
           'Compte créé !',

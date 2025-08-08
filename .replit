@@ -87,14 +87,5 @@ mode = "sequential"
 task = "shell.exec"
 args = "npx eas build --platform ios --profile production --clear-cache --non-interactive"
 
-[[workflows.workflow]]
-name = "Démarrer Serveur Backend"
-author = 42598128
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd server && npm install && node server.js"
-
 [deployment]
 run = ["sh", "-c", "cd server && PORT=5000 node server.js"]
