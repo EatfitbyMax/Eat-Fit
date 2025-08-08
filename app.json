@@ -37,6 +37,9 @@
     "extra": {
       "router": {
         "origin": "https://eatfitbymax.app"
+      },
+      "eas": {
+        "projectId": "09b0be21-7d36-4d48-9728-6585b19ae23f"
       }
     },
     "runtimeVersion": "1.5.0",
@@ -78,7 +81,7 @@
     "experiments": {
       "typedRoutes": true
     },
-    "owner": "votre_nouveau_nom_utilisateur",
+    "owner": "eatfit",
     "android": {
       "permissions": [
         "android.permission.CAMERA",
