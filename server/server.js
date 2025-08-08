@@ -777,7 +777,7 @@ app.get('/api/strava/status/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     console.log(`🔍 [SERVEUR] Vérification statut Strava pour: ${userId}`);
-    
+
     const tokenData = await readJsonFile(`strava_tokens_${userId}.json`, null);
 
     if (tokenData && tokenData.connected) {
@@ -924,27 +924,43 @@ app.get('/strava-callback', async (req, res) => {
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>Connexion Strava réussie</title>
+          <script>
+            // Fermeture automatique après 2 secondes
+            setTimeout(() => {
+              window.close();
+            }, 2000);
+          </script>
         </head>
-        <body style="font-family: Arial, sans-serif; text-align: center; padding: 30px; background: #f5f5f5;">
-          <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 350px; margin: 0 auto;">
-            <h2 style="color: #FC4C02; margin-bottom: 20px;">✅ Connexion réussie!</h2>
-            <p style="font-size: 16px; color: #333; margin-bottom: 25px;">
-              Strava connecté à <strong>EatFit By Max</strong>
-            </p>
-            <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <p style="margin: 0; font-weight: bold; color: #2d5a3d; font-size: 14px;">
-                Vous pouvez fermer cette fenêtre et retourner dans l'application.
-              </p>
+        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f8f9fa;">
+          <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto;">
+            <div style="font-size: 48px; margin-bottom: 20px;">✅</div>
+            <h2 style="color: #FC4C02; margin-bottom: 16px;">Connexion réussie!</h2>
+            <p style="color: #333; margin-bottom: 20px;">Strava connecté à <strong>EatFit By Max</strong></p>
+            <div style="background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+              Vous pouvez fermer cette fenêtre et retourner dans l'application.
             </div>
-            <button onclick="window.close()" style="background: #FC4C02; color: white; border: none; padding: 14px 28px; border-radius: 8px; font-size: 16px; cursor: pointer; font-weight: 600;">
+            <p style="color: #666; font-size: 14px; margin-bottom: 20px;">
+              Cette fenêtre se fermera automatiquement dans <span id="countdown">2</span> secondes...
+            </p>
+            <button onclick="window.close()" style="background: #FC4C02; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 600;">
               Fermer
             </button>
           </div>
           <script>
-            // Fermeture automatique après 3 secondes
-            setTimeout(() => {
-              window.close();
-            }, 3000);
+            // Compte à rebours visuel
+            let seconds = 2;
+            const countdownElement = document.getElementById('countdown');
+
+            const countdown = setInterval(() => {
+              seconds--;
+              if (countdownElement) {
+                countdownElement.textContent = seconds;
+              }
+
+              if (seconds <= 0) {
+                clearInterval(countdown);
+              }
+            }, 1000);
           </script>
         </body>
       </html>
