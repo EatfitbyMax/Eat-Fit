@@ -523,6 +523,163 @@ app.post('/api/strava/:userId', async (req, res) => {
   }
 });
 
+// Routes d'authentification
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email et mot de passe requis' });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    console.log(`🔍 Tentative de connexion pour: ${normalizedEmail}`);
+
+    // Chercher d'abord dans les clients
+    let userData = null;
+    let userType = null;
+    let userId = null;
+
+    try {
+      const clientDir = path.join(DATA_DIR, 'Client');
+      await ensureDirectoryExists(clientDir);
+      const clientFiles = await fs.readdir(clientDir);
+
+      for (const file of clientFiles) {
+        if (file.endsWith('.json')) {
+          const filePath = path.join(clientDir, file);
+          const data = await fs.readFile(filePath, 'utf8');
+          const client = JSON.parse(data);
+          
+          if (client.email && client.email.toLowerCase() === normalizedEmail) {
+            userData = client;
+            userType = 'client';
+            userId = file.replace('.json', '');
+            break;
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('⚠️ Erreur lecture dossier Client:', error);
+    }
+
+    // Si pas trouvé dans les clients, chercher dans les coaches
+    if (!userData) {
+      try {
+        const coachDir = path.join(DATA_DIR, 'Coach');
+        await ensureDirectoryExists(coachDir);
+        const coachFiles = await fs.readdir(coachDir);
+
+        for (const file of coachFiles) {
+          if (file.endsWith('.json')) {
+            const filePath = path.join(coachDir, file);
+            const data = await fs.readFile(filePath, 'utf8');
+            const coach = JSON.parse(data);
+            
+            if (coach.email && coach.email.toLowerCase() === normalizedEmail) {
+              userData = coach;
+              userType = 'coach';
+              userId = file.replace('.json', '');
+              break;
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('⚠️ Erreur lecture dossier Coach:', error);
+      }
+    }
+
+    if (!userData) {
+      console.log(`❌ Utilisateur non trouvé: ${normalizedEmail}`);
+      return res.status(401).json({ error: 'Email ou mot de passe incorrect' });
+    }
+
+    // Vérifier le mot de passe (pour simplifier, comparaison directe)
+    // En production, utilisez bcrypt pour hasher les mots de passe
+    if (userData.password !== password) {
+      console.log(`❌ Mot de passe incorrect pour: ${normalizedEmail}`);
+      return res.status(401).json({ error: 'Email ou mot de passe incorrect' });
+    }
+
+    console.log(`✅ Connexion réussie pour: ${normalizedEmail} (${userType})`);
+
+    // Retourner les données utilisateur (sans le mot de passe)
+    const { password: _, ...userWithoutPassword } = userData;
+    res.json({
+      success: true,
+      user: {
+        ...userWithoutPassword,
+        id: userId,
+        userType
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Erreur login:', error);
+    res.status(500).json({ error: 'Erreur serveur lors de la connexion' });
+  }
+});
+
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const userData = req.body;
+
+    if (!userData.email || !userData.password) {
+      return res.status(400).json({ error: 'Email et mot de passe requis' });
+    }
+
+    const normalizedEmail = userData.email.toLowerCase().trim();
+    console.log(`📝 Tentative d'inscription pour: ${normalizedEmail}`);
+
+    // Générer un ID unique basé sur l'email et le timestamp
+    const userId = `${normalizedEmail.replace(/[^a-z0-9]/g, '_')}_${Date.now()}`;
+    const userType = userData.userType || 'client';
+
+    // Vérifier si l'utilisateur existe déjà
+    const existingUser = await readUserFile(userId, userType);
+    if (existingUser) {
+      return res.status(409).json({ error: 'Un compte avec cet email existe déjà' });
+    }
+
+    // Vérifier dans l'autre type d'utilisateur aussi
+    const otherType = userType === 'client' ? 'coach' : 'client';
+    const existingOtherType = await readUserFile(userId, otherType);
+    if (existingOtherType) {
+      return res.status(409).json({ error: 'Un compte avec cet email existe déjà' });
+    }
+
+    // Préparer les données utilisateur
+    const userDataToSave = {
+      ...userData,
+      email: normalizedEmail,
+      id: userId,
+      userType,
+      createdAt: new Date().toISOString(),
+      lastUpdated: new Date().toISOString()
+    };
+
+    // Sauvegarder l'utilisateur
+    const saveSuccess = await writeUserFile(userId, userDataToSave, userType);
+
+    if (saveSuccess) {
+      console.log(`✅ Inscription réussie pour: ${normalizedEmail} (${userType})`);
+      
+      // Retourner les données utilisateur (sans le mot de passe)
+      const { password: _, ...userWithoutPassword } = userDataToSave;
+      res.json({
+        success: true,
+        user: userWithoutPassword
+      });
+    } else {
+      throw new Error('Erreur de sauvegarde');
+    }
+
+  } catch (error) {
+    console.error('❌ Erreur inscription:', error);
+    res.status(500).json({ error: 'Erreur serveur lors de l\'inscription' });
+  }
+});
+
 // Routes existantes (messages, programmes, etc.)
 app.get('/api/messages/:userId', async (req, res) => {
   try {
