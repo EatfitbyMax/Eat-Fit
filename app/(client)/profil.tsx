@@ -211,7 +211,7 @@ export default function ProfilScreen() {
     setStravaConnecting(true);
 
     try {
-      console.log('⚡ Connexion Strava ultra-rapide pour:', userId);
+      console.log('🔄 Connexion Strava pour:', userId);
 
       // Vérification préalable du statut serveur
       const preCheckStatus = await IntegrationsManager.getStravaStatusFromServer(userId);
@@ -227,25 +227,54 @@ export default function ProfilScreen() {
         return;
       }
 
-      // Modal de connexion instantané
+      // Modal de connexion
       showModal('Connexion Strava...', 'Redirection vers Strava pour autorisation...');
 
-      // Tenter la connexion avec timeout ultra-court
+      // Tenter la connexion
       const isConnected = await IntegrationsManager.connectStrava(userId);
 
       if (isConnected) {
-        console.log('✅ Connexion Strava réussie instantanément !');
+        console.log('✅ Connexion Strava réussie !');
 
-        // Mise à jour ultra-rapide du modal
-        showModal('Synchronisation...', 'Récupération immédiate des données Strava...');
+        // Attendre un délai pour que le serveur traite les données
+        showModal('Finalisation...', 'Vérification de la connexion...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
-        // Synchronisation ultra-rapide en parallèle
-        const [serverStatus] = await Promise.all([
-          IntegrationsManager.syncStravaStatusFromServer(userId),
-          loadIntegrationStatus()
-        ]);
+        // Vérifier le statut final avec plusieurs tentatives
+        let connectionVerified = false;
+        for (let i = 0; i < 5; i++) {
+          const finalStatus = await IntegrationsManager.getStravaStatusFromServer(userId);
+          if (finalStatus.connected) {
+            connectionVerified = true;
+            await loadIntegrationStatus();
+            break;
+          }
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
 
-        // Vérifier le statut final instantanément
+        if (connectionVerified) {
+          hideModal();
+          Alert.alert(
+            '✅ Strava connecté !',
+            'Votre compte Strava est maintenant connecté avec succès !',
+            [{ text: 'Parfait !', style: 'default' }]
+          );
+        } else {
+          hideModal();
+          Alert.alert(
+            '⚠️ Connexion en cours',
+            'La connexion Strava est en cours de finalisation. Veuillez patienter quelques instants et vérifier à nouveau.',
+            [
+              {
+                text: 'Vérifier maintenant',
+                onPress: async () => {
+                  await loadIntegrationStatus();
+                }
+              },
+              { text: 'OK', style: 'cancel' }
+            ]
+          );
+        }
         const finalStatus = await IntegrationsManager.getIntegrationStatus(userId);
 
         if (finalStatus.strava.connected) {
@@ -283,38 +312,7 @@ export default function ProfilScreen() {
           // Tentative de re-synchronisation rapide
           setTimeout(async () => {
             await loadIntegrationStatus();
-            const retryStatus = await IntegrationsManager.getIntegrationStatus(userId);
-
-            if (retryStatus.strava.connected) {
-              hideModal();
-              Alert.alert(
-                '✅ Strava connecté !',
-                `Synchronisation terminée ! Votre compte Strava est maintenant opérationnel.`,
-                [{ text: 'Parfait !', style: 'cancel' }]
-              );
-            }
-          }, 1000);
-
-          hideModal();
-          Alert.alert(
-            'Synchronisation en cours...',
-            'L\'autorisation Strava a été accordée. La synchronisation des données se termine dans quelques instants.',
-            [
-              {
-                text: 'Vérifier maintenant',
-                onPress: async () => {
-                  await loadIntegrationStatus();
-                },
-                style: 'default'
-              },
-              {
-                text: 'OK',
-                style: 'cancel'
-              }
-            ]
-          );
-        }
-      } else {
+            } else {
         console.log('❌ Connexion Strava échouée');
         hideModal();
 

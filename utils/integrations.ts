@@ -389,42 +389,44 @@ export class IntegrationsManager {
   }
 
   /**
-   * Vérification de la connexion côté serveur avec retry ultra-rapide
+   * Vérification de la connexion côté serveur avec retry optimisé
    * @param userId - ID utilisateur
    * @param serverUrl - URL du serveur
    * @returns Promise<object> - Résultat de la vérification
    */
   private static async verifyStravaConnection(userId: string, serverUrl: string): Promise<{ success: boolean; data?: any }> {
-    console.log('⚡ [STRAVA] Vérification connexion ultra-rapide...');
+    console.log('🔄 [STRAVA] Vérification connexion avec délais adaptatifs...');
 
-    // Délai initial minimal pour réactivité maximale
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Délai initial pour laisser le temps au serveur de traiter
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const maxAttempts = 12; // Plus de tentatives mais ultra-rapides
-    const retryDelay = 200; // Délai ultra-réduit à 200ms
+    const maxAttempts = 15;
+    const baseDelay = 500; // Délai de base plus élevé
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        console.log(`⚡ [STRAVA] Vérification ${attempt}/${maxAttempts}...`);
+        console.log(`🔄 [STRAVA] Vérification ${attempt}/${maxAttempts}...`);
 
         const serverStatus = await this.getStravaStatusFromServer(userId);
 
         if (serverStatus && serverStatus.connected) {
-          console.log('✅ [STRAVA] Connexion confirmée instantanément !');
+          console.log('✅ [STRAVA] Connexion confirmée !');
 
-          // Déclencher la synchronisation immédiatement et en parallèle
-          Promise.all([
-            this.triggerImmediateSync(userId),
-            this.updateLocalStravaStatus(userId, serverStatus)
-          ]).catch(err => 
-            console.log('⚠️ [STRAVA] Sync parallèle échoué:', err)
+          // Mettre à jour le statut local
+          await this.updateLocalStravaStatus(userId, serverStatus);
+
+          // Déclencher la synchronisation en arrière-plan
+          this.triggerImmediateSync(userId).catch(err => 
+            console.log('⚠️ [STRAVA] Sync arrière-plan échoué:', err)
           );
 
           return { success: true, data: serverStatus };
         }
 
         if (attempt < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, retryDelay));
+          // Délai progressif : plus on attend, plus on laisse de temps
+          const delay = baseDelay * (attempt <= 5 ? 1 : attempt <= 10 ? 2 : 3);
+          await new Promise(resolve => setTimeout(resolve, delay));
         }
       } catch (error) {
         console.log(`⚠️ [STRAVA] Erreur tentative ${attempt}:`, error);
