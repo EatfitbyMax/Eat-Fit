@@ -229,12 +229,10 @@ export class IntegrationsManager {
   // ========================================
 
   /**
-   * Connexion à Strava avec gestion d'erreurs améliorée
-   * @param userId - ID de l'utilisateur
-   * @returns Promise<boolean> - true si connexion réussie
+   * Gestion de la connexion Strava simple
    */
   static async connectStrava(userId: string): Promise<boolean> {
-    console.log('🔄 [STRAVA] Début de la connexion pour utilisateur:', userId);
+    console.log('🔄 Connexion Strava pour:', userId);
 
     try {
       // 1. Validation de la configuration
@@ -251,22 +249,22 @@ export class IntegrationsManager {
 
       // 3. Lancement du processus d'autorisation OAuth
       const authResult = await this.initiateStravaOAuth(userId, config);
-      
-      // 4. Vérification du résultat côté serveur
+
+      // 4. Vérification de la connexion côté serveur
       const connectionResult = await this.verifyStravaConnection(userId, config.serverUrl);
-      
+
       if (connectionResult.success) {
         // 5. Mise à jour du statut local
         await this.updateLocalStravaStatus(userId, connectionResult.data);
-        console.log('✅ [STRAVA] Connexion réussie pour utilisateur:', userId);
+        console.log('✅ Connexion Strava réussie pour utilisateur:', userId);
         return true;
       } else {
-        console.log('❌ [STRAVA] Connexion échouée pour utilisateur:', userId);
+        console.log('❌ Connexion Strava échouée pour utilisateur:', userId);
         return false;
       }
 
     } catch (error) {
-      console.error('❌ [STRAVA] Erreur lors de la connexion:', error);
+      console.error('❌ Erreur lors de la connexion Strava:', error);
       throw this.formatStravaError(error);
     }
   }
@@ -325,7 +323,7 @@ export class IntegrationsManager {
   private static async testServerConnectivity(serverUrl: string): Promise<boolean> {
     try {
       console.log('🔍 [STRAVA] Test connectivité serveur:', serverUrl);
-      
+
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
@@ -339,7 +337,7 @@ export class IntegrationsManager {
 
       clearTimeout(timeoutId);
       const isAvailable = response.ok;
-      
+
       console.log(isAvailable ? '✅ [STRAVA] Serveur disponible' : '❌ [STRAVA] Serveur indisponible');
       return isAvailable;
     } catch (error) {
@@ -358,7 +356,7 @@ export class IntegrationsManager {
     try {
       const redirectUri = `${config.serverUrl}/strava-callback`;
       const scope = 'read,activity:read_all';
-      
+
       const authUrl = [
         'https://www.strava.com/oauth/authorize',
         `?client_id=${config.clientId}`,
@@ -398,7 +396,7 @@ export class IntegrationsManager {
    */
   private static async verifyStravaConnection(userId: string, serverUrl: string): Promise<{ success: boolean; data?: any }> {
     console.log('⚡ [STRAVA] Vérification connexion ultra-rapide...');
-    
+
     // Délai initial minimal pour réactivité maximale
     await new Promise(resolve => setTimeout(resolve, 100));
 
@@ -408,12 +406,12 @@ export class IntegrationsManager {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         console.log(`⚡ [STRAVA] Vérification ${attempt}/${maxAttempts}...`);
-        
+
         const serverStatus = await this.getStravaStatusFromServer(userId);
-        
+
         if (serverStatus && serverStatus.connected) {
           console.log('✅ [STRAVA] Connexion confirmée instantanément !');
-          
+
           // Déclencher la synchronisation immédiatement et en parallèle
           Promise.all([
             this.triggerImmediateSync(userId),
@@ -421,7 +419,7 @@ export class IntegrationsManager {
           ]).catch(err => 
             console.log('⚠️ [STRAVA] Sync parallèle échoué:', err)
           );
-          
+
           return { success: true, data: serverStatus };
         }
 
@@ -461,7 +459,7 @@ export class IntegrationsManager {
   private static async updateLocalStravaStatus(userId: string, stravaData: any): Promise<void> {
     try {
       const status = await this.getIntegrationStatus(userId);
-      
+
       status.strava = {
         connected: true,
         athlete: stravaData.athlete,
@@ -495,7 +493,7 @@ export class IntegrationsManager {
 
       // Nettoyer les activités stockées localement
       await AsyncStorage.removeItem(`strava_activities_${userId}`);
-      
+
       console.log('🧹 [STRAVA] Données locales nettoyées');
     } catch (error) {
       console.error('❌ [STRAVA] Erreur nettoyage données locales:', error);
@@ -510,7 +508,7 @@ export class IntegrationsManager {
   private static async notifyServerDisconnection(userId: string): Promise<void> {
     try {
       const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
-      
+
       const response = await fetch(`${serverUrl}/api/strava/disconnect/${userId}`, {
         method: 'POST',
         headers: {
@@ -539,15 +537,15 @@ export class IntegrationsManager {
     if (error.message?.includes('Configuration')) {
       return new Error('Configuration Strava manquante. Contactez le support technique.');
     }
-    
+
     if (error.message?.includes('Serveur indisponible')) {
       return new Error('Serveur temporairement indisponible. Vérifiez votre connexion internet.');
     }
-    
+
     if (error.message?.includes('OAuth') || error.message?.includes('authorization')) {
       return new Error('Erreur d\'autorisation Strava. Veuillez réessayer.');
     }
-    
+
     return new Error('Impossible de connecter Strava. Vérifiez votre connexion internet et réessayez.');
   }
 
@@ -559,7 +557,7 @@ export class IntegrationsManager {
    */
   static async exchangeStravaCode(code: string, userId: string): Promise<boolean> {
     console.log('🔄 [STRAVA] Échange code autorisation (legacy method)');
-    
+
     try {
       const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
 
@@ -653,7 +651,7 @@ export class IntegrationsManager {
     try {
       // D'abord, synchroniser le statut depuis le serveur
       await this.syncStravaStatusFromServer(userId);
-      
+
       const status = await this.getIntegrationStatus(userId);
 
       if (!status.strava.connected) {
@@ -764,7 +762,7 @@ export class IntegrationsManager {
   static async getStravaActivities(userId: string): Promise<StravaActivity[]> {
     try {
       console.log(`🔍 [GET_STRAVA_ACTIVITIES] Début pour utilisateur: ${userId}`);
-      
+
       // 1. Essayer de récupérer depuis le serveur VPS d'abord
       try {
         const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
@@ -773,12 +771,12 @@ export class IntegrationsManager {
           headers: { 'Content-Type': 'application/json' },
           timeout: 5000
         });
-        
+
         if (response.ok) {
           const serverActivities = await response.json();
           if (Array.isArray(serverActivities) && serverActivities.length > 0) {
             console.log(`✅ [SERVEUR] ${serverActivities.length} activités récupérées depuis serveur VPS`);
-            
+
             // Valider et formater les activités
             const validServerActivities = serverActivities.filter(activity =>
               activity &&
@@ -790,11 +788,11 @@ export class IntegrationsManager {
               ...activity,
               avgHeartRate: activity.avgHeartRate || activity.averageHeartrate
             }));
-            
+
             // Mettre à jour le cache local
             await AsyncStorage.setItem(`strava_activities_${userId}`, JSON.stringify(validServerActivities));
             console.log(`💾 [CACHE] ${validServerActivities.length} activités sauvées en cache`);
-            
+
             return validServerActivities;
           }
         }
@@ -818,7 +816,7 @@ export class IntegrationsManager {
             ...activity,
             avgHeartRate: activity.avgHeartRate || activity.averageHeartrate
           }));
-          
+
           if (validActivities.length > 0) {
             console.log(`📱 [CACHE] ${validActivities.length} activités chargées depuis le cache local`);
             return validActivities;
@@ -829,11 +827,11 @@ export class IntegrationsManager {
       // 3. Si pas de cache local, essayer de synchroniser
       console.log('🔄 [SYNC] Aucune activité en cache, tentative de synchronisation...');
       const integrationStatus = await this.getIntegrationStatus(userId);
-      
+
       if (integrationStatus.strava.connected) {
         try {
           await this.syncStravaActivities(userId);
-          
+
           // Réessayer de lire le cache après synchronisation
           const newStored = await AsyncStorage.getItem(`strava_activities_${userId}`);
           if (newStored) {
@@ -935,24 +933,24 @@ export class IntegrationsManager {
   static async syncStravaStatusFromServer(userId: string): Promise<void> {
     try {
       console.log('🔄 [STRAVA] Synchronisation statut depuis serveur...');
-      
+
       // Récupérer le statut depuis le serveur
       const serverStatus = await this.getStravaStatusFromServer(userId);
-      
+
       // Récupérer le statut local actuel
       const localStatus = await this.getIntegrationStatus(userId);
-      
+
       // Mettre à jour le statut local si différent du serveur
       if (serverStatus.connected !== localStatus.strava.connected) {
         console.log(`📝 [STRAVA] Mise à jour statut local: ${localStatus.strava.connected} -> ${serverStatus.connected}`);
-        
+
         localStatus.strava = {
           connected: serverStatus.connected,
           athlete: serverStatus.athlete || null,
           lastSync: serverStatus.connected ? new Date().toISOString() : null,
           athleteId: serverStatus.athlete?.id?.toString() || null
         };
-        
+
         await PersistentStorage.saveIntegrationStatus(userId, localStatus);
         console.log('✅ [STRAVA] Statut local synchronisé avec le serveur');
       } else {
@@ -1119,7 +1117,7 @@ export const getIntegrationStatuses = async (userId: string): Promise<Integratio
     // Pour l'instant, on retourne toujours les valeurs par défaut car l'endpoint /api/integrations n'existe pas encore
     // et l'endpoint /api/strava/status/{userId} ne couvre pas toutes les intégrations.
     console.log('📋 Utilisation des statuts d\'intégrations par défaut (endpoint API manquant)');
-    
+
     // Tentative de récupération des statuts réels si l'API était implémentée
     // Exemple :
     // const integrationStatus = await IntegrationsManager.getIntegrationStatus(userId);

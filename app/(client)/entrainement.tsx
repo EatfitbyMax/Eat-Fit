@@ -309,23 +309,7 @@ export default function EntrainementScreen() {
             setStravaActivities(activities);
           } else {
             // 3. Finalement, essayer de synchroniser
-            console.log('🔄 Aucune activité trouvée, tentative de synchronisation...');
-            try {
-              await IntegrationsManager.syncStravaActivities(currentUser.id);
-              const newActivities = await IntegrationsManager.getStravaActivities(currentUser.id);
-              console.log(`✅ ${newActivities.length} activités après synchronisation`);
-              
-              if (newActivities.length > 0) {
-                console.log('📋 Nouvelles activités synchronisées:');
-                newActivities.forEach((activity, index) => {
-                  console.log(`  ${index + 1}. ${activity.name} - ${new Date(activity.date).toLocaleDateString('fr-FR')} (${activity.type})`);
-                });
-              }
-              
-              setStravaActivities(newActivities);
-            } catch (syncError) {
-              console.error('❌ Erreur synchronisation:', syncError);
-            }
+            // Synchronisation supprimée - uniquement affichage des activités existantes
           }
         } else {
           console.log('⚠️ Strava non connecté, aucune activité à charger');
@@ -1000,16 +984,7 @@ export default function EntrainementScreen() {
                 <Text style={styles.sectionSubtitle}>
                   {getStravaActivitiesForCurrentWeek().length} activité{getStravaActivitiesForCurrentWeek().length > 1 ? 's' : ''} cette semaine
                 </Text>
-                <TouchableOpacity 
-                  style={styles.syncButton}
-                  onPress={async () => {
-                    const currentUser = await getCurrentUser();
-                    if (currentUser) {
-                      setIsLoading(true);
-                      try {
-                        console.log('🔄 Synchronisation manuelle Strava...');
-                        await IntegrationsManager.syncStravaActivities(currentUser.id);
-                        await loadStravaActivities();
+                {/* Bouton de synchronisation supprimé - synchronisation uniquement dans le profil */}
                         console.log('✅ Synchronisation manuelle terminée');
                       } catch (error) {
                         console.error('❌ Erreur synchronisation manuelle:', error);
@@ -1499,18 +1474,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#8B949E',
   },
-  syncButton: {
-    backgroundColor: '#F5A623',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    marginTop: 8,
-  },
-  syncButtonText: {
-    fontSize: 12,
-    color: '#000000',
-    fontWeight: '600',
-  },
+  // Styles du bouton de synchronisation supprimés
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',

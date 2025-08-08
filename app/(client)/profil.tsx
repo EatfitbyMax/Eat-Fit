@@ -218,7 +218,7 @@ export default function ProfilScreen() {
       if (preCheckStatus.connected) {
         console.log('✅ Déjà connecté ! Mise à jour de l\'interface...');
         await loadIntegrationStatus();
-        
+
         Alert.alert(
           '✅ Déjà connecté !',
           `Bonjour ${preCheckStatus.athlete?.firstname || 'Athlète'} ! Votre compte Strava est déjà connecté.`,
@@ -284,7 +284,7 @@ export default function ProfilScreen() {
           setTimeout(async () => {
             await loadIntegrationStatus();
             const retryStatus = await IntegrationsManager.getIntegrationStatus(userId);
-            
+
             if (retryStatus.strava.connected) {
               hideModal();
               Alert.alert(
@@ -423,28 +423,7 @@ export default function ProfilScreen() {
     }
   };
 
-  const handleSyncAllData = async () => {
-    if (isLoading) return;
-
-    setIsLoading(true);
-    try {
-      const currentUser = await getCurrentUser();
-      if (!currentUser) {
-        Alert.alert("Information", "Veuillez vous reconnecter");
-        return;
-      }
-
-      await syncWithExternalApps(currentUser.id);
-
-      Alert.alert("Succès", "Synchronisation terminée");
-      await loadIntegrationStatus();
-    } catch (error) {
-      console.error("Erreur sync:", error);
-      Alert.alert("Erreur", "Impossible de synchroniser les données. Vérifiez votre connexion internet.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Synchronisation supprimée - gestion simple uniquement
 
   const toggleGoal = (goal: string) => {
     setSelectedGoals(prev =>
@@ -512,40 +491,7 @@ export default function ProfilScreen() {
     setShowComingSoonModal(true);
   };
 
-  /**
-   * Vérification manuelle du statut Strava
-   */
-  const handleCheckStravaStatus = async () => {
-    if (isLoading) return;
-
-    setIsLoading(true);
-    try {
-      const currentUser = await getCurrentUser();
-      if (!currentUser) return;
-
-      console.log('🔍 Vérification manuelle du statut Strava...');
-
-      // Synchroniser depuis le serveur
-      await IntegrationsManager.syncStravaStatusFromServer(currentUser.id);
-
-      // Recharger le statut local
-      await loadIntegrationStatus();
-
-      const status = await IntegrationsManager.getIntegrationStatus(currentUser.id);
-
-      if (status.strava.connected) {
-        Alert.alert('✅ Statut vérifié', 'Strava est bien connecté!');
-      } else {
-        Alert.alert('⚠️ Statut vérifié', 'Strava n\'est pas connecté. Essayez de vous reconnecter.');
-      }
-    } catch (error) {
-      console.error('❌ Erreur vérification statut:', error);
-      Alert.alert('Erreur', 'Impossible de vérifier le statut de connexion.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // Synchronisation supprimée - gestion simple uniquement
 
   return (
     <SafeAreaView style={styles.container}>
@@ -817,19 +763,6 @@ export default function ProfilScreen() {
               </Text>
             </TouchableOpacity>
           </View>
-
-          {/* Synchronisation globale */}
-          {(integrationStatus.appleHealth.connected || integrationStatus.strava.connected) && (
-            <TouchableOpacity
-              style={styles.syncAllButton}
-              onPress={handleSyncAllData}
-              disabled={isLoading}
-            >
-              <Text style={styles.syncAllButtonText}>
-                🔄 Synchroniser toutes les données
-              </Text>
-            </TouchableOpacity>
-          )}
 
           {/* Informations de statut */}
           {integrationStatus.appleHealth.connected && (
