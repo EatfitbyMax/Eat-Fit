@@ -312,9 +312,10 @@ export default function ProfilScreen() {
           // Tentative de re-synchronisation rapide
           setTimeout(async () => {
             await loadIntegrationStatus();
-            } else {
-        console.log('❌ Connexion Strava échouée');
-        hideModal();
+          }, 1500);
+        } else {
+          console.log('❌ Connexion Strava échouée');
+          hideModal();
 
         Alert.alert(
           'Connexion échouée',
