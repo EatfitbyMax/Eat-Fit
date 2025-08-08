@@ -1,3 +1,4 @@
+
 import { PersistentStorage } from './storage';
 import { Platform } from 'react-native';
 import * as AuthSession from 'expo-auth-session';
@@ -10,7 +11,6 @@ const STRAVA_CLIENT_SECRET = process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET || '';
 
 // Configuration du redirect URI selon l'environnement  
 const getStravaRedirectUri = (): string => {
-  // Utiliser l'URL du serveur VPS pour la cohérence
   return `${process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud'}/strava-callback`;
 };
 
@@ -20,18 +20,17 @@ export interface IntegrationConfig {
   appleHealth: {
     connected: boolean;
     permissions: string[];
-    lastSync?: string; // Ajout pour stocker la date du dernier sync
+    lastSync?: string;
   };
   strava: {
     connected: boolean;
-    athlete?: any; // Ajout pour stocker les infos de l'athlète
+    athlete?: any;
     accessToken?: string;
     refreshToken?: string;
     expiresAt?: number;
   };
 }
 
-// Interface pour les activités Strava, utilisée dans getStravaActivities
 interface StravaActivity {
   id: string;
   name: string;
@@ -59,10 +58,8 @@ export class IntegrationsManager {
 
       console.log('🍎 Début connexion Apple Health pour utilisateur:', userId);
 
-      // Importer HealthKitService
       const HealthKitService = require('../utils/healthKit').default;
 
-      // Vérifier la disponibilité d'Apple Health
       console.log('🔍 Vérification disponibilité Apple Health...');
       const isAvailable = await HealthKitService.isAvailable();
       if (!isAvailable) {
@@ -70,12 +67,10 @@ export class IntegrationsManager {
         throw new Error('Apple Health n\'est pas disponible sur cet appareil. Vérifiez que l\'application Santé est installée et que HealthKit est supporté.');
       }
 
-      // Demander les permissions via HealthKitService
       console.log('🔐 Demande des permissions Apple Health...');
       const granted = await HealthKitService.requestPermissions();
 
       if (granted) {
-        // Sauvegarder le statut de connexion
         const status = await this.getIntegrationStatus(userId);
         status.appleHealth = {
           connected: true,
@@ -125,12 +120,10 @@ export class IntegrationsManager {
 
       const AppleHealthKit = require('rn-apple-healthkit');
 
-      // Obtenir les données des 7 derniers jours
       const endDate = new Date();
       const startDate = new Date();
       startDate.setDate(endDate.getDate() - 7);
 
-      // Récupérer les pas des 7 derniers jours
       const stepData: any[] = [];
       for (let i = 0; i < 7; i++) {
         const currentDate = new Date(startDate);
@@ -153,7 +146,6 @@ export class IntegrationsManager {
         });
       }
 
-      // Récupérer les données de fréquence cardiaque
       const heartRateData = await new Promise<any[]>((resolve) => {
         const options = {
           startDate: startDate.toISOString(),
@@ -166,15 +158,10 @@ export class IntegrationsManager {
         });
       });
 
-      // Récupérer les données de sommeil (pas directement supporté par rn-apple-healthkit de base)
       const sleepData: any[] = [];
-      // Note: Les données de sommeil nécessitent une configuration spéciale avec rn-apple-healthkit
-      // Pour l'instant, on laisse le tableau vide
 
-      // Organiser les données par date
       const healthDataByDate = {};
 
-      // Traiter les pas
       stepData.forEach((entry: any) => {
         const date = new Date(entry.startDate).toISOString().split('T')[0];
         if (!healthDataByDate[date]) {
@@ -183,7 +170,6 @@ export class IntegrationsManager {
         healthDataByDate[date].steps += entry.value || 0;
       });
 
-      // Traiter la fréquence cardiaque
       heartRateData.forEach((entry: any) => {
         const date = new Date(entry.startDate).toISOString().split('T')[0];
         if (!healthDataByDate[date]) {
@@ -192,11 +178,6 @@ export class IntegrationsManager {
         healthDataByDate[date].heartRate.push(entry.value);
       });
 
-      // Traiter les données de sommeil
-      // Les données de sommeil ne sont pas directement disponibles via rn-apple-healthkit
-      // On peut ajouter cette fonctionnalité plus tard si nécessaire
-
-      // Convertir en tableau et calculer les moyennes
       const processedData = Object.values(healthDataByDate).map((dayData: any) => ({
         date: dayData.date,
         steps: Math.round(dayData.steps),
@@ -213,7 +194,6 @@ export class IntegrationsManager {
         }, 0)
       }));
 
-      // Sauvegarder sur le serveur uniquement
       await PersistentStorage.saveHealthData(userId, processedData);
       console.log('✅ Données Apple Health synchronisées sur le serveur');
     } catch (error) {
@@ -222,14 +202,14 @@ export class IntegrationsManager {
     }
   }
 
-  // Méthodes pour Strava
+  // Méthodes pour Strava - Nouvelle implémentation
   static async connectStrava(userId: string): Promise<boolean> {
     try {
       const clientId = process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID;
       const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
 
       console.log('🔍 Vérification configuration Strava...');
-      console.log('Client ID:', clientId);
+      console.log('Client ID:', clientId ? `${clientId.substring(0, 6)}...` : 'manquant');
       console.log('Serveur URL:', serverUrl);
 
       if (!clientId || clientId.includes('your_')) {
@@ -237,94 +217,106 @@ export class IntegrationsManager {
         throw new Error('Configuration Strava manquante. Veuillez contacter le support technique.');
       }
 
-      // Tester d'abord la connexion au serveur
-      const testResponse = await fetch(`${serverUrl}/api/health`, {
-        method: 'GET',
-        timeout: 5000
-      }).catch(() => null);
+      // Tester la connexion au serveur
+      try {
+        const testResponse = await fetch(`${serverUrl}/api/health`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 5000
+        });
 
-      if (!testResponse || !testResponse.ok) {
+        if (!testResponse.ok) {
+          throw new Error('Serveur non disponible');
+        }
+      } catch (error) {
+        console.error('❌ Test serveur échoué:', error);
         throw new Error('Serveur indisponible. Vérifiez votre connexion internet.');
       }
 
-      // Créer l'URL d'autorisation Strava vers notre serveur
+      // Créer l'URL d'autorisation Strava
       const authUrl = `https://www.strava.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(serverUrl + '/strava-callback')}&approval_prompt=force&scope=read,activity:read_all&state=${userId}`;
 
       console.log('🔗 Ouverture de l\'autorisation Strava...');
 
+      // Utiliser AuthSession pour un meilleur contrôle du flux OAuth
+      const redirectUrl = AuthSession.makeRedirectUri({
+        path: '/strava-callback',
+        queryParams: { platform: 'mobile' }
+      });
+
+      console.log('📱 Redirect URL mobile:', redirectUrl);
+
       // Ouvrir l'autorisation Strava
       const result = await WebBrowser.openAuthSessionAsync(
-        authUrl, 
-        serverUrl,
+        authUrl,
+        redirectUrl,
         {
           showInRecents: false,
-          presentationStyle: WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN
+          presentationStyle: WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN,
+          controlsColor: '#FC4C02', // Couleur Strava
+          toolbarColor: '#FFFFFF',
+          secondaryToolbarColor: '#F5F5F5',
+          showTitle: true,
+          enableBarCollapsing: false,
+          ephemeralWebSession: false
         }
       );
 
-      console.log('🔄 Résultat WebBrowser:', result.type);
+      console.log('🔄 Résultat WebBrowser:', result);
 
-      // Vérifier le statut côté serveur après tentative de connexion
-      // Attendre un peu plus longtemps pour que le serveur traite la requête
-      console.log('⏳ Attente du traitement côté serveur...');
-      await new Promise(resolve => setTimeout(resolve, 5000)); // Attendre 5 secondes
-
-      // Essayer plusieurs fois si nécessaire
-      let attempts = 0;
-      const maxAttempts = 3;
-      let serverStatus = null;
-
-      while (attempts < maxAttempts && (!serverStatus || !serverStatus.connected)) {
-        attempts++;
-        console.log(`🔄 Tentative ${attempts}/${maxAttempts} de vérification du statut Strava...`);
+      if (result.type === 'success' && result.url) {
+        console.log('✅ URL de retour reçue:', result.url);
         
-        try {
-          serverStatus = await this.getStravaStatusFromServer(userId);
-          console.log('📡 Statut serveur Strava:', serverStatus);
+        // Extraire le code de l'URL de retour
+        const url = new URL(result.url);
+        const code = url.searchParams.get('code');
+        const error = url.searchParams.get('error');
+
+        if (error) {
+          console.error('❌ Erreur OAuth Strava:', error);
+          throw new Error(`Erreur d'autorisation Strava: ${error}`);
+        }
+
+        if (code) {
+          console.log('🔐 Code d\'autorisation reçu, échange en cours...');
           
-          if (serverStatus && serverStatus.connected) {
-            break;
+          // Échanger le code contre un token via notre serveur
+          const exchangeSuccess = await this.exchangeStravaCodeDirect(code, userId);
+          
+          if (exchangeSuccess) {
+            console.log('✅ Connexion Strava réussie');
+            return true;
+          } else {
+            console.error('❌ Échec de l\'échange de token');
+            throw new Error('Impossible d\'échanger le code d\'autorisation');
           }
-        } catch (error) {
-          console.log(`⚠️ Erreur tentative ${attempts}:`, error);
+        } else {
+          console.error('❌ Code d\'autorisation manquant dans l\'URL de retour');
+          throw new Error('Code d\'autorisation manquant');
         }
-        
-        if (attempts < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, 2000)); // Attendre 2 secondes entre les tentatives
-        }
-      }
-
-      if (serverStatus && serverStatus.connected) {
-        console.log('✅ Connexion Strava confirmée côté serveur');
-
-        // Mettre à jour le statut local
-        const status = await this.getIntegrationStatus(userId);
-        status.strava = {
-          connected: true,
-          athlete: serverStatus.athlete
-        };
-        await PersistentStorage.saveIntegrationStatus(userId, status);
-
-        return true;
-      } else {
-        console.log('❌ Connexion Strava échouée après', attempts, 'tentatives');
+      } else if (result.type === 'cancel') {
+        console.log('ℹ️ Connexion Strava annulée par l\'utilisateur');
         return false;
+      } else {
+        console.error('❌ Résultat WebBrowser inattendu:', result);
+        throw new Error('Processus d\'autorisation interrompu');
       }
 
     } catch (error) {
       console.error('❌ Erreur connexion Strava:', error);
-      if (error.message.includes('Configuration')) {
-        throw error; // Propager les erreurs de configuration
+      if (error.message.includes('Configuration') || error.message.includes('Serveur')) {
+        throw error;
       }
       throw new Error('Impossible de connecter Strava. Vérifiez votre connexion internet et réessayez.');
     }
   }
 
-  static async exchangeStravaCode(code: string, userId: string): Promise<boolean> {
+  static async exchangeStravaCodeDirect(code: string, userId: string): Promise<boolean> {
     try {
-      const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
+      const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
 
-      // Utiliser le serveur VPS pour l'échange du token
+      console.log('🔄 Échange direct du code Strava...');
+
       const response = await fetch(`${serverUrl}/api/strava/exchange-token`, {
         method: 'POST',
         headers: {
@@ -333,45 +325,69 @@ export class IntegrationsManager {
         body: JSON.stringify({
           code: code,
           userId: userId
-        })
+        }),
+        timeout: 15000 // 15 secondes timeout
       });
 
       if (!response.ok) {
-        throw new Error('Erreur lors de l\'authentification Strava');
+        const errorText = await response.text();
+        console.error('❌ Erreur serveur échange token:', response.status, errorText);
+        throw new Error(`Erreur serveur lors de l'authentification Strava (${response.status})`);
       }
 
       const result = await response.json();
+      console.log('📋 Résultat échange token:', { success: result.success, hasAthlete: !!result.athlete });
 
-      if (result.success) {
-        // Mettre à jour le statut local
+      if (result.success && result.athlete) {
+        // Mettre à jour le statut local avec les nouvelles données
         const status = await this.getIntegrationStatus(userId);
         status.strava = {
           connected: true,
           athlete: result.athlete,
-          accessToken: result.access_token, // Stocker l'access token
-          refreshToken: result.refresh_token, // Stocker le refresh token
-          expiresAt: result.expires_at // Stocker l'expiration
+          accessToken: result.access_token,
+          refreshToken: result.refresh_token,
+          expiresAt: result.expires_at
         };
         await PersistentStorage.saveIntegrationStatus(userId, status);
 
-        console.log('✅ Strava connecté via serveur VPS');
+        console.log('✅ Token Strava échangé et sauvegardé avec succès');
         return true;
+      } else {
+        console.error('❌ Réponse serveur invalide:', result);
+        return false;
       }
 
-      return false;
     } catch (error) {
-      console.error('❌ Erreur connexion Strava:', error);
-      throw new Error('Impossible de se connecter à Strava. Vérifiez votre connexion internet.');
+      console.error('❌ Erreur échange code Strava:', error);
+      throw new Error('Impossible d\'échanger le code d\'autorisation avec Strava. Vérifiez votre connexion internet.');
     }
   }
 
   static async disconnectStrava(userId: string): Promise<void> {
     try {
+      // Révoquer le token côté serveur
+      const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
+      
+      try {
+        await fetch(`${serverUrl}/api/strava/disconnect/${userId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 10000
+        });
+      } catch (error) {
+        console.warn('⚠️ Impossible de révoquer le token côté serveur:', error);
+      }
+
+      // Nettoyer le statut local
       const status = await this.getIntegrationStatus(userId);
       status.strava = {
         connected: false
       };
       await PersistentStorage.saveIntegrationStatus(userId, status);
+      
+      // Nettoyer les données locales
+      await AsyncStorage.removeItem(`strava_activities_${userId}`);
+      
       console.log('✅ Strava déconnecté');
     } catch (error) {
       console.error('❌ Erreur déconnexion Strava:', error);
@@ -387,46 +403,43 @@ export class IntegrationsManager {
         throw new Error('Strava non connecté ou token de rafraîchissement manquant');
       }
 
-      const clientId = process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID;
-      const clientSecret = process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET;
+      const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
 
-      if (!clientId || !clientSecret) {
-        throw new Error('Configuration Strava manquante pour le rafraîchissement du token.');
-      }
-
-      const response = await fetch('https://www.strava.com/oauth/token', {
+      const response = await fetch(`${serverUrl}/api/strava/refresh-token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          client_id: clientId,
-          client_secret: clientSecret,
-          refresh_token: status.strava.refreshToken,
-          grant_type: 'refresh_token'
-        })
+          userId: userId,
+          refreshToken: status.strava.refreshToken
+        }),
+        timeout: 10000
       });
 
       if (!response.ok) {
-        console.error('Strava API Error:', await response.text()); // Log the actual error from Strava
+        console.error('❌ Erreur rafraîchissement token:', response.status);
         throw new Error('Erreur lors du rafraîchissement du token Strava');
       }
 
       const tokenData = await response.json();
 
-      // Mettre à jour les tokens
-      status.strava.accessToken = tokenData.access_token;
-      status.strava.refreshToken = tokenData.refresh_token;
-      status.strava.expiresAt = tokenData.expires_at;
+      if (tokenData.success) {
+        // Mettre à jour les tokens
+        status.strava.accessToken = tokenData.access_token;
+        status.strava.refreshToken = tokenData.refresh_token;
+        status.strava.expiresAt = tokenData.expires_at;
 
-      await PersistentStorage.saveIntegrationStatus(userId, status);
+        await PersistentStorage.saveIntegrationStatus(userId, status);
+        return tokenData.access_token;
+      } else {
+        throw new Error('Token de rafraîchissement invalide');
+      }
 
-      return tokenData.access_token;
     } catch (error) {
       console.error('❌ Erreur rafraîchissement token Strava:', error);
-      // Si le token de rafraîchissement n'est plus valide, déconnecter Strava
-      if (error.message.includes('Erreur lors du rafraîchissement') || error.message.includes('invalid_grant')) {
-        console.log('Token de rafraîchissement invalide ou expiré. Déconnexion de Strava.');
+      if (error.message.includes('invalide') || error.message.includes('rafraîchissement')) {
+        console.log('Token de rafraîchissement invalide. Déconnexion de Strava.');
         await this.disconnectStrava(userId);
       }
       throw new Error('Impossible de rafraîchir le token Strava. Veuillez vous reconnecter.');
@@ -442,17 +455,20 @@ export class IntegrationsManager {
       }
 
       const now = Math.floor(Date.now() / 1000);
-      if (!status.strava.expiresAt || now >= status.strava.expiresAt - 300) { // 5 minutes buffer
-        // Token expire dans 5 minutes ou moins, le rafraîchir
-        console.log('Token Strava expire bientôt, rafraîchissement...');
+      if (!status.strava.expiresAt || now >= status.strava.expiresAt - 300) {
+        console.log('🔄 Token Strava expire bientôt, rafraîchissement...');
         return await this.refreshStravaToken(userId);
       }
 
-      console.log('Utilisation du token Strava existant.');
-      return status.strava.accessToken!; // L'opérateur ! est sûr ici car nous avons déjà vérifié connected et le refresh est géré.
+      if (!status.strava.accessToken) {
+        throw new Error('Token d\'accès manquant');
+      }
+
+      console.log('✅ Utilisation du token Strava existant');
+      return status.strava.accessToken;
     } catch (error) {
       console.error('❌ Erreur récupération token Strava:', error);
-      throw error; // Propager l'erreur pour que l'appelant puisse la gérer
+      throw error;
     }
   }
 
@@ -460,60 +476,61 @@ export class IntegrationsManager {
     try {
       const accessToken = await this.getValidStravaToken(userId);
 
-      // Récupérer les activités des 30 derniers jours
       const after = Math.floor((Date.now() - 30 * 24 * 60 * 60 * 1000) / 1000);
 
       const response = await fetch(`https://www.strava.com/api/v3/athlete/activities?after=${after}&per_page=100`, {
         headers: {
           'Authorization': `Bearer ${accessToken}`
-        }
+        },
+        timeout: 15000
       });
 
       if (!response.ok) {
-        console.error('Strava API Error:', await response.text());
-        throw new Error(`Erreur lors de la récupération des activités Strava (Statut: ${response.status})`);
+        console.error('❌ Erreur API Strava:', response.status, await response.text());
+        throw new Error(`Erreur lors de la récupération des activités Strava (${response.status})`);
       }
 
       const activities = await response.json();
 
-      // Traiter et formater les activités
       const processedActivities: StravaActivity[] = activities.map((activity: any) => ({
-        id: activity.id.toString(), // Assurer que l'ID est une chaîne
-        name: activity.name || 'Sans nom', // Valeur par défaut si le nom est manquant
+        id: activity.id.toString(),
+        name: activity.name || 'Sans nom',
         type: activity.type,
-        date: new Date(activity.start_date).toISOString(), // Normaliser la date
+        date: new Date(activity.start_date).toISOString(),
         duration: activity.moving_time,
         distance: activity.distance,
         elevationGain: activity.total_elevation_gain,
-        averageHeartrate: activity.average_heartrate || null, // Gérer les nulls
-        maxHeartrate: activity.max_heartrate || null, // Gérer les nulls
+        averageHeartrate: activity.average_heartrate || null,
+        maxHeartrate: activity.max_heartrate || null,
         averageSpeed: activity.average_speed,
         maxSpeed: activity.max_speed,
         calories: activity.kilojoules ? Math.round(activity.kilojoules * 0.239) : 0,
-        kudosCount: activity.kudos_count || 0, // Valeur par défaut
-        achievementCount: activity.achievement_count || 0 // Valeur par défaut
+        kudosCount: activity.kudos_count || 0,
+        achievementCount: activity.achievement_count || 0
       }));
 
-      // Sauvegarder les activités sur le serveur VPS uniquement
-      const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
+      // Sauvegarder localement
+      await AsyncStorage.setItem(`strava_activities_${userId}`, JSON.stringify(processedActivities));
+
+      // Sauvegarder sur le serveur
+      const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
       const saveResponse = await fetch(`${serverUrl}/api/strava/${userId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(processedActivities),
+        timeout: 15000
       });
 
       if (!saveResponse.ok) {
-        console.error('Serveur VPS Error:', await saveResponse.text());
-        throw new Error(`Erreur lors de la sauvegarde des activités Strava sur le serveur (Statut: ${saveResponse.status})`);
+        console.warn('⚠️ Erreur sauvegarde serveur:', saveResponse.status);
       }
 
-      console.log('✅ Activités Strava synchronisées sur le serveur');
+      console.log(`✅ ${processedActivities.length} activités Strava synchronisées`);
     } catch (error) {
       console.error('❌ Erreur synchronisation Strava:', error);
-      // Si l'erreur est liée à un token invalide, cela sera géré par getValidStravaToken
-      throw error; // Propager l'erreur
+      throw error;
     }
   }
 
@@ -522,7 +539,6 @@ export class IntegrationsManager {
       const stored = await AsyncStorage.getItem(`strava_activities_${userId}`);
       if (stored) {
         const parsed = JSON.parse(stored);
-        // Validation du format des données
         if (Array.isArray(parsed)) {
           return parsed.filter(activity =>
             activity &&
@@ -536,7 +552,6 @@ export class IntegrationsManager {
       return [];
     } catch (error) {
       console.error('❌ Erreur chargement activités Strava:', error);
-      // Nettoyer les données corrompues
       await AsyncStorage.removeItem(`strava_activities_${userId}`);
       return [];
     }
@@ -555,10 +570,8 @@ export class IntegrationsManager {
     try {
       const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
 
-      console.log(`🔍 Vérification statut Strava sur ${serverUrl} pour userId: ${userId}`);
-
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 secondes timeout
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
       const response = await fetch(`${serverUrl}/api/strava/status/${userId}`, {
         method: 'GET',
@@ -572,21 +585,21 @@ export class IntegrationsManager {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Statut Strava récupéré du serveur:', data);
+        console.log('✅ Statut Strava du serveur:', data);
         return data;
       } else if (response.status === 404) {
-        console.log('📝 Statut Strava non trouvé sur le serveur pour:', userId);
+        console.log('📝 Statut Strava non trouvé pour:', userId);
         return { connected: false };
       } else {
         const errorText = await response.text().catch(() => 'Erreur inconnue');
-        console.error(`❌ Erreur serveur pour /api/strava/status/${userId}: Statut ${response.status}, Réponse: ${errorText}`);
+        console.error(`❌ Erreur serveur statut Strava: ${response.status}, ${errorText}`);
         return { connected: false };
       }
     } catch (error) {
       if (error.name === 'AbortError') {
-        console.error('⏰ Timeout lors de la récupération du statut Strava');
+        console.error('⏰ Timeout statut Strava');
       } else {
-        console.error('❌ Erreur récupération statut Strava du serveur:', error);
+        console.error('❌ Erreur récupération statut Strava:', error);
       }
       return { connected: false };
     }
@@ -596,14 +609,12 @@ export class IntegrationsManager {
   static async getIntegrationStatus(userId: string): Promise<IntegrationConfig> {
     try {
       const status = await PersistentStorage.getUserIntegrationStatus(userId);
-      // S'assurer que toutes les propriétés existent pour éviter les erreurs
       status.appleHealth = status.appleHealth || { connected: false, permissions: [] };
       status.strava = status.strava || { connected: false };
       return status;
     } catch (error) {
-      console.log('⚠️ Erreur récupération statuts intégrations, utilisation des valeurs par défaut:', error?.message || error);
+      console.log('⚠️ Erreur récupération statuts intégrations:', error?.message || error);
 
-      // Retourner une configuration par défaut au lieu de lancer une erreur
       return {
         appleHealth: {
           connected: false,
@@ -629,7 +640,7 @@ export class IntegrationsManager {
 // Fonction principale pour synchroniser toutes les données
 export async function syncWithExternalApps(userId: string): Promise<void> {
   try {
-    console.log('🔄 Début de la synchronisation complète pour utilisateur:', userId);
+    console.log('🔄 Début synchronisation complète pour:', userId);
 
     const integrationStatus = await IntegrationsManager.getIntegrationStatus(userId);
     const results = {
@@ -637,53 +648,35 @@ export async function syncWithExternalApps(userId: string): Promise<void> {
       strava: false
     };
 
-    // Synchroniser Apple Health si connecté
     if (integrationStatus.appleHealth.connected) {
       try {
         await IntegrationsManager.syncAppleHealthData(userId);
         results.appleHealth = true;
-        console.log('✅ Apple Health synchronisé avec succès');
+        console.log('✅ Apple Health synchronisé');
       } catch (error) {
         console.error('❌ Erreur sync Apple Health:', error);
-        // Ne pas arrêter la synchronisation complète en cas d'échec d'une intégration
       }
-    } else {
-      console.log('🍎 Apple Health non connecté, synchronisation ignorée.');
     }
 
-    // Synchroniser Strava si connecté
     if (integrationStatus.strava.connected) {
       try {
         await IntegrationsManager.syncStravaActivities(userId);
         results.strava = true;
-        console.log('✅ Strava synchronisé avec succès');
+        console.log('✅ Strava synchronisé');
       } catch (error) {
         console.error('❌ Erreur sync Strava:', error);
-        // Ne pas arrêter la synchronisation complète en cas d'échec d'une intégration
       }
-    } else {
-      console.log('🏃 Strava non connecté, synchronisation ignorée.');
     }
 
-    console.log('Synchronisation complète terminée pour utilisateur:', userId, results);
-
-    if (!results.appleHealth && integrationStatus.appleHealth.connected) {
-      console.warn('Apple Health connecté mais synchronisation échouée');
-    }
-    if (!results.strava && integrationStatus.strava.connected) {
-      console.warn('Strava connecté mais synchronisation échouée');
-    }
+    console.log('🔄 Synchronisation terminée:', results);
   } catch (error) {
-    console.error('Erreur lors de la synchronisation complète:', error);
-    // Lancer une erreur si la récupération du statut des intégrations échoue gravement
+    console.error('❌ Erreur synchronisation complète:', error);
     throw error;
   }
 }
 
 export const testServerConnection = async (serverUrl: string): Promise<boolean> => {
   try {
-    console.log(`Test de connexion au serveur VPS: ${serverUrl}`);
-
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
 
@@ -698,7 +691,7 @@ export const testServerConnection = async (serverUrl: string): Promise<boolean> 
     clearTimeout(timeoutId);
     return response.ok;
   } catch (error) {
-    console.log(`⚠️ Erreur de connexion au serveur ${serverUrl}:`, error);
+    console.log(`⚠️ Test connexion serveur ${serverUrl} échoué:`, error);
     return false;
   }
 };
@@ -714,84 +707,61 @@ export interface IntegrationStatus {
 
 export const getIntegrationStatuses = async (userId: string): Promise<IntegrationStatus[]> => {
   try {
-    console.log('🔍 Récupération statuts intégrations pour:', userId);
-
-    // Tester d'abord la disponibilité du serveur avec un timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 secondes
-
-    let isServerAvailable = false;
-    try {
-      const testResponse = await fetch(`${process.env.EXPO_PUBLIC_VPS_URL}/api/health`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        signal: controller.signal
-      });
-
-      isServerAvailable = testResponse.ok;
-      console.log(`✅ Serveur ${process.env.EXPO_PUBLIC_VPS_URL} disponible: ${isServerAvailable}`);
-    } catch (testError) {
-      console.log(`⚠️ Test de connexion au serveur ${process.env.EXPO_PUBLIC_VPS_URL} échoué:`, testError);
-      isServerAvailable = false;
-    } finally {
-      clearTimeout(timeoutId);
-    }
-
-    if (!isServerAvailable) {
-      console.log('📋 Utilisation des statuts d\'intégrations par défaut car le serveur n\'est pas disponible.');
-      return getDefaultIntegrationStatuses();
-    }
-
-    // Si le serveur est disponible, récupérer les statuts réels
-    // Pour l'instant, on retourne toujours les valeurs par défaut car l'endpoint /api/integrations n'existe pas encore
-    // et l'endpoint /api/strava/status/{userId} ne couvre pas toutes les intégrations.
-    console.log('📋 Utilisation des statuts d\'intégrations par défaut (endpoint API manquant)');
+    const integrationStatus = await IntegrationsManager.getIntegrationStatus(userId);
     
-    // Tentative de récupération des statuts réels si l'API était implémentée
-    // Exemple :
-    // const integrationStatus = await IntegrationsManager.getIntegrationStatus(userId);
-    // return [
-    //   { id: 'strava', name: 'Strava', description: 'Synchronisation des activités sportives', isConnected: integrationStatus.strava.connected, icon: '🏃‍♂️', lastSync: null },
-    //   { id: 'apple-health', name: 'Apple Health', description: 'Données de santé et fitness', isConnected: integrationStatus.appleHealth.connected, icon: '❤️', lastSync: integrationStatus.appleHealth.lastSync ? new Date(integrationStatus.appleHealth.lastSync) : null },
-    //   { id: 'google-fit', name: 'Google Fit', description: 'Suivi d\'activité Google', isConnected: false, icon: '📊', lastSync: null } // Google Fit non implémenté
-    // ];
-
-    return getDefaultIntegrationStatuses();
-
+    return [
+      {
+        id: 'strava',
+        name: 'Strava',
+        description: 'Synchronisation des activités sportives',
+        isConnected: integrationStatus.strava.connected,
+        icon: '🏃‍♂️',
+        lastSync: null
+      },
+      {
+        id: 'apple-health',
+        name: 'Apple Health',
+        description: 'Données de santé et fitness',
+        isConnected: integrationStatus.appleHealth.connected,
+        icon: '❤️',
+        lastSync: integrationStatus.appleHealth.lastSync ? new Date(integrationStatus.appleHealth.lastSync) : null
+      },
+      {
+        id: 'google-fit',
+        name: 'Google Fit',
+        description: 'Suivi d\'activité Google',
+        isConnected: false,
+        icon: '📊',
+        lastSync: null
+      }
+    ];
   } catch (error) {
-    console.log('⚠️ Erreur générale récupération intégrations, utilisation des valeurs par défaut:', error?.message || error);
-    return getDefaultIntegrationStatuses();
+    console.log('⚠️ Erreur récupération statuts intégrations:', error?.message || error);
+    return [
+      {
+        id: 'strava',
+        name: 'Strava',
+        description: 'Synchronisation des activités sportives',
+        isConnected: false,
+        icon: '🏃‍♂️',
+        lastSync: null
+      },
+      {
+        id: 'apple-health',
+        name: 'Apple Health',
+        description: 'Données de santé et fitness',
+        isConnected: false,
+        icon: '❤️',
+        lastSync: null
+      },
+      {
+        id: 'google-fit',
+        name: 'Google Fit',
+        description: 'Suivi d\'activité Google',
+        isConnected: false,
+        icon: '📊',
+        lastSync: null
+      }
+    ];
   }
-};
-
-// Fonction helper pour les valeurs par défaut
-const getDefaultIntegrationStatuses = (): IntegrationStatus[] => {
-  return [
-    {
-      id: 'strava',
-      name: 'Strava',
-      description: 'Synchronisation des activités sportives',
-      isConnected: false,
-      icon: '🏃‍♂️',
-      lastSync: null
-    },
-    {
-      id: 'apple-health',
-      name: 'Apple Health',
-      description: 'Données de santé et fitness',
-      isConnected: false,
-      icon: '❤️',
-      lastSync: null
-    },
-    {
-      id: 'google-fit',
-      name: 'Google Fit',
-      description: 'Suivi d\'activité Google',
-      isConnected: false,
-      icon: '📊',
-      lastSync: null
-    }
-  ];
 };
