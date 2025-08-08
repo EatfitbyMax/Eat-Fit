@@ -927,8 +927,30 @@ app.get('/strava-callback', async (req, res) => {
           <script>
             // Fermeture automatique après 2 secondes
             setTimeout(() => {
-              window.close();
+              closeWindow();
             }, 2000);
+
+            function closeWindow() {
+              // Essayer plusieurs méthodes de fermeture
+              try {
+                // 1. Méthode standard
+                window.close();
+              } catch (e) {
+                console.log('window.close() failed:', e);
+              }
+
+              try {
+                // 2. Fermeture via l'historique (pour les webviews)
+                if (window.history && window.history.length > 1) {
+                  window.history.back();
+                } else {
+                  // 3. Redirection vers une page vide
+                  window.location.href = 'about:blank';
+                }
+              } catch (e) {
+                console.log('Alternative close methods failed:', e);
+              }
+            }
           </script>
         </head>
         <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f8f9fa;">
@@ -942,7 +964,7 @@ app.get('/strava-callback', async (req, res) => {
             <p style="color: #666; font-size: 14px; margin-bottom: 20px;">
               Cette fenêtre se fermera automatiquement dans <span id="countdown">2</span> secondes...
             </p>
-            <button onclick="window.close()" style="background: #FC4C02; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 600;">
+            <button onclick="closeWindow()" style="background: #FC4C02; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 600;">
               Fermer
             </button>
           </div>
