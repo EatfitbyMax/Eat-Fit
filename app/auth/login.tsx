@@ -19,21 +19,31 @@ export default function LoginScreen() {
       return;
     }
 
+    if (!email.includes('@')) {
+      Alert.alert('Erreur', 'Veuillez entrer une adresse email valide');
+      return;
+    }
+
+    console.log('🔄 Tentative de connexion pour:', email.trim().toLowerCase());
+    
     setLoading(true);
     try {
-      const user = await login(email, password);
+      const user = await login(email.trim().toLowerCase(), password);
       if (user) {
         console.log('✅ Connexion réussie pour:', user.email);
+        console.log('👤 Type utilisateur:', user.userType);
+        
         // Mettre à jour le contexte d'authentification
         contextLogin(user);
-        console.log('✅ Contexte mis à jour');
-        // La redirection sera gérée automatiquement par AuthGuard
+        console.log('✅ Contexte mis à jour, redirection automatique...');
       } else {
-        Alert.alert('Erreur', 'Email ou mot de passe incorrect');
+        console.log('❌ Échec de la connexion - utilisateur null');
+        Alert.alert('Erreur', 'Email ou mot de passe incorrect. Vérifiez vos identifiants.');
       }
     } catch (error) {
-      console.error('❌ Erreur connexion:', error);
-      Alert.alert('Erreur', 'Une erreur est survenue lors de la connexion');
+      console.error('❌ Erreur connexion complète:', error);
+      const errorMessage = error.message || 'Une erreur est survenue lors de la connexion';
+      Alert.alert('Erreur de connexion', errorMessage);
     } finally {
       setLoading(false);
     }
