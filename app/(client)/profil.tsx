@@ -203,11 +203,10 @@ export default function ProfilScreen() {
       if (success) {
         console.log('✅ Connexion Strava réussie côté OAuth');
 
-        // Attendre un peu puis vérifier le statut réel côté serveur
+        // Vérification plus rapide du statut serveur
         console.log('🔍 Vérification statut serveur...');
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Attendre 2 secondes
-
-        // Synchroniser le statut depuis le serveur
+        
+        // Synchroniser le statut depuis le serveur immédiatement
         await IntegrationsManager.syncStravaStatusFromServer(userId);
 
         // Recharger le statut des intégrations
@@ -219,23 +218,40 @@ export default function ProfilScreen() {
         if (finalStatus.strava.connected) {
           console.log('✅ Connexion Strava confirmée côté serveur');
 
-          Alert.alert(
-            '🎉 Connexion réussie!',
-            'Strava a été connecté avec succès. Vos activités peuvent maintenant être synchronisées automatiquement.',
-            [{
-              text: 'Parfait!',
-              style: 'default',
-              onPress: () => {
-                console.log('Connexion Strava confirmée par l\'utilisateur');
-              }
-            }]
-          );
+          // Lancer la synchronisation des activités immédiatement
+          try {
+            console.log('🔄 Démarrage synchronisation automatique des activités...');
+            await IntegrationsManager.syncStravaActivities(userId);
+            console.log('✅ Synchronisation des activités terminée');
+            
+            Alert.alert(
+              '🎉 Connexion réussie!',
+              'Strava a été connecté avec succès et vos activités ont été synchronisées automatiquement.',
+              [{
+                text: 'Parfait!',
+                style: 'default',
+                onPress: () => {
+                  console.log('Connexion Strava confirmée par l\'utilisateur');
+                }
+              }]
+            );
+          } catch (syncError) {
+            console.error('⚠️ Erreur synchronisation automatique:', syncError);
+            Alert.alert(
+              '🎉 Connexion réussie!',
+              'Strava a été connecté avec succès. La synchronisation des activités est en cours.',
+              [{
+                text: 'Parfait!',
+                style: 'default'
+              }]
+            );
+          }
         } else {
           console.log('⚠️ OAuth réussi mais pas de connexion serveur');
 
           Alert.alert(
             'Connexion en cours...',
-            'L\'autorisation Strava a été accordée, mais la synchronisation des données est en cours. Veuillez patienter quelques instants puis vérifier à nouveau.',
+            'L\'autorisation Strava a été accordée, mais la synchronisation des données est en cours. Veuillez patienter quelques instants.',
             [
               {
                 text: 'Vérifier maintenant',

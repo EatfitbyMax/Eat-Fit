@@ -940,7 +940,7 @@ app.get('/strava-callback', async (req, res) => {
           throw new Error('Configuration Strava manquante');
         }
 
-        // Échanger le code contre un token d'accès
+        // Échanger le code contre un token d'accès avec timeout optimisé
         const tokenResponse = await fetch('https://www.strava.com/oauth/token', {
           method: 'POST',
           headers: {
@@ -957,7 +957,7 @@ app.get('/strava-callback', async (req, res) => {
         if (tokenResponse.ok) {
           const tokenData = await tokenResponse.json();
 
-          // Sauvegarder les tokens
+          // Sauvegarder les tokens immédiatement
           const tokenFilePath = `strava_tokens_${state}.json`;
           const tokenInfo = {
             accessToken: tokenData.access_token,
@@ -968,13 +968,12 @@ app.get('/strava-callback', async (req, res) => {
             lastSync: new Date().toISOString()
           };
 
-          await writeJsonFile(tokenFilePath, tokenInfo);
-          console.log('✅ Tokens Strava sauvegardés automatiquement pour utilisateur:', state, {
-            athleteId: tokenData.athlete?.id,
-            expiresAt: new Date(tokenData.expires_at * 1000).toISOString()
-          });
+          // Traitement en parallèle pour plus de rapidité
+          const savePromises = [
+            writeJsonFile(tokenFilePath, tokenInfo)
+          ];
 
-          // Aussi sauvegarder dans les données utilisateur pour la cohérence
+          // Sauvegarder dans les données utilisateur en parallèle
           let userData = await readUserFile(state, 'client');
           let userType = 'client';
 
@@ -990,9 +989,17 @@ app.get('/strava-callback', async (req, res) => {
               lastSync: new Date().toISOString()
             };
             userData.lastUpdated = new Date().toISOString();
-            await writeUserFile(state, userData, userType);
-            console.log('✅ Statut Strava mis à jour dans les données utilisateur');
+            savePromises.push(writeUserFile(state, userData, userType));
           }
+
+          // Attendre toutes les sauvegardes en parallèle
+          await Promise.all(savePromises);
+
+          console.log('✅ Tokens Strava sauvegardés automatiquement pour utilisateur:', state, {
+            athleteId: tokenData.athlete?.id,
+            expiresAt: new Date(tokenData.expires_at * 1000).toISOString()
+          });
+          console.log('✅ Statut Strava mis à jour dans les données utilisateur');
 
         } else {
           const errorText = await tokenResponse.text();
@@ -1026,7 +1033,7 @@ app.get('/strava-callback', async (req, res) => {
                 stravaLink.click();
                 document.body.removeChild(stravaLink);
 
-                // Fallback vers l'app principale après 1 seconde
+                // Fallback vers l'app principale après 500ms
                 setTimeout(() => {
                   const appScheme = 'eatfitbymax://';
                   console.log('Fallback vers application principale:', appScheme);
@@ -1038,11 +1045,11 @@ app.get('/strava-callback', async (req, res) => {
                   link.click();
                   document.body.removeChild(link);
 
-                  // Fermer après un autre délai
+                  // Fermer après un délai réduit
                   setTimeout(() => {
                     closeWindow();
-                  }, 1000);
-                }, 1000);
+                  }, 500);
+                }, 500);
 
               } catch (e) {
                 console.log('Redirection vers app failed, fermeture directe:', e);
@@ -1072,10 +1079,10 @@ app.get('/strava-callback', async (req, res) => {
               }
             }
 
-            // Redirection automatique après 1 seconde
+            // Redirection automatique immédiate
             setTimeout(() => {
               redirectToApp();
-            }, 1000);
+            }, 500);
           </script>
         </head>
         <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f8f9fa;">

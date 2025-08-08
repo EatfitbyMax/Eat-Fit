@@ -399,11 +399,11 @@ export class IntegrationsManager {
   private static async verifyStravaConnection(userId: string, serverUrl: string): Promise<{ success: boolean; data?: any }> {
     console.log('⏳ [STRAVA] Vérification connexion côté serveur...');
     
-    // Attendre que le serveur traite la demande
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    // Délai initial réduit à 1 seconde
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const maxAttempts = 4;
-    const retryDelay = 2000;
+    const maxAttempts = 6; // Plus de tentatives avec des délais plus courts
+    const retryDelay = 800; // Délai réduit à 800ms
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
@@ -862,7 +862,7 @@ export class IntegrationsManager {
       console.log(`🔍 [STRAVA] Vérification statut serveur pour utilisateur: ${userId}`);
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 secondes timeout
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout réduit à 5 secondes
 
       const response = await fetch(`${serverUrl}/api/strava/status/${userId}`, {
         method: 'GET',
