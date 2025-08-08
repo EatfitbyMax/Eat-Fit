@@ -241,6 +241,10 @@ export default function ProgresScreen() {
 
   const handleWeightUpdate = async () => {
     try {
+      // Fermer le clavier
+      const { Keyboard } = await import('react-native');
+      Keyboard.dismiss();
+      
       console.log('🔄 Mise à jour du poids actuel:', tempWeight);
 
       // Remplacer la virgule par un point pour la conversion
@@ -308,6 +312,10 @@ export default function ProgresScreen() {
 
   const handleTargetUpdate = async () => {
     try {
+      // Fermer le clavier
+      const { Keyboard } = await import('react-native');
+      Keyboard.dismiss();
+      
       console.log('🎯 Mise à jour de l\'objectif:', tempTarget);
 
       // Remplacer la virgule par un point pour la conversion
@@ -479,6 +487,10 @@ export default function ProgresScreen() {
   };
 
   const handleSaveMensuration = async () => {
+    // Fermer le clavier
+    const { Keyboard } = await import('react-native');
+    Keyboard.dismiss();
+    
     const config = getMuscleConfig(selectedMuscle);
 
     // Validation des données
@@ -1545,7 +1557,7 @@ export default function ProgresScreen() {
       let stravaActivities = [];
       try {
         console.log('🔄 Chargement données Strava...');
-        const stravaDataString = await AsyncStorage.getItem(`strava_activities_${user.id}`);
+        const stravaDataString = await PersistentStorage.getItem(`strava_activities_${user.id}`);
         if (stravaDataString) {
           const parsedStrava = JSON.parse(stravaDataString);
           if (Array.isArray(parsedStrava)) {
@@ -2840,6 +2852,9 @@ export default function ProgresScreen() {
                 placeholderTextColor="#8B949E"
                 keyboardType="numeric"
                 autoFocus
+                autoComplete="off"
+                autoCorrect={false}
+                spellCheck={false}
               />
               <Text style={styles.inputUnit}>kg</Text>
             </View>
@@ -2888,6 +2903,9 @@ export default function ProgresScreen() {
                 placeholderTextColor="#8B949E"
                 keyboardType="numeric"
                 autoFocus
+                autoComplete="off"
+                autoCorrect={false}
+                spellCheck={false}
               />
               <Text style={styles.inputUnit}>kg</Text>
             </View>
@@ -2918,7 +2936,7 @@ export default function ProgresScreen() {
                         await PersistentStorage.saveUsers(users);
                       }
 
-                      await AsyncStorage.setItem('currentUser', JSON.stringify(updatedUser));
+                      await PersistentStorage.setItem('currentUser', JSON.stringify(updatedUser));
                       setUserData(updatedUser);
                     }
                   } catch (error) {
@@ -2972,6 +2990,9 @@ export default function ProgresScreen() {
                     placeholder="0.0"
                     placeholderTextColor="#8B949E"
                     keyboardType="numeric"
+                    autoComplete="off"
+                    autoCorrect={false}
+                    spellCheck={false}
                   />
                   <Text style={styles.inputUnit}>cm</Text>
                 </View>
@@ -2985,6 +3006,9 @@ export default function ProgresScreen() {
                     placeholder="0.0"
                     placeholderTextColor="#8B949E"
                     keyboardType="numeric"
+                    autoComplete="off"
+                    autoCorrect={false}
+                    spellCheck={false}
                   />
                   <Text style={styles.inputUnit}>cm</Text>
                 </View>
@@ -3007,6 +3031,9 @@ export default function ProgresScreen() {
                         placeholder="0.0"
                         placeholderTextColor="#8B949E"
                         keyboardType="numeric"
+                        autoComplete="off"
+                        autoCorrect={false}
+                        spellCheck={false}
                       />
                       <Text style={styles.inputUnit}>cm</Text>
                     </View>
@@ -3020,6 +3047,9 @@ export default function ProgresScreen() {
                         placeholder="0.0"
                         placeholderTextColor="#8B949E"
                         keyboardType="numeric"
+                        autoComplete="off"
+                        autoCorrect={false}
+                        spellCheck={false}
                       />
                       <Text style={styles.inputUnit}>cm</Text>
                     </View>
@@ -3039,6 +3069,9 @@ export default function ProgresScreen() {
                         placeholder="0.0"
                         placeholderTextColor="#8B949E"
                         keyboardType="numeric"
+                        autoComplete="off"
+                        autoCorrect={false}
+                        spellCheck={false}
                       />
                       <Text style={styles.inputUnit}>cm</Text>
                     </View>
@@ -3052,6 +3085,9 @@ export default function ProgresScreen() {
                         placeholder="0.0"
                         placeholderTextColor="#8B949E"
                         keyboardType="numeric"
+                        autoComplete="off"
+                        autoCorrect={false}
+                        spellCheck={false}
                       />
                       <Text style={styles.inputUnit}>cm</Text>
                     </View>
