@@ -143,8 +143,16 @@ export default function ProfilScreen() {
     setShowComingSoonModal(true);
   };
 
+  /**
+   * Gestion du toggle connexion/déconnexion Strava
+   */
   const handleStravaToggle = async () => {
+    if (isLoading || stravaConnecting) {
+      return; // Éviter les actions multiples simultanées
+    }
+
     setIsLoading(true);
+    
     try {
       const currentUser = await getCurrentUser();
       if (!currentUser) {
@@ -153,76 +161,156 @@ export default function ProfilScreen() {
       }
 
       if (integrationStatus.strava.connected) {
-        await IntegrationsManager.disconnectStrava(currentUser.id);
-        setIntegrationStatus(prev => ({
-          ...prev,
-          strava: { connected: false, lastSync: null, athleteId: null }
-        }));
-        Alert.alert("Succès", "Strava déconnecté");
+        // Déconnexion
+        await handleStravaDisconnect(currentUser.id);
       } else {
-        // Appel à la nouvelle fonction gérant la connexion Strava avec une meilleure gestion des erreurs
-        await handleConnectStrava();
+        // Connexion
+        await handleStravaConnect(currentUser.id);
       }
     } catch (error) {
-      console.error("Failed to toggle Strava:", error);
-      Alert.alert("Erreur", "Impossible de connecter/déconnecter Strava.");
+      console.error("❌ Erreur toggle Strava:", error);
+      Alert.alert(
+        "Erreur", 
+        "Une erreur s'est produite. Veuillez réessayer.",
+        [{ text: 'OK', style: 'default' }]
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Nouvelle fonction pour gérer la connexion Strava avec une meilleure gestion des erreurs et feedback utilisateur
-  const handleConnectStrava = async () => {
+  /**
+   * Gestion de la connexion Strava avec feedback utilisateur amélioré
+   */
+  const handleStravaConnect = async (userId: string) => {
+    setStravaConnecting(true);
+    
     try {
-      setIsLoading(true); // Utiliser setIsLoading pour l'indicateur global
-      setStravaConnecting(true); // Garder un état spécifique si nécessaire, mais setIsLoading est suffisant pour la UI générale
+      console.log('🔄 Début connexion Strava...');
 
-      // Afficher un indicateur de progression
-      console.log('🔄 Début de la connexion Strava...');
-
-      const currentUser = await getCurrentUser();
-      if (!currentUser) {
-        Alert.alert("Erreur", "Utilisateur non connecté");
-        setStravaConnecting(false);
-        setIsLoading(false);
-        return;
-      }
-
-      const success = await IntegrationsManager.connectStrava(currentUser.id);
+      const success = await IntegrationsManager.connectStrava(userId);
 
       if (success) {
         console.log('✅ Connexion Strava réussie');
+        
+        // Recharger le statut d'intégration
         await loadIntegrationStatus();
+        
         Alert.alert(
-          'Connexion réussie', 
-          'Strava a été connecté avec succès! Vous pouvez maintenant synchroniser vos activités.',
-          [{ text: 'OK', style: 'default' }]
+          '🎉 Connexion réussie!', 
+          'Strava a été connecté avec succès. Vos activités peuvent maintenant être synchronisées automatiquement.',
+          [{ 
+            text: 'Parfait!', 
+            style: 'default',
+            onPress: () => {
+              // Optionnel: déclencher une synchronisation immédiate
+              console.log('Connexion Strava confirmée par l\'utilisateur');
+            }
+          }]
         );
       } else {
         console.log('❌ Connexion Strava échouée');
+        
         Alert.alert(
           'Connexion échouée', 
-          'La connexion à Strava a échoué. Veuillez vérifier que vous avez autorisé l\'accès et réessayer.',
+          'La connexion à Strava n\'a pas pu être établie. Assurez-vous d\'avoir autorisé l\'accès dans l\'application Strava.',
           [
-            { text: 'Réessayer', onPress: () => handleConnectStrava(), style: 'default' },
-            { text: 'Annuler', style: 'cancel' }
+            { 
+              text: 'Réessayer', 
+              onPress: () => handleStravaConnect(userId), 
+              style: 'default' 
+            },
+            { 
+              text: 'Annuler', 
+              style: 'cancel' 
+            }
           ]
         );
       }
     } catch (error) {
       console.error('❌ Erreur connexion Strava:', error);
-      const errorMessage = error?.message || 'Impossible de se connecter à Strava';
+      
+      let errorMessage = 'Une erreur inattendue s\'est produite.';
+      
+      if (error?.message?.includes('Configuration')) {
+        errorMessage = 'Configuration manquante. Contactez le support technique.';
+      } else if (error?.message?.includes('Serveur')) {
+        errorMessage = 'Serveur temporairement indisponible. Réessayez dans quelques instants.';
+      } else if (error?.message?.includes('connexion internet')) {
+        errorMessage = 'Vérifiez votre connexion internet et réessayez.';
+      }
+      
       Alert.alert(
         'Erreur de connexion', 
         errorMessage,
         [
-          { text: 'Réessayer', onPress: () => handleConnectStrava(), style: 'default' },
-          { text: 'Annuler', style: 'cancel' }
+          { 
+            text: 'Réessayer', 
+            onPress: () => handleStravaConnect(userId), 
+            style: 'default' 
+          },
+          { 
+            text: 'Annuler', 
+            style: 'cancel' 
+          }
         ]
       );
     } finally {
       setStravaConnecting(false);
-      setIsLoading(false);
+    }
+  };
+
+  /**
+   * Gestion de la déconnexion Strava
+   */
+  const handleStravaDisconnect = async (userId: string) => {
+    try {
+      Alert.alert(
+        'Déconnecter Strava',
+        'Êtes-vous sûr de vouloir déconnecter votre compte Strava ? Vos données d\'activité ne seront plus synchronisées.',
+        [
+          {
+            text: 'Annuler',
+            style: 'cancel'
+          },
+          {
+            text: 'Déconnecter',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await IntegrationsManager.disconnectStrava(userId);
+                
+                // Mettre à jour l'état local
+                setIntegrationStatus(prev => ({
+                  ...prev,
+                  strava: { 
+                    connected: false, 
+                    lastSync: null, 
+                    athleteId: null 
+                  }
+                }));
+                
+                Alert.alert(
+                  '✅ Déconnecté', 
+                  'Strava a été déconnecté avec succès.',
+                  [{ text: 'OK', style: 'default' }]
+                );
+                
+                console.log('✅ Déconnexion Strava réussie');
+              } catch (disconnectError) {
+                console.error('❌ Erreur déconnexion Strava:', disconnectError);
+                Alert.alert(
+                  'Erreur', 
+                  'Impossible de déconnecter Strava. Veuillez réessayer.',
+                  [{ text: 'OK', style: 'default' }]
+                );
+              }
+            }
+          }
+        ]
+      );
+    } catch (error) {
+      console.error('❌ Erreur lors de la demande de déconnexion:', error);
     }
   };
 

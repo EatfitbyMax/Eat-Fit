@@ -116,6 +116,44 @@ app.get('/api/health-check', (req, res) => {
   });
 });
 
+// Fonctions helper pour la gestion des fichiers JSON
+async function readJsonFile(fileName, defaultValue = {}) {
+  try {
+    const filePath = path.join(DATA_DIR, fileName);
+    const data = await fs.readFile(filePath, 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      return defaultValue;
+    }
+    throw error;
+  }
+}
+
+async function writeJsonFile(fileName, data) {
+  try {
+    const filePath = path.join(DATA_DIR, fileName);
+    await fs.writeFile(filePath, JSON.stringify(data, null, 2));
+    return true;
+  } catch (error) {
+    console.error(`Erreur écriture fichier ${fileName}:`, error);
+    throw error;
+  }
+}
+
+async function deleteJsonFile(fileName) {
+  try {
+    const filePath = path.join(DATA_DIR, fileName);
+    await fs.unlink(filePath);
+    return true;
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      return true; // Fichier déjà supprimé
+    }
+    throw error;
+  }
+}
+
 // Fonction pour lire le fichier utilisateur (client ou coach)
 async function readUserFile(userId, userType = 'client') {
   try {
@@ -738,20 +776,69 @@ app.post('/api/strava/exchange-token', async (req, res) => {
 app.get('/api/strava/status/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
+    console.log(`🔍 [SERVEUR] Vérification statut Strava pour: ${userId}`);
+    
     const tokenData = await readJsonFile(`strava_tokens_${userId}.json`, null);
 
     if (tokenData && tokenData.connected) {
+      console.log(`✅ [SERVEUR] Strava connecté pour: ${userId}`);
       res.json({ 
         connected: true, 
         athlete: tokenData.athlete,
-        lastSync: null 
+        lastSync: tokenData.lastSync || null 
       });
     } else {
+      console.log(`📝 [SERVEUR] Strava non connecté pour: ${userId}`);
       res.json({ connected: false });
     }
   } catch (error) {
-    console.error('❌ Erreur statut Strava:', error);
+    console.error('❌ [SERVEUR] Erreur statut Strava:', error);
     res.json({ connected: false });
+  }
+});
+
+// Endpoint de déconnexion Strava
+app.post('/api/strava/disconnect/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log(`🔄 [SERVEUR] Déconnexion Strava pour: ${userId}`);
+
+    // Supprimer le fichier de tokens
+    const tokenFilePath = `strava_tokens_${userId}.json`;
+    try {
+      await deleteJsonFile(tokenFilePath);
+      console.log(`🗑️ [SERVEUR] Tokens Strava supprimés pour: ${userId}`);
+    } catch (deleteError) {
+      console.log(`⚠️ [SERVEUR] Fichier tokens non trouvé pour: ${userId}`);
+    }
+
+    // Nettoyer les données utilisateur Strava
+    let userData = await readUserFile(userId, 'client');
+    let userType = 'client';
+
+    if (!userData) {
+      userData = await readUserFile(userId, 'coach');
+      userType = 'coach';
+    }
+
+    if (userData) {
+      // Supprimer les données Strava de l'utilisateur
+      delete userData.strava;
+      userData.lastUpdated = new Date().toISOString();
+      await writeUserFile(userId, userData, userType);
+      console.log(`🧹 [SERVEUR] Données Strava nettoyées pour: ${userId}`);
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Strava déconnecté avec succès' 
+    });
+  } catch (error) {
+    console.error('❌ [SERVEUR] Erreur déconnexion Strava:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Erreur lors de la déconnexion Strava' 
+    });
   }
 });
 
