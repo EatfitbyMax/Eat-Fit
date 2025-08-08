@@ -15,7 +15,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { logout, getCurrentUser } from '@/utils/auth';
-import { IntegrationsManager, IntegrationStatus } from '@/utils/integrations';
+import { IntegrationsManager, IntegrationStatus, syncWithExternalApps } from '@/utils/integrations';
 import { checkSubscriptionStatus } from '@/utils/subscription';
 import { InAppPurchaseService } from '@/utils/inAppPurchases';
 import { allSports } from '@/utils/sportPrograms';
@@ -338,12 +338,13 @@ export default function ProfilScreen() {
         return;
       }
 
-      await IntegrationsManager.syncAllData(currentUser.id);
+      await syncWithExternalApps(currentUser.id);
+      
       Alert.alert("Succès", "Synchronisation terminée");
       await loadIntegrationStatus();
     } catch (error) {
-      console.warn("Erreur sync:", error);
-      Alert.alert("Information", "Synchronisation partielle effectuée");
+      console.error("Erreur sync:", error);
+      Alert.alert("Erreur", "Impossible de synchroniser les données. Vérifiez votre connexion internet.");
     } finally {
       setIsLoading(false);
     }
