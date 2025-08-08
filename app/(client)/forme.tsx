@@ -620,6 +620,10 @@ export default function FormeScreen() {
   };
 
   const handleSaveSleep = async () => {
+    // Fermer le clavier
+    const { Keyboard } = await import('react-native');
+    Keyboard.dismiss();
+    
     const inputValue = tempSleep.hours.replace(',', '.');
 
     // Validation pour format décimal (ex: 7.59 = 7h59min maximum)
@@ -2159,6 +2163,9 @@ export default function FormeScreen() {
                 onChangeText={(text) => setTempSleep({...tempSleep, hours: text})}
                 placeholder="7.30 (pour 7h30min)"
                 keyboardType="numeric"
+                autoComplete="off"
+                autoCorrect={false}
+                spellCheck={false}
               />
 
             </View>
@@ -2353,6 +2360,9 @@ export default function FormeScreen() {
                     }}
                     placeholder="1-35 (moy. 28j)"
                     keyboardType="numeric"
+                    autoComplete="off"
+                    autoCorrect={false}
+                    spellCheck={false}
                   />
                 </View>
 
