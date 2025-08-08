@@ -39,7 +39,7 @@
         "origin": "https://eatfitbymax.app"
       },
       "eas": {
-        "projectId": "38beb82e-34b3-48d3-b1a1-f70f3c6ff386"
+        "projectId": "09b0be21-7d36-4d48-9728-6585b19ae23f"
       }
     },
     "runtimeVersion": "1.5.0",
@@ -81,7 +81,7 @@
     "experiments": {
       "typedRoutes": true
     },
-    "owner": "maxandre_pm",
+    "owner": "eatfit",
     "android": {
       "permissions": [
         "android.permission.CAMERA",
