@@ -47,6 +47,8 @@ interface StravaActivity {
   calories: number;
   kudosCount: number;
   achievementCount: number;
+  // Alias pour compatibilité avec l'affichage
+  avgHeartRate?: number | null;
 }
 
 export class IntegrationsManager {
@@ -669,24 +671,29 @@ export class IntegrationsManager {
 
       // Traiter et formater les activités
       const processedActivities: StravaActivity[] = activities.map((activity: any) => ({
-        id: activity.id.toString(), // Assurer que l'ID est une chaîne
-        name: activity.name || 'Sans nom', // Valeur par défaut si le nom est manquant
+        id: activity.id.toString(),
+        name: activity.name || 'Sans nom',
         type: activity.type,
-        date: new Date(activity.start_date).toISOString(), // Normaliser la date
+        date: new Date(activity.start_date).toISOString(),
         duration: activity.moving_time,
         distance: activity.distance,
         elevationGain: activity.total_elevation_gain,
-        averageHeartrate: activity.average_heartrate || null, // Gérer les nulls
-        maxHeartrate: activity.max_heartrate || null, // Gérer les nulls
+        averageHeartrate: activity.average_heartrate || null,
+        maxHeartrate: activity.max_heartrate || null,
         averageSpeed: activity.average_speed,
         maxSpeed: activity.max_speed,
         calories: activity.kilojoules ? Math.round(activity.kilojoules * 0.239) : 0,
-        kudosCount: activity.kudos_count || 0, // Valeur par défaut
-        achievementCount: activity.achievement_count || 0 // Valeur par défaut
+        kudosCount: activity.kudos_count || 0,
+        achievementCount: activity.achievement_count || 0,
+        // Ajouter l'alias pour compatibilité
+        avgHeartRate: activity.average_heartrate || null
       }));
 
-      // Sauvegarder les activités sur le serveur VPS uniquement
-      const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'http://51.178.29.220:5000';
+      // Sauvegarder localement pour l'affichage immédiat
+      await AsyncStorage.setItem(`strava_activities_${userId}`, JSON.stringify(processedActivities));
+
+      // Sauvegarder sur le serveur VPS
+      const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
       const saveResponse = await fetch(`${serverUrl}/api/strava/${userId}`, {
         method: 'POST',
         headers: {
@@ -700,30 +707,67 @@ export class IntegrationsManager {
         throw new Error(`Erreur lors de la sauvegarde des activités Strava sur le serveur (Statut: ${saveResponse.status})`);
       }
 
-      console.log('✅ Activités Strava synchronisées sur le serveur');
+      // Mettre à jour la date de dernière synchronisation
+      const status = await this.getIntegrationStatus(userId);
+      status.strava.lastSync = new Date().toISOString();
+      await PersistentStorage.saveIntegrationStatus(userId, status);
+
+      console.log('✅ Activités Strava synchronisées sur le serveur et localement');
     } catch (error) {
       console.error('❌ Erreur synchronisation Strava:', error);
-      // Si l'erreur est liée à un token invalide, cela sera géré par getValidStravaToken
-      throw error; // Propager l'erreur
+      throw error;
     }
   }
 
   static async getStravaActivities(userId: string): Promise<StravaActivity[]> {
     try {
+      // Essayer de récupérer depuis le cache local d'abord
       const stored = await AsyncStorage.getItem(`strava_activities_${userId}`);
       if (stored) {
         const parsed = JSON.parse(stored);
-        // Validation du format des données
         if (Array.isArray(parsed)) {
-          return parsed.filter(activity =>
+          const validActivities = parsed.filter(activity =>
             activity &&
             typeof activity === 'object' &&
             activity.id &&
             activity.name &&
             activity.date
-          );
+          ).map(activity => ({
+            ...activity,
+            // S'assurer que avgHeartRate est disponible pour l'affichage
+            avgHeartRate: activity.avgHeartRate || activity.averageHeartrate
+          }));
+          
+          if (validActivities.length > 0) {
+            console.log(`📱 ${validActivities.length} activités Strava chargées depuis le cache local`);
+            return validActivities;
+          }
         }
       }
+
+      // Si pas de cache local, essayer de synchroniser
+      console.log('🔄 Aucune activité en cache, tentative de synchronisation...');
+      const integrationStatus = await this.getIntegrationStatus(userId);
+      
+      if (integrationStatus.strava.connected) {
+        try {
+          await this.syncStravaActivities(userId);
+          // Réessayer de lire le cache après synchronisation
+          const newStored = await AsyncStorage.getItem(`strava_activities_${userId}`);
+          if (newStored) {
+            const newParsed = JSON.parse(newStored);
+            if (Array.isArray(newParsed)) {
+              return newParsed.map(activity => ({
+                ...activity,
+                avgHeartRate: activity.avgHeartRate || activity.averageHeartrate
+              }));
+            }
+          }
+        } catch (syncError) {
+          console.error('❌ Erreur lors de la synchronisation automatique:', syncError);
+        }
+      }
+
       return [];
     } catch (error) {
       console.error('❌ Erreur chargement activités Strava:', error);

@@ -256,11 +256,36 @@ export default function EntrainementScreen() {
       setIsLoading(true);
       const currentUser = await getCurrentUser();
       if (currentUser) {
-        const activities = await IntegrationsManager.getStravaActivities(currentUser.id);
-        setStravaActivities(activities);
+        console.log('🔄 Chargement des activités Strava pour:', currentUser.email);
+        
+        // Vérifier le statut de connexion Strava
+        const integrationStatus = await IntegrationsManager.getIntegrationStatus(currentUser.id);
+        console.log('📊 Statut Strava:', integrationStatus.strava.connected ? 'Connecté' : 'Non connecté');
+        
+        if (integrationStatus.strava.connected) {
+          const activities = await IntegrationsManager.getStravaActivities(currentUser.id);
+          console.log(`✅ ${activities.length} activités Strava récupérées`);
+          setStravaActivities(activities);
+          
+          if (activities.length === 0) {
+            console.log('🔄 Aucune activité trouvée, tentative de synchronisation...');
+            try {
+              await IntegrationsManager.syncStravaActivities(currentUser.id);
+              const newActivities = await IntegrationsManager.getStravaActivities(currentUser.id);
+              console.log(`✅ ${newActivities.length} activités après synchronisation`);
+              setStravaActivities(newActivities);
+            } catch (syncError) {
+              console.error('❌ Erreur synchronisation:', syncError);
+            }
+          }
+        } else {
+          console.log('⚠️ Strava non connecté, aucune activité à charger');
+          setStravaActivities([]);
+        }
       }
     } catch (error) {
-      console.error('Erreur chargement activités Strava:', error);
+      console.error('❌ Erreur chargement activités Strava:', error);
+      setStravaActivities([]);
     } finally {
       setIsLoading(false);
     }
@@ -552,10 +577,10 @@ export default function EntrainementScreen() {
                 <Text style={styles.statValue}>{activity.calories}</Text>
               </View>
             )}
-            {activity.avgHeartRate && (
+            {(activity.avgHeartRate || activity.averageHeartrate) && (
               <View style={styles.statItem}>
                 <Text style={styles.statLabel}>FC moy.</Text>
-                <Text style={styles.statValue}>{Math.round(activity.avgHeartRate)} bpm</Text>
+                <Text style={styles.statValue}>{Math.round(activity.avgHeartRate || activity.averageHeartrate || 0)} bpm</Text>
               </View>
             )}
           </View>
@@ -637,17 +662,17 @@ export default function EntrainementScreen() {
                 </View>
               )}
 
-              {activity.avgHeartRate && (
+              {(activity.avgHeartRate || activity.averageHeartrate) && (
                 <View style={styles.detailStatCard}>
                   <Text style={styles.detailStatLabel}>FC moyenne</Text>
-                  <Text style={styles.detailStatValue}>{Math.round(activity.avgHeartRate)} bpm</Text>
+                  <Text style={styles.detailStatValue}>{Math.round(activity.avgHeartRate || activity.averageHeartrate || 0)} bpm</Text>
                 </View>
               )}
 
-              {activity.maxHeartRate && (
+              {(activity.maxHeartRate || activity.maxHeartrate) && (
                 <View style={styles.detailStatCard}>
                   <Text style={styles.detailStatLabel}>FC maximale</Text>
-                  <Text style={styles.detailStatValue}>{Math.round(activity.maxHeartRate)} bpm</Text>
+                  <Text style={styles.detailStatValue}>{Math.round(activity.maxHeartRate || activity.maxHeartrate || 0)} bpm</Text>
                 </View>
               )}
 
