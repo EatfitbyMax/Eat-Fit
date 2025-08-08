@@ -929,9 +929,9 @@ app.get('/strava-callback', async (req, res) => {
             function redirectToApp() {
               try {
                 // 1. Essayer le deep link spécifique Strava d'abord
-                const stravaCallbackScheme = 'eatfitbymax://strava-callback?success=true';
+                const stravaCallbackScheme = 'eatfitbymax://strava-callback?success=true&connected=true';
                 console.log('Tentative de redirection Strava callback:', stravaCallbackScheme);
-                
+
                 // Créer un lien invisible pour déclencher la redirection
                 const stravaLink = document.createElement('a');
                 stravaLink.href = stravaCallbackScheme;
@@ -939,25 +939,25 @@ app.get('/strava-callback', async (req, res) => {
                 document.body.appendChild(stravaLink);
                 stravaLink.click();
                 document.body.removeChild(stravaLink);
-                
+
                 // Fallback vers l'app principale après 1 seconde
                 setTimeout(() => {
                   const appScheme = 'eatfitbymax://';
                   console.log('Fallback vers application principale:', appScheme);
-                  
+
                   const link = document.createElement('a');
                   link.href = appScheme;
                   link.style.display = 'none';
                   document.body.appendChild(link);
                   link.click();
                   document.body.removeChild(link);
-                  
+
                   // Fermer après un autre délai
                   setTimeout(() => {
                     closeWindow();
                   }, 1000);
                 }, 1000);
-                
+
               } catch (e) {
                 console.log('Redirection vers app failed, fermeture directe:', e);
                 closeWindow();
@@ -1003,8 +1003,16 @@ app.get('/strava-callback', async (req, res) => {
             <p style="color: #666; font-size: 14px; margin-bottom: 20px;">
               Redirection vers l'application dans <span id="countdown">1</span> seconde...
             </p>
-            <button onclick="redirectToApp()" style="background: #FC4C02; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 600;">
-              Retour à l'app
+            <button 
+              onclick="window.location.href='eatfitbymax://strava-callback?success=true&connected=true'" 
+              style="background: #FF6B35; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; cursor: pointer; font-weight: 600; margin: 10px;">
+              🔗 Retour à l'app
+            </button>
+            <br>
+            <button 
+              onclick="redirectToApp()" 
+              style="background: #28A745; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: 500;">
+              🔄 Redirection automatique
             </button>
           </div>
           <script>

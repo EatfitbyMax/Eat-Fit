@@ -25,10 +25,25 @@
     <key>CFBundleURLTypes</key>
     <array>
       <dict>
+        <key>CFBundleURLName</key>
+        <string>com.eatfitbymax.app</string>
         <key>CFBundleURLSchemes</key>
         <array>
           <string>eatfitbymax</string>
           <string>com.eatfitbymax.app</string>
+        </array>
+      </dict>
+      <dict>
+        <key>CFBundleURLName</key>
+        <string>strava-callback</string>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          <string>eatfitbymax</string>
+        </array>
+        <key>CFBundleURLTypes</key>
+        <array>
+          <string>strava-callback</string>
+          <string>auth</string>
         </array>
       </dict>
     </array>
