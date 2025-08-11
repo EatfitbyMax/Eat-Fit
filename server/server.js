@@ -1127,6 +1127,84 @@ app.get('/api/strava/status/:userId', async (req, res) => {
   }
 });
 
+// Endpoint pour synchronisation manuelle Strava
+app.post('/api/strava/sync/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log(`🔄 [SERVEUR] Synchronisation manuelle Strava pour: ${userId}`);
+
+    // Chercher l'utilisateur
+    let userData = await readUserFile(userId, 'client');
+    let userType = 'client';
+
+    if (!userData) {
+      userData = await readUserFile(userId, 'coach');
+      userType = 'coach';
+    }
+
+    if (!userData) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Utilisateur non trouvé' 
+      });
+    }
+
+    // Vérifier si Strava est connecté
+    if (!userData.stravaIntegration || !userData.stravaIntegration.connected || !userData.stravaIntegration.accessToken) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Strava non connecté' 
+      });
+    }
+
+    // Récupérer les activités depuis Strava
+    console.log('📡 [SERVEUR] Récupération activités Strava...');
+    const stravaResponse = await fetch('https://www.strava.com/api/v3/athlete/activities?per_page=50', {
+      headers: {
+        'Authorization': `Bearer ${userData.stravaIntegration.accessToken}`
+      }
+    });
+
+    if (!stravaResponse.ok) {
+      console.error('❌ [SERVEUR] Erreur API Strava:', stravaResponse.status, stravaResponse.statusText);
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Erreur lors de la récupération des activités Strava' 
+      });
+    }
+
+    const activities = await stravaResponse.json();
+    console.log(`✅ [SERVEUR] ${activities.length} activités récupérées de Strava`);
+
+    // Mettre à jour la date de dernière synchronisation
+    userData.stravaIntegration.lastSync = new Date().toISOString();
+    userData.lastUpdated = new Date().toISOString();
+    
+    // Sauvegarder les activités (optionnel - vous pouvez les stocker si besoin)
+    if (!userData.stravaActivities) {
+      userData.stravaActivities = [];
+    }
+    userData.stravaActivities = activities;
+
+    await writeUserFile(userId, userData, userType);
+
+    console.log(`✅ [SERVEUR] Synchronisation Strava terminée pour: ${userId}`);
+    res.json({ 
+      success: true, 
+      message: 'Synchronisation réussie',
+      activitiesCount: activities.length,
+      lastSync: userData.stravaIntegration.lastSync
+    });
+
+  } catch (error) {
+    console.error('❌ [SERVEUR] Erreur synchronisation Strava:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Erreur serveur lors de la synchronisation' 
+    });
+  }
+});
+
 // Endpoint pour déconnecter Strava
 app.post('/api/strava/disconnect/:userId', async (req, res) => {
   try {

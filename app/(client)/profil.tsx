@@ -310,6 +310,62 @@ export default function ProfilScreen() {
   };
 
   /**
+   * Synchronisation manuelle des données Strava
+   */
+  const handleStravaSync = async () => {
+    if (isLoading) return;
+
+    setIsLoading(true);
+    
+    try {
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        Alert.alert("Erreur", "Utilisateur non connecté");
+        return;
+      }
+
+      console.log('🔄 [STRAVA] Démarrage synchronisation manuelle pour:', currentUser.id);
+
+      // Appel à l'endpoint de synchronisation sur le serveur
+      const response = await fetch(`${process.env.EXPO_PUBLIC_VPS_URL}/api/strava/sync/${currentUser.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ [STRAVA] Synchronisation réussie:', result);
+        
+        // Recharger le statut pour mettre à jour la date de dernière sync
+        await loadIntegrationStatus();
+        
+        Alert.alert(
+          '✅ Synchronisation terminée',
+          `${result.activitiesCount || 0} activité(s) synchronisée(s) depuis Strava.`,
+          [{ text: 'OK', style: 'default' }]
+        );
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.log('❌ [STRAVA] Erreur synchronisation:', errorData);
+        Alert.alert(
+          '❌ Erreur de synchronisation', 
+          errorData.message || 'Impossible de synchroniser vos données Strava. Réessayez plus tard.',
+          [{ text: 'OK', style: 'default' }]
+        );
+      }
+    } catch (error) {
+      console.error('❌ [STRAVA] Erreur sync manuelle:', error);
+      Alert.alert(
+        '❌ Erreur réseau',
+        'Impossible de se connecter au serveur. Vérifiez votre connexion.',
+        [{ text: 'OK', style: 'default' }]
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
    * Gestion de la déconnexion Strava côté serveur
    */
   const handleStravaDisconnect = async (userId: string) => {
@@ -718,15 +774,26 @@ export default function ProfilScreen() {
             </View>
             <View style={styles.integrationActions}>
               {integrationStatus.strava.connected ? (
-                <TouchableOpacity
-                  style={styles.disconnectButton}
-                  onPress={() => handleStravaToggle()}
-                  disabled={isLoading || stravaConnecting}
-                >
-                  <Text style={styles.disconnectButtonText}>
-                    Déconnecter
-                  </Text>
-                </TouchableOpacity>
+                <View style={styles.stravaConnectedActions}>
+                  <TouchableOpacity
+                    style={styles.syncButton}
+                    onPress={() => handleStravaSync()}
+                    disabled={isLoading || stravaConnecting}
+                  >
+                    <Text style={styles.syncButtonText}>
+                      {isLoading ? '⏳ Sync...' : '🔄 Synchroniser'}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.stravaDisconnectButton}
+                    onPress={() => handleStravaToggle()}
+                    disabled={isLoading || stravaConnecting}
+                  >
+                    <Text style={styles.stravaDisconnectButtonText}>
+                      Déconnexion
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               ) : (
                 <TouchableOpacity
                   style={styles.connectButton}
@@ -1011,6 +1078,40 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   disconnectButtonText: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  // Nouveaux styles pour les actions Strava connectées
+  stravaConnectedActions: {
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: 8,
+  },
+  syncButton: {
+    backgroundColor: '#1E90FF',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    minWidth: 100,
+    alignItems: 'center',
+  },
+  syncButtonText: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  stravaDisconnectButton: {
+    backgroundColor: '#FF4444',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#FF6666',
+    minWidth: 100,
+    alignItems: 'center',
+  },
+  stravaDisconnectButtonText: {
     fontSize: 12,
     color: '#FFFFFF',
     fontWeight: '600',
