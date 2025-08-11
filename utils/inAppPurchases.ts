@@ -1,16 +1,6 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Import conditionnel pour éviter les erreurs sur les plateformes non supportées
-let InAppPurchases: any = null;
-try {
-  if (Platform.OS === 'ios') {
-    InAppPurchases = require('expo-in-app-purchases');
-  }
-} catch (error) {
-  console.warn('expo-in-app-purchases non disponible:', error);
-}
-
 // Types pour les produits
 export interface SubscriptionProduct {
   productId: string;
@@ -99,164 +89,101 @@ export const IAP_SUBSCRIPTION_PLANS = [
     ],
     appointmentLimits: { monthly: -1, yearly: -1 } // -1 = illimité
   }
-];;
+];
+
+// Mock des produits pour le développement
+const MOCK_PRODUCTS: SubscriptionProduct[] = [
+  {
+    productId: SUBSCRIPTION_PRODUCTS.BRONZE,
+    title: 'Abonnement BRONZE',
+    description: 'Plan Bronze mensuel',
+    price: '9,99 €',
+    priceAmountMicros: 9990000,
+    priceCurrencyCode: 'EUR',
+    type: 'subs'
+  },
+  {
+    productId: SUBSCRIPTION_PRODUCTS.SILVER,
+    title: 'Abonnement SILVER',
+    description: 'Plan Silver mensuel',
+    price: '19,99 €',
+    priceAmountMicros: 19990000,
+    priceCurrencyCode: 'EUR',
+    type: 'subs'
+  },
+  {
+    productId: SUBSCRIPTION_PRODUCTS.GOLD,
+    title: 'Abonnement GOLD',
+    description: 'Plan Gold mensuel',
+    price: '49,99 €',
+    priceAmountMicros: 49990000,
+    priceCurrencyCode: 'EUR',
+    type: 'subs'
+  },
+  {
+    productId: SUBSCRIPTION_PRODUCTS.DIAMOND,
+    title: 'Abonnement DIAMOND',
+    description: 'Plan Diamond mensuel',
+    price: '99,99 €',
+    priceAmountMicros: 99990000,
+    priceCurrencyCode: 'EUR',
+    type: 'subs'
+  }
+];
 
 class InAppPurchaseManager {
   private isConnected = false;
-  private products: any[] = [];
-  private isInitializing = false;
+  private products: SubscriptionProduct[] = MOCK_PRODUCTS;
 
   async initialize(): Promise<boolean> {
-    try {
-      console.log('🛒 Initialisation InAppPurchases...');
+    console.log('🛒 Initialisation InAppPurchases (MODE MOCK)...');
 
-      // Vérifier si le module est disponible
-      if (!InAppPurchases) {
-        console.log('⚠️ Module InAppPurchases non disponible sur cette plateforme');
-        return false;
-      }
+    // Simulation d'une initialisation
+    await new Promise(resolve => setTimeout(resolve, 500));
 
-      if (this.isConnected) {
-        console.log('✅ InAppPurchases déjà connecté');
-        return true;
-      }
-
-      if (this.isInitializing) {
-        console.log('⏳ Initialisation en cours...');
-        return false;
-      }
-
-      this.isInitializing = true;
-
-      const result = await InAppPurchases.connectAsync();
-      console.log('🔗 Connexion InAppPurchases:', result);
-
-      if (result.responseCode === InAppPurchases.IAPResponseCode.OK) {
-        this.isConnected = true;
-        await this.loadProducts();
-        console.log('✅ InAppPurchases initialisé avec succès');
-        this.isInitializing = false;
-        return true;
-      } else {
-        console.error('❌ Échec connexion InAppPurchases:', result);
-        this.isInitializing = false;
-        return false;
-      }
-    } catch (error) {
-      console.error('❌ Erreur initialisation InAppPurchases:', error);
-      this.isInitializing = false;
-      return false;
-    }
+    this.isConnected = true;
+    console.log('✅ InAppPurchases initialisé en mode mock');
+    return true;
   }
 
   async loadProducts(): Promise<void> {
-    try {
-      if (!InAppPurchases) {
-        console.log('⚠️ Module InAppPurchases non disponible pour charger les produits');
-        return;
-      }
-
-      console.log('📦 Chargement des produits...');
-
-      const result = await InAppPurchases.getAvailablePurchasesAsync();
-      console.log('📦 Produits disponibles:', result);
-
-      if (result.responseCode === InAppPurchases.IAPResponseCode.OK) {
-        this.products = result.results || [];
-        console.log('✅ Produits chargés:', this.products.length);
-      } else {
-        console.error('❌ Erreur chargement produits:', result);
-      }
-    } catch (error) {
-      console.error('❌ Erreur chargement produits:', error);
-    }
+    console.log('📦 Chargement des produits (MODE MOCK)...');
+    // Les produits sont déjà chargés en mock
+    console.log('✅ Produits chargés:', this.products.length);
   }
 
   async getProducts(): Promise<SubscriptionProduct[]> {
-    if (!this.isConnected && !this.isInitializing) {
+    if (!this.isConnected) {
       await this.initialize();
     }
-
-    return this.products.map(product => ({
-      productId: product.productId,
-      title: product.title || 'Abonnement Premium',
-      description: product.description || 'Accès illimité à toutes les fonctionnalités',
-      price: product.price || '9,99 €',
-      priceAmountMicros: product.priceAmountMicros || 9990000,
-      priceCurrencyCode: product.priceCurrencyCode || 'EUR',
-      type: product.type as 'subs' | 'inapp' || 'subs'
-    }));
+    return this.products;
   }
 
   async purchaseProduct(productId: string): Promise<{ success: boolean; error?: string }> {
-    try {
-      if (!InAppPurchases) {
-        return { success: false, error: 'Service d\'achat non disponible sur cette plateforme' };
-      }
+    console.log('💳 Tentative d\'achat (MODE MOCK):', productId);
 
-      console.log('💳 Tentative d\'achat:', productId);
-
-      // Vérifier la connexion une seule fois
-      if (!this.isConnected) {
-        console.log('🔄 Initialisation du service d\'achat...');
-        const connected = await this.initialize();
-        if (!connected) {
-          return { success: false, error: 'Service d\'achat non disponible' };
-        }
-      }
-
-      // Vérifier que le produit existe
-      const product = this.products.find(p => p.productId === productId);
-      if (!product) {
-        console.error('❌ Produit non trouvé:', productId);
-        return { success: false, error: 'Produit non disponible' };
-      }
-
-      console.log('🛒 Lancement achat pour produit:', product.title);
-
-      const result = await InAppPurchases.purchaseItemAsync(productId);
-      console.log('💳 Résultat achat:', result);
-
-      if (result.responseCode === InAppPurchases.IAPResponseCode.OK && result.results && result.results.length > 0) {
-        const purchase = result.results[0];
-
-        try {
-          // Finaliser la transaction
-          await InAppPurchases.finishTransactionAsync(purchase, false);
-          console.log('✅ Transaction finalisée');
-
-          // Sauvegarder l'achat
-          await this.savePurchase(purchase);
-          console.log('💾 Achat sauvegardé');
-
-          return { success: true };
-        } catch (finishError) {
-          console.error('❌ Erreur finalisation transaction:', finishError);
-          return { success: false, error: 'Erreur lors de la finalisation' };
-        }
-      } else {
-        console.error('❌ Achat échoué:', result);
-        return { 
-          success: false, 
-          error: this.getErrorMessage(result.responseCode) 
-        };
-      }
-    } catch (error) {
-      console.error('❌ Erreur lors de l\'achat:', error);
-
-      // Éviter la récursion - ne pas réessayer automatiquement
-      if (error.message?.includes('Maximum call stack')) {
-        return { 
-          success: false, 
-          error: 'Erreur système: Redémarrez l\'application' 
-        };
-      }
-
-      return { 
-        success: false, 
-        error: 'Erreur technique: Veuillez réessayer' 
-      };
+    // Vérifier que le produit existe
+    const product = this.products.find(p => p.productId === productId);
+    if (!product) {
+      console.error('❌ Produit non trouvé:', productId);
+      return { success: false, error: 'Produit non disponible' };
     }
+
+    // Simulation d'un achat
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Mock d'un achat réussi
+    const mockPurchase = {
+      productId: productId,
+      transactionId: `mock_${Date.now()}`,
+      purchaseTime: Date.now(),
+      acknowledged: true
+    };
+
+    await this.savePurchase(mockPurchase);
+    console.log('✅ Achat simulé avec succès');
+
+    return { success: true };
   }
 
   private async savePurchase(purchase: any): Promise<void> {
@@ -273,78 +200,31 @@ class InAppPurchaseManager {
         JSON.stringify(purchaseData)
       );
 
-      console.log('💾 Achat sauvegardé:', purchaseData);
+      console.log('💾 Achat sauvegardé (MOCK):', purchaseData);
     } catch (error) {
       console.error('❌ Erreur sauvegarde achat:', error);
     }
   }
 
   async restorePurchases(): Promise<{ success: boolean; purchases?: any[] }> {
-    try {
-      if (!InAppPurchases) {
-        console.log('⚠️ Module InAppPurchases non disponible pour la restauration');
-        return { success: false };
-      }
+    console.log('🔄 Restauration des achats (MODE MOCK)...');
 
-      console.log('🔄 Restauration des achats...');
+    // Simulation de restauration
+    await new Promise(resolve => setTimeout(resolve, 500));
 
-      if (!this.isConnected && !this.isInitializing) {
-        await this.initialize();
-      }
-
-      const result = await InAppPurchases.getPurchaseHistoryAsync();
-      console.log('🔄 Historique achats:', result);
-
-      if (result.responseCode === InAppPurchases.IAPResponseCode.OK) {
-        return { 
-          success: true, 
-          purchases: result.results || [] 
-        };
-      } else {
-        return { 
-          success: false 
-        };
-      }
-    } catch (error) {
-      console.error('❌ Erreur restauration achats:', error);
-      return { success: false };
-    }
-  }
-
-  private getErrorMessage(responseCode: any): string {
-    switch (responseCode) {
-      case InAppPurchases.IAPResponseCode.USER_CANCELED:
-        return 'Achat annulé par l\'utilisateur';
-      case InAppPurchases.IAPResponseCode.SERVICE_UNAVAILABLE:
-        return 'Service d\'achat temporairement indisponible';
-      case InAppPurchases.IAPResponseCode.BILLING_UNAVAILABLE:
-        return 'Facturation non disponible';
-      case InAppPurchases.IAPResponseCode.ITEM_UNAVAILABLE:
-        return 'Produit non disponible';
-      case InAppPurchases.IAPResponseCode.DEVELOPER_ERROR:
-        return 'Erreur de configuration';
-      case InAppPurchases.IAPResponseCode.ERROR:
-        return 'Erreur inconnue';
-      default:
-        return 'Erreur lors de l\'achat';
-    }
+    return { 
+      success: true, 
+      purchases: [] 
+    };
   }
 
   async disconnect(): Promise<void> {
-    try {
-      if (this.isConnected) {
-        await InAppPurchases.disconnectAsync();
-        this.isConnected = false;
-        console.log('🔌 InAppPurchases déconnecté');
-      }
-    } catch (error) {
-      console.error('❌ Erreur déconnexion InAppPurchases:', error);
-    }
+    this.isConnected = false;
+    console.log('🔌 InAppPurchases déconnecté (MOCK)');
   }
 
   isInMockMode(): boolean {
-    // Retourner true si le module n'est pas disponible (comme en mode développement)
-    return !InAppPurchases;
+    return true; // Toujours en mode mock maintenant
   }
 }
 

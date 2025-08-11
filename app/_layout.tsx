@@ -91,23 +91,18 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
-   // Initialiser les achats intégrés
+   // Initialiser les achats intégrés en mode mock
    useEffect(() => {
     const initializeIAP = async () => {
-      if (Platform.OS === 'ios') {
-        try {
-          const success = await purchaseManager.initialize();
-          const mockMode = purchaseManager.isInMockMode() ? ' (MODE DÉVELOPPEMENT - Module non disponible)' : ' (MODE NATIF - EAS Build)';
-          if (success) {
-            console.log('✅ In-App Purchases initialisés' + mockMode);
-          } else {
-            console.log('⚠️ In-App Purchases non disponibles' + mockMode);
-          }
-        } catch (error: any) {
-          console.warn('⚠️ Erreur lors de l\'initialisation des achats intégrés:', error.message || error);
+      try {
+        const success = await purchaseManager.initialize();
+        if (success) {
+          console.log('✅ In-App Purchases initialisés (MODE MOCK)');
+        } else {
+          console.log('⚠️ In-App Purchases non disponibles');
         }
-      } else {
-        console.log('ℹ️ In-App Purchases non pris en charge sur cette plateforme.');
+      } catch (error: any) {
+        console.warn('⚠️ Erreur lors de l\'initialisation des achats intégrés:', error.message || error);
       }
     };
 
@@ -117,11 +112,9 @@ export default function RootLayout() {
     });
 
     return () => {
-      if (Platform.OS === 'ios') {
-        purchaseManager.disconnect().catch(error => {
-          console.warn('⚠️ Erreur lors de la déconnexion IAP:', error);
-        });
-      }
+      purchaseManager.disconnect().catch(error => {
+        console.warn('⚠️ Erreur lors de la déconnexion IAP:', error);
+      });
     };
   }, []);
 
