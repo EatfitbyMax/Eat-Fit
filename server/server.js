@@ -13,9 +13,9 @@ const DATA_DIR = path.join(__dirname, 'data');
 const CLIENT_DIR = path.join(DATA_DIR, 'Client');
 const COACH_DIR = path.join(DATA_DIR, 'Coach');
 
-// Configuration Strava avec les vraies valeurs
-const STRAVA_CLIENT_ID = '159394';
-const STRAVA_CLIENT_SECRET = '0a8889616f64a229949082240702228cba150700';
+// Configuration Strava avec les variables d'environnement
+const STRAVA_CLIENT_ID = process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID || '159394';
+const STRAVA_CLIENT_SECRET = process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET || '0a8889616f64a229949082240702228cba150700';
 
 // Middleware de base
 app.use(cors({
@@ -842,6 +842,10 @@ app.post('/api/strava/exchange-token', async (req, res) => {
     console.log('   - Client Secret longueur:', STRAVA_CLIENT_SECRET ? STRAVA_CLIENT_SECRET.length : 0);
     console.log('   - Code reçu (10 premiers chars):', code.substring(0, 10) + '...');
     console.log('   - Code complet longueur:', code.length);
+    console.log('   - Variables env chargées:', {
+      hasStravaClientId: !!process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID,
+      hasStravaClientSecret: !!process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET
+    });
     
     // Vérifier la correspondance exacte avec la config Strava
     const expectedClientId = '159394';

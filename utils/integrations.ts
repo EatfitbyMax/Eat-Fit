@@ -4,13 +4,13 @@ import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Configuration Strava avec les vraies valeurs
-const STRAVA_CLIENT_ID = '159394';
-const STRAVA_CLIENT_SECRET = '0a8889616f64a229949082240702228cba150700';
+// Configuration Strava avec les variables d'environnement
+const STRAVA_CLIENT_ID = process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID || '159394';
+const STRAVA_CLIENT_SECRET = process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET || '0a8889616f64a229949082240702228cba150700';
 
 // Configuration du redirect URI selon l'environnement  
 const getStravaRedirectUri = (): string => {
-  return 'https://eatfitbymax.cloud/strava-callback';
+  return process.env.EXPO_PUBLIC_VPS_URL ? `${process.env.EXPO_PUBLIC_VPS_URL}/strava-callback` : 'https://eatfitbymax.cloud/strava-callback';
 };
 
 const STRAVA_REDIRECT_URI = getStravaRedirectUri();
@@ -165,15 +165,23 @@ export class IntegrationsManager {
 
   private static validateStravaConfig(): { isValid: boolean; errorMessage?: string; clientId?: string; serverUrl?: string } {
     const clientId = STRAVA_CLIENT_ID;
-    const serverUrl = 'https://eatfitbymax.cloud';
+    const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
 
     console.log('🔍 [STRAVA] Validation configuration - Client ID:', clientId);
     console.log('🔍 [STRAVA] Validation configuration - Serveur:', serverUrl);
+    console.log('🔍 [STRAVA] Validation configuration - Client Secret présent:', !!STRAVA_CLIENT_SECRET);
 
     if (!clientId || clientId.trim() === '') {
       return {
         isValid: false,
-        errorMessage: 'Configuration Strava manquante. Veuillez contacter le support technique.'
+        errorMessage: 'Configuration Strava manquante (Client ID). Veuillez contacter le support technique.'
+      };
+    }
+
+    if (!STRAVA_CLIENT_SECRET || STRAVA_CLIENT_SECRET.trim() === '') {
+      return {
+        isValid: false,
+        errorMessage: 'Configuration Strava manquante (Client Secret). Veuillez contacter le support technique.'
       };
     }
 
@@ -202,7 +210,10 @@ export class IntegrationsManager {
       clearTimeout(timeoutId);
       const isAvailable = response.ok;
 
-      console.log(isAvailable ? '✅ [STRAVA] Serveur disponible' : '❌ [STRAVA] Serveur indisponible');
+      console.log(isAvailable ? '✅ [STRAVA] Serveur disponible' : '❌ [STRAVA] Serveur indisponible', {
+        status: response.status,
+        url: `${serverUrl}/api/health`
+      });
       return isAvailable;
     } catch (error) {
       console.log('❌ [STRAVA] Erreur test connectivité:', error);
@@ -383,10 +394,16 @@ export class IntegrationsManager {
     console.log('🔄 [STRAVA] Échange code autorisation (legacy method)');
 
     try {
-      const serverUrl = 'https://eatfitbymax.cloud';
+      const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+      console.log('📤 [STRAVA] Envoi vers serveur:', {
+        url: `${serverUrl}/api/strava/exchange-token`,
+        codeLength: code.length,
+        userId: userId
+      });
 
       const response = await fetch(`${serverUrl}/api/strava/exchange-token`, {
         method: 'POST',
@@ -403,11 +420,23 @@ export class IntegrationsManager {
 
       clearTimeout(timeoutId);
 
+      console.log('📥 [STRAVA] Réponse serveur:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+      });
+
       if (!response.ok) {
-        throw new Error(`Erreur serveur: ${response.status}`);
+        const errorText = await response.text();
+        console.error('❌ [STRAVA] Détails erreur serveur:', errorText);
+        throw new Error(`Erreur serveur: ${response.status} - ${errorText}`);
       }
 
       const result = await response.json();
+      console.log('✅ [STRAVA] Résultat échange:', {
+        success: result.success,
+        hasAthlete: !!result.athlete
+      });
 
       if (result.success) {
         await this.updateLocalStravaStatus(userId, result);
@@ -415,10 +444,11 @@ export class IntegrationsManager {
         return true;
       }
 
+      console.log('❌ [STRAVA] Échange échoué côté serveur');
       return false;
     } catch (error) {
       console.error('❌ [STRAVA] Erreur échange code:', error);
-      throw new Error('Impossible d\'échanger le code d\'autorisation Strava.');
+      throw new Error('Impossible d\'échanger le code d\'autorisation Strava: ' + error.message);
     }
   }
 
