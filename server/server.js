@@ -1061,11 +1061,22 @@ app.post('/api/strava/disconnect/:userId', async (req, res) => {
 app.get('/strava-callback', async (req, res) => {
   const { code, error, state } = req.query;
 
+  console.log('🔗 [STRAVA_CALLBACK] === DIAGNOSTIC COMPLET ===');
+  console.log('   - Timestamp:', new Date().toISOString());
+  console.log('   - URL complète:', req.url);
+  console.log('   - Method:', req.method);
+  console.log('   - Query params:', JSON.stringify(req.query, null, 2));
+  console.log('   - Headers:', JSON.stringify(req.headers, null, 2));
+  console.log('   - IP Client:', req.ip || req.connection.remoteAddress);
+  console.log('   - User-Agent:', req.headers['user-agent'] || 'N/A');
+  
   console.log('🔗 Callback Strava reçu:', { 
     code: code ? code.substring(0, 10) + '...' : 'aucun',
     error: error || 'aucune',
     state: state || 'aucun',
-    url: req.url
+    url: req.url,
+    hasAnyParams: Object.keys(req.query).length > 0,
+    allParams: req.query
   });
 
   if (error) {
