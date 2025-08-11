@@ -96,22 +96,31 @@ export default function RootLayout() {
     const initializeIAP = async () => {
       if (Platform.OS === 'ios') {
         try {
-          await purchaseManager.initialize();
-          const mockMode = purchaseManager.isInMockMode() ? ' (MODE MOCK - Expo Go)' : ' (MODE NATIF - EAS Build)';
-          console.log('✅ In-App Purchases initialisés' + mockMode);
+          const success = await purchaseManager.initialize();
+          const mockMode = purchaseManager.isInMockMode() ? ' (MODE DÉVELOPPEMENT - Module non disponible)' : ' (MODE NATIF - EAS Build)';
+          if (success) {
+            console.log('✅ In-App Purchases initialisés' + mockMode);
+          } else {
+            console.log('⚠️ In-App Purchases non disponibles' + mockMode);
+          }
         } catch (error: any) {
-          console.warn('⚠️ Erreur lors de l\'initialisation des achats intégrés:', error.message);
+          console.warn('⚠️ Erreur lors de l\'initialisation des achats intégrés:', error.message || error);
         }
       } else {
         console.log('ℹ️ In-App Purchases non pris en charge sur cette plateforme.');
       }
     };
 
-    initializeIAP();
+    // Ne pas bloquer le chargement de l'app si l'initialisation échoue
+    initializeIAP().catch(error => {
+      console.warn('⚠️ Initialisation IAP échouée, l\'app continue de fonctionner:', error);
+    });
 
     return () => {
       if (Platform.OS === 'ios') {
-        purchaseManager.disconnect();
+        purchaseManager.disconnect().catch(error => {
+          console.warn('⚠️ Erreur lors de la déconnexion IAP:', error);
+        });
       }
     };
   }, []);

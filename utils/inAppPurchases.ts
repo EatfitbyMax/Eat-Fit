@@ -1,6 +1,15 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as InAppPurchases from 'expo-in-app-purchases';
+
+// Import conditionnel pour éviter les erreurs sur les plateformes non supportées
+let InAppPurchases: any = null;
+try {
+  if (Platform.OS === 'ios') {
+    InAppPurchases = require('expo-in-app-purchases');
+  }
+} catch (error) {
+  console.warn('expo-in-app-purchases non disponible:', error);
+}
 
 // Types pour les produits
 export interface SubscriptionProduct {
@@ -101,6 +110,12 @@ class InAppPurchaseManager {
     try {
       console.log('🛒 Initialisation InAppPurchases...');
 
+      // Vérifier si le module est disponible
+      if (!InAppPurchases) {
+        console.log('⚠️ Module InAppPurchases non disponible sur cette plateforme');
+        return false;
+      }
+
       if (this.isConnected) {
         console.log('✅ InAppPurchases déjà connecté');
         return true;
@@ -136,6 +151,11 @@ class InAppPurchaseManager {
 
   async loadProducts(): Promise<void> {
     try {
+      if (!InAppPurchases) {
+        console.log('⚠️ Module InAppPurchases non disponible pour charger les produits');
+        return;
+      }
+
       console.log('📦 Chargement des produits...');
 
       const result = await InAppPurchases.getAvailablePurchasesAsync();
@@ -170,6 +190,10 @@ class InAppPurchaseManager {
 
   async purchaseProduct(productId: string): Promise<{ success: boolean; error?: string }> {
     try {
+      if (!InAppPurchases) {
+        return { success: false, error: 'Service d\'achat non disponible sur cette plateforme' };
+      }
+
       console.log('💳 Tentative d\'achat:', productId);
 
       // Vérifier la connexion une seule fois
@@ -257,6 +281,11 @@ class InAppPurchaseManager {
 
   async restorePurchases(): Promise<{ success: boolean; purchases?: any[] }> {
     try {
+      if (!InAppPurchases) {
+        console.log('⚠️ Module InAppPurchases non disponible pour la restauration');
+        return { success: false };
+      }
+
       console.log('🔄 Restauration des achats...');
 
       if (!this.isConnected && !this.isInitializing) {
@@ -314,8 +343,8 @@ class InAppPurchaseManager {
   }
 
   isInMockMode(): boolean {
-    // Toujours false maintenant que nous utilisons le module natif
-    return false;
+    // Retourner true si le module n'est pas disponible (comme en mode développement)
+    return !InAppPurchases;
   }
 }
 
