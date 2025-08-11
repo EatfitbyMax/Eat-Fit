@@ -776,20 +776,20 @@ export default function ProfilScreen() {
               {integrationStatus.strava.connected ? (
                 <View style={styles.stravaConnectedActions}>
                   <TouchableOpacity
-                    style={styles.syncButton}
+                    style={styles.stravaSyncButton}
                     onPress={() => handleStravaSync()}
                     disabled={isLoading || stravaConnecting}
                   >
-                    <Text style={styles.syncButtonText}>
+                    <Text style={styles.stravaSyncButtonText}>
                       {isLoading ? '⏳ Sync...' : '🔄 Synchroniser'}
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={styles.stravaDisconnectButton}
+                    style={styles.stravaDisconnectButtonRed}
                     onPress={() => handleStravaToggle()}
                     disabled={isLoading || stravaConnecting}
                   >
-                    <Text style={styles.stravaDisconnectButtonText}>
+                    <Text style={styles.stravaDisconnectButtonRedText}>
                       Déconnexion
                     </Text>
                   </TouchableOpacity>
@@ -1086,35 +1086,48 @@ const styles = StyleSheet.create({
   stravaConnectedActions: {
     flexDirection: 'column',
     alignItems: 'flex-end',
-    gap: 8,
+    gap: 10,
   },
-  syncButton: {
-    backgroundColor: '#1E90FF',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 6,
-    minWidth: 100,
+  stravaSyncButton: {
+    backgroundColor: '#28A745',
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 8,
+    minWidth: 110,
     alignItems: 'center',
+    shadowColor: '#28A745',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  syncButtonText: {
-    fontSize: 12,
+  stravaSyncButtonText: {
+    fontSize: 13,
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontWeight: '700',
   },
-  stravaDisconnectButton: {
+  stravaDisconnectButtonRed: {
     backgroundColor: '#FF4444',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#FF6666',
-    minWidth: 100,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#FF2222',
+    minWidth: 110,
     alignItems: 'center',
+    shadowColor: '#FF4444',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  stravaDisconnectButtonText: {
-    fontSize: 12,
+  stravaDisconnectButtonRedText: {
+    fontSize: 13,
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontWeight: '700',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   connectedButton: {
     backgroundColor: '#2ecc71',
