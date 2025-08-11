@@ -80,13 +80,14 @@ export class IntegrationsManager {
 
       console.log('🔗 [STRAVA] URL d\'autorisation:', authUrl);
 
-      // Ouverture du navigateur pour autorisation
+      // Configuration du WebBrowser pour Strava
       const result = await WebBrowser.openAuthSessionAsync(
         authUrl,
-        'https://eatfitbymax.cloud',
+        'eatfitbymax://', // Deep link scheme
         {
           showInRecents: false,
           presentationStyle: WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN,
+          preferEphemeralSession: true, // Session privée
         }
       );
 

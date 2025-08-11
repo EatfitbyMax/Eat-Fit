@@ -1183,12 +1183,14 @@ app.get('/strava-callback', async (req, res) => {
   // Gestion des erreurs
   if (error) {
     console.error('❌ [STRAVA] Erreur autorisation:', error);
-    return res.send(createCallbackPage('❌ Erreur', 'L\'autorisation Strava a échoué.', '#FF6B6B'));
+    res.send(createCallbackPage('❌ Erreur', 'L\'autorisation Strava a échoué. Redirection vers l\'app...', '#FF6B6B', true));
+    return; // Important de retourner ici pour ne pas exécuter la suite
   }
 
   if (!code || !state) {
     console.log('⚠️ [STRAVA] Paramètres manquants');
-    return res.send(createCallbackPage('⚠️ Paramètres manquants', 'Veuillez réessayer depuis l\'application.', '#F5A623'));
+    res.send(createCallbackPage('⚠️ Paramètres manquants', 'Veuillez réessayer depuis l\'application. Redirection vers l\'app...', '#F5A623', true));
+    return; // Important de retourner ici pour ne pas exécuter la suite
   }
 
   const userId = state;
@@ -1213,7 +1215,8 @@ app.get('/strava-callback', async (req, res) => {
       console.error('   - Status:', tokenResponse.status);
       console.error('   - Response:', errorText);
       console.error('   - Headers:', Object.fromEntries(tokenResponse.headers.entries()));
-      return res.send(createCallbackPage('❌ Erreur OAuth', 'Échec de l\'échange de token avec Strava.', '#FF6B6B'));
+      res.send(createCallbackPage('❌ Erreur OAuth', 'Échec de l\'échange de token avec Strava. Redirection vers l\'app...', '#FF6B6B', true));
+      return; // Important de retourner ici
     }
 
     const tokenData = await tokenResponse.json();
@@ -1229,17 +1232,16 @@ app.get('/strava-callback', async (req, res) => {
       lastSync: new Date().toISOString()
     };
 
-    const userDataPath = path.join(CLIENT_DIR, `${userId}.json`); // Correction: CLIENT_DIR
-    let userData = {};
+    // Utiliser la recherche robuste pour trouver l'utilisateur
+    const userResult = await findUserById(userId);
 
-    try {
-      // Utilisation de fs.promises.readFile pour la compatibilité async/await
-      const fileContent = await fs.readFile(userDataPath, 'utf8');
-      userData = JSON.parse(fileContent);
-    } catch (e) {
-      console.log('📝 [STRAVA] Nouveau fichier utilisateur');
-      // Si le fichier n'existe pas, userData reste {}
+    if (!userResult) {
+      console.error('❌ [STRAVA] Utilisateur non trouvé pour le callback:', userId);
+      res.send(createCallbackPage('❌ Utilisateur non trouvé', 'Impossible de trouver votre profil utilisateur. Redirection vers l\'app...', '#FF6B6B', true));
+      return;
     }
+
+    const { userData, userType } = userResult;
 
     // Assurer que userData.stravaIntegration existe avant d'y accéder
     userData.stravaIntegration = stravaData; // Utiliser stravaIntegration comme dans le reste du code
@@ -1254,47 +1256,178 @@ app.get('/strava-callback', async (req, res) => {
 
     userData.lastUpdated = new Date().toISOString();
 
-    await fs.writeFile(userDataPath, JSON.stringify(userData, null, 2));
+    await writeUserFile(userId, userData, userType);
 
-    console.log('💾 [STRAVA] Données sauvegardées');
+    console.log('💾 [STRAVA] Données sauvées avec succès');
 
-    res.send(createCallbackPage(
-      '🎉 Strava connecté !', 
-      `Bonjour ${tokenData.athlete?.firstname || 'Athlète'} ! Connexion réussie.`, 
-      '#28A745'
-    ));
-
+    // Page de succès avec redirection automatique vers l'app
+    res.send(createCallbackPage('🎉 Connexion réussie !', 'Strava est maintenant connecté. Redirection vers l\'app...', '#28A745', true));
   } catch (error) {
-    console.error('❌ [STRAVA] Erreur callback:', error);
-    res.send(createCallbackPage('❌ Erreur', 'Impossible de connecter Strava.', '#FF6B6B'));
+    console.error('❌ [STRAVA] Erreur traitement callback:', error);
+    res.send(createCallbackPage(
+      '❌ Erreur de connexion', 
+      'Une erreur est survenue lors de la connexion. Redirection vers l\'app...', 
+      '#FF6B6B',
+      true // Redirection automatique même en cas d'erreur
+    ));
   }
 });
 
-// Fonction utilitaire pour créer les pages de callback
-function createCallbackPage(title, message, color) {
+// Fonction utilitaire pour créer une page de callback
+function createCallbackPage(title, message, color, autoRedirect = false) {
+  const redirectScript = autoRedirect ? `
+    <script>
+      setTimeout(function() {
+        // Essayer plusieurs méthodes de redirection
+        try {
+          // 1. Deep link vers l'app Expo
+          if (window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'strava_callback_complete',
+              success: ${title.includes('✅') || title.includes('🎉')},
+              title: '${title}',
+              message: '${message}'
+            }));
+          }
+
+          // 2. Essayer le deep link custom
+          window.location.href = 'eatfitbymax://profil';
+
+          // 3. Fallback : fermer la fenêtre
+          setTimeout(function() {
+            try {
+              window.close();
+            } catch (e) {
+              // Si on ne peut pas fermer, essayer de revenir en arrière
+              history.back();
+            }
+          }, 1500);
+        } catch (e) {
+          console.log('Erreur redirection:', e);
+          // Fallback final
+          setTimeout(function() {
+            history.back();
+          }, 2000);
+        }
+      }, 2000);
+    </script>
+  ` : '';
+
   return `
     <!DOCTYPE html>
-    <html>
+    <html lang="fr">
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>${title}</title>
+      <title>EatFitByMax - ${title}</title>
       <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 40px; background: #0A0A0A; color: #FFFFFF; text-align: center; }
-        .container { max-width: 400px; margin: 0 auto; }
-        h1 { color: ${color}; margin-bottom: 20px; }
-        p { margin: 15px 0; line-height: 1.5; }
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          background: linear-gradient(135deg, #0A0A0A 0%, #1a1a1a 100%);
+          color: white;
+          margin: 0;
+          padding: 0;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 100vh;
+          text-align: center;
+        }
+        .container {
+          background: rgba(255, 255, 255, 0.1);
+          padding: 40px;
+          border-radius: 20px;
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          max-width: 400px;
+          margin: 20px;
+        }
+        .icon {
+          font-size: 64px;
+          margin-bottom: 20px;
+        }
+        h1 {
+          color: ${color};
+          margin: 0 0 20px 0;
+          font-size: 24px;
+          font-weight: 600;
+        }
+        p {
+          font-size: 16px;
+          line-height: 1.5;
+          margin-bottom: 30px;
+          opacity: 0.9;
+        }
+        .back-button {
+          background: ${color};
+          color: white;
+          padding: 12px 24px;
+          border: none;
+          border-radius: 8px;
+          font-size: 16px;
+          font-weight: 600;
+          cursor: pointer;
+          text-decoration: none;
+          display: inline-block;
+          transition: opacity 0.2s;
+        }
+        .back-button:hover {
+          opacity: 0.8;
+        }
+        .loading {
+          display: inline-block;
+          width: 20px;
+          height: 20px;
+          border: 3px solid rgba(255,255,255,0.3);
+          border-radius: 50%;
+          border-top-color: ${color};
+          animation: spin 1s ease-in-out infinite;
+          margin-right: 10px;
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        .countdown {
+          font-size: 14px;
+          opacity: 0.7;
+          margin-top: 10px;
+        }
       </style>
     </head>
     <body>
       <div class="container">
+        <div class="icon">🏃‍♂️</div>
         <h1>${title}</h1>
         <p>${message}</p>
-        <p>Retournez à l'application mobile.</p>
+        ${autoRedirect ? `
+          <div class="loading"></div>
+          <span>Redirection automatique...</span>
+          <div class="countdown" id="countdown"></div>
+        ` : '<a href="#" onclick="history.back();" class="back-button">Retour à l\'app</a>'}
       </div>
-      <script>
-        setTimeout(() => window.close(), 1500);
-      </script>
+      ${autoRedirect ? `
+        <script>
+          let timeLeft = 3;
+          const countdownEl = document.getElementById('countdown');
+
+          function updateCountdown() {
+            countdownEl.textContent = \`Redirection dans \${timeLeft}s\`;
+            timeLeft--;
+
+            if (timeLeft < 0) {
+              countdownEl.textContent = 'Redirection en cours...';
+            }
+          }
+
+          updateCountdown();
+          const countdownInterval = setInterval(updateCountdown, 1000);
+
+          setTimeout(function() {
+            clearInterval(countdownInterval);
+          }, 3000);
+        </script>
+      ` : ''}
+      ${redirectScript}
     </body>
     </html>
   `;

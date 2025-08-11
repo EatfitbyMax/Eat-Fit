@@ -6,6 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/crown-logo.png",
     "scheme": "eatfitbymax",
+    "associatedDomains": ["applinks:eatfitbymax.cloud"],
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "platforms": [
