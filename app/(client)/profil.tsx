@@ -89,32 +89,20 @@ export default function ProfilScreen() {
       const currentUser = await getCurrentUser();
       if (!currentUser) return;
 
-      console.log('🔄 Chargement statut intégrations pour:', currentUser.email);
+      console.log('🔄 Chargement statut intégrations depuis serveur pour:', currentUser.email);
 
-      // Synchroniser avec le serveur d'abord
-      try {
-        await IntegrationsManager.syncStravaStatusFromServer(currentUser.id);
-      } catch (syncError) {
-        console.log('⚠️ Erreur synchronisation Strava (non critique):', syncError);
-      }
-
-      // Charger le statut local après synchronisation
-      const status = await IntegrationsManager.getIntegrationStatus(currentUser.id);
+      // Récupérer le statut directement depuis le serveur
+      const status = await IntegrationsManager.getIntegrationStatusFromServer(currentUser.id);
+      setIntegrationStatus(status);
       
-      // Forcer une nouvelle vérification pour s'assurer que l'état est correct
-      const stravaConnected = await IntegrationsManager.checkStravaConnection(currentUser.id);
-      if (stravaConnected && !status.strava.connected) {
-        // Si Strava est connecté mais pas dans le statut local, recharger
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const updatedStatus = await IntegrationsManager.getIntegrationStatus(currentUser.id);
-        setIntegrationStatus(updatedStatus);
-        console.log('📊 Statut intégrations mis à jour après vérification:', updatedStatus);
-      } else {
-        setIntegrationStatus(status);
-        console.log('📊 Statut intégrations chargé:', status);
-      }
+      console.log('📊 Statut intégrations chargé depuis serveur:', status);
     } catch (error) {
-      console.error('Erreur chargement statut intégrations:', error);
+      console.error('Erreur chargement statut intégrations depuis serveur:', error);
+      // Statut par défaut en cas d'erreur
+      setIntegrationStatus({
+        appleHealth: { connected: false, lastSync: null, permissions: [] },
+        strava: { connected: false, lastSync: null, athleteId: null },
+      });
     }
   };
 
@@ -202,16 +190,16 @@ export default function ProfilScreen() {
   };
 
   /**
-   * Gestion de la connexion Strava simplifiée
+   * Gestion de la connexion Strava - tout géré côté serveur
    */
   const handleStravaConnect = async (userId: string) => {
     setStravaConnecting(true);
 
     try {
-      console.log('🔄 Connexion Strava pour:', userId);
+      console.log('🔄 Connexion Strava côté serveur pour:', userId);
 
-      // Vérifier si déjà connecté
-      const isAlreadyConnected = await IntegrationsManager.checkStravaConnection(userId);
+      // Vérifier si déjà connecté côté serveur
+      const isAlreadyConnected = await IntegrationsManager.checkStravaConnectionFromServer(userId);
       if (isAlreadyConnected) {
         await loadIntegrationStatus();
         Alert.alert('✅ Déjà connecté !', 'Votre compte Strava est déjà connecté.');
@@ -222,16 +210,8 @@ export default function ProfilScreen() {
       const success = await IntegrationsManager.connectStrava(userId);
 
       if (success) {
-        // Attendre un peu puis recharger le statut pour s'assurer de la synchronisation
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        // Recharger le statut depuis le serveur
         await loadIntegrationStatus();
-        
-        // Vérifier à nouveau après le rechargement
-        const finalStatus = await IntegrationsManager.getIntegrationStatus(userId);
-        if (finalStatus.strava.connected) {
-          setIntegrationStatus(finalStatus);
-          console.log('✅ Interface mise à jour - Strava connecté');
-        }
         
         Alert.alert(
           '🎉 Strava connecté !',
@@ -256,7 +236,7 @@ export default function ProfilScreen() {
   };
 
   /**
-   * Gestion de la déconnexion Strava
+   * Gestion de la déconnexion Strava côté serveur
    */
   const handleStravaDisconnect = async (userId: string) => {
     try {
@@ -275,15 +255,8 @@ export default function ProfilScreen() {
               try {
                 await IntegrationsManager.disconnectStrava(userId);
 
-                // Mettre à jour l'état local
-                setIntegrationStatus(prev => ({
-                  ...prev,
-                  strava: {
-                    connected: false,
-                    lastSync: null,
-                    athleteId: null
-                  }
-                }));
+                // Recharger le statut depuis le serveur
+                await loadIntegrationStatus();
 
                 Alert.alert(
                   '✅ Déconnecté',
@@ -291,7 +264,7 @@ export default function ProfilScreen() {
                   [{ text: 'OK', style: 'default' }]
                 );
 
-                console.log('✅ Déconnexion Strava réussie');
+                console.log('✅ Déconnexion Strava côté serveur réussie');
               } catch (disconnectError) {
                 console.error('❌ Erreur déconnexion Strava:', disconnectError);
                 Alert.alert(
