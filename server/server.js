@@ -1209,8 +1209,11 @@ app.get('/strava-callback', async (req, res) => {
 
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
-      console.error('❌ [STRAVA] Échec échange token:', errorText);
-      throw new Error('Échec échange token');
+      console.error('❌ [STRAVA] Échec échange token:');
+      console.error('   - Status:', tokenResponse.status);
+      console.error('   - Response:', errorText);
+      console.error('   - Headers:', Object.fromEntries(tokenResponse.headers.entries()));
+      return res.send(createCallbackPage('❌ Erreur OAuth', 'Échec de l\'échange de token avec Strava.', '#FF6B6B'));
     }
 
     const tokenData = await tokenResponse.json();

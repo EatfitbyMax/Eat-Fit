@@ -58,12 +58,19 @@ export class IntegrationsManager {
         throw new Error('Configuration manquante');
       }
 
-      // Construction de l'URL d'autorisation Strava
+      console.log('🔧 [STRAVA] Configuration:', {
+        clientId: STRAVA_CLIENT_ID,
+        serverUrl: SERVER_URL,
+        userId: userId
+      });
+
+      // Construction de l'URL d'autorisation Strava avec redirect_uri exact
+      const redirectUri = 'https://eatfitbymax.cloud/strava-callback';
       const authUrl = [
         'https://www.strava.com/oauth/authorize',
         `?client_id=${STRAVA_CLIENT_ID}`,
         `&response_type=code`,
-        `&redirect_uri=${encodeURIComponent(`${SERVER_URL}/strava-callback`)}`,
+        `&redirect_uri=${encodeURIComponent(redirectUri)}`,
         `&approval_prompt=force`,
         `&scope=read,activity:read_all`,
         `&state=${userId}`
@@ -71,21 +78,26 @@ export class IntegrationsManager {
 
       console.log('🔗 [STRAVA] Ouverture autorisation OAuth...');
 
+      console.log('🔗 [STRAVA] URL d\'autorisation:', authUrl);
+
       // Ouverture du navigateur pour autorisation
       const result = await WebBrowser.openAuthSessionAsync(
         authUrl,
-        SERVER_URL,
+        'https://eatfitbymax.cloud',
         {
           showInRecents: false,
           presentationStyle: WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN,
         }
       );
 
-      console.log('📱 [STRAVA] Résultat WebBrowser:', result.type);
+      console.log('📱 [STRAVA] Résultat WebBrowser:', {
+        type: result.type,
+        url: result.url
+      });
 
       // Attendre que le serveur traite l'autorisation
       console.log('⏳ [STRAVA] Attente du traitement serveur...');
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      await new Promise(resolve => setTimeout(resolve, 5000));
 
       // Vérifier le statut final
       const isConnected = await this.checkStravaConnection(userId);
