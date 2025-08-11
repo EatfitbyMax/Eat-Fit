@@ -166,10 +166,8 @@ export class IntegrationsManager {
         const data = await response.json();
         console.log('📊 [STRAVA] Statut:', { connected: data.connected, athlete: data.athlete?.firstname });
 
-        if (data.connected) {
-          // Mettre à jour le statut local
-          await this.updateLocalStravaStatus(userId, data);
-        }
+        // Toujours synchroniser le statut local avec le serveur
+        await this.syncStravaStatusFromServer(userId);
 
         return data.connected || false;
       }
@@ -299,13 +297,17 @@ export class IntegrationsManager {
     try {
       const status = await this.getIntegrationStatus(userId);
       status.strava = {
-        connected: true,
+        connected: stravaData.connected || true,
         athlete: stravaData.athlete,
-        lastSync: new Date().toISOString(),
+        lastSync: stravaData.lastSync || new Date().toISOString(),
         athleteId: stravaData.athlete?.id?.toString() || null
       };
       await PersistentStorage.saveIntegrationStatus(userId, status);
-      console.log('💾 [STRAVA] Statut local mis à jour');
+      console.log('💾 [STRAVA] Statut local mis à jour:', {
+        connected: status.strava.connected,
+        athleteId: status.strava.athleteId,
+        athlete: status.strava.athlete?.firstname
+      });
     } catch (error) {
       console.error('❌ [STRAVA] Erreur mise à jour statut local:', error);
     }
@@ -328,19 +330,28 @@ export class IntegrationsManager {
         const data = await response.json();
         console.log('📊 [STRAVA] Statut serveur:', data);
 
-        if (data.connected) {
-          await this.updateLocalStravaStatus(userId, data);
+        const status = await this.getIntegrationStatus(userId);
+        
+        if (data.connected && data.athlete) {
+          status.strava = {
+            connected: true,
+            athlete: data.athlete,
+            lastSync: data.lastSync || new Date().toISOString(),
+            athleteId: data.athlete.id?.toString() || null
+          };
+          console.log('✅ [STRAVA] Mise à jour locale connecté:', data.athlete.firstname);
         } else {
-          // Mettre à jour le statut local comme déconnecté
-          const status = await this.getIntegrationStatus(userId);
           status.strava = {
             connected: false,
             athlete: null,
             lastSync: null,
             athleteId: null
           };
-          await PersistentStorage.saveIntegrationStatus(userId, status);
+          console.log('📝 [STRAVA] Mise à jour locale déconnecté');
         }
+        
+        await PersistentStorage.saveIntegrationStatus(userId, status);
+        console.log('💾 [STRAVA] Statut local synchronisé:', status.strava);
       }
     } catch (error) {
       console.error('❌ [STRAVA] Erreur synchronisation depuis serveur:', error);
