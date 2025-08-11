@@ -36,21 +36,6 @@ export default function ProfilScreen() {
   const [showComingSoonModal, setShowComingSoonModal] = useState(false);
   const [showPremiumComingSoonModal, setShowPremiumComingSoonModal] = useState(false);
   const [stravaConnecting, setStravaConnecting] = useState(false); // Ajout pour gérer l'état de connexion Strava
-  const [loadingModalVisible, setLoadingModalVisible] = useState(false);
-  const [loadingModalTitle, setLoadingModalTitle] = useState('');
-  const [loadingModalMessage, setLoadingModalMessage] = useState('');
-
-  // Fonction pour afficher le modal de chargement
-  const showModal = (title: string, message: string) => {
-    setLoadingModalTitle(title);
-    setLoadingModalMessage(message);
-    setLoadingModalVisible(true);
-  };
-
-  // Fonction pour masquer le modal de chargement
-  const hideModal = () => {
-    setLoadingModalVisible(false);
-  };
 
   const availableGoals = [
     'Perdre du poids',
@@ -234,13 +219,10 @@ export default function ProfilScreen() {
       if (isConnected) {
         console.log('✅ Connexion Strava réussie !');
 
-        // Vérification rapide du statut
-        showModal('Finalisation...', 'Vérification de la connexion...');
-        
+        // Vérification rapide du statut avec délai
         await new Promise(resolve => setTimeout(resolve, 1500));
         
         const finalStatus = await IntegrationsManager.getStravaStatusFromServer(userId);
-        hideModal();
 
         if (finalStatus.connected) {
           await loadIntegrationStatus();
@@ -323,7 +305,6 @@ export default function ProfilScreen() {
       );
     } finally {
       setStravaConnecting(false);
-      hideModal(); // S'assurer que le modal est toujours fermé
     }
   };
 
@@ -788,21 +769,6 @@ export default function ProfilScreen() {
           <Text style={styles.versionText}>Version 1.0.0</Text>
         </View>
       </ScrollView>
-
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={loadingModalVisible}
-        onRequestClose={hideModal}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <ActivityIndicator size="large" color="#FFFFFF" />
-            <Text style={styles.modalTitle}>{loadingModalTitle}</Text>
-            <Text style={styles.modalMessage}>{loadingModalMessage}</Text>
-          </View>
-        </View>
-      </Modal>
 
       <ComingSoonModal
         visible={showComingSoonModal}
@@ -1445,32 +1411,5 @@ const styles = StyleSheet.create({
     color: '#000000',
     marginLeft: 8,
   },
-  // Styles pour le modal de chargement
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-  },
-  modalContent: {
-    backgroundColor: '#161B22',
-    padding: 30,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#21262D',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  modalMessage: {
-    fontSize: 14,
-    color: '#8B949E',
-    textAlign: 'center',
-  },
+  
 });
