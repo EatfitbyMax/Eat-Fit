@@ -636,45 +636,96 @@ export default function ProfilScreen() {
             <View style={styles.integrationInfo}>
               <Text style={styles.integrationName}>🏃‍♂️ Strava</Text>
               <Text style={styles.integrationDescription}>
-                Synchronisez vos activités sportives avec EatFitByMax
+                {integrationStatus.strava.connected ? 
+                  `Connecté comme ${integrationStatus.strava.athlete?.firstname || 'Athlète'}` :
+                  'Synchronisez vos activités sportives avec EatFitByMax'
+                }
               </Text>
+              {integrationStatus.strava.connected && integrationStatus.strava.lastSync && (
+                <Text style={styles.integrationLastSync}>
+                  Dernière sync : {new Date(integrationStatus.strava.lastSync).toLocaleDateString('fr-FR')}
+                </Text>
+              )}
             </View>
-            <TouchableOpacity
-              style={[styles.connectButton, integrationStatus.strava.connected && styles.connectedButton]}
-              onPress={() => handleStravaToggle()}
-              disabled={isLoading || stravaConnecting}
-            >
-              <Text style={[styles.connectButtonText, integrationStatus.strava.connected && styles.connectedButtonText]}>
-                {integrationStatus.strava.connected ? 'Connecté' : 'Connecter'}
-              </Text>
-            </TouchableOpacity>
+            <View style={styles.integrationActions}>
+              {integrationStatus.strava.connected ? (
+                <TouchableOpacity
+                  style={styles.disconnectButton}
+                  onPress={() => handleStravaToggle()}
+                  disabled={isLoading || stravaConnecting}
+                >
+                  <Text style={styles.disconnectButtonText}>
+                    Déconnecter
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={styles.connectButton}
+                  onPress={() => handleStravaToggle()}
+                  disabled={isLoading || stravaConnecting}
+                >
+                  <Text style={styles.connectButtonText}>
+                    {stravaConnecting ? 'Connexion...' : 'Connecter'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
 
-          {/* Informations de statut */}
+          {/* Carte de statut détaillée pour Strava connecté */}
+          {integrationStatus.strava.connected && (
+            <View style={styles.stravaStatusCard}>
+              <View style={styles.stravaStatusHeader}>
+                <Text style={styles.stravaStatusTitle}>🏃‍♂️ Compte Strava connecté</Text>
+                <View style={styles.connectedBadge}>
+                  <Text style={styles.connectedBadgeText}>✓ CONNECTÉ</Text>
+                </View>
+              </View>
+              
+              <View style={styles.stravaStatusDetails}>
+                <View style={styles.stravaDetailRow}>
+                  <Text style={styles.stravaDetailLabel}>Nom :</Text>
+                  <Text style={styles.stravaDetailValue}>
+                    {integrationStatus.strava.athlete?.firstname} {integrationStatus.strava.athlete?.lastname}
+                  </Text>
+                </View>
+                
+                <View style={styles.stravaDetailRow}>
+                  <Text style={styles.stravaDetailLabel}>ID Athlète :</Text>
+                  <Text style={styles.stravaDetailValue}>
+                    #{integrationStatus.strava.athleteId || integrationStatus.strava.athlete?.id || 'Non disponible'}
+                  </Text>
+                </View>
+                
+                {integrationStatus.strava.athlete?.city && (
+                  <View style={styles.stravaDetailRow}>
+                    <Text style={styles.stravaDetailLabel}>Ville :</Text>
+                    <Text style={styles.stravaDetailValue}>
+                      {integrationStatus.strava.athlete.city}
+                    </Text>
+                  </View>
+                )}
+                
+                <View style={styles.stravaDetailRow}>
+                  <Text style={styles.stravaDetailLabel}>Dernière sync :</Text>
+                  <Text style={styles.stravaDetailValue}>
+                    {integrationStatus.strava.lastSync ?
+                      new Date(integrationStatus.strava.lastSync).toLocaleString('fr-FR') :
+                      'Jamais'
+                    }
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
+
+          {/* Informations de statut Apple Health */}
           {integrationStatus.appleHealth.connected && (
             <View style={styles.statusCard}>
               <Text style={styles.statusTitle}>📱 Apple Health</Text>
               <Text style={styles.statusDescription}>
                 Dernière synchronisation : {integrationStatus.appleHealth.lastSync ?
                   new Date(integrationStatus.appleHealth.lastSync).toLocaleDateString('fr-FR') :
-                  'Jamais'
-                }
-              </Text>
-            </View>
-          )}
-
-          {integrationStatus.strava.connected && (
-            <View style={styles.statusCard}>
-              <Text style={styles.statusTitle}>🏃‍♂️ Strava</Text>
-              <Text style={styles.statusDescription}>
-                {integrationStatus.strava.athlete?.firstname || 'Athlète'} connecté à EatFitByMax
-              </Text>
-              <Text style={styles.statusDescription}>
-                Athlete #{integrationStatus.strava.athleteId || integrationStatus.strava.athlete?.id || 'Non disponible'}
-              </Text>
-              <Text style={styles.statusDescription}>
-                Dernière synchronisation : {integrationStatus.strava.lastSync ?
-                  new Date(integrationStatus.strava.lastSync).toLocaleDateString('fr-FR') :
                   'Jamais'
                 }
               </Text>
@@ -865,6 +916,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#8B949E',
   },
+  integrationLastSync: {
+    fontSize: 12,
+    color: '#6C757D',
+    marginTop: 4,
+  },
+  integrationActions: {
+    alignItems: 'flex-end',
+  },
   connectButton: {
     backgroundColor: '#28A745',
     paddingVertical: 8,
@@ -876,11 +935,73 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
   },
+  disconnectButton: {
+    backgroundColor: '#DC3545',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+  },
+  disconnectButtonText: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
   connectedButton: {
     backgroundColor: '#2ecc71',
   },
   connectedButtonText: {
     color: '#000000',
+  },
+  // Nouveaux styles pour la carte de statut Strava
+  stravaStatusCard: {
+    backgroundColor: '#1a4f3a',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#28A745',
+    marginTop: 12,
+  },
+  stravaStatusHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  stravaStatusTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  connectedBadge: {
+    backgroundColor: '#28A745',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  connectedBadgeText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+  stravaStatusDetails: {
+    gap: 8,
+  },
+  stravaDetailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  stravaDetailLabel: {
+    fontSize: 14,
+    color: '#8B949E',
+    fontWeight: '500',
+  },
+  stravaDetailValue: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   stravaConnection: {
     backgroundColor: '#161B22',
