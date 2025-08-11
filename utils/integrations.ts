@@ -142,7 +142,7 @@ export class IntegrationsManager {
   }
 
   /**
-   * Récupération du statut d'intégration depuis le serveur
+   * Récupération du statut d'intégration depuis le serveur et local
    */
   static async getIntegrationStatusFromServer(userId: string): Promise<IntegrationConfig> {
     try {
@@ -168,14 +168,34 @@ export class IntegrationsManager {
         }
       }
 
+      // Récupérer le statut Apple Health depuis AsyncStorage (local uniquement)
+      let appleHealthStatus = { connected: false, permissions: [], lastSync: null };
+      
+      try {
+        const appleHealthConnected = await AsyncStorage.getItem('appleHealthConnected');
+        const appleHealthPermissions = await AsyncStorage.getItem('appleHealthPermissions');
+        const appleHealthLastSync = await AsyncStorage.getItem('appleHealthLastSync');
+        
+        if (appleHealthConnected === 'true') {
+          appleHealthStatus = {
+            connected: true,
+            permissions: appleHealthPermissions ? JSON.parse(appleHealthPermissions) : ['Steps', 'ActiveEnergyBurned', 'HeartRate', 'Weight', 'DistanceWalkingRunning'],
+            lastSync: appleHealthLastSync || new Date().toISOString()
+          };
+          console.log('✅ [APPLE HEALTH] Statut récupéré depuis AsyncStorage:', appleHealthStatus);
+        }
+      } catch (storageError) {
+        console.log('⚠️ [APPLE HEALTH] Erreur lecture AsyncStorage:', storageError);
+      }
+
       return {
-        appleHealth: { connected: false, permissions: [] },
+        appleHealth: appleHealthStatus,
         strava: stravaStatus
       };
     } catch (error) {
       console.error('❌ [INTEGRATIONS] Erreur récupération statut serveur:', error);
       return {
-        appleHealth: { connected: false, permissions: [] },
+        appleHealth: { connected: false, permissions: [], lastSync: null },
         strava: { connected: false, athlete: null, lastSync: null, athleteId: null }
       };
     }
@@ -242,40 +262,58 @@ export class IntegrationsManager {
         throw new Error('Apple Health est uniquement disponible sur iOS');
       }
 
+      console.log('🔄 [APPLE HEALTH] Tentative de connexion pour:', userId);
+
       const HealthKitService = require('../utils/healthKit').default;
       const isAvailable = await HealthKitService.isAvailable();
       if (!isAvailable) {
+        console.log('❌ [APPLE HEALTH] Non disponible sur cet appareil');
         throw new Error('Apple Health n\'est pas disponible sur cet appareil');
       }
 
+      console.log('✅ [APPLE HEALTH] Disponible - demande de permissions...');
       const granted = await HealthKitService.requestPermissions();
+      
       if (granted) {
-        const status = await this.getIntegrationStatus(userId);
-        status.appleHealth = {
+        console.log('✅ [APPLE HEALTH] Permissions accordées');
+        
+        const permissionsList = permissions || ['Steps', 'ActiveEnergyBurned', 'HeartRate', 'Weight', 'DistanceWalkingRunning'];
+        const currentTime = new Date().toISOString();
+        
+        // Sauvegarder dans AsyncStorage
+        await AsyncStorage.setItem('appleHealthConnected', 'true');
+        await AsyncStorage.setItem('appleHealthPermissions', JSON.stringify(permissionsList));
+        await AsyncStorage.setItem('appleHealthLastSync', currentTime);
+        
+        console.log('💾 [APPLE HEALTH] État sauvegardé localement:', {
           connected: true,
-          lastSync: new Date().toISOString(),
-          permissions: permissions || ['Steps', 'ActiveEnergyBurned', 'HeartRate', 'Weight', 'DistanceWalkingRunning']
-        };
-        await PersistentStorage.saveIntegrationStatus(userId, status);
+          permissions: permissionsList,
+          lastSync: currentTime
+        });
+        
         return true;
+      } else {
+        console.log('❌ [APPLE HEALTH] Permissions refusées');
+        return false;
       }
-      return false;
     } catch (error) {
-      console.error('❌ Erreur connexion Apple Health:', error);
+      console.error('❌ [APPLE HEALTH] Erreur connexion:', error);
       throw error;
     }
   }
 
   static async disconnectAppleHealth(userId: string): Promise<void> {
     try {
-      const status = await this.getIntegrationStatus(userId);
-      status.appleHealth = {
-        connected: false,
-        permissions: []
-      };
-      await PersistentStorage.saveIntegrationStatus(userId, status);
+      console.log('🔄 [APPLE HEALTH] Déconnexion pour:', userId);
+      
+      // Nettoyer AsyncStorage
+      await AsyncStorage.removeItem('appleHealthConnected');
+      await AsyncStorage.removeItem('appleHealthPermissions');
+      await AsyncStorage.removeItem('appleHealthLastSync');
+      
+      console.log('✅ [APPLE HEALTH] Déconnexion locale terminée');
     } catch (error) {
-      console.error('❌ Erreur déconnexion Apple Health:', error);
+      console.error('❌ [APPLE HEALTH] Erreur déconnexion:', error);
       throw error;
     }
   }

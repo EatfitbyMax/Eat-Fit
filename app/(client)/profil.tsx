@@ -150,7 +150,81 @@ export default function ProfilScreen() {
   };
 
   const handleAppleHealthToggle = async () => {
-    setShowComingSoonModal(true);
+    if (isLoading) return;
+
+    setIsLoading(true);
+
+    try {
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        Alert.alert("Erreur", "Utilisateur non connecté");
+        return;
+      }
+
+      if (integrationStatus.appleHealth.connected) {
+        // Déconnexion
+        Alert.alert(
+          'Déconnecter Apple Health',
+          'Êtes-vous sûr de vouloir déconnecter Apple Health ? Vos données de santé ne seront plus synchronisées.',
+          [
+            { text: 'Annuler', style: 'cancel' },
+            {
+              text: 'Déconnecter',
+              style: 'destructive',
+              onPress: async () => {
+                try {
+                  await IntegrationsManager.disconnectAppleHealth(currentUser.id);
+                  await loadIntegrationStatus();
+                  Alert.alert('✅ Déconnecté', 'Apple Health a été déconnecté avec succès.');
+                } catch (error) {
+                  console.error('❌ Erreur déconnexion Apple Health:', error);
+                  Alert.alert('Erreur', 'Impossible de déconnecter Apple Health.');
+                }
+              }
+            }
+          ]
+        );
+      } else {
+        // Connexion
+        try {
+          const success = await IntegrationsManager.connectAppleHealth(currentUser.id);
+          if (success) {
+            await loadIntegrationStatus();
+            Alert.alert(
+              '🎉 Apple Health connecté !',
+              'Vos données de santé seront maintenant synchronisées.',
+              [{ text: 'OK', style: 'default' }]
+            );
+          } else {
+            Alert.alert(
+              '❌ Connexion échouée',
+              'Impossible de connecter Apple Health. Vérifiez les permissions dans les réglages.',
+              [{ text: 'OK', style: 'default' }]
+            );
+          }
+        } catch (error) {
+          console.error('❌ Erreur connexion Apple Health:', error);
+          if (error.message.includes('iOS')) {
+            Alert.alert(
+              '📱 iOS uniquement',
+              'Apple Health est uniquement disponible sur iPhone et iPad.',
+              [{ text: 'OK', style: 'default' }]
+            );
+          } else {
+            Alert.alert(
+              '❌ Erreur',
+              'Une erreur s\'est produite lors de la connexion à Apple Health.',
+              [{ text: 'OK', style: 'default' }]
+            );
+          }
+        }
+      }
+    } catch (error) {
+      console.error('❌ Erreur toggle Apple Health:', error);
+      Alert.alert('Erreur', 'Une erreur s\'est produite. Veuillez réessayer.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   /**
@@ -591,18 +665,40 @@ export default function ProfilScreen() {
             <View style={styles.integrationInfo}>
               <Text style={styles.integrationName}>🍎 Apple Health</Text>
               <Text style={styles.integrationDescription}>
-                Synchronisez vos données de santé et fitness avec EatFitByMax
+                {integrationStatus.appleHealth.connected ? 
+                  'Données de santé synchronisées avec EatFitByMax' :
+                  'Synchronisez vos données de santé et fitness avec EatFitByMax'
+                }
               </Text>
+              {integrationStatus.appleHealth.connected && integrationStatus.appleHealth.lastSync && (
+                <Text style={styles.integrationLastSync}>
+                  Dernière sync : {new Date(integrationStatus.appleHealth.lastSync).toLocaleDateString('fr-FR')}
+                </Text>
+              )}
             </View>
-            <TouchableOpacity
-              style={[styles.connectButton, integrationStatus.appleHealth.connected && styles.connectedButton]}
-              onPress={() => handleAppleHealthToggle()}
-              disabled={isLoading}
-            >
-              <Text style={[styles.connectButtonText]}>
-                Bientôt disponible
-              </Text>
-            </TouchableOpacity>
+            <View style={styles.integrationActions}>
+              {integrationStatus.appleHealth.connected ? (
+                <TouchableOpacity
+                  style={styles.disconnectButton}
+                  onPress={() => handleAppleHealthToggle()}
+                  disabled={isLoading}
+                >
+                  <Text style={styles.disconnectButtonText}>
+                    Déconnecter
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={styles.connectButton}
+                  onPress={() => handleAppleHealthToggle()}
+                  disabled={isLoading}
+                >
+                  <Text style={styles.connectButtonText}>
+                    {isLoading ? 'Connexion...' : 'Connecter'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
 
           <View style={styles.integrationItem}>
