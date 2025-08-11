@@ -14,7 +14,7 @@ const COACH_DIR = path.join(DATA_DIR, 'Coach');
 
 // Configuration Strava avec les variables d'environnement
 const STRAVA_CLIENT_ID = process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID || '159394';
-const STRAVA_CLIENT_SECRET = process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET || '0a8889616f64a229949082240702228cba150700';
+const STRAVA_CLIENT_SECRET = process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET || '0a888961cf64a2294908224b07b222ccba150700';
 
 // Middleware de base
 app.use(cors({
