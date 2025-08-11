@@ -88,6 +88,9 @@ export class IntegrationsManager {
           showInRecents: false,
           presentationStyle: WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN,
           preferEphemeralSession: true, // Session privée
+          browserPackage: undefined, // Utiliser le navigateur par défaut
+          readerMode: false,
+          dismissButtonStyle: 'close',
         }
       );
 
@@ -114,23 +117,34 @@ export class IntegrationsManager {
         }
         
         if (code) {
-          console.log('✅ [STRAVA] Code d\'autorisation reçu');
-          // Attendre que le serveur traite l'autorisation
-          console.log('⏳ [STRAVA] Attente du traitement serveur...');
-          await new Promise(resolve => setTimeout(resolve, 3000));
+          console.log('✅ [STRAVA] Code d\'autorisation reçu directement');
+          // Échanger le code immédiatement
+          const exchangeSuccess = await this.exchangeStravaCode(code, userId);
+          if (exchangeSuccess) {
+            console.log('✅ [STRAVA] Échange de code réussi');
+            return true;
+          }
         }
       }
 
-      // Vérifier le statut final
-      const isConnected = await this.checkStravaConnection(userId);
+      // Si pas de code direct, attendre que le serveur traite l'autorisation
+      console.log('⏳ [STRAVA] Attente du traitement serveur...');
+      await new Promise(resolve => setTimeout(resolve, 4000));
 
-      if (isConnected) {
-        console.log('✅ [STRAVA] Connexion réussie');
-        return true;
-      } else {
-        console.log('❌ [STRAVA] Connexion échouée');
-        return false;
+      // Vérifier le statut final plusieurs fois
+      for (let i = 0; i < 3; i++) {
+        const isConnected = await this.checkStravaConnection(userId);
+        if (isConnected) {
+          console.log('✅ [STRAVA] Connexion réussie (tentative', i + 1, ')');
+          return true;
+        }
+        if (i < 2) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
       }
+
+      console.log('❌ [STRAVA] Connexion échouée après vérifications');
+      return false;
     } catch (error) {
       console.error('❌ [STRAVA] Erreur connexion:', error);
       throw new Error('Impossible de connecter Strava: ' + error.message);
@@ -241,6 +255,40 @@ export class IntegrationsManager {
     } catch (error) {
       console.error('❌ [STRAVA] Erreur récupération activités:', error);
       return [];
+    }
+  }
+
+  /**
+   * Échanger le code d'autorisation contre un token
+   */
+  static async exchangeStravaCode(code: string, userId: string): Promise<boolean> {
+    try {
+      console.log('🔄 [STRAVA] Échange de code pour utilisateur:', userId);
+
+      const response = await fetch(`${SERVER_URL}/api/strava/exchange-token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, userId }),
+        timeout: 10000
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          console.log('✅ [STRAVA] Échange de code réussi');
+          // Mettre à jour le statut local
+          if (data.athlete) {
+            await this.updateLocalStravaStatus(userId, data);
+          }
+          return true;
+        }
+      }
+
+      console.error('❌ [STRAVA] Échec échange de code');
+      return false;
+    } catch (error) {
+      console.error('❌ [STRAVA] Erreur échange de code:', error);
+      return false;
     }
   }
 

@@ -1277,39 +1277,52 @@ app.get('/strava-callback', async (req, res) => {
 function createCallbackPage(title, message, color, autoRedirect = false) {
   const redirectScript = autoRedirect ? `
     <script>
-      setTimeout(function() {
-        // Essayer plusieurs méthodes de redirection
+      console.log('Début redirection automatique...');
+      
+      // Fonction pour fermer la fenêtre
+      function closeWindow() {
         try {
-          // 1. Deep link vers l'app Expo
-          if (window.ReactNativeWebView) {
-            window.ReactNativeWebView.postMessage(JSON.stringify({
-              type: 'strava_callback_complete',
-              success: ${title.includes('✅') || title.includes('🎉')},
-              title: '${title}',
-              message: '${message}'
-            }));
-          }
-
-          // 2. Essayer le deep link custom
+          // 1. Essayer le protocole custom scheme pour iOS
           window.location.href = 'eatfitbymax://profil';
-
-          // 3. Fallback : fermer la fenêtre
+          
+          // 2. Attendre un peu puis essayer de fermer
           setTimeout(function() {
             try {
               window.close();
             } catch (e) {
-              // Si on ne peut pas fermer, essayer de revenir en arrière
-              history.back();
+              console.log('Impossible de fermer la fenêtre:', e);
             }
-          }, 1500);
-        } catch (e) {
-          console.log('Erreur redirection:', e);
-          // Fallback final
+          }, 500);
+          
+          // 3. Fallback final - retour en arrière
           setTimeout(function() {
-            history.back();
-          }, 2000);
+            try {
+              history.back();
+            } catch (e) {
+              console.log('Impossible de revenir en arrière:', e);
+            }
+          }, 1000);
+        } catch (e) {
+          console.log('Erreur lors de la redirection:', e);
         }
-      }, 2000);
+      }
+
+      // Démarrer la redirection immédiatement
+      setTimeout(closeWindow, 1000);
+      
+      // Ajouter un listener pour détecter si la page devient visible/cachée
+      document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'hidden') {
+          console.log('Page cachée - tentative de fermeture');
+          closeWindow();
+        }
+      });
+      
+      // Ajouter un listener pour les événements de focus/blur
+      window.addEventListener('blur', function() {
+        console.log('Fenêtre a perdu le focus - tentative de fermeture');
+        setTimeout(closeWindow, 200);
+      });
     </script>
   ` : '';
 
