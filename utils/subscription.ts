@@ -1,7 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { getCurrentUser } from './auth';
-import { purchaseManager } from './inAppPurchases';
 
 // Plans d'abonnement disponibles
 export const SUBSCRIPTION_PLANS = [
@@ -119,21 +118,24 @@ export const getCurrentSubscription = async (userId: string): Promise<Subscripti
   try {
     console.log('🔍 Récupération abonnement pour:', userId);
 
-    // Sur iOS, utiliser le service IAP en priorité
+    // Sur iOS, utiliser StoreKit 2 en priorité
     if (Platform.OS === 'ios') {
-      const iapSubscription = await InAppPurchaseService.getCurrentSubscription(userId);
+      const { purchaseManager } = await import('./inAppPurchases');
+      const iapSubscription = await purchaseManager.getCurrentSubscription(userId);
 
       if (iapSubscription && iapSubscription.planId !== 'free') {
         const subscription = {
           planId: iapSubscription.planId,
           planName: iapSubscription.planName,
           status: iapSubscription.status as 'active' | 'inactive' | 'cancelled',
-          price: parseFloat(iapSubscription.price.replace(/[^0-9.,]/g, '').replace(',', '.')),
+          price: typeof iapSubscription.price === 'string' 
+            ? parseFloat(iapSubscription.price.replace(/[^0-9.,]/g, '').replace(',', '.'))
+            : iapSubscription.price,
           currency: iapSubscription.currency,
           paymentMethod: iapSubscription.paymentMethod || 'apple_iap'
         };
 
-        console.log('🍎 Abonnement IAP récupéré:', subscription);
+        console.log('🍎 Abonnement StoreKit récupéré:', subscription);
         return subscription;
       }
     }

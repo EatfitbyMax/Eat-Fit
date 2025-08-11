@@ -1,3 +1,4 @@
+
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -91,65 +92,67 @@ export const IAP_SUBSCRIPTION_PLANS = [
   }
 ];
 
-// Mock des produits pour le développement
-const MOCK_PRODUCTS: SubscriptionProduct[] = [
-  {
-    productId: SUBSCRIPTION_PRODUCTS.BRONZE,
-    title: 'Abonnement BRONZE',
-    description: 'Plan Bronze mensuel',
-    price: '9,99 €',
-    priceAmountMicros: 9990000,
-    priceCurrencyCode: 'EUR',
-    type: 'subs'
-  },
-  {
-    productId: SUBSCRIPTION_PRODUCTS.SILVER,
-    title: 'Abonnement SILVER',
-    description: 'Plan Silver mensuel',
-    price: '19,99 €',
-    priceAmountMicros: 19990000,
-    priceCurrencyCode: 'EUR',
-    type: 'subs'
-  },
-  {
-    productId: SUBSCRIPTION_PRODUCTS.GOLD,
-    title: 'Abonnement GOLD',
-    description: 'Plan Gold mensuel',
-    price: '49,99 €',
-    priceAmountMicros: 49990000,
-    priceCurrencyCode: 'EUR',
-    type: 'subs'
-  },
-  {
-    productId: SUBSCRIPTION_PRODUCTS.DIAMOND,
-    title: 'Abonnement DIAMOND',
-    description: 'Plan Diamond mensuel',
-    price: '99,99 €',
-    priceAmountMicros: 99990000,
-    priceCurrencyCode: 'EUR',
-    type: 'subs'
-  }
-];
-
-class InAppPurchaseManager {
+class StoreKitManager {
   private isConnected = false;
-  private products: SubscriptionProduct[] = MOCK_PRODUCTS;
+  private products: SubscriptionProduct[] = [];
+  private purchasedProductIDs: Set<string> = new Set();
 
   async initialize(): Promise<boolean> {
-    console.log('🛒 Initialisation InAppPurchases (MODE MOCK)...');
+    console.log('🛒 Initialisation StoreKit 2...');
+    
+    if (Platform.OS !== 'ios') {
+      console.log('⚠️ StoreKit uniquement disponible sur iOS');
+      return false;
+    }
 
-    // Simulation d'une initialisation
-    await new Promise(resolve => setTimeout(resolve, 500));
+    try {
+      // Initialisation de StoreKit via le module natif
+      const StoreKit = require('react-native').NativeModules.StoreKit;
+      
+      if (!StoreKit) {
+        console.error('❌ Module StoreKit non disponible');
+        return false;
+      }
 
-    this.isConnected = true;
-    console.log('✅ InAppPurchases initialisé en mode mock');
-    return true;
+      await StoreKit.initialize();
+      this.isConnected = true;
+      console.log('✅ StoreKit 2 initialisé');
+      
+      // Charger les produits et vérifier les achats existants
+      await this.loadProducts();
+      await this.checkCurrentEntitlements();
+      
+      return true;
+    } catch (error) {
+      console.error('❌ Erreur initialisation StoreKit:', error);
+      return false;
+    }
   }
 
   async loadProducts(): Promise<void> {
-    console.log('📦 Chargement des produits (MODE MOCK)...');
-    // Les produits sont déjà chargés en mock
-    console.log('✅ Produits chargés:', this.products.length);
+    console.log('📦 Chargement des produits StoreKit...');
+    
+    try {
+      const StoreKit = require('react-native').NativeModules.StoreKit;
+      const productIds = Object.values(SUBSCRIPTION_PRODUCTS);
+      
+      const products = await StoreKit.loadProducts(productIds);
+      
+      this.products = products.map((product: any) => ({
+        productId: product.id,
+        title: product.displayName,
+        description: product.description,
+        price: product.displayPrice,
+        priceAmountMicros: Math.round(product.price * 1000000),
+        priceCurrencyCode: product.priceFormatStyle.currency || 'EUR',
+        type: 'subs' as const
+      }));
+      
+      console.log('✅ Produits chargés:', this.products.length);
+    } catch (error) {
+      console.error('❌ Erreur chargement produits:', error);
+      this.products = [];
+    }
   }
 
   async getProducts(): Promise<SubscriptionProduct[]> {
@@ -160,30 +163,171 @@ class InAppPurchaseManager {
   }
 
   async purchaseProduct(productId: string): Promise<{ success: boolean; error?: string }> {
-    console.log('💳 Tentative d\'achat (MODE MOCK):', productId);
+    console.log('💳 Tentative d\'achat StoreKit:', productId);
 
-    // Vérifier que le produit existe
-    const product = this.products.find(p => p.productId === productId);
-    if (!product) {
-      console.error('❌ Produit non trouvé:', productId);
-      return { success: false, error: 'Produit non disponible' };
+    if (Platform.OS !== 'ios') {
+      return { success: false, error: 'Achats intégrés disponibles uniquement sur iOS' };
     }
 
-    // Simulation d'un achat
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      const StoreKit = require('react-native').NativeModules.StoreKit;
+      
+      // Trouver le produit
+      const product = this.products.find(p => p.productId === productId);
+      if (!product) {
+        console.error('❌ Produit non trouvé:', productId);
+        return { success: false, error: 'Produit non disponible' };
+      }
 
-    // Mock d'un achat réussi
-    const mockPurchase = {
-      productId: productId,
-      transactionId: `mock_${Date.now()}`,
-      purchaseTime: Date.now(),
-      acknowledged: true
-    };
+      console.log('🛒 Démarrage achat pour:', product.title);
+      
+      // Effectuer l'achat avec StoreKit 2
+      const result = await StoreKit.purchase(productId);
+      
+      switch (result.status) {
+        case 'success':
+          console.log('✅ Achat réussi');
+          this.purchasedProductIDs.add(productId);
+          
+          // Sauvegarder l'achat localement
+          await this.savePurchase({
+            productId: productId,
+            transactionId: result.transaction.id,
+            purchaseTime: result.transaction.purchaseDate,
+            expirationDate: result.transaction.expirationDate,
+            verified: result.transaction.verified
+          });
+          
+          return { success: true };
+          
+        case 'userCancelled':
+          console.log('ℹ️ Achat annulé par l\'utilisateur');
+          return { success: false, error: 'Achat annulé' };
+          
+        case 'pending':
+          console.log('⏳ Achat en attente');
+          return { success: false, error: 'Achat en attente d\'approbation' };
+          
+        default:
+          console.error('❌ Erreur achat:', result.error);
+          return { success: false, error: result.error || 'Erreur inconnue' };
+      }
+    } catch (error) {
+      console.error('❌ Erreur achat:', error);
+      return { success: false, error: error.message || 'Erreur lors de l\'achat' };
+    }
+  }
 
-    await this.savePurchase(mockPurchase);
-    console.log('✅ Achat simulé avec succès');
+  async checkCurrentEntitlements(): Promise<void> {
+    console.log('🔍 Vérification des droits actuels...');
+    
+    try {
+      const StoreKit = require('react-native').NativeModules.StoreKit;
+      const entitlements = await StoreKit.currentEntitlements();
+      
+      this.purchasedProductIDs.clear();
+      
+      for (const entitlement of entitlements) {
+        if (entitlement.verified) {
+          this.purchasedProductIDs.add(entitlement.productID);
+          console.log('✅ Droit vérifié pour:', entitlement.productID);
+          
+          // Mettre à jour le stockage local
+          await this.savePurchase({
+            productId: entitlement.productID,
+            transactionId: entitlement.id,
+            purchaseTime: entitlement.purchaseDate,
+            expirationDate: entitlement.expirationDate,
+            verified: true
+          });
+        }
+      }
+      
+      console.log('📊 Droits actuels:', Array.from(this.purchasedProductIDs));
+    } catch (error) {
+      console.error('❌ Erreur vérification droits:', error);
+    }
+  }
 
-    return { success: true };
+  async restorePurchases(): Promise<{ success: boolean; purchases?: any[] }> {
+    console.log('🔄 Restauration des achats...');
+
+    try {
+      await this.checkCurrentEntitlements();
+      
+      const purchases = Array.from(this.purchasedProductIDs).map(productId => ({
+        productId,
+        restored: true
+      }));
+      
+      console.log('✅ Achats restaurés:', purchases.length);
+      
+      return { 
+        success: true, 
+        purchases 
+      };
+    } catch (error) {
+      console.error('❌ Erreur restauration:', error);
+      return { success: false };
+    }
+  }
+
+  async getCurrentSubscription(userId: string): Promise<any> {
+    console.log('🔍 Récupération abonnement actuel pour:', userId);
+    
+    try {
+      // Vérifier les droits actuels
+      await this.checkCurrentEntitlements();
+      
+      // Trouver l'abonnement actif le plus récent
+      for (const productId of this.purchasedProductIDs) {
+        const plan = IAP_SUBSCRIPTION_PLANS.find(p => p.productId === productId);
+        if (plan) {
+          const subscription = {
+            planId: plan.id,
+            planName: plan.name,
+            status: 'active',
+            price: plan.price,
+            currency: 'EUR',
+            paymentMethod: 'apple_iap'
+          };
+          
+          console.log('💎 Abonnement actif trouvé:', subscription);
+          return subscription;
+        }
+      }
+      
+      // Aucun abonnement actif, retourner le plan gratuit
+      const freeSubscription = {
+        planId: 'free',
+        planName: 'Version Gratuite',
+        status: 'active',
+        price: '0€',
+        currency: 'EUR',
+        paymentMethod: 'none'
+      };
+      
+      console.log('🆓 Plan gratuit retourné');
+      return freeSubscription;
+      
+    } catch (error) {
+      console.error('❌ Erreur récupération abonnement:', error);
+      return {
+        planId: 'free',
+        planName: 'Version Gratuite',
+        status: 'active',
+        price: '0€',
+        currency: 'EUR',
+        paymentMethod: 'none'
+      };
+    }
+  }
+
+  async purchaseSubscription(productId: string, userId: string): Promise<boolean> {
+    console.log('🛒 Achat abonnement:', productId, 'pour:', userId);
+    
+    const result = await this.purchaseProduct(productId);
+    return result.success;
   }
 
   private async savePurchase(purchase: any): Promise<void> {
@@ -192,41 +336,64 @@ class InAppPurchaseManager {
         productId: purchase.productId,
         transactionId: purchase.transactionId,
         purchaseTime: purchase.purchaseTime,
-        acknowledged: purchase.acknowledged
+        expirationDate: purchase.expirationDate,
+        verified: purchase.verified,
+        savedAt: Date.now()
       };
 
       await AsyncStorage.setItem(
-        `purchase_${purchase.productId}`, 
+        `storekit_purchase_${purchase.productId}`, 
         JSON.stringify(purchaseData)
       );
 
-      console.log('💾 Achat sauvegardé (MOCK):', purchaseData);
+      console.log('💾 Achat sauvegardé:', purchaseData);
     } catch (error) {
       console.error('❌ Erreur sauvegarde achat:', error);
     }
   }
 
-  async restorePurchases(): Promise<{ success: boolean; purchases?: any[] }> {
-    console.log('🔄 Restauration des achats (MODE MOCK)...');
-
-    // Simulation de restauration
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    return { 
-      success: true, 
-      purchases: [] 
-    };
-  }
-
   async disconnect(): Promise<void> {
     this.isConnected = false;
-    console.log('🔌 InAppPurchases déconnecté (MOCK)');
+    this.products = [];
+    this.purchasedProductIDs.clear();
+    console.log('🔌 StoreKit déconnecté');
+  }
+
+  hasActiveSubscription(): boolean {
+    return this.purchasedProductIDs.size > 0;
+  }
+
+  getActivePlan(): string | null {
+    for (const productId of this.purchasedProductIDs) {
+      const plan = IAP_SUBSCRIPTION_PLANS.find(p => p.productId === productId);
+      if (plan) return plan.id;
+    }
+    return null;
   }
 
   isInMockMode(): boolean {
-    return true; // Toujours en mode mock maintenant
+    return false; // Plus de mode mock
   }
 }
 
 // Instance globale
-export const purchaseManager = new InAppPurchaseManager();
+export const purchaseManager = new StoreKitManager();
+
+// Service InAppPurchase pour la compatibilité
+export const InAppPurchaseService = {
+  async getCurrentSubscription(userId: string) {
+    return await purchaseManager.getCurrentSubscription(userId);
+  },
+  
+  async purchaseSubscription(productId: string, userId: string): Promise<boolean> {
+    return await purchaseManager.purchaseSubscription(productId, userId);
+  },
+  
+  async restorePurchases() {
+    return await purchaseManager.restorePurchases();
+  },
+  
+  async initialize() {
+    return await purchaseManager.initialize();
+  }
+};
