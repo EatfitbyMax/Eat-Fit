@@ -98,10 +98,21 @@ export default function ProfilScreen() {
         console.log('⚠️ Erreur synchronisation Strava (non critique):', syncError);
       }
 
-      // Puis charger le statut local
+      // Charger le statut local après synchronisation
       const status = await IntegrationsManager.getIntegrationStatus(currentUser.id);
-      setIntegrationStatus(status);
-      console.log('📊 Statut intégrations chargé:', status);
+      
+      // Forcer une nouvelle vérification pour s'assurer que l'état est correct
+      const stravaConnected = await IntegrationsManager.checkStravaConnection(currentUser.id);
+      if (stravaConnected && !status.strava.connected) {
+        // Si Strava est connecté mais pas dans le statut local, recharger
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const updatedStatus = await IntegrationsManager.getIntegrationStatus(currentUser.id);
+        setIntegrationStatus(updatedStatus);
+        console.log('📊 Statut intégrations mis à jour après vérification:', updatedStatus);
+      } else {
+        setIntegrationStatus(status);
+        console.log('📊 Statut intégrations chargé:', status);
+      }
     } catch (error) {
       console.error('Erreur chargement statut intégrations:', error);
     }
@@ -211,7 +222,17 @@ export default function ProfilScreen() {
       const success = await IntegrationsManager.connectStrava(userId);
 
       if (success) {
+        // Attendre un peu puis recharger le statut pour s'assurer de la synchronisation
+        await new Promise(resolve => setTimeout(resolve, 1500));
         await loadIntegrationStatus();
+        
+        // Vérifier à nouveau après le rechargement
+        const finalStatus = await IntegrationsManager.getIntegrationStatus(userId);
+        if (finalStatus.strava.connected) {
+          setIntegrationStatus(finalStatus);
+          console.log('✅ Interface mise à jour - Strava connecté');
+        }
+        
         Alert.alert(
           '🎉 Strava connecté !',
           'Votre compte Strava est maintenant connecté.',
@@ -646,7 +667,10 @@ export default function ProfilScreen() {
             <View style={styles.statusCard}>
               <Text style={styles.statusTitle}>🏃‍♂️ Strava</Text>
               <Text style={styles.statusDescription}>
-                Athlete #{integrationStatus.strava.athleteId || '24854648'} connecté à EatFitByMax.
+                {integrationStatus.strava.athlete?.firstname || 'Athlète'} connecté à EatFitByMax
+              </Text>
+              <Text style={styles.statusDescription}>
+                Athlete #{integrationStatus.strava.athleteId || integrationStatus.strava.athlete?.id || 'Non disponible'}
               </Text>
               <Text style={styles.statusDescription}>
                 Dernière synchronisation : {integrationStatus.strava.lastSync ?
