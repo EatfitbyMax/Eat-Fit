@@ -95,9 +95,30 @@ export class IntegrationsManager {
         url: result.url
       });
 
-      // Attendre que le serveur traite l'autorisation
-      console.log('⏳ [STRAVA] Attente du traitement serveur...');
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Vérifier si l'utilisateur a annulé
+      if (result.type === 'cancel') {
+        console.log('👤 [STRAVA] Connexion annulée par l\'utilisateur');
+        throw new Error('Connexion annulée par l\'utilisateur');
+      }
+
+      // Vérifier si on a reçu un code dans l'URL
+      if (result.type === 'success' && result.url) {
+        const url = new URL(result.url);
+        const code = url.searchParams.get('code');
+        const error = url.searchParams.get('error');
+        
+        if (error) {
+          console.error('❌ [STRAVA] Erreur OAuth:', error);
+          throw new Error(`Erreur OAuth: ${error}`);
+        }
+        
+        if (code) {
+          console.log('✅ [STRAVA] Code d\'autorisation reçu');
+          // Attendre que le serveur traite l'autorisation
+          console.log('⏳ [STRAVA] Attente du traitement serveur...');
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        }
+      }
 
       // Vérifier le statut final
       const isConnected = await this.checkStravaConnection(userId);
@@ -238,6 +259,42 @@ export class IntegrationsManager {
       console.log('💾 [STRAVA] Statut local mis à jour');
     } catch (error) {
       console.error('❌ [STRAVA] Erreur mise à jour statut local:', error);
+    }
+  }
+
+  /**
+   * Synchronisation du statut Strava depuis le serveur
+   */
+  static async syncStravaStatusFromServer(userId: string): Promise<void> {
+    try {
+      console.log('🔄 [STRAVA] Synchronisation statut depuis serveur pour:', userId);
+      
+      const response = await fetch(`${SERVER_URL}/api/strava/status/${userId}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 5000
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('📊 [STRAVA] Statut serveur:', data);
+
+        if (data.connected) {
+          await this.updateLocalStravaStatus(userId, data);
+        } else {
+          // Mettre à jour le statut local comme déconnecté
+          const status = await this.getIntegrationStatus(userId);
+          status.strava = {
+            connected: false,
+            athlete: null,
+            lastSync: null,
+            athleteId: null
+          };
+          await PersistentStorage.saveIntegrationStatus(userId, status);
+        }
+      }
+    } catch (error) {
+      console.error('❌ [STRAVA] Erreur synchronisation depuis serveur:', error);
     }
   }
 

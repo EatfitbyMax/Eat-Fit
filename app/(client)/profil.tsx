@@ -91,16 +91,17 @@ export default function ProfilScreen() {
 
       console.log('🔄 Chargement statut intégrations pour:', currentUser.email);
 
-      // Synchroniser le statut Strava depuis le serveur d'abord
-      await IntegrationsManager.syncStravaStatusFromServer(currentUser.id);
+      // Synchroniser avec le serveur d'abord
+      try {
+        await IntegrationsManager.syncStravaStatusFromServer(currentUser.id);
+      } catch (syncError) {
+        console.log('⚠️ Erreur synchronisation Strava (non critique):', syncError);
+      }
 
+      // Puis charger le statut local
       const status = await IntegrationsManager.getIntegrationStatus(currentUser.id);
       setIntegrationStatus(status);
-
-      console.log('📊 Statuts chargés:', {
-        appleHealth: status.appleHealth.connected,
-        strava: status.strava.connected
-      });
+      console.log('📊 Statut intégrations chargé:', status);
     } catch (error) {
       console.error('Erreur chargement statut intégrations:', error);
     }
@@ -665,7 +666,7 @@ export default function ProfilScreen() {
             style={styles.menuItem}
             onPress={() => router.push('/(client)/parametres-application')}
           >
-            <Text style={styles.menuItemText}>⚙️ Paramètres de l'application</Text>
+            <Text style={styles.menuItemText}>⚙️ Paramètres de l\'application</Text>
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
 
