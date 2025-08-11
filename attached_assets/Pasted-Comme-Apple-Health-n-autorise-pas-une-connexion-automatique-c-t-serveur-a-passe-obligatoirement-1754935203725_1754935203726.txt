@@ -1,0 +1,56 @@
+Comme Apple Health n’autorise pas une "connexion" automatique côté serveur (ça passe obligatoirement par une autorisation utilisateur sur iOS), le code doit :
+Demander les permissions à l’utilisateur via l’API HealthKit.
+Enregistrer l’état connected: true en base uniquement après accord.
+Logguer les erreurs pour voir pourquoi ça échouerait (problème de permissions, d’initialisation, etc.).
+Voici un exemple en JavaScript (React Native + HealthKit) qui permet de déboguer et compléter l’intégration :
+import AppleHealthKit from 'react-native-health';
+
+// 1. Configuration des permissions à demander
+const permissions = {
+  permissions: {
+    read: [
+      AppleHealthKit.Constants.Permissions.StepCount,
+      AppleHealthKit.Constants.Permissions.HeartRate,
+      AppleHealthKit.Constants.Permissions.ActiveEnergyBurned,
+      AppleHealthKit.Constants.Permissions.DistanceWalkingRunning,
+      AppleHealthKit.Constants.Permissions.Weight,
+    ],
+    write: [
+      AppleHealthKit.Constants.Permissions.Weight,
+    ],
+  },
+};
+
+// 2. Initialisation et demande de permissions
+export const connectAppleHealth = () => {
+  console.log("🔄 Tentative de connexion à Apple Health...");
+
+  AppleHealthKit.initHealthKit(permissions, (err, results) => {
+    if (err) {
+      console.error("❌ Échec d'initialisation Apple Health:", err);
+      return;
+    }
+
+    console.log("✅ Apple Health initialisé:", results);
+
+    // Ici tu peux stocker l'état `connected: true` sur ton serveur
+    fetch("https://ton-serveur.com/api/integrations/appleHealth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ connected: true, permissions: permissions.permissions.read }),
+    })
+    .then(res => res.json())
+    .then(data => {
+      console.log("📡 État envoyé au serveur:", data);
+    })
+    .catch(err => {
+      console.error("⚠️ Erreur envoi serveur:", err);
+    });
+  });
+};
+À savoir pour le débogage :
+Sur simulateur iOS, HealthKit ne marche pas → teste sur un iPhone réel.
+Si err retourne "HealthKit not available", c’est soit que l’app n’a pas la capacité HealthKit activée, soit que tu n’es pas sur iOS.
+Les permissions sont granulaires : si tu ne demandes pas un type de donnée précis, il restera bloqué côté permissions: [].
+Côté serveur, ne force pas connected: true sans confirmation du client iOS, sinon ça ne remontera pas les données.
+Si tu veux, je peux aussi te préparer la version Node.js côté serveur qui gère le stockage et la mise à jour de connected: true une fois qu’Apple Health est autorisé sur le téléphone.
