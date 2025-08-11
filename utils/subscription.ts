@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { getCurrentUser } from './auth';
-import { InAppPurchaseService } from './inAppPurchases';
+import { purchaseManager } from './inAppPurchases';
 
 // Plans d'abonnement disponibles
 export const SUBSCRIPTION_PLANS = [

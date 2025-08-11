@@ -312,6 +312,11 @@ class InAppPurchaseManager {
       console.error('❌ Erreur déconnexion InAppPurchases:', error);
     }
   }
+
+  isInMockMode(): boolean {
+    // Toujours false maintenant que nous utilisons le module natif
+    return false;
+  }
 }
 
 // Instance globale

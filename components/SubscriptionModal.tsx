@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
-import { InAppPurchaseService, IAP_SUBSCRIPTION_PLANS } from '../utils/inAppPurchases';
+import { purchaseManager, IAP_SUBSCRIPTION_PLANS } from '../utils/inAppPurchases';
 import { getCurrentUser } from '../utils/auth';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
