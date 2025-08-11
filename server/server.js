@@ -753,11 +753,32 @@ app.post('/api/strava/exchange-token', async (req, res) => {
     const { code, userId } = req.body;
 
     if (!code || !userId) {
+      console.error('❌ [STRAVA_EXCHANGE] Paramètres manquants:', { code: !!code, userId: !!userId });
       return res.status(400).json({ error: 'Code et userId requis' });
     }
 
-    console.log('🔄 Échange du code Strava pour utilisateur:', userId);
-    console.log('🔧 Configuration Strava - Client ID:', STRAVA_CLIENT_ID);
+    console.log('🔄 [STRAVA_EXCHANGE] Début échange token pour utilisateur:', userId);
+    console.log('🔧 [STRAVA_EXCHANGE] Configuration utilisée:');
+    console.log('   - Client ID:', STRAVA_CLIENT_ID);
+    console.log('   - Client Secret présent:', !!STRAVA_CLIENT_SECRET);
+    console.log('   - Code reçu (10 premiers chars):', code.substring(0, 10) + '...');
+
+    // Préparer la requête vers Strava
+    const requestData = {
+      client_id: STRAVA_CLIENT_ID,
+      client_secret: STRAVA_CLIENT_SECRET,
+      code: code,
+      grant_type: 'authorization_code'
+    };
+
+    console.log('📤 [STRAVA_EXCHANGE] Envoi requête vers Strava OAuth...');
+    console.log('   - URL:', 'https://www.strava.com/oauth/token');
+    console.log('   - Données envoyées:', {
+      client_id: requestData.client_id,
+      client_secret: requestData.client_secret ? '[MASQUÉ]' : 'MANQUANT',
+      code: requestData.code ? requestData.code.substring(0, 10) + '...' : 'MANQUANT',
+      grant_type: requestData.grant_type
+    });
 
     // Échanger le code contre un token d'accès
     const tokenResponse = await fetch('https://www.strava.com/oauth/token', {
@@ -765,56 +786,137 @@ app.post('/api/strava/exchange-token', async (req, res) => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        client_id: STRAVA_CLIENT_ID,
-        client_secret: STRAVA_CLIENT_SECRET,
-        code: code,
-        grant_type: 'authorization_code'
-      })
+      body: JSON.stringify(requestData)
     });
+
+    console.log('📥 [STRAVA_EXCHANGE] Réponse Strava reçue:');
+    console.log('   - Status:', tokenResponse.status, tokenResponse.statusText);
+    console.log('   - Headers:', Object.fromEntries(tokenResponse.headers.entries()));
 
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
-      console.error('❌ Erreur Strava OAuth:', errorText);
-      throw new Error('Erreur lors de l\'authentification Strava');
+      console.error('❌ [STRAVA_EXCHANGE] Erreur Strava OAuth:');
+      console.error('   - Status:', tokenResponse.status);
+      console.error('   - Status Text:', tokenResponse.statusText);
+      console.error('   - Error Response:', errorText);
+      
+      // Essayer de parser le JSON d'erreur si possible
+      try {
+        const errorJson = JSON.parse(errorText);
+        console.error('   - Error Details (JSON):', JSON.stringify(errorJson, null, 2));
+      } catch (parseError) {
+        console.error('   - Error Response (Raw):', errorText);
+      }
+
+      throw new Error('Erreur lors de l\'authentification Strava: ' + errorText);
     }
 
     const tokenData = await tokenResponse.json();
+
+    console.log('✅ [STRAVA_EXCHANGE] Token reçu avec succès:');
+    console.log('   - Access Token présent:', !!tokenData.access_token);
+    console.log('   - Access Token (10 premiers chars):', tokenData.access_token ? tokenData.access_token.substring(0, 10) + '...' : 'MANQUANT');
+    console.log('   - Refresh Token présent:', !!tokenData.refresh_token);
+    console.log('   - Refresh Token (10 premiers chars):', tokenData.refresh_token ? tokenData.refresh_token.substring(0, 10) + '...' : 'MANQUANT');
+    console.log('   - Expires At:', tokenData.expires_at);
+    console.log('   - Expires At (Date):', tokenData.expires_at ? new Date(tokenData.expires_at * 1000).toISOString() : 'MANQUANT');
+    console.log('   - Athlete présent:', !!tokenData.athlete);
+    console.log('   - Athlete ID:', tokenData.athlete?.id);
+    console.log('   - Athlete Name:', tokenData.athlete?.firstname, tokenData.athlete?.lastname);
+    console.log('   - Token Data complet:', JSON.stringify(tokenData, null, 2));
+
+    // Vérifier la présence des champs essentiels
+    const missingFields = [];
+    if (!tokenData.access_token) missingFields.push('access_token');
+    if (!tokenData.refresh_token) missingFields.push('refresh_token');
+    if (!tokenData.expires_at) missingFields.push('expires_at');
+    if (!tokenData.athlete) missingFields.push('athlete');
+
+    if (missingFields.length > 0) {
+      console.error('❌ [STRAVA_EXCHANGE] Champs manquants dans la réponse Strava:', missingFields);
+      throw new Error('Réponse Strava incomplète: champs manquants - ' + missingFields.join(', '));
+    }
+
+    console.log('🔍 [STRAVA_EXCHANGE] Recherche utilisateur:', userId);
 
     // Sauvegarder les tokens dans le fichier utilisateur
     let userData = await readUserFile(userId, 'client');
     let userType = 'client';
 
     if (!userData) {
+      console.log('   - Utilisateur non trouvé dans Client/, recherche dans Coach/...');
       userData = await readUserFile(userId, 'coach');
       userType = 'coach';
     }
 
-    if (userData) {
-      // Sauvegarder les tokens dans le fichier utilisateur avec la nouvelle structure
-      userData.stravaIntegration = {
-        accessToken: tokenData.access_token,
-        refreshToken: tokenData.refresh_token,
-        expiresAt: tokenData.expires_at,
-        athlete: tokenData.athlete,
-        connected: true,
-        lastSync: new Date().toISOString()
-      };
-
-      // Nettoyer l'ancienne structure si elle existe
-      if (userData.stravaTokens) {
-        delete userData.stravaTokens;
-      }
-
-      userData.lastUpdated = new Date().toISOString();
-      await writeUserFile(userId, userData, userType);
+    if (!userData) {
+      console.error('❌ [STRAVA_EXCHANGE] Utilisateur non trouvé:', userId);
+      throw new Error('Utilisateur non trouvé: ' + userId);
     }
 
-    console.log('✅ Tokens Strava sauvegardés dans le fichier utilisateur:', userId);
-    res.json({ success: true, athlete: tokenData.athlete });
+    console.log('✅ [STRAVA_EXCHANGE] Utilisateur trouvé:', {
+      id: userData.id,
+      name: userData.name || userData.firstName + ' ' + userData.lastName,
+      type: userType
+    });
+
+    // Sauvegarder les tokens dans le fichier utilisateur avec la nouvelle structure
+    const stravaIntegrationData = {
+      accessToken: tokenData.access_token,
+      refreshToken: tokenData.refresh_token,
+      expiresAt: tokenData.expires_at,
+      athlete: tokenData.athlete,
+      connected: true,
+      lastSync: new Date().toISOString()
+    };
+
+    console.log('💾 [STRAVA_EXCHANGE] Sauvegarde données Strava:');
+    console.log('   - Structure sauvegardée:', {
+      ...stravaIntegrationData,
+      accessToken: stravaIntegrationData.accessToken ? stravaIntegrationData.accessToken.substring(0, 10) + '...' : 'MANQUANT',
+      refreshToken: stravaIntegrationData.refreshToken ? stravaIntegrationData.refreshToken.substring(0, 10) + '...' : 'MANQUANT'
+    });
+
+    userData.stravaIntegration = stravaIntegrationData;
+
+    // Nettoyer l'ancienne structure si elle existe
+    if (userData.stravaTokens) {
+      console.log('🧹 [STRAVA_EXCHANGE] Nettoyage ancienne structure stravaTokens');
+      delete userData.stravaTokens;
+    }
+
+    userData.lastUpdated = new Date().toISOString();
+    
+    const saveSuccess = await writeUserFile(userId, userData, userType);
+    
+    if (saveSuccess) {
+      console.log('✅ [STRAVA_EXCHANGE] Tokens Strava sauvegardés avec succès dans le fichier utilisateur:', userId);
+      console.log('   - Fichier utilisateur:', `${userType}/${userId}.json`);
+      console.log('   - Connexion établie pour athlète:', tokenData.athlete.firstname, tokenData.athlete.lastname);
+    } else {
+      console.error('❌ [STRAVA_EXCHANGE] Échec sauvegarde fichier utilisateur');
+      throw new Error('Impossible de sauvegarder les tokens Strava');
+    }
+
+    console.log('🎉 [STRAVA_EXCHANGE] Échange de token terminé avec succès pour:', userId);
+
+    res.json({ 
+      success: true, 
+      athlete: tokenData.athlete,
+      message: 'Strava connecté avec succès'
+    });
+
   } catch (error) {
-    console.error('❌ Erreur échange token Strava:', error);
-    res.status(500).json({ error: 'Erreur échange token Strava' });
+    console.error('❌ [STRAVA_EXCHANGE] Erreur complète:');
+    console.error('   - Message:', error.message);
+    console.error('   - Stack:', error.stack);
+    console.error('   - Type:', error.constructor.name);
+    
+    res.status(500).json({ 
+      error: 'Erreur échange token Strava',
+      details: error.message,
+      timestamp: new Date().toISOString()
+    });
   }
 });
 
