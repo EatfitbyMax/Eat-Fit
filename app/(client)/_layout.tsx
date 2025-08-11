@@ -6,6 +6,8 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { checkSubscriptionStatus } from '@/utils/subscription';
 import { useAuth } from '@/context/AuthContext';
+import { Redirect } from 'expo-router';
+import { View, ActivityIndicator } from 'react-native';
 
 export default function ClientLayout() {
   const { user, isLoading } = useAuth();
@@ -24,13 +26,17 @@ export default function ClientLayout() {
 
   // Afficher un loader pendant le chargement
   if (isLoading) {
-    return null;
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
   }
 
   // Vérification stricte : rediriger si pas connecté ou pas client
   if (!user) {
     console.log('🚫 ClientLayout - Accès refusé: Aucun utilisateur connecté');
-    return null;
+    return <Redirect href="/auth/login" />;
   }
 
   if (user.userType !== 'client') {

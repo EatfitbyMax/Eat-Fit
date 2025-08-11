@@ -1,16 +1,7 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { 
-  getAvailablePurchasesAsync,
-  getPurchaseHistoryAsync,
-  purchaseItemAsync,
-  finishTransactionAsync,
-  connectAsync,
-  disconnectAsync,
-  IAPResponseCode,
-  InAppPurchase,
-  IAPItemDetails
-} from 'expo-in-app-purchases';
+import { getInAppPurchases } from './expo-in-app-purchases-mock';
+const InAppPurchases = getInAppPurchases();
 
 // Types pour les produits
 export interface SubscriptionProduct {
@@ -123,10 +114,10 @@ class InAppPurchaseManager {
 
       this.isInitializing = true;
 
-      const result = await connectAsync();
+      const result = await InAppPurchases.connectAsync();
       console.log('🔗 Connexion InAppPurchases:', result);
 
-      if (result.responseCode === IAPResponseCode.OK) {
+      if (result.responseCode === InAppPurchases.IAPResponseCode.OK) {
         this.isConnected = true;
         await this.loadProducts();
         console.log('✅ InAppPurchases initialisé avec succès');
@@ -148,10 +139,10 @@ class InAppPurchaseManager {
     try {
       console.log('📦 Chargement des produits...');
 
-      const result = await getAvailablePurchasesAsync();
+      const result = await InAppPurchases.getAvailablePurchasesAsync();
       console.log('📦 Produits disponibles:', result);
 
-      if (result.responseCode === IAPResponseCode.OK) {
+      if (result.responseCode === InAppPurchases.IAPResponseCode.OK) {
         this.products = result.results || [];
         console.log('✅ Produits chargés:', this.products.length);
       } else {
@@ -200,15 +191,15 @@ class InAppPurchaseManager {
 
       console.log('🛒 Lancement achat pour produit:', product.title);
 
-      const result = await purchaseItemAsync(productId);
+      const result = await InAppPurchases.purchaseItemAsync(productId);
       console.log('💳 Résultat achat:', result);
 
-      if (result.responseCode === IAPResponseCode.OK && result.results && result.results.length > 0) {
+      if (result.responseCode === InAppPurchases.IAPResponseCode.OK && result.results && result.results.length > 0) {
         const purchase = result.results[0];
 
         try {
           // Finaliser la transaction
-          await finishTransactionAsync(purchase, false);
+          await InAppPurchases.finishTransactionAsync(purchase, false);
           console.log('✅ Transaction finalisée');
 
           // Sauvegarder l'achat
@@ -229,7 +220,7 @@ class InAppPurchaseManager {
       }
     } catch (error) {
       console.error('❌ Erreur lors de l\'achat:', error);
-      
+
       // Éviter la récursion - ne pas réessayer automatiquement
       if (error.message?.includes('Maximum call stack')) {
         return { 
@@ -237,7 +228,7 @@ class InAppPurchaseManager {
           error: 'Erreur système: Redémarrez l\'application' 
         };
       }
-      
+
       return { 
         success: false, 
         error: 'Erreur technique: Veuillez réessayer' 
@@ -273,10 +264,10 @@ class InAppPurchaseManager {
         await this.initialize();
       }
 
-      const result = await getPurchaseHistoryAsync();
+      const result = await InAppPurchases.getPurchaseHistoryAsync();
       console.log('🔄 Historique achats:', result);
 
-      if (result.responseCode === IAPResponseCode.OK) {
+      if (result.responseCode === InAppPurchases.IAPResponseCode.OK) {
         return { 
           success: true, 
           purchases: result.results || [] 
@@ -294,17 +285,17 @@ class InAppPurchaseManager {
 
   private getErrorMessage(responseCode: IAPResponseCode): string {
     switch (responseCode) {
-      case IAPResponseCode.USER_CANCELED:
+      case InAppPurchases.IAPResponseCode.USER_CANCELED:
         return 'Achat annulé par l\'utilisateur';
-      case IAPResponseCode.SERVICE_UNAVAILABLE:
+      case InAppPurchases.IAPResponseCode.SERVICE_UNAVAILABLE:
         return 'Service d\'achat temporairement indisponible';
-      case IAPResponseCode.BILLING_UNAVAILABLE:
+      case InAppPurchases.IAPResponseCode.BILLING_UNAVAILABLE:
         return 'Facturation non disponible';
-      case IAPResponseCode.ITEM_UNAVAILABLE:
+      case InAppPurchases.IAPResponseCode.ITEM_UNAVAILABLE:
         return 'Produit non disponible';
-      case IAPResponseCode.DEVELOPER_ERROR:
+      case InAppPurchases.IAPResponseCode.DEVELOPER_ERROR:
         return 'Erreur de configuration';
-      case IAPResponseCode.ERROR:
+      case InAppPurchases.IAPResponseCode.ERROR:
         return 'Erreur inconnue';
       default:
         return 'Erreur lors de l\'achat';
@@ -314,7 +305,7 @@ class InAppPurchaseManager {
   async disconnect(): Promise<void> {
     try {
       if (this.isConnected) {
-        await disconnectAsync();
+        await InAppPurchases.disconnectAsync();
         this.isConnected = false;
         console.log('🔌 InAppPurchases déconnecté');
       }

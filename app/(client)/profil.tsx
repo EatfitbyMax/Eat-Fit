@@ -665,7 +665,7 @@ export default function ProfilScreen() {
             style={styles.menuItem}
             onPress={() => router.push('/(client)/parametres-application')}
           >
-            <Text style={styles.menuItemText}>⚙️ Paramètres de l\'application</Text>
+            <Text style={styles.menuItemText}>⚙️ Paramètres de l'application</Text>
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
 

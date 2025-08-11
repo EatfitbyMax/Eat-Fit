@@ -10,7 +10,16 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 export default function CoachLayout() {
-  const { user, isLoading } = useAuth();
+  // Vérifier si le contexte Auth est disponible
+  let user, isLoading;
+  try {
+    const authContext = useAuth();
+    user = authContext.user;
+    isLoading = authContext.isLoading;
+  } catch (error) {
+    console.log('⚠️ AuthProvider non disponible dans CoachLayout');
+    return null;
+  }
   const colorScheme = useColorScheme();
 
   // Afficher un loader pendant le chargement
