@@ -849,11 +849,11 @@ app.post('/api/strava/exchange-token', async (req, res) => {
     
     // Vérifier la correspondance exacte avec la config Strava
     const expectedClientId = '159394';
-    const expectedClientSecret = '0a8889616f64a229949082240702228cba150700';
+    const expectedClientSecret = '0a888961cf64a2294908224b07b222ccba150700';
     
     console.log('🔍 [STRAVA_EXCHANGE] Vérification configuration:');
     console.log('   - Client ID correspond:', STRAVA_CLIENT_ID === expectedClientId);
-    console.log('   - Client Secret correspond:', STRAVA_CLIENT_SECRET === expectedClientSecret);
+    console.log('   - Client Secret correspond:', STRAVA_CLIENT_SECRET === expectedClientSecret);pectedClientSecret);
     
     if (STRAVA_CLIENT_ID !== expectedClientId) {
       console.error('❌ [STRAVA_EXCHANGE] ERREUR: Client ID ne correspond pas!');
