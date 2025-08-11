@@ -1,7 +1,6 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getInAppPurchases } from './expo-in-app-purchases-mock';
-const InAppPurchases = getInAppPurchases();
+import * as InAppPurchases from 'expo-in-app-purchases';
 
 // Types pour les produits
 export interface SubscriptionProduct {
@@ -95,7 +94,7 @@ export const IAP_SUBSCRIPTION_PLANS = [
 
 class InAppPurchaseManager {
   private isConnected = false;
-  private products: IAPItemDetails[] = [];
+  private products: any[] = [];
   private isInitializing = false;
 
   async initialize(): Promise<boolean> {
@@ -236,7 +235,7 @@ class InAppPurchaseManager {
     }
   }
 
-  private async savePurchase(purchase: InAppPurchase): Promise<void> {
+  private async savePurchase(purchase: any): Promise<void> {
     try {
       const purchaseData = {
         productId: purchase.productId,
@@ -283,7 +282,7 @@ class InAppPurchaseManager {
     }
   }
 
-  private getErrorMessage(responseCode: IAPResponseCode): string {
+  private getErrorMessage(responseCode: any): string {
     switch (responseCode) {
       case InAppPurchases.IAPResponseCode.USER_CANCELED:
         return 'Achat annulé par l\'utilisateur';

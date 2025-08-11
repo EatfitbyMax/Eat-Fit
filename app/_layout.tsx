@@ -23,14 +23,14 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { initializeAdminAccount } from '@/utils/auth';
 import { migrateExistingData } from '@/utils/migration';
 import { PersistentStorage } from '../utils/storage';
-import SplashScreenComponent from '@/components/SplashScreen';
+import SplashScreenComponent from '@/components/ SplashScreen';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { LanguageProvider } from '@/context/LanguageContext';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import AuthGuard from '@/components/AuthGuard';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { setupGlobalErrorHandlers } from '@/utils/errorHandlers';
-import { InAppPurchaseService } from '@/utils/inAppPurchases';
+import { purchaseManager } from '../utils/inAppPurchases';
 
 // Stripe supprimé - utilisation des achats intégrés Apple uniquement
 
@@ -96,8 +96,8 @@ export default function RootLayout() {
     const initializeIAP = async () => {
       if (Platform.OS === 'ios') {
         try {
-          await InAppPurchaseService.initialize();
-          const mockMode = InAppPurchaseService.isInMockMode() ? ' (MODE MOCK - Expo Go)' : ' (MODE NATIF - EAS Build)';
+          await purchaseManager.initialize();
+          const mockMode = purchaseManager.isInMockMode() ? ' (MODE MOCK - Expo Go)' : ' (MODE NATIF - EAS Build)';
           console.log('✅ In-App Purchases initialisés' + mockMode);
         } catch (error: any) {
           console.warn('⚠️ Erreur lors de l\'initialisation des achats intégrés:', error.message);
@@ -111,7 +111,7 @@ export default function RootLayout() {
 
     return () => {
       if (Platform.OS === 'ios') {
-        InAppPurchaseService.disconnect();
+        purchaseManager.disconnect();
       }
     };
   }, []);
