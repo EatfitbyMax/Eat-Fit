@@ -1177,6 +1177,12 @@ app.post('/api/strava/disconnect/:userId', async (req, res) => {
 // Callback Strava - Route principale avec les vraies valeurs
 app.get('/strava-callback', async (req, res) => {
   console.log('📥 [STRAVA] Callback reçu:', req.query);
+  console.log('📥 [STRAVA] Headers reçus:', req.headers);
+  console.log('📥 [STRAVA] URL complète:', req.url);
+  console.log('📥 [STRAVA] Configuration utilisée:', {
+    clientId: STRAVA_CLIENT_ID,
+    clientSecret: STRAVA_CLIENT_SECRET ? '[PRÉSENT]' : '[MANQUANT]'
+  });
 
   const { code, error, state } = req.query;
 
