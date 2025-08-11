@@ -97,7 +97,7 @@ export class IntegrationsManager {
 
       // Attendre que le serveur traite l'autorisation
       console.log('⏳ [STRAVA] Attente du traitement serveur...');
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Vérifier le statut final
       const isConnected = await this.checkStravaConnection(userId);
@@ -123,7 +123,7 @@ export class IntegrationsManager {
       const response = await fetch(`${SERVER_URL}/api/strava/status/${userId}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
-        timeout: 5000
+        timeout: 2000
       });
 
       if (response.ok) {

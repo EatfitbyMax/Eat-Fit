@@ -1,0 +1,40 @@
+iOS Bundled 22926ms node_modules/expo-router/entry.js (1712 modules)
+ ERROR  Error: Cannot find native module 'ExpoInAppPurchases', js engine: hermes
+ WARN  Route "./(client)/_layout.tsx" is missing the required default export. Ensure a React component is exported as default.
+ ERROR  Error: Cannot find native module 'ExpoInAppPurchases', js engine: hermes
+ WARN  Route "./(client)/coach.tsx" is missing the required default export. Ensure a React component is exported as default.
+ ERROR  Error: Cannot find native module 'ExpoInAppPurchases', js engine: hermes
+ WARN  Route "./(client)/entrainement.tsx" is missing the required default export. Ensure a React component is exported as default.
+ ERROR  Error: Cannot find native module 'ExpoInAppPurchases', js engine: hermes
+ WARN  Route "./(client)/forme.tsx" is missing the required default export. Ensure a React component is exported as default.
+ ERROR  Error: Cannot find native module 'ExpoInAppPurchases', js engine: hermes
+ WARN  Route "./(client)/index.tsx" is missing the required default export. Ensure a React component is exported as default.
+ WARN  expo-notifications: Android Push notifications (remote notifications) functionality provided by expo-notifications was removed from Expo Go with the release of SDK 53. Use a development build instead of Expo Go. Read more at https://docs.expo.dev/develop/development-builds/introduction/.
+ WARN  `expo-notifications` functionality is not fully supported in Expo Go:
+We recommend you instead use a development build to avoid limitations. Learn more: https://expo.fyi/dev-client.
+ ERROR  Error: Cannot find native module 'ExpoInAppPurchases', js engine: hermes
+ WARN  Route "./(client)/profil.tsx" is missing the required default export. Ensure a React component is exported as default.
+ ERROR  Error: Cannot find native module 'ExpoInAppPurchases', js engine: hermes
+ WARN  Route "./(client)/progres.tsx" is missing the required default export. Ensure a React component is exported as default.
+ ERROR  Error: Cannot find native module 'ExpoInAppPurchases', js engine: hermes
+ WARN  Route "./_layout.tsx" is missing the required default export. Ensure a React component is exported as default.
+ LOG  🔧 Configuration EmailJS: {"PUBLIC_KEY": "t2undaGNuW...", "SERVICE_ID": "service_3d0mqnl", "TEMPLATE_ID": "template_cmyczjl"}
+ ERROR  Warning: Error: useAuth must be used within an AuthProvider
+
+This error is located at:
+
+  11 |
+  12 | export default function CoachLayout() {
+> 13 |   const { user, isLoading } = useAuth();
+     |                                      ^
+  14 |   const colorScheme = useColorScheme();
+  15 |
+  16 |   // Afficher un loader pendant le chargement
+
+Call Stack
+  CoachLayout (app/(coach)/_layout.tsx:13:38)
+  RNCSafeAreaView (<anonymous>)
+  DefaultNavigator(expo-router/build/views/Navigator.js) (<anonymous>)
+  RNCSafeAreaProvider (<anonymous>)
+  App (<anonymous>)
+  ErrorOverlay (<anonymous>)
