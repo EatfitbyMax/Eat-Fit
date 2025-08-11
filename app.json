@@ -69,12 +69,7 @@
         }
       ],
       [
-        "expo-build-properties",
-        {
-          "ios": {
-            "newArchEnabled": true
-          }
-        }
+        "expo-build-properties"
       ],
       "./plugins/withHealthKit.js"
     ],
