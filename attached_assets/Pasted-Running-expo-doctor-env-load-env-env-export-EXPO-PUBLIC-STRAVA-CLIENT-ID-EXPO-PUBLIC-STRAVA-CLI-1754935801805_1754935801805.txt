@@ -1,0 +1,32 @@
+Running "expo doctor"
+env: load .env
+env: export EXPO_PUBLIC_STRAVA_CLIENT_ID EXPO_PUBLIC_STRAVA_CLIENT_SECRET EXPO_PUBLIC_VPS_URL EXPO_PUBLIC_API_URL EXPO_PUBLIC_APP_STORE_URL EXPO_PUBLIC_SUPPORT_EMAIL
+Running 15 checks on your project...
+Unexpected error while running 'Check for issues with Metro config' check:
+Error: Cannot find module './utils/expo-in-app-purchases-mock.ts'
+Require stack:
+- /Users/expo/workingdir/build/metro.config.js
+- /Users/expo/workingdir/build/node_modules/cosmiconfig/node_modules/import-fresh/index.js
+- /Users/expo/workingdir/build/node_modules/cosmiconfig/dist/loaders.js
+- /Users/expo/workingdir/build/node_modules/cosmiconfig/dist/createExplorer.js
+- /Users/expo/workingdir/build/node_modules/cosmiconfig/dist/index.js
+- /Users/expo/workingdir/build/node_modules/metro-config/src/loadConfig.js
+- /Users/expo/workingdir/build/node_modules/metro-config/src/index.js
+- /Users/expo/.npm/_npx/c15e4b19a90d9797/node_modules/expo-doctor/build/index.js
+12/15 checks passed. 3 checks failed. Possible issues detected:
+Use the --verbose flag to see more details about passed checks.
+
+✖ Check Expo config (app.json/ app.config.js) schema
+Error validating fields in /Users/expo/workingdir/build/app.json:
+ should NOT have additional property 'associatedDomains'.
+Advice:
+Resolve schema errors in your app config. Learn more: https://docs.expo.dev/workflow/configuration/
+
+✖ Check for issues with Metro config
+✖ Check for app config fields that may not be synced in a non-CNG project
+This project contains native project folders but also has native configuration properties in app.json, indicating it is configured to use Prebuild. When the android/ios folders are present, EAS Build will not sync the following properties: orientation, icon, scheme, userInterfaceStyle, ios, plugins, android. 
+
+Advice:
+Add '/android' and '/ios' to your .easignore file if you intend to use CNG / Prebuild. Learn more: https://docs.expo.dev/workflow/prebuild/#usage-with-eas-build
+3 checks failed, indicating possible issues with the project.
+Command "expo doctor" failed.
