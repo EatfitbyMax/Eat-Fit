@@ -62,3 +62,12 @@ email-setup-guide.md
 __tests__/
 *.test.*
 *.spec.*
+# Ignorer les dossiers natifs pour utiliser Prebuild
+/android
+/ios
+
+# Autres fichiers à ignorer
+node_modules/
+.expo/
+.vscode/
+attached_assets/
