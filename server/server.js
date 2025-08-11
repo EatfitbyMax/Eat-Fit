@@ -1,4 +1,3 @@
-
 // Charger les variables d'environnement en premier
 require('dotenv').config();
 
@@ -173,7 +172,7 @@ async function readUserFile(userId, userType = 'client') {
 // Fonction pour rechercher un utilisateur par ID (plus robuste)
 async function findUserById(userId) {
   console.log('🔍 [SEARCH_USER] Recherche utilisateur ID:', userId);
-  
+
   // Essayer client d'abord
   try {
     const userData = await readUserFile(userId, 'client');
@@ -198,19 +197,19 @@ async function findUserById(userId) {
 
   // Recherche exhaustive si pas trouvé
   console.log('🔍 [SEARCH_USER] Recherche exhaustive dans tous les fichiers...');
-  
+
   for (const userType of ['client', 'coach']) {
     try {
       const userDir = userType === 'coach' ? COACH_DIR : CLIENT_DIR;
       const files = await fs.readdir(userDir);
-      
+
       for (const file of files) {
         if (file.endsWith('.json')) {
           try {
             const filePath = path.join(userDir, file);
             const data = await fs.readFile(filePath, 'utf8');
             const userData = JSON.parse(data);
-            
+
             // Vérifier correspondance ID
             if (userData.id && userData.id.toString() === userId.toString()) {
               console.log(`✅ [SEARCH_USER] Trouvé par correspondance ID dans ${userType}/${file}`);
@@ -846,21 +845,21 @@ app.post('/api/strava/exchange-token', async (req, res) => {
       hasStravaClientId: !!process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID,
       hasStravaClientSecret: !!process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET
     });
-    
+
     // Vérifier la correspondance exacte avec la config Strava
     const expectedClientId = '159394';
-    const expectedClientSecret = '0a888961cf64a2294908224b07b222ccba150700';
-    
+    const expectedClientSecret = '0a8889616f64a229949082240702228cba150700';
+
     console.log('🔍 [STRAVA_EXCHANGE] Vérification configuration:');
     console.log('   - Client ID correspond:', STRAVA_CLIENT_ID === expectedClientId);
-    console.log('   - Client Secret correspond:', STRAVA_CLIENT_SECRET === expectedClientSecret);pectedClientSecret);
-    
+    console.log('   - Client Secret correspond:', STRAVA_CLIENT_SECRET === expectedClientSecret);
+
     if (STRAVA_CLIENT_ID !== expectedClientId) {
       console.error('❌ [STRAVA_EXCHANGE] ERREUR: Client ID ne correspond pas!');
       console.error('   - Attendu:', expectedClientId);
       console.error('   - Reçu:', STRAVA_CLIENT_ID);
     }
-    
+
     if (STRAVA_CLIENT_SECRET !== expectedClientSecret) {
       console.error('❌ [STRAVA_EXCHANGE] ERREUR: Client Secret ne correspond pas!');
       console.error('   - Attendu (10 premiers chars):', expectedClientSecret.substring(0, 10) + '...');
@@ -870,7 +869,7 @@ app.post('/api/strava/exchange-token', async (req, res) => {
     // Vérifier que le redirect_uri correspond exactement à la config Strava
     const redirectUri = 'https://eatfitbymax.cloud/strava-callback';
     console.log('🔍 [STRAVA_EXCHANGE] Redirect URI utilisé:', redirectUri);
-    
+
     // Préparer la requête vers Strava
     const requestData = {
       client_id: STRAVA_CLIENT_ID,
@@ -878,7 +877,7 @@ app.post('/api/strava/exchange-token', async (req, res) => {
       code: code,
       grant_type: 'authorization_code'
     };
-    
+
     console.log('🔍 [STRAVA_EXCHANGE] === VÉRIFICATION REDIRECT_URI ===');
     console.log('   - Redirect URI dans l\'app:', 'https://eatfitbymax.cloud/strava-callback');
     console.log('   - Client ID dans requête:', STRAVA_CLIENT_ID);
@@ -912,7 +911,7 @@ app.post('/api/strava/exchange-token', async (req, res) => {
       console.error('   - Status:', tokenResponse.status);
       console.error('   - Status Text:', tokenResponse.statusText);
       console.error('   - Error Response:', errorText);
-      
+
       // Essayer de parser le JSON d'erreur si possible
       try {
         const errorJson = JSON.parse(errorText);
@@ -956,7 +955,7 @@ app.post('/api/strava/exchange-token', async (req, res) => {
 
     // Utiliser la fonction de recherche robuste
     const userResult = await findUserById(userId);
-    
+
     if (!userResult) {
       console.error('❌ [STRAVA_EXCHANGE] Utilisateur non trouvé:', userId);
       console.error('   - Vérification des fichiers existants dans Client/:');
@@ -1013,18 +1012,18 @@ app.post('/api/strava/exchange-token', async (req, res) => {
     }
 
     userData.lastUpdated = new Date().toISOString();
-    
+
     console.log('📂 [STRAVA_EXCHANGE] === ÉCRITURE FICHIER ===');
     console.log('   - Chemin fichier:', path.join(userType === 'coach' ? COACH_DIR : CLIENT_DIR, `${userId}.json`));
     console.log('   - Taille données utilisateur:', JSON.stringify(userData).length, 'caractères');
-    
+
     const saveSuccess = await writeUserFile(userId, userData, userType);
-    
+
     if (saveSuccess) {
       console.log('✅ [STRAVA_EXCHANGE] Tokens Strava sauvegardés avec succès dans le fichier utilisateur:', userId);
       console.log('   - Fichier utilisateur:', `${userType}/${userId}.json`);
       console.log('   - Connexion établie pour athlète:', tokenData.athlete.firstname, tokenData.athlete.lastname);
-      
+
       // Vérification immédiate de la sauvegarde
       try {
         const verificationData = await readUserFile(userId, userType);
@@ -1078,7 +1077,7 @@ app.post('/api/strava/exchange-token', async (req, res) => {
     console.error('   - Message:', error.message);
     console.error('   - Stack:', error.stack);
     console.error('   - Type:', error.constructor.name);
-    
+
     res.status(500).json({ 
       error: 'Erreur échange token Strava',
       details: error.message,
@@ -1109,7 +1108,7 @@ app.get('/api/strava/status/:userId', async (req, res) => {
     // Vérifier la nouvelle structure stravaIntegration
     if (userData.stravaIntegration && userData.stravaIntegration.connected) {
       console.log(`✅ [SERVEUR] Strava connecté pour ${userId}: ${userData.stravaIntegration.athlete?.firstname || 'Athlète'}`);
-      
+
       res.json({
         connected: true,
         athlete: userData.stravaIntegration.athlete,
@@ -1177,250 +1176,126 @@ app.post('/api/strava/disconnect/:userId', async (req, res) => {
 
 // Callback Strava - Route principale avec les vraies valeurs
 app.get('/strava-callback', async (req, res) => {
+  console.log('📥 [STRAVA] Callback reçu:', req.query);
+
   const { code, error, state } = req.query;
 
-  console.log('🔗 [STRAVA_CALLBACK] === DIAGNOSTIC COMPLET ===');
-  console.log('   - Timestamp:', new Date().toISOString());
-  console.log('   - URL complète:', req.url);
-  console.log('   - Method:', req.method);
-  console.log('   - Query params:', JSON.stringify(req.query, null, 2));
-  console.log('   - Headers:', JSON.stringify(req.headers, null, 2));
-  console.log('   - IP Client:', req.ip || req.connection.remoteAddress);
-  console.log('   - User-Agent:', req.headers['user-agent'] || 'N/A');
-  
-  console.log('🔗 Callback Strava reçu:', { 
-    code: code ? code.substring(0, 10) + '...' : 'aucun',
-    error: error || 'aucune',
-    state: state || 'aucun',
-    url: req.url,
-    hasAnyParams: Object.keys(req.query).length > 0,
-    allParams: req.query
-  });
-
+  // Gestion des erreurs
   if (error) {
-    console.error('❌ Erreur callback Strava:', error);
-    return res.status(400).send(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Erreur Strava</title>
-        </head>
-        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5;">
-          <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto;">
-            <h2 style="color: #e74c3c;">❌ Erreur de connexion Strava</h2>
-            <p>Une erreur s'est produite lors de la connexion à Strava.</p>
-            <p><strong>Erreur:</strong> ${error}</p>
-            <p style="margin-top: 30px;">Vous pouvez fermer cette fenêtre et réessayer dans l'application.</p>
-          </div>
-        </body>
-      </html>
-    `);
+    console.error('❌ [STRAVA] Erreur autorisation:', error);
+    return res.send(createCallbackPage('❌ Erreur', 'L\'autorisation Strava a échoué.', '#FF6B6B'));
   }
 
-  if (code) {
-    console.log('✅ Code d\'autorisation Strava reçu avec succès');
+  if (!code || !state) {
+    console.log('⚠️ [STRAVA] Paramètres manquants');
+    return res.send(createCallbackPage('⚠️ Paramètres manquants', 'Veuillez réessayer depuis l\'application.', '#F5A623'));
+  }
 
-    // Si nous avons un state (userId), traiter immédiatement le token
-    if (state) {
-      try {
-        console.log('🔄 Traitement automatique du token pour utilisateur:', state);
+  const userId = state;
+  console.log('✅ [STRAVA] Traitement pour utilisateur:', userId);
 
-        // Échanger le code contre un token d'accès avec timeout optimisé
-        const tokenResponse = await fetch('https://www.strava.com/oauth/token', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            client_id: STRAVA_CLIENT_ID,
-            client_secret: STRAVA_CLIENT_SECRET,
-            code: code,
-            grant_type: 'authorization_code'
-          })
-        });
+  try {
+    // Échanger le code contre un token
+    const tokenResponse = await fetch('https://www.strava.com/oauth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        client_id: STRAVA_CLIENT_ID,
+        client_secret: STRAVA_CLIENT_SECRET,
+        code: code,
+        grant_type: 'authorization_code'
+      })
+    });
 
-        if (tokenResponse.ok) {
-          const tokenData = await tokenResponse.json();
-
-          // Sauvegarder les tokens directement dans le fichier utilisateur principal
-          let userData = await readUserFile(state, 'client');
-          let userType = 'client';
-
-          if (!userData) {
-            userData = await readUserFile(state, 'coach');
-            userType = 'coach';
-          }
-
-          if (userData) {
-            userData.stravaIntegration = {
-              accessToken: tokenData.access_token,
-              refreshToken: tokenData.refresh_token,
-              expiresAt: tokenData.expires_at,
-              athlete: tokenData.athlete,
-              connected: true,
-              lastSync: new Date().toISOString()
-            };
-            
-            // Nettoyer l'ancienne structure si elle existe
-            if (userData.stravaTokens) {
-              delete userData.stravaTokens;
-            }
-            if (userData.strava) {
-              delete userData.strava;
-            }
-
-            userData.lastUpdated = new Date().toISOString();
-            await writeUserFile(state, userData, userType);
-          }
-
-          console.log('✅ Tokens Strava sauvegardés automatiquement pour utilisateur:', state, {
-            athleteId: tokenData.athlete?.id,
-            expiresAt: new Date(tokenData.expires_at * 1000).toISOString()
-          });
-          console.log('✅ Statut Strava mis à jour dans les données utilisateur');
-
-        } else {
-          const errorText = await tokenResponse.text();
-          console.error('❌ Erreur échange token Strava:', errorText);
-        }
-      } catch (error) {
-        console.error('❌ Erreur traitement automatique token:', error);
-      }
+    if (!tokenResponse.ok) {
+      const errorText = await tokenResponse.text();
+      console.error('❌ [STRAVA] Échec échange token:', errorText);
+      throw new Error('Échec échange token');
     }
 
-    return res.send(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Connexion Strava réussie</title>
-          <script>
-            function redirectToApp() {
-              try {
-                const stravaCallbackScheme = 'eatfitbymax://strava-callback?success=true&connected=true';
-                console.log('Tentative de redirection Strava callback:', stravaCallbackScheme);
+    const tokenData = await tokenResponse.json();
+    console.log('✅ [STRAVA] Token reçu pour athlète:', tokenData.athlete?.firstname);
 
-                const stravaLink = document.createElement('a');
-                stravaLink.href = stravaCallbackScheme;
-                stravaLink.style.display = 'none';
-                document.body.appendChild(stravaLink);
-                stravaLink.click();
-                document.body.removeChild(stravaLink);
+    // Sauvegarder les données
+    const stravaData = {
+      connected: true,
+      accessToken: tokenData.access_token,
+      refreshToken: tokenData.refresh_token,
+      expiresAt: tokenData.expires_at,
+      athlete: tokenData.athlete,
+      lastSync: new Date().toISOString()
+    };
 
-                setTimeout(() => {
-                  const appScheme = 'eatfitbymax://';
-                  console.log('Fallback vers application principale:', appScheme);
+    const userDataPath = path.join(CLIENT_DIR, `${userId}.json`); // Correction: CLIENT_DIR
+    let userData = {};
 
-                  const link = document.createElement('a');
-                  link.href = appScheme;
-                  link.style.display = 'none';
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
+    try {
+      // Utilisation de fs.promises.readFile pour la compatibilité async/await
+      const fileContent = await fs.readFile(userDataPath, 'utf8');
+      userData = JSON.parse(fileContent);
+    } catch (e) {
+      console.log('📝 [STRAVA] Nouveau fichier utilisateur');
+      // Si le fichier n'existe pas, userData reste {}
+    }
 
-                  setTimeout(() => {
-                    closeWindow();
-                  }, 500);
-                }, 500);
+    // Assurer que userData.stravaIntegration existe avant d'y accéder
+    userData.stravaIntegration = stravaData; // Utiliser stravaIntegration comme dans le reste du code
 
-              } catch (e) {
-                console.log('Redirection vers app failed, fermeture directe:', e);
-                closeWindow();
-              }
-            }
+    // Nettoyer l'ancienne structure si elle existe
+    if (userData.stravaTokens) {
+      delete userData.stravaTokens;
+    }
+    if (userData.strava) {
+      delete userData.strava; // Supprimer l'ancienne clé 'strava'
+    }
 
-            function closeWindow() {
-              try {
-                window.close();
-              } catch (e) {
-                console.log('window.close() failed:', e);
-              }
+    userData.lastUpdated = new Date().toISOString();
 
-              try {
-                if (window.history && window.history.length > 1) {
-                  window.history.back();
-                } else {
-                  window.location.href = 'about:blank';
-                }
-              } catch (e) {
-                console.log('Alternative close methods failed:', e);
-              }
-            }
+    await fs.writeFile(userDataPath, JSON.stringify(userData, null, 2));
 
-            setTimeout(() => {
-              redirectToApp();
-            }, 500);
-          </script>
-        </head>
-        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f8f9fa;">
-          <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto;">
-            <div style="font-size: 48px; margin-bottom: 20px;">✅</div>
-            <h2 style="color: #FC4C02; margin-bottom: 16px;">Connexion réussie!</h2>
-            <p style="color: #333; margin-bottom: 20px;">Strava connecté à <strong>EatFit By Max</strong></p>
-            <div style="background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-              Vous pouvez fermer cette fenêtre et retourner dans l'application.
-            </div>
-            <p style="color: #666; font-size: 14px; margin-bottom: 20px;">
-              Redirection vers l'application dans <span id="countdown">1</span> seconde...
-            </p>
-            <button 
-              onclick="window.location.href='eatfitbymax://strava-callback?success=true&connected=true'" 
-              style="background: #FF6B35; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; cursor: pointer; font-weight: 600; margin: 10px;">
-              🔗 Retour à l'app
-            </button>
-            <br>
-            <button 
-              onclick="redirectToApp()" 
-              style="background: #28A745; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: 500;">
-              🔄 Redirection automatique
-            </button>
-          </div>
-          <script>
-            let seconds = 1;
-            const countdownElement = document.getElementById('countdown');
+    console.log('💾 [STRAVA] Données sauvegardées');
 
-            const countdown = setInterval(() => {
-              seconds--;
-              if (countdownElement) {
-                countdownElement.textContent = seconds;
-              }
+    res.send(createCallbackPage(
+      '🎉 Strava connecté !', 
+      `Bonjour ${tokenData.athlete?.firstname || 'Athlète'} ! Connexion réussie.`, 
+      '#28A745'
+    ));
 
-              if (seconds <= 0) {
-                clearInterval(countdown);
-              }
-            }, 1000);
-          </script>
-        </body>
-      </html>
-    `);
+  } catch (error) {
+    console.error('❌ [STRAVA] Erreur callback:', error);
+    res.send(createCallbackPage('❌ Erreur', 'Impossible de connecter Strava.', '#FF6B6B'));
   }
+});
 
-  console.warn('⚠️ Callback Strava sans paramètres valides');
-  res.status(400).send(`
+// Fonction utilitaire pour créer les pages de callback
+function createCallbackPage(title, message, color) {
+  return `
     <!DOCTYPE html>
     <html>
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Paramètres manquants</title>
-      </head>
-      <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5;">
-        <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto;">
-          <h2 style="color: #f39c12;">⚠️ Paramètres manquants</h2>
-          <p>Les paramètres de callback Strava sont manquants.</p>
-          <p style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
-            <strong>URL reçue:</strong><br>
-            <code style="font-size: 12px; word-break: break-all;">${req.url}</code>
-          </p>
-          <p>Veuillez réessayer la connexion depuis l'application mobile.</p>
-        </div>
-      </body>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>${title}</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 40px; background: #0A0A0A; color: #FFFFFF; text-align: center; }
+        .container { max-width: 400px; margin: 0 auto; }
+        h1 { color: ${color}; margin-bottom: 20px; }
+        p { margin: 15px 0; line-height: 1.5; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h1>${title}</h1>
+        <p>${message}</p>
+        <p>Retournez à l'application mobile.</p>
+      </div>
+      <script>
+        setTimeout(() => window.close(), 1500);
+      </script>
+    </body>
     </html>
-  `);
-});
+  `;
+}
 
 // ========================================
 // 👨‍💼 GESTION DES INSCRIPTIONS COACH
@@ -1539,7 +1414,7 @@ app.get('/coach-signup', (req, res) => {
         <head><title>Erreur</title></head>
         <body style="font-family: Arial; text-align: center; padding: 50px;">
           <h2>Erreur temporaire</h2>
-          <p>La page d\'inscription coach n\'est pas disponible actuellement.</p>
+          <p>La page d'inscription coach n'est pas disponible actuellement.</p>
         </body>
       </html>
     `);
