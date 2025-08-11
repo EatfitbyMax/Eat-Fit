@@ -170,6 +170,66 @@ async function readUserFile(userId, userType = 'client') {
   }
 }
 
+// Fonction pour rechercher un utilisateur par ID (plus robuste)
+async function findUserById(userId) {
+  console.log('🔍 [SEARCH_USER] Recherche utilisateur ID:', userId);
+  
+  // Essayer client d'abord
+  try {
+    const userData = await readUserFile(userId, 'client');
+    if (userData) {
+      console.log('✅ [SEARCH_USER] Trouvé dans Client/');
+      return { userData, userType: 'client' };
+    }
+  } catch (error) {
+    console.log('⚠️ [SEARCH_USER] Erreur lecture Client/', error.message);
+  }
+
+  // Essayer coach ensuite
+  try {
+    const userData = await readUserFile(userId, 'coach');
+    if (userData) {
+      console.log('✅ [SEARCH_USER] Trouvé dans Coach/');
+      return { userData, userType: 'coach' };
+    }
+  } catch (error) {
+    console.log('⚠️ [SEARCH_USER] Erreur lecture Coach/', error.message);
+  }
+
+  // Recherche exhaustive si pas trouvé
+  console.log('🔍 [SEARCH_USER] Recherche exhaustive dans tous les fichiers...');
+  
+  for (const userType of ['client', 'coach']) {
+    try {
+      const userDir = userType === 'coach' ? COACH_DIR : CLIENT_DIR;
+      const files = await fs.readdir(userDir);
+      
+      for (const file of files) {
+        if (file.endsWith('.json')) {
+          try {
+            const filePath = path.join(userDir, file);
+            const data = await fs.readFile(filePath, 'utf8');
+            const userData = JSON.parse(data);
+            
+            // Vérifier correspondance ID
+            if (userData.id && userData.id.toString() === userId.toString()) {
+              console.log(`✅ [SEARCH_USER] Trouvé par correspondance ID dans ${userType}/${file}`);
+              return { userData, userType };
+            }
+          } catch (fileError) {
+            console.log(`⚠️ [SEARCH_USER] Erreur lecture ${file}:`, fileError.message);
+          }
+        }
+      }
+    } catch (dirError) {
+      console.log(`⚠️ [SEARCH_USER] Erreur lecture dossier ${userType}:`, dirError.message);
+    }
+  }
+
+  console.log('❌ [SEARCH_USER] Utilisateur non trouvé nulle part');
+  return null;
+}
+
 // Fonction pour écrire le fichier utilisateur
 async function writeUserFile(userId, userData, userType = 'client') {
   try {
@@ -887,26 +947,31 @@ app.post('/api/strava/exchange-token', async (req, res) => {
     }
 
     console.log('🔍 [STRAVA_EXCHANGE] Recherche utilisateur:', userId);
+    console.log('🔍 [STRAVA_EXCHANGE] Type userId:', typeof userId);
+    console.log('🔍 [STRAVA_EXCHANGE] Valeur userId brute:', JSON.stringify(userId));
 
-    // Sauvegarder les tokens dans le fichier utilisateur
-    let userData = await readUserFile(userId, 'client');
-    let userType = 'client';
-
-    if (!userData) {
-      console.log('   - Utilisateur non trouvé dans Client/, recherche dans Coach/...');
-      userData = await readUserFile(userId, 'coach');
-      userType = 'coach';
-    }
-
-    if (!userData) {
+    // Utiliser la fonction de recherche robuste
+    const userResult = await findUserById(userId);
+    
+    if (!userResult) {
       console.error('❌ [STRAVA_EXCHANGE] Utilisateur non trouvé:', userId);
+      console.error('   - Vérification des fichiers existants dans Client/:');
+      try {
+        const clientFiles = await fs.readdir(CLIENT_DIR);
+        console.error('   - Fichiers Client disponibles:', clientFiles);
+      } catch (dirError) {
+        console.error('   - Impossible de lire le dossier Client:', dirError);
+      }
       throw new Error('Utilisateur non trouvé: ' + userId);
     }
+
+    const { userData, userType } = userResult;
 
     console.log('✅ [STRAVA_EXCHANGE] Utilisateur trouvé:', {
       id: userData.id,
       name: userData.name || userData.firstName + ' ' + userData.lastName,
-      type: userType
+      type: userType,
+      existingStravaData: !!userData.stravaIntegration
     });
 
     // Sauvegarder les tokens dans le fichier utilisateur avec la nouvelle structure
@@ -916,15 +981,24 @@ app.post('/api/strava/exchange-token', async (req, res) => {
       expiresAt: tokenData.expires_at,
       athlete: tokenData.athlete,
       connected: true,
-      lastSync: new Date().toISOString()
+      lastSync: new Date().toISOString(),
+      connectionDate: new Date().toISOString()
     };
 
-    console.log('💾 [STRAVA_EXCHANGE] Sauvegarde données Strava:');
-    console.log('   - Structure sauvegardée:', {
+    console.log('💾 [STRAVA_EXCHANGE] === PRÉPARATION SAUVEGARDE ===');
+    console.log('   - Athlete ID:', tokenData.athlete.id);
+    console.log('   - Athlete Name:', tokenData.athlete.firstname, tokenData.athlete.lastname);
+    console.log('   - Token expire le:', new Date(tokenData.expires_at * 1000).toISOString());
+    console.log('   - Structure complète:', {
       ...stravaIntegrationData,
-      accessToken: stravaIntegrationData.accessToken ? stravaIntegrationData.accessToken.substring(0, 10) + '...' : 'MANQUANT',
-      refreshToken: stravaIntegrationData.refreshToken ? stravaIntegrationData.refreshToken.substring(0, 10) + '...' : 'MANQUANT'
+      accessToken: '[MASQUÉ]',
+      refreshToken: '[MASQUÉ]'
     });
+
+    // Backup de l'ancienne structure pour debug
+    if (userData.stravaIntegration) {
+      console.log('📝 [STRAVA_EXCHANGE] Écrasement ancienne données Strava existantes');
+    }
 
     userData.stravaIntegration = stravaIntegrationData;
 
@@ -936,12 +1010,28 @@ app.post('/api/strava/exchange-token', async (req, res) => {
 
     userData.lastUpdated = new Date().toISOString();
     
+    console.log('📂 [STRAVA_EXCHANGE] === ÉCRITURE FICHIER ===');
+    console.log('   - Chemin fichier:', path.join(userType === 'coach' ? COACH_DIR : CLIENT_DIR, `${userId}.json`));
+    console.log('   - Taille données utilisateur:', JSON.stringify(userData).length, 'caractères');
+    
     const saveSuccess = await writeUserFile(userId, userData, userType);
     
     if (saveSuccess) {
       console.log('✅ [STRAVA_EXCHANGE] Tokens Strava sauvegardés avec succès dans le fichier utilisateur:', userId);
       console.log('   - Fichier utilisateur:', `${userType}/${userId}.json`);
       console.log('   - Connexion établie pour athlète:', tokenData.athlete.firstname, tokenData.athlete.lastname);
+      
+      // Vérification immédiate de la sauvegarde
+      try {
+        const verificationData = await readUserFile(userId, userType);
+        if (verificationData && verificationData.stravaIntegration && verificationData.stravaIntegration.connected) {
+          console.log('✅ [VÉRIFICATION] Données Strava confirmées dans le fichier après sauvegarde');
+        } else {
+          console.error('❌ [VÉRIFICATION] Données Strava non trouvées après sauvegarde!');
+        }
+      } catch (verifError) {
+        console.error('❌ [VÉRIFICATION] Erreur lors de la vérification:', verifError);
+      }
     } else {
       console.error('❌ [STRAVA_EXCHANGE] Échec sauvegarde fichier utilisateur');
       throw new Error('Impossible de sauvegarder les tokens Strava');
@@ -949,10 +1039,34 @@ app.post('/api/strava/exchange-token', async (req, res) => {
 
     console.log('🎉 [STRAVA_EXCHANGE] Échange de token terminé avec succès pour:', userId);
 
+    // Diagnostic final : vérifier que les données sont bien sauvées
+    console.log('🔍 [DIAGNOSTIC FINAL] === VÉRIFICATION COMPLÈTE ===');
+    try {
+      const finalCheck = await readUserFile(userId, userType);
+      if (finalCheck && finalCheck.stravaIntegration) {
+        console.log('✅ [DIAGNOSTIC] Données Strava présentes:', {
+          connected: finalCheck.stravaIntegration.connected,
+          athlete: finalCheck.stravaIntegration.athlete?.firstname + ' ' + finalCheck.stravaIntegration.athlete?.lastname,
+          hasAccessToken: !!finalCheck.stravaIntegration.accessToken,
+          lastSync: finalCheck.stravaIntegration.lastSync
+        });
+      } else {
+        console.error('❌ [DIAGNOSTIC] PROBLÈME : Pas de données stravaIntegration trouvées!');
+      }
+    } catch (diagError) {
+      console.error('❌ [DIAGNOSTIC] Erreur diagnostic final:', diagError);
+    }
+
     res.json({ 
       success: true, 
       athlete: tokenData.athlete,
-      message: 'Strava connecté avec succès'
+      message: 'Strava connecté avec succès',
+      debug: {
+        userId: userId,
+        userType: userType,
+        saved: saveSuccess,
+        timestamp: new Date().toISOString()
+      }
     });
 
   } catch (error) {
