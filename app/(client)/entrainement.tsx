@@ -276,9 +276,6 @@ export default function EntrainementScreen() {
       if (currentUser) {
         console.log('🔄 Chargement des activités Strava pour:', currentUser.email);
 
-        // Synchroniser le statut Strava depuis le serveur avant de vérifier
-        await IntegrationsManager.syncStravaStatusFromServer(currentUser.id);
-
         // Vérifier le statut de connexion Strava
         const integrationStatus = await IntegrationsManager.getIntegrationStatus(currentUser.id);
         console.log('📊 Statut Strava:', integrationStatus.strava.connected ? 'Connecté' : 'Non connecté');
@@ -343,6 +340,7 @@ export default function EntrainementScreen() {
           }
 
           // 2. Ensuite essayer le cache local
+          // La fonction getStravaActivities de IntegrationsManager utilise maintenant le cache local
           const activities = await IntegrationsManager.getStravaActivities(currentUser.id);
           console.log(`📱 ${activities.length} activités depuis cache local`);
 
@@ -366,8 +364,9 @@ export default function EntrainementScreen() {
 
             setStravaActivities(normalizedActivities);
           } else {
-            // 3. Finalement, essayer de synchroniser
-            // Synchronisation supprimée - uniquement affichage des activités existantes
+            // 3. Si rien n'est trouvé, afficher un message approprié
+            console.log('Aucune activité Strava trouvée ni sur le serveur ni en cache.');
+            setStravaActivities([]);
           }
         } else {
           console.log('⚠️ Strava non connecté, aucune activité à charger');
@@ -481,7 +480,7 @@ export default function EntrainementScreen() {
         return;
       }
 
-      console.log(`  ${index + 1}. "${activity.name}" - ${activityDate.toISOString().split('T')[0]} (${activityDate.toLocaleDateString('fr-FR')})`);
+      console.log(`  ${index + 1}. ${activity.name} - ${activityDate.toISOString().split('T')[0]} (${activityDate.toLocaleDateString('fr-FR')})`);
     });
 
     const filteredActivities = stravaActivities.filter(activity => {
