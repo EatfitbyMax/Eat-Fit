@@ -612,8 +612,14 @@ app.get('/api/strava/:userId', async (req, res) => {
       return res.json([]);
     }
 
-    // Récupérer les activités Strava sauvegardées - CORRECTION: utiliser stravaActivities au lieu de strava
-    const stravaActivities = userData.stravaActivities || userData.strava || [];
+    // Récupérer les activités Strava sauvegardées - Support des deux structures
+    let stravaActivities = userData.stravaActivities || userData.strava || [];
+    
+    // Si c'est un objet au lieu d'un tableau, essayer d'extraire les activités
+    if (!Array.isArray(stravaActivities) && typeof stravaActivities === 'object') {
+      stravaActivities = stravaActivities.activities || [];
+    }
+    
     console.log(`📊 [STRAVA] ${stravaActivities.length} activités trouvées pour ${userId}`);
 
     // Debug: vérifier la structure des données
@@ -629,8 +635,9 @@ app.get('/api/strava/:userId', async (req, res) => {
 
     // Debug: vérifier les deux emplacements possibles
     console.log(`🔍 [STRAVA] Debug emplacements données pour ${userId}:`);
-    console.log(`  - userData.stravaActivities: ${userData.stravaActivities ? userData.stravaActivities.length : 'undefined'} activités`);
-    console.log(`  - userData.strava: ${userData.strava ? userData.strava.length : 'undefined'} activités`);
+    console.log(`  - userData.stravaActivities: ${userData.stravaActivities ? (Array.isArray(userData.stravaActivities) ? userData.stravaActivities.length + ' activités' : 'objet non-tableau') : 'undefined'}`);
+    console.log(`  - userData.strava: ${userData.strava ? (Array.isArray(userData.strava) ? userData.strava.length + ' activités' : 'objet non-tableau') : 'undefined'}`);
+    console.log(`  - Clés disponibles dans userData:`, Object.keys(userData).filter(key => key.toLowerCase().includes('strava')));
 
     // Debug détaillé des activités trouvées
     if (stravaActivities.length > 0) {
