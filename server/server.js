@@ -614,6 +614,31 @@ app.get('/api/strava/:userId', async (req, res) => {
     console.log(`🔍 [STRAVA_GET] === ANALYSE STRUCTURE DONNÉES ===`);
     console.log(`📂 Toutes les clés dans userData:`, Object.keys(userData));
     console.log(`📂 Clés contenant 'strava':`, Object.keys(userData).filter(key => key.toLowerCase().includes('strava')));
+    
+    // Debug encore plus détaillé - montrer un échantillon de chaque structure
+    console.log(`🔍 [STRAVA_GET] === DEBUG STRUCTURE COMPLÈTE ===`);
+    if (userData.stravaIntegration) {
+      console.log(`📊 stravaIntegration:`, {
+        connected: userData.stravaIntegration.connected,
+        hasActivities: !!userData.stravaIntegration.activities,
+        activitiesType: typeof userData.stravaIntegration.activities,
+        activitiesLength: Array.isArray(userData.stravaIntegration.activities) ? userData.stravaIntegration.activities.length : 'N/A',
+        keys: typeof userData.stravaIntegration === 'object' ? Object.keys(userData.stravaIntegration) : []
+      });
+    }
+    
+    // Debug toutes les clés qui pourraient contenir des activités
+    ['stravaActivities', 'strava', 'activities', 'workouts'].forEach(key => {
+      if (userData[key]) {
+        console.log(`📊 ${key}:`, {
+          type: typeof userData[key],
+          isArray: Array.isArray(userData[key]),
+          length: Array.isArray(userData[key]) ? userData[key].length : 'N/A',
+          sample: Array.isArray(userData[key]) && userData[key].length > 0 ? 
+            userData[key][0].name || userData[key][0].id || 'Pas de nom/id' : 'Aucun échantillon'
+        });
+      }
+    });
 
     // Vérifier toutes les structures possibles
     const possibleKeys = ['stravaActivities', 'strava', 'activities'];
@@ -1264,17 +1289,54 @@ app.get('/api/debug/user/:userId', async (req, res) => {
       allKeys: Object.keys(userData),
       stravaKeys: Object.keys(userData).filter(key => key.toLowerCase().includes('strava')),
       stravaData: {},
-      fileSize: JSON.stringify(userData).length
+      activityKeys: Object.keys(userData).filter(key => key.toLowerCase().includes('activit')),
+      workoutKeys: Object.keys(userData).filter(key => key.toLowerCase().includes('workout')),
+      fileSize: JSON.stringify(userData).length,
+      stravaIntegrationDetails: userData.stravaIntegration ? {
+        connected: userData.stravaIntegration.connected,
+        hasAthlete: !!userData.stravaIntegration.athlete,
+        athleteName: userData.stravaIntegration.athlete ? 
+          `${userData.stravaIntegration.athlete.firstname} ${userData.stravaIntegration.athlete.lastname}` : null,
+        hasAccessToken: !!userData.stravaIntegration.accessToken,
+        lastSync: userData.stravaIntegration.lastSync,
+        allKeys: Object.keys(userData.stravaIntegration)
+      } : null
     };
 
     // Analyser chaque clé Strava
     diagnostic.stravaKeys.forEach(key => {
+      const data = userData[key];
       diagnostic.stravaData[key] = {
-        type: typeof userData[key],
-        isArray: Array.isArray(userData[key]),
-        length: Array.isArray(userData[key]) ? userData[key].length : 'N/A',
-        keys: typeof userData[key] === 'object' && userData[key] ? Object.keys(userData[key]) : []
+        type: typeof data,
+        isArray: Array.isArray(data),
+        length: Array.isArray(data) ? data.length : 'N/A',
+        keys: typeof data === 'object' && data ? Object.keys(data) : [],
+        sample: Array.isArray(data) && data.length > 0 ? {
+          name: data[0].name,
+          date: data[0].start_date || data[0].date,
+          type: data[0].type || data[0].sport_type,
+          id: data[0].id
+        } : null
       };
+    });
+
+    // Analyser les clés d'activités générales
+    diagnostic.activityKeys.forEach(key => {
+      if (!diagnostic.stravaData[key]) { // Éviter les doublons
+        const data = userData[key];
+        diagnostic.stravaData[key] = {
+          type: typeof data,
+          isArray: Array.isArray(data),
+          length: Array.isArray(data) ? data.length : 'N/A',
+          keys: typeof data === 'object' && data ? Object.keys(data) : [],
+          sample: Array.isArray(data) && data.length > 0 ? {
+            name: data[0].name,
+            date: data[0].start_date || data[0].date,
+            type: data[0].type || data[0].sport_type,
+            id: data[0].id
+          } : null
+        };
+      }
     });
 
     console.log(`🔧 [DEBUG] Diagnostic généré pour ${userId}:`, diagnostic);
