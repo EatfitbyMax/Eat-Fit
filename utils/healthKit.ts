@@ -36,6 +36,12 @@ class HealthKitService {
       } catch (requireError) {
         console.log('❌ Erreur import rn-apple-healthkit:', requireError.message);
         
+        // En mode développement, on accepte que le module ne soit pas disponible
+        if (__DEV__) {
+          console.log('📱 Mode développement - Module HealthKit non disponible, mais on continue');
+          return true; // On retourne true pour permettre les tests en dev
+        }
+        
         // En production, essayer des chemins alternatifs
         try {
           AppleHealthKit = require('rn-apple-healthkit/RNAppleHealthKit');
@@ -45,6 +51,12 @@ class HealthKitService {
         }
       }
       
+      // En mode développement sans module natif, on simule la disponibilité
+      if (__DEV__ && !AppleHealthKit) {
+        console.log('📱 Mode développement - Simulation HealthKit disponible');
+        return true;
+      }
+      
       console.log('🔍 Vérification API HealthKit...');
       
       // Vérifications plus robustes des méthodes
@@ -52,6 +64,12 @@ class HealthKitService {
       for (const method of requiredMethods) {
         if (!AppleHealthKit[method] || typeof AppleHealthKit[method] !== 'function') {
           console.log(`❌ Méthode ${method} manquante dans AppleHealthKit`);
+          
+          // En développement, on continue même si les méthodes manquent
+          if (__DEV__) {
+            console.log('📱 Mode développement - Méthodes manquantes ignorées');
+            return true;
+          }
           return false;
         }
       }
@@ -65,11 +83,23 @@ class HealthKitService {
         console.log('📱 Support HealthKit sur appareil:', deviceSupported);
       } catch (availabilityError) {
         console.log('❌ Erreur vérification support appareil:', availabilityError.message);
+        
+        // En développement, on simule que c'est supporté
+        if (__DEV__) {
+          console.log('📱 Mode développement - Support appareil simulé');
+          return true;
+        }
         return false;
       }
       
       if (!deviceSupported) {
         console.log('❌ HealthKit non supporté sur cet appareil');
+        
+        // En développement, on accepte même si non supporté
+        if (__DEV__) {
+          console.log('📱 Mode développement - Support forcé pour test');
+          return true;
+        }
         return false;
       }
       
@@ -79,10 +109,10 @@ class HealthKitService {
     } catch (error) {
       console.error('⚠️ Erreur critique vérification HealthKit:', error);
       
-      // En mode développement
+      // En mode développement, on retourne true pour permettre les tests
       if (__DEV__) {
-        console.log('📱 Mode développement - HealthKit limité');
-        return false;
+        console.log('📱 Mode développement - Erreur ignorée, disponibilité simulée');
+        return true;
       }
       
       // En production, plus de détails
@@ -113,14 +143,43 @@ class HealthKitService {
         }
       } catch (error) {
         console.log('❌ Erreur import dans requestPermissions:', error.message);
+        
+        // En mode développement, on simule le succès
+        if (__DEV__) {
+          console.log('📱 Mode développement - Permissions simulées accordées');
+          return true;
+        }
         return false;
+      }
+
+      // En mode développement sans module natif, on simule le succès
+      if (__DEV__ && !AppleHealthKit) {
+        console.log('📱 Mode développement - Module non disponible, permissions simulées');
+        return true;
       }
 
       // Vérifier d'abord si HealthKit est disponible
       console.log('🔍 Vérification disponibilité avant permissions...');
-      if (!AppleHealthKit.isAvailable()) {
-        console.log('❌ Apple Health non disponible sur cet appareil');
-        throw new Error('Apple Health n\'est pas disponible sur cet appareil');
+      try {
+        if (!AppleHealthKit.isAvailable()) {
+          console.log('❌ Apple Health non disponible sur cet appareil');
+          
+          // En développement, on continue même si non disponible
+          if (__DEV__) {
+            console.log('📱 Mode développement - Disponibilité forcée');
+            return true;
+          }
+          throw new Error('Apple Health n\'est pas disponible sur cet appareil');
+        }
+      } catch (availabilityError) {
+        console.log('❌ Erreur vérification disponibilité:', availabilityError.message);
+        
+        // En développement, on ignore l'erreur
+        if (__DEV__) {
+          console.log('📱 Mode développement - Erreur disponibilité ignorée');
+          return true;
+        }
+        throw availabilityError;
       }
 
       // Configuration permissions simplifiée
@@ -160,7 +219,14 @@ class HealthKitService {
             } else {
               console.error('❌ Erreur inconnue HealthKit:', error);
             }
-            resolve(false);
+            
+            // En développement, on accepte même les erreurs
+            if (__DEV__) {
+              console.log('📱 Mode développement - Erreur permissions ignorée');
+              resolve(true);
+            } else {
+              resolve(false);
+            }
           } else {
             console.log('✅ HealthKit initialisé avec succès');
             console.log('✅ Permissions accordées');
@@ -170,6 +236,12 @@ class HealthKitService {
       });
     } catch (error) {
       console.error('⚠️ Exception lors de la demande de permissions HealthKit:', error);
+      
+      // En développement, on simule le succès même en cas d'erreur
+      if (__DEV__) {
+        console.log('📱 Mode développement - Exception ignorée, succès simulé');
+        return true;
+      }
       return false;
     }
   }
@@ -365,21 +437,55 @@ export const connectToAppleHealth = async (): Promise<boolean> => {
 
     if (Platform.OS !== 'ios') {
       console.log('❌ Apple Health disponible uniquement sur iOS');
+      Alert.alert(
+        'iOS Requis',
+        'Apple Health est uniquement disponible sur les appareils iOS.'
+      );
       return false;
     }
 
-    // Toujours utiliser les vraies APIs HealthKit en production
+    // Vérifier la disponibilité avec une gestion d'erreur améliorée
     try {
+      console.log('🔍 Vérification de la disponibilité d\'Apple Health...');
       const isAvailable = await HealthKitService.isAvailable();
+      
       if (!isAvailable) {
         console.log('❌ Apple Health non disponible sur cet appareil');
-        Alert.alert(
-          'Apple Health non disponible',
-          'Apple Health n\'est pas disponible sur cet appareil. Assurez-vous que l\'application Santé est installée et que votre appareil supporte HealthKit.'
-        );
-        return false;
+        
+        // Message différent selon l'environnement
+        if (__DEV__) {
+          Alert.alert(
+            'Apple Health (Mode Dev)',
+            'HealthKit non disponible en développement. Voulez-vous continuer avec une simulation ?',
+            [
+              { 
+                text: 'Annuler', 
+                style: 'cancel'
+              },
+              { 
+                text: 'Simuler', 
+                onPress: async () => {
+                  try {
+                    await AsyncStorage.setItem('appleHealthConnected', 'true');
+                    console.log('✅ Apple Health connecté (simulé)');
+                  } catch (error) {
+                    console.error('Erreur sauvegarde simulation:', error);
+                  }
+                }
+              }
+            ]
+          );
+          return true; // En mode dev, on considère que la simulation réussit
+        } else {
+          Alert.alert(
+            'Apple Health non disponible',
+            'Apple Health n\'est pas disponible sur cet appareil. Assurez-vous que l\'application Santé est installée et que votre appareil supporte HealthKit.'
+          );
+          return false;
+        }
       }
 
+      console.log('✅ Apple Health disponible, demande des permissions...');
       const hasPermissions = await HealthKitService.requestPermissions();
       
       if (hasPermissions) {
@@ -394,17 +500,18 @@ export const connectToAppleHealth = async (): Promise<boolean> => {
         );
         return false;
       }
-    } catch (error) {
-      console.error('❌ Erreur connexion Apple Health:', error);
       
-      // En développement seulement, proposer une simulation comme fallback
+    } catch (healthKitError) {
+      console.error('❌ Erreur HealthKit:', healthKitError);
+      
+      // En développement, proposer une simulation
       if (__DEV__) {
-        console.log('📱 Mode développement - Fallback simulation Apple Health');
+        console.log('📱 Mode développement - Proposer simulation après erreur');
         
         return new Promise((resolve) => {
           Alert.alert(
-            'Apple Health (Mode Dev)',
-            'HealthKit non disponible en développement. Utiliser la simulation ?',
+            'Erreur HealthKit (Mode Dev)',
+            `Erreur: ${healthKitError.message}\n\nVoulez-vous utiliser la simulation ?`,
             [
               { 
                 text: 'Annuler', 
@@ -416,10 +523,10 @@ export const connectToAppleHealth = async (): Promise<boolean> => {
                 onPress: async () => {
                   try {
                     await AsyncStorage.setItem('appleHealthConnected', 'true');
-                    console.log('✅ Apple Health connecté (simulé)');
+                    console.log('✅ Apple Health connecté (simulé après erreur)');
                     resolve(true);
-                  } catch (error) {
-                    console.error('Erreur sauvegarde:', error);
+                  } catch (storageError) {
+                    console.error('Erreur sauvegarde:', storageError);
                     resolve(false);
                   }
                 }
@@ -427,13 +534,24 @@ export const connectToAppleHealth = async (): Promise<boolean> => {
             ]
           );
         });
+      } else {
+        // En production, afficher l'erreur spécifique
+        const errorMessage = healthKitError.message || 'Erreur inconnue';
+        Alert.alert(
+          'Erreur de connexion',
+          `Impossible de connecter Apple Health: ${errorMessage}`
+        );
+        return false;
       }
-      
-      return false;
     }
     
-  } catch (error) {
-    console.error('❌ Erreur générale connexion Apple Health:', error);
+  } catch (generalError) {
+    console.error('❌ Erreur générale connexion Apple Health:', generalError);
+    
+    Alert.alert(
+      'Erreur',
+      'Une erreur inattendue s\'est produite lors de la connexion à Apple Health.'
+    );
     return false;
   }
 };
