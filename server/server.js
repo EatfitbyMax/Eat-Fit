@@ -17,6 +17,12 @@ const STRAVA_DIR = path.join(DATA_DIR, 'Strava');
 const STRAVA_CLIENT_ID = process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID || '159394';
 const STRAVA_CLIENT_SECRET = process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET || '0a888961cf64a2294908224b07b222ccba150700';
 
+// Log de vérification configuration au démarrage
+console.log('🔧 [STARTUP] Configuration Strava:');
+console.log('   - Client ID:', STRAVA_CLIENT_ID);
+console.log('   - Client Secret présent:', !!STRAVA_CLIENT_SECRET);
+console.log('   - Redirect URI configuré: https://eatfitbymax.cloud/strava-callback');
+
 // Middleware de base
 app.use(cors({
   origin: true,
@@ -1430,57 +1436,113 @@ app.post('/api/strava/disconnect/:userId', async (req, res) => {
 
 // Callback Strava - Route principale avec les vraies valeurs
 app.get('/strava-callback', async (req, res) => {
-  console.log('📥 [STRAVA] Callback reçu:', req.query);
-  console.log('📥 [STRAVA] Headers reçus:', req.headers);
-  console.log('📥 [STRAVA] URL complète:', req.url);
-  console.log('📥 [STRAVA] Configuration utilisée:', {
+  console.log('📥 [STRAVA_CALLBACK] === DÉBUT TRAITEMENT CALLBACK ===');
+  console.log('📥 [STRAVA_CALLBACK] Query params:', JSON.stringify(req.query, null, 2));
+  console.log('📥 [STRAVA_CALLBACK] Headers importants:', {
+    'user-agent': req.headers['user-agent'],
+    'referer': req.headers['referer'],
+    'host': req.headers['host']
+  });
+  console.log('📥 [STRAVA_CALLBACK] URL complète:', req.url);
+  console.log('📥 [STRAVA_CALLBACK] Method:', req.method);
+  console.log('📥 [STRAVA_CALLBACK] Configuration utilisée:', {
     clientId: STRAVA_CLIENT_ID,
-    clientSecret: STRAVA_CLIENT_SECRET ? '[PRÉSENT]' : '[MANQUANT]'
+    clientSecret: STRAVA_CLIENT_SECRET ? '[PRÉSENT - ' + STRAVA_CLIENT_SECRET.length + ' chars]' : '[MANQUANT]',
+    redirectUri: 'https://eatfitbymax.cloud/strava-callback'
   });
 
   const { code, error, state } = req.query;
 
+  // Validation détaillée des paramètres
+  console.log('🔍 [STRAVA_CALLBACK] Validation paramètres:');
+  console.log('   - code présent:', !!code, '- longueur:', code ? code.length : 0);
+  console.log('   - error présent:', !!error, '- valeur:', error);
+  console.log('   - state présent:', !!state, '- valeur:', state);
+
   // Gestion des erreurs
   if (error) {
-    console.error('❌ [STRAVA] Erreur autorisation:', error);
-    res.send(createCallbackPage('❌ Erreur', 'L\'autorisation Strava a échoué. Redirection vers l\'app...', '#FF6B6B', true));
-    return; // Important de retourner ici pour ne pas exécuter la suite
+    console.error('❌ [STRAVA_CALLBACK] Erreur autorisation Strava:', error);
+    res.send(createCallbackPage('❌ Erreur', 'L\'autorisation Strava a échoué: ' + error, '#FF6B6B', true));
+    return;
   }
 
-  if (!code || !state) {
-    console.log('⚠️ [STRAVA] Paramètres manquants');
-    res.send(createCallbackPage('⚠️ Paramètres manquants', 'Veuillez réessayer depuis l\'application. Redirection vers l\'app...', '#F5A623', true));
-    return; // Important de retourner ici pour ne pas exécuter la suite
+  if (!code) {
+    console.error('❌ [STRAVA_CALLBACK] Code d\'autorisation manquant');
+    res.send(createCallbackPage('⚠️ Code manquant', 'Code d\'autorisation non reçu. Réessayez depuis l\'app.', '#F5A623', true));
+    return;
+  }
+
+  if (!state) {
+    console.error('❌ [STRAVA_CALLBACK] State (userId) manquant');
+    res.send(createCallbackPage('⚠️ État manquant', 'Identifiant utilisateur manquant. Réessayez depuis l\'app.', '#F5A623', true));
+    return;
   }
 
   const userId = state;
-  console.log('✅ [STRAVA] Traitement pour utilisateur:', userId);
+  console.log('✅ [STRAVA_CALLBACK] Paramètres validés - Traitement pour utilisateur:', userId);
 
   try {
+    console.log('🔄 [STRAVA_CALLBACK] === DÉBUT ÉCHANGE TOKEN ===');
+
+    // Préparer la requête d'échange de token
+    const tokenRequestBody = {
+      client_id: STRAVA_CLIENT_ID,
+      client_secret: STRAVA_CLIENT_SECRET,
+      code: code,
+      grant_type: 'authorization_code'
+    };
+
+    console.log('📤 [STRAVA_CALLBACK] Envoi requête vers Strava OAuth:');
+    console.log('   - URL: https://www.strava.com/oauth/token');
+    console.log('   - Method: POST');
+    console.log('   - client_id:', tokenRequestBody.client_id);
+    console.log('   - client_secret:', tokenRequestBody.client_secret ? '[MASQUÉ-' + tokenRequestBody.client_secret.length + ']' : 'MANQUANT');
+    console.log('   - code (premiers 10 chars):', code.substring(0, 10) + '...');
+    console.log('   - grant_type:', tokenRequestBody.grant_type);
+
     // Échanger le code contre un token
     const tokenResponse = await fetch('https://www.strava.com/oauth/token', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        client_id: STRAVA_CLIENT_ID,
-        client_secret: STRAVA_CLIENT_SECRET,
-        code: code,
-        grant_type: 'authorization_code'
-      })
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(tokenRequestBody)
     });
+
+    console.log('📥 [STRAVA_CALLBACK] Réponse Strava reçue:');
+    console.log('   - Status:', tokenResponse.status, tokenResponse.statusText);
+    console.log('   - Headers:', Object.fromEntries(tokenResponse.headers.entries()));
 
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
-      console.error('❌ [STRAVA] Échec échange token:');
-      console.error('   - Status:', tokenResponse.status);
-      console.error('   - Response:', errorText);
-      console.error('   - Headers:', Object.fromEntries(tokenResponse.headers.entries()));
-      res.send(createCallbackPage('❌ Erreur OAuth', 'Échec de l\'échange de token avec Strava. Redirection vers l\'app...', '#FF6B6B', true));
-      return; // Important de retourner ici
+      console.error('❌ [STRAVA_CALLBACK] Échec échange token:');
+      console.error('   - Status HTTP:', tokenResponse.status);
+      console.error('   - Status Text:', tokenResponse.statusText);
+      console.error('   - Response Body:', errorText);
+      
+      let errorMessage = 'Échec de l\'échange de token avec Strava';
+      try {
+        const errorJson = JSON.parse(errorText);
+        console.error('   - Error JSON:', JSON.stringify(errorJson, null, 2));
+        errorMessage += ': ' + (errorJson.message || errorJson.error || 'Erreur inconnue');
+      } catch (parseError) {
+        console.error('   - Impossible de parser l\'erreur JSON');
+      }
+
+      res.send(createCallbackPage('❌ Erreur OAuth', errorMessage, '#FF6B6B', true));
+      return;
     }
 
     const tokenData = await tokenResponse.json();
-    console.log('✅ [STRAVA] Token reçu pour athlète:', tokenData.athlete?.firstname);
+    console.log('✅ [STRAVA_CALLBACK] Token reçu avec succès:');
+    console.log('   - Athlete présent:', !!tokenData.athlete);
+    console.log('   - Athlete nom:', tokenData.athlete?.firstname, tokenData.athlete?.lastname);
+    console.log('   - Athlete ID:', tokenData.athlete?.id);
+    console.log('   - Access token présent:', !!tokenData.access_token);
+    console.log('   - Refresh token présent:', !!tokenData.refresh_token);
+    console.log('   - Expires at:', tokenData.expires_at, '(' + new Date(tokenData.expires_at * 1000).toISOString() + ')');
+    console.log('   - Token Data complet:', JSON.stringify(tokenData, null, 2));
 
     // Sauvegarder les données
     const stravaData = {
@@ -1492,43 +1554,124 @@ app.get('/strava-callback', async (req, res) => {
       lastSync: new Date().toISOString()
     };
 
+    console.log('🔍 [STRAVA_CALLBACK] === RECHERCHE UTILISATEUR ===');
+    console.log('   - userId à rechercher:', userId);
+    console.log('   - Type userId:', typeof userId);
+
     // Utiliser la recherche robuste pour trouver l'utilisateur
     const userResult = await findUserById(userId);
 
     if (!userResult) {
-      console.error('❌ [STRAVA] Utilisateur non trouvé pour le callback:', userId);
-      res.send(createCallbackPage('❌ Utilisateur non trouvé', 'Impossible de trouver votre profil utilisateur. Redirection vers l\'app...', '#FF6B6B', true));
+      console.error('❌ [STRAVA_CALLBACK] Utilisateur non trouvé:', userId);
+      console.error('   - Vérification fichiers Client existants...');
+      try {
+        const clientFiles = await fs.readdir(CLIENT_DIR);
+        console.error('   - Fichiers disponibles:', clientFiles.slice(0, 5)); // Les 5 premiers
+        console.error('   - Total fichiers:', clientFiles.length);
+      } catch (dirError) {
+        console.error('   - Erreur lecture dossier Client:', dirError.message);
+      }
+      res.send(createCallbackPage('❌ Utilisateur non trouvé', 'Impossible de trouver votre profil utilisateur (ID: ' + userId + ')', '#FF6B6B', true));
       return;
     }
 
     const { userData, userType } = userResult;
+    console.log('✅ [STRAVA_CALLBACK] Utilisateur trouvé:', {
+      id: userData.id,
+      name: userData.name || userData.firstName + ' ' + userData.lastName,
+      type: userType,
+      email: userData.email
+    });
 
-    // Assurer que userData.stravaIntegration existe avant d'y accéder
-    userData.stravaIntegration = stravaData; // Utiliser stravaIntegration comme dans le reste du code
+    console.log('💾 [STRAVA_CALLBACK] === SAUVEGARDE DONNÉES ===');
 
-    // Nettoyer l'ancienne structure si elle existe
-    if (userData.stravaTokens) {
-      delete userData.stravaTokens;
+    // Préparer les données d'intégration Strava
+    const stravaIntegrationData = {
+      connected: true,
+      accessToken: tokenData.access_token,
+      refreshToken: tokenData.refresh_token,
+      expiresAt: tokenData.expires_at,
+      athlete: tokenData.athlete,
+      lastSync: new Date().toISOString(),
+      connectionDate: new Date().toISOString()
+    };
+
+    // Sauvegarder dans le fichier Strava dédié d'abord
+    const completeStravaData = {
+      stravaIntegration: stravaIntegrationData,
+      activities: [] // Initialement vide, sera rempli lors de la synchronisation
+    };
+
+    try {
+      await writeStravaFile(userId, completeStravaData);
+      console.log('✅ [STRAVA_CALLBACK] Données sauvées dans Strava/' + userId + '.json');
+    } catch (stravaFileError) {
+      console.error('❌ [STRAVA_CALLBACK] Erreur sauvegarde fichier Strava:', stravaFileError);
     }
-    if (userData.strava) {
-      delete userData.strava; // Supprimer l'ancienne clé 'strava'
-    }
+
+    // Ensuite mettre à jour le fichier utilisateur avec la référence d'intégration
+    userData.stravaIntegration = stravaIntegrationData;
+
+    // Nettoyer les anciennes structures si elles existent
+    const oldKeys = ['stravaTokens', 'strava', 'stravaActivities'];
+    oldKeys.forEach(key => {
+      if (userData[key]) {
+        console.log('🧹 [STRAVA_CALLBACK] Nettoyage ancienne structure:', key);
+        delete userData[key];
+      }
+    });
 
     userData.lastUpdated = new Date().toISOString();
 
-    await writeUserFile(userId, userData, userType);
+    try {
+      await writeUserFile(userId, userData, userType);
+      console.log('✅ [STRAVA_CALLBACK] Fichier utilisateur mis à jour:', userType + '/' + userId + '.json');
+    } catch (userFileError) {
+      console.error('❌ [STRAVA_CALLBACK] Erreur sauvegarde fichier utilisateur:', userFileError);
+      throw userFileError;
+    }
 
-    console.log('💾 [STRAVA] Données sauvées avec succès');
+    // Vérification finale - s'assurer que les données ont été bien sauvegardées
+    console.log('🔍 [STRAVA_CALLBACK] === VÉRIFICATION FINALE ===');
+    try {
+      const verificationData = await readUserFile(userId, userType);
+      const stravaVerificationData = await readStravaFile(userId);
+      
+      if (verificationData && verificationData.stravaIntegration && verificationData.stravaIntegration.connected) {
+        console.log('✅ [STRAVA_CALLBACK] Vérification utilisateur réussie - Strava connecté');
+      } else {
+        console.error('❌ [STRAVA_CALLBACK] Vérification utilisateur échouée');
+      }
+
+      if (stravaVerificationData && stravaVerificationData.stravaIntegration && stravaVerificationData.stravaIntegration.connected) {
+        console.log('✅ [STRAVA_CALLBACK] Vérification fichier Strava réussie');
+      } else {
+        console.error('❌ [STRAVA_CALLBACK] Vérification fichier Strava échouée');
+      }
+    } catch (verificationError) {
+      console.error('❌ [STRAVA_CALLBACK] Erreur lors de la vérification finale:', verificationError);
+    }
+
+    console.log('🎉 [STRAVA_CALLBACK] === SUCCÈS COMPLET ===');
+    console.log('   - Utilisateur:', userId);
+    console.log('   - Athlete:', tokenData.athlete?.firstname, tokenData.athlete?.lastname);
+    console.log('   - Connexion établie à:', new Date().toISOString());
 
     // Page de succès avec redirection automatique vers l'app
-    res.send(createCallbackPage('🎉 Connexion réussie !', 'Strava est maintenant connecté. Redirection vers l\'app...', '#28A745', true));
+    res.send(createCallbackPage('🎉 Connexion réussie !', 'Strava est maintenant connecté à votre compte. Redirection vers l\'app...', '#28A745', true));
   } catch (error) {
-    console.error('❌ [STRAVA] Erreur traitement callback:', error);
+    console.error('❌ [STRAVA_CALLBACK] === ERREUR CRITIQUE ===');
+    console.error('   - Message:', error.message);
+    console.error('   - Stack:', error.stack);
+    console.error('   - Type:', error.constructor.name);
+    console.error('   - userId:', userId);
+    console.error('   - Timestamp:', new Date().toISOString());
+
     res.send(createCallbackPage(
       '❌ Erreur de connexion', 
-      'Une erreur est survenue lors de la connexion. Redirection vers l\'app...', 
+      'Une erreur est survenue lors de la connexion: ' + error.message, 
       '#FF6B6B',
-      true // Redirection automatique même en cas d'erreur
+      true
     ));
   }
 });
