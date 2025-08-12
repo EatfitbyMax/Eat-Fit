@@ -807,7 +807,7 @@ export default function ProfilScreen() {
           {integrationStatus.strava.connected && (
             <View style={styles.stravaStatusCard}>
               <View style={styles.stravaStatusHeader}>
-                <Text style={styles.stravaStatusTitle}>🏃‍♂️ Compte Strava connecté</Text>
+                <Text style={styles.stravaStatusTitle}>🏃‍♂️ Compte Strava </Text>
                 <View style={styles.connectedBadge}>
                   <Text style={styles.connectedBadgeText}>✓ CONNECTÉ</Text>
                 </View>
