@@ -929,25 +929,11 @@ app.post('/api/strava/exchange-token', async (req, res) => {
       hasStravaClientSecret: !!process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET
     });
 
-    // Vérifier la correspondance exacte avec la config Strava
-    const expectedClientId = '159394';
-    const expectedClientSecret = '0a8889616f64a229949082240702228cba150700';
-
+    // Vérifier la configuration de base
     console.log('🔍 [STRAVA_EXCHANGE] Vérification configuration:');
-    console.log('   - Client ID correspond:', STRAVA_CLIENT_ID === expectedClientId);
-    console.log('   - Client Secret correspond:', STRAVA_CLIENT_SECRET === expectedClientSecret);
-
-    if (STRAVA_CLIENT_ID !== expectedClientId) {
-      console.error('❌ [STRAVA_EXCHANGE] ERREUR: Client ID ne correspond pas!');
-      console.error('   - Attendu:', expectedClientId);
-      console.error('   - Reçu:', STRAVA_CLIENT_ID);
-    }
-
-    if (STRAVA_CLIENT_SECRET !== expectedClientSecret) {
-      console.error('❌ [STRAVA_EXCHANGE] ERREUR: Client Secret ne correspond pas!');
-      console.error('   - Attendu (10 premiers chars):', expectedClientSecret.substring(0, 10) + '...');
-      console.error('   - Reçu (10 premiers chars):', STRAVA_CLIENT_SECRET ? STRAVA_CLIENT_SECRET.substring(0, 10) + '...' : 'UNDEFINED');
-    }
+    console.log('   - Client ID:', STRAVA_CLIENT_ID);
+    console.log('   - Client Secret présent:', !!STRAVA_CLIENT_SECRET);
+    console.log('   - Client Secret longueur:', STRAVA_CLIENT_SECRET ? STRAVA_CLIENT_SECRET.length : 0);
 
     // Vérifier que le redirect_uri correspond exactement à la config Strava
     const redirectUri = 'https://eatfitbymax.cloud/strava-callback';
