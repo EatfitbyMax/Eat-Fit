@@ -11,6 +11,14 @@ interface ExtendedStravaActivity extends StravaActivity {
   start_date_local?: string;
   moving_time?: number;
   elapsed_time?: number;
+  // Ajout des propriétés Strava courantes non présentes dans l'interface de base
+  duration?: number;
+  avgHeartRate?: number;
+  maxHeartRate?: number;
+  average_heartrate?: number;
+  max_heartrate?: number;
+  sportType?: string;
+  calories?: number;
 }
 import { getCurrentUser } from '../../utils/auth';
 import { checkSubscriptionStatus } from '../../utils/subscription';
@@ -27,7 +35,7 @@ export default function EntrainementScreen() {
   const { t } = useLanguage();
   const [selectedTab, setSelectedTab] = useState('Journal');
   const [selectedDay, setSelectedDay] = useState('Lundi');
-  const [stravaActivities, setStravaActivities] = useState<StravaActivity[]>([]);
+  const [stravaActivities, setStravaActivities] = useState<ExtendedStravaActivity[]>([]); // Utilisation de ExtendedStravaActivity
   const [isLoading, setIsLoading] = useState(false);
   const [hasSubscription, setHasSubscription] = useState(false);
   const [currentWeek, setCurrentWeek] = useState(() => {
@@ -39,23 +47,23 @@ export default function EntrainementScreen() {
   const [workouts, setWorkouts] = useState<any[]>([]);
   const [showAddWorkout, setShowAddWorkout] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [selectedStravaActivity, setSelectedStravaActivity] = useState<StravaActivity | null>(null);
+  const [selectedStravaActivity, setSelectedStravaActivity] = useState<ExtendedStravaActivity | null>(null); // Utilisation de ExtendedStravaActivity
   const [userSport, setUserSport] = useState<string>('');
   const [recommendedPrograms, setRecommendedPrograms] = useState<WorkoutProgram[]>([]);
   const [showRPEModal, setShowRPEModal] = useState(false);
-  const [activityToRate, setActivityToRate] = useState<StravaActivity | null>(null);
+  const [activityToRate, setActivityToRate] = useState<ExtendedStravaActivity | null>(null); // Utilisation de ExtendedStravaActivity
   const [rpeRating, setRpeRating] = useState(5);
   const [rpeNotes, setRpeNotes] = useState('');
   const [activityRatings, setActivityRatings] = useState<{[key: string]: {rpe: number, notes: string, date: string}}>({});
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
   const daysOfWeek = [
-    'Lundi', 
-    'Mardi', 
-    'Mercredi', 
-    'Jeudi', 
-    'Vendredi', 
-    'Samedi', 
+    'Lundi',
+    'Mardi',
+    'Mercredi',
+    'Jeudi',
+    'Vendredi',
+    'Samedi',
     'Dimanche'
   ];
 
@@ -217,7 +225,7 @@ export default function EntrainementScreen() {
     }
   };
 
-  const handleRateActivity = (activity: StravaActivity) => {
+  const handleRateActivity = (activity: ExtendedStravaActivity) => { // Utilisation de ExtendedStravaActivity
     setActivityToRate(activity);
     const existingRating = activityRatings[activity.id];
     if (existingRating) {
@@ -283,38 +291,55 @@ export default function EntrainementScreen() {
             const response = await fetch(`${serverUrl}/api/strava/${currentUser.id}`);
 
             if (response.ok) {
-              const serverActivities = await response.json();
+              const serverActivities: StravaActivity[] = await response.json(); // Typage explicite
               if (Array.isArray(serverActivities) && serverActivities.length > 0) {
-                console.log(`✅ ${serverActivities.length} activités récupérées depuis le serveur VPS`);
-                
-                // Normaliser les activités pour s'assurer d'avoir un format cohérent
-                const normalizedActivities = serverActivities.map(activity => ({
-                  ...activity,
-                  // S'assurer d'avoir un champ 'date' uniforme
-                  date: activity.date || activity.start_date || activity.start_date_local,
-                  // Normaliser la durée (moving_time ou elapsed_time)
-                  duration: activity.duration || activity.moving_time || activity.elapsed_time || 0,
-                  // S'assurer d'avoir un ID valide
-                  id: activity.id?.toString() || `activity_${Date.now()}_${Math.random()}`
-                }));
-                
-                setStravaActivities(normalizedActivities);
+                try {
+                  console.log(`✅ ${serverActivities.length} activités récupérées depuis le serveur VPS`);
 
-                // Sauvegarder en cache local
-                await AsyncStorage.setItem(`strava_activities_${currentUser.id}`, JSON.stringify(normalizedActivities));
+                  // Normaliser les activités pour s'assurer d'avoir un format cohérent
+                  const normalizedActivities: ExtendedStravaActivity[] = serverActivities.map(activity => ({
+                    ...activity,
+                    // S'assurer d'avoir un champ 'date' uniforme
+                    date: activity.date || activity.start_date || activity.start_date_local,
+                    // Normaliser la durée (priorité à moving_time)
+                    duration: activity.moving_time || activity.elapsed_time || activity.duration || 0,
+                    // Normaliser les données de fréquence cardiaque
+                    avgHeartRate: activity.average_heartrate || activity.avgHeartRate || null,
+                    maxHeartRate: activity.max_heartrate || activity.maxHeartRate || null,
+                    averageHeartrate: activity.average_heartrate || activity.avgHeartRate || null,
+                    maxHeartrate: activity.max_heartrate || activity.maxHeartRate || null,
+                    // Normaliser le type de sport
+                    sportType: activity.sport_type || activity.type,
+                    // S'assurer d'avoir un ID valide
+                    id: activity.id?.toString() || `activity_${Date.now()}_${Math.random()}`,
+                    // Ajouter les calories si elles ne sont pas présentes (estimation basique)
+                    calories: activity.calories || (activity.moving_time && activity.average_heartrate ?
+                      Math.round((activity.moving_time / 60) * activity.average_heartrate * 0.1) : 0)
+                  }));
 
-                // Debug détaillé
-                console.log('📋 Activités normalisées depuis serveur VPS:');
-                normalizedActivities.forEach((activity, index) => {
-                  const dateToUse = activity.date || activity.start_date;
-                  console.log(`  ${index + 1}. ${activity.name} - ${new Date(dateToUse).toLocaleDateString('fr-FR')} (${activity.type}) - Date: ${dateToUse}`);
-                });
+                  setStravaActivities(normalizedActivities);
 
-                return; // Sortir ici si on a trouvé des activités
+                  // Sauvegarder en cache local
+                  await AsyncStorage.setItem(`strava_activities_${currentUser.id}`, JSON.stringify(normalizedActivities));
+
+                  // Debug détaillé
+                  console.log('📋 Activités normalisées depuis serveur VPS:');
+                  normalizedActivities.forEach((activity, index) => {
+                    const dateToUse = activity.date || activity.start_date;
+                    console.log(`  ${index + 1}. ${activity.name} - ${new Date(dateToUse).toLocaleDateString('fr-FR')} (${activity.type}) - Date: ${dateToUse}`);
+                  });
+
+                  return; // Sortir ici si on a trouvé des activités
+                } catch (normalizationError) {
+                  console.error('Erreur lors de la normalisation des activités Strava:', normalizationError);
+                  // Continuer pour essayer le cache
+                }
               }
+            } else {
+              console.log(`Erreur lors de la récupération des activités depuis le serveur VPS: ${response.status}`);
             }
           } catch (serverError) {
-            console.log('⚠️ Erreur serveur VPS, fallback vers cache/sync:', serverError);
+            console.log('⚠️ Erreur serveur VPS (ou réseau), fallback vers cache/sync:', serverError);
           }
 
           // 2. Ensuite essayer le cache local
@@ -322,13 +347,24 @@ export default function EntrainementScreen() {
           console.log(`📱 ${activities.length} activités depuis cache local`);
 
           if (activities.length > 0) {
+            // Assurer la compatibilité avec ExtendedStravaActivity
+            const normalizedActivities = activities.map(activity => ({
+              ...activity,
+              duration: activity.moving_time || activity.elapsed_time || activity.duration || 0,
+              avgHeartRate: activity.average_heartrate || activity.avgHeartRate || null,
+              maxHeartRate: activity.max_heartrate || activity.maxHeartRate || null,
+              averageHeartrate: activity.average_heartrate || activity.avgHeartRate || null,
+              maxHeartrate: activity.max_heartrate || activity.maxHeartRate || null,
+              sportType: activity.sport_type || activity.type,
+            }));
+
             // Debug détaillé des activités
             console.log('📋 Liste des activités Strava (cache):');
-            activities.forEach((activity, index) => {
+            normalizedActivities.forEach((activity, index) => {
               console.log(`  ${index + 1}. ${activity.name} - ${new Date(activity.date).toLocaleDateString('fr-FR')} (${activity.type})`);
             });
 
-            setStravaActivities(activities);
+            setStravaActivities(normalizedActivities);
           } else {
             // 3. Finalement, essayer de synchroniser
             // Synchronisation supprimée - uniquement affichage des activités existantes
@@ -444,7 +480,7 @@ export default function EntrainementScreen() {
         console.log(`⚠️ Activité sans date valide:`, activity);
         return;
       }
-      
+
       console.log(`  ${index + 1}. "${activity.name}" - ${activityDate.toISOString().split('T')[0]} (${activityDate.toLocaleDateString('fr-FR')})`);
     });
 
@@ -471,7 +507,7 @@ export default function EntrainementScreen() {
         console.log('⚠️ Date invalide pour activité:', activityDateString, activity);
         return false;
       }
-      
+
       activityDate.setHours(0, 0, 0, 0);
 
       // Créer des copies des dates de début et fin pour la comparaison
@@ -657,25 +693,25 @@ export default function EntrainementScreen() {
     }
   };
 
-  const renderStravaActivity = (activity: StravaActivity) => {
+  const renderStravaActivity = (activity: ExtendedStravaActivity) => { // Utilisation de ExtendedStravaActivity
     const hasRating = activityRatings[activity.id];
     // Gérer les différents formats de date
     const activityDate = activity.date || activity.start_date || activity.start_date_local;
 
     return (
       <View key={activity.id} style={styles.activityCard}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.activityContent}
           onPress={() => setSelectedStravaActivity(activity)}
         >
           <View style={styles.activityHeader}>
-            <Text style={styles.activityIcon}>{getActivityIcon(activity.type, activity.name)}</Text>
+            <Text style={styles.activityIcon}>{getActivityIcon(activity.sportType || activity.type, activity.name)}</Text>
             <View style={styles.activityInfo}>
               <Text style={styles.activityName}>{activity.name}</Text>
               <Text style={styles.activityDate}>{formatDate(activityDate)}</Text>
             </View>
             <View style={styles.activityTypeContainer}>
-              <Text style={styles.activityType}>{activity.type}</Text>
+              <Text style={styles.activityType}>{activity.sportType || activity.type}</Text>
               <Text style={styles.arrowIcon}>›</Text>
             </View>
           </View>
@@ -697,10 +733,10 @@ export default function EntrainementScreen() {
                 <Text style={styles.statValue}>{activity.calories}</Text>
               </View>
             )}
-            {(activity.avgHeartRate || activity.averageHeartrate) && (
+            {(activity.avgHeartRate || activity.average_heartrate) && (
               <View style={styles.statItem}>
                 <Text style={styles.statLabel}>FC moy.</Text>
-                <Text style={styles.statValue}>{Math.round(activity.avgHeartRate || activity.averageHeartrate || 0)} bpm</Text>
+                <Text style={styles.statValue}>{Math.round(activity.avgHeartRate || activity.average_heartrate || 0)} bpm</Text>
               </View>
             )}
           </View>
@@ -722,7 +758,7 @@ export default function EntrainementScreen() {
             )}
           </View>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.rpeButton, hasRating && styles.rpeButtonRated]}
             onPress={() => handleRateActivity(activity)}
           >
@@ -745,7 +781,7 @@ export default function EntrainementScreen() {
         <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>{activity.name}</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.closeButton}
               onPress={() => setSelectedStravaActivity(null)}
             >
@@ -755,9 +791,9 @@ export default function EntrainementScreen() {
 
           <ScrollView style={styles.modalBody}>
             <View style={styles.activityDetailHeader}>
-              <Text style={styles.activityDetailIcon}>{getActivityIcon(activity.type, activity.name)}</Text>
+              <Text style={styles.activityDetailIcon}>{getActivityIcon(activity.sportType || activity.type, activity.name)}</Text>
               <View style={styles.activityDetailInfo}>
-                <Text style={styles.activityDetailType}>{activity.type}</Text>
+                <Text style={styles.activityDetailType}>{activity.sportType || activity.type}</Text>
                 <Text style={styles.activityDetailDate}>{formatDate(activity.date)}</Text>
               </View>
             </View>
@@ -782,17 +818,17 @@ export default function EntrainementScreen() {
                 </View>
               )}
 
-              {(activity.avgHeartRate || activity.averageHeartrate) && (
+              {(activity.avgHeartRate || activity.average_heartrate) && (
                 <View style={styles.detailStatCard}>
                   <Text style={styles.detailStatLabel}>FC moyenne</Text>
-                  <Text style={styles.detailStatValue}>{Math.round(activity.avgHeartRate || activity.averageHeartrate || 0)} bpm</Text>
+                  <Text style={styles.detailStatValue}>{Math.round(activity.avgHeartRate || activity.average_heartrate || 0)} bpm</Text>
                 </View>
               )}
 
-              {(activity.maxHeartRate || activity.maxHeartrate) && (
+              {(activity.maxHeartRate || activity.max_heartrate) && (
                 <View style={styles.detailStatCard}>
                   <Text style={styles.detailStatLabel}>FC maximale</Text>
-                  <Text style={styles.detailStatValue}>{Math.round(activity.maxHeartRate || activity.maxHeartrate || 0)} bpm</Text>
+                  <Text style={styles.detailStatValue}>{Math.round(activity.maxHeartRate || activity.max_heartrate || 0)} bpm</Text>
                 </View>
               )}
 
@@ -906,7 +942,7 @@ export default function EntrainementScreen() {
 
           {/* Navigation par semaines */}
           <View style={styles.weekNavigation}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.weekArrow}
               onPress={() => navigateWeek('prev')}
             >
@@ -917,7 +953,7 @@ export default function EntrainementScreen() {
               <Text style={styles.weekRange}>{formatWeekRange()}</Text>
             </View>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.weekArrow}
               onPress={() => navigateWeek('next')}
             >
@@ -928,7 +964,7 @@ export default function EntrainementScreen() {
 
         {/* Tabs avec design amélioré */}
         <View style={styles.tabsContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.tab, selectedTab === 'Journal' && styles.activeTab]}
             onPress={() => setSelectedTab('Journal')}
           >
@@ -940,7 +976,7 @@ export default function EntrainementScreen() {
             </View>
             {selectedTab === 'Journal' && <View style={styles.tabIndicator} />}
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.tab, selectedTab === 'Strava' && styles.activeTab]}
             onPress={() => setSelectedTab('Strava')}
           >
@@ -952,7 +988,7 @@ export default function EntrainementScreen() {
             </View>
             {selectedTab === 'Strava' && <View style={styles.tabIndicator} />}
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.tab, selectedTab === 'Programmes' && styles.activeTab, !hasSubscription && styles.lockedTab]}
             onPress={handleProgrammesTab}
           >
@@ -984,7 +1020,7 @@ export default function EntrainementScreen() {
                 const isTodayCheck = isToday(targetDate);
 
                 return (
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     key={jour}
                     style={[styles.dayCard, isTodayCheck && styles.todayCard]}
                     onPress={() => handleDayPress(jour)}
@@ -1011,7 +1047,7 @@ export default function EntrainementScreen() {
 
                     <View style={styles.dayFooter}>
                       <Text style={styles.sessionDetails}>
-                        {sessionCount > 0 
+                        {sessionCount > 0
                           ? `${sessionCount} séance${sessionCount > 1 ? 's' : ''} planifiée${sessionCount > 1 ? 's' : ''}`
                           : 'Aucune séance planifiée'
                         }
@@ -1161,14 +1197,14 @@ export default function EntrainementScreen() {
             </View>
 
             <View style={styles.rpeModalButtons}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.rpeButtonSecondary}
                 onPress={() => setShowRPEModal(false)}
                 activeOpacity={0.7}
               >
                 <Text style={styles.rpeButtonSecondaryText}>Annuler</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.rpeButtonPrimary}
                 onPress={handleSaveRPE}
                 activeOpacity={0.8}
@@ -1804,137 +1840,9 @@ const styles = StyleSheet.create({
   selectedRPELevelText: {
     color: '#000000',
   },
-  rpeLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 8,
-  },
-  modalButtonSecondary: {
-    flex: 1,
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#21262D',
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  modalButtonSecondaryText: {
-    color: '#8B949E',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  modalButtonPrimary: {
-    flex: 1,
-    backgroundColor: '#F5A623',
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  modalButtonPrimaryText: {
-    color: '#000000',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-
-  // Styles améliorés pour le modal RPE
-  rpeModalContent: {
-    backgroundColor: '#1A1D23',
-    borderRadius: 20,
-    margin: 20,
-    maxHeight: '85%',
-    width: '90%',
-    borderWidth: 1.5,
-    borderColor: '#2D3748',
-    boxShadow: '0px 8px 16px rgba(0, 0, 0, 0.3)',
-    elevation: 12,
-  },
-  rpeModalHeader: {
-    padding: 24,
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#2D3748',
-  },
-  rpeModalIconContainer: {
-    width: 60,
-    height: 60,
-    backgroundColor: 'rgba(245, 166, 35, 0.15)',
-    borderRadius: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-    borderWidth: 2,
-    borderColor: 'rgba(245, 166, 35, 0.3)',
-  },
-  rpeModalIcon: {
-    fontSize: 28,
-  },
-  rpeModalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  rpeModalSubtitle: {
-    fontSize: 15,
-    color: '#9CA3AF',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  rpeInputContainer: {
-    padding: 24,
-    paddingBottom: 16,
-  },
-  rpeInputLabel: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    marginBottom: 20,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  rpeSliderContainer: {
-    alignItems: 'center',
-  },
-  rpeSlider: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-    paddingHorizontal: 4,
-  },
-  rpeLevel: {
-    width: 32,
-    height: 32,
-    backgroundColor: '#2D3748',
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#374151',
-    marginHorizontal: 1,
-  },
-  selectedRPELevel: {
-    backgroundColor: '#F5A623',
-    borderColor: '#F5A623',
-    transform: [{ scale: 1.1 }],
-    boxShadow: '0px 2px 4px rgba(245, 166, 35, 0.4)',
-    elevation: 4,
-  },
   activeRPELevel: {
     backgroundColor: 'rgba(245, 166, 35, 0.2)',
     borderColor: 'rgba(245, 166, 35, 0.5)',
-  },
-  rpeLevelText: {
-    fontSize: 13,
-    color: '#9CA3AF',
-    fontWeight: '700',
-  },
-  selectedRPELevelText: {
-    color: '#000000',
-    fontWeight: '800',
   },
   activeRPELevelText: {
     color: '#F5A623',
