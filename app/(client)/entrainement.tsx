@@ -325,9 +325,9 @@ export default function EntrainementScreen() {
                 isArray: Array.isArray(serverActivities),
                 length: Array.isArray(serverActivities) ? serverActivities.length : 'N/A',
                 keys: Array.isArray(serverActivities) && serverActivities.length > 0 ? Object.keys(serverActivities[0]) : [],
-                sample: Array.isArray(serverActivities) && serverActivities.length > 0 ? 
-                  { 
-                    name: serverActivities[0].name, 
+                sample: Array.isArray(serverActivities) && serverActivities.length > 0 ?
+                  {
+                    name: serverActivities[0].name,
                     start_date: serverActivities[0].start_date,
                     start_date_local: serverActivities[0].start_date_local,
                     date: serverActivities[0].date,
@@ -406,7 +406,7 @@ export default function EntrainementScreen() {
                 const cachedActivities = JSON.parse(cachedData);
                 if (Array.isArray(cachedActivities) && cachedActivities.length > 0) {
                   console.log(`📱 [LOAD_STRAVA] ${cachedActivities.length} activités trouvées en cache local`);
-                  
+
                   allActivities = cachedActivities.map(activity => ({
                     ...activity,
                     date: activity.start_date || activity.start_date_local || activity.date,
@@ -439,16 +439,16 @@ export default function EntrainementScreen() {
           // 3. Résultat final
           if (activitiesFound && allActivities.length > 0) {
             console.log(`✅ [LOAD_STRAVA] SUCCÈS: ${allActivities.length} activités chargées au total`);
-            
+
             // Trier les activités par date (plus récente en premier)
             const sortedActivities = allActivities.sort((a, b) => {
               const dateA = new Date(a.date || a.start_date || '');
               const dateB = new Date(b.date || b.start_date || '');
               return dateB.getTime() - dateA.getTime();
             });
-            
+
             setStravaActivities(sortedActivities);
-            
+
             // Afficher la plage de dates des activités
             if (sortedActivities.length > 0) {
               const oldestDate = new Date(sortedActivities[sortedActivities.length - 1].date);
@@ -2064,5 +2064,74 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#F5A623',
     fontWeight: '500',
+  },
+  // Styles RPE Modal améliorés
+  rpeModalContent: {
+    backgroundColor: '#0D1117',
+    borderRadius: 16,
+    margin: 20,
+    maxHeight: '80%',
+    width: '90%',
+    borderWidth: 2,
+    borderColor: '#F5A623',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  rpeModalHeader: {
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 32,
+    paddingBottom: 24,
+    borderBottomWidth: 2,
+    borderBottomColor: '#F5A623',
+    backgroundColor: '#161B22',
+    borderTopLeftRadius: 14,
+    borderTopRightRadius: 14,
+  },
+  rpeModalIconContainer: {
+    backgroundColor: 'rgba(245, 166, 35, 0.1)',
+    borderRadius: 16,
+    width: 48,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(245, 166, 35, 0.2)',
+  },
+  rpeModalIcon: {
+    fontSize: 24,
+  },
+  rpeModalTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginTop: 8,
+    textShadow: '0px 2px 4px rgba(0, 0, 0, 0.8)',
+  },
+  rpeInputContainer: {
+    paddingHorizontal: 24,
+    paddingVertical: 24,
+    backgroundColor: '#0D1117',
+  },
+  rpeInputLabel: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    marginBottom: 12,
+    fontWeight: '700',
+    textAlign: 'center',
+    textShadow: '0px 1px 2px rgba(0, 0, 0, 0.5)',
+  },
+  rpeSliderContainer: {
+    marginVertical: 16,
+    backgroundColor: '#161B22',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#21262D',
   },
 });
