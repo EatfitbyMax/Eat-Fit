@@ -596,65 +596,100 @@ app.post('/api/health/:userId', async (req, res) => {
 app.get('/api/strava/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    console.log(`🔍 [STRAVA] Récupération activités pour utilisateur: ${userId}`);
+    console.log(`🔍 [STRAVA_GET] === RÉCUPÉRATION ACTIVITÉS STRAVA ===`);
+    console.log(`🔍 [STRAVA_GET] User ID demandé: ${userId}`);
 
-    // Chercher l'utilisateur
-    let userData = await readUserFile(userId, 'client');
-    let userType = 'client';
+    // Utiliser la fonction de recherche robuste
+    const userResult = await findUserById(userId);
 
-    if (!userData) {
-      userData = await readUserFile(userId, 'coach');
-      userType = 'coach';
-    }
-
-    if (!userData) {
-      console.log(`❌ [STRAVA] Utilisateur ${userId} non trouvé`);
+    if (!userResult) {
+      console.log(`❌ [STRAVA_GET] Utilisateur ${userId} non trouvé`);
       return res.json([]);
     }
 
-    // Récupérer les activités Strava sauvegardées - Support des deux structures
-    let stravaActivities = userData.stravaActivities || userData.strava || [];
-    
-    // Si c'est un objet au lieu d'un tableau, essayer d'extraire les activités
-    if (!Array.isArray(stravaActivities) && typeof stravaActivities === 'object') {
-      stravaActivities = stravaActivities.activities || [];
-    }
-    
-    console.log(`📊 [STRAVA] ${stravaActivities.length} activités trouvées pour ${userId}`);
+    const { userData, userType } = userResult;
+    console.log(`✅ [STRAVA_GET] Utilisateur trouvé: ${userData.name || userData.email} (${userType})`);
 
-    // Debug: vérifier la structure des données
-    if (userData.stravaIntegration) {
-      if (userData.stravaIntegration.connected) {
-        console.log(`✅ [STRAVA] Strava connecté pour ${userId}:`, {
-          connected: userData.stravaIntegration.connected,
-          athlete: userData.stravaIntegration.athlete?.firstname || 'Non défini',
-          lastSync: userData.stravaIntegration.lastSync
+    // Debug complet de la structure des données
+    console.log(`🔍 [STRAVA_GET] === ANALYSE STRUCTURE DONNÉES ===`);
+    console.log(`📂 Toutes les clés dans userData:`, Object.keys(userData));
+    console.log(`📂 Clés contenant 'strava':`, Object.keys(userData).filter(key => key.toLowerCase().includes('strava')));
+
+    // Vérifier toutes les structures possibles
+    const possibleKeys = ['stravaActivities', 'strava', 'activities'];
+    let stravaActivities = [];
+    let foundIn = null;
+
+    for (const key of possibleKeys) {
+      if (userData[key]) {
+        console.log(`🔍 [STRAVA_GET] Clé "${key}" trouvée:`, {
+          type: typeof userData[key],
+          isArray: Array.isArray(userData[key]),
+          length: Array.isArray(userData[key]) ? userData[key].length : 'N/A',
+          keys: typeof userData[key] === 'object' ? Object.keys(userData[key]) : []
         });
+
+        if (Array.isArray(userData[key])) {
+          stravaActivities = userData[key];
+          foundIn = key;
+          break;
+        } else if (typeof userData[key] === 'object' && userData[key].activities) {
+          stravaActivities = userData[key].activities;
+          foundIn = `${key}.activities`;
+          break;
+        }
       }
     }
 
-    // Debug: vérifier les deux emplacements possibles
-    console.log(`🔍 [STRAVA] Debug emplacements données pour ${userId}:`);
-    console.log(`  - userData.stravaActivities: ${userData.stravaActivities ? (Array.isArray(userData.stravaActivities) ? userData.stravaActivities.length + ' activités' : 'objet non-tableau') : 'undefined'}`);
-    console.log(`  - userData.strava: ${userData.strava ? (Array.isArray(userData.strava) ? userData.strava.length + ' activités' : 'objet non-tableau') : 'undefined'}`);
-    console.log(`  - Clés disponibles dans userData:`, Object.keys(userData).filter(key => key.toLowerCase().includes('strava')));
-
-    // Debug détaillé des activités trouvées
-    if (stravaActivities.length > 0) {
-      console.log(`📋 [STRAVA] Liste des activités pour ${userId}:`);
-      stravaActivities.slice(0, 5).forEach((activity, index) => {
-        console.log(`  ${index + 1}. ${activity.name} - ${activity.start_date || activity.date} (${activity.type || activity.sport_type})`);
+    // Vérifier dans l'intégration Strava si les activités ne sont pas trouvées ailleurs
+    if (stravaActivities.length === 0 && userData.stravaIntegration) {
+      console.log(`🔍 [STRAVA_GET] Vérification stravaIntegration:`, {
+        connected: userData.stravaIntegration.connected,
+        hasActivities: !!userData.stravaIntegration.activities,
+        activitiesLength: userData.stravaIntegration.activities ? userData.stravaIntegration.activities.length : 'N/A'
       });
-      if (stravaActivities.length > 5) {
-        console.log(`  ... et ${stravaActivities.length - 5} autres activités`);
+
+      if (userData.stravaIntegration.activities && Array.isArray(userData.stravaIntegration.activities)) {
+        stravaActivities = userData.stravaIntegration.activities;
+        foundIn = 'stravaIntegration.activities';
       }
-    } else {
-      console.log(`📭 [STRAVA] Aucune activité trouvée pour ${userId}`);
     }
 
+    console.log(`📊 [STRAVA_GET] === RÉSULTAT FINAL ===`);
+    console.log(`📊 Activités trouvées: ${stravaActivities.length}`);
+    console.log(`📊 Source: ${foundIn || 'Aucune'}`);
+
+    // Debug des premières activités si elles existent
+    if (stravaActivities.length > 0) {
+      console.log(`📋 [STRAVA_GET] Première activité:`, {
+        name: stravaActivities[0].name,
+        date: stravaActivities[0].start_date || stravaActivities[0].date,
+        type: stravaActivities[0].type || stravaActivities[0].sport_type,
+        keys: Object.keys(stravaActivities[0])
+      });
+
+      console.log(`📋 [STRAVA_GET] Liste des ${Math.min(5, stravaActivities.length)} premières activités:`);
+      stravaActivities.slice(0, 5).forEach((activity, index) => {
+        const date = activity.start_date || activity.date || activity.start_date_local;
+        console.log(`  ${index + 1}. "${activity.name}" - ${date} (${activity.type || activity.sport_type})`);
+      });
+    } else {
+      console.log(`❌ [STRAVA_GET] Aucune activité trouvée`);
+      console.log(`💡 [STRAVA_GET] Suggestions de vérification:`);
+      console.log(`   - Vérifiez que Strava est connecté: ${userData.stravaIntegration?.connected || false}`);
+      console.log(`   - Vérifiez la dernière sync: ${userData.stravaIntegration?.lastSync || 'Jamais'}`);
+      console.log(`   - Vérifiez l'athlete: ${userData.stravaIntegration?.athlete?.firstname || 'Non défini'}`);
+    }
+
+    console.log(`✅ [STRAVA_GET] === FIN RÉCUPÉRATION ===`);
     res.json(stravaActivities);
+
   } catch (error) {
-    console.error(`❌ [STRAVA] Erreur lecture données Strava utilisateur ${req.params.userId}:`, error);
+    console.error(`❌ [STRAVA_GET] Erreur complète:`, {
+      message: error.message,
+      stack: error.stack,
+      userId: req.params.userId
+    });
     res.json([]);
   }
 });
@@ -662,25 +697,52 @@ app.get('/api/strava/:userId', async (req, res) => {
 app.post('/api/strava/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    let userData = await readUserFile(userId, 'client');
-    let userType = 'client';
+    console.log(`💾 [STRAVA_POST] Sauvegarde activités pour: ${userId}`);
+    console.log(`💾 [STRAVA_POST] Données reçues:`, {
+      type: typeof req.body,
+      isArray: Array.isArray(req.body),
+      length: Array.isArray(req.body) ? req.body.length : 'N/A'
+    });
 
-    if (!userData) {
-      userData = await readUserFile(userId, 'coach');
-      userType = 'coach';
-    }
+    const userResult = await findUserById(userId);
 
-    if (!userData) {
+    if (!userResult) {
       return res.status(404).json({ error: 'Utilisateur non trouvé' });
     }
 
-    userData.strava = req.body; // Note: Cette ligne sauvegarde dans l'ancienne structure 'strava'
+    const { userData, userType } = userResult;
+
+    // Sauvegarder dans la nouvelle structure principale
+    userData.stravaActivities = req.body;
+    
+    // S'assurer que stravaIntegration existe et sauvegarder aussi là
+    if (!userData.stravaIntegration) {
+      userData.stravaIntegration = {
+        connected: false,
+        athlete: null,
+        accessToken: null,
+        refreshToken: null,
+        expiresAt: null,
+        lastSync: null
+      };
+    }
+    
+    userData.stravaIntegration.activities = req.body;
+    userData.stravaIntegration.lastSync = new Date().toISOString();
     userData.lastUpdated = new Date().toISOString();
 
+    // Nettoyer l'ancienne structure si elle existe
+    if (userData.strava) {
+      delete userData.strava;
+      console.log(`🧹 [STRAVA_POST] Ancienne structure 'strava' supprimée`);
+    }
+
     await writeUserFile(userId, userData, userType);
+    
+    console.log(`✅ [STRAVA_POST] ${Array.isArray(req.body) ? req.body.length : 0} activités sauvegardées avec succès`);
     res.json({ success: true });
   } catch (error) {
-    console.error(`Erreur sauvegarde données Strava utilisateur ${userId}:`, error);
+    console.error(`❌ [STRAVA_POST] Erreur sauvegarde données Strava utilisateur ${userId}:`, error);
     res.status(500).json({ error: 'Erreur sauvegarde données Strava' });
   }
 });
@@ -1179,6 +1241,51 @@ app.get('/api/strava/status/:userId', async (req, res) => {
   }
 });
 
+// Route de diagnostic pour analyser les données utilisateur
+app.get('/api/debug/user/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log(`🔧 [DEBUG] Diagnostic utilisateur: ${userId}`);
+
+    const userResult = await findUserById(userId);
+
+    if (!userResult) {
+      return res.json({ error: 'Utilisateur non trouvé' });
+    }
+
+    const { userData, userType } = userResult;
+
+    // Créer un diagnostic complet
+    const diagnostic = {
+      userId: userId,
+      userType: userType,
+      userName: userData.name || `${userData.firstName} ${userData.lastName}`,
+      email: userData.email,
+      allKeys: Object.keys(userData),
+      stravaKeys: Object.keys(userData).filter(key => key.toLowerCase().includes('strava')),
+      stravaData: {},
+      fileSize: JSON.stringify(userData).length
+    };
+
+    // Analyser chaque clé Strava
+    diagnostic.stravaKeys.forEach(key => {
+      diagnostic.stravaData[key] = {
+        type: typeof userData[key],
+        isArray: Array.isArray(userData[key]),
+        length: Array.isArray(userData[key]) ? userData[key].length : 'N/A',
+        keys: typeof userData[key] === 'object' && userData[key] ? Object.keys(userData[key]) : []
+      };
+    });
+
+    console.log(`🔧 [DEBUG] Diagnostic généré pour ${userId}:`, diagnostic);
+    res.json(diagnostic);
+
+  } catch (error) {
+    console.error(`❌ [DEBUG] Erreur diagnostic:`, error);
+    res.status(500).json({ error: 'Erreur diagnostic' });
+  }
+});
+
 // Endpoint pour synchronisation manuelle Strava
 app.post('/api/strava/sync/:userId', async (req, res) => {
   try {
@@ -1232,15 +1339,38 @@ app.post('/api/strava/sync/:userId', async (req, res) => {
     userData.stravaIntegration.lastSync = new Date().toISOString();
     userData.lastUpdated = new Date().toISOString();
 
-    // Sauvegarder les activités dans la nouvelle structure
+    // Sauvegarder les activités dans la structure principale ET dans l'intégration
     userData.stravaActivities = activities;
-    console.log(`💾 [SERVEUR] ${activities.length} activités sauvegardées dans stravaActivities`);
+    
+    // S'assurer que stravaIntegration existe
+    if (!userData.stravaIntegration) {
+      userData.stravaIntegration = {
+        connected: false,
+        athlete: null,
+        accessToken: null,
+        refreshToken: null,
+        expiresAt: null,
+        lastSync: null
+      };
+    }
+    
+    // Sauvegarder aussi dans l'intégration pour cohérence
+    userData.stravaIntegration.activities = activities;
+    
+    console.log(`💾 [SERVEUR] ${activities.length} activités sauvegardées dans stravaActivities ET stravaIntegration.activities`);
 
     // Debug: afficher quelques activités sauvegardées
     if (activities.length > 0) {
       console.log(`📋 [SERVEUR] Activités sauvegardées pour ${userId}:`);
       activities.slice(0, 3).forEach((activity, index) => {
         console.log(`  ${index + 1}. ${activity.name} - ${activity.start_date} (${activity.type || activity.sport_type})`);
+      });
+      
+      console.log(`🔍 [SERVEUR] Structure finale userData après sync:`, {
+        stravaActivitiesLength: userData.stravaActivities?.length || 0,
+        stravaIntegrationActivitiesLength: userData.stravaIntegration.activities?.length || 0,
+        stravaIntegrationConnected: userData.stravaIntegration.connected,
+        lastSync: userData.stravaIntegration.lastSync
       });
     }
 
