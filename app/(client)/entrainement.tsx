@@ -281,91 +281,119 @@ export default function EntrainementScreen() {
         console.log('📊 Statut Strava:', integrationStatus.strava.connected ? 'Connecté' : 'Non connecté');
 
         if (integrationStatus.strava.connected) {
+          let activitiesFound = false;
+
           // 1. D'abord essayer de récupérer depuis le serveur VPS
           try {
             console.log('🔄 Récupération activités depuis serveur VPS...');
             const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
-            const response = await fetch(`${serverUrl}/api/strava/${currentUser.id}`);
+            const response = await fetch(`${serverUrl}/api/strava/${currentUser.id}`, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+              }
+            });
+
+            console.log('📥 Réponse serveur VPS:', response.status, response.statusText);
 
             if (response.ok) {
-              const serverActivities: StravaActivity[] = await response.json(); // Typage explicite
-              if (Array.isArray(serverActivities) && serverActivities.length > 0) {
-                try {
-                  console.log(`✅ ${serverActivities.length} activités récupérées depuis le serveur VPS`);
+              const serverActivities = await response.json();
+              console.log('📦 Données reçues du serveur VPS:', {
+                type: typeof serverActivities,
+                isArray: Array.isArray(serverActivities),
+                length: Array.isArray(serverActivities) ? serverActivities.length : 'N/A',
+                sample: Array.isArray(serverActivities) && serverActivities.length > 0 ? 
+                  { name: serverActivities[0].name, date: serverActivities[0].start_date || serverActivities[0].date } : 'Aucun échantillon'
+              });
 
-                  // Normaliser les activités pour s'assurer d'avoir un format cohérent
-                  const normalizedActivities: ExtendedStravaActivity[] = serverActivities.map(activity => ({
+              if (Array.isArray(serverActivities) && serverActivities.length > 0) {
+                console.log(`✅ ${serverActivities.length} activités récupérées depuis le serveur VPS`);
+
+                // Normaliser les activités pour s'assurer d'avoir un format cohérent
+                const normalizedActivities: ExtendedStravaActivity[] = serverActivities.map(activity => ({
+                  ...activity,
+                  // S'assurer d'avoir un champ 'date' uniforme
+                  date: activity.date || activity.start_date || activity.start_date_local,
+                  // Normaliser la durée (priorité à moving_time)
+                  duration: activity.moving_time || activity.elapsed_time || activity.duration || 0,
+                  // Normaliser les données de fréquence cardiaque
+                  avgHeartRate: activity.average_heartrate || activity.avgHeartRate || null,
+                  maxHeartRate: activity.max_heartrate || activity.maxHeartRate || null,
+                  averageHeartrate: activity.average_heartrate || activity.avgHeartRate || null,
+                  maxHeartrate: activity.max_heartrate || activity.maxHeartRate || null,
+                  // Normaliser le type de sport
+                  sportType: activity.sport_type || activity.type,
+                  // S'assurer d'avoir un ID valide
+                  id: activity.id?.toString() || `activity_${Date.now()}_${Math.random()}`,
+                  // Ajouter les calories si elles ne sont pas présentes (estimation basique)
+                  calories: activity.calories || (activity.moving_time && activity.average_heartrate ?
+                    Math.round((activity.moving_time / 60) * activity.average_heartrate * 0.1) : 0)
+                }));
+
+                setStravaActivities(normalizedActivities);
+                activitiesFound = true;
+
+                // Sauvegarder en cache local
+                await AsyncStorage.setItem(`strava_activities_${currentUser.id}`, JSON.stringify(normalizedActivities));
+
+                // Debug détaillé
+                console.log('📋 Activités normalisées depuis serveur VPS:');
+                normalizedActivities.forEach((activity, index) => {
+                  const dateToUse = activity.date || activity.start_date;
+                  console.log(`  ${index + 1}. ${activity.name} - ${new Date(dateToUse).toLocaleDateString('fr-FR')} (${activity.type}) - Date: ${dateToUse}`);
+                });
+              } else {
+                console.log('📭 Serveur VPS a retourné un tableau vide ou invalide');
+              }
+            } else {
+              const errorText = await response.text();
+              console.log(`❌ Erreur serveur VPS: ${response.status} - ${errorText}`);
+            }
+          } catch (serverError) {
+            console.error('⚠️ Erreur serveur VPS (ou réseau):', serverError.message);
+          }
+
+          // 2. Si pas d'activités trouvées sur le serveur, essayer le cache local
+          if (!activitiesFound) {
+            try {
+              console.log('🔄 Tentative cache local AsyncStorage...');
+              const cachedData = await AsyncStorage.getItem(`strava_activities_${currentUser.id}`);
+              if (cachedData) {
+                const cachedActivities = JSON.parse(cachedData);
+                if (Array.isArray(cachedActivities) && cachedActivities.length > 0) {
+                  console.log(`📱 ${cachedActivities.length} activités trouvées en cache local`);
+                  
+                  const normalizedActivities = cachedActivities.map(activity => ({
                     ...activity,
-                    // S'assurer d'avoir un champ 'date' uniforme
-                    date: activity.date || activity.start_date || activity.start_date_local,
-                    // Normaliser la durée (priorité à moving_time)
                     duration: activity.moving_time || activity.elapsed_time || activity.duration || 0,
-                    // Normaliser les données de fréquence cardiaque
                     avgHeartRate: activity.average_heartrate || activity.avgHeartRate || null,
                     maxHeartRate: activity.max_heartrate || activity.maxHeartRate || null,
                     averageHeartrate: activity.average_heartrate || activity.avgHeartRate || null,
                     maxHeartrate: activity.max_heartrate || activity.maxHeartRate || null,
-                    // Normaliser le type de sport
                     sportType: activity.sport_type || activity.type,
-                    // S'assurer d'avoir un ID valide
-                    id: activity.id?.toString() || `activity_${Date.now()}_${Math.random()}`,
-                    // Ajouter les calories si elles ne sont pas présentes (estimation basique)
-                    calories: activity.calories || (activity.moving_time && activity.average_heartrate ?
-                      Math.round((activity.moving_time / 60) * activity.average_heartrate * 0.1) : 0)
                   }));
 
                   setStravaActivities(normalizedActivities);
+                  activitiesFound = true;
 
-                  // Sauvegarder en cache local
-                  await AsyncStorage.setItem(`strava_activities_${currentUser.id}`, JSON.stringify(normalizedActivities));
-
-                  // Debug détaillé
-                  console.log('📋 Activités normalisées depuis serveur VPS:');
+                  console.log('📋 Activités chargées depuis cache local:');
                   normalizedActivities.forEach((activity, index) => {
-                    const dateToUse = activity.date || activity.start_date;
-                    console.log(`  ${index + 1}. ${activity.name} - ${new Date(dateToUse).toLocaleDateString('fr-FR')} (${activity.type}) - Date: ${dateToUse}`);
+                    console.log(`  ${index + 1}. ${activity.name} - ${new Date(activity.date).toLocaleDateString('fr-FR')} (${activity.type})`);
                   });
-
-                  return; // Sortir ici si on a trouvé des activités
-                } catch (normalizationError) {
-                  console.error('Erreur lors de la normalisation des activités Strava:', normalizationError);
-                  // Continuer pour essayer le cache
+                } else {
+                  console.log('📭 Cache local vide ou invalide');
                 }
+              } else {
+                console.log('📭 Aucun cache local trouvé');
               }
-            } else {
-              console.log(`Erreur lors de la récupération des activités depuis le serveur VPS: ${response.status}`);
+            } catch (cacheError) {
+              console.error('❌ Erreur lecture cache local:', cacheError);
             }
-          } catch (serverError) {
-            console.log('⚠️ Erreur serveur VPS (ou réseau), fallback vers cache/sync:', serverError);
           }
 
-          // 2. Ensuite essayer le cache local
-          // La fonction getStravaActivities de IntegrationsManager utilise maintenant le cache local
-          const activities = await IntegrationsManager.getStravaActivities(currentUser.id);
-          console.log(`📱 ${activities.length} activités depuis cache local`);
-
-          if (activities.length > 0) {
-            // Assurer la compatibilité avec ExtendedStravaActivity
-            const normalizedActivities = activities.map(activity => ({
-              ...activity,
-              duration: activity.moving_time || activity.elapsed_time || activity.duration || 0,
-              avgHeartRate: activity.average_heartrate || activity.avgHeartRate || null,
-              maxHeartRate: activity.max_heartrate || activity.maxHeartRate || null,
-              averageHeartrate: activity.average_heartrate || activity.avgHeartRate || null,
-              maxHeartrate: activity.max_heartrate || activity.maxHeartRate || null,
-              sportType: activity.sport_type || activity.type,
-            }));
-
-            // Debug détaillé des activités
-            console.log('📋 Liste des activités Strava (cache):');
-            normalizedActivities.forEach((activity, index) => {
-              console.log(`  ${index + 1}. ${activity.name} - ${new Date(activity.date).toLocaleDateString('fr-FR')} (${activity.type})`);
-            });
-
-            setStravaActivities(normalizedActivities);
-          } else {
-            // 3. Si rien n'est trouvé, afficher un message approprié
-            console.log('Aucune activité Strava trouvée ni sur le serveur ni en cache.');
+          // 3. Si toujours rien trouvé
+          if (!activitiesFound) {
+            console.log('❌ Aucune activité Strava trouvée nulle part');
             setStravaActivities([]);
           }
         } else {
