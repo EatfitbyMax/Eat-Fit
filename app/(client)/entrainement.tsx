@@ -4,6 +4,14 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { IntegrationsManager } from '../../utils/integrations';
 import type { StravaActivity } from '../../utils/integrations';
+
+// Interface étendue pour gérer tous les formats de données Strava
+interface ExtendedStravaActivity extends StravaActivity {
+  start_date?: string;
+  start_date_local?: string;
+  moving_time?: number;
+  elapsed_time?: number;
+}
 import { getCurrentUser } from '../../utils/auth';
 import { checkSubscriptionStatus } from '../../utils/subscription';
 import { getUserData, PersistentStorage } from '@/utils/storage';
@@ -278,15 +286,28 @@ export default function EntrainementScreen() {
               const serverActivities = await response.json();
               if (Array.isArray(serverActivities) && serverActivities.length > 0) {
                 console.log(`✅ ${serverActivities.length} activités récupérées depuis le serveur VPS`);
-                setStravaActivities(serverActivities);
+                
+                // Normaliser les activités pour s'assurer d'avoir un format cohérent
+                const normalizedActivities = serverActivities.map(activity => ({
+                  ...activity,
+                  // S'assurer d'avoir un champ 'date' uniforme
+                  date: activity.date || activity.start_date || activity.start_date_local,
+                  // Normaliser la durée (moving_time ou elapsed_time)
+                  duration: activity.duration || activity.moving_time || activity.elapsed_time || 0,
+                  // S'assurer d'avoir un ID valide
+                  id: activity.id?.toString() || `activity_${Date.now()}_${Math.random()}`
+                }));
+                
+                setStravaActivities(normalizedActivities);
 
                 // Sauvegarder en cache local
-                await AsyncStorage.setItem(`strava_activities_${currentUser.id}`, JSON.stringify(serverActivities));
+                await AsyncStorage.setItem(`strava_activities_${currentUser.id}`, JSON.stringify(normalizedActivities));
 
                 // Debug détaillé
-                console.log('📋 Activités depuis serveur VPS:');
-                serverActivities.forEach((activity, index) => {
-                  console.log(`  ${index + 1}. ${activity.name} - ${new Date(activity.date).toLocaleDateString('fr-FR')} (${activity.type})`);
+                console.log('📋 Activités normalisées depuis serveur VPS:');
+                normalizedActivities.forEach((activity, index) => {
+                  const dateToUse = activity.date || activity.start_date;
+                  console.log(`  ${index + 1}. ${activity.name} - ${new Date(dateToUse).toLocaleDateString('fr-FR')} (${activity.type}) - Date: ${dateToUse}`);
                 });
 
                 return; // Sortir ici si on a trouvé des activités
@@ -413,18 +434,44 @@ export default function EntrainementScreen() {
     // Debug de toutes les activités avant filtrage
     console.log('📋 Toutes les activités Strava disponibles:');
     stravaActivities.forEach((activity, index) => {
-      const activityDate = new Date(activity.date);
+      // Gérer les différents formats de date de Strava
+      let activityDate;
+      if (activity.start_date) {
+        activityDate = new Date(activity.start_date);
+      } else if (activity.date) {
+        activityDate = new Date(activity.date);
+      } else {
+        console.log(`⚠️ Activité sans date valide:`, activity);
+        return;
+      }
+      
       console.log(`  ${index + 1}. "${activity.name}" - ${activityDate.toISOString().split('T')[0]} (${activityDate.toLocaleDateString('fr-FR')})`);
     });
 
     const filteredActivities = stravaActivities.filter(activity => {
-      if (!activity || !activity.date) {
+      if (!activity) {
         console.log('⚠️ Activité invalide détectée:', activity);
         return false;
       }
 
+      // Gérer les différents formats de date de Strava (start_date ou date)
+      let activityDateString;
+      if (activity.start_date) {
+        activityDateString = activity.start_date;
+      } else if (activity.date) {
+        activityDateString = activity.date;
+      } else {
+        console.log('⚠️ Activité sans date détectée:', activity);
+        return false;
+      }
+
       // Normaliser la date d'activité pour éviter les problèmes de fuseau horaire
-      const activityDate = new Date(activity.date);
+      const activityDate = new Date(activityDateString);
+      if (isNaN(activityDate.getTime())) {
+        console.log('⚠️ Date invalide pour activité:', activityDateString, activity);
+        return false;
+      }
+      
       activityDate.setHours(0, 0, 0, 0);
 
       // Créer des copies des dates de début et fin pour la comparaison
@@ -444,7 +491,8 @@ export default function EntrainementScreen() {
     if (filteredActivities.length > 0) {
       console.log('📋 Activités de la semaine courante:');
       filteredActivities.forEach((activity, index) => {
-        console.log(`  ${index + 1}. "${activity.name}" - ${new Date(activity.date).toLocaleDateString('fr-FR')} (${activity.type})`);
+        const dateToUse = activity.start_date || activity.date;
+        console.log(`  ${index + 1}. "${activity.name}" - ${new Date(dateToUse).toLocaleDateString('fr-FR')} (${activity.type})`);
       });
     }
     console.log('=== FIN DEBUG ACTIVITÉS STRAVA SEMAINE COURANTE ===');
@@ -611,6 +659,8 @@ export default function EntrainementScreen() {
 
   const renderStravaActivity = (activity: StravaActivity) => {
     const hasRating = activityRatings[activity.id];
+    // Gérer les différents formats de date
+    const activityDate = activity.date || activity.start_date || activity.start_date_local;
 
     return (
       <View key={activity.id} style={styles.activityCard}>
@@ -622,7 +672,7 @@ export default function EntrainementScreen() {
             <Text style={styles.activityIcon}>{getActivityIcon(activity.type, activity.name)}</Text>
             <View style={styles.activityInfo}>
               <Text style={styles.activityName}>{activity.name}</Text>
-              <Text style={styles.activityDate}>{formatDate(activity.date)}</Text>
+              <Text style={styles.activityDate}>{formatDate(activityDate)}</Text>
             </View>
             <View style={styles.activityTypeContainer}>
               <Text style={styles.activityType}>{activity.type}</Text>
