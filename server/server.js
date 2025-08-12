@@ -1165,8 +1165,19 @@ app.get('/api/strava/status/:userId', async (req, res) => {
     const { userId } = req.params;
     console.log(`🔍 [STRAVA_STATUS] Vérification statut pour: ${userId}`);
 
-    // Récupérer les données depuis le fichier Strava dédié
+    // Récupérer les données depuis le fichier Strava dédié AVEC logs détaillés
+    console.log(`🔍 [STRAVA_STATUS] Tentative lecture Strava/${userId}.json`);
     const stravaData = await readStravaFile(userId);
+    
+    console.log(`🔍 [STRAVA_STATUS] Données Strava lues:`, stravaData ? 'TROUVÉ' : 'VIDE');
+    if (stravaData) {
+      console.log(`🔍 [STRAVA_STATUS] Structure:`, {
+        hasIntegration: !!stravaData.stravaIntegration,
+        connected: stravaData.stravaIntegration?.connected,
+        hasAthlete: !!stravaData.stravaIntegration?.athlete,
+        athleteName: stravaData.stravaIntegration?.athlete?.firstname + ' ' + stravaData.stravaIntegration?.athlete?.lastname
+      });
+    }
     
     if (stravaData && stravaData.stravaIntegration && stravaData.stravaIntegration.connected) {
       const integration = stravaData.stravaIntegration;
@@ -1181,8 +1192,26 @@ app.get('/api/strava/status/:userId', async (req, res) => {
         lastSync: integration.lastSync
       });
     } else {
-      console.log(`📝 [STRAVA_STATUS] Non connecté pour ${userId}`);
-      res.json({ connected: false });
+      console.log(`📝 [STRAVA_STATUS] Non connecté pour ${userId} - Recherche dans fichier utilisateur...`);
+      
+      // Fallback : chercher dans le fichier utilisateur
+      const userResult = await findUserById(userId);
+      if (userResult && userResult.userData.stravaIntegration && userResult.userData.stravaIntegration.connected) {
+        const integration = userResult.userData.stravaIntegration;
+        console.log(`✅ [STRAVA_STATUS] Trouvé dans fichier utilisateur pour ${userId}: ${integration.athlete?.firstname || 'Athlète'}`);
+        
+        res.json({
+          connected: true,
+          athlete: integration.athlete,
+          accessToken: integration.accessToken,
+          refreshToken: integration.refreshToken,
+          expiresAt: integration.expiresAt,
+          lastSync: integration.lastSync
+        });
+      } else {
+        console.log(`📝 [STRAVA_STATUS] Définitivement non connecté pour ${userId}`);
+        res.json({ connected: false });
+      }
     }
   } catch (error) {
     console.error('❌ [STRAVA_STATUS] Erreur vérification:', error.message);
