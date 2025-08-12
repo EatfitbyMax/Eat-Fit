@@ -762,34 +762,29 @@ export default function ProfilScreen() {
               <Text style={styles.integrationName}>🏃‍♂️ Strava</Text>
               <Text style={styles.integrationDescription}>
                 {integrationStatus.strava.connected ? 
-                  `Connecté comme ${integrationStatus.strava.athlete?.firstname || 'Athlète'}` :
+                  'Synchronisez vos activités sportives avec EatFitByMax' :
                   'Synchronisez vos activités sportives avec EatFitByMax'
                 }
               </Text>
-              {integrationStatus.strava.connected && integrationStatus.strava.lastSync && (
-                <Text style={styles.integrationLastSync}>
-                  Dernière sync : {new Date(integrationStatus.strava.lastSync).toLocaleDateString('fr-FR')}
-                </Text>
-              )}
             </View>
             <View style={styles.integrationActions}>
               {integrationStatus.strava.connected ? (
                 <View style={styles.stravaConnectedActions}>
                   <TouchableOpacity
-                    style={styles.stravaSyncButton}
+                    style={styles.stravaUniformButton}
                     onPress={() => handleStravaSync()}
                     disabled={isLoading || stravaConnecting}
                   >
-                    <Text style={styles.stravaSyncButtonText}>
+                    <Text style={styles.stravaUniformButtonText}>
                       {isLoading ? '⏳ Sync...' : '🔄 Synchroniser'}
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={styles.stravaDisconnectButtonRed}
+                    style={[styles.stravaUniformButton, styles.stravaDisconnectButton]}
                     onPress={() => handleStravaToggle()}
                     disabled={isLoading || stravaConnecting}
                   >
-                    <Text style={styles.stravaDisconnectButtonRedText}>
+                    <Text style={[styles.stravaUniformButtonText, styles.stravaDisconnectButtonText]}>
                       Déconnexion
                     </Text>
                   </TouchableOpacity>
@@ -1088,6 +1083,36 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: 10,
   },
+  stravaUniformButton: {
+    backgroundColor: '#28A745',
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 8,
+    minWidth: 110,
+    alignItems: 'center',
+    shadowColor: '#28A745',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  stravaUniformButtonText: {
+    fontSize: 13,
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  stravaDisconnectButton: {
+    backgroundColor: '#FF4444',
+    borderWidth: 2,
+    borderColor: '#FF2222',
+    shadowColor: '#FF4444',
+  },
+  stravaDisconnectButtonText: {
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  // Anciens styles pour compatibilité
   stravaSyncButton: {
     backgroundColor: '#28A745',
     paddingVertical: 10,
