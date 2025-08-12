@@ -68,7 +68,6 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Endpoints pour les intégrations
 app.get('/api/integrations/:userId', (req, res) => {
   const { userId } = req.params;
 
@@ -593,14 +592,16 @@ app.post('/api/health/:userId', async (req, res) => {
   }
 });
 
+// Endpoint pour récupérer les activités Strava d'un utilisateur
 app.get('/api/strava/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     console.log(`🔍 [STRAVA] Récupération activités pour utilisateur: ${userId}`);
-    
+
+    // Chercher l'utilisateur
     let userData = await readUserFile(userId, 'client');
     let userType = 'client';
-    
+
     if (!userData) {
       userData = await readUserFile(userId, 'coach');
       userType = 'coach';
@@ -611,35 +612,25 @@ app.get('/api/strava/:userId', async (req, res) => {
       return res.json([]);
     }
 
-    console.log(`✅ [STRAVA] Utilisateur trouvé: ${userData.name || userData.firstName} (${userType})`);
-    
-    // Vérifier les différentes sources possibles d'activités Strava
-    let stravaActivities = [];
-    
-    // 1. Nouvelle structure: stravaActivities
-    if (userData.stravaActivities && Array.isArray(userData.stravaActivities)) {
-      stravaActivities = userData.stravaActivities;
-      console.log(`📊 [STRAVA] ${stravaActivities.length} activités trouvées dans stravaActivities`);
-    }
-    // 2. Ancienne structure: strava
-    else if (userData.strava && Array.isArray(userData.strava)) {
-      stravaActivities = userData.strava;
-      console.log(`📊 [STRAVA] ${stravaActivities.length} activités trouvées dans strava (ancienne structure)`);
-    }
-    // 3. Structure vide
-    else {
-      console.log(`📭 [STRAVA] Aucune activité trouvée pour l'utilisateur ${userId}`);
-      console.log(`🔍 [STRAVA] Clés disponibles dans userData:`, Object.keys(userData));
-      
-      // Debug: afficher la structure stravaIntegration si elle existe
-      if (userData.stravaIntegration) {
-        console.log(`📋 [STRAVA] Structure stravaIntegration:`, {
+    // Récupérer les activités Strava sauvegardées - CORRECTION: utiliser stravaActivities au lieu de strava
+    const stravaActivities = userData.stravaActivities || userData.strava || [];
+    console.log(`📊 [STRAVA] ${stravaActivities.length} activités trouvées pour ${userId}`);
+
+    // Debug: vérifier la structure des données
+    if (userData.stravaIntegration) {
+      if (userData.stravaIntegration.connected) {
+        console.log(`✅ [STRAVA] Strava connecté pour ${userId}:`, {
           connected: userData.stravaIntegration.connected,
           athlete: userData.stravaIntegration.athlete?.firstname || 'Non défini',
           lastSync: userData.stravaIntegration.lastSync
         });
       }
     }
+
+    // Debug: vérifier les deux emplacements possibles
+    console.log(`🔍 [STRAVA] Debug emplacements données pour ${userId}:`);
+    console.log(`  - userData.stravaActivities: ${userData.stravaActivities ? userData.stravaActivities.length : 'undefined'} activités`);
+    console.log(`  - userData.strava: ${userData.strava ? userData.strava.length : 'undefined'} activités`);
 
     // Debug détaillé des activités trouvées
     if (stravaActivities.length > 0) {
@@ -650,6 +641,8 @@ app.get('/api/strava/:userId', async (req, res) => {
       if (stravaActivities.length > 5) {
         console.log(`  ... et ${stravaActivities.length - 5} autres activités`);
       }
+    } else {
+      console.log(`📭 [STRAVA] Aucune activité trouvée pour ${userId}`);
     }
 
     res.json(stravaActivities);
@@ -674,7 +667,7 @@ app.post('/api/strava/:userId', async (req, res) => {
       return res.status(404).json({ error: 'Utilisateur non trouvé' });
     }
 
-    userData.strava = req.body;
+    userData.strava = req.body; // Note: Cette ligne sauvegarde dans l'ancienne structure 'strava'
     userData.lastUpdated = new Date().toISOString();
 
     await writeUserFile(userId, userData, userType);
@@ -1231,11 +1224,11 @@ app.post('/api/strava/sync/:userId', async (req, res) => {
     // Mettre à jour la date de dernière synchronisation
     userData.stravaIntegration.lastSync = new Date().toISOString();
     userData.lastUpdated = new Date().toISOString();
-    
+
     // Sauvegarder les activités dans la nouvelle structure
     userData.stravaActivities = activities;
     console.log(`💾 [SERVEUR] ${activities.length} activités sauvegardées dans stravaActivities`);
-    
+
     // Debug: afficher quelques activités sauvegardées
     if (activities.length > 0) {
       console.log(`📋 [SERVEUR] Activités sauvegardées pour ${userId}:`);
@@ -1420,13 +1413,13 @@ function createCallbackPage(title, message, color, autoRedirect = false) {
   const redirectScript = autoRedirect ? `
     <script>
       console.log('Début redirection automatique...');
-      
+
       // Fonction pour fermer la fenêtre
       function closeWindow() {
         try {
           // 1. Essayer le protocole custom scheme pour iOS
           window.location.href = 'eatfitbymax://profil';
-          
+
           // 2. Attendre un peu puis essayer de fermer
           setTimeout(function() {
             try {
@@ -1435,7 +1428,7 @@ function createCallbackPage(title, message, color, autoRedirect = false) {
               console.log('Impossible de fermer la fenêtre:', e);
             }
           }, 500);
-          
+
           // 3. Fallback final - retour en arrière
           setTimeout(function() {
             try {
@@ -1451,7 +1444,7 @@ function createCallbackPage(title, message, color, autoRedirect = false) {
 
       // Démarrer la redirection immédiatement
       setTimeout(closeWindow, 1000);
-      
+
       // Ajouter un listener pour détecter si la page devient visible/cachée
       document.addEventListener('visibilitychange', function() {
         if (document.visibilityState === 'hidden') {
@@ -1459,7 +1452,7 @@ function createCallbackPage(title, message, color, autoRedirect = false) {
           closeWindow();
         }
       });
-      
+
       // Ajouter un listener pour les événements de focus/blur
       window.addEventListener('blur', function() {
         console.log('Fenêtre a perdu le focus - tentative de fermeture');
@@ -1558,7 +1551,7 @@ function createCallbackPage(title, message, color, autoRedirect = false) {
           <div class="loading"></div>
           <span>Redirection automatique...</span>
           <div class="countdown" id="countdown"></div>
-        ` : '<a href="#" onclick="history.back();" class="back-button">Retour à l\'app</a>'}
+        ` : '<a href="#" onclick="history.back();" class="back-button">Retour à l\'application</a>'}
       </div>
       ${autoRedirect ? `
         <script>
