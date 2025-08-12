@@ -111,23 +111,43 @@ export default function EntrainementScreen() {
     }, [])
   );
 
-  // Rafraîchissement automatique optimisé toutes les 10 secondes
+  // État pour détecter les nouvelles entrées
+  const [lastUpdateTime, setLastUpdateTime] = useState<number>(0);
+  const [lastWorkoutCount, setLastWorkoutCount] = useState<number>(0);
+
+  // Rafraîchissement automatique intelligent - seulement si nouvelles données détectées
   useEffect(() => {
-    const interval = setInterval(() => {
-      console.log('=== RAFRAÎCHISSEMENT AUTOMATIQUE ===');
-      loadWorkouts();
-      // Forcer un re-render subtil seulement si nécessaire
-      setCurrentWeek(prev => {
-        const now = new Date();
-        if (Math.abs(now.getTime() - prev.getTime()) > 1000 * 60 * 60) { // Plus d'1 heure
-          return now;
+    const interval = setInterval(async () => {
+      try {
+        const currentUser = await getCurrentUser();
+        if (!currentUser) return;
+
+        // Récupérer le count actuel sans logs
+        const currentWorkouts = await PersistentStorage.getWorkouts(currentUser.id);
+        const currentCount = currentWorkouts.length;
+
+        // Vérifier s'il y a de nouvelles données
+        if (currentCount !== lastWorkoutCount) {
+          console.log('=== NOUVELLES DONNÉES DÉTECTÉES ===');
+          console.log(`Ancien count: ${lastWorkoutCount}, Nouveau count: ${currentCount}`);
+          loadWorkouts();
+          setLastWorkoutCount(currentCount);
+          setLastUpdateTime(Date.now());
         }
-        return prev;
-      });
-    }, 10000); // Rafraîchit toutes les 10 secondes (plus économe)
+      } catch (error) {
+        // Silencieux pour éviter les logs d'erreur répétitifs
+      }
+    }, 30000); // Vérification toutes les 30 secondes (moins fréquent)
 
     return () => clearInterval(interval);
-  }, []);
+  }, [lastWorkoutCount]);
+
+  // Mettre à jour le count initial
+  useEffect(() => {
+    if (workouts.length > 0 && lastWorkoutCount === 0) {
+      setLastWorkoutCount(workouts.length);
+    }
+  }, [workouts.length, lastWorkoutCount]);
 
   const loadWorkouts = async () => {
     try {
@@ -528,48 +548,14 @@ export default function EntrainementScreen() {
   const getStravaActivitiesForCurrentWeek = () => {
     const { start, end } = getWeekRange();
 
-    console.log('=== DEBUG ACTIVITÉS STRAVA SEMAINE COURANTE ===');
-    console.log(`📅 Période recherchée: ${start.toISOString().split('T')[0]} (${start.toLocaleDateString('fr-FR')}) à ${end.toISOString().split('T')[0]} (${end.toLocaleDateString('fr-FR')})`);
-    console.log(`📊 Total activités Strava disponibles: ${stravaActivities.length}`);
+    console.log('=== FILTRAGE ACTIVITÉS STRAVA SEMAINE COURANTE ===');
+    console.log(`📅 Période: ${start.toLocaleDateString('fr-FR')} à ${end.toLocaleDateString('fr-FR')}`);
+    console.log(`📊 Total activités disponibles: ${stravaActivities.length}`);
 
     if (stravaActivities.length === 0) {
-      console.log('⚠️ Aucune activité Strava disponible pour filtrer');
-      console.log('💡 Suggestion: Vérifiez la connexion Strava et la synchronisation des données');
+      console.log('⚠️ Aucune activité Strava disponible');
       return [];
     }
-
-    // Debug de toutes les activités avant filtrage avec plus de détails
-    console.log('📋 TOUTES les activités Strava disponibles:');
-    stravaActivities.forEach((activity, index) => {
-      // Gérer les différents formats de date de Strava
-      let activityDate;
-      let originalDateString = '';
-      
-      if (activity.start_date) {
-        activityDate = new Date(activity.start_date);
-        originalDateString = activity.start_date;
-      } else if (activity.date) {
-        activityDate = new Date(activity.date);
-        originalDateString = activity.date;
-      } else if (activity.start_date_local) {
-        activityDate = new Date(activity.start_date_local);
-        originalDateString = activity.start_date_local;
-      } else {
-        console.log(`⚠️ [${index + 1}] Activité "${activity.name}" sans date valide:`, {
-          start_date: activity.start_date,
-          date: activity.date,
-          start_date_local: activity.start_date_local
-        });
-        return;
-      }
-
-      const isValid = !isNaN(activityDate.getTime());
-      console.log(`  [${index + 1}] "${activity.name}"`);
-      console.log(`      📅 Date originale: ${originalDateString}`);
-      console.log(`      📅 Date parsée: ${isValid ? activityDate.toISOString().split('T')[0] : 'INVALIDE'} (${isValid ? activityDate.toLocaleDateString('fr-FR') : 'N/A'})`);
-      console.log(`      🏃 Type: ${activity.sportType || activity.type}`);
-      console.log(`      🆔 ID: ${activity.id}`);
-    });
 
     const filteredActivities = stravaActivities.filter((activity, index) => {
       if (!activity) {
@@ -613,46 +599,19 @@ export default function EntrainementScreen() {
 
       const isInRange = normalizedActivityDate >= startDate && normalizedActivityDate <= endDate;
 
-      console.log(`🔍 [${index + 1}] "${activity.name}"`);
-      console.log(`      📅 Date normalisée: ${normalizedActivityDate.toISOString().split('T')[0]}`);
-      console.log(`      📊 Comparaison: ${startDate.toISOString().split('T')[0]} ≤ ${normalizedActivityDate.toISOString().split('T')[0]} ≤ ${endDate.toISOString().split('T')[0]}`);
-      console.log(`      ✅ Dans la semaine: ${isInRange ? 'OUI' : 'NON'}`);
+      // Log simplifié seulement pour les activités dans la plage
+      if (isInRange) {
+        console.log(`✅ "${activity.name}" - ${normalizedActivityDate.toLocaleDateString('fr-FR')}`);
+      }
 
       return isInRange;
     });
 
-    console.log(`🎯 RÉSULTAT: ${filteredActivities.length} activité(s) filtrée(s) pour cette semaine`);
-    if (filteredActivities.length > 0) {
-      console.log('📋 Activités retenues pour la semaine courante:');
-      filteredActivities.forEach((activity, index) => {
-        const dateToUse = activity.start_date || activity.date || activity.start_date_local;
-        const formattedDate = new Date(dateToUse).toLocaleDateString('fr-FR');
-        console.log(`  ✅ [${index + 1}] "${activity.name}" - ${formattedDate} (${activity.sportType || activity.type})`);
-      });
-    } else {
-      console.log('❌ Aucune activité ne correspond à la période demandée');
-      console.log('💡 Vérifiez si vos activités Strava sont dans une autre semaine');
-      
-      // Suggérer les semaines où il y a des activités
-      if (stravaActivities.length > 0) {
-        console.log('📅 Suggestions - Activités disponibles dans ces périodes:');
-        stravaActivities.forEach((activity, index) => {
-          const activityDate = new Date(activity.start_date || activity.date || activity.start_date_local);
-          if (!isNaN(activityDate.getTime())) {
-            const weekStart = new Date(activityDate);
-            const dayOfWeek = weekStart.getDay() === 0 ? 6 : weekStart.getDay() - 1;
-            weekStart.setDate(activityDate.getDate() - dayOfWeek);
-            weekStart.setHours(0, 0, 0, 0);
-            
-            const weekEnd = new Date(weekStart);
-            weekEnd.setDate(weekStart.getDate() + 6);
-            
-            console.log(`  📅 "${activity.name}" - Semaine du ${weekStart.toLocaleDateString('fr-FR')} au ${weekEnd.toLocaleDateString('fr-FR')}`);
-          }
-        });
-      }
+    console.log(`🎯 ${filteredActivities.length} activité(s) trouvée(s) pour cette semaine`);
+    if (filteredActivities.length === 0 && stravaActivities.length > 0) {
+      console.log('💡 Aucune activité cette semaine. Naviguez entre les semaines pour voir vos autres séances.');
     }
-    console.log('=== FIN DEBUG ACTIVITÉS STRAVA SEMAINE COURANTE ===');
+    console.log('=== FIN FILTRAGE STRAVA ===');
 
     return filteredActivities;
   };
@@ -1099,7 +1058,12 @@ export default function EntrainementScreen() {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tab, selectedTab === 'Strava' && styles.activeTab]}
-            onPress={() => setSelectedTab('Strava')}
+            onPress={() => {
+              setSelectedTab('Strava');
+              // Actualisation automatique lors du clic sur "Terminées"
+              console.log('=== ACTUALISATION ONGLET TERMINÉES ===');
+              loadStravaActivities();
+            }}
           >
             <View style={styles.tabContent}>
               <Text style={styles.tabIcon}>✅</Text>
