@@ -1063,16 +1063,32 @@ app.post('/api/strava/exchange-token', async (req, res) => {
     let existingStravaData = await readStravaFile(userId);
     const existingActivities = existingStravaData?.activities || [];
 
-    // Sauvegarder dans le fichier Strava dédié
+    // PRIORITÉ : Sauvegarder dans le fichier Strava dédié EN PREMIER
     const completeStravaData = {
       stravaIntegration: stravaIntegrationData,
       activities: existingActivities
     };
+    
+    console.log('💾 [STRAVA_EXCHANGE] === SAUVEGARDE PRIORITAIRE FICHIER STRAVA ===');
     await writeStravaFile(userId, completeStravaData);
     console.log(`✅ [STRAVA_EXCHANGE] Données sauvegardées dans Strava/${userId}.json (${existingActivities.length} activités conservées)`);
 
-    // Mettre à jour le fichier utilisateur avec juste la référence d'intégration (sans les activités)
-    userData.stravaIntegration = stravaIntegrationData;
+    // Vérification immédiate du fichier Strava
+    const immediateVerification = await readStravaFile(userId);
+    if (immediateVerification && immediateVerification.stravaIntegration && immediateVerification.stravaIntegration.connected) {
+      console.log('✅ [STRAVA_EXCHANGE] Vérification immédiate fichier Strava réussie');
+    } else {
+      console.error('❌ [STRAVA_EXCHANGE] PROBLÈME : Fichier Strava non vérifié !');
+    }
+
+    // Mettre à jour le fichier utilisateur avec SEULEMENT une référence minimale (PAS les tokens complets)
+    userData.stravaIntegration = {
+      connected: true,
+      athlete: stravaIntegrationData.athlete,
+      lastSync: stravaIntegrationData.lastSync,
+      connectionDate: stravaIntegrationData.connectionDate
+      // Les tokens restent UNIQUEMENT dans le fichier Strava dédié
+    };
 
     // Nettoyer l'ancienne structure si elle existe
     if (userData.stravaTokens) {
@@ -1581,6 +1597,73 @@ app.get('/strava-callback', async (req, res) => {
       console.error('   - Vérification fichiers Client existants...');
       try {
         const clientFiles = await fs.readdir(CLIENT_DIR);
+
+
+// Route de migration pour nettoyer les données Strava mal placées
+app.post('/api/strava/migrate/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log(`🔄 [STRAVA_MIGRATE] Migration données pour: ${userId}`);
+
+    // Lire les données utilisateur
+    const userResult = await findUserById(userId);
+    if (!userResult) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    const { userData, userType } = userResult;
+
+    // Vérifier s'il y a des données Strava à migrer
+    if (userData.stravaIntegration && userData.stravaIntegration.accessToken) {
+      console.log('📦 [STRAVA_MIGRATE] Données Strava trouvées dans fichier utilisateur - migration...');
+
+      // Sauvegarder dans le fichier Strava dédié
+      const stravaDataToMigrate = {
+        stravaIntegration: userData.stravaIntegration,
+        activities: userData.stravaActivities || []
+      };
+
+      await writeStravaFile(userId, stravaDataToMigrate);
+      console.log(`✅ [STRAVA_MIGRATE] Données migrées vers Strava/${userId}.json`);
+
+      // Nettoyer le fichier utilisateur
+      userData.stravaIntegration = {
+        connected: userData.stravaIntegration.connected,
+        athlete: userData.stravaIntegration.athlete,
+        lastSync: userData.stravaIntegration.lastSync,
+        connectionDate: userData.stravaIntegration.connectionDate || new Date().toISOString()
+      };
+
+      // Supprimer les anciennes clés
+      delete userData.stravaActivities;
+      delete userData.stravaTokens;
+      delete userData.strava;
+
+      userData.lastUpdated = new Date().toISOString();
+      await writeUserFile(userId, userData, userType);
+
+      console.log('🧹 [STRAVA_MIGRATE] Fichier utilisateur nettoyé');
+
+      res.json({ 
+        success: true, 
+        message: 'Migration réussie',
+        migratedData: {
+          integration: !!stravaDataToMigrate.stravaIntegration,
+          activitiesCount: stravaDataToMigrate.activities.length
+        }
+      });
+    } else {
+      console.log('📝 [STRAVA_MIGRATE] Aucune donnée à migrer');
+      res.json({ success: true, message: 'Aucune migration nécessaire' });
+    }
+
+  } catch (error) {
+    console.error('❌ [STRAVA_MIGRATE] Erreur migration:', error);
+    res.status(500).json({ error: 'Erreur migration' });
+  }
+});
+
+
         console.error('   - Fichiers disponibles:', clientFiles.slice(0, 5)); // Les 5 premiers
         console.error('   - Total fichiers:', clientFiles.length);
       } catch (dirError) {
@@ -1611,23 +1694,39 @@ app.get('/strava-callback', async (req, res) => {
       connectionDate: new Date().toISOString()
     };
 
-    // Sauvegarder dans le fichier Strava dédié d'abord
+    // PRIORITÉ : Sauvegarder dans le fichier Strava dédié D'ABORD
     const completeStravaData = {
       stravaIntegration: stravaIntegrationData,
       activities: [] // Initialement vide, sera rempli lors de la synchronisation
     };
 
+    console.log('💾 [STRAVA_CALLBACK] === SAUVEGARDE FICHIER STRAVA DÉDIÉ ===');
     try {
       await writeStravaFile(userId, completeStravaData);
       console.log('✅ [STRAVA_CALLBACK] Données sauvées dans Strava/' + userId + '.json');
+      
+      // Vérification immédiate
+      const verification = await readStravaFile(userId);
+      if (verification && verification.stravaIntegration && verification.stravaIntegration.connected) {
+        console.log('✅ [STRAVA_CALLBACK] Vérification fichier Strava réussie immédiatement');
+      } else {
+        console.error('❌ [STRAVA_CALLBACK] ÉCHEC vérification fichier Strava !');
+      }
     } catch (stravaFileError) {
-      console.error('❌ [STRAVA_CALLBACK] Erreur sauvegarde fichier Strava:', stravaFileError);
+      console.error('❌ [STRAVA_CALLBACK] ERREUR CRITIQUE sauvegarde fichier Strava:', stravaFileError);
+      throw stravaFileError; // Arrêter le processus si ça échoue
     }
 
-    // Ensuite mettre à jour le fichier utilisateur avec la référence d'intégration
-    userData.stravaIntegration = stravaIntegrationData;
+    // Ensuite mettre à jour le fichier utilisateur avec SEULEMENT une référence minimale
+    userData.stravaIntegration = {
+      connected: true,
+      athlete: stravaIntegrationData.athlete,
+      lastSync: stravaIntegrationData.lastSync,
+      connectionDate: stravaIntegrationData.connectionDate
+      // PAS de tokens dans le fichier utilisateur - tout dans le fichier Strava
+    };
 
-    // Nettoyer les anciennes structures si elles existent
+    // Nettoyer TOUTES les anciennes structures Strava du fichier utilisateur
     const oldKeys = ['stravaTokens', 'strava', 'stravaActivities'];
     oldKeys.forEach(key => {
       if (userData[key]) {
@@ -1635,6 +1734,13 @@ app.get('/strava-callback', async (req, res) => {
         delete userData[key];
       }
     });
+    
+    // Nettoyer les tokens complets de stravaIntegration s'ils existent
+    if (userData.stravaIntegration && userData.stravaIntegration.accessToken) {
+      console.log('🧹 [STRAVA_CALLBACK] Suppression tokens du fichier utilisateur (migration vers fichier Strava)');
+      const { accessToken, refreshToken, expiresAt, ...cleanIntegration } = userData.stravaIntegration;
+      userData.stravaIntegration = cleanIntegration;
+    }
 
     userData.lastUpdated = new Date().toISOString();
 
