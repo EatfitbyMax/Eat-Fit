@@ -760,10 +760,16 @@ export default function ProfilScreen() {
           <View style={styles.integrationItem}>
             <View style={styles.integrationInfo}>
               <Text style={styles.integrationName}>🏃‍♂️ Strava</Text>
+              <Text style={styles.integrationDescription}>
+                {integrationStatus.strava.connected ? 
+                  'Synchronisez vos activités sportives avec EatFitByMax' :
+                  'Synchronisez vos activités sportives avec EatFitByMax'
+                }
+              </Text>
             </View>
             <View style={styles.integrationActions}>
               {integrationStatus.strava.connected ? (
-                <View style={styles.stravaHorizontalActions}>
+                <View style={styles.stravaConnectedActions}>
                   <TouchableOpacity
                     style={styles.stravaUniformButton}
                     onPress={() => handleStravaSync()}
@@ -1076,11 +1082,6 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'flex-end',
     gap: 10,
-  },
-  stravaHorizontalActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
   },
   stravaUniformButton: {
     backgroundColor: '#28A745',
