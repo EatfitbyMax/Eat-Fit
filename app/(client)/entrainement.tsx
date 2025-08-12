@@ -92,10 +92,10 @@ export default function EntrainementScreen() {
     console.log('Workouts par date:', workoutsByDate);
     console.log('=== FIN DEBUG SEINE ===');
 
-    // Forcer un petit délai pour s'assurer que l'UI se met à jour
+    // Forcer un délai d'1 minute pour s'assurer que l'UI se met à jour
     setTimeout(() => {
       console.log('Force refresh UI terminé');
-    }, 100);
+    }, 60000);
   }, [workouts, currentWeek]);
 
   // Rechargement automatique quand l'écran est focalisé
