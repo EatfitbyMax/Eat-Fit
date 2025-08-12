@@ -25,9 +25,22 @@ export default function StravaCallbackScreen() {
       }
 
       if (code && typeof code === 'string') {
-        console.log('✅ Code d\'autorisation Strava reçu - traitement côté serveur');
-        // Le traitement du code se fait maintenant entièrement côté serveur
-        // via la route /strava-callback du serveur VPS
+        console.log('✅ Code d\'autorisation Strava reçu');
+        const currentUser = await getCurrentUser();
+        if (currentUser) {
+          try {
+            const success = await IntegrationsManager.exchangeStravaCode(code, currentUser.id);
+            if (success) {
+              console.log('✅ Connexion Strava réussie dans callback');
+            } else {
+              console.error('❌ Échec de l\'échange de token Strava');
+            }
+          } catch (exchangeError) {
+            console.error('❌ Erreur lors de l\'échange du code:', exchangeError);
+          }
+        } else {
+          console.error('❌ Utilisateur non trouvé lors du callback');
+        }
       }
 
       // Attendre un peu puis rediriger vers le profil

@@ -225,7 +225,7 @@ export class IntegrationsManager {
   }
 
   /**
-   * Récupération des activités Strava depuis le serveur (fichier Strava dédié)
+   * Récupération des activités Strava depuis le serveur
    */
   static async getStravaActivities(userId: string): Promise<StravaActivity[]> {
     try {
@@ -239,15 +239,15 @@ export class IntegrationsManager {
       if (response.ok) {
         const activities = await response.json();
         if (Array.isArray(activities)) {
-          console.log(`✅ [STRAVA] ${activities.length} activités récupérées depuis Strava/${userId}.json`);
+          console.log(`✅ [STRAVA] ${activities.length} activités récupérées depuis serveur`);
           return activities;
         }
       }
 
-      console.log('📭 [STRAVA] Aucune activité trouvée dans le fichier Strava dédié');
+      console.log('📭 [STRAVA] Aucune activité trouvée sur le serveur');
       return [];
     } catch (error) {
-      console.error('❌ [STRAVA] Erreur récupération activités:', error);
+      console.error('❌ [STRAVA] Erreur récupération activités serveur:', error);
       return [];
     }
   }

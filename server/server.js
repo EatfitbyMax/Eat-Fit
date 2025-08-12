@@ -17,12 +17,6 @@ const STRAVA_DIR = path.join(DATA_DIR, 'Strava');
 const STRAVA_CLIENT_ID = process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID || '159394';
 const STRAVA_CLIENT_SECRET = process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET || '0a888961cf64a2294908224b07b222ccba150700';
 
-// Log de vérification configuration au démarrage
-console.log('🔧 [STARTUP] Configuration Strava:');
-console.log('   - Client ID:', STRAVA_CLIENT_ID);
-console.log('   - Client Secret présent:', !!STRAVA_CLIENT_SECRET);
-console.log('   - Redirect URI configuré: https://eatfitbymax.cloud/strava-callback');
-
 // Middleware de base
 app.use(cors({
   origin: true,
@@ -644,74 +638,188 @@ app.post('/api/health/:userId', async (req, res) => {
   }
 });
 
-// Endpoint pour récupérer les activités Strava d'un utilisateur - STRUCTURE STRAVA UNIFIÉE
+// Endpoint pour récupérer les activités Strava d'un utilisateur
 app.get('/api/strava/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    console.log(`🔍 [STRAVA_GET] Récupération activités Strava pour: ${userId}`);
+    console.log(`🔍 [STRAVA_GET] === RÉCUPÉRATION ACTIVITÉS STRAVA ===`);
+    console.log(`🔍 [STRAVA_GET] User ID demandé: ${userId}`);
 
-    // Lire directement depuis le fichier Strava dédié
-    const stravaData = await readStravaFile(userId);
-    
-    if (stravaData && stravaData.activities && Array.isArray(stravaData.activities)) {
-      console.log(`✅ [STRAVA_GET] ${stravaData.activities.length} activités trouvées dans Strava/${userId}.json`);
-      
-      if (stravaData.activities.length > 0) {
-        const firstActivity = stravaData.activities[0];
-        console.log(`📋 [STRAVA_GET] Première activité: "${firstActivity.name}" - ${firstActivity.start_date || firstActivity.date} (${firstActivity.type || firstActivity.sport_type})`);
-      }
-      
-      res.json(stravaData.activities);
+    // Essayer d'abord le fichier Strava dédié
+    let stravaData = await readStravaFile(userId);
+    let foundIn = null;
+    let stravaActivities = [];
+
+    if (stravaData && stravaData.activities) {
+      stravaActivities = stravaData.activities;
+      foundIn = 'Strava/' + userId + '.json';
+      console.log(`✅ [STRAVA_GET] Données trouvées dans le fichier Strava dédié: ${stravaActivities.length} activités`);
     } else {
-      console.log(`📭 [STRAVA_GET] Aucune activité trouvée dans Strava/${userId}.json`);
-      res.json([]);
+      console.log(`🔍 [STRAVA_GET] Aucun fichier Strava dédié trouvé, recherche dans les données utilisateur...`);
+      
+      // Fallback: chercher dans les données utilisateur (ancienne structure)
+      const userResult = await findUserById(userId);
+
+      if (!userResult) {
+        console.log(`❌ [STRAVA_GET] Utilisateur ${userId} non trouvé`);
+        return res.json([]);
+      }
+
+      const { userData, userType } = userResult;
+      console.log(`✅ [STRAVA_GET] Utilisateur trouvé: ${userData.name || userData.email} (${userType})`);
+
+      // Vérifier toutes les structures possibles dans les données utilisateur
+      const possibleKeys = ['stravaActivities', 'strava', 'activities'];
+
+      for (const key of possibleKeys) {
+        if (userData[key]) {
+          console.log(`🔍 [STRAVA_GET] Clé "${key}" trouvée dans userData:`, {
+            type: typeof userData[key],
+            isArray: Array.isArray(userData[key]),
+            length: Array.isArray(userData[key]) ? userData[key].length : 'N/A'
+          });
+
+          if (Array.isArray(userData[key])) {
+            stravaActivities = userData[key];
+            foundIn = `userData.${key}`;
+            break;
+          } else if (typeof userData[key] === 'object' && userData[key].activities) {
+            stravaActivities = userData[key].activities;
+            foundIn = `userData.${key}.activities`;
+            break;
+          }
+        }
+      }
+
+      // Vérifier dans l'intégration Strava si les activités ne sont pas trouvées ailleurs
+      if (stravaActivities.length === 0 && userData.stravaIntegration && userData.stravaIntegration.activities) {
+        stravaActivities = userData.stravaIntegration.activities;
+        foundIn = 'userData.stravaIntegration.activities';
+      }
+
+      // Si des activités sont trouvées dans l'ancienne structure, les migrer vers le nouveau fichier Strava
+      if (stravaActivities.length > 0) {
+        console.log(`🔄 [STRAVA_GET] Migration de ${stravaActivities.length} activités vers le fichier Strava dédié...`);
+        const migrationData = {
+          stravaIntegration: userData.stravaIntegration || null,
+          activities: stravaActivities
+        };
+        await writeStravaFile(userId, migrationData);
+        console.log(`✅ [STRAVA_GET] Migration terminée vers Strava/${userId}.json`);
+        foundIn = `Strava/${userId}.json (migré depuis ${foundIn})`;
+      }
     }
 
+    console.log(`📊 [STRAVA_GET] === RÉSULTAT FINAL ===`);
+    console.log(`📊 Activités trouvées: ${stravaActivities.length}`);
+    console.log(`📊 Source: ${foundIn || 'Aucune'}`);
+
+    // Debug des premières activités si elles existent
+    if (stravaActivities.length > 0) {
+      console.log(`📋 [STRAVA_GET] Première activité:`, {
+        name: stravaActivities[0].name,
+        date: stravaActivities[0].start_date || stravaActivities[0].date,
+        type: stravaActivities[0].type || stravaActivities[0].sport_type,
+        keys: Object.keys(stravaActivities[0])
+      });
+
+      console.log(`📋 [STRAVA_GET] Liste des ${Math.min(5, stravaActivities.length)} premières activités:`);
+      stravaActivities.slice(0, 5).forEach((activity, index) => {
+        const date = activity.start_date || activity.date || activity.start_date_local;
+        console.log(`  ${index + 1}. "${activity.name}" - ${date} (${activity.type || activity.sport_type})`);
+      });
+    } else {
+      console.log(`❌ [STRAVA_GET] Aucune activité trouvée`);
+    }
+
+    console.log(`✅ [STRAVA_GET] === FIN RÉCUPÉRATION ===`);
+    res.json(stravaActivities);
+
   } catch (error) {
-    console.error(`❌ [STRAVA_GET] Erreur récupération activités Strava:`, error.message);
+    console.error(`❌ [STRAVA_GET] Erreur complète:`, {
+      message: error.message,
+      stack: error.stack,
+      userId: req.params.userId
+    });
     res.json([]);
   }
 });
 
-// Endpoint pour sauvegarder les activités Strava - STRUCTURE STRAVA UNIFIÉE
 app.post('/api/strava/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    console.log(`💾 [STRAVA_POST] Sauvegarde activités Strava pour: ${userId}`);
-    console.log(`💾 [STRAVA_POST] Nombre d'activités reçues: ${Array.isArray(req.body) ? req.body.length : 0}`);
+    console.log(`💾 [STRAVA_POST] Sauvegarde activités pour: ${userId}`);
+    console.log(`💾 [STRAVA_POST] Données reçues:`, {
+      type: typeof req.body,
+      isArray: Array.isArray(req.body),
+      length: Array.isArray(req.body) ? req.body.length : 'N/A'
+    });
 
-    // Récupérer les informations d'intégration existantes depuis le fichier Strava
+    // Récupérer les informations d'intégration existantes
     let existingStravaData = await readStravaFile(userId);
     
-    // Si pas de fichier Strava existant, récupérer l'intégration depuis les données utilisateur
-    if (!existingStravaData || !existingStravaData.stravaIntegration) {
+    // Si pas de fichier Strava existant, essayer de récupérer depuis les données utilisateur
+    if (!existingStravaData) {
       const userResult = await findUserById(userId);
-      if (userResult && userResult.userData.stravaIntegration) {
+      if (userResult) {
+        const { userData } = userResult;
         existingStravaData = {
-          stravaIntegration: userResult.userData.stravaIntegration,
+          stravaIntegration: userData.stravaIntegration || null,
           activities: []
         };
       }
     }
 
-    // Préparer les données à sauvegarder
+    // Préparer les données à sauvegarder dans le fichier Strava dédié
     const stravaDataToSave = {
       stravaIntegration: existingStravaData?.stravaIntegration || null,
-      activities: Array.isArray(req.body) ? req.body : []
+      activities: req.body
     };
 
-    // Mettre à jour la date de synchronisation
+    // Mettre à jour la date de synchronisation si l'intégration existe
     if (stravaDataToSave.stravaIntegration) {
       stravaDataToSave.stravaIntegration.lastSync = new Date().toISOString();
     }
 
     // Sauvegarder dans le fichier Strava dédié
     await writeStravaFile(userId, stravaDataToSave);
-    console.log(`✅ [STRAVA_POST] ${stravaDataToSave.activities.length} activités sauvegardées dans Strava/${userId}.json`);
+
+    console.log(`✅ [STRAVA_POST] ${Array.isArray(req.body) ? req.body.length : 0} activités sauvegardées dans Strava/${userId}.json`);
+
+    // Optionnel: nettoyer les anciennes données Strava des fichiers utilisateur
+    try {
+      const userResult = await findUserById(userId);
+      if (userResult) {
+        const { userData, userType } = userResult;
+        let needsCleanup = false;
+
+        // Supprimer les anciennes structures
+        if (userData.stravaActivities) {
+          delete userData.stravaActivities;
+          needsCleanup = true;
+        }
+        if (userData.strava) {
+          delete userData.strava;
+          needsCleanup = true;
+        }
+        if (userData.stravaIntegration && userData.stravaIntegration.activities) {
+          delete userData.stravaIntegration.activities;
+          needsCleanup = true;
+        }
+
+        if (needsCleanup) {
+          userData.lastUpdated = new Date().toISOString();
+          await writeUserFile(userId, userData, userType);
+          console.log(`🧹 [STRAVA_POST] Nettoyage des anciennes données Strava dans le fichier utilisateur`);
+        }
+      }
+    } catch (cleanupError) {
+      console.log(`⚠️ [STRAVA_POST] Erreur nettoyage (non critique):`, cleanupError.message);
+    }
 
     res.json({ success: true });
   } catch (error) {
-    console.error(`❌ [STRAVA_POST] Erreur sauvegarde activités Strava:`, error.message);
+    console.error(`❌ [STRAVA_POST] Erreur sauvegarde données Strava utilisateur ${userId}:`, error);
     res.status(500).json({ error: 'Erreur sauvegarde données Strava' });
   }
 });
@@ -929,11 +1037,25 @@ app.post('/api/strava/exchange-token', async (req, res) => {
       hasStravaClientSecret: !!process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET
     });
 
-    // Vérifier la configuration de base
+    // Vérifier la correspondance exacte avec la config Strava
+    const expectedClientId = '159394';
+    const expectedClientSecret = '0a8889616f64a229949082240702228cba150700';
+
     console.log('🔍 [STRAVA_EXCHANGE] Vérification configuration:');
-    console.log('   - Client ID:', STRAVA_CLIENT_ID);
-    console.log('   - Client Secret présent:', !!STRAVA_CLIENT_SECRET);
-    console.log('   - Client Secret longueur:', STRAVA_CLIENT_SECRET ? STRAVA_CLIENT_SECRET.length : 0);
+    console.log('   - Client ID correspond:', STRAVA_CLIENT_ID === expectedClientId);
+    console.log('   - Client Secret correspond:', STRAVA_CLIENT_SECRET === expectedClientSecret);
+
+    if (STRAVA_CLIENT_ID !== expectedClientId) {
+      console.error('❌ [STRAVA_EXCHANGE] ERREUR: Client ID ne correspond pas!');
+      console.error('   - Attendu:', expectedClientId);
+      console.error('   - Reçu:', STRAVA_CLIENT_ID);
+    }
+
+    if (STRAVA_CLIENT_SECRET !== expectedClientSecret) {
+      console.error('❌ [STRAVA_EXCHANGE] ERREUR: Client Secret ne correspond pas!');
+      console.error('   - Attendu (10 premiers chars):', expectedClientSecret.substring(0, 10) + '...');
+      console.error('   - Reçu (10 premiers chars):', STRAVA_CLIENT_SECRET ? STRAVA_CLIENT_SECRET.substring(0, 10) + '...' : 'UNDEFINED');
+    }
 
     // Vérifier que le redirect_uri correspond exactement à la config Strava
     const redirectUri = 'https://eatfitbymax.cloud/strava-callback';
@@ -1046,7 +1168,7 @@ app.post('/api/strava/exchange-token', async (req, res) => {
       existingStravaData: !!userData.stravaIntegration
     });
 
-    // Préparer les données d'intégration Strava
+    // Sauvegarder les tokens dans le fichier Strava dédié
     const stravaIntegrationData = {
       accessToken: tokenData.access_token,
       refreshToken: tokenData.refresh_token,
@@ -1057,38 +1179,30 @@ app.post('/api/strava/exchange-token', async (req, res) => {
       connectionDate: new Date().toISOString()
     };
 
-    console.log('💾 [STRAVA_EXCHANGE] Sauvegarde tokens pour athlete:', tokenData.athlete.firstname, tokenData.athlete.lastname);
+    console.log('💾 [STRAVA_EXCHANGE] === PRÉPARATION SAUVEGARDE ===');
+    console.log('   - Athlete ID:', tokenData.athlete.id);
+    console.log('   - Athlete Name:', tokenData.athlete.firstname, tokenData.athlete.lastname);
+    console.log('   - Token expire le:', new Date(tokenData.expires_at * 1000).toISOString());
 
-    // Récupérer les activités existantes s'il y en a dans le fichier Strava dédié
+    // Récupérer les activités existantes s'il y en a
     let existingStravaData = await readStravaFile(userId);
     const existingActivities = existingStravaData?.activities || [];
 
-    // PRIORITÉ : Sauvegarder dans le fichier Strava dédié EN PREMIER
+    // Préparer les données complètes à sauvegarder
     const completeStravaData = {
       stravaIntegration: stravaIntegrationData,
       activities: existingActivities
     };
-    
-    console.log('💾 [STRAVA_EXCHANGE] === SAUVEGARDE PRIORITAIRE FICHIER STRAVA ===');
+
+    // Sauvegarder dans le fichier Strava dédié
     await writeStravaFile(userId, completeStravaData);
-    console.log(`✅ [STRAVA_EXCHANGE] Données sauvegardées dans Strava/${userId}.json (${existingActivities.length} activités conservées)`);
 
-    // Vérification immédiate du fichier Strava
-    const immediateVerification = await readStravaFile(userId);
-    if (immediateVerification && immediateVerification.stravaIntegration && immediateVerification.stravaIntegration.connected) {
-      console.log('✅ [STRAVA_EXCHANGE] Vérification immédiate fichier Strava réussie');
-    } else {
-      console.error('❌ [STRAVA_EXCHANGE] PROBLÈME : Fichier Strava non vérifié !');
-    }
+    console.log('📂 [STRAVA_EXCHANGE] === ÉCRITURE FICHIER STRAVA DÉDIÉ ===');
+    console.log('   - Chemin fichier:', path.join(STRAVA_DIR, `${userId}.json`));
+    console.log('   - Activités existantes conservées:', existingActivities.length);
 
-    // Mettre à jour le fichier utilisateur avec SEULEMENT une référence minimale (PAS les tokens complets)
-    userData.stravaIntegration = {
-      connected: true,
-      athlete: stravaIntegrationData.athlete,
-      lastSync: stravaIntegrationData.lastSync,
-      connectionDate: stravaIntegrationData.connectionDate
-      // Les tokens restent UNIQUEMENT dans le fichier Strava dédié
-    };
+    // Mettre à jour le fichier utilisateur avec juste la référence d'intégration (sans les activités)
+    userData.stravaIntegration = stravaIntegrationData;
 
     // Nettoyer l'ancienne structure si elle existe
     if (userData.stravaTokens) {
@@ -1175,63 +1289,44 @@ app.post('/api/strava/exchange-token', async (req, res) => {
   }
 });
 
-// Endpoint pour vérifier le statut de connexion Strava - STRUCTURE STRAVA UNIFIÉE
 app.get('/api/strava/status/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    console.log(`🔍 [STRAVA_STATUS] Vérification statut pour: ${userId}`);
+    console.log(`🔍 [SERVEUR] Vérification statut Strava pour: ${userId}`);
 
-    // Récupérer les données depuis le fichier Strava dédié AVEC logs détaillés
-    console.log(`🔍 [STRAVA_STATUS] Tentative lecture Strava/${userId}.json`);
-    const stravaData = await readStravaFile(userId);
-    
-    console.log(`🔍 [STRAVA_STATUS] Données Strava lues:`, stravaData ? 'TROUVÉ' : 'VIDE');
-    if (stravaData) {
-      console.log(`🔍 [STRAVA_STATUS] Structure:`, {
-        hasIntegration: !!stravaData.stravaIntegration,
-        connected: stravaData.stravaIntegration?.connected,
-        hasAthlete: !!stravaData.stravaIntegration?.athlete,
-        athleteName: stravaData.stravaIntegration?.athlete?.firstname + ' ' + stravaData.stravaIntegration?.athlete?.lastname
-      });
+    // Chercher dans les clients d'abord
+    let userData = await readUserFile(userId, 'client');
+    let userType = 'client';
+
+    if (!userData) {
+      userData = await readUserFile(userId, 'coach');
+      userType = 'coach';
     }
-    
-    if (stravaData && stravaData.stravaIntegration && stravaData.stravaIntegration.connected) {
-      const integration = stravaData.stravaIntegration;
-      console.log(`✅ [STRAVA_STATUS] Connecté pour ${userId}: ${integration.athlete?.firstname || 'Athlète'}`);
+
+    if (!userData) {
+      console.log(`❌ Utilisateur ${userId} non trouvé`);
+      return res.status(404).json({ connected: false, error: 'Utilisateur non trouvé' });
+    }
+
+    // Vérifier la nouvelle structure stravaIntegration
+    if (userData.stravaIntegration && userData.stravaIntegration.connected) {
+      console.log(`✅ [SERVEUR] Strava connecté pour ${userId}: ${userData.stravaIntegration.athlete?.firstname || 'Athlète'}`);
 
       res.json({
         connected: true,
-        athlete: integration.athlete,
-        accessToken: integration.accessToken,
-        refreshToken: integration.refreshToken,
-        expiresAt: integration.expiresAt,
-        lastSync: integration.lastSync
+        athlete: userData.stravaIntegration.athlete,
+        accessToken: userData.stravaIntegration.accessToken,
+        refreshToken: userData.stravaIntegration.refreshToken,
+        expiresAt: userData.stravaIntegration.expiresAt,
+        lastSync: userData.stravaIntegration.lastSync
       });
     } else {
-      console.log(`📝 [STRAVA_STATUS] Non connecté pour ${userId} - Recherche dans fichier utilisateur...`);
-      
-      // Fallback : chercher dans le fichier utilisateur
-      const userResult = await findUserById(userId);
-      if (userResult && userResult.userData.stravaIntegration && userResult.userData.stravaIntegration.connected) {
-        const integration = userResult.userData.stravaIntegration;
-        console.log(`✅ [STRAVA_STATUS] Trouvé dans fichier utilisateur pour ${userId}: ${integration.athlete?.firstname || 'Athlète'}`);
-        
-        res.json({
-          connected: true,
-          athlete: integration.athlete,
-          accessToken: integration.accessToken,
-          refreshToken: integration.refreshToken,
-          expiresAt: integration.expiresAt,
-          lastSync: integration.lastSync
-        });
-      } else {
-        console.log(`📝 [STRAVA_STATUS] Définitivement non connecté pour ${userId}`);
-        res.json({ connected: false });
-      }
+      console.log(`📝 [SERVEUR] Strava non connecté pour ${userId}`);
+      res.json({ connected: false });
     }
   } catch (error) {
-    console.error('❌ [STRAVA_STATUS] Erreur vérification:', error.message);
-    res.json({ connected: false, error: 'Erreur serveur' });
+    console.error('❌ [SERVEUR] Erreur vérification statut Strava:', error);
+    res.status(500).json({ connected: false, error: 'Erreur serveur' });
   }
 });
 
@@ -1336,91 +1431,86 @@ app.get('/api/debug/user/:userId', async (req, res) => {
   }
 });
 
-// Endpoint pour synchronisation manuelle Strava - STRUCTURE STRAVA UNIFIÉE
+// Endpoint pour synchronisation manuelle Strava
 app.post('/api/strava/sync/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    console.log(`🔄 [STRAVA_SYNC] Synchronisation manuelle pour: ${userId}`);
+    console.log(`🔄 [SERVEUR] Synchronisation manuelle Strava pour: ${userId}`);
 
-    // Récupérer les données Strava depuis le fichier dédié
+    // Récupérer les données Strava existantes
     let stravaData = await readStravaFile(userId);
     
-    // Si pas de fichier Strava, récupérer l'intégration depuis les données utilisateur
+    // Si pas de fichier Strava, essayer de récupérer les infos d'intégration depuis les données utilisateur
     if (!stravaData || !stravaData.stravaIntegration) {
       const userResult = await findUserById(userId);
-      if (!userResult || !userResult.userData.stravaIntegration) {
+      if (!userResult) {
         return res.status(404).json({ 
           success: false, 
-          error: 'Strava non connecté - configuration manquante' 
+          error: 'Utilisateur non trouvé' 
         });
       }
       
+      const { userData } = userResult;
       stravaData = {
-        stravaIntegration: userResult.userData.stravaIntegration,
+        stravaIntegration: userData.stravaIntegration || null,
         activities: []
       };
     }
 
-    // Vérifier l'état de la connexion
-    const integration = stravaData.stravaIntegration;
-    if (!integration || !integration.connected || !integration.accessToken) {
+    // Vérifier si Strava est connecté
+    if (!stravaData.stravaIntegration || !stravaData.stravaIntegration.connected || !stravaData.stravaIntegration.accessToken) {
       return res.status(400).json({ 
         success: false, 
-        error: 'Strava non connecté - tokens manquants' 
+        error: 'Strava non connecté' 
       });
     }
 
-    console.log(`🔗 [STRAVA_SYNC] Récupération activités depuis API Strava pour athlete: ${integration.athlete?.firstname}`);
-
-    // Récupérer les activités depuis l'API Strava
+    // Récupérer les activités depuis Strava
+    console.log('📡 [SERVEUR] Récupération activités Strava...');
     const stravaResponse = await fetch('https://www.strava.com/api/v3/athlete/activities?per_page=50', {
       headers: {
-        'Authorization': `Bearer ${integration.accessToken}`,
-        'Accept': 'application/json'
+        'Authorization': `Bearer ${stravaData.stravaIntegration.accessToken}`
       }
     });
 
     if (!stravaResponse.ok) {
-      const errorText = await stravaResponse.text();
-      console.error(`❌ [STRAVA_SYNC] Erreur API Strava (${stravaResponse.status}):`, errorText);
+      console.error('❌ [SERVEUR] Erreur API Strava:', stravaResponse.status, stravaResponse.statusText);
       return res.status(400).json({ 
         success: false, 
-        error: `Erreur API Strava: ${stravaResponse.status}` 
+        error: 'Erreur lors de la récupération des activités Strava' 
       });
     }
 
     const activities = await stravaResponse.json();
-    console.log(`✅ [STRAVA_SYNC] ${activities.length} activités récupérées depuis API Strava`);
+    console.log(`✅ [SERVEUR] ${activities.length} activités récupérées de Strava`);
 
-    // Mettre à jour les données complètes
-    const updatedStravaData = {
-      stravaIntegration: {
-        ...integration,
-        lastSync: new Date().toISOString()
-      },
-      activities: activities
-    };
+    // Mettre à jour les données Strava
+    stravaData.stravaIntegration.lastSync = new Date().toISOString();
+    stravaData.activities = activities;
 
     // Sauvegarder dans le fichier Strava dédié
-    await writeStravaFile(userId, updatedStravaData);
-    console.log(`💾 [STRAVA_SYNC] ${activities.length} activités sauvegardées dans Strava/${userId}.json`);
+    await writeStravaFile(userId, stravaData);
+    
+    console.log(`💾 [SERVEUR] ${activities.length} activités sauvegardées dans Strava/${userId}.json`);
 
-    // Log des premières activités pour debug
+    // Debug: afficher quelques activités sauvegardées
     if (activities.length > 0) {
+      console.log(`📋 [SERVEUR] Activités synchronisées pour ${userId}:`);
       activities.slice(0, 3).forEach((activity, index) => {
-        console.log(`  ${index + 1}. "${activity.name}" - ${activity.start_date} (${activity.type || activity.sport_type})`);
+        console.log(`  ${index + 1}. ${activity.name} - ${activity.start_date} (${activity.type || activity.sport_type})`);
       });
     }
 
+    console.log(`✅ [SERVEUR] Synchronisation Strava terminée pour: ${userId}`);
     res.json({ 
       success: true, 
-      message: 'Synchronisation Strava réussie',
+      message: 'Synchronisation réussie',
       activitiesCount: activities.length,
-      lastSync: updatedStravaData.stravaIntegration.lastSync
+      lastSync: stravaData.stravaIntegration.lastSync
     });
 
   } catch (error) {
-    console.error('❌ [STRAVA_SYNC] Erreur synchronisation:', error.message);
+    console.error('❌ [SERVEUR] Erreur synchronisation Strava:', error);
     res.status(500).json({ 
       success: false, 
       error: 'Erreur serveur lors de la synchronisation' 
@@ -1428,152 +1518,118 @@ app.post('/api/strava/sync/:userId', async (req, res) => {
   }
 });
 
-// Endpoint pour déconnecter Strava - STRUCTURE STRAVA UNIFIÉE
+// Endpoint pour déconnecter Strava
 app.post('/api/strava/disconnect/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    console.log(`🔄 [STRAVA_DISCONNECT] Déconnexion pour: ${userId}`);
+    console.log(`🔄 [SERVEUR] Déconnexion Strava pour: ${userId}`);
 
     // Supprimer le fichier Strava dédié
     await deleteStravaFile(userId);
-    console.log(`🗑️ [STRAVA_DISCONNECT] Fichier Strava/${userId}.json supprimé`);
+    console.log(`🗑️ [SERVEUR] Fichier Strava/${userId}.json supprimé`);
 
-    // Nettoyer aussi la référence dans le fichier utilisateur
-    const userResult = await findUserById(userId);
-    if (userResult) {
-      const { userData, userType } = userResult;
-      
-      // Réinitialiser l'intégration Strava dans les données utilisateur
-      userData.stravaIntegration = {
-        connected: false,
-        athlete: null,
-        accessToken: null,
-        refreshToken: null,
-        expiresAt: null,
-        lastSync: null
-      };
+    // Chercher l'utilisateur pour nettoyer aussi ses données
+    let userData = await readUserFile(userId, 'client');
+    let userType = 'client';
+
+    if (!userData) {
+      userData = await readUserFile(userId, 'coach');
+      userType = 'coach';
+    }
+
+    if (userData) {
+      // Supprimer les données Strava du fichier utilisateur
+      if (userData.stravaIntegration) {
+        userData.stravaIntegration = {
+          connected: false,
+          athlete: null,
+          accessToken: null,
+          refreshToken: null,
+          expiresAt: null,
+          lastSync: null
+        };
+      }
+
+      // Nettoyer toutes les anciennes structures
+      if (userData.stravaTokens) {
+        delete userData.stravaTokens;
+      }
+      if (userData.stravaActivities) {
+        delete userData.stravaActivities;
+      }
+      if (userData.strava) {
+        delete userData.strava;
+      }
 
       userData.lastUpdated = new Date().toISOString();
       await writeUserFile(userId, userData, userType);
-      console.log(`🧹 [STRAVA_DISCONNECT] Données utilisateur nettoyées`);
-    }
 
-    res.json({ success: true, message: 'Strava déconnecté avec succès' });
+      console.log(`✅ [SERVEUR] Strava déconnecté complètement pour: ${userId}`);
+      res.json({ success: true, message: 'Strava déconnecté avec succès' });
+    } else {
+      // Même si l'utilisateur n'est pas trouvé, le fichier Strava a été supprimé
+      console.log(`✅ [SERVEUR] Fichier Strava supprimé pour: ${userId} (utilisateur non trouvé)`);
+      res.json({ success: true, message: 'Strava déconnecté avec succès' });
+    }
   } catch (error) {
-    console.error('❌ [STRAVA_DISCONNECT] Erreur:', error.message);
+    console.error('❌ [SERVEUR] Erreur déconnexion Strava:', error);
     res.status(500).json({ success: false, error: 'Erreur serveur' });
   }
 });
 
 // Callback Strava - Route principale avec les vraies valeurs
 app.get('/strava-callback', async (req, res) => {
-  console.log('📥 [STRAVA_CALLBACK] === DÉBUT TRAITEMENT CALLBACK ===');
-  console.log('📥 [STRAVA_CALLBACK] Query params:', JSON.stringify(req.query, null, 2));
-  console.log('📥 [STRAVA_CALLBACK] Headers importants:', {
-    'user-agent': req.headers['user-agent'],
-    'referer': req.headers['referer'],
-    'host': req.headers['host']
-  });
-  console.log('📥 [STRAVA_CALLBACK] URL complète:', req.url);
-  console.log('📥 [STRAVA_CALLBACK] Method:', req.method);
-  console.log('📥 [STRAVA_CALLBACK] Configuration utilisée:', {
+  console.log('📥 [STRAVA] Callback reçu:', req.query);
+  console.log('📥 [STRAVA] Headers reçus:', req.headers);
+  console.log('📥 [STRAVA] URL complète:', req.url);
+  console.log('📥 [STRAVA] Configuration utilisée:', {
     clientId: STRAVA_CLIENT_ID,
-    clientSecret: STRAVA_CLIENT_SECRET ? '[PRÉSENT - ' + STRAVA_CLIENT_SECRET.length + ' chars]' : '[MANQUANT]',
-    redirectUri: 'https://eatfitbymax.cloud/strava-callback'
+    clientSecret: STRAVA_CLIENT_SECRET ? '[PRÉSENT]' : '[MANQUANT]'
   });
 
   const { code, error, state } = req.query;
 
-  // Validation détaillée des paramètres
-  console.log('🔍 [STRAVA_CALLBACK] Validation paramètres:');
-  console.log('   - code présent:', !!code, '- longueur:', code ? code.length : 0);
-  console.log('   - error présent:', !!error, '- valeur:', error);
-  console.log('   - state présent:', !!state, '- valeur:', state);
-
   // Gestion des erreurs
   if (error) {
-    console.error('❌ [STRAVA_CALLBACK] Erreur autorisation Strava:', error);
-    res.send(createCallbackPage('❌ Erreur', 'L\'autorisation Strava a échoué: ' + error, '#FF6B6B', true));
-    return;
+    console.error('❌ [STRAVA] Erreur autorisation:', error);
+    res.send(createCallbackPage('❌ Erreur', 'L\'autorisation Strava a échoué. Redirection vers l\'app...', '#FF6B6B', true));
+    return; // Important de retourner ici pour ne pas exécuter la suite
   }
 
-  if (!code) {
-    console.error('❌ [STRAVA_CALLBACK] Code d\'autorisation manquant');
-    res.send(createCallbackPage('⚠️ Code manquant', 'Code d\'autorisation non reçu. Réessayez depuis l\'app.', '#F5A623', true));
-    return;
-  }
-
-  if (!state) {
-    console.error('❌ [STRAVA_CALLBACK] State (userId) manquant');
-    res.send(createCallbackPage('⚠️ État manquant', 'Identifiant utilisateur manquant. Réessayez depuis l\'app.', '#F5A623', true));
-    return;
+  if (!code || !state) {
+    console.log('⚠️ [STRAVA] Paramètres manquants');
+    res.send(createCallbackPage('⚠️ Paramètres manquants', 'Veuillez réessayer depuis l\'application. Redirection vers l\'app...', '#F5A623', true));
+    return; // Important de retourner ici pour ne pas exécuter la suite
   }
 
   const userId = state;
-  console.log('✅ [STRAVA_CALLBACK] Paramètres validés - Traitement pour utilisateur:', userId);
+  console.log('✅ [STRAVA] Traitement pour utilisateur:', userId);
 
   try {
-    console.log('🔄 [STRAVA_CALLBACK] === DÉBUT ÉCHANGE TOKEN ===');
-
-    // Préparer la requête d'échange de token
-    const tokenRequestBody = {
-      client_id: STRAVA_CLIENT_ID,
-      client_secret: STRAVA_CLIENT_SECRET,
-      code: code,
-      grant_type: 'authorization_code'
-    };
-
-    console.log('📤 [STRAVA_CALLBACK] Envoi requête vers Strava OAuth:');
-    console.log('   - URL: https://www.strava.com/oauth/token');
-    console.log('   - Method: POST');
-    console.log('   - client_id:', tokenRequestBody.client_id);
-    console.log('   - client_secret:', tokenRequestBody.client_secret ? '[MASQUÉ-' + tokenRequestBody.client_secret.length + ']' : 'MANQUANT');
-    console.log('   - code (premiers 10 chars):', code.substring(0, 10) + '...');
-    console.log('   - grant_type:', tokenRequestBody.grant_type);
-
     // Échanger le code contre un token
     const tokenResponse = await fetch('https://www.strava.com/oauth/token', {
       method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(tokenRequestBody)
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        client_id: STRAVA_CLIENT_ID,
+        client_secret: STRAVA_CLIENT_SECRET,
+        code: code,
+        grant_type: 'authorization_code'
+      })
     });
-
-    console.log('📥 [STRAVA_CALLBACK] Réponse Strava reçue:');
-    console.log('   - Status:', tokenResponse.status, tokenResponse.statusText);
-    console.log('   - Headers:', Object.fromEntries(tokenResponse.headers.entries()));
 
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
-      console.error('❌ [STRAVA_CALLBACK] Échec échange token:');
-      console.error('   - Status HTTP:', tokenResponse.status);
-      console.error('   - Status Text:', tokenResponse.statusText);
-      console.error('   - Response Body:', errorText);
-      
-      let errorMessage = 'Échec de l\'échange de token avec Strava';
-      try {
-        const errorJson = JSON.parse(errorText);
-        console.error('   - Error JSON:', JSON.stringify(errorJson, null, 2));
-        errorMessage += ': ' + (errorJson.message || errorJson.error || 'Erreur inconnue');
-      } catch (parseError) {
-        console.error('   - Impossible de parser l\'erreur JSON');
-      }
-
-      res.send(createCallbackPage('❌ Erreur OAuth', errorMessage, '#FF6B6B', true));
-      return;
+      console.error('❌ [STRAVA] Échec échange token:');
+      console.error('   - Status:', tokenResponse.status);
+      console.error('   - Response:', errorText);
+      console.error('   - Headers:', Object.fromEntries(tokenResponse.headers.entries()));
+      res.send(createCallbackPage('❌ Erreur OAuth', 'Échec de l\'échange de token avec Strava. Redirection vers l\'app...', '#FF6B6B', true));
+      return; // Important de retourner ici
     }
 
     const tokenData = await tokenResponse.json();
-    console.log('✅ [STRAVA_CALLBACK] Token reçu avec succès:');
-    console.log('   - Athlete présent:', !!tokenData.athlete);
-    console.log('   - Athlete nom:', tokenData.athlete?.firstname, tokenData.athlete?.lastname);
-    console.log('   - Athlete ID:', tokenData.athlete?.id);
-    console.log('   - Access token présent:', !!tokenData.access_token);
-    console.log('   - Refresh token présent:', !!tokenData.refresh_token);
-    console.log('   - Expires at:', tokenData.expires_at, '(' + new Date(tokenData.expires_at * 1000).toISOString() + ')');
-    console.log('   - Token Data complet:', JSON.stringify(tokenData, null, 2));
+    console.log('✅ [STRAVA] Token reçu pour athlète:', tokenData.athlete?.firstname);
 
     // Sauvegarder les données
     const stravaData = {
@@ -1585,214 +1641,43 @@ app.get('/strava-callback', async (req, res) => {
       lastSync: new Date().toISOString()
     };
 
-    console.log('🔍 [STRAVA_CALLBACK] === RECHERCHE UTILISATEUR ===');
-    console.log('   - userId à rechercher:', userId);
-    console.log('   - Type userId:', typeof userId);
-
     // Utiliser la recherche robuste pour trouver l'utilisateur
     const userResult = await findUserById(userId);
 
     if (!userResult) {
-      console.error('❌ [STRAVA_CALLBACK] Utilisateur non trouvé:', userId);
-      console.error('   - Vérification fichiers Client existants...');
-      try {
-        const clientFiles = await fs.readdir(CLIENT_DIR);
-
-
-// Route de migration pour nettoyer les données Strava mal placées
-app.post('/api/strava/migrate/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    console.log(`🔄 [STRAVA_MIGRATE] Migration données pour: ${userId}`);
-
-    // Lire les données utilisateur
-    const userResult = await findUserById(userId);
-    if (!userResult) {
-      return res.status(404).json({ error: 'Utilisateur non trouvé' });
-    }
-
-    const { userData, userType } = userResult;
-
-    // Vérifier s'il y a des données Strava à migrer
-    if (userData.stravaIntegration && userData.stravaIntegration.accessToken) {
-      console.log('📦 [STRAVA_MIGRATE] Données Strava trouvées dans fichier utilisateur - migration...');
-
-      // Sauvegarder dans le fichier Strava dédié
-      const stravaDataToMigrate = {
-        stravaIntegration: userData.stravaIntegration,
-        activities: userData.stravaActivities || []
-      };
-
-      await writeStravaFile(userId, stravaDataToMigrate);
-      console.log(`✅ [STRAVA_MIGRATE] Données migrées vers Strava/${userId}.json`);
-
-      // Nettoyer le fichier utilisateur
-      userData.stravaIntegration = {
-        connected: userData.stravaIntegration.connected,
-        athlete: userData.stravaIntegration.athlete,
-        lastSync: userData.stravaIntegration.lastSync,
-        connectionDate: userData.stravaIntegration.connectionDate || new Date().toISOString()
-      };
-
-      // Supprimer les anciennes clés
-      delete userData.stravaActivities;
-      delete userData.stravaTokens;
-      delete userData.strava;
-
-      userData.lastUpdated = new Date().toISOString();
-      await writeUserFile(userId, userData, userType);
-
-      console.log('🧹 [STRAVA_MIGRATE] Fichier utilisateur nettoyé');
-
-      res.json({ 
-        success: true, 
-        message: 'Migration réussie',
-        migratedData: {
-          integration: !!stravaDataToMigrate.stravaIntegration,
-          activitiesCount: stravaDataToMigrate.activities.length
-        }
-      });
-    } else {
-      console.log('📝 [STRAVA_MIGRATE] Aucune donnée à migrer');
-      res.json({ success: true, message: 'Aucune migration nécessaire' });
-    }
-
-  } catch (error) {
-    console.error('❌ [STRAVA_MIGRATE] Erreur migration:', error);
-    res.status(500).json({ error: 'Erreur migration' });
-  }
-});
-
-
-        console.error('   - Fichiers disponibles:', clientFiles.slice(0, 5)); // Les 5 premiers
-        console.error('   - Total fichiers:', clientFiles.length);
-      } catch (dirError) {
-        console.error('   - Erreur lecture dossier Client:', dirError.message);
-      }
-      res.send(createCallbackPage('❌ Utilisateur non trouvé', 'Impossible de trouver votre profil utilisateur (ID: ' + userId + ')', '#FF6B6B', true));
+      console.error('❌ [STRAVA] Utilisateur non trouvé pour le callback:', userId);
+      res.send(createCallbackPage('❌ Utilisateur non trouvé', 'Impossible de trouver votre profil utilisateur. Redirection vers l\'app...', '#FF6B6B', true));
       return;
     }
 
     const { userData, userType } = userResult;
-    console.log('✅ [STRAVA_CALLBACK] Utilisateur trouvé:', {
-      id: userData.id,
-      name: userData.name || userData.firstName + ' ' + userData.lastName,
-      type: userType,
-      email: userData.email
-    });
 
-    console.log('💾 [STRAVA_CALLBACK] === SAUVEGARDE DONNÉES ===');
+    // Assurer que userData.stravaIntegration existe avant d'y accéder
+    userData.stravaIntegration = stravaData; // Utiliser stravaIntegration comme dans le reste du code
 
-    // Préparer les données d'intégration Strava
-    const stravaIntegrationData = {
-      connected: true,
-      accessToken: tokenData.access_token,
-      refreshToken: tokenData.refresh_token,
-      expiresAt: tokenData.expires_at,
-      athlete: tokenData.athlete,
-      lastSync: new Date().toISOString(),
-      connectionDate: new Date().toISOString()
-    };
-
-    // PRIORITÉ : Sauvegarder dans le fichier Strava dédié D'ABORD
-    const completeStravaData = {
-      stravaIntegration: stravaIntegrationData,
-      activities: [] // Initialement vide, sera rempli lors de la synchronisation
-    };
-
-    console.log('💾 [STRAVA_CALLBACK] === SAUVEGARDE FICHIER STRAVA DÉDIÉ ===');
-    try {
-      await writeStravaFile(userId, completeStravaData);
-      console.log('✅ [STRAVA_CALLBACK] Données sauvées dans Strava/' + userId + '.json');
-      
-      // Vérification immédiate
-      const verification = await readStravaFile(userId);
-      if (verification && verification.stravaIntegration && verification.stravaIntegration.connected) {
-        console.log('✅ [STRAVA_CALLBACK] Vérification fichier Strava réussie immédiatement');
-      } else {
-        console.error('❌ [STRAVA_CALLBACK] ÉCHEC vérification fichier Strava !');
-      }
-    } catch (stravaFileError) {
-      console.error('❌ [STRAVA_CALLBACK] ERREUR CRITIQUE sauvegarde fichier Strava:', stravaFileError);
-      throw stravaFileError; // Arrêter le processus si ça échoue
+    // Nettoyer l'ancienne structure si elle existe
+    if (userData.stravaTokens) {
+      delete userData.stravaTokens;
     }
-
-    // Ensuite mettre à jour le fichier utilisateur avec SEULEMENT une référence minimale
-    userData.stravaIntegration = {
-      connected: true,
-      athlete: stravaIntegrationData.athlete,
-      lastSync: stravaIntegrationData.lastSync,
-      connectionDate: stravaIntegrationData.connectionDate
-      // PAS de tokens dans le fichier utilisateur - tout dans le fichier Strava
-    };
-
-    // Nettoyer TOUTES les anciennes structures Strava du fichier utilisateur
-    const oldKeys = ['stravaTokens', 'strava', 'stravaActivities'];
-    oldKeys.forEach(key => {
-      if (userData[key]) {
-        console.log('🧹 [STRAVA_CALLBACK] Nettoyage ancienne structure:', key);
-        delete userData[key];
-      }
-    });
-    
-    // Nettoyer les tokens complets de stravaIntegration s'ils existent
-    if (userData.stravaIntegration && userData.stravaIntegration.accessToken) {
-      console.log('🧹 [STRAVA_CALLBACK] Suppression tokens du fichier utilisateur (migration vers fichier Strava)');
-      const { accessToken, refreshToken, expiresAt, ...cleanIntegration } = userData.stravaIntegration;
-      userData.stravaIntegration = cleanIntegration;
+    if (userData.strava) {
+      delete userData.strava; // Supprimer l'ancienne clé 'strava'
     }
 
     userData.lastUpdated = new Date().toISOString();
 
-    try {
-      await writeUserFile(userId, userData, userType);
-      console.log('✅ [STRAVA_CALLBACK] Fichier utilisateur mis à jour:', userType + '/' + userId + '.json');
-    } catch (userFileError) {
-      console.error('❌ [STRAVA_CALLBACK] Erreur sauvegarde fichier utilisateur:', userFileError);
-      throw userFileError;
-    }
+    await writeUserFile(userId, userData, userType);
 
-    // Vérification finale - s'assurer que les données ont été bien sauvegardées
-    console.log('🔍 [STRAVA_CALLBACK] === VÉRIFICATION FINALE ===');
-    try {
-      const verificationData = await readUserFile(userId, userType);
-      const stravaVerificationData = await readStravaFile(userId);
-      
-      if (verificationData && verificationData.stravaIntegration && verificationData.stravaIntegration.connected) {
-        console.log('✅ [STRAVA_CALLBACK] Vérification utilisateur réussie - Strava connecté');
-      } else {
-        console.error('❌ [STRAVA_CALLBACK] Vérification utilisateur échouée');
-      }
-
-      if (stravaVerificationData && stravaVerificationData.stravaIntegration && stravaVerificationData.stravaIntegration.connected) {
-        console.log('✅ [STRAVA_CALLBACK] Vérification fichier Strava réussie');
-      } else {
-        console.error('❌ [STRAVA_CALLBACK] Vérification fichier Strava échouée');
-      }
-    } catch (verificationError) {
-      console.error('❌ [STRAVA_CALLBACK] Erreur lors de la vérification finale:', verificationError);
-    }
-
-    console.log('🎉 [STRAVA_CALLBACK] === SUCCÈS COMPLET ===');
-    console.log('   - Utilisateur:', userId);
-    console.log('   - Athlete:', tokenData.athlete?.firstname, tokenData.athlete?.lastname);
-    console.log('   - Connexion établie à:', new Date().toISOString());
+    console.log('💾 [STRAVA] Données sauvées avec succès');
 
     // Page de succès avec redirection automatique vers l'app
-    res.send(createCallbackPage('🎉 Connexion réussie !', 'Strava est maintenant connecté à votre compte. Redirection vers l\'app...', '#28A745', true));
+    res.send(createCallbackPage('🎉 Connexion réussie !', 'Strava est maintenant connecté. Redirection vers l\'app...', '#28A745', true));
   } catch (error) {
-    console.error('❌ [STRAVA_CALLBACK] === ERREUR CRITIQUE ===');
-    console.error('   - Message:', error.message);
-    console.error('   - Stack:', error.stack);
-    console.error('   - Type:', error.constructor.name);
-    console.error('   - userId:', userId);
-    console.error('   - Timestamp:', new Date().toISOString());
-
+    console.error('❌ [STRAVA] Erreur traitement callback:', error);
     res.send(createCallbackPage(
       '❌ Erreur de connexion', 
-      'Une erreur est survenue lors de la connexion: ' + error.message, 
+      'Une erreur est survenue lors de la connexion. Redirection vers l\'app...', 
       '#FF6B6B',
-      true
+      true // Redirection automatique même en cas d'erreur
     ));
   }
 });
