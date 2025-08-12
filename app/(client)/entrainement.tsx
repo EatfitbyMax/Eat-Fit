@@ -274,18 +274,20 @@ export default function EntrainementScreen() {
       setIsLoading(true);
       const currentUser = await getCurrentUser();
       if (currentUser) {
-        console.log('🔄 Chargement des activités Strava pour:', currentUser.email);
+        console.log('🔄 [LOAD_STRAVA] Chargement des activités Strava pour:', currentUser.email);
+        console.log('🔄 [LOAD_STRAVA] User ID:', currentUser.id);
 
         // Vérifier le statut de connexion Strava
         const integrationStatus = await IntegrationsManager.getIntegrationStatus(currentUser.id);
-        console.log('📊 Statut Strava:', integrationStatus.strava.connected ? 'Connecté' : 'Non connecté');
+        console.log('📊 [LOAD_STRAVA] Statut Strava:', integrationStatus.strava.connected ? 'Connecté' : 'Non connecté');
 
         if (integrationStatus.strava.connected) {
           let activitiesFound = false;
+          let allActivities: ExtendedStravaActivity[] = [];
 
           // 1. D'abord essayer de récupérer depuis le serveur VPS
           try {
-            console.log('🔄 Récupération activités depuis serveur VPS...');
+            console.log('🔄 [LOAD_STRAVA] Récupération activités depuis serveur VPS...');
             const serverUrl = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
             const response = await fetch(`${serverUrl}/api/strava/${currentUser.id}`, {
               method: 'GET',
@@ -294,77 +296,100 @@ export default function EntrainementScreen() {
               }
             });
 
-            console.log('📥 Réponse serveur VPS:', response.status, response.statusText);
+            console.log('📥 [LOAD_STRAVA] Réponse serveur VPS:', response.status, response.statusText);
 
             if (response.ok) {
               const serverActivities = await response.json();
-              console.log('📦 Données reçues du serveur VPS:', {
+              console.log('📦 [LOAD_STRAVA] Données brutes reçues du serveur VPS:', {
                 type: typeof serverActivities,
                 isArray: Array.isArray(serverActivities),
                 length: Array.isArray(serverActivities) ? serverActivities.length : 'N/A',
+                keys: Array.isArray(serverActivities) && serverActivities.length > 0 ? Object.keys(serverActivities[0]) : [],
                 sample: Array.isArray(serverActivities) && serverActivities.length > 0 ? 
-                  { name: serverActivities[0].name, date: serverActivities[0].start_date || serverActivities[0].date } : 'Aucun échantillon'
+                  { 
+                    name: serverActivities[0].name, 
+                    start_date: serverActivities[0].start_date,
+                    start_date_local: serverActivities[0].start_date_local,
+                    date: serverActivities[0].date,
+                    id: serverActivities[0].id,
+                    type: serverActivities[0].type || serverActivities[0].sport_type
+                  } : 'Aucun échantillon'
               });
 
               if (Array.isArray(serverActivities) && serverActivities.length > 0) {
-                console.log(`✅ ${serverActivities.length} activités récupérées depuis le serveur VPS`);
+                console.log(`✅ [LOAD_STRAVA] ${serverActivities.length} activités récupérées depuis le serveur VPS`);
 
                 // Normaliser les activités pour s'assurer d'avoir un format cohérent
-                const normalizedActivities: ExtendedStravaActivity[] = serverActivities.map(activity => ({
-                  ...activity,
-                  // S'assurer d'avoir un champ 'date' uniforme
-                  date: activity.date || activity.start_date || activity.start_date_local,
-                  // Normaliser la durée (priorité à moving_time)
-                  duration: activity.moving_time || activity.elapsed_time || activity.duration || 0,
-                  // Normaliser les données de fréquence cardiaque
-                  avgHeartRate: activity.average_heartrate || activity.avgHeartRate || null,
-                  maxHeartRate: activity.max_heartrate || activity.maxHeartRate || null,
-                  averageHeartrate: activity.average_heartrate || activity.avgHeartRate || null,
-                  maxHeartrate: activity.max_heartrate || activity.maxHeartRate || null,
-                  // Normaliser le type de sport
-                  sportType: activity.sport_type || activity.type,
-                  // S'assurer d'avoir un ID valide
-                  id: activity.id?.toString() || `activity_${Date.now()}_${Math.random()}`,
-                  // Ajouter les calories si elles ne sont pas présentes (estimation basique)
-                  calories: activity.calories || (activity.moving_time && activity.average_heartrate ?
-                    Math.round((activity.moving_time / 60) * activity.average_heartrate * 0.1) : 0)
-                }));
+                allActivities = serverActivities.map((activity, index) => {
+                  const normalizedActivity: ExtendedStravaActivity = {
+                    ...activity,
+                    // S'assurer d'avoir un champ 'date' uniforme - utiliser start_date en priorité
+                    date: activity.start_date || activity.start_date_local || activity.date,
+                    // Normaliser la durée (priorité à moving_time)
+                    duration: activity.moving_time || activity.elapsed_time || activity.duration || 0,
+                    // Normaliser les données de fréquence cardiaque
+                    avgHeartRate: activity.average_heartrate || activity.avgHeartRate || null,
+                    maxHeartRate: activity.max_heartrate || activity.maxHeartRate || null,
+                    averageHeartrate: activity.average_heartrate || activity.avgHeartRate || null,
+                    maxHeartrate: activity.max_heartrate || activity.maxHeartRate || null,
+                    // Normaliser le type de sport
+                    sportType: activity.sport_type || activity.type,
+                    // S'assurer d'avoir un ID valide
+                    id: activity.id?.toString() || `activity_${Date.now()}_${Math.random()}_${index}`,
+                    // Ajouter les calories si elles ne sont pas présentes (estimation basique)
+                    calories: activity.calories || activity.kilojoules || (activity.moving_time && activity.average_heartrate ?
+                      Math.round((activity.moving_time / 60) * activity.average_heartrate * 0.1) : 0)
+                  };
 
-                setStravaActivities(normalizedActivities);
+                  console.log(`🔍 [LOAD_STRAVA] Activité ${index + 1} normalisée:`, {
+                    name: normalizedActivity.name,
+                    originalDate: activity.start_date || activity.start_date_local || activity.date,
+                    normalizedDate: normalizedActivity.date,
+                    type: normalizedActivity.sportType || normalizedActivity.type,
+                    id: normalizedActivity.id,
+                    duration: normalizedActivity.duration
+                  });
+
+                  return normalizedActivity;
+                });
+
+                setStravaActivities(allActivities);
                 activitiesFound = true;
 
                 // Sauvegarder en cache local
-                await AsyncStorage.setItem(`strava_activities_${currentUser.id}`, JSON.stringify(normalizedActivities));
+                await AsyncStorage.setItem(`strava_activities_${currentUser.id}`, JSON.stringify(allActivities));
 
-                // Debug détaillé
-                console.log('📋 Activités normalisées depuis serveur VPS:');
-                normalizedActivities.forEach((activity, index) => {
+                // Debug détaillé de toutes les activités
+                console.log('📋 [LOAD_STRAVA] TOUTES les activités normalisées depuis serveur VPS:');
+                allActivities.forEach((activity, index) => {
                   const dateToUse = activity.date || activity.start_date;
-                  console.log(`  ${index + 1}. ${activity.name} - ${new Date(dateToUse).toLocaleDateString('fr-FR')} (${activity.type}) - Date: ${dateToUse}`);
+                  const activityDate = new Date(dateToUse);
+                  console.log(`  ${index + 1}. "${activity.name}" - ${dateToUse} => ${activityDate.toLocaleDateString('fr-FR')} (${activity.sportType || activity.type}) - ID: ${activity.id}`);
                 });
               } else {
-                console.log('📭 Serveur VPS a retourné un tableau vide ou invalide');
+                console.log('📭 [LOAD_STRAVA] Serveur VPS a retourné un tableau vide ou invalide');
               }
             } else {
               const errorText = await response.text();
-              console.log(`❌ Erreur serveur VPS: ${response.status} - ${errorText}`);
+              console.log(`❌ [LOAD_STRAVA] Erreur serveur VPS: ${response.status} - ${errorText}`);
             }
           } catch (serverError) {
-            console.error('⚠️ Erreur serveur VPS (ou réseau):', serverError.message);
+            console.error('⚠️ [LOAD_STRAVA] Erreur serveur VPS (ou réseau):', serverError.message);
           }
 
           // 2. Si pas d'activités trouvées sur le serveur, essayer le cache local
           if (!activitiesFound) {
             try {
-              console.log('🔄 Tentative cache local AsyncStorage...');
+              console.log('🔄 [LOAD_STRAVA] Tentative cache local AsyncStorage...');
               const cachedData = await AsyncStorage.getItem(`strava_activities_${currentUser.id}`);
               if (cachedData) {
                 const cachedActivities = JSON.parse(cachedData);
                 if (Array.isArray(cachedActivities) && cachedActivities.length > 0) {
-                  console.log(`📱 ${cachedActivities.length} activités trouvées en cache local`);
+                  console.log(`📱 [LOAD_STRAVA] ${cachedActivities.length} activités trouvées en cache local`);
                   
-                  const normalizedActivities = cachedActivities.map(activity => ({
+                  allActivities = cachedActivities.map(activity => ({
                     ...activity,
+                    date: activity.start_date || activity.start_date_local || activity.date,
                     duration: activity.moving_time || activity.elapsed_time || activity.duration || 0,
                     avgHeartRate: activity.average_heartrate || activity.avgHeartRate || null,
                     maxHeartRate: activity.max_heartrate || activity.maxHeartRate || null,
@@ -373,36 +398,54 @@ export default function EntrainementScreen() {
                     sportType: activity.sport_type || activity.type,
                   }));
 
-                  setStravaActivities(normalizedActivities);
+                  setStravaActivities(allActivities);
                   activitiesFound = true;
 
-                  console.log('📋 Activités chargées depuis cache local:');
-                  normalizedActivities.forEach((activity, index) => {
+                  console.log('📋 [LOAD_STRAVA] Activités chargées depuis cache local:');
+                  allActivities.forEach((activity, index) => {
                     console.log(`  ${index + 1}. ${activity.name} - ${new Date(activity.date).toLocaleDateString('fr-FR')} (${activity.type})`);
                   });
                 } else {
-                  console.log('📭 Cache local vide ou invalide');
+                  console.log('📭 [LOAD_STRAVA] Cache local vide ou invalide');
                 }
               } else {
-                console.log('📭 Aucun cache local trouvé');
+                console.log('📭 [LOAD_STRAVA] Aucun cache local trouvé');
               }
             } catch (cacheError) {
-              console.error('❌ Erreur lecture cache local:', cacheError);
+              console.error('❌ [LOAD_STRAVA] Erreur lecture cache local:', cacheError);
             }
           }
 
-          // 3. Si toujours rien trouvé
-          if (!activitiesFound) {
-            console.log('❌ Aucune activité Strava trouvée nulle part');
+          // 3. Résultat final
+          if (activitiesFound && allActivities.length > 0) {
+            console.log(`✅ [LOAD_STRAVA] SUCCÈS: ${allActivities.length} activités chargées au total`);
+            
+            // Trier les activités par date (plus récente en premier)
+            const sortedActivities = allActivities.sort((a, b) => {
+              const dateA = new Date(a.date || a.start_date || '');
+              const dateB = new Date(b.date || b.start_date || '');
+              return dateB.getTime() - dateA.getTime();
+            });
+            
+            setStravaActivities(sortedActivities);
+            
+            // Afficher la plage de dates des activités
+            if (sortedActivities.length > 0) {
+              const oldestDate = new Date(sortedActivities[sortedActivities.length - 1].date);
+              const newestDate = new Date(sortedActivities[0].date);
+              console.log(`📅 [LOAD_STRAVA] Plage des activités: ${oldestDate.toLocaleDateString('fr-FR')} à ${newestDate.toLocaleDateString('fr-FR')}`);
+            }
+          } else {
+            console.log('❌ [LOAD_STRAVA] Aucune activité Strava trouvée nulle part');
             setStravaActivities([]);
           }
         } else {
-          console.log('⚠️ Strava non connecté, aucune activité à charger');
+          console.log('⚠️ [LOAD_STRAVA] Strava non connecté, aucune activité à charger');
           setStravaActivities([]);
         }
       }
     } catch (error) {
-      console.error('❌ Erreur chargement activités Strava:', error);
+      console.error('❌ [LOAD_STRAVA] Erreur chargement activités Strava:', error);
       setStravaActivities([]);
     } finally {
       setIsLoading(false);
@@ -486,77 +529,128 @@ export default function EntrainementScreen() {
     const { start, end } = getWeekRange();
 
     console.log('=== DEBUG ACTIVITÉS STRAVA SEMAINE COURANTE ===');
-    console.log(`Période recherchée: ${start.toISOString().split('T')[0]} à ${end.toISOString().split('T')[0]}`);
-    console.log(`Total activités Strava disponibles: ${stravaActivities.length}`);
+    console.log(`📅 Période recherchée: ${start.toISOString().split('T')[0]} (${start.toLocaleDateString('fr-FR')}) à ${end.toISOString().split('T')[0]} (${end.toLocaleDateString('fr-FR')})`);
+    console.log(`📊 Total activités Strava disponibles: ${stravaActivities.length}`);
 
     if (stravaActivities.length === 0) {
       console.log('⚠️ Aucune activité Strava disponible pour filtrer');
+      console.log('💡 Suggestion: Vérifiez la connexion Strava et la synchronisation des données');
       return [];
     }
 
-    // Debug de toutes les activités avant filtrage
-    console.log('📋 Toutes les activités Strava disponibles:');
+    // Debug de toutes les activités avant filtrage avec plus de détails
+    console.log('📋 TOUTES les activités Strava disponibles:');
     stravaActivities.forEach((activity, index) => {
       // Gérer les différents formats de date de Strava
       let activityDate;
+      let originalDateString = '';
+      
       if (activity.start_date) {
         activityDate = new Date(activity.start_date);
+        originalDateString = activity.start_date;
       } else if (activity.date) {
         activityDate = new Date(activity.date);
+        originalDateString = activity.date;
+      } else if (activity.start_date_local) {
+        activityDate = new Date(activity.start_date_local);
+        originalDateString = activity.start_date_local;
       } else {
-        console.log(`⚠️ Activité sans date valide:`, activity);
+        console.log(`⚠️ [${index + 1}] Activité "${activity.name}" sans date valide:`, {
+          start_date: activity.start_date,
+          date: activity.date,
+          start_date_local: activity.start_date_local
+        });
         return;
       }
 
-      console.log(`  ${index + 1}. ${activity.name} - ${activityDate.toISOString().split('T')[0]} (${activityDate.toLocaleDateString('fr-FR')})`);
+      const isValid = !isNaN(activityDate.getTime());
+      console.log(`  [${index + 1}] "${activity.name}"`);
+      console.log(`      📅 Date originale: ${originalDateString}`);
+      console.log(`      📅 Date parsée: ${isValid ? activityDate.toISOString().split('T')[0] : 'INVALIDE'} (${isValid ? activityDate.toLocaleDateString('fr-FR') : 'N/A'})`);
+      console.log(`      🏃 Type: ${activity.sportType || activity.type}`);
+      console.log(`      🆔 ID: ${activity.id}`);
     });
 
-    const filteredActivities = stravaActivities.filter(activity => {
+    const filteredActivities = stravaActivities.filter((activity, index) => {
       if (!activity) {
-        console.log('⚠️ Activité invalide détectée:', activity);
+        console.log(`⚠️ [${index}] Activité invalide détectée:`, activity);
         return false;
       }
 
-      // Gérer les différents formats de date de Strava (start_date ou date)
+      // Gérer les différents formats de date de Strava (start_date prioritaire)
       let activityDateString;
       if (activity.start_date) {
         activityDateString = activity.start_date;
       } else if (activity.date) {
         activityDateString = activity.date;
+      } else if (activity.start_date_local) {
+        activityDateString = activity.start_date_local;
       } else {
-        console.log('⚠️ Activité sans date détectée:', activity);
+        console.log(`⚠️ [${index}] Activité "${activity.name}" sans date détectée:`, {
+          keys: Object.keys(activity),
+          hasStartDate: !!activity.start_date,
+          hasDate: !!activity.date,
+          hasStartDateLocal: !!activity.start_date_local
+        });
         return false;
       }
 
       // Normaliser la date d'activité pour éviter les problèmes de fuseau horaire
       const activityDate = new Date(activityDateString);
       if (isNaN(activityDate.getTime())) {
-        console.log('⚠️ Date invalide pour activité:', activityDateString, activity);
+        console.log(`⚠️ [${index}] Date invalide pour activité "${activity.name}":`, activityDateString);
         return false;
       }
 
-      activityDate.setHours(0, 0, 0, 0);
+      // Normaliser les dates pour la comparaison (heure à 00:00:00)
+      const normalizedActivityDate = new Date(activityDate.getTime());
+      normalizedActivityDate.setHours(0, 0, 0, 0);
 
-      // Créer des copies des dates de début et fin pour la comparaison
       const startDate = new Date(start.getTime());
       const endDate = new Date(end.getTime());
       startDate.setHours(0, 0, 0, 0);
       endDate.setHours(23, 59, 59, 999);
 
-      const isInRange = activityDate >= startDate && activityDate <= endDate;
+      const isInRange = normalizedActivityDate >= startDate && normalizedActivityDate <= endDate;
 
-      console.log(`🔍 Activité "${activity.name}" du ${activityDate.toISOString().split('T')[0]} - Dans la semaine (${start.toISOString().split('T')[0]} à ${end.toISOString().split('T')[0]}): ${isInRange ? '✅ OUI' : '❌ NON'}`);
+      console.log(`🔍 [${index + 1}] "${activity.name}"`);
+      console.log(`      📅 Date normalisée: ${normalizedActivityDate.toISOString().split('T')[0]}`);
+      console.log(`      📊 Comparaison: ${startDate.toISOString().split('T')[0]} ≤ ${normalizedActivityDate.toISOString().split('T')[0]} ≤ ${endDate.toISOString().split('T')[0]}`);
+      console.log(`      ✅ Dans la semaine: ${isInRange ? 'OUI' : 'NON'}`);
 
       return isInRange;
     });
 
-    console.log(`🎯 Activités filtrées pour cette semaine: ${filteredActivities.length}`);
+    console.log(`🎯 RÉSULTAT: ${filteredActivities.length} activité(s) filtrée(s) pour cette semaine`);
     if (filteredActivities.length > 0) {
-      console.log('📋 Activités de la semaine courante:');
+      console.log('📋 Activités retenues pour la semaine courante:');
       filteredActivities.forEach((activity, index) => {
-        const dateToUse = activity.start_date || activity.date;
-        console.log(`  ${index + 1}. "${activity.name}" - ${new Date(dateToUse).toLocaleDateString('fr-FR')} (${activity.type})`);
+        const dateToUse = activity.start_date || activity.date || activity.start_date_local;
+        const formattedDate = new Date(dateToUse).toLocaleDateString('fr-FR');
+        console.log(`  ✅ [${index + 1}] "${activity.name}" - ${formattedDate} (${activity.sportType || activity.type})`);
       });
+    } else {
+      console.log('❌ Aucune activité ne correspond à la période demandée');
+      console.log('💡 Vérifiez si vos activités Strava sont dans une autre semaine');
+      
+      // Suggérer les semaines où il y a des activités
+      if (stravaActivities.length > 0) {
+        console.log('📅 Suggestions - Activités disponibles dans ces périodes:');
+        stravaActivities.forEach((activity, index) => {
+          const activityDate = new Date(activity.start_date || activity.date || activity.start_date_local);
+          if (!isNaN(activityDate.getTime())) {
+            const weekStart = new Date(activityDate);
+            const dayOfWeek = weekStart.getDay() === 0 ? 6 : weekStart.getDay() - 1;
+            weekStart.setDate(activityDate.getDate() - dayOfWeek);
+            weekStart.setHours(0, 0, 0, 0);
+            
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6);
+            
+            console.log(`  📅 "${activity.name}" - Semaine du ${weekStart.toLocaleDateString('fr-FR')} au ${weekEnd.toLocaleDateString('fr-FR')}`);
+          }
+        });
+      }
     }
     console.log('=== FIN DEBUG ACTIVITÉS STRAVA SEMAINE COURANTE ===');
 
