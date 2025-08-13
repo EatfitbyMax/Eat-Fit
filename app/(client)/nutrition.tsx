@@ -122,14 +122,18 @@ function NutritionScreen() {
       // Calcul de base personnalisé selon le poids et l'âge
       let baseGoal = 2000; // Valeur par défaut
 
-      if (user.weight && user.age) {
+      // Vérifier que weight et age sont des nombres valides
+      const userWeight = parseFloat(user.weight) || parseFloat(user.currentWeight) || 70; // Poids par défaut 70kg
+      const userAge = parseFloat(user.age) || 25; // Âge par défaut 25 ans
+
+      if (userWeight && userAge && !isNaN(userWeight) && !isNaN(userAge)) {
         // Formule: 35ml par kg de poids corporel + ajustement selon l'âge
-        baseGoal = user.weight * 35;
+        baseGoal = userWeight * 35;
 
         // Ajustement selon l'âge (les personnes âgées ont besoin de plus d'hydratation)
-        if (user.age > 65) {
+        if (userAge > 65) {
           baseGoal += 300; // +300ml pour les seniors
-        } else if (user.age > 50) {
+        } else if (userAge > 50) {
           baseGoal += 200; // +200ml pour les 50-65 ans
         }
 
@@ -172,9 +176,12 @@ function NutritionScreen() {
       // Arrondir pour être réalisable avec les boutons disponibles (250ml, 500ml, 1000ml)
       // L'objectif doit être un multiple de 250ml pour être atteignable facilement
       const finalGoal = Math.ceil(baseGoal / 250) * 250;
-      console.log(`Objectif hydratation calculé: ${finalGoal}ml (base: ${Math.ceil((user.weight * 35) / 250) * 250}ml)`);
+      
+      // Validation finale pour éviter NaN
+      const validGoal = isNaN(finalGoal) ? 2000 : finalGoal;
+      console.log(`Objectif hydratation calculé: ${validGoal}ml (base: ${Math.ceil((userWeight * 35) / 250) * 250}ml)`);
 
-      return finalGoal;
+      return validGoal;
     } catch (error) {
       console.error('Erreur calcul objectif hydratation:', error);
       return 2000;
