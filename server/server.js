@@ -341,6 +341,59 @@ app.post('/api/users', async (req, res) => {
   }
 });
 
+// Routes pour les préférences d'application
+app.get('/api/app-preferences/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    let userData = await readUserFile(userId, 'client');
+    if (!userData) userData = await readUserFile(userId, 'coach');
+
+    const defaultPreferences = {
+      theme: 'system',
+      language: 'fr',
+      units: 'metric',
+      notifications: true
+    };
+
+    const preferences = userData?.appPreferences || defaultPreferences;
+    res.json(preferences);
+  } catch (error) {
+    console.error(`Erreur lecture préférences app utilisateur ${req.params.userId}:`, error);
+    res.json({
+      theme: 'system',
+      language: 'fr',
+      units: 'metric',
+      notifications: true
+    });
+  }
+});
+
+app.post('/api/app-preferences/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    let userData = await readUserFile(userId, 'client');
+    let userType = 'client';
+
+    if (!userData) {
+      userData = await readUserFile(userId, 'coach');
+      userType = 'coach';
+    }
+
+    if (!userData) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    userData.appPreferences = req.body;
+    userData.lastUpdated = new Date().toISOString();
+
+    await writeUserFile(userId, userData, userType);
+    res.json({ success: true });
+  } catch (error) {
+    console.error(`Erreur sauvegarde préférences app utilisateur ${userId}:`, error);
+    res.status(500).json({ error: 'Erreur sauvegarde préférences application' });
+  }
+});
+
 // Routes pour les coaches
 app.get('/api/coaches', async (req, res) => {
   try {

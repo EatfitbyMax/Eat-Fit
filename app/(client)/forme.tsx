@@ -171,8 +171,9 @@ export default function FormeScreen() {
       let todayData = null;
       try {
         todayData = await PersistentStorage.getFormeData(userData.id, today);
-        console.log('Données de forme chargées depuis le serveur VPS');
+        console.log('✅ Données de forme chargées depuis le serveur VPS');
       } catch (serverError) {
+        console.log('⚠️ Aucune donnée de forme trouvée, création des données par défaut');
         // Créer des données par défaut si rien n'est trouvé
         todayData = {
           sleep: { hours: 0, quality: 'Moyen', bedTime: '', wakeTime: '' },
@@ -182,7 +183,7 @@ export default function FormeScreen() {
           cycle: userData?.gender === 'Femme' ? { phase: 'Menstruel', dayOfCycle: 1, symptoms: [], notes: '' } : undefined,
           date: today
         };
-        console.log('Création de nouvelles données de forme par défaut');
+        console.log('✅ Nouvelles données de forme par défaut créées');
       }
 
       // Récupérer les données nutritionnelles réelles depuis la nutrition
