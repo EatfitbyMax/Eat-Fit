@@ -1121,10 +1121,16 @@ app.post('/api/water/:userId/:date', async (req, res) => {
     userData.waterIntake[date] = amount;
     userData.lastUpdated = new Date().toISOString();
 
-    await writeUserFile(userId, userData, userType);
-    res.json({ success: true });
+    try {
+      await writeUserFile(userId, userData, userType);
+      console.log(`✅ Hydratation sauvegardée: ${userId}/${date} = ${amount}ml`);
+      res.json({ success: true });
+    } catch (writeError) {
+      console.error(`❌ Erreur écriture fichier hydratation ${userId}:`, writeError);
+      res.status(500).json({ error: 'Erreur écriture fichier hydratation' });
+    }
   } catch (error) {
-    console.error(`Erreur sauvegarde hydratation ${userId}/${date}:`, error);
+    console.error(`❌ Erreur sauvegarde hydratation ${req.params.userId}/${req.params.date}:`, error);
     res.status(500).json({ error: 'Erreur sauvegarde hydratation' });
   }
 });

@@ -709,28 +709,60 @@ function NutritionScreen() {
   const addWater = async (amount: number) => {
     try {
       const user = await getCurrentUser();
-      if (!user) return;
+      if (!user) {
+        console.error('❌ Aucun utilisateur connecté pour ajout eau');
+        return;
+      }
 
+      console.log(`💧 Ajout ${amount}ml d'eau pour ${user.email}`);
+      
       const newWaterIntake = waterIntake + amount;
-      setWaterIntake(newWaterIntake);
-
       const dateKey = selectedDate.toISOString().split('T')[0];
+      
+      // Sauvegarder sur le serveur en premier
       await PersistentStorage.saveWaterIntake(user.id, dateKey, newWaterIntake);
+      
+      // Mettre à jour l'état local seulement après succès
+      setWaterIntake(newWaterIntake);
+      console.log(`✅ Hydratation mise à jour: ${newWaterIntake}ml`);
+      
     } catch (error) {
-      console.error('Erreur ajout eau:', error);
+      console.error('❌ Erreur ajout eau:', error);
+      // Afficher une alerte à l'utilisateur
+      Alert.alert(
+        'Erreur',
+        'Impossible de sauvegarder votre consommation d\'eau. Vérifiez votre connexion internet.',
+        [{ text: 'OK' }]
+      );
     }
   };
 
   const resetWater = async () => {
     try {
       const user = await getCurrentUser();
-      if (!user) return;
+      if (!user) {
+        console.error('❌ Aucun utilisateur connecté pour reset eau');
+        return;
+      }
 
-      setWaterIntake(0);
+      console.log(`💧 Reset hydratation pour ${user.email}`);
+      
       const dateKey = selectedDate.toISOString().split('T')[0];
+      
+      // Sauvegarder sur le serveur en premier
       await PersistentStorage.saveWaterIntake(user.id, dateKey, 0);
+      
+      // Mettre à jour l'état local seulement après succès
+      setWaterIntake(0);
+      console.log(`✅ Hydratation remise à zéro`);
+      
     } catch (error) {
-      console.error('Erreur reset eau:', error);
+      console.error('❌ Erreur reset eau:', error);
+      Alert.alert(
+        'Erreur',
+        'Impossible de remettre à zéro votre consommation d\'eau. Vérifiez votre connexion internet.',
+        [{ text: 'OK' }]
+      );
     }
   };
 
