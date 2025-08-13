@@ -162,10 +162,10 @@ export default function ProgresScreen() {
           console.log('📝 Données par défaut créées');
         }
 
-        // Validation des données
-        if (!saved.targetWeight) saved.targetWeight = 0;
+        // Validation simple des données - pas de synchronisation complexe
         if (!saved.startWeight && user.weight) saved.startWeight = user.weight;
         if (!saved.currentWeight && user.weight) saved.currentWeight = user.weight;
+        if (!saved.targetWeight) saved.targetWeight = 0;
 
         setWeightData(saved);
 
@@ -310,14 +310,18 @@ export default function ProgresScreen() {
         if (!response) return;
       }
 
-      // Mettre à jour les données de poids avec le nouvel objectif
+      // Mettre à jour directement les données de poids avec le nouvel objectif
       const updatedWeightData = {
         ...weightData,
         targetWeight: target
       };
 
-      // Sauvegarder dans les données client
+      console.log('💾 Sauvegarde objectif dans les données client:', updatedWeightData);
+
+      // Sauvegarder directement sur le serveur
       await saveWeightData(updatedWeightData);
+      
+      // Mettre à jour l'état local immédiatement
       setWeightData(updatedWeightData);
 
       // Mettre à jour l'animation de progression
@@ -332,7 +336,7 @@ export default function ProgresScreen() {
       setShowTargetModal(false);
       Alert.alert('Succès', `Votre objectif a été défini : ${formatWeight(target)} kg`);
 
-      console.log('✅ Objectif sauvegardé dans les données client:', target);
+      console.log('✅ Objectif sauvegardé avec succès:', target);
 
     } catch (error) {
       console.error('❌ Erreur mise à jour objectif:', error);
