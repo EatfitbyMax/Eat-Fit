@@ -320,7 +320,7 @@ export default function ProgresScreen() {
 
       // Sauvegarder directement sur le serveur
       await saveWeightData(updatedWeightData);
-      
+
       // Mettre à jour l'état local immédiatement
       setWeightData(updatedWeightData);
 
