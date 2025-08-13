@@ -460,6 +460,34 @@ export class PersistentStorage {
     }
   }
 
+  // App preferences
+  static async getAppPreferences(userId: string): Promise<any> {
+    const response = await fetch(`${SERVER_URL}/api/app-preferences/${userId}`);
+
+    if (!response.ok) {
+      return {
+        theme: 'system',
+        language: 'fr',
+        units: 'metric',
+        notifications: true
+      };
+    }
+
+    return await response.json();
+  }
+
+  static async saveAppPreferences(userId: string, preferences: any): Promise<void> {
+    const response = await fetch(`${SERVER_URL}/api/app-preferences/${userId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(preferences)
+    });
+
+    if (!response.ok) {
+      throw new Error('Erreur sauvegarde préférences application');
+    }
+  }
+
   // Alias methods pour compatibilité
   static async getIntegrationStatus(userId: string): Promise<any> {
     return await this.getUserIntegrationStatus(userId);

@@ -656,7 +656,7 @@ app.get('/api/strava/:userId', async (req, res) => {
       console.log(`✅ [STRAVA_GET] Données trouvées dans le fichier Strava dédié: ${stravaActivities.length} activités`);
     } else {
       console.log(`🔍 [STRAVA_GET] Aucun fichier Strava dédié trouvé, recherche dans les données utilisateur...`);
-      
+
       // Fallback: chercher dans les données utilisateur (ancienne structure)
       const userResult = await findUserById(userId);
 
@@ -757,8 +757,8 @@ app.post('/api/strava/:userId', async (req, res) => {
 
     // Récupérer les informations d'intégration existantes
     let existingStravaData = await readStravaFile(userId);
-    
-    // Si pas de fichier Strava existant, essayer de récupérer depuis les données utilisateur
+
+    // Si pas de fichier Strava existant, essayer de récupérer les infos d'intégration depuis les données utilisateur
     if (!existingStravaData) {
       const userResult = await findUserById(userId);
       if (userResult) {
@@ -1439,7 +1439,7 @@ app.post('/api/strava/sync/:userId', async (req, res) => {
 
     // Récupérer les données Strava existantes
     let stravaData = await readStravaFile(userId);
-    
+
     // Si pas de fichier Strava, essayer de récupérer les infos d'intégration depuis les données utilisateur
     if (!stravaData || !stravaData.stravaIntegration) {
       const userResult = await findUserById(userId);
@@ -1449,7 +1449,7 @@ app.post('/api/strava/sync/:userId', async (req, res) => {
           error: 'Utilisateur non trouvé' 
         });
       }
-      
+
       const { userData } = userResult;
       stravaData = {
         stravaIntegration: userData.stravaIntegration || null,
@@ -1490,7 +1490,7 @@ app.post('/api/strava/sync/:userId', async (req, res) => {
 
     // Sauvegarder dans le fichier Strava dédié
     await writeStravaFile(userId, stravaData);
-    
+
     console.log(`💾 [SERVEUR] ${activities.length} activités sauvegardées dans Strava/${userId}.json`);
 
     // Debug: afficher quelques activités sauvegardées
