@@ -195,14 +195,16 @@ export default function ProgresScreen() {
           needsUpdate = true;
         }
 
-        // CORRECTION OBJECTIF : Toujours utiliser l'objectif du profil si disponible
-        if (userTargetWeight > 0) {
-          if (!saved.targetWeight || saved.targetWeight === 0 || saved.targetWeight !== userTargetWeight) {
-            console.log(`🎯 Synchronisation objectif depuis profil: ${userTargetWeight}kg`);
-            saved.targetWeight = userTargetWeight;
-            saved.targetAsked = true;
-            needsUpdate = true;
-          }
+        // CORRECTION OBJECTIF : Préserver l'objectif existant dans les données VPS, sinon utiliser le profil
+        if (saved.targetWeight > 0) {
+          // Si on a déjà un objectif dans les données VPS, le garder
+          console.log(`🎯 Objectif existant trouvé dans VPS: ${saved.targetWeight}kg`);
+        } else if (userTargetWeight > 0) {
+          // Sinon, utiliser l'objectif du profil utilisateur
+          console.log(`🎯 Synchronisation objectif depuis profil: ${userTargetWeight}kg`);
+          saved.targetWeight = userTargetWeight;
+          saved.targetAsked = true;
+          needsUpdate = true;
         }
 
         // Cas spécial : si on a un poids actuel mais pas de poids de départ, utiliser le poids actuel comme départ
@@ -230,11 +232,11 @@ export default function ProgresScreen() {
         }
 
         // Vérifier si on doit demander l'objectif de poids (seulement si jamais demandé)
-      if (!weightData.targetAsked && weightData.currentWeight > 0) {
+      if (!saved.targetAsked && saved.currentWeight > 0) {
         console.log('❓ Première demande définition objectif après chargement');
 
         // Marquer immédiatement comme demandé pour éviter les demandes répétées
-        const updatedDataWithAsked = { ...weightData, targetAsked: true };
+        const updatedDataWithAsked = { ...saved, targetAsked: true };
         setWeightData(updatedDataWithAsked);
         await saveWeightData(updatedDataWithAsked);
 
@@ -261,7 +263,7 @@ export default function ProgresScreen() {
             ]
           );
         }, 1000);
-      } else if (weightData.targetAsked) {
+      } else if (saved.targetAsked) {
         console.log('✅ Objectif déjà demandé précédemment, pas de nouvelle demande');
       }
       }
