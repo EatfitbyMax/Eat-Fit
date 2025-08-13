@@ -1,0 +1,70 @@
+LOG  Début de semaine: 2025-08-10
+ LOG  Dates disponibles dans les données: []
+ LOG  Jour 1 (2025-08-10): 0 entrées trouvées
+ ERROR  Warning: Text strings must be rendered within a <Text> component.
+
+  11 |
+  12 | export default function ProgresScreen() {
+> 13 |   const [selectedTab, setSelectedTab] = useState<string>('Mesures');
+     |                                                 ^
+  14 |   const [isPremium, setIsPremium] = useState<boolean>(false);
+  15 |   const [selectedMeasurementTab, setSelectedMeasurementTab] = useState<string>('Poids');
+  16 |   const [selectedPeriod, setSelectedPeriod] = useState<string>('Mois');
+
+Call Stack
+  TouchableOpacity (<anonymous>)
+  Wrapper (<anonymous>)
+  RCTSafeAreaView (<anonymous>)
+  ProgresScreen (app/(client)/progres.tsx:13:49)
+  ClientLayout (app/(client)/_layout.tsx:13:38)
+  ScreenContentWrapper (<anonymous>)
+  RNSScreenStack (<anonymous>)
+  AuthGuard (components/AuthGuard.tsx:9:45)
+  AppNavigator (app/_layout.tsx:41:38)
+  AuthProvider (context/AuthContext.tsx:16:40)
+  ThemeProvider (context/ThemeContext.tsx:71:71)
+  LanguageProvider (context/LanguageContext.tsx:318:77)
+  constructor (components/ErrorBoundary.tsx:20:29)
+  RootLayout (app/_layout.tsx:73:37)
+  RNCSafeAreaProvider (<anonymous>)
+  App (<anonymous>)
+  ErrorOverlay (<anonymous>)
+ LOG  Jour 2 (2025-08-11): 0 entrées trouvées
+ LOG  Jour 2 (2025-08-11): 0 entrées trouvées
+ LOG  Jour 3 (2025-08-12): 0 entrées trouvées
+ LOG  Jour 3 (2025-08-12): 0 entrées trouvées
+ ERROR  Warning: Text strings must be rendered within a <Text> component.
+
+  11 |
+  12 | export default function ProgresScreen() {
+> 13 |   const [selectedTab, setSelectedTab] = useState<string>('Mesures');
+     |                                                 ^
+  14 |   const [isPremium, setIsPremium] = useState<boolean>(false);
+  15 |   const [selectedMeasurementTab, setSelectedMeasurementTab] = useState<string>('Poids');
+  16 |   const [selectedPeriod, setSelectedPeriod] = useState<string>('Mois');
+
+Call Stack
+  Wrapper (<anonymous>)
+  RCTSafeAreaView (<anonymous>)
+  ProgresScreen (app/(client)/progres.tsx:13:49)
+  ClientLayout (app/(client)/_layout.tsx:13:38)
+  ScreenContentWrapper (<anonymous>)
+  RNSScreenStack (<anonymous>)
+  AuthGuard (components/AuthGuard.tsx:9:45)
+  AppNavigator (app/_layout.tsx:41:38)
+  AuthProvider (context/AuthContext.tsx:16:40)
+  ThemeProvider (context/ThemeContext.tsx:71:71)
+  LanguageProvider (context/LanguageContext.tsx:318:77)
+  constructor (components/ErrorBoundary.tsx:20:29)
+  RootLayout (app/_layout.tsx:73:37)
+  RNCSafeAreaProvider (<anonymous>)
+  App (<anonymous>)
+  ErrorOverlay (<anonymous>)
+ LOG  Jour 4 (2025-08-13): 0 entrées trouvées
+ LOG  Jour 4 (2025-08-13): 0 entrées trouvées
+ LOG  Jour 5 (2025-08-14): 0 entrées trouvées
+ LOG  Jour 5 (2025-08-14): 0 entrées trouvées
+ LOG  Jour 6 (2025-08-15): 0 entrées trouvées
+ LOG  Jour 6 (2025-08-15): 0 entrées trouvées
+ LOG  Jour 7 (2025-08-16): 0 entrées trouvées
+ LOG  Jour 7 (2025-08-16): 0 entrées trouvées
