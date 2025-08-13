@@ -149,17 +149,19 @@ export default function ProgresScreen() {
         } catch (serverError) {
           console.log('📱 Erreur serveur, création de nouvelles données:', serverError);
           // Créer des données par défaut basées sur le profil utilisateur
+          const profileWeight = user.weight || 0;
           saved = {
-            startWeight: user.weight || 0,
-            currentWeight: user.weight || 0,
+            startWeight: profileWeight,
+            currentWeight: profileWeight,
             targetWeight: user.targetWeight || 0,
             lastWeightUpdate: null,
             targetAsked: (user.targetWeight && user.targetWeight > 0) ? true : false,
-            weightHistory: (user.weight && user.weight > 0) ? [{ 
-              weight: user.weight, 
+            weightHistory: profileWeight > 0 ? [{ 
+              weight: profileWeight, 
               date: user.createdAt || new Date().toISOString() 
             }] : [],
           };
+          console.log('📝 Données par défaut créées avec poids profil:', profileWeight, 'kg');
         }
 
         // Synchroniser avec les données du profil utilisateur
@@ -171,13 +173,23 @@ export default function ProgresScreen() {
         if (userWeight > 0 && (!saved.startWeight || saved.startWeight === 0)) {
           console.log(`🔄 Initialisation poids de départ: ${userWeight}kg`);
           saved.startWeight = userWeight;
-          saved.currentWeight = userWeight;
+          // Ne pas écraser le poids actuel s'il existe déjà et est différent
+          if (!saved.currentWeight || saved.currentWeight === 0) {
+            saved.currentWeight = userWeight;
+          }
           if (!saved.weightHistory || saved.weightHistory.length === 0) {
             saved.weightHistory = [{ 
               weight: userWeight, 
               date: user.createdAt || new Date().toISOString() 
             }];
           }
+          needsUpdate = true;
+        }
+
+        // Cas spécial : si startWeight est 0 mais qu'on a un currentWeight, utiliser le poids du profil comme startWeight
+        if ((!saved.startWeight || saved.startWeight === 0) && saved.currentWeight > 0 && userWeight > 0) {
+          console.log(`🔄 Correction poids de départ manquant: ${userWeight}kg (basé sur le profil)`);
+          saved.startWeight = userWeight;
           needsUpdate = true;
         }
 
