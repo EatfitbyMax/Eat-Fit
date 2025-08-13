@@ -598,7 +598,7 @@ export default function ProgresScreen() {
           }]}
         />
         <View style={styles.dataPoints}>
-          {dataPoints}
+          <Text>{dataPoints}</Text>
         </View>
       </>
     );
@@ -838,7 +838,7 @@ export default function ProgresScreen() {
           style={styles.weightLineGradient}
         />
         <View style={styles.dataPoints}>
-          {dataPoints}
+          <Text>{dataPoints}</Text>
         </View>
       </>
     );
@@ -886,7 +886,7 @@ export default function ProgresScreen() {
           style={styles.weightLineGradient}
         />
         <View style={styles.dataPoints}>
-          {dataPoints}
+          <Text>{dataPoints}</Text>
         </View>
       </>
     );
