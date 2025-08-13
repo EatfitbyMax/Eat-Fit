@@ -1234,6 +1234,7 @@ export default function ProgresScreen() {
 
     if (selectedPeriod === 'Semaines') {
       // Pour les semaines, créer les labels basés sur les vraies données
+      const processedData = getProcessedWeightData();
       const uniqueWeeks = new Map();
 
       processedData.forEach(entry => {
