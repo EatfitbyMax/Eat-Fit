@@ -2303,6 +2303,235 @@ export default function ProgresScreen() {
           </View>
         )}
 
+        {/* Onglet Nutrition */}
+        {selectedTab === 'Nutrition' && (
+          <View style={styles.nutritionContainer}>
+            {/* Stats nutritionnelles de la semaine */}
+            <View style={styles.nutritionStatsContainer}>
+              <View style={styles.nutritionStatCard}>
+                <View style={styles.statIcon}>
+                  <Text style={styles.iconText}>🔥</Text>
+                </View>
+                <Text style={styles.statLabel}>Calories moyennes</Text>
+                <Text style={styles.statValue}>{nutritionStats.averageCalories}</Text>
+                <Text style={styles.statSubtext}>kcal/jour</Text>
+              </View>
+
+              <View style={styles.nutritionStatCard}>
+                <View style={styles.statIcon}>
+                  <Text style={styles.iconText}>🥩</Text>
+                </View>
+                <Text style={styles.statLabel}>Protéines moyennes</Text>
+                <Text style={styles.statValue}>{nutritionStats.averageProteins}g</Text>
+                <Text style={styles.statSubtext}>par jour</Text>
+              </View>
+
+              <View style={styles.nutritionStatCard}>
+                <View style={styles.statIcon}>
+                  <Text style={styles.iconText}>📅</Text>
+                </View>
+                <Text style={styles.statLabel}>Jours avec données</Text>
+                <Text style={styles.statValue}>{nutritionStats.daysWithData}/7</Text>
+                <Text style={styles.statSubtext}>cette semaine</Text>
+              </View>
+
+              <View style={styles.nutritionStatCard}>
+                <View style={styles.statIcon}>
+                  <Text style={styles.iconText}>💧</Text>
+                </View>
+                <Text style={styles.statLabel}>Hydratation moyenne</Text>
+                <Text style={styles.statValue}>{Math.round(nutritionStats.averageHydration/1000*10)/10}L</Text>
+                <Text style={styles.statSubtext}>par jour</Text>
+              </View>
+            </View>
+
+            {/* Graphique d'évolution des calories */}
+            <View style={styles.nutritionChartContainer}>
+              <View style={styles.chartHeader}>
+                <Text style={styles.chartTitle}>Évolution des calories</Text>
+              </View>
+
+              {/* Onglets de période pour nutrition */}
+              <View style={styles.periodTabsContainer}>
+                {['Jours', 'Semaines', 'Mois'].map((period) => (
+                  <TouchableOpacity 
+                    key={period}
+                    style={[styles.periodTab, selectedNutritionPeriod === period && styles.activePeriodTab]}
+                    onPress={() => setSelectedNutritionPeriod(period)}
+                  >
+                    <Text style={[styles.periodTabText, selectedNutritionPeriod === period && styles.activePeriodTabText]}>
+                      {period}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Graphique avec scroll horizontal */}
+              <View style={styles.chartArea}>
+                <View style={styles.nutritionYAxis}>
+                  {generateNutritionYAxisLabels().map((label, index) => (
+                    <Text key={index} style={styles.nutritionYAxisLabel}>{label}</Text>
+                  ))}
+                </View>
+
+                <ScrollView 
+                  horizontal 
+                  showsHorizontalScrollIndicator={true}
+                  style={styles.chartScrollView}
+                  contentContainerStyle={styles.chartScrollContent}
+                >
+                  <View style={styles.chartContent}>
+                    {/* Grille */}
+                    <View style={styles.gridContainer}>
+                      {[...Array(6)].map((_, i) => (
+                        <View key={i} style={styles.gridLine} />
+                      ))}
+                    </View>
+
+                    {/* Ligne et points de nutrition */}
+                    {renderNutritionChart()}
+                  </View>
+                </ScrollView>
+              </View>
+            </View>
+
+            {/* Distribution des macronutriments */}
+            <View style={styles.macroDistributionCard}>
+              <Text style={styles.chartTitle}>🥗 Répartition des macronutriments</Text>
+              <Text style={styles.chartSubtitle}>Moyenne de la semaine</Text>
+
+              <View style={styles.macroCircularChart}>
+                <View style={styles.macroCircle}>
+                  <Text style={styles.macroMainText}>
+                    {nutritionStats.averageCalories > 0 ? 
+                      `${Math.round((nutritionStats.averageProteins * 4 / nutritionStats.averageCalories) * 100)}%` : 
+                      '0%'
+                    }
+                  </Text>
+                  <Text style={styles.macroSubText}>Protéines</Text>
+                </View>
+              </View>
+
+              <View style={styles.macroLegend}>
+                <View style={styles.macroLegendItem}>
+                  <View style={[styles.macroLegendColor, { backgroundColor: '#F5A623' }]} />
+                  <Text style={styles.macroLegendText}>
+                    Protéines ({nutritionStats.averageProteins}g)
+                  </Text>
+                </View>
+                <View style={styles.macroLegendItem}>
+                  <View style={[styles.macroLegendColor, { backgroundColor: '#4ECDC4' }]} />
+                  <Text style={styles.macroLegendText}>
+                    Glucides ({nutritionStats.averageCarbs}g)
+                  </Text>
+                </View>
+                <View style={styles.macroLegendItem}>
+                  <View style={[styles.macroLegendColor, { backgroundColor: '#28A745' }]} />
+                  <Text style={styles.macroLegendText}>
+                    Lipides ({nutritionStats.averageFat}g)
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Progression hydratation */}
+            <View style={styles.hydrationProgressCard}>
+              <Text style={styles.chartTitle}>💧 Hydratation de la semaine</Text>
+
+              <View style={styles.hydrationBars}>
+                {nutritionStats.weeklyHydration.map((day, index) => (
+                  <View key={index} style={styles.hydrationBarContainer}>
+                    <Text style={styles.hydrationBarText}>{Math.round(day.water/1000*10)/10}L</Text>
+                    <View style={styles.hydrationBarBackground}>
+                      <View 
+                        style={[
+                          styles.hydrationBarFill, 
+                          { 
+                            height: `${Math.min((day.water / day.goal) * 100, 100)}%`,
+                            backgroundColor: day.water >= day.goal ? '#4ECDC4' : day.water >= day.goal * 0.7 ? '#F5A623' : '#DC3545'
+                          }
+                        ]} 
+                      />
+                    </View>
+                    <Text style={styles.dayLabel}>{day.day}</Text>
+                  </View>
+                ))}
+              </View>
+
+              <View style={styles.hydrationObjectiveContainer}>
+                <Text style={styles.hydrationObjectiveText}>
+                  Objectif: 2L par jour
+                </Text>
+                <Text style={styles.hydrationObjectiveSubtext}>
+                  {nutritionStats.weeklyHydration.filter(d => d.water >= d.goal).length}/7 jours atteints
+                </Text>
+              </View>
+            </View>
+
+            {/* Résumé nutritionnel */}
+            <View style={styles.nutritionSummaryCard}>
+              <Text style={styles.summaryTitle}>Résumé nutritionnel</Text>
+              
+              {nutritionStats.daysWithData === 0 ? (
+                <View style={styles.noDataContainer}>
+                  <Text style={styles.noDataText}>🍽️</Text>
+                  <Text style={styles.noDataTitle}>Aucune donnée nutritionnelle</Text>
+                  <Text style={styles.noDataSubtitle}>
+                    Commencez à enregistrer vos repas dans l'onglet Nutrition pour voir vos statistiques ici.
+                  </Text>
+                </View>
+              ) : (
+                <>
+                  <View style={styles.summaryStats}>
+                    <View style={styles.summaryItem}>
+                      <Text style={[styles.summaryValue, { 
+                        color: nutritionStats.averageCalories >= calorieGoals.calories * 0.8 ? '#28A745' : '#F5A623'
+                      }]}>
+                        {Math.round((nutritionStats.averageCalories / calorieGoals.calories) * 100)}%
+                      </Text>
+                      <Text style={styles.summaryLabel}>Objectif calories</Text>
+                    </View>
+                    <View style={styles.summaryItem}>
+                      <Text style={[styles.summaryValue, { 
+                        color: nutritionStats.averageProteins >= calorieGoals.proteins * 0.8 ? '#28A745' : '#F5A623'
+                      }]}>
+                        {Math.round((nutritionStats.averageProteins / calorieGoals.proteins) * 100)}%
+                      </Text>
+                      <Text style={styles.summaryLabel}>Objectif protéines</Text>
+                    </View>
+                    <View style={styles.summaryItem}>
+                      <Text style={[styles.summaryValue, { color: '#4ECDC4' }]}>
+                        {Math.round((nutritionStats.daysWithData / 7) * 100)}%
+                      </Text>
+                      <Text style={styles.summaryLabel}>Régularité</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.regularityIndicator}>
+                    <Text style={styles.regularityTitle}>Régularité du suivi</Text>
+                    <View style={styles.regularityBar}>
+                      <View style={[
+                        styles.regularityBarFill, 
+                        { 
+                          width: `${(nutritionStats.daysWithData / 7) * 100}%`,
+                          backgroundColor: nutritionStats.daysWithData >= 5 ? '#28A745' : 
+                                          nutritionStats.daysWithData >= 3 ? '#F5A623' : '#DC3545'
+                        }
+                      ]} />
+                    </View>
+                    <Text style={styles.regularityText}>
+                      {nutritionStats.daysWithData >= 5 ? 'Excellent suivi !' :
+                       nutritionStats.daysWithData >= 3 ? 'Bon suivi, continuez !' :
+                       nutritionStats.daysWithData >= 1 ? 'Essayez d\'être plus régulier' :
+                       'Commencez à enregistrer vos repas'}
+                    </Text>
+                  </View>
+                </>
+              )}
+            </View>
+          </View>
+        )}
+
         {/* Onglet Sport */}
         {selectedTab === 'Sport' && (
           <View style={styles.sportContainer}>
