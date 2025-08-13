@@ -598,7 +598,7 @@ export default function ProgresScreen() {
           }]}
         />
         <View style={styles.dataPoints}>
-          <Text>{dataPoints}</Text>
+          {dataPoints}
         </View>
       </>
     );
@@ -709,7 +709,7 @@ export default function ProgresScreen() {
     const minDataWeight = Math.min(...weights.filter(w => w > 0));
     const maxDataWeight = Math.max(...weights.filter(w => w > 0));
 
-    // Déterminer l'objectif de l'utilisateur en temps réel
+    // Déterminer l'objectif de l'utilisateur
     const currentUserGoals = userData?.goals || [];
     const isWeightLoss = currentUserGoals.includes('Perdre du poids');
     const isMuscleGain = currentUserGoals.includes('Me muscler') || currentUserGoals.includes('Prendre du muscle');
@@ -838,7 +838,7 @@ export default function ProgresScreen() {
           style={styles.weightLineGradient}
         />
         <View style={styles.dataPoints}>
-          <Text>{dataPoints}</Text>
+          {dataPoints}
         </View>
       </>
     );
@@ -886,14 +886,14 @@ export default function ProgresScreen() {
           style={styles.weightLineGradient}
         />
         <View style={styles.dataPoints}>
-          <Text>{dataPoints}</Text>
+          {dataPoints}
         </View>
       </>
     );
   };
 
   const getNutritionDataPointPosition = (calories: number, dataIndex: number, totalDataPoints: number, allLabels: string[]) => {
-    // Utiliser la même logique que generateNutritionYAxisLabels
+    // Utiliser la même logique que pour les autres graphiques
     const yAxisValues = generateNutritionYAxisLabels().map(label => parseInt(label));
     const actualMaxCalories = yAxisValues[0];
     const actualMinCalories = yAxisValues[4];
