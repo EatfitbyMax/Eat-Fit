@@ -600,8 +600,23 @@ app.post('/api/weight/:userId', async (req, res) => {
       return res.status(404).json({ error: 'Utilisateur non trouvé' });
     }
 
-    userData.weight = req.body;
+    // S'assurer que tous les champs sont bien sauvegardés, y compris targetAsked
+    const weightDataToSave = {
+      startWeight: req.body.startWeight || 0,
+      currentWeight: req.body.currentWeight || 0,
+      targetWeight: req.body.targetWeight || 0,
+      targetAsked: req.body.targetAsked !== undefined ? req.body.targetAsked : false,
+      lastWeightUpdate: req.body.lastWeightUpdate || null,
+      weightHistory: req.body.weightHistory || []
+    };
+
+    userData.weight = weightDataToSave;
     userData.lastUpdated = new Date().toISOString();
+
+    console.log(`💾 Sauvegarde poids pour ${userId}:`, {
+      targetAsked: weightDataToSave.targetAsked,
+      currentWeight: weightDataToSave.currentWeight
+    });
 
     await writeUserFile(userId, userData, userType);
     res.json({ success: true });

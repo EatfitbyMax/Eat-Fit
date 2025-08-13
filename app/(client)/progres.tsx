@@ -229,11 +229,41 @@ export default function ProgresScreen() {
           }
         }
 
-        // Demander de définir l'objectif si pas encore fait ET pas défini dans le profil
-        if ((!saved.targetWeight || saved.targetWeight === 0) && (!userTargetWeight || userTargetWeight === 0) && saved.startWeight > 0 && !saved.targetAsked) {
-          console.log('❓ Demande définition objectif après chargement');
-          setTimeout(() => setShowTargetModal(true), 1500);
-        }
+        // Vérifier si on doit demander l'objectif de poids (seulement si jamais demandé)
+      if (!weightData.targetAsked && weightData.currentWeight > 0) {
+        console.log('❓ Première demande définition objectif après chargement');
+
+        // Marquer immédiatement comme demandé pour éviter les demandes répétées
+        const updatedDataWithAsked = { ...weightData, targetAsked: true };
+        setWeightData(updatedDataWithAsked);
+        await saveWeightData(updatedDataWithAsked);
+
+        setTimeout(() => {
+          Alert.alert(
+            'Objectif de poids',
+            'Souhaitez-vous définir un objectif de poids ?',
+            [
+              {
+                text: 'Plus tard',
+                style: 'cancel',
+                onPress: () => {
+                  console.log('📝 Utilisateur a choisi "Plus tard" pour l\'objectif');
+                  // targetAsked est déjà à true, ne rien faire de plus
+                }
+              },
+              {
+                text: 'Définir',
+                onPress: () => {
+                  console.log('📝 Utilisateur a choisi de définir un objectif');
+                  setShowTargetModal(true);
+                }
+              }
+            ]
+          );
+        }, 1000);
+      } else if (weightData.targetAsked) {
+        console.log('✅ Objectif déjà demandé précédemment, pas de nouvelle demande');
+      }
       }
     } catch (error) {
       console.error('❌ Erreur chargement données utilisateur:', error);
@@ -468,7 +498,7 @@ export default function ProgresScreen() {
 
   const getMensurationTrend = (muscle: string) => {
     const config = getMuscleConfig(muscle);
-    const data = mensurationData[muscle];
+    const data = mensurationData[muscle] || { start: 0, current: 0 };
 
     if (!data || data.start === 0 || data.current === 0) {
       return { text: 'Non défini', color: '#8B949E' };
@@ -1201,7 +1231,6 @@ export default function ProgresScreen() {
   const generatePeriodLabels = () => {
     const labels = [];
     const monthNames = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
-    const processedData = getProcessedWeightData();
 
     if (selectedPeriod === 'Semaines') {
       // Pour les semaines, créer les labels basés sur les vraies données
@@ -1876,6 +1905,7 @@ export default function ProgresScreen() {
       let totalFatWeek = 0;
       let daysWithData = 0;
       let daysWithHydration = 0;
+      let totalHydrationWeek = 0;
 
       // Calculer le début de la semaine courante (lundi)
       const today = new Date();
@@ -2471,7 +2501,7 @@ export default function ProgresScreen() {
             {/* Résumé nutritionnel */}
             <View style={styles.nutritionSummaryCard}>
               <Text style={styles.summaryTitle}>Résumé nutritionnel</Text>
-              
+
               {nutritionStats.daysWithData === 0 ? (
                 <View style={styles.noDataContainer}>
                   <Text style={styles.noDataText}>🍽️</Text>
