@@ -169,39 +169,51 @@ export default function ProgresScreen() {
         const userWeight = user.weight || 0;
         const userTargetWeight = user.targetWeight || 0;
 
-        // Si les données serveur sont vides mais le profil a des données
+        // CORRECTION PRINCIPALE : Toujours utiliser le poids du profil comme poids de départ si il n'est pas défini
         if (userWeight > 0 && (!saved.startWeight || saved.startWeight === 0)) {
-          console.log(`🔄 Initialisation poids de départ: ${userWeight}kg`);
+          console.log(`🔄 Initialisation poids de départ depuis profil: ${userWeight}kg`);
           saved.startWeight = userWeight;
-          // Ne pas écraser le poids actuel s'il existe déjà et est différent
-          if (!saved.currentWeight || saved.currentWeight === 0) {
+          needsUpdate = true;
+        }
+
+        // Si le poids actuel n'est pas défini, utiliser le poids du profil
+        if (!saved.currentWeight || saved.currentWeight === 0) {
+          if (userWeight > 0) {
+            console.log(`🔄 Initialisation poids actuel depuis profil: ${userWeight}kg`);
             saved.currentWeight = userWeight;
+            needsUpdate = true;
           }
-          if (!saved.weightHistory || saved.weightHistory.length === 0) {
-            saved.weightHistory = [{ 
-              weight: userWeight, 
-              date: user.createdAt || new Date().toISOString() 
-            }];
-          }
+        }
+
+        // Initialiser l'historique si vide
+        if ((!saved.weightHistory || saved.weightHistory.length === 0) && userWeight > 0) {
+          console.log(`📊 Initialisation historique poids`);
+          saved.weightHistory = [{ 
+            weight: userWeight, 
+            date: user.createdAt || new Date().toISOString() 
+          }];
           needsUpdate = true;
         }
 
-        // Cas spécial : si startWeight est 0 mais qu'on a un currentWeight, utiliser le poids du profil comme startWeight
-        if ((!saved.startWeight || saved.startWeight === 0) && saved.currentWeight > 0 && userWeight > 0) {
-          console.log(`🔄 Correction poids de départ manquant: ${userWeight}kg (basé sur le profil)`);
-          saved.startWeight = userWeight;
-          needsUpdate = true;
+        // CORRECTION OBJECTIF : Toujours utiliser l'objectif du profil si disponible
+        if (userTargetWeight > 0) {
+          if (!saved.targetWeight || saved.targetWeight === 0 || saved.targetWeight !== userTargetWeight) {
+            console.log(`🎯 Synchronisation objectif depuis profil: ${userTargetWeight}kg`);
+            saved.targetWeight = userTargetWeight;
+            saved.targetAsked = true;
+            needsUpdate = true;
+          }
         }
 
-        // Synchroniser l'objectif
-        if (userTargetWeight > 0 && (!saved.targetWeight || saved.targetWeight === 0)) {
-          console.log(`🎯 Initialisation objectif: ${userTargetWeight}kg`);
-          saved.targetWeight = userTargetWeight;
-          saved.targetAsked = true;
+        // Cas spécial : si on a un poids actuel mais pas de poids de départ, utiliser le poids actuel comme départ
+        if (saved.currentWeight > 0 && (!saved.startWeight || saved.startWeight === 0)) {
+          console.log(`🔄 Utilisation poids actuel comme poids de départ: ${saved.currentWeight}kg`);
+          saved.startWeight = saved.currentWeight;
           needsUpdate = true;
         }
 
         if (needsUpdate) {
+          console.log('💾 Sauvegarde des corrections de données poids:', saved);
           await saveWeightData(saved);
         }
 
@@ -217,8 +229,8 @@ export default function ProgresScreen() {
           }
         }
 
-        // Demander de définir l'objectif si pas encore fait
-        if ((!saved.targetWeight || saved.targetWeight === 0) && saved.startWeight > 0 && !saved.targetAsked) {
+        // Demander de définir l'objectif si pas encore fait ET pas défini dans le profil
+        if ((!saved.targetWeight || saved.targetWeight === 0) && (!userTargetWeight || userTargetWeight === 0) && saved.startWeight > 0 && !saved.targetAsked) {
           console.log('❓ Demande définition objectif après chargement');
           setTimeout(() => setShowTargetModal(true), 1500);
         }
