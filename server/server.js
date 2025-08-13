@@ -602,9 +602,9 @@ app.post('/api/weight/:userId', async (req, res) => {
 
     // S'assurer que tous les champs sont bien sauvegardés, y compris targetAsked
     const weightDataToSave = {
-      startWeight: req.body.startWeight || 0,
-      currentWeight: req.body.currentWeight || 0,
-      targetWeight: req.body.targetWeight || 0,
+      startWeight: Number(req.body.startWeight) || 0,
+      currentWeight: Number(req.body.currentWeight) || 0,
+      targetWeight: req.body.targetWeight !== undefined ? Number(req.body.targetWeight) : 0,
       targetAsked: req.body.targetAsked !== undefined ? req.body.targetAsked : false,
       lastWeightUpdate: req.body.lastWeightUpdate || null,
       weightHistory: req.body.weightHistory || []
@@ -615,7 +615,11 @@ app.post('/api/weight/:userId', async (req, res) => {
 
     console.log(`💾 Sauvegarde poids pour ${userId}:`, {
       targetAsked: weightDataToSave.targetAsked,
-      currentWeight: weightDataToSave.currentWeight
+      currentWeight: weightDataToSave.currentWeight,
+      targetWeight: weightDataToSave.targetWeight,
+      targetWeightType: typeof weightDataToSave.targetWeight,
+      originalTargetWeight: req.body.targetWeight,
+      originalTargetWeightType: typeof req.body.targetWeight
     });
 
     await writeUserFile(userId, userData, userType);
