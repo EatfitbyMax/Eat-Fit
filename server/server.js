@@ -571,6 +571,14 @@ app.get('/api/weight/:userId', async (req, res) => {
     };
 
     const weightData = userData?.weight || defaultWeight;
+    
+    console.log(`📤 [WEIGHT_LOAD] Chargement poids pour ${userId}:`, {
+      targetWeight: weightData.targetWeight,
+      targetWeightType: typeof weightData.targetWeight,
+      completeData: weightData,
+      userDataKeys: userData ? Object.keys(userData) : 'pas de userData'
+    });
+    
     res.json(weightData);
   } catch (error) {
     console.error(`Erreur lecture poids utilisateur ${req.params.userId}:`, error);
@@ -600,12 +608,23 @@ app.post('/api/weight/:userId', async (req, res) => {
       return res.status(404).json({ error: 'Utilisateur non trouvé' });
     }
 
+    // Logging détaillé des données reçues
+    console.log(`🔍 [WEIGHT_SAVE] Données brutes reçues pour ${userId}:`, {
+      startWeight: req.body.startWeight,
+      currentWeight: req.body.currentWeight,
+      targetWeight: req.body.targetWeight,
+      targetWeightType: typeof req.body.targetWeight,
+      targetAsked: req.body.targetAsked,
+      targetAskedType: typeof req.body.targetAsked,
+      allKeys: Object.keys(req.body)
+    });
+
     // S'assurer que tous les champs sont bien sauvegardés, y compris targetAsked
     const weightDataToSave = {
       startWeight: Number(req.body.startWeight) || 0,
       currentWeight: Number(req.body.currentWeight) || 0,
-      targetWeight: req.body.targetWeight !== undefined ? Number(req.body.targetWeight) : 0,
-      targetAsked: req.body.targetAsked !== undefined ? req.body.targetAsked : false,
+      targetWeight: req.body.targetWeight !== null && req.body.targetWeight !== undefined ? Number(req.body.targetWeight) : 0,
+      targetAsked: req.body.targetAsked !== undefined ? Boolean(req.body.targetAsked) : false,
       lastWeightUpdate: req.body.lastWeightUpdate || null,
       weightHistory: req.body.weightHistory || []
     };
@@ -613,16 +632,24 @@ app.post('/api/weight/:userId', async (req, res) => {
     userData.weight = weightDataToSave;
     userData.lastUpdated = new Date().toISOString();
 
-    console.log(`💾 Sauvegarde poids pour ${userId}:`, {
+    console.log(`💾 [WEIGHT_SAVE] Sauvegarde poids pour ${userId}:`, {
       targetAsked: weightDataToSave.targetAsked,
       currentWeight: weightDataToSave.currentWeight,
       targetWeight: weightDataToSave.targetWeight,
       targetWeightType: typeof weightDataToSave.targetWeight,
       originalTargetWeight: req.body.targetWeight,
-      originalTargetWeightType: typeof req.body.targetWeight
+      originalTargetWeightType: typeof req.body.targetWeight,
+      weightDataComplete: weightDataToSave
     });
 
     await writeUserFile(userId, userData, userType);
+
+    // Vérification immédiate après sauvegarde
+    console.log(`🔍 [WEIGHT_VERIFY] Vérification données sauvées pour ${userId}:`, {
+      targetWeight: userData.weight.targetWeight,
+      targetWeightType: typeof userData.weight.targetWeight,
+      allWeightData: userData.weight
+    });
     res.json({ success: true });
   } catch (error) {
     console.error(`Erreur sauvegarde poids utilisateur ${userId}:`, error);
