@@ -20,9 +20,7 @@ export default function ProgresScreen() {
   const [weightData, setWeightData] = useState({
     startWeight: 0,
     currentWeight: 0,
-    targetWeight: 0,
     lastWeightUpdate: null as string | null,
-    targetAsked: false,
     weightHistory: [] as Array<{ weight: number; date: string }>,
   });
 
@@ -167,9 +165,8 @@ export default function ProgresScreen() {
         // Synchroniser avec les données du profil utilisateur
         let needsUpdate = false;
         const userWeight = user.weight || 0;
-        const userTargetWeight = user.targetWeight || 0;
 
-        // CORRECTION PRINCIPALE : Toujours utiliser le poids du profil comme poids de départ si il n'est pas défini
+        // Initialiser le poids de départ depuis le profil si pas défini
         if (userWeight > 0 && (!saved.startWeight || saved.startWeight === 0)) {
           console.log(`🔄 Initialisation poids de départ depuis profil: ${userWeight}kg`);
           saved.startWeight = userWeight;
@@ -195,28 +192,6 @@ export default function ProgresScreen() {
           needsUpdate = true;
         }
 
-        // CORRECTION OBJECTIF : Préserver l'objectif existant dans les données VPS, ne pas l'écraser
-        if (saved.targetWeight > 0) {
-          // Si on a déjà un objectif dans les données VPS, le garder absolument
-          console.log(`🎯 Objectif existant préservé depuis VPS: ${saved.targetWeight}kg`);
-          // S'assurer que targetAsked est également préservé
-          if (saved.targetAsked === undefined) {
-            saved.targetAsked = true;
-            needsUpdate = true;
-          }
-        } else if (userTargetWeight > 0) {
-          // Seulement si pas d'objectif sur le serveur ET qu'on a un objectif dans le profil
-          console.log(`🎯 Synchronisation objectif depuis profil: ${userTargetWeight}kg`);
-          saved.targetWeight = userTargetWeight;
-          saved.targetAsked = true;
-          needsUpdate = true;
-        } else {
-          // S'assurer que targetAsked est préservé même sans objectif
-          if (saved.targetAsked === undefined) {
-            saved.targetAsked = false;
-          }
-        }
-
         // Cas spécial : si on a un poids actuel mais pas de poids de départ, utiliser le poids actuel comme départ
         if (saved.currentWeight > 0 && (!saved.startWeight || saved.startWeight === 0)) {
           console.log(`🔄 Utilisation poids actuel comme poids de départ: ${saved.currentWeight}kg`);
@@ -231,51 +206,15 @@ export default function ProgresScreen() {
 
         setWeightData(saved);
 
-        // Calculer le pourcentage de progression
-        if (saved.targetWeight && saved.startWeight && saved.targetWeight > 0 && saved.startWeight > 0) {
-          const totalLoss = saved.startWeight - saved.targetWeight;
+        // Calculer le pourcentage de progression si objectif défini
+        if (user.targetWeight && saved.startWeight && user.targetWeight > 0 && saved.startWeight > 0) {
+          const totalLoss = saved.startWeight - user.targetWeight;
           const currentLoss = saved.startWeight - saved.currentWeight;
           if (totalLoss > 0) {
             const progress = Math.max(0, Math.min(1, currentLoss / totalLoss));
             progressAnimation.value = withSpring(progress);
           }
         }
-
-        // Vérifier si on doit demander l'objectif de poids (seulement si jamais demandé)
-      if (!saved.targetAsked && saved.currentWeight > 0) {
-        console.log('❓ Première demande définition objectif après chargement');
-
-        // Marquer immédiatement comme demandé pour éviter les demandes répétées
-        const updatedDataWithAsked = { ...saved, targetAsked: true };
-        setWeightData(updatedDataWithAsked);
-        await saveWeightData(updatedDataWithAsked);
-
-        setTimeout(() => {
-          Alert.alert(
-            'Objectif de poids',
-            'Souhaitez-vous définir un objectif de poids ?',
-            [
-              {
-                text: 'Plus tard',
-                style: 'cancel',
-                onPress: () => {
-                  console.log('📝 Utilisateur a choisi "Plus tard" pour l\'objectif');
-                  // targetAsked est déjà à true, ne rien faire de plus
-                }
-              },
-              {
-                text: 'Définir',
-                onPress: () => {
-                  console.log('📝 Utilisateur a choisi de définir un objectif');
-                  setShowTargetModal(true);
-                }
-              }
-            ]
-          );
-        }, 1000);
-      } else if (saved.targetAsked) {
-        console.log('✅ Objectif déjà demandé précédemment, pas de nouvelle demande');
-      }
       }
     } catch (error) {
       console.error('❌ Erreur chargement données utilisateur:', error);
@@ -289,9 +228,7 @@ export default function ProgresScreen() {
       const validatedData = {
         startWeight: Number(data.startWeight) || 0,
         currentWeight: Number(data.currentWeight) || 0,
-        targetWeight: Number(data.targetWeight) || 0,
         lastWeightUpdate: data.lastWeightUpdate || null,
-        targetAsked: data.targetAsked !== undefined ? Boolean(data.targetAsked) : false,
         weightHistory: Array.isArray(data.weightHistory) ? data.weightHistory : []
       };
 
@@ -409,51 +346,32 @@ export default function ProgresScreen() {
         if (!response) return;
       }
 
-      const newData = {
-        ...weightData,
-        targetWeight: target,
-        targetAsked: true,
-      };
+      // Sauvegarder l'objectif directement dans le profil utilisateur
+      if (userData) {
+        const updatedUser = {
+          ...userData,
+          targetWeight: target
+        };
 
-      console.log('🎯 Nouvelles données objectif:', newData);
-
-      await saveWeightData(newData);
-
-      // Mettre à jour l'état local immédiatement
-      setWeightData(newData);
-
-      // Sauvegarder l'objectif dans le profil utilisateur
-      try {
-        if (userData) {
-          const updatedUser = {
-            ...userData,
-            targetWeight: target
-          };
-
-          // Sauvegarder sur le serveur
-          const users = await PersistentStorage.getUsers();
-          const userIndex = users.findIndex(u => u.id === userData.id);
-          if (userIndex !== -1) {
-            users[userIndex] = updatedUser;
-            await PersistentStorage.saveUsers(users);
-          }
-
-          // Pas besoin de sauvegarde locale - tout est géré par le serveur VPS
-          setUserData(updatedUser);
-
-          console.log('✅ Objectif sauvegardé dans le profil utilisateur:', target);
+        // Sauvegarder sur le serveur
+        const users = await PersistentStorage.getUsers();
+        const userIndex = users.findIndex(u => u.id === userData.id);
+        if (userIndex !== -1) {
+          users[userIndex] = updatedUser;
+          await PersistentStorage.saveUsers(users);
         }
-      } catch (error) {
-        console.error('⚠️ Erreur sauvegarde objectif utilisateur:', error);
-        // Continue même si cette sauvegarde échoue
-      }
 
-      // Mettre à jour l'animation de progression
-      if (newData.currentWeight && newData.startWeight) {
-        const totalLoss = newData.startWeight - newData.targetWeight;
-        const currentLoss = newData.startWeight - newData.currentWeight;
-        const progress = Math.max(0, Math.min(1, currentLoss / totalLoss));
-        progressAnimation.value = withSpring(progress);
+        setUserData(updatedUser);
+
+        // Mettre à jour l'animation de progression
+        if (weightData.currentWeight && weightData.startWeight) {
+          const totalLoss = weightData.startWeight - target;
+          const currentLoss = weightData.startWeight - weightData.currentWeight;
+          const progress = Math.max(0, Math.min(1, currentLoss / totalLoss));
+          progressAnimation.value = withSpring(progress);
+        }
+
+        console.log('✅ Objectif sauvegardé dans le profil utilisateur:', target);
       }
 
       setTempTarget('');
@@ -2861,11 +2779,11 @@ export default function ProgresScreen() {
             </View>
             <Text style={styles.statLabel}>Objectif</Text>
             <Text style={styles.statValue}>
-              {weightData.targetWeight ? `${formatWeight(weightData.targetWeight)} kg` : 'À définir'}
+              {userData?.targetWeight ? `${formatWeight(userData.targetWeight)} kg` : 'À définir'}
             </Text>
-            {weightData.targetWeight > 0 && (
+            {userData?.targetWeight && userData.targetWeight > 0 && (
               <Text style={styles.statSubtext}>
-                {formatWeight(Math.abs(weightData.currentWeight - weightData.targetWeight))} kg restants
+                {formatWeight(Math.abs(weightData.currentWeight - userData.targetWeight))} kg restants
               </Text>
             )}
             <Text style={styles.updateHint}>Appuyez pour modifier</Text>
@@ -2987,14 +2905,15 @@ export default function ProgresScreen() {
         )}
 
         {/* Progress Card - Affiché seulement pour le suivi du poids */}
-        {selectedTab === 'Mesures' && selectedMeasurementTab === 'Poids' && weightData.targetWeight > 0 && (
+        {selectedTab === 'Mesures' && selectedMeasurementTab === 'Poids' && userData?.targetWeight && userData.targetWeight > 0 && (
         <View style={styles.progressCard}>
           <View style={styles.progressHeader}>
             <Text style={styles.progressTitle}>Progression vers l'objectif</Text>
             <Text style={styles.progressPercentage}>
               {(() => {
+                if (!userData?.targetWeight) return '0%';
                 const weightDiff = weightData.startWeight - weightData.currentWeight;
-                const targetDiff = weightData.startWeight - weightData.targetWeight;
+                const targetDiff = weightData.startWeight - userData.targetWeight;
                 if (targetDiff === 0) return '0%';
                 const percentage = (weightDiff / targetDiff) * 100;
                 return `${Math.round(Math.max(0, Math.min(100, percentage)))}%`;
@@ -3014,7 +2933,7 @@ export default function ProgresScreen() {
 
           <View style={styles.progressLabels}>
             <Text style={styles.progressLabel}>{formatWeight(weightData.startWeight)} kg</Text>
-            <Text style={styles.progressLabel}>{formatWeight(weightData.targetWeight)} kg</Text>
+            <Text style={styles.progressLabel}>{formatWeight(userData?.targetWeight || 0)} kg</Text>
           </View>
         </View>
         )}
@@ -3211,36 +3130,7 @@ export default function ProgresScreen() {
             <View style={styles.modalButtons}>
               <TouchableOpacity 
                 style={styles.modalButtonSecondary}
-                onPress={async () => {
-                  // Marquer comme demandé même si annulé pour éviter de redemander
-                  const newData = {
-                    ...weightData,
-                    targetAsked: true,
-                  };
-                  await saveWeightData(newData);
-
-                  // Sauvegarder dans le profil utilisateur pour éviter de redemander
-                  try {
-                    if (userData) {
-                      const updatedUser = {
-                        ...userData,
-                        targetWeightAsked: true // Flag pour indiquer que la question a été posée
-                      };
-
-                      const users = await PersistentStorage.getUsers();
-                      const userIndex = users.findIndex(u => u.id === userData.id);
-                      if (userIndex !== -1) {
-                        users[userIndex] = updatedUser;
-                        await PersistentStorage.saveUsers(users);
-                      }
-
-                      await PersistentStorage.setItem('currentUser', JSON.stringify(updatedUser));
-                      setUserData(updatedUser);
-                    }
-                  } catch (error) {
-                    console.error('Erreur sauvegarde flag utilisateur:', error);
-                  }
-
+                onPress={() => {
                   setTempTarget('');
                   setShowTargetModal(false);
                 }}
