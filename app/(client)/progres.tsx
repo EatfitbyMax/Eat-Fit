@@ -20,6 +20,7 @@ export default function ProgresScreen() {
   const [weightData, setWeightData] = useState({
     startWeight: 0,
     currentWeight: 0,
+    targetWeight: 0,
     lastWeightUpdate: null as string | null,
     weightHistory: [] as Array<{ weight: number; date: string }>,
   });
@@ -137,7 +138,7 @@ export default function ProgresScreen() {
 
       if (user) {
         setUserData(user);
-        console.log('👤 Utilisateur chargé:', user.firstName, user.lastName, 'Poids profil:', user.weight, 'Objectif profil:', user.targetWeight);
+        console.log('👤 Utilisateur chargé:', user.firstName, user.lastName);
 
         // Charger les données de poids depuis le serveur VPS
         let saved = null;
@@ -146,69 +147,31 @@ export default function ProgresScreen() {
           console.log('✅ Données de poids chargées depuis le serveur VPS:', saved);
         } catch (serverError) {
           console.log('📱 Erreur serveur, création de nouvelles données:', serverError);
-          // Créer des données par défaut basées sur le profil utilisateur
+          // Créer des données par défaut
           const profileWeight = user.weight || 0;
           saved = {
             startWeight: profileWeight,
             currentWeight: profileWeight,
-            targetWeight: user.targetWeight || 0,
+            targetWeight: 0,
             lastWeightUpdate: null,
-            targetAsked: (user.targetWeight && user.targetWeight > 0) ? true : false,
             weightHistory: profileWeight > 0 ? [{ 
               weight: profileWeight, 
               date: user.createdAt || new Date().toISOString() 
             }] : [],
           };
-          console.log('📝 Données par défaut créées avec poids profil:', profileWeight, 'kg');
+          console.log('📝 Données par défaut créées');
         }
 
-        // Synchroniser avec les données du profil utilisateur
-        let needsUpdate = false;
-        const userWeight = user.weight || 0;
-
-        // Initialiser le poids de départ depuis le profil si pas défini
-        if (userWeight > 0 && (!saved.startWeight || saved.startWeight === 0)) {
-          console.log(`🔄 Initialisation poids de départ depuis profil: ${userWeight}kg`);
-          saved.startWeight = userWeight;
-          needsUpdate = true;
-        }
-
-        // Si le poids actuel n'est pas défini, utiliser le poids du profil
-        if (!saved.currentWeight || saved.currentWeight === 0) {
-          if (userWeight > 0) {
-            console.log(`🔄 Initialisation poids actuel depuis profil: ${userWeight}kg`);
-            saved.currentWeight = userWeight;
-            needsUpdate = true;
-          }
-        }
-
-        // Initialiser l'historique si vide
-        if ((!saved.weightHistory || saved.weightHistory.length === 0) && userWeight > 0) {
-          console.log(`📊 Initialisation historique poids`);
-          saved.weightHistory = [{ 
-            weight: userWeight, 
-            date: user.createdAt || new Date().toISOString() 
-          }];
-          needsUpdate = true;
-        }
-
-        // Cas spécial : si on a un poids actuel mais pas de poids de départ, utiliser le poids actuel comme départ
-        if (saved.currentWeight > 0 && (!saved.startWeight || saved.startWeight === 0)) {
-          console.log(`🔄 Utilisation poids actuel comme poids de départ: ${saved.currentWeight}kg`);
-          saved.startWeight = saved.currentWeight;
-          needsUpdate = true;
-        }
-
-        if (needsUpdate) {
-          console.log('💾 Sauvegarde des corrections de données poids:', saved);
-          await saveWeightData(saved);
-        }
+        // Validation des données
+        if (!saved.targetWeight) saved.targetWeight = 0;
+        if (!saved.startWeight && user.weight) saved.startWeight = user.weight;
+        if (!saved.currentWeight && user.weight) saved.currentWeight = user.weight;
 
         setWeightData(saved);
 
         // Calculer le pourcentage de progression si objectif défini
-        if (user.targetWeight && saved.startWeight && user.targetWeight > 0 && saved.startWeight > 0) {
-          const totalLoss = saved.startWeight - user.targetWeight;
+        if (saved.targetWeight && saved.startWeight && saved.targetWeight > 0 && saved.startWeight > 0) {
+          const totalLoss = saved.startWeight - saved.targetWeight;
           const currentLoss = saved.startWeight - saved.currentWeight;
           if (totalLoss > 0) {
             const progress = Math.max(0, Math.min(1, currentLoss / totalLoss));
@@ -228,6 +191,7 @@ export default function ProgresScreen() {
       const validatedData = {
         startWeight: Number(data.startWeight) || 0,
         currentWeight: Number(data.currentWeight) || 0,
+        targetWeight: Number(data.targetWeight) || 0,
         lastWeightUpdate: data.lastWeightUpdate || null,
         weightHistory: Array.isArray(data.weightHistory) ? data.weightHistory : []
       };
@@ -346,37 +310,29 @@ export default function ProgresScreen() {
         if (!response) return;
       }
 
-      // Sauvegarder l'objectif directement dans le profil utilisateur
-      if (userData) {
-        const updatedUser = {
-          ...userData,
-          targetWeight: target
-        };
+      // Mettre à jour les données de poids avec le nouvel objectif
+      const updatedWeightData = {
+        ...weightData,
+        targetWeight: target
+      };
 
-        // Sauvegarder sur le serveur
-        const users = await PersistentStorage.getUsers();
-        const userIndex = users.findIndex(u => u.id === userData.id);
-        if (userIndex !== -1) {
-          users[userIndex] = updatedUser;
-          await PersistentStorage.saveUsers(users);
-        }
+      // Sauvegarder dans les données client
+      await saveWeightData(updatedWeightData);
+      setWeightData(updatedWeightData);
 
-        setUserData(updatedUser);
-
-        // Mettre à jour l'animation de progression
-        if (weightData.currentWeight && weightData.startWeight) {
-          const totalLoss = weightData.startWeight - target;
-          const currentLoss = weightData.startWeight - weightData.currentWeight;
-          const progress = Math.max(0, Math.min(1, currentLoss / totalLoss));
-          progressAnimation.value = withSpring(progress);
-        }
-
-        console.log('✅ Objectif sauvegardé dans le profil utilisateur:', target);
+      // Mettre à jour l'animation de progression
+      if (weightData.currentWeight && weightData.startWeight) {
+        const totalLoss = weightData.startWeight - target;
+        const currentLoss = weightData.startWeight - weightData.currentWeight;
+        const progress = Math.max(0, Math.min(1, currentLoss / totalLoss));
+        progressAnimation.value = withSpring(progress);
       }
 
       setTempTarget('');
       setShowTargetModal(false);
       Alert.alert('Succès', `Votre objectif a été défini : ${formatWeight(target)} kg`);
+
+      console.log('✅ Objectif sauvegardé dans les données client:', target);
 
     } catch (error) {
       console.error('❌ Erreur mise à jour objectif:', error);
@@ -2779,11 +2735,11 @@ export default function ProgresScreen() {
             </View>
             <Text style={styles.statLabel}>Objectif</Text>
             <Text style={styles.statValue}>
-              {userData?.targetWeight ? `${formatWeight(userData.targetWeight)} kg` : 'À définir'}
+              {weightData.targetWeight ? `${formatWeight(weightData.targetWeight)} kg` : 'À définir'}
             </Text>
-            {userData?.targetWeight && userData.targetWeight > 0 && (
+            {weightData.targetWeight && weightData.targetWeight > 0 && (
               <Text style={styles.statSubtext}>
-                {formatWeight(Math.abs(weightData.currentWeight - userData.targetWeight))} kg restants
+                {formatWeight(Math.abs(weightData.currentWeight - weightData.targetWeight))} kg restants
               </Text>
             )}
             <Text style={styles.updateHint}>Appuyez pour modifier</Text>
@@ -2905,15 +2861,15 @@ export default function ProgresScreen() {
         )}
 
         {/* Progress Card - Affiché seulement pour le suivi du poids */}
-        {selectedTab === 'Mesures' && selectedMeasurementTab === 'Poids' && userData?.targetWeight && userData.targetWeight > 0 && (
+        {selectedTab === 'Mesures' && selectedMeasurementTab === 'Poids' && weightData.targetWeight && weightData.targetWeight > 0 && (
         <View style={styles.progressCard}>
           <View style={styles.progressHeader}>
             <Text style={styles.progressTitle}>Progression vers l'objectif</Text>
             <Text style={styles.progressPercentage}>
               {(() => {
-                if (!userData?.targetWeight) return '0%';
+                if (!weightData.targetWeight) return '0%';
                 const weightDiff = weightData.startWeight - weightData.currentWeight;
-                const targetDiff = weightData.startWeight - userData.targetWeight;
+                const targetDiff = weightData.startWeight - weightData.targetWeight;
                 if (targetDiff === 0) return '0%';
                 const percentage = (weightDiff / targetDiff) * 100;
                 return `${Math.round(Math.max(0, Math.min(100, percentage)))}%`;
@@ -2933,7 +2889,7 @@ export default function ProgresScreen() {
 
           <View style={styles.progressLabels}>
             <Text style={styles.progressLabel}>{formatWeight(weightData.startWeight)} kg</Text>
-            <Text style={styles.progressLabel}>{formatWeight(userData?.targetWeight || 0)} kg</Text>
+            <Text style={styles.progressLabel}>{formatWeight(weightData.targetWeight || 0)} kg</Text>
           </View>
         </View>
         )}
