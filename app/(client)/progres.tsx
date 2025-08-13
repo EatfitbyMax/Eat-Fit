@@ -199,12 +199,22 @@ export default function ProgresScreen() {
         if (saved.targetWeight > 0) {
           // Si on a déjà un objectif dans les données VPS, le garder
           console.log(`🎯 Objectif existant trouvé dans VPS: ${saved.targetWeight}kg`);
+          // S'assurer que targetAsked est également préservé
+          if (saved.targetAsked === undefined) {
+            saved.targetAsked = true;
+            needsUpdate = true;
+          }
         } else if (userTargetWeight > 0) {
           // Sinon, utiliser l'objectif du profil utilisateur
           console.log(`🎯 Synchronisation objectif depuis profil: ${userTargetWeight}kg`);
           saved.targetWeight = userTargetWeight;
           saved.targetAsked = true;
           needsUpdate = true;
+        } else {
+          // S'assurer que targetAsked est préservé même sans objectif
+          if (saved.targetAsked === undefined) {
+            saved.targetAsked = false;
+          }
         }
 
         // Cas spécial : si on a un poids actuel mais pas de poids de départ, utiliser le poids actuel comme départ
@@ -281,7 +291,7 @@ export default function ProgresScreen() {
         currentWeight: Number(data.currentWeight) || 0,
         targetWeight: Number(data.targetWeight) || 0,
         lastWeightUpdate: data.lastWeightUpdate || null,
-        targetAsked: Boolean(data.targetAsked),
+        targetAsked: data.targetAsked !== undefined ? Boolean(data.targetAsked) : false,
         weightHistory: Array.isArray(data.weightHistory) ? data.weightHistory : []
       };
 
