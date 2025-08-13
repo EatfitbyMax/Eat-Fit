@@ -195,17 +195,17 @@ export default function ProgresScreen() {
           needsUpdate = true;
         }
 
-        // CORRECTION OBJECTIF : Préserver l'objectif existant dans les données VPS, sinon utiliser le profil
+        // CORRECTION OBJECTIF : Préserver l'objectif existant dans les données VPS, ne pas l'écraser
         if (saved.targetWeight > 0) {
-          // Si on a déjà un objectif dans les données VPS, le garder
-          console.log(`🎯 Objectif existant trouvé dans VPS: ${saved.targetWeight}kg`);
+          // Si on a déjà un objectif dans les données VPS, le garder absolument
+          console.log(`🎯 Objectif existant préservé depuis VPS: ${saved.targetWeight}kg`);
           // S'assurer que targetAsked est également préservé
           if (saved.targetAsked === undefined) {
             saved.targetAsked = true;
             needsUpdate = true;
           }
         } else if (userTargetWeight > 0) {
-          // Sinon, utiliser l'objectif du profil utilisateur
+          // Seulement si pas d'objectif sur le serveur ET qu'on a un objectif dans le profil
           console.log(`🎯 Synchronisation objectif depuis profil: ${userTargetWeight}kg`);
           saved.targetWeight = userTargetWeight;
           saved.targetAsked = true;
