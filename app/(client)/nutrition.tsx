@@ -779,19 +779,19 @@ function NutritionScreen() {
                           strokeWidth="8"
                           fill="transparent"
                           strokeDasharray={`${2 * Math.PI * 52}`}
-                          strokeDashoffset={`${2 * Math.PI * 52 * (1 - Math.min(dailyTotals.calories / calorieGoals.calories, 1))}`}
+                          strokeDashoffset={`${2 * Math.PI * 52 * (1 - Math.min(((isNaN(dailyTotals.calories) ? 0 : dailyTotals.calories) / (isNaN(calorieGoals.calories) ? 1 : calorieGoals.calories)), 1))}`}
                           strokeLinecap="round"
                           transform="rotate(-90 60 60)"
                         />
                       </Svg>
                       <View style={styles.circularGaugeInner}>
-                        <Text style={styles.caloriesValue}>{dailyTotals.calories}</Text>
-                        <Text style={styles.caloriesTarget}>/ {calorieGoals.calories}</Text>
+                        <Text style={styles.caloriesValue}>{isNaN(dailyTotals.calories) ? 0 : Math.round(dailyTotals.calories)}</Text>
+                        <Text style={styles.caloriesTarget}>/ {isNaN(calorieGoals.calories) ? 0 : calorieGoals.calories}</Text>
                         <Text style={styles.caloriesLabel}>kcal</Text>
                       </View>
                     </View>
                     <Text style={styles.caloriesSubtext}>
-                      {Math.max(0, calorieGoals.calories - dailyTotals.calories)} kcal restantes
+                      {Math.max(0, (isNaN(calorieGoals.calories) ? 0 : calorieGoals.calories) - (isNaN(dailyTotals.calories) ? 0 : dailyTotals.calories))} kcal restantes
                     </Text>
                   </View>
 
@@ -801,11 +801,13 @@ function NutritionScreen() {
                     <View style={styles.macroProgressItem}>
                       <View style={styles.macroProgressHeader}>
                         <Text style={styles.macroProgressLabel}>Protéines</Text>
-                        <Text style={styles.macroProgressValue}>{Math.round(dailyTotals.proteins)}g / {calorieGoals.proteins}g</Text>
+                        <Text style={styles.macroProgressValue}>
+                          {isNaN(dailyTotals.proteins) ? 0 : Math.round(dailyTotals.proteins)}g / {isNaN(calorieGoals.proteins) ? 0 : calorieGoals.proteins}g
+                        </Text>
                       </View>
                       <View style={styles.macroProgressBar}>
                         <View style={[styles.macroProgressFill, { 
-                          width: `${Math.min((dailyTotals.proteins / calorieGoals.proteins) * 100, 100)}%`, 
+                          width: `${Math.min(((isNaN(dailyTotals.proteins) ? 0 : dailyTotals.proteins) / (isNaN(calorieGoals.proteins) ? 1 : calorieGoals.proteins)) * 100, 100)}%`, 
                           backgroundColor: '#FF6B6B' 
                         }]} />
                       </View>
@@ -815,11 +817,13 @@ function NutritionScreen() {
                     <View style={styles.macroProgressItem}>
                       <View style={styles.macroProgressHeader}>
                         <Text style={styles.macroProgressLabel}>Glucides</Text>
-                        <Text style={styles.macroProgressValue}>{Math.round(dailyTotals.carbohydrates)}g / {calorieGoals.carbohydrates}g</Text>
+                        <Text style={styles.macroProgressValue">
+                          {isNaN(dailyTotals.carbohydrates) ? 0 : Math.round(dailyTotals.carbohydrates)}g / {isNaN(calorieGoals.carbohydrates) ? 0 : calorieGoals.carbohydrates}g
+                        </Text>
                       </View>
                       <View style={styles.macroProgressBar}>
                         <View style={[styles.macroProgressFill, { 
-                          width: `${Math.min((dailyTotals.carbohydrates / calorieGoals.carbohydrates) * 100, 100)}%`, 
+                          width: `${Math.min(((isNaN(dailyTotals.carbohydrates) ? 0 : dailyTotals.carbohydrates) / (isNaN(calorieGoals.carbohydrates) ? 1 : calorieGoals.carbohydrates)) * 100, 100)}%`, 
                           backgroundColor: '#4ECDC4' 
                         }]} />
                       </View>
@@ -829,11 +833,13 @@ function NutritionScreen() {
                     <View style={styles.macroProgressItem}>
                       <View style={styles.macroProgressHeader}>
                         <Text style={styles.macroProgressLabel}>Lipides</Text>
-                        <Text style={styles.macroProgressValue}>{Math.round(dailyTotals.fat)}g / {calorieGoals.fat}g</Text>
+                        <Text style={styles.macroProgressValue">
+                          {isNaN(dailyTotals.fat) ? 0 : Math.round(dailyTotals.fat)}g / {isNaN(calorieGoals.fat) ? 0 : calorieGoals.fat}g
+                        </Text>
                       </View>
                       <View style={styles.macroProgressBar}>
                         <View style={[styles.macroProgressFill, { 
-                          width: `${Math.min((dailyTotals.fat / calorieGoals.fat) * 100, 100)}%`, 
+                          width: `${Math.min(((isNaN(dailyTotals.fat) ? 0 : dailyTotals.fat) / (isNaN(calorieGoals.fat) ? 1 : calorieGoals.fat)) * 100, 100)}%`, 
                           backgroundColor: '#FFE66D' 
                         }]} />
                       </View>
