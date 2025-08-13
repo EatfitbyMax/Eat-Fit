@@ -571,14 +571,14 @@ app.get('/api/weight/:userId', async (req, res) => {
     };
 
     const weightData = userData?.weight || defaultWeight;
-    
+
     console.log(`📤 [WEIGHT_LOAD] Chargement poids pour ${userId}:`, {
       targetWeight: weightData.targetWeight,
       targetWeightType: typeof weightData.targetWeight,
       completeData: weightData,
       userDataKeys: userData ? Object.keys(userData) : 'pas de userData'
     });
-    
+
     res.json(weightData);
   } catch (error) {
     console.error(`Erreur lecture poids utilisateur ${req.params.userId}:`, error);
@@ -619,27 +619,38 @@ app.post('/api/weight/:userId', async (req, res) => {
       allKeys: Object.keys(req.body)
     });
 
-    // S'assurer que tous les champs sont bien sauvegardés, y compris targetAsked
-    const weightDataToSave = {
-      startWeight: Number(req.body.startWeight) || 0,
-      currentWeight: Number(req.body.currentWeight) || 0,
-      targetWeight: req.body.targetWeight !== null && req.body.targetWeight !== undefined ? Number(req.body.targetWeight) : 0,
-      targetAsked: req.body.targetAsked !== undefined ? Boolean(req.body.targetAsked) : false,
-      lastWeightUpdate: req.body.lastWeightUpdate || null,
-      weightHistory: req.body.weightHistory || []
+    // Préserver le targetWeight existant si la nouvelle valeur est 0 ou undefined
+    const existingTargetWeight = userData.weight?.targetWeight || 0;
+    const newTargetWeight = parseFloat(req.body.targetWeight);
+    const finalTargetWeight = (!isNaN(newTargetWeight) && newTargetWeight > 0) ? newTargetWeight : existingTargetWeight;
+
+    // Mettre à jour les données de poids
+    const updatedWeightData = {
+      startWeight: parseFloat(req.body.startWeight) || userData.weight?.startWeight || 0,
+      currentWeight: parseFloat(req.body.currentWeight) || userData.weight?.currentWeight || 0,
+      targetWeight: finalTargetWeight,
+      lastWeightUpdate: req.body.lastWeightUpdate || userData.weight?.lastWeightUpdate || null,
+      targetAsked: req.body.targetAsked !== undefined ? Boolean(req.body.targetAsked) : (userData.weight?.targetAsked || false),
+      weightHistory: req.body.weightHistory || userData.weight?.weightHistory || []
     };
 
-    userData.weight = weightDataToSave;
+    userData.weight = updatedWeightData;
     userData.lastUpdated = new Date().toISOString();
 
+    console.log(`💾 [WEIGHT_SAVE] Données finales à sauvegarder pour ${userId}:`, {
+      existingTargetWeight,
+      newTargetWeight,
+      finalTargetWeight,
+      updatedData: updatedWeightData
+    });
     console.log(`💾 [WEIGHT_SAVE] Sauvegarde poids pour ${userId}:`, {
-      targetAsked: weightDataToSave.targetAsked,
-      currentWeight: weightDataToSave.currentWeight,
-      targetWeight: weightDataToSave.targetWeight,
-      targetWeightType: typeof weightDataToSave.targetWeight,
+      targetAsked: updatedWeightData.targetAsked,
+      currentWeight: updatedWeightData.currentWeight,
+      targetWeight: updatedWeightData.targetWeight,
+      targetWeightType: typeof updatedWeightData.targetWeight,
       originalTargetWeight: req.body.targetWeight,
       originalTargetWeightType: typeof req.body.targetWeight,
-      weightDataComplete: weightDataToSave
+      weightDataComplete: updatedWeightData
     });
 
     await writeUserFile(userId, userData, userType);
@@ -1078,7 +1089,7 @@ app.get('/api/water/:userId/:date', async (req, res) => {
 
     const waterData = userData?.waterIntake || {};
     const amount = waterData[date] || 0;
-    
+
     res.json(amount);
   } catch (error) {
     console.error(`Erreur récupération hydratation ${req.params.userId}/${req.params.date}:`, error);
@@ -1168,7 +1179,7 @@ app.get('/api/forme/:userId/:date', async (req, res) => {
 
     const formeData = userData?.forme || {};
     const dayData = formeData[date] || null;
-    
+
     res.json(dayData);
   } catch (error) {
     console.error(`Erreur récupération forme ${req.params.userId}/${req.params.date}:`, error);

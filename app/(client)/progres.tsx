@@ -10,10 +10,10 @@ import ComingSoonModal from '@/components/ComingSoonModal';
 const { width } = Dimensions.get('window');
 
 export default function ProgresScreen() {
-  const [selectedTab, setSelectedTab] = useState('Mesures');
-  const [isPremium, setIsPremium] = useState(false);
-  const [selectedMeasurementTab, setSelectedMeasurementTab] = useState('Poids');
-  const [selectedPeriod, setSelectedPeriod] = useState('Mois');
+  const [selectedTab, setSelectedTab] = useState<string>('Mesures');
+  const [isPremium, setIsPremium] = useState<boolean>(false);
+  const [selectedMeasurementTab, setSelectedMeasurementTab] = useState<string>('Poids');
+  const [selectedPeriod, setSelectedPeriod] = useState<string>('Mois');
   const progressAnimation = useSharedValue(0);
   const [userData, setUserData] = useState<any>(null);
   const [showComingSoonModal, setShowComingSoonModal] = useState(false);
