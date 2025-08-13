@@ -139,7 +139,7 @@ function NutritionScreen() {
 
       // Récupérer les entraînements du jour depuis le serveur VPS
       const dateString = selectedDate.toISOString().split('T')[0];
-      
+
       try {
         const workouts = await PersistentStorage.getWorkouts(user.id);
         const dayWorkouts = workouts.filter((workout: any) => {
@@ -222,7 +222,7 @@ function NutritionScreen() {
     try {
       const dateString = selectedDate.toISOString().split('T')[0];
       const workouts = await PersistentStorage.getWorkouts(user.id);
-      
+
       const hasWorkoutToday = workouts.some((workout: any) => {
         const workoutDate = new Date(workout.date).toISOString().split('T')[0];
         return workoutDate === dateString;
