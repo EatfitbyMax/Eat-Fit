@@ -1023,6 +1023,184 @@ app.post('/api/notifications/:userId', async (req, res) => {
   }
 });
 
+// Routes pour l'hydratation
+app.get('/api/water/:userId/:date', async (req, res) => {
+  try {
+    const { userId, date } = req.params;
+    let userData = await readUserFile(userId, 'client');
+    if (!userData) userData = await readUserFile(userId, 'coach');
+
+    const waterData = userData?.waterIntake || {};
+    const amount = waterData[date] || 0;
+    
+    res.json(amount);
+  } catch (error) {
+    console.error(`Erreur récupération hydratation ${req.params.userId}/${req.params.date}:`, error);
+    res.json(0);
+  }
+});
+
+app.post('/api/water/:userId/:date', async (req, res) => {
+  try {
+    const { userId, date } = req.params;
+    const { amount } = req.body;
+
+    let userData = await readUserFile(userId, 'client');
+    let userType = 'client';
+
+    if (!userData) {
+      userData = await readUserFile(userId, 'coach');
+      userType = 'coach';
+    }
+
+    if (!userData) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    if (!userData.waterIntake) {
+      userData.waterIntake = {};
+    }
+
+    userData.waterIntake[date] = amount;
+    userData.lastUpdated = new Date().toISOString();
+
+    await writeUserFile(userId, userData, userType);
+    res.json({ success: true });
+  } catch (error) {
+    console.error(`Erreur sauvegarde hydratation ${userId}/${date}:`, error);
+    res.status(500).json({ error: 'Erreur sauvegarde hydratation' });
+  }
+});
+
+// Routes pour les mensurations
+app.get('/api/mensurations/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    let userData = await readUserFile(userId, 'client');
+    if (!userData) userData = await readUserFile(userId, 'coach');
+
+    const mensurationData = userData?.mensurations || {};
+    res.json(mensurationData);
+  } catch (error) {
+    console.error(`Erreur lecture mensurations utilisateur ${req.params.userId}:`, error);
+    res.json({});
+  }
+});
+
+app.post('/api/mensurations/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    let userData = await readUserFile(userId, 'client');
+    let userType = 'client';
+
+    if (!userData) {
+      userData = await readUserFile(userId, 'coach');
+      userType = 'coach';
+    }
+
+    if (!userData) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    userData.mensurations = req.body;
+    userData.lastUpdated = new Date().toISOString();
+
+    await writeUserFile(userId, userData, userType);
+    res.json({ success: true });
+  } catch (error) {
+    console.error(`Erreur sauvegarde mensurations utilisateur ${userId}:`, error);
+    res.status(500).json({ error: 'Erreur sauvegarde mensurations' });
+  }
+});
+
+// Routes pour les données de forme
+app.get('/api/forme/:userId/:date', async (req, res) => {
+  try {
+    const { userId, date } = req.params;
+    let userData = await readUserFile(userId, 'client');
+    if (!userData) userData = await readUserFile(userId, 'coach');
+
+    const formeData = userData?.forme || {};
+    const dayData = formeData[date] || null;
+    
+    res.json(dayData);
+  } catch (error) {
+    console.error(`Erreur récupération forme ${req.params.userId}/${req.params.date}:`, error);
+    res.json(null);
+  }
+});
+
+app.post('/api/forme/:userId/:date', async (req, res) => {
+  try {
+    const { userId, date } = req.params;
+    let userData = await readUserFile(userId, 'client');
+    let userType = 'client';
+
+    if (!userData) {
+      userData = await readUserFile(userId, 'coach');
+      userType = 'coach';
+    }
+
+    if (!userData) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    if (!userData.forme) {
+      userData.forme = {};
+    }
+
+    userData.forme[date] = req.body;
+    userData.lastUpdated = new Date().toISOString();
+
+    await writeUserFile(userId, userData, userType);
+    res.json({ success: true });
+  } catch (error) {
+    console.error(`Erreur sauvegarde forme ${userId}/${date}:`, error);
+    res.status(500).json({ error: 'Erreur sauvegarde données forme' });
+  }
+});
+
+// Routes pour les sports récents
+app.get('/api/recent-sports/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    let userData = await readUserFile(userId, 'client');
+    if (!userData) userData = await readUserFile(userId, 'coach');
+
+    const recentSports = userData?.recentSports || [];
+    res.json(recentSports);
+  } catch (error) {
+    console.error(`Erreur lecture sports récents utilisateur ${req.params.userId}:`, error);
+    res.json([]);
+  }
+});
+
+app.post('/api/recent-sports/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    let userData = await readUserFile(userId, 'client');
+    let userType = 'client';
+
+    if (!userData) {
+      userData = await readUserFile(userId, 'coach');
+      userType = 'coach';
+    }
+
+    if (!userData) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    userData.recentSports = req.body;
+    userData.lastUpdated = new Date().toISOString();
+
+    await writeUserFile(userId, userData, userType);
+    res.json({ success: true });
+  } catch (error) {
+    console.error(`Erreur sauvegarde sports récents utilisateur ${userId}:`, error);
+    res.status(500).json({ error: 'Erreur sauvegarde sports récents' });
+  }
+});
+
 // Routes pour les programmes (fichier global)
 app.get('/api/programmes', async (req, res) => {
   try {

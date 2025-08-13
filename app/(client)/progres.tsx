@@ -291,6 +291,9 @@ export default function ProgresScreen() {
 
       await saveWeightData(newData);
 
+      // Mettre à jour l'état local immédiatement
+      setWeightData(newData);
+
       // Mettre à jour l'animation de progression
       if (newData.targetWeight && newData.startWeight) {
         const totalLoss = newData.startWeight - newData.targetWeight;
@@ -349,6 +352,9 @@ export default function ProgresScreen() {
       console.log('🎯 Nouvelles données objectif:', newData);
 
       await saveWeightData(newData);
+
+      // Mettre à jour l'état local immédiatement
+      setWeightData(newData);
 
       // Sauvegarder l'objectif dans le profil utilisateur
       try {
@@ -1844,7 +1850,6 @@ export default function ProgresScreen() {
       let totalProteinsWeek = 0;
       let totalCarbsWeek = 0;
       let totalFatWeek = 0;
-      let totalHydrationWeek = 0;
       let daysWithData = 0;
       let daysWithHydration = 0;
 
@@ -3917,7 +3922,7 @@ flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
     paddingBottom: 25,
-    paddingHorizontal: 5,
+    paddingHorizontal: 10,
   },
   barContainer: {
     alignItems: 'center',
