@@ -123,7 +123,7 @@ function NutritionScreen() {
       let baseGoal = 2000; // Valeur par défaut
 
       // Vérifier que weight et age sont des nombres valides
-      const userWeight = parseFloat(user.weight) || parseFloat(user.currentWeight) || 70; // Poids par défaut 70kg
+      const userWeight = parseFloat(user.weight?.currentWeight) || parseFloat(user.currentWeight) || 70; // Poids par défaut 70kg
       const userAge = parseFloat(user.age) || 25; // Âge par défaut 25 ans
 
       if (userWeight && userAge && !isNaN(userWeight) && !isNaN(userAge)) {
@@ -213,7 +213,7 @@ function NutritionScreen() {
 
     // Conversion en nombres pour éviter les erreurs
     const age = parseFloat(user.age) || 25;
-    const weight = parseFloat(user.weight) || parseFloat(user.currentWeight) || 70;
+    const weight = parseFloat(user.weight?.currentWeight) || parseFloat(user.currentWeight) || 70;
     const height = parseFloat(user.height) || 175;
 
     console.log('📊 Valeurs numériques utilisées:', { age, weight, height, gender: user.gender });
