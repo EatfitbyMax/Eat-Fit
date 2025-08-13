@@ -401,64 +401,64 @@ export class PersistentStorage {
     }
   }
 
-  // Forme data
-  static async getFormeData(userId: string, date: string): Promise<any> {
-    const response = await fetch(`${SERVER_URL}/api/forme/${userId}/${date}`);
+  // Forme data (duplicate, keeping one instance)
+  // static async getFormeData(userId: string, date: string): Promise<any> {
+  //   const response = await fetch(`${SERVER_URL}/api/forme/${userId}/${date}`);
 
-    if (!response.ok) {
-      throw new Error('Données de forme non trouvées');
-    }
+  //   if (!response.ok) {
+  //     throw new Error('Données de forme non trouvées');
+  //   }
 
-    return await response.json();
-  }
+  //   return await response.json();
+  // }
 
-  static async saveFormeData(userId: string, date: string, data: any): Promise<void> {
-    const response = await fetch(`${SERVER_URL}/api/forme/${userId}/${date}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
+  // static async saveFormeData(userId: string, date: string, data: any): Promise<void> {
+  //   const response = await fetch(`${SERVER_URL}/api/forme/${userId}/${date}`, {
+  //     method: 'POST',
+  //     headers: { 'Content-Type': 'application/json' },
+  //     body: JSON.stringify(data)
+  //   });
 
-    if (!response.ok) {
-      throw new Error('Erreur sauvegarde données forme');
-    }
-  }
+  //   if (!response.ok) {
+  //     throw new Error('Erreur sauvegarde données forme');
+  //   }
+  // }
 
-  // Activity ratings
-  static async getActivityRatings(userId: string): Promise<any> {
-    const response = await fetch(`${SERVER_URL}/api/activity-ratings/${userId}`);
-    return response.ok ? await response.json() : {};
-  }
+  // Activity ratings (duplicate, keeping one instance)
+  // static async getActivityRatings(userId: string): Promise<any> {
+  //   const response = await fetch(`${SERVER_URL}/api/activity-ratings/${userId}`);
+  //   return response.ok ? await response.json() : {};
+  // }
 
-  static async saveActivityRatings(userId: string, ratings: any): Promise<void> {
-    const response = await fetch(`${SERVER_URL}/api/activity-ratings/${userId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(ratings)
-    });
+  // static async saveActivityRatings(userId: string, ratings: any): Promise<void> {
+  //   const response = await fetch(`${SERVER_URL}/api/activity-ratings/${userId}`, {
+  //     method: 'POST',
+  //     headers: { 'Content-Type': 'application/json' },
+  //     body: JSON.stringify(ratings)
+  //   });
 
-    if (!response.ok) {
-      throw new Error('Erreur sauvegarde notes RPE');
-    }
-  }
+  //   if (!response.ok) {
+  //     throw new Error('Erreur sauvegarde notes RPE');
+  //   }
+  // }
 
-  // Water intake
-  static async getWaterIntake(userId: string, date: string): Promise<number> {
-    const response = await fetch(`${SERVER_URL}/api/water/${userId}/${date}`);
-    return response.ok ? await response.json() : 0;
-  }
+  // Water intake (duplicate, keeping one instance)
+  // static async getWaterIntake(userId: string, date: string): Promise<number> {
+  //   const response = await fetch(`${SERVER_URL}/api/water/${userId}/${date}`);
+  //   return response.ok ? await response.json() : 0;
+  // }
 
-  static async saveWaterIntake(userId: string, date: string, amount: number): Promise<void> {
-    const response = await fetch(`${SERVER_URL}/api/water/${userId}/${date}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount })
-    });
+  // static async saveWaterIntake(userId: string, date: string, amount: number): Promise<void> {
+  //   const response = await fetch(`${SERVER_URL}/api/water/${userId}/${date}`, {
+  //     method: 'POST',
+  //     headers: { 'Content-Type': 'application/json' },
+  //     body: JSON.stringify({ amount })
+  //   });
 
-    if (!response.ok) {
-      throw new Error('Erreur sauvegarde hydratation');
-    }
-  }
+  //   if (!response.ok) {
+  //     throw new Error('Erreur sauvegarde hydratation');
+  //   }
+  // }
 
   // App preferences
   static async getAppPreferences(userId: string): Promise<any> {
@@ -477,14 +477,39 @@ export class PersistentStorage {
   }
 
   static async saveAppPreferences(userId: string, preferences: any): Promise<void> {
-    const response = await fetch(`${SERVER_URL}/api/app-preferences/${userId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(preferences)
-    });
+    try {
+      const VPS_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
 
-    if (!response.ok) {
-      throw new Error('Erreur sauvegarde préférences application');
+      const response = await fetch(`${VPS_URL}/api/app-preferences/${userId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(preferences)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP: ${response.status}`);
+      }
+
+      console.log('✅ Préférences app sauvegardées sur le serveur VPS');
+    } catch (error) {
+      console.error('❌ Erreur sauvegarde préférences app sur VPS:', error);
+      throw error;
+    }
+  }
+
+  // Fonction getItem pour la compatibilité avec le code existant (notamment Strava)
+  static async getItem(key: string): Promise<string | null> {
+    try {
+      if (Platform.OS === 'web') {
+        return localStorage.getItem(key);
+      } else {
+        return await AsyncStorage.getItem(key);
+      }
+    } catch (error) {
+      console.error(`❌ Erreur récupération ${key}:`, error);
+      return null;
     }
   }
 

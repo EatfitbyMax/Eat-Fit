@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Alert, TextInput, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Alert, TextInput, Modal, Keyboard } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring } from 'react-native-reanimated';
 import { useFocusEffect } from 'expo-router';
@@ -242,7 +242,6 @@ export default function ProgresScreen() {
   const handleWeightUpdate = async () => {
     try {
       // Fermer le clavier
-      const { Keyboard } = await import('react-native');
       Keyboard.dismiss();
 
       console.log('🔄 Mise à jour du poids actuel:', tempWeight);
@@ -313,7 +312,6 @@ export default function ProgresScreen() {
   const handleTargetUpdate = async () => {
     try {
       // Fermer le clavier
-      const { Keyboard } = await import('react-native');
       Keyboard.dismiss();
 
       console.log('🎯 Mise à jour de l\'objectif:', tempTarget);
@@ -488,7 +486,6 @@ export default function ProgresScreen() {
 
   const handleSaveMensuration = async () => {
     // Fermer le clavier
-    const { Keyboard } = await import('react-native');
     Keyboard.dismiss();
 
     const config = getMuscleConfig(selectedMuscle);
