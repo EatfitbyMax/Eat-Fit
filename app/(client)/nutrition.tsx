@@ -176,7 +176,7 @@ function NutritionScreen() {
       // Arrondir pour être réalisable avec les boutons disponibles (250ml, 500ml, 1000ml)
       // L'objectif doit être un multiple de 250ml pour être atteignable facilement
       const finalGoal = Math.ceil(baseGoal / 250) * 250;
-      
+
       // Validation finale pour éviter NaN
       const validGoal = isNaN(finalGoal) ? 2000 : finalGoal;
       console.log(`Objectif hydratation calculé: ${validGoal}ml (base: ${Math.ceil((userWeight * 35) / 250) * 250}ml)`);
@@ -817,7 +817,7 @@ function NutritionScreen() {
                     <View style={styles.macroProgressItem}>
                       <View style={styles.macroProgressHeader}>
                         <Text style={styles.macroProgressLabel}>Glucides</Text>
-                        <Text style={styles.macroProgressValue">
+                        <Text style={styles.macroProgressValue}>
                           {isNaN(dailyTotals.carbohydrates) ? 0 : Math.round(dailyTotals.carbohydrates)}g / {isNaN(calorieGoals.carbohydrates) ? 0 : calorieGoals.carbohydrates}g
                         </Text>
                       </View>
@@ -833,7 +833,7 @@ function NutritionScreen() {
                     <View style={styles.macroProgressItem}>
                       <View style={styles.macroProgressHeader}>
                         <Text style={styles.macroProgressLabel}>Lipides</Text>
-                        <Text style={styles.macroProgressValue">
+                        <Text style={styles.macroProgressValue}>
                           {isNaN(dailyTotals.fat) ? 0 : Math.round(dailyTotals.fat)}g / {isNaN(calorieGoals.fat) ? 0 : calorieGoals.fat}g
                         </Text>
                       </View>
