@@ -266,37 +266,14 @@ export class PersistentStorage {
   }
 
   static async saveNotificationTimes(userId: string, times: any): Promise<void> {
-    try {
-      console.log('📤 [STORAGE] Envoi horaires vers serveur pour utilisateur:', userId);
-      console.log('📤 [STORAGE] URL:', `${SERVER_URL}/api/notification-times/${userId}`);
-      console.log('📤 [STORAGE] Données:', times);
+    const response = await fetch(`${SERVER_URL}/api/notification-times/${userId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(times)
+    });
 
-      const response = await fetch(`${SERVER_URL}/api/notification-times/${userId}`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify(times)
-      });
-
-      console.log('📥 [STORAGE] Réponse serveur:', response.status, response.statusText);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ [STORAGE] Erreur serveur:', {
-          status: response.status,
-          statusText: response.statusText,
-          errorText: errorText
-        });
-        throw new Error(`Erreur serveur ${response.status}: ${errorText || 'Erreur sauvegarde horaires notifications'}`);
-      }
-
-      const result = await response.json();
-      console.log('✅ [STORAGE] Horaires sauvegardés avec succès:', result);
-    } catch (error) {
-      console.error('❌ [STORAGE] Erreur complète sauvegarde horaires:', error);
-      throw error;
+    if (!response.ok) {
+      throw new Error('Erreur sauvegarde horaires notifications');
     }
   }
 
