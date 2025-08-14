@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const SERVER_URL = 'https://eatfitbymax.cloud';
+const SERVER_URL = 'https://workspace-url-here.repl.co'; // Remplacer par l'URL de votre Replit
 
 export class PersistentStorage {
   // Users storage
