@@ -58,10 +58,10 @@ export default function HomeScreen() {
   const [formeScore, setFormeScore] = useState(0);
   const [currentTip, setCurrentTip] = useState('');
   const [calorieGoals, setCalorieGoals] = useState({
-    calories: 2495,
-    proteins: 125,
-    carbohydrates: 312,
-    fat: 83,
+    calories: 2341,
+    proteins: 117,
+    carbohydrates: 293,
+    fat: 78,
   });
   const [weeklyWorkouts, setWeeklyWorkouts] = useState(0);
   const [weightData, setWeightData] = useState({
@@ -248,7 +248,13 @@ export default function HomeScreen() {
     console.log('✅ OBJECTIFS FINAUX CALCULÉS - ACCUEIL:', finalGoals);
     console.log(`📊 Ratios: P${Math.round(proteinRatio*100)}% C${Math.round(carbRatio*100)}% F${Math.round(fatRatio*100)}%`);
 
-    return finalGoals;
+    // S'assurer que les valeurs sont cohérentes avec nutrition.tsx
+    return {
+      calories: isNaN(finalGoals.calories) ? 2341 : finalGoals.calories,
+      proteins: isNaN(finalGoals.proteins) ? 117 : finalGoals.proteins,
+      carbohydrates: isNaN(finalGoals.carbohydrates) ? 293 : finalGoals.carbohydrates,
+      fat: isNaN(finalGoals.fat) ? 78 : finalGoals.fat,
+    };
   };
 
   const loadUserData = async () => {
