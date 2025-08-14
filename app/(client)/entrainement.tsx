@@ -1231,55 +1231,61 @@ export default function EntrainementScreen() {
               <Text style={styles.rpeModalTitle}>Ressenti (RPE)</Text>
             </View>
 
-            <View style={styles.rpeInputContainer}>
-              <Text style={styles.rpeInputLabel}>Évaluez la difficulté ressentie lors de cette séance (1-10)</Text>
-              <View style={styles.rpeSliderContainer}>
-                <View style={styles.rpeSlider}>
-                  {[...Array(10)].map((_, i) => (
-                    <TouchableOpacity
-                      key={i}
-                      style={[
-                        styles.rpeLevel,
-                        rpeRating === i + 1 && styles.selectedRPELevel,
-                        rpeRating > i && styles.activeRPELevel
-                      ]}
-                      onPress={() => setRpeRating(i + 1)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={[
-                        styles.rpeLevelText,
-                        rpeRating === i + 1 && styles.selectedRPELevelText,
-                        rpeRating > i && styles.activeRPELevelText
-                      ]}>
-                        {i + 1}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-                <View style={styles.rpeDescription}>
-                  <Text style={styles.rpeDescriptionText}>
-                    {rpeRating <= 2 ? '😌 Très facile' :
-                     rpeRating <= 4 ? '🙂 Facile' :
-                     rpeRating <= 6 ? '😐 Modéré' :
-                     rpeRating <= 8 ? '😅 Difficile' : '🥵 Très difficile'}
-                  </Text>
+            <ScrollView 
+              style={styles.rpeModalScrollView}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              <View style={styles.rpeInputContainer}>
+                <Text style={styles.rpeInputLabel}>Évaluez la difficulté ressentie lors de cette séance (1-10)</Text>
+                <View style={styles.rpeSliderContainer}>
+                  <View style={styles.rpeSlider}>
+                    {[...Array(10)].map((_, i) => (
+                      <TouchableOpacity
+                        key={i}
+                        style={[
+                          styles.rpeLevel,
+                          rpeRating === i + 1 && styles.selectedRPELevel,
+                          rpeRating > i && styles.activeRPELevel
+                        ]}
+                        onPress={() => setRpeRating(i + 1)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={[
+                          styles.rpeLevelText,
+                          rpeRating === i + 1 && styles.selectedRPELevelText,
+                          rpeRating > i && styles.activeRPELevelText
+                        ]}>
+                          {i + 1}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  <View style={styles.rpeDescription}>
+                    <Text style={styles.rpeDescriptionText}>
+                      {rpeRating <= 2 ? '😌 Très facile' :
+                       rpeRating <= 4 ? '🙂 Facile' :
+                       rpeRating <= 6 ? '😐 Modéré' :
+                       rpeRating <= 8 ? '😅 Difficile' : '🥵 Très difficile'}
+                    </Text>
+                  </View>
                 </View>
               </View>
-            </View>
 
-            <View style={styles.rpeNotesContainer}>
-              <Text style={styles.rpeNotesLabel}>Notes (optionnel)</Text>
-              <TextInput
-                style={styles.rpeNotesInput}
-                value={rpeNotes}
-                onChangeText={setRpeNotes}
-                placeholder="Ressenti général, zones difficiles..."
-                placeholderTextColor="#6A7280"
-                multiline={true}
-                numberOfLines={3}
-                textAlignVertical="top"
-              />
-            </View>
+              <View style={styles.rpeNotesContainer}>
+                <Text style={styles.rpeNotesLabel}>Notes (optionnel)</Text>
+                <TextInput
+                  style={styles.rpeNotesInput}
+                  value={rpeNotes}
+                  onChangeText={setRpeNotes}
+                  placeholder="Ressenti général, zones difficiles..."
+                  placeholderTextColor="#6A7280"
+                  multiline={true}
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                />
+              </View>
+            </ScrollView>
 
             <View style={styles.rpeModalButtons}>
               <TouchableOpacity
@@ -1960,7 +1966,7 @@ const styles = StyleSheet.create({
   },
   rpeNotesContainer: {
     paddingHorizontal: 24,
-    paddingBottom: 24,
+    paddingBottom: 20,
   },
   rpeNotesLabel: {
     fontSize: 16,
@@ -1984,7 +1990,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     paddingHorizontal: 24,
-    paddingBottom: 24,
+    paddingVertical: 16,
+    backgroundColor: '#0D1117',
+    borderTopWidth: 1,
+    borderTopColor: '#21262D',
   },
   rpeButtonSecondary: {
     flex: 1,
@@ -2069,8 +2078,9 @@ const styles = StyleSheet.create({
   rpeModalContent: {
     backgroundColor: '#0D1117',
     borderRadius: 16,
-    margin: 20,
-    maxHeight: '80%',
+    marginHorizontal: 20,
+    marginVertical: 40,
+    maxHeight: '85%',
     width: '90%',
     borderWidth: 2,
     borderColor: '#F5A623',
@@ -2113,9 +2123,13 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textShadow: '0px 2px 4px rgba(0, 0, 0, 0.8)',
   },
+  rpeModalScrollView: {
+    flex: 1,
+  },
   rpeInputContainer: {
     paddingHorizontal: 24,
-    paddingVertical: 24,
+    paddingTop: 16,
+    paddingBottom: 20,
     backgroundColor: '#0D1117',
   },
   rpeInputLabel: {
