@@ -239,7 +239,7 @@ function NutritionScreen() {
 
     const activityFactor = activityFactors[user.activityLevel] || 1.2;
     let totalCalories = Math.round(bmr * activityFactor);
-    
+
     console.log(`🏃 Facteur activité (${user.activityLevel}): ${activityFactor}`);
     console.log(`📈 Calories avec activité: ${totalCalories} kcal`);
 
@@ -311,7 +311,24 @@ function NutritionScreen() {
     console.log('✅ OBJECTIFS FINAUX CALCULÉS:', finalGoals);
     console.log(`📊 Ratios: P${Math.round(proteinRatio*100)}% C${Math.round(carbRatio*100)}% F${Math.round(fatRatio*100)}%`);
 
-    return finalGoals;
+    // S'assurer que les valeurs sont cohérentes
+    const validatedGoals = {
+      calories: isNaN(finalGoals.calories) ? 2341 : finalGoals.calories,
+      proteins: isNaN(finalGoals.proteins) ? 117 : finalGoals.proteins,
+      carbohydrates: isNaN(finalGoals.carbohydrates) ? 293 : finalGoals.carbohydrates,
+      fat: isNaN(finalGoals.fat) ? 78 : finalGoals.fat,
+    };
+
+    // Sauvegarder les objectifs pour les autres pages
+    try {
+      const savedGoalsKey = `calorieGoals_${user.id}`;
+      await AsyncStorage.setItem(savedGoalsKey, JSON.stringify(validatedGoals));
+      console.log('💾 Objectifs sauvegardés pour les autres pages');
+    } catch (error) {
+      console.error('❌ Erreur sauvegarde objectifs:', error);
+    }
+
+    return validatedGoals;
   };
 
   const navigateDate = (direction: 'prev' | 'next') => {
@@ -716,29 +733,29 @@ function NutritionScreen() {
       }
 
       console.log(`💧 Ajout ${amount}ml d'eau pour ${user.email}`);
-      
+
       const newWaterIntake = waterIntake + amount;
       const dateKey = selectedDate.toISOString().split('T')[0];
-      
+
       console.log(`📡 Tentative sauvegarde hydratation:`, {
         userId: user.id,
         date: dateKey,
         amount: newWaterIntake,
         userEmail: user.email
       });
-      
+
       // Sauvegarder sur le serveur avec une gestion d'erreur plus robuste
       try {
         await PersistentStorage.saveWaterIntake(user.id, dateKey, newWaterIntake);
         console.log(`✅ Hydratation sauvegardée avec succès sur le serveur VPS`);
-        
+
         // Mettre à jour l'état local seulement après succès de la sauvegarde
         setWaterIntake(newWaterIntake);
         console.log(`✅ Hydratation mise à jour localement: ${newWaterIntake}ml`);
-        
+
         // Afficher un feedback positif à l'utilisateur
         Alert.alert('✅ Hydratation', `+${amount}ml ajoutés avec succès !`, [{ text: 'OK' }]);
-        
+
       } catch (serverError) {
         console.error('❌ Erreur sauvegarde serveur hydratation:', serverError);
         console.error('❌ Détails erreur complète:', {
@@ -750,7 +767,7 @@ function NutritionScreen() {
           amount: newWaterIntake,
           userEmail: user.email
         });
-        
+
         // Essayer de déterminer la cause spécifique de l'erreur
         let errorMessage = 'Erreur de connexion au serveur';
         if (serverError.message.includes('404')) {
@@ -762,13 +779,13 @@ function NutritionScreen() {
         } else if (serverError.message.includes('network')) {
           errorMessage = 'Problème de connexion réseau';
         }
-        
+
         throw new Error(errorMessage);
       }
-      
+
     } catch (error) {
       console.error('❌ Erreur complète ajout eau:', error);
-      
+
       // Afficher une alerte détaillée à l'utilisateur
       Alert.alert(
         'Erreur d\'hydratation',
@@ -791,20 +808,20 @@ function NutritionScreen() {
       }
 
       console.log(`💧 Reset hydratation pour ${user.email}`);
-      
+
       const dateKey = selectedDate.toISOString().split('T')[0];
-      
+
       console.log(`📡 Tentative reset hydratation: ${user.id}, ${dateKey}`);
-      
+
       // Sauvegarder sur le serveur avec gestion d'erreur robuste
       try {
         await PersistentStorage.saveWaterIntake(user.id, dateKey, 0);
         console.log(`✅ Reset hydratation sauvegardé avec succès sur le serveur VPS`);
-        
+
         // Mettre à jour l'état local seulement après succès
         setWaterIntake(0);
         console.log(`✅ Hydratation remise à zéro localement`);
-        
+
       } catch (serverError) {
         console.error('❌ Erreur reset serveur hydratation:', serverError);
         console.error('❌ Détails erreur reset:', {
@@ -813,10 +830,10 @@ function NutritionScreen() {
           userId: user.id,
           date: dateKey
         });
-        
+
         throw new Error(`Erreur serveur: ${serverError.message}`);
       }
-      
+
     } catch (error) {
       console.error('❌ Erreur complète reset eau:', error);
       Alert.alert(

@@ -24,6 +24,7 @@ import { getCurrentUser } from '@/utils/auth';
 import { syncWithExternalApps, IntegrationsManager } from '@/utils/integrations';
 import { PersistentStorage } from '@/utils/storage';
 import { checkSubscriptionStatus } from '@/utils/subscription';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 const { width, height } = Dimensions.get('window');
@@ -125,136 +126,36 @@ export default function HomeScreen() {
     generateRandomTip();
   };
 
-  const calculatePersonalizedGoals = async (user: any) => {
-    console.log('🎯 CALCUL OBJECTIFS PERSONNALISÉS - ACCUEIL');
-    console.log('Données utilisateur reçues:', {
-      age: user?.age,
-      weight: user?.weight,
-      height: user?.height,
-      gender: user?.gender,
-      activityLevel: user?.activityLevel,
-      goals: user?.goals
-    });
-
-    if (!user || !user.age || !user.weight || !user.height || !user.gender) {
-      console.log('⚠️ Données utilisateur incomplètes - Utilisation valeurs par défaut');
-      const defaultGoals = {
+  const getCalorieGoalsFromNutrition = async (user: any) => {
+    try {
+      console.log('📋 RÉCUPÉRATION OBJECTIFS DEPUIS NUTRITION - ACCUEIL');
+      
+      // Récupérer les objectifs sauvegardés depuis AsyncStorage (utilisés par nutrition.tsx)
+      const savedGoalsKey = `calorieGoals_${user.id}`;
+      const savedGoals = await AsyncStorage.getItem(savedGoalsKey);
+      
+      if (savedGoals) {
+        const parsedGoals = JSON.parse(savedGoals);
+        console.log('✅ Objectifs récupérés depuis nutrition:', parsedGoals);
+        return parsedGoals;
+      } else {
+        console.log('⚠️ Aucun objectif sauvegardé - Utilisation valeurs par défaut');
+        return {
+          calories: 2495,
+          proteins: 125,
+          carbohydrates: 312,
+          fat: 83,
+        };
+      }
+    } catch (error) {
+      console.error('❌ Erreur récupération objectifs depuis nutrition:', error);
+      return {
         calories: 2495,
         proteins: 125,
         carbohydrates: 312,
         fat: 83,
       };
-      console.log('🎯 Objectifs par défaut définis:', defaultGoals);
-      return defaultGoals;
     }
-
-    // Conversion en nombres pour éviter les erreurs
-    const age = parseFloat(user.age) || 25;
-    const weight = parseFloat(user.weight?.currentWeight) || parseFloat(user.currentWeight) || 70;
-    const height = parseFloat(user.height) || 175;
-
-    console.log('📊 Valeurs numériques utilisées:', { age, weight, height, gender: user.gender });
-
-    // Calcul du métabolisme de base (BMR) avec la formule de Mifflin-St Jeor
-    let bmr;
-    if (user.gender === 'Homme') {
-      bmr = 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
-    } else {
-      bmr = 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age);
-    }
-
-    console.log(`🔥 BMR calculé (${user.gender}): ${Math.round(bmr)} kcal`);
-
-    // Facteurs d'activité physique
-    const activityFactors = {
-      'sedentaire': 1.2,
-      'leger': 1.375,
-      'modere': 1.55,
-      'actif': 1.725,
-      'extreme': 1.9
-    };
-
-    const activityFactor = activityFactors[user.activityLevel as keyof typeof activityFactors] || 1.2;
-    let totalCalories = Math.round(bmr * activityFactor);
-
-    console.log(`🏃 Facteur activité (${user.activityLevel}): ${activityFactor}`);
-    console.log(`📈 Calories avec activité: ${totalCalories} kcal`);
-
-    // Ajustements selon les objectifs
-    const goals = user.goals || [];
-    console.log('🎯 Objectifs utilisateur:', goals);
-
-    if (goals.includes('Perdre du poids')) {
-      totalCalories -= 200; // Déficit de 200 kcal
-      console.log('⬇️ Ajustement perte de poids: -200 kcal');
-    }
-
-    // Vérifier s'il y a un entraînement programmé aujourd'hui depuis le serveur VPS
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      const workouts = await PersistentStorage.getWorkouts(user.id);
-
-      const hasWorkoutToday = workouts.some((workout: any) => {
-        const workoutDate = new Date(workout.date).toISOString().split('T')[0];
-        return workoutDate === today;
-      });
-
-      if (hasWorkoutToday) {
-        // Ajouter 150 kcal pour le premier entraînement + 50 kcal par séance supplémentaire
-        const workoutCount = workouts.filter((workout: any) => {
-          const workoutDate = new Date(workout.date).toISOString().split('T')[0];
-          return workoutDate === today;
-        }).length;
-
-        const bonusCalories = 150 + (workoutCount - 1) * 50;
-        totalCalories += bonusCalories;
-        console.log(`💪 ${workoutCount} entraînement(s) détecté(s) aujourd'hui - Ajout de ${bonusCalories} kcal`);
-      }
-    } catch (error) {
-      console.error('Erreur vérification entraînements depuis VPS:', error);
-    }
-
-    // Calcul des macronutriments selon les objectifs
-    let proteinRatio = 0.20; // 20% par défaut
-    let carbRatio = 0.50;    // 50% par défaut
-    let fatRatio = 0.30;     // 30% par défaut
-
-    if (goals.includes('Me muscler')) {
-      // Augmenter les protéines, réduire les lipides
-      proteinRatio = 0.30; // 30%
-      carbRatio = 0.45;    // 45%
-      fatRatio = 0.25;     // 25%
-      console.log('💪 Ratios musculation appliqués');
-    } else if (goals.includes('Gagner en performance')) {
-      // Ratio glucides/protéines optimal pour la performance
-      proteinRatio = 0.25; // 25%
-      carbRatio = 0.55;    // 55%
-      fatRatio = 0.20;     // 20%
-      console.log('🏃‍♂️ Ratios performance appliqués');
-    }
-
-    // Calcul des grammes de macronutriments
-    const proteins = Math.round((totalCalories * proteinRatio) / 4); // 4 kcal par gramme
-    const carbohydrates = Math.round((totalCalories * carbRatio) / 4); // 4 kcal par gramme
-    const fat = Math.round((totalCalories * fatRatio) / 9); // 9 kcal par gramme
-
-    const finalGoals = {
-      calories: Math.max(totalCalories, 1200), // Minimum 1200 kcal pour la santé
-      proteins,
-      carbohydrates,
-      fat,
-    };
-
-    console.log('✅ OBJECTIFS FINAUX CALCULÉS - ACCUEIL:', finalGoals);
-    console.log(`📊 Ratios: P${Math.round(proteinRatio*100)}% C${Math.round(carbRatio*100)}% F${Math.round(fatRatio*100)}%`);
-
-    // S'assurer que les valeurs sont cohérentes avec nutrition.tsx
-    return {
-      calories: isNaN(finalGoals.calories) ? 2341 : finalGoals.calories,
-      proteins: isNaN(finalGoals.proteins) ? 117 : finalGoals.proteins,
-      carbohydrates: isNaN(finalGoals.carbohydrates) ? 293 : finalGoals.carbohydrates,
-      fat: isNaN(finalGoals.fat) ? 78 : finalGoals.fat,
-    };
   };
 
   const loadUserData = async () => {
@@ -267,11 +168,11 @@ export default function HomeScreen() {
         setUser(currentUser);
         console.log('👤 Utilisateur chargé:', currentUser.firstName, currentUser.lastName);
 
-        // Calculer les objectifs personnalisés
-        console.log('🎯 Début calcul objectifs personnalisés - Accueil...');
-        const personalizedGoals = await calculatePersonalizedGoals(currentUser);
-        setCalorieGoals(personalizedGoals);
-        console.log('✅ Objectifs appliqués dans l\'état - Accueil:', personalizedGoals);
+        // Récupérer les objectifs depuis nutrition
+        console.log('📋 Récupération objectifs depuis nutrition - Accueil...');
+        const nutritionGoals = await getCalorieGoalsFromNutrition(currentUser);
+        setCalorieGoals(nutritionGoals);
+        console.log('✅ Objectifs récupérés depuis nutrition - Accueil:', nutritionGoals);
 
         // Vérifier le statut premium
         try {
