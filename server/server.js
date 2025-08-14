@@ -1121,109 +1121,44 @@ app.get('/api/notification-times/:userId', async (req, res) => {
   }
 });
 
-// Route GET pour récupérer les horaires de notifications
-app.get('/api/notification-times/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    
-    console.log(`📥 [NOTIFICATION_TIMES_GET] === RÉCUPÉRATION HORAIRES ===`);
-    console.log(`📥 [NOTIFICATION_TIMES_GET] Utilisateur: ${userId}`);
-    
-    // Utiliser la fonction de recherche robuste
-    const userResult = await findUserById(userId);
-
-    if (!userResult) {
-      console.error(`❌ [NOTIFICATION_TIMES_GET] Utilisateur ${userId} non trouvé`);
-      
-      // Retourner les horaires par défaut si l'utilisateur n'est pas trouvé
-      const defaultTimes = {
-        breakfast: { hour: 8, minute: 0 },
-        lunch: { hour: 12, minute: 30 },
-        dinner: { hour: 19, minute: 0 },
-        workout: { hour: 18, minute: 0 },
-      };
-      
-      return res.json(defaultTimes);
-    }
-
-    const { userData, userType } = userResult;
-    console.log(`✅ [NOTIFICATION_TIMES_GET] Utilisateur trouvé: ${userData.name || userData.email} (${userType})`);
-
-    const defaultTimes = {
-      breakfast: { hour: 8, minute: 0 },
-      lunch: { hour: 12, minute: 30 },
-      dinner: { hour: 19, minute: 0 },
-      workout: { hour: 18, minute: 0 },
-    };
-
-    const notificationTimes = userData?.notificationTimes || defaultTimes;
-    
-    console.log(`✅ [NOTIFICATION_TIMES_GET] Horaires récupérés:`, notificationTimes);
-    res.json(notificationTimes);
-    
-  } catch (error) {
-    console.error(`❌ [NOTIFICATION_TIMES_GET] Erreur complète:`, error);
-    
-    // En cas d'erreur, retourner les horaires par défaut
-    const defaultTimes = {
-      breakfast: { hour: 8, minute: 0 },
-      lunch: { hour: 12, minute: 30 },
-      dinner: { hour: 19, minute: 0 },
-      workout: { hour: 18, minute: 0 },
-    };
-    
-    res.json(defaultTimes);
-  }
-});
-
-// Route POST pour sauvegarder les horaires de notifications
 app.post('/api/notification-times/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     
-    console.log(`📥 [NOTIFICATION_TIMES] === DÉBUT SAUVEGARDE HORAIRES ===`);
-    console.log(`📥 [NOTIFICATION_TIMES] Utilisateur: ${userId}`);
-    console.log(`📥 [NOTIFICATION_TIMES] Method: ${req.method}`);
-    console.log(`📥 [NOTIFICATION_TIMES] URL: ${req.url}`);
-    console.log(`📥 [NOTIFICATION_TIMES] Données reçues:`, JSON.stringify(req.body, null, 2));
-    console.log(`📥 [NOTIFICATION_TIMES] Content-Type:`, req.headers['content-type']);
+    console.log(`📥 [NOTIFICATION_TIMES] Réception horaires pour utilisateur: ${userId}`);
+    console.log(`📥 [NOTIFICATION_TIMES] Données reçues:`, req.body);
+    console.log(`📥 [NOTIFICATION_TIMES] Headers:`, req.headers);
 
     // Validation des données reçues
     if (!req.body || typeof req.body !== 'object') {
       console.error(`❌ [NOTIFICATION_TIMES] Données invalides:`, req.body);
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Données horaires invalides' 
-      });
+      return res.status(400).json({ error: 'Données horaires invalides' });
     }
 
     const requiredFields = ['breakfast', 'lunch', 'dinner', 'workout'];
     for (const field of requiredFields) {
-      if (!req.body[field] || 
-          typeof req.body[field].hour !== 'number' || 
-          typeof req.body[field].minute !== 'number') {
+      if (!req.body[field] || typeof req.body[field].hour !== 'number' || typeof req.body[field].minute !== 'number') {
         console.error(`❌ [NOTIFICATION_TIMES] Champ manquant ou invalide: ${field}`, req.body[field]);
-        return res.status(400).json({ 
-          success: false, 
-          error: `Champ ${field} manquant ou invalide` 
-        });
+        return res.status(400).json({ error: `Champ ${field} manquant ou invalide` });
       }
     }
 
     console.log(`🔍 [NOTIFICATION_TIMES] Recherche utilisateur: ${userId}`);
     
-    // Utiliser la fonction de recherche robuste
-    const userResult = await findUserById(userId);
+    let userData = await readUserFile(userId, 'client');
+    let userType = 'client';
 
-    if (!userResult) {
-      console.error(`❌ [NOTIFICATION_TIMES] Utilisateur ${userId} non trouvé`);
-      return res.status(404).json({ 
-        success: false, 
-        error: 'Utilisateur non trouvé' 
-      });
+    if (!userData) {
+      console.log(`🔍 [NOTIFICATION_TIMES] Utilisateur non trouvé dans Client/, recherche dans Coach/`);
+      userData = await readUserFile(userId, 'coach');
+      userType = 'coach';
     }
 
-    const { userData, userType } = userResult;
+    if (!userData) {
+      console.error(`❌ [NOTIFICATION_TIMES] Utilisateur ${userId} non trouvé`);
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
     console.log(`✅ [NOTIFICATION_TIMES] Utilisateur trouvé: ${userData.name || userData.email} (${userType})`);
 
     // Sauvegarder les nouveaux horaires
@@ -1231,43 +1166,31 @@ app.post('/api/notification-times/:userId', async (req, res) => {
     userData.lastUpdated = new Date().toISOString();
 
     console.log(`💾 [NOTIFICATION_TIMES] Sauvegarde en cours pour ${userId}...`);
-    console.log(`💾 [NOTIFICATION_TIMES] Fichier cible: ${userType}/${userId}.json`);
     
     const saveSuccess = await writeUserFile(userId, userData, userType);
     
     if (saveSuccess) {
-      console.log(`✅ [NOTIFICATION_TIMES] === SAUVEGARDE RÉUSSIE ===`);
-      console.log(`✅ [NOTIFICATION_TIMES] Utilisateur: ${userId}`);
-      console.log(`✅ [NOTIFICATION_TIMES] Type: ${userType}`);
-      console.log(`✅ [NOTIFICATION_TIMES] Horaires:`, req.body);
-      
+      console.log(`✅ [NOTIFICATION_TIMES] Horaires sauvegardés avec succès pour ${userId}:`, req.body);
       res.json({ 
         success: true, 
-        message: 'Horaires notifications sauvegardés avec succès',
+        message: 'Horaires notifications sauvegardés',
         userId: userId,
         userType: userType,
-        savedTimes: req.body,
-        timestamp: new Date().toISOString()
+        savedTimes: req.body
       });
     } else {
       console.error(`❌ [NOTIFICATION_TIMES] Échec sauvegarde fichier pour ${userId}`);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Échec sauvegarde fichier utilisateur' 
-      });
+      res.status(500).json({ error: 'Échec sauvegarde fichier utilisateur' });
     }
   } catch (error) {
-    console.error(`❌ [NOTIFICATION_TIMES] === ERREUR COMPLÈTE ===`);
-    console.error(`❌ [NOTIFICATION_TIMES] Utilisateur: ${req.params.userId}`);
-    console.error(`❌ [NOTIFICATION_TIMES] Message: ${error.message}`);
-    console.error(`❌ [NOTIFICATION_TIMES] Stack:`, error.stack);
-    console.error(`❌ [NOTIFICATION_TIMES] Données reçues:`, req.body);
-    
+    console.error(`❌ [NOTIFICATION_TIMES] Erreur complète pour ${req.params.userId}:`, {
+      message: error.message,
+      stack: error.stack,
+      userData: req.body
+    });
     res.status(500).json({ 
-      success: false,
       error: 'Erreur sauvegarde horaires notifications',
-      details: error.message,
-      timestamp: new Date().toISOString()
+      details: error.message 
     });
   }
 });
@@ -2471,28 +2394,12 @@ async function startServer() {
       console.log(`✅ Nouvelle structure: Client/ et Coach/ avec fichiers unifiés`);
       console.log(`💧 Routes hydratation configurées: GET/POST /api/water/:userId/:date`);
 
-      // Liste toutes les routes enregistrées
-      console.log(`📋 === ROUTES ENREGISTRÉES ===`);
-      app._router.stack.forEach((middleware) => {
-        if (middleware.route) {
-          const methods = Object.keys(middleware.route.methods);
-          console.log(`  ${methods.join(', ').toUpperCase()} ${middleware.route.path}`);
-        } else if (middleware.name === 'router') {
-          middleware.handle.stack.forEach((handler) => {
-            if (handler.route) {
-              const methods = Object.keys(handler.route.methods);
-              console.log(`  ${methods.join(', ').toUpperCase()} ${handler.route.path}`);
-            }
-          });
-        }
-      });
-
-      console.log(`📋 === ROUTES CRITIQUES VÉRIFIÉES ===`);
-      console.log(`  - GET /api/notification-times/:userId`);
-      console.log(`  - POST /api/notification-times/:userId`);
-      console.log(`  - GET/POST /api/water/:userId/:date (hydratation)`);
-      console.log(`  - GET/POST /api/user-data/:userId`);
-      console.log(`✅ Serveur prêt à recevoir les requêtes`);
+      // Test des routes importantes
+      console.log(`📋 Routes configurées:`);
+      console.log(`  - GET /api/water/:userId/:date (hydratation)`);
+      console.log(`  - POST /api/water/:userId/:date (hydratation)`);
+      console.log(`  - GET /api/user-data/:userId`);
+      console.log(`  - POST /api/user-data/:userId`);
     });
 
     server.on('error', (error) => {
