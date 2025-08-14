@@ -2318,12 +2318,4 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Erreur interne du serveur' });
 });
 
-// Route 404 - ABSOLUMENT À LA FIN, APRÈS TOUTES LES ROUTES API
-app.use('*', (req, res) => {
-  console.log(`❌ [404] Route non trouvée: ${req.method} ${req.path}`);
-  console.log(`❌ [404] Headers:`, req.headers);
-  console.log(`❌ [404] User-Agent:`, req.get('User-Agent'));
-  res.status(404).json({ error: 'Route non trouvée' });
-});
-
 startServer();
