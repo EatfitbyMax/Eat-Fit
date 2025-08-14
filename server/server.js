@@ -1153,47 +1153,48 @@ app.post('/api/notification-times/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
 
-    console.log(`📥 [NOTIFICATION_TIMES] Réception horaires pour utilisateur: ${userId}`);
-    console.log(`📥 [NOTIFICATION_TIMES] Données reçues:`, req.body);
-    console.log(`📥 [NOTIFICATION_TIMES] Headers:`, req.headers);
+    console.log(`📥 [NOTIFICATION_TIMES_POST] === SAUVEGARDE HORAIRES ===`);
+    console.log(`📥 [NOTIFICATION_TIMES_POST] Utilisateur: ${userId}`);
+    console.log(`📥 [NOTIFICATION_TIMES_POST] Données reçues:`, req.body);
+    console.log(`📥 [NOTIFICATION_TIMES_POST] Headers:`, req.headers);
 
     // Validation des données reçues
     if (!req.body || typeof req.body !== 'object') {
-      console.error(`❌ [NOTIFICATION_TIMES] Données invalides:`, req.body);
+      console.error(`❌ [NOTIFICATION_TIMES_POST] Données invalides:`, req.body);
       return res.status(400).json({ error: 'Données horaires invalides' });
     }
 
     const requiredFields = ['breakfast', 'lunch', 'dinner', 'workout'];
     for (const field of requiredFields) {
       if (!req.body[field] || typeof req.body[field].hour !== 'number' || typeof req.body[field].minute !== 'number') {
-        console.error(`❌ [NOTIFICATION_TIMES] Champ manquant ou invalide: ${field}`, req.body[field]);
+        console.error(`❌ [NOTIFICATION_TIMES_POST] Champ manquant ou invalide: ${field}`, req.body[field]);
         return res.status(400).json({ error: `Champ ${field} manquant ou invalide` });
       }
     }
 
-    console.log(`🔍 [NOTIFICATION_TIMES] Recherche utilisateur: ${userId}`);
+    console.log(`🔍 [NOTIFICATION_TIMES_POST] Recherche utilisateur: ${userId}`);
 
     // Utiliser la fonction de recherche robuste
     const userResult = await findUserById(userId);
 
     if (!userResult) {
-      console.error(`❌ [NOTIFICATION_TIMES] Utilisateur ${userId} non trouvé`);
+      console.error(`❌ [NOTIFICATION_TIMES_POST] Utilisateur ${userId} non trouvé`);
       return res.status(404).json({ error: 'Utilisateur non trouvé' });
     }
 
     const { userData, userType } = userResult;
-    console.log(`✅ [NOTIFICATION_TIMES] Utilisateur trouvé: ${userData.name || userData.email} (${userType})`);
+    console.log(`✅ [NOTIFICATION_TIMES_POST] Utilisateur trouvé: ${userData.name || userData.email} (${userType})`);
 
     // Sauvegarder les nouveaux horaires
     userData.notificationTimes = req.body;
     userData.lastUpdated = new Date().toISOString();
 
-    console.log(`💾 [NOTIFICATION_TIMES] Sauvegarde en cours pour ${userId}...`);
+    console.log(`💾 [NOTIFICATION_TIMES_POST] Sauvegarde en cours pour ${userId}...`);
 
     const saveSuccess = await writeUserFile(userId, userData, userType);
 
     if (saveSuccess) {
-      console.log(`✅ [NOTIFICATION_TIMES] Horaires sauvegardés avec succès pour ${userId}:`, req.body);
+      console.log(`✅ [NOTIFICATION_TIMES_POST] Horaires sauvegardés avec succès pour ${userId}:`, req.body);
       res.json({ 
         success: true, 
         message: 'Horaires notifications sauvegardés',
@@ -1202,11 +1203,11 @@ app.post('/api/notification-times/:userId', async (req, res) => {
         savedTimes: req.body
       });
     } else {
-      console.error(`❌ [NOTIFICATION_TIMES] Échec sauvegarde fichier pour ${userId}`);
+      console.error(`❌ [NOTIFICATION_TIMES_POST] Échec sauvegarde fichier pour ${userId}`);
       res.status(500).json({ error: 'Échec sauvegarde fichier utilisateur' });
     }
   } catch (error) {
-    console.error(`❌ [NOTIFICATION_TIMES] Erreur complète pour ${req.params.userId}:`, {
+    console.error(`❌ [NOTIFICATION_TIMES_POST] Erreur complète pour ${req.params.userId}:`, {
       message: error.message,
       stack: error.stack,
       userData: req.body
