@@ -27,9 +27,23 @@ app.use(cors({
 
 app.use(express.json({ limit: '50mb' }));
 
-// Logging simple
+// Logging détaillé pour diagnostiquer les problèmes de routes
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  const timestamp = new Date().toISOString();
+  console.log(`📡 [${timestamp}] ${req.method} ${req.path}`);
+  
+  // Log spécial pour les routes d'hydratation
+  if (req.path.includes('/api/water/')) {
+    console.log(`💧 [WATER_REQUEST] Route hydratation détectée:`);
+    console.log(`   - Method: ${req.method}`);
+    console.log(`   - Path: ${req.path}`);
+    console.log(`   - Params: ${JSON.stringify(req.params)}`);
+    console.log(`   - Query: ${JSON.stringify(req.query)}`);
+    if (req.method === 'POST') {
+      console.log(`   - Body: ${JSON.stringify(req.body)}`);
+    }
+  }
+  
   next();
 });
 
@@ -1122,7 +1136,7 @@ async function writeHydratationFile(userId, hydratationData) {
   }
 }
 
-// Routes pour l'hydratation
+// Routes pour l'hydratation - IMPORTANTES: Doivent être définies avant la route 404
 app.get('/api/water/:userId/:date', async (req, res) => {
   try {
     const { userId, date } = req.params;
@@ -2409,6 +2423,14 @@ async function startServer() {
       console.log(`🌐 API disponible sur: https://eatfitbymax.cloud`);
       console.log(`🔧 Configuration Strava - Client ID: ${STRAVA_CLIENT_ID}`);
       console.log(`✅ Nouvelle structure: Client/ et Coach/ avec fichiers unifiés`);
+      console.log(`💧 Routes hydratation configurées: GET/POST /api/water/:userId/:date`);
+      
+      // Test des routes importantes
+      console.log(`📋 Routes configurées:`);
+      console.log(`  - GET /api/water/:userId/:date (hydratation)`);
+      console.log(`  - POST /api/water/:userId/:date (hydratation)`);
+      console.log(`  - GET /api/user-data/:userId`);
+      console.log(`  - POST /api/user-data/:userId`);
     });
 
     server.on('error', (error) => {
@@ -2428,9 +2450,11 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Erreur interne du serveur' });
 });
 
-// Route 404 - DOIT ÊTRE À LA FIN
+// Route 404 - ABSOLUMENT À LA FIN, APRÈS TOUTES LES ROUTES API
 app.use('*', (req, res) => {
-  console.log(`❌ Route non trouvée: ${req.method} ${req.path}`);
+  console.log(`❌ [404] Route non trouvée: ${req.method} ${req.path}`);
+  console.log(`❌ [404] Headers:`, req.headers);
+  console.log(`❌ [404] User-Agent:`, req.get('User-Agent'));
   res.status(404).json({ error: 'Route non trouvée' });
 });
 
