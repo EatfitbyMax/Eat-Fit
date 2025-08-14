@@ -711,6 +711,7 @@ function NutritionScreen() {
       const user = await getCurrentUser();
       if (!user) {
         console.error('❌ Aucun utilisateur connecté pour ajout eau');
+        Alert.alert('Erreur', 'Utilisateur non connecté');
         return;
       }
 
@@ -719,19 +720,36 @@ function NutritionScreen() {
       const newWaterIntake = waterIntake + amount;
       const dateKey = selectedDate.toISOString().split('T')[0];
       
-      // Sauvegarder sur le serveur en premier
-      await PersistentStorage.saveWaterIntake(user.id, dateKey, newWaterIntake);
+      console.log(`📡 Tentative sauvegarde hydratation: ${user.id}, ${dateKey}, ${newWaterIntake}ml`);
       
-      // Mettre à jour l'état local seulement après succès
-      setWaterIntake(newWaterIntake);
-      console.log(`✅ Hydratation mise à jour: ${newWaterIntake}ml`);
+      // Sauvegarder sur le serveur avec une gestion d'erreur plus robuste
+      try {
+        await PersistentStorage.saveWaterIntake(user.id, dateKey, newWaterIntake);
+        console.log(`✅ Hydratation sauvegardée avec succès sur le serveur VPS`);
+        
+        // Mettre à jour l'état local seulement après succès de la sauvegarde
+        setWaterIntake(newWaterIntake);
+        console.log(`✅ Hydratation mise à jour localement: ${newWaterIntake}ml`);
+        
+      } catch (serverError) {
+        console.error('❌ Erreur sauvegarde serveur hydratation:', serverError);
+        console.error('❌ Détails erreur:', {
+          message: serverError.message,
+          name: serverError.name,
+          userId: user.id,
+          date: dateKey,
+          amount: newWaterIntake
+        });
+        
+        throw new Error(`Erreur serveur: ${serverError.message}`);
+      }
       
     } catch (error) {
-      console.error('❌ Erreur ajout eau:', error);
-      // Afficher une alerte à l'utilisateur
+      console.error('❌ Erreur complète ajout eau:', error);
+      // Afficher une alerte plus détaillée à l'utilisateur
       Alert.alert(
-        'Erreur',
-        'Impossible de sauvegarder votre consommation d\'eau. Vérifiez votre connexion internet.',
+        'Erreur d\'hydratation',
+        `Impossible de sauvegarder votre consommation d'eau. ${error.message || 'Vérifiez votre connexion internet.'}`,
         [{ text: 'OK' }]
       );
     }
@@ -742,6 +760,7 @@ function NutritionScreen() {
       const user = await getCurrentUser();
       if (!user) {
         console.error('❌ Aucun utilisateur connecté pour reset eau');
+        Alert.alert('Erreur', 'Utilisateur non connecté');
         return;
       }
 
@@ -749,18 +768,34 @@ function NutritionScreen() {
       
       const dateKey = selectedDate.toISOString().split('T')[0];
       
-      // Sauvegarder sur le serveur en premier
-      await PersistentStorage.saveWaterIntake(user.id, dateKey, 0);
+      console.log(`📡 Tentative reset hydratation: ${user.id}, ${dateKey}`);
       
-      // Mettre à jour l'état local seulement après succès
-      setWaterIntake(0);
-      console.log(`✅ Hydratation remise à zéro`);
+      // Sauvegarder sur le serveur avec gestion d'erreur robuste
+      try {
+        await PersistentStorage.saveWaterIntake(user.id, dateKey, 0);
+        console.log(`✅ Reset hydratation sauvegardé avec succès sur le serveur VPS`);
+        
+        // Mettre à jour l'état local seulement après succès
+        setWaterIntake(0);
+        console.log(`✅ Hydratation remise à zéro localement`);
+        
+      } catch (serverError) {
+        console.error('❌ Erreur reset serveur hydratation:', serverError);
+        console.error('❌ Détails erreur reset:', {
+          message: serverError.message,
+          name: serverError.name,
+          userId: user.id,
+          date: dateKey
+        });
+        
+        throw new Error(`Erreur serveur: ${serverError.message}`);
+      }
       
     } catch (error) {
-      console.error('❌ Erreur reset eau:', error);
+      console.error('❌ Erreur complète reset eau:', error);
       Alert.alert(
-        'Erreur',
-        'Impossible de remettre à zéro votre consommation d\'eau. Vérifiez votre connexion internet.',
+        'Erreur de reset',
+        `Impossible de remettre à zéro votre consommation d'eau. ${error.message || 'Vérifiez votre connexion internet.'}`,
         [{ text: 'OK' }]
       );
     }

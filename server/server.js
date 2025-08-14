@@ -1102,6 +1102,31 @@ app.post('/api/water/:userId/:date', async (req, res) => {
     const { userId, date } = req.params;
     const { amount } = req.body;
 
+    console.log(`💧 [WATER_SAVE] Début sauvegarde hydratation:`, {
+      userId,
+      date,
+      amount,
+      amountType: typeof amount,
+      bodyKeys: Object.keys(req.body)
+    });
+
+    // Validation des paramètres
+    if (!userId || !date) {
+      console.error('❌ [WATER_SAVE] Paramètres manquants:', { userId: !!userId, date: !!date });
+      return res.status(400).json({ error: 'Paramètres userId et date requis' });
+    }
+
+    if (amount === undefined || amount === null || isNaN(amount)) {
+      console.error('❌ [WATER_SAVE] Amount invalide:', { amount, type: typeof amount });
+      return res.status(400).json({ error: 'Amount doit être un nombre valide' });
+    }
+
+    const validAmount = parseFloat(amount);
+    if (validAmount < 0) {
+      console.error('❌ [WATER_SAVE] Amount négatif:', validAmount);
+      return res.status(400).json({ error: 'Amount ne peut pas être négatif' });
+    }
+
     let userData = await readUserFile(userId, 'client');
     let userType = 'client';
 
@@ -1111,26 +1136,44 @@ app.post('/api/water/:userId/:date', async (req, res) => {
     }
 
     if (!userData) {
+      console.error(`❌ [WATER_SAVE] Utilisateur non trouvé: ${userId}`);
       return res.status(404).json({ error: 'Utilisateur non trouvé' });
     }
 
+    console.log(`✅ [WATER_SAVE] Utilisateur trouvé: ${userData.name || userData.email} (${userType})`);
+
     if (!userData.waterIntake) {
       userData.waterIntake = {};
+      console.log(`🔧 [WATER_SAVE] Initialisation waterIntake pour ${userId}`);
     }
 
-    userData.waterIntake[date] = amount;
+    userData.waterIntake[date] = validAmount;
     userData.lastUpdated = new Date().toISOString();
+
+    console.log(`💾 [WATER_SAVE] Sauvegarde données: ${userId}/${date} = ${validAmount}ml`);
 
     try {
       await writeUserFile(userId, userData, userType);
-      console.log(`✅ Hydratation sauvegardée: ${userId}/${date} = ${amount}ml`);
-      res.json({ success: true });
+      console.log(`✅ [WATER_SAVE] Hydratation sauvegardée avec succès: ${userId}/${date} = ${validAmount}ml`);
+      res.json({ success: true, message: 'Hydratation sauvegardée', amount: validAmount });
     } catch (writeError) {
-      console.error(`❌ Erreur écriture fichier hydratation ${userId}:`, writeError);
+      console.error(`❌ [WATER_SAVE] Erreur écriture fichier ${userId}:`, {
+        error: writeError.message,
+        stack: writeError.stack,
+        userType,
+        date,
+        amount: validAmount
+      });
       res.status(500).json({ error: 'Erreur écriture fichier hydratation' });
     }
   } catch (error) {
-    console.error(`❌ Erreur sauvegarde hydratation ${req.params.userId}/${req.params.date}:`, error);
+    console.error(`❌ [WATER_SAVE] Erreur globale sauvegarde hydratation:`, {
+      userId: req.params.userId,
+      date: req.params.date,
+      error: error.message,
+      stack: error.stack,
+      body: req.body
+    });
     res.status(500).json({ error: 'Erreur sauvegarde hydratation' });
   }
 });
