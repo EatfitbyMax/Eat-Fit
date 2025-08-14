@@ -36,6 +36,7 @@ export default function ProfilScreen() {
   const [showComingSoonModal, setShowComingSoonModal] = useState(false);
   const [showPremiumComingSoonModal, setShowPremiumComingSoonModal] = useState(false);
   const [stravaConnecting, setStravaConnecting] = useState(false); // Ajout pour gérer l'état de connexion Strava
+  const [showAppleHealthComingSoon, setShowAppleHealthComingSoon] = useState(false);
 
   const availableGoals = [
     'Perdre du poids',
@@ -94,7 +95,7 @@ export default function ProfilScreen() {
       // Récupérer le statut directement depuis le serveur
       const status = await IntegrationsManager.getIntegrationStatusFromServer(currentUser.id);
       setIntegrationStatus(status);
-      
+
       console.log('📊 Statut intégrations chargé depuis serveur:', status);
     } catch (error) {
       console.error('Erreur chargement statut intégrations depuis serveur:', error);
@@ -150,11 +151,9 @@ export default function ProfilScreen() {
   };
 
   const handleAppleHealthToggle = async () => {
-    if (isLoading) return;
-
-    setIsLoading(true);
-
     try {
+      setIsLoading(true);
+
       const currentUser = await getCurrentUser();
       if (!currentUser) {
         Alert.alert("Erreur", "Utilisateur non connecté");
@@ -221,7 +220,7 @@ export default function ProfilScreen() {
       }
     } catch (error) {
       console.error('❌ Erreur toggle Apple Health:', error);
-      Alert.alert('Erreur', 'Une erreur s\'est produite. Veuillez réessayer.');
+      Alert.alert('Erreur', 'Une erreur s\'est produite.');
     } finally {
       setIsLoading(false);
     }
@@ -286,7 +285,7 @@ export default function ProfilScreen() {
       if (success) {
         // Recharger le statut depuis le serveur
         await loadIntegrationStatus();
-        
+
         Alert.alert(
           '🎉 Strava connecté !',
           'Votre compte Strava est maintenant connecté.',
@@ -316,7 +315,7 @@ export default function ProfilScreen() {
     if (isLoading) return;
 
     setIsLoading(true);
-    
+
     try {
       const currentUser = await getCurrentUser();
       if (!currentUser) {
@@ -335,10 +334,10 @@ export default function ProfilScreen() {
       if (response.ok) {
         const result = await response.json();
         console.log('✅ [STRAVA] Synchronisation réussie:', result);
-        
+
         // Recharger le statut pour mettre à jour la date de dernière sync
         await loadIntegrationStatus();
-        
+
         Alert.alert(
           '✅ Synchronisation terminée',
           `${result.activitiesCount || 0} activité(s) synchronisée(s) depuis Strava.`,
@@ -348,7 +347,7 @@ export default function ProfilScreen() {
         const errorData = await response.json().catch(() => ({}));
         console.log('❌ [STRAVA] Erreur synchronisation:', errorData);
         Alert.alert(
-          '❌ Erreur de synchronisation', 
+          '❌ Erreur de synchronisation',
           errorData.message || 'Impossible de synchroniser vos données Strava. Réessayez plus tard.',
           [{ text: 'OK', style: 'default' }]
         );
@@ -481,6 +480,9 @@ export default function ProfilScreen() {
   };
 
   // Synchronisation supprimée - gestion simple uniquement
+  const handleAppleHealthComingSoon = () => {
+    setShowAppleHealthComingSoon(true);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -721,7 +723,7 @@ export default function ProfilScreen() {
             <View style={styles.integrationInfo}>
               <Text style={styles.integrationName}>🍎 Apple Health</Text>
               <Text style={styles.integrationDescription}>
-                {integrationStatus.appleHealth.connected ? 
+                {integrationStatus.appleHealth.connected ?
                   'Données de santé synchronisées avec EatFitByMax' :
                   'Synchronisez vos données de santé et fitness avec EatFitByMax'
                 }
@@ -733,27 +735,14 @@ export default function ProfilScreen() {
               )}
             </View>
             <View style={styles.integrationActions}>
-              {integrationStatus.appleHealth.connected ? (
-                <TouchableOpacity
-                  style={styles.disconnectButton}
-                  onPress={() => handleAppleHealthToggle()}
-                  disabled={isLoading}
-                >
-                  <Text style={styles.disconnectButtonText}>
-                    Déconnecter
-                  </Text>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity
-                  style={styles.connectButton}
-                  onPress={() => handleAppleHealthToggle()}
-                  disabled={isLoading}
-                >
-                  <Text style={styles.connectButtonText}>
-                    {isLoading ? 'Connexion...' : 'Connecter'}
-                  </Text>
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity
+                style={[styles.connectButton, { backgroundColor: '#F5A623' }]}
+                onPress={handleAppleHealthComingSoon}
+              >
+                <Text style={[styles.connectButtonText, { color: '#000000' }]}>
+                  Bientôt disponible
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -761,7 +750,7 @@ export default function ProfilScreen() {
             <View style={styles.integrationInfo}>
               <Text style={styles.integrationName}>🏃‍♂️ Strava</Text>
               <Text style={styles.integrationDescription}>
-                {integrationStatus.strava.connected ? 
+                {integrationStatus.strava.connected ?
                   'Synchronisez vos activités sportives avec EatFitByMax' :
                   'Synchronisez vos activités sportives avec EatFitByMax'
                 }
@@ -812,7 +801,7 @@ export default function ProfilScreen() {
                   <Text style={styles.connectedBadgeText}>✓ CONNECTÉ</Text>
                 </View>
               </View>
-              
+
               <View style={styles.stravaStatusDetails}>
                 <View style={styles.stravaDetailRow}>
                   <Text style={styles.stravaDetailLabel}>Nom :</Text>
@@ -820,14 +809,14 @@ export default function ProfilScreen() {
                     {integrationStatus.strava.athlete?.firstname} {integrationStatus.strava.athlete?.lastname}
                   </Text>
                 </View>
-                
+
                 <View style={styles.stravaDetailRow}>
                   <Text style={styles.stravaDetailLabel}>ID Athlète :</Text>
                   <Text style={styles.stravaDetailValue}>
                     #{integrationStatus.strava.athleteId || integrationStatus.strava.athlete?.id || 'Non disponible'}
                   </Text>
                 </View>
-                
+
                 {integrationStatus.strava.athlete?.city && (
                   <View style={styles.stravaDetailRow}>
                     <Text style={styles.stravaDetailLabel}>Ville :</Text>
@@ -836,7 +825,7 @@ export default function ProfilScreen() {
                     </Text>
                   </View>
                 )}
-                
+
                 <View style={styles.stravaDetailRow}>
                   <Text style={styles.stravaDetailLabel}>Dernière sync :</Text>
                   <Text style={styles.stravaDetailValue}>
@@ -872,7 +861,7 @@ export default function ProfilScreen() {
             style={styles.menuItem}
             onPress={() => router.push('/(client)/parametres-application')}
           >
-            <Text style={styles.menuItemText}>⚙️ Paramètres de l\'application</Text>
+            <Text style={styles.menuItemText}>⚙️ Paramètres de l'application</Text>
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
 
@@ -902,11 +891,12 @@ export default function ProfilScreen() {
         </View>
       </ScrollView>
 
+      {/* Modal Bientôt disponible Apple Health */}
       <ComingSoonModal
-        visible={showComingSoonModal}
-        onClose={() => setShowComingSoonModal(false)}
-        feature="🍎 Connexion Apple Health"
-        description="Synchronisez automatiquement vos données de santé et fitness avec EatFitByMax pour un suivi personnalisé optimal."
+        visible={showAppleHealthComingSoon}
+        onClose={() => setShowAppleHealthComingSoon(false)}
+        feature="Apple Health"
+        description="L'intégration avec Apple Health permettra de synchroniser automatiquement vos données de santé et fitness (pas, fréquence cardiaque, calories brûlées, etc.) pour un suivi personnalisé et précis de votre progression."
       />
 
       <ComingSoonModal
