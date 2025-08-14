@@ -2452,17 +2452,6 @@ app.get('/coach-signup', (req, res) => {
   }
 });
 
-// Gestion des erreurs globales
-app.use((err, req, res, next) => {
-  console.error('Erreur serveur:', err);
-  res.status(500).json({ error: 'Erreur interne du serveur' });
-});
-
-// Route 404
-app.use('*', (req, res) => {
-  res.status(404).json({ error: 'Route non trouvée' });
-});
-
 // Démarrage du serveur
 async function startServer() {
   try {
@@ -2485,5 +2474,17 @@ async function startServer() {
     process.exit(1);
   }
 }
+
+// Gestion des erreurs globales
+app.use((err, req, res, next) => {
+  console.error('Erreur serveur:', err);
+  res.status(500).json({ error: 'Erreur interne du serveur' });
+});
+
+// Route 404 - DOIT ÊTRE À LA FIN
+app.use('*', (req, res) => {
+  console.log(`❌ Route non trouvée: ${req.method} ${req.path}`);
+  res.status(404).json({ error: 'Route non trouvée' });
+});
 
 startServer();
