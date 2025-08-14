@@ -1,0 +1,50 @@
+LOG  ✅ Paramètres notifications chargés: {"coachMessages": true, "mealReminders": true, "progressUpdates": true, "pushNotifications": true, "soundEnabled": true, "vibrationEnabled": true, "weeklyReports": true, "workoutReminders": true}
+ LOG  🔔 Tentative sauvegarde horaires pour utilisateur: 1755174502398
+ LOG  🔔 Horaires à sauvegarder: {"breakfast": {"hour": 9, "minute": 0}, "dinner": {"hour": 19, "minute": 0}, "lunch": {"hour": 12, "minute": 30}, "workout": {"hour": 18, "minute": 0}}
+ LOG  📤 [STORAGE] Envoi horaires vers serveur pour utilisateur: 1755174502398
+ LOG  📤 [STORAGE] URL: https://eatfitbymax.cloud/api/notification-times/1755174502398
+ LOG  📤 [STORAGE] Données: {"breakfast": {"hour": 9, "minute": 0}, "dinner": {"hour": 19, "minute": 0}, "lunch": {"hour": 12, "minute": 30}, "workout": {"hour": 18, "minute": 0}}
+ LOG  📥 [STORAGE] Réponse serveur: 404 
+ ERROR  ❌ [STORAGE] Erreur serveur: {"errorText": "<!DOCTYPE html>
+<html lang=\"en\">
+<head>
+<meta charset=\"utf-8\">
+<title>Error</title>
+</head>
+<body>
+<pre>Cannot POST /api/notification-times/1755174502398</pre>
+</body>
+</html>
+", "status": 404, "statusText": ""}
+ ERROR  ❌ [STORAGE] Erreur complète sauvegarde horaires: [Error: Erreur serveur 404: <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Error</title>
+</head>
+<body>
+<pre>Cannot POST /api/notification-times/1755174502398</pre>
+</body>
+</html>
+]
+ ERROR  ❌ Erreur sauvegarde storage: [Error: Erreur serveur 404: <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Error</title>
+</head>
+<body>
+<pre>Cannot POST /api/notification-times/1755174502398</pre>
+</body>
+</html>
+]
+ LOG  ✅ Toutes les notifications annulées
+ LOG  🔔 Initialisation des notifications pour: 1755174502398
+ LOG  ✅ Permissions notifications accordées
+ LOG  ✅ Rappels de repas programmés avec horaires personnalisés: {"breakfast": {"hour": 8, "minute": 0}, "dinner": {"hour": 19, "minute": 0}, "lunch": {"hour": 12, "minute": 30}, "workout": {"hour": 18, "minute": 0}}
+ LOG  ✅ Rappels d'entraînement programmés avec heure personnalisée: {"hour": 18, "minute": 0}
+ LOG  ✅ Rapport hebdomadaire programmé
+ LOG  ✅ Toutes les notifications ont été initialisées
+ LOG  ✅ Notifications mises à jour
+ LOG  ✅ Notifications reprogrammées avec succès
+ LOG  ✅ Horaires de notifications mis à jour: {"breakfast": {"hour": 9, "minute": 0}, "dinner": {"hour": 19, "minute": 0}, "lunch": {"hour": 12, "minute": 30}, "workout": {"hour": 18, "minute": 0}}
