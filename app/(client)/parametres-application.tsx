@@ -13,7 +13,6 @@ export default function ParametresApplicationScreen() {
   const [settings, setSettings] = useState({
     darkMode: true,
     autoSync: true,
-    offlineMode: false,
     analytics: true,
     crashReporting: true,
     language: 'Français',
@@ -196,7 +195,6 @@ export default function ParametresApplicationScreen() {
             const defaultSettings = {
               darkMode: true,
               autoSync: true,
-              offlineMode: false,
               analytics: true,
               crashReporting: true,
               language: 'Français',
@@ -328,18 +326,7 @@ export default function ParametresApplicationScreen() {
             <Text style={[styles.settingArrow, { color: theme.textSecondary }]}>›</Text>
           </TouchableOpacity>
 
-          <View style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            <View style={styles.settingInfo}>
-              <Text style={[styles.settingTitle, { color: theme.text }]}>Mode hors ligne</Text>
-              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Utiliser l'app sans connexion internet</Text>
-            </View>
-            <Switch
-              value={settings.offlineMode}
-              onValueChange={(value) => updateSetting('offlineMode', value)}
-              trackColor={{ false: '#21262D', true: '#F5A623' }}
-              thumbColor={settings.offlineMode ? '#FFFFFF' : '#8B949E'}
-            />
-          </View>
+          
 
           <View style={[styles.settingItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
             <View style={styles.settingInfo}>
