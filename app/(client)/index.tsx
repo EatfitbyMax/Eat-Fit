@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -59,10 +58,10 @@ export default function HomeScreen() {
   const [formeScore, setFormeScore] = useState(0);
   const [currentTip, setCurrentTip] = useState('');
   const [calorieGoals, setCalorieGoals] = useState({
-    calories: 2286,
-    proteins: 171,
-    carbohydrates: 257,
-    fat: 64,
+    calories: 2495,
+    proteins: 125,
+    carbohydrates: 312,
+    fat: 83,
   });
   const [weeklyWorkouts, setWeeklyWorkouts] = useState(0);
   const [weightData, setWeightData] = useState({
@@ -126,23 +125,45 @@ export default function HomeScreen() {
     generateRandomTip();
   };
 
-  const calculatePersonalizedGoals = (user: User) => {
+  const calculatePersonalizedGoals = async (user: any) => {
+    console.log('🎯 CALCUL OBJECTIFS PERSONNALISÉS - ACCUEIL');
+    console.log('Données utilisateur reçues:', {
+      age: user?.age,
+      weight: user?.weight,
+      height: user?.height,
+      gender: user?.gender,
+      activityLevel: user?.activityLevel,
+      goals: user?.goals
+    });
+
     if (!user || !user.age || !user.weight || !user.height || !user.gender) {
-      return {
-        calories: 2286,
-        proteins: 171,
-        carbohydrates: 257,
-        fat: 64,
+      console.log('⚠️ Données utilisateur incomplètes - Utilisation valeurs par défaut');
+      const defaultGoals = {
+        calories: 2495,
+        proteins: 125,
+        carbohydrates: 312,
+        fat: 83,
       };
+      console.log('🎯 Objectifs par défaut définis:', defaultGoals);
+      return defaultGoals;
     }
+
+    // Conversion en nombres pour éviter les erreurs
+    const age = parseFloat(user.age) || 25;
+    const weight = parseFloat(user.weight?.currentWeight) || parseFloat(user.currentWeight) || 70;
+    const height = parseFloat(user.height) || 175;
+
+    console.log('📊 Valeurs numériques utilisées:', { age, weight, height, gender: user.gender });
 
     // Calcul du métabolisme de base (BMR) avec la formule de Mifflin-St Jeor
     let bmr;
     if (user.gender === 'Homme') {
-      bmr = 88.362 + (13.397 * user.weight) + (4.799 * user.height) - (5.677 * user.age);
+      bmr = 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
     } else {
-      bmr = 447.593 + (9.247 * user.weight) + (3.098 * user.height) - (4.330 * user.age);
+      bmr = 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age);
     }
+
+    console.log(`🔥 BMR calculé (${user.gender}): ${Math.round(bmr)} kcal`);
 
     // Facteurs d'activité physique
     const activityFactors = {
@@ -156,13 +177,41 @@ export default function HomeScreen() {
     const activityFactor = activityFactors[user.activityLevel as keyof typeof activityFactors] || 1.2;
     let totalCalories = Math.round(bmr * activityFactor);
 
+    console.log(`🏃 Facteur activité (${user.activityLevel}): ${activityFactor}`);
+    console.log(`📈 Calories avec activité: ${totalCalories} kcal`);
+
     // Ajustements selon les objectifs
     const goals = user.goals || [];
+    console.log('🎯 Objectifs utilisateur:', goals);
 
     if (goals.includes('Perdre du poids')) {
-      totalCalories -= 300; // Déficit de 300 kcal pour perte de poids
-    } else if (goals.includes('Prendre du muscle')) {
-      totalCalories += 200; // Surplus de 200 kcal pour prise de muscle
+      totalCalories -= 200; // Déficit de 200 kcal
+      console.log('⬇️ Ajustement perte de poids: -200 kcal');
+    }
+
+    // Vérifier s'il y a un entraînement programmé aujourd'hui depuis le serveur VPS
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const workouts = await PersistentStorage.getWorkouts(user.id);
+
+      const hasWorkoutToday = workouts.some((workout: any) => {
+        const workoutDate = new Date(workout.date).toISOString().split('T')[0];
+        return workoutDate === today;
+      });
+
+      if (hasWorkoutToday) {
+        // Ajouter 150 kcal pour le premier entraînement + 50 kcal par séance supplémentaire
+        const workoutCount = workouts.filter((workout: any) => {
+          const workoutDate = new Date(workout.date).toISOString().split('T')[0];
+          return workoutDate === today;
+        }).length;
+
+        const bonusCalories = 150 + (workoutCount - 1) * 50;
+        totalCalories += bonusCalories;
+        console.log(`💪 ${workoutCount} entraînement(s) détecté(s) aujourd'hui - Ajout de ${bonusCalories} kcal`);
+      }
+    } catch (error) {
+      console.error('Erreur vérification entraînements depuis VPS:', error);
     }
 
     // Calcul des macronutriments selon les objectifs
@@ -171,13 +220,17 @@ export default function HomeScreen() {
     let fatRatio = 0.30;     // 30% par défaut
 
     if (goals.includes('Me muscler')) {
+      // Augmenter les protéines, réduire les lipides
       proteinRatio = 0.30; // 30%
       carbRatio = 0.45;    // 45%
       fatRatio = 0.25;     // 25%
+      console.log('💪 Ratios musculation appliqués');
     } else if (goals.includes('Gagner en performance')) {
+      // Ratio glucides/protéines optimal pour la performance
       proteinRatio = 0.25; // 25%
       carbRatio = 0.55;    // 55%
       fatRatio = 0.20;     // 20%
+      console.log('🏃‍♂️ Ratios performance appliqués');
     }
 
     // Calcul des grammes de macronutriments
@@ -185,12 +238,17 @@ export default function HomeScreen() {
     const carbohydrates = Math.round((totalCalories * carbRatio) / 4); // 4 kcal par gramme
     const fat = Math.round((totalCalories * fatRatio) / 9); // 9 kcal par gramme
 
-    return {
+    const finalGoals = {
       calories: Math.max(totalCalories, 1200), // Minimum 1200 kcal pour la santé
       proteins,
       carbohydrates,
       fat,
     };
+
+    console.log('✅ OBJECTIFS FINAUX CALCULÉS - ACCUEIL:', finalGoals);
+    console.log(`📊 Ratios: P${Math.round(proteinRatio*100)}% C${Math.round(carbRatio*100)}% F${Math.round(fatRatio*100)}%`);
+
+    return finalGoals;
   };
 
   const loadUserData = async () => {
@@ -203,6 +261,12 @@ export default function HomeScreen() {
         setUser(currentUser);
         console.log('👤 Utilisateur chargé:', currentUser.firstName, currentUser.lastName);
 
+        // Calculer les objectifs personnalisés
+        console.log('🎯 Début calcul objectifs personnalisés - Accueil...');
+        const personalizedGoals = await calculatePersonalizedGoals(currentUser);
+        setCalorieGoals(personalizedGoals);
+        console.log('✅ Objectifs appliqués dans l\'état - Accueil:', personalizedGoals);
+
         // Vérifier le statut premium
         try {
           const subscription = await checkSubscriptionStatus();
@@ -213,9 +277,17 @@ export default function HomeScreen() {
           setIsPremium(false);
         }
 
-        // Calculer les objectifs personnalisés
-        const personalizedGoals = calculatePersonalizedGoals(currentUser);
-        setCalorieGoals(personalizedGoals);
+        // Charger les statistiques
+        await loadTodayStats();
+
+        // Charger les données de poids
+        console.log('⚖️ Chargement données de poids...');
+        const weightData = await PersistentStorage.getUserWeight(currentUser.id);
+        console.log('⚖️ Données poids chargées:', weightData);
+        setWeightData(weightData);
+
+        // Calculer les séances de la semaine
+        await calculateWeeklyWorkouts();
       } else {
         throw new Error('Aucun utilisateur connecté');
       }
@@ -429,7 +501,7 @@ export default function HomeScreen() {
                 await loadTodayStats();
               } catch (error: any) {
                 setConnectionError(error.message || 'Erreur de synchronisation');
-                Alert.alert('Erreur', error.message || 'Impossible de synchroniser les données');
+                Alert.Alert('Erreur', error.message || 'Impossible de synchroniser les données');
               }
             }
           }
@@ -516,6 +588,15 @@ export default function HomeScreen() {
     return baseGoal;
   };
 
+  const getStartOfWeek = (date: Date): Date => {
+    const start = new Date(date);
+    const day = date.getDay();
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is Sunday
+    start.setDate(diff);
+    start.setHours(0, 0, 0, 0);
+    return start;
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -571,7 +652,7 @@ export default function HomeScreen() {
                   Prêt pour une nouvelle journée ?
                 </Text>
               </View>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.profileButton}
                 onPress={() => router.push('/(client)/profil')}
               >
@@ -615,7 +696,7 @@ export default function HomeScreen() {
         <Animated.View style={[styles.actionsContainer, cardsAnimatedStyle]}>
           <Text style={styles.sectionTitle}>Actions rapides</Text>
           <View style={styles.actionsGrid}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.actionCard, styles.nutritionAction]}
               onPress={() => router.push('/(client)/nutrition')}
             >
@@ -626,7 +707,7 @@ export default function HomeScreen() {
               <Text style={styles.actionSubtitle}>Suivre mon alimentation</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.actionCard, styles.workoutAction]}
               onPress={() => router.push('/(client)/entrainement')}
             >
@@ -637,7 +718,7 @@ export default function HomeScreen() {
               <Text style={styles.actionSubtitle}>Enregistrer mes séances</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.actionCard, styles.progressAction]}
               onPress={() => router.push('/(client)/progres')}
             >
@@ -648,7 +729,7 @@ export default function HomeScreen() {
               <Text style={styles.actionSubtitle}>Voir mon évolution</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.actionCard, styles.formeAction]}
               onPress={() => router.push('/(client)/forme')}
             >
@@ -692,16 +773,16 @@ export default function HomeScreen() {
             </View>
             <View style={styles.progressBar}>
               <View style={[
-                styles.progressFill, 
-                { 
+                styles.progressFill,
+                {
                   width: `${Math.min((todayStats.calories / calorieGoals.calories) * 100, 100)}%`,
                   backgroundColor: todayStats.calories >= calorieGoals.calories * 0.8 ? '#28A745' : '#F5A623'
                 }
               ]} />
             </View>
             <Text style={styles.goalSubtext}>
-              {todayStats.calories >= calorieGoals.calories 
-                ? 'Objectif atteint !' 
+              {todayStats.calories >= calorieGoals.calories
+                ? 'Objectif atteint !'
                 : `${Math.max(0, calorieGoals.calories - todayStats.calories)} kcal restantes`
               }
             </Text>
@@ -715,19 +796,19 @@ export default function HomeScreen() {
             </View>
             <View style={styles.progressBar}>
               <View style={[
-                styles.progressFill, 
-                { 
+                styles.progressFill,
+                {
                   width: `${Math.min((weeklyWorkouts / getTrainingGoal()) * 100, 100)}%`,
                   backgroundColor: weeklyWorkouts >= getTrainingGoal() ? '#28A745' : '#F5A623'
                 }
               ]} />
             </View>
             <Text style={styles.goalSubtext}>
-              {weeklyWorkouts >= getTrainingGoal() 
-                ? 'Objectif hebdomadaire atteint ! 🎉' 
-                : weeklyWorkouts === 0 
+              {weeklyWorkouts >= getTrainingGoal()
+                ? 'Objectif hebdomadaire atteint ! 🎉'
+                : weeklyWorkouts === 0
                   ? 'Planifiez vos séances dans Entraînement'
-                  : `${Math.max(0, getTrainingGoal() - weeklyWorkouts)} séance${getTrainingGoal() - weeklyWorkouts > 1 ? 's' : ''} supplémentaire${getTrainingGoal() - weeklyWorkouts > 1 ? 's' : ''} suggérée${getTrainingGoal() - weeklyWorkouts > 1 ? 's' : ''}`
+                  : `${Math.max(0, getTrainingGoal() - weeklyWorkouts)} séance${getTrainingGoal() - weeklyWorkouts > 1 ? 's' : ''} suggérée${getTrainingGoal() - weeklyWorkouts > 1 ? 's' : ''}`
               }
             </Text>
           </View>
@@ -741,8 +822,8 @@ export default function HomeScreen() {
               </View>
               <View style={styles.progressBar}>
                 <View style={[
-                  styles.progressFill, 
-                  { 
+                  styles.progressFill,
+                  {
                     width: `${getWeightLossPercentage()}%`,
                     backgroundColor: getWeightLossPercentage() >= 50 ? '#28A745' : '#F5A623'
                   }
