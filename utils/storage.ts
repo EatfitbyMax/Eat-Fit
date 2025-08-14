@@ -249,6 +249,34 @@ export class PersistentStorage {
     }
   }
 
+  // Notification times
+  static async getNotificationTimes(userId: string): Promise<any> {
+    const response = await fetch(`${SERVER_URL}/api/notification-times/${userId}`);
+
+    if (!response.ok) {
+      return {
+        breakfast: { hour: 8, minute: 0 },
+        lunch: { hour: 12, minute: 30 },
+        dinner: { hour: 19, minute: 0 },
+        workout: { hour: 18, minute: 0 },
+      };
+    }
+
+    return await response.json();
+  }
+
+  static async saveNotificationTimes(userId: string, times: any): Promise<void> {
+    const response = await fetch(`${SERVER_URL}/api/notification-times/${userId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(times)
+    });
+
+    if (!response.ok) {
+      throw new Error('Erreur sauvegarde horaires notifications');
+    }
+  }
+
   // Integration status
   static async getUserIntegrationStatus(userId: string): Promise<any> {
     const response = await fetch(`${SERVER_URL}/api/integrations/${userId}`);

@@ -48,19 +48,27 @@ export class NotificationService {
   static async scheduleNutritionReminders(userId: string): Promise<void> {
     try {
       const settings = await PersistentStorage.getNotificationSettings(userId);
+      const times = await PersistentStorage.getNotificationTimes(userId);
 
       if (!settings.mealReminders || !settings.pushNotifications) {
         console.log('🔔 Rappels de repas désactivés');
         return;
       }
 
-      // Annuler les anciennes notifications
-      await Notifications.cancelAllScheduledNotificationsAsync();
+      // Annuler les anciennes notifications de repas
+      const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
+      for (const notification of scheduledNotifications) {
+        if (notification.content.title?.includes('🌅') || 
+            notification.content.title?.includes('☀️') || 
+            notification.content.title?.includes('🌆')) {
+          await Notifications.cancelScheduledNotificationAsync(notification.identifier);
+        }
+      }
 
       // Sons personnalisés selon les préférences
       const soundConfig = settings.soundEnabled ? 'default' : false;
 
-      // Programmer petit-déjeuner (8h00)
+      // Programmer petit-déjeuner avec heure personnalisée
       await Notifications.scheduleNotificationAsync({
         content: {
           title: '🌅 Petit-déjeuner',
@@ -69,13 +77,13 @@ export class NotificationService {
           vibrate: settings.vibrationEnabled ? [0, 250, 250, 250] : [],
         },
         trigger: {
-          hour: 8,
-          minute: 0,
+          hour: times.breakfast.hour,
+          minute: times.breakfast.minute,
           repeats: true,
         },
       });
 
-      // Programmer déjeuner (12h30)
+      // Programmer déjeuner avec heure personnalisée
       await Notifications.scheduleNotificationAsync({
         content: {
           title: '☀️ Déjeuner',
@@ -84,13 +92,13 @@ export class NotificationService {
           vibrate: settings.vibrationEnabled ? [0, 250, 250, 250] : [],
         },
         trigger: {
-          hour: 12,
-          minute: 30,
+          hour: times.lunch.hour,
+          minute: times.lunch.minute,
           repeats: true,
         },
       });
 
-      // Programmer dîner (19h00)
+      // Programmer dîner avec heure personnalisée
       await Notifications.scheduleNotificationAsync({
         content: {
           title: '🌆 Dîner',
@@ -99,13 +107,13 @@ export class NotificationService {
           vibrate: settings.vibrationEnabled ? [0, 250, 250, 250] : [],
         },
         trigger: {
-          hour: 19,
-          minute: 0,
+          hour: times.dinner.hour,
+          minute: times.dinner.minute,
           repeats: true,
         },
       });
 
-      console.log('✅ Rappels de repas programmés');
+      console.log('✅ Rappels de repas programmés avec horaires personnalisés:', times);
     } catch (error) {
       console.error('❌ Erreur programmation rappels repas:', error);
     }
@@ -115,15 +123,24 @@ export class NotificationService {
   static async scheduleWorkoutReminders(userId: string): Promise<void> {
     try {
       const settings = await PersistentStorage.getNotificationSettings(userId);
+      const times = await PersistentStorage.getNotificationTimes(userId);
 
       if (!settings.workoutReminders || !settings.pushNotifications) {
         console.log('🔔 Rappels d\'entraînement désactivés');
         return;
       }
 
+      // Annuler les anciennes notifications d'entraînement
+      const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
+      for (const notification of scheduledNotifications) {
+        if (notification.content.title?.includes('🏋️‍♂️')) {
+          await Notifications.cancelScheduledNotificationAsync(notification.identifier);
+        }
+      }
+
       const soundConfig = settings.soundEnabled ? 'default' : undefined;
 
-      // Programmer rappel entraînement (18h00)
+      // Programmer rappel entraînement avec heure personnalisée
       await Notifications.scheduleNotificationAsync({
         content: {
           title: '🏋️‍♂️ Entraînement',
@@ -132,13 +149,13 @@ export class NotificationService {
           vibrate: settings.vibrationEnabled ? [0, 250, 250, 250] : [],
         },
         trigger: {
-          hour: 18,
-          minute: 0,
+          hour: times.workout.hour,
+          minute: times.workout.minute,
           repeats: true,
         },
       });
 
-      console.log('✅ Rappels d\'entraînement programmés');
+      console.log('✅ Rappels d\'entraînement programmés avec heure personnalisée:', times.workout);
     } catch (error) {
       console.error('❌ Erreur programmation rappels entraînement:', error);
     }

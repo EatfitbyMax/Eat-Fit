@@ -1094,6 +1094,48 @@ app.post('/api/notifications/:userId', async (req, res) => {
   }
 });
 
+// Notification times
+app.get('/api/notification-times/:userId', (req, res) => {
+  const { userId } = req.params;
+  const filePath = `./data/notification-times/${userId}.json`;
+
+  try {
+    if (fs.existsSync(filePath)) {
+      const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      res.json(data);
+    } else {
+      res.json({
+        breakfast: { hour: 8, minute: 0 },
+        lunch: { hour: 12, minute: 30 },
+        dinner: { hour: 19, minute: 0 },
+        workout: { hour: 18, minute: 0 },
+      });
+    }
+  } catch (error) {
+    console.error('Erreur récupération horaires notifications:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+app.post('/api/notification-times/:userId', (req, res) => {
+  const { userId } = req.params;
+  const filePath = `./data/notification-times/${userId}.json`;
+
+  try {
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    fs.writeFileSync(filePath, JSON.stringify(req.body, null, 2));
+    console.log(`✅ Horaires notifications sauvegardés pour ${userId}:`, req.body);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Erreur sauvegarde horaires notifications:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 // Hydratation : Sauvegarder l'apport en eau
 app.post('/api/water/:userId/:date', async (req, res) => {
   const { userId, date } = req.params;

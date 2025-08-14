@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Switch, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Switch, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { getCurrentUser } from '@/utils/auth';
 import { PersistentStorage } from '@/utils/storage';
 import { NotificationService } from '@/utils/notifications';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function NotificationsScreen() {
   const router = useRouter();
@@ -17,6 +18,18 @@ export default function NotificationsScreen() {
     weeklyReports: true,
     soundEnabled: true,
     vibrationEnabled: true,
+  });
+
+  const [notificationTimes, setNotificationTimes] = useState({
+    breakfast: new Date(),
+    lunch: new Date(),
+    dinner: new Date(),
+    workout: new Date(),
+  });
+
+  const [showTimePicker, setShowTimePicker] = useState({
+    type: null as 'breakfast' | 'lunch' | 'dinner' | 'workout' | null,
+    visible: false,
   });
 
   useEffect(() => {
@@ -33,6 +46,7 @@ export default function NotificationsScreen() {
         setUser(currentUser);
         // Charger les paramètres de notification existants
         loadNotificationSettings();
+        loadNotificationTimes();
       }
     } catch (error) {
       console.error('Erreur chargement utilisateur:', error);
@@ -175,6 +189,86 @@ export default function NotificationsScreen() {
     }
   };
 
+  const loadNotificationTimes = async () => {
+    try {
+      const currentUser = await getCurrentUser();
+      if (currentUser?.id) {
+        const savedTimes = await PersistentStorage.getNotificationTimes(currentUser.id);
+        
+        if (savedTimes) {
+          const now = new Date();
+          setNotificationTimes({
+            breakfast: new Date(now.getFullYear(), now.getMonth(), now.getDate(), savedTimes.breakfast.hour, savedTimes.breakfast.minute),
+            lunch: new Date(now.getFullYear(), now.getMonth(), now.getDate(), savedTimes.lunch.hour, savedTimes.lunch.minute),
+            dinner: new Date(now.getFullYear(), now.getMonth(), now.getDate(), savedTimes.dinner.hour, savedTimes.dinner.minute),
+            workout: new Date(now.getFullYear(), now.getMonth(), now.getDate(), savedTimes.workout.hour, savedTimes.workout.minute),
+          });
+        } else {
+          // Horaires par défaut
+          const now = new Date();
+          setNotificationTimes({
+            breakfast: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 0),
+            lunch: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 30),
+            dinner: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 19, 0),
+            workout: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 18, 0),
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Erreur chargement horaires notifications:', error);
+    }
+  };
+
+  const saveNotificationTimes = async (times: typeof notificationTimes) => {
+    try {
+      const currentUser = await getCurrentUser();
+      if (currentUser?.id) {
+        const timesToSave = {
+          breakfast: { hour: times.breakfast.getHours(), minute: times.breakfast.getMinutes() },
+          lunch: { hour: times.lunch.getHours(), minute: times.lunch.getMinutes() },
+          dinner: { hour: times.dinner.getHours(), minute: times.dinner.getMinutes() },
+          workout: { hour: times.workout.getHours(), minute: times.workout.getMinutes() },
+        };
+        
+        await PersistentStorage.saveNotificationTimes(currentUser.id, timesToSave);
+        
+        // Reprogrammer les notifications avec les nouveaux horaires
+        await NotificationService.updateNotifications(currentUser.id);
+        
+        console.log('✅ Horaires de notifications sauvegardés:', timesToSave);
+      }
+    } catch (error) {
+      console.error('❌ Erreur sauvegarde horaires notifications:', error);
+      Alert.alert('Erreur', 'Impossible de sauvegarder les horaires');
+    }
+  };
+
+  const handleTimeChange = (event: any, selectedTime: Date | undefined) => {
+    setShowTimePicker({ type: null, visible: false });
+    
+    if (selectedTime && showTimePicker.type) {
+      const newTimes = {
+        ...notificationTimes,
+        [showTimePicker.type]: selectedTime,
+      };
+      
+      setNotificationTimes(newTimes);
+      saveNotificationTimes(newTimes);
+    }
+  };
+
+  const openTimePicker = (type: 'breakfast' | 'lunch' | 'dinner' | 'workout') => {
+    setShowTimePicker({ type, visible: true });
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+  };
+
   const saveNotificationSettings = async (settings: NotificationSettings) => {
     try {
       const currentUser = await PersistentStorage.getCurrentUser();
@@ -257,50 +351,73 @@ export default function NotificationsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>⏰ Horaires des notifications</Text>
 
-          <TouchableOpacity style={styles.scheduleItem}>
+          <TouchableOpacity 
+            style={styles.scheduleItem}
+            onPress={() => openTimePicker('breakfast')}
+          >
             <View style={styles.scheduleInfo}>
               <Text style={styles.scheduleIcon}>🌅</Text>
               <View>
                 <Text style={styles.scheduleTitle}>Rappel petit-déjeuner</Text>
-                <Text style={styles.scheduleTime}>08:00</Text>
+                <Text style={styles.scheduleTime}>{formatTime(notificationTimes.breakfast)}</Text>
               </View>
             </View>
             <Text style={styles.scheduleArrow}>›</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.scheduleItem}>
+          <TouchableOpacity 
+            style={styles.scheduleItem}
+            onPress={() => openTimePicker('lunch')}
+          >
             <View style={styles.scheduleInfo}>
               <Text style={styles.scheduleIcon}>☀️</Text>
               <View>
                 <Text style={styles.scheduleTitle}>Rappel déjeuner</Text>
-                <Text style={styles.scheduleTime}>12:30</Text>
+                <Text style={styles.scheduleTime}>{formatTime(notificationTimes.lunch)}</Text>
               </View>
             </View>
             <Text style={styles.scheduleArrow}>›</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.scheduleItem}>
+          <TouchableOpacity 
+            style={styles.scheduleItem}
+            onPress={() => openTimePicker('dinner')}
+          >
             <View style={styles.scheduleInfo}>
               <Text style={styles.scheduleIcon}>🌆</Text>
               <View>
                 <Text style={styles.scheduleTitle}>Rappel dîner</Text>
-                <Text style={styles.scheduleTime}>19:00</Text>
+                <Text style={styles.scheduleTime}>{formatTime(notificationTimes.dinner)}</Text>
               </View>
             </View>
             <Text style={styles.scheduleArrow}>›</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.scheduleItem}>
+          <TouchableOpacity 
+            style={styles.scheduleItem}
+            onPress={() => openTimePicker('workout')}
+          >
             <View style={styles.scheduleInfo}>
               <Text style={styles.scheduleIcon}>🏋️‍♂️</Text>
               <View>
                 <Text style={styles.scheduleTitle}>Rappel entraînement</Text>
-                <Text style={styles.scheduleTime}>18:00</Text>
+                <Text style={styles.scheduleTime}>{formatTime(notificationTimes.workout)}</Text>
               </View>
             </View>
             <Text style={styles.scheduleArrow}>›</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Time Picker */}
+        {showTimePicker.visible && (
+          <DateTimePicker
+            value={notificationTimes[showTimePicker.type!]}
+            mode="time"
+            is24Hour={true}
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            onChange={handleTimeChange}
+          />
+        )}
 
         
       </ScrollView>
