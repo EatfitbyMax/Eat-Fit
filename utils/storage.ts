@@ -249,6 +249,33 @@ export class PersistentStorage {
     }
   }
 
+  static async getNotificationSchedule(userId: string): Promise<any> {
+    const response = await fetch(`${SERVER_URL}/api/notifications-schedule/${userId}`);
+
+    if (!response.ok) {
+      return {
+        petitDejeuner: { hour: 8, minute: 0 },
+        dejeuner: { hour: 12, minute: 30 },
+        diner: { hour: 19, minute: 0 },
+        entrainement: { hour: 18, minute: 0 }
+      };
+    }
+
+    return await response.json();
+  }
+
+  static async saveNotificationSchedule(userId: string, schedule: any): Promise<void> {
+    const response = await fetch(`${SERVER_URL}/api/notifications-schedule/${userId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(schedule)
+    });
+
+    if (!response.ok) {
+      throw new Error('Erreur sauvegarde horaires notifications');
+    }
+  }
+
   // Integration status
   static async getUserIntegrationStatus(userId: string): Promise<any> {
     const response = await fetch(`${SERVER_URL}/api/integrations/${userId}`);

@@ -54,13 +54,13 @@ export class NotificationService {
         return;
       }
 
-      // Annuler les anciennes notifications
-      await Notifications.cancelAllScheduledNotificationsAsync();
+      // Charger les horaires personnalisés
+      const schedule = await PersistentStorage.getNotificationSchedule(userId);
 
       // Sons personnalisés selon les préférences
       const soundConfig = settings.soundEnabled ? 'default' : false;
 
-      // Programmer petit-déjeuner (8h00)
+      // Programmer petit-déjeuner
       await Notifications.scheduleNotificationAsync({
         content: {
           title: '🌅 Petit-déjeuner',
@@ -69,13 +69,13 @@ export class NotificationService {
           vibrate: settings.vibrationEnabled ? [0, 250, 250, 250] : [],
         },
         trigger: {
-          hour: 8,
-          minute: 0,
+          hour: schedule.petitDejeuner.hour,
+          minute: schedule.petitDejeuner.minute,
           repeats: true,
         },
       });
 
-      // Programmer déjeuner (12h30)
+      // Programmer déjeuner
       await Notifications.scheduleNotificationAsync({
         content: {
           title: '☀️ Déjeuner',
@@ -84,13 +84,13 @@ export class NotificationService {
           vibrate: settings.vibrationEnabled ? [0, 250, 250, 250] : [],
         },
         trigger: {
-          hour: 12,
-          minute: 30,
+          hour: schedule.dejeuner.hour,
+          minute: schedule.dejeuner.minute,
           repeats: true,
         },
       });
 
-      // Programmer dîner (19h00)
+      // Programmer dîner
       await Notifications.scheduleNotificationAsync({
         content: {
           title: '🌆 Dîner',
@@ -99,13 +99,13 @@ export class NotificationService {
           vibrate: settings.vibrationEnabled ? [0, 250, 250, 250] : [],
         },
         trigger: {
-          hour: 19,
-          minute: 0,
+          hour: schedule.diner.hour,
+          minute: schedule.diner.minute,
           repeats: true,
         },
       });
 
-      console.log('✅ Rappels de repas programmés');
+      console.log('✅ Rappels de repas programmés avec horaires personnalisés');
     } catch (error) {
       console.error('❌ Erreur programmation rappels repas:', error);
     }
@@ -121,9 +121,11 @@ export class NotificationService {
         return;
       }
 
+      // Charger les horaires personnalisés
+      const schedule = await PersistentStorage.getNotificationSchedule(userId);
       const soundConfig = settings.soundEnabled ? 'default' : undefined;
 
-      // Programmer rappel entraînement (18h00)
+      // Programmer rappel entraînement
       await Notifications.scheduleNotificationAsync({
         content: {
           title: '🏋️‍♂️ Entraînement',
@@ -132,13 +134,13 @@ export class NotificationService {
           vibrate: settings.vibrationEnabled ? [0, 250, 250, 250] : [],
         },
         trigger: {
-          hour: 18,
-          minute: 0,
+          hour: schedule.entrainement.hour,
+          minute: schedule.entrainement.minute,
           repeats: true,
         },
       });
 
-      console.log('✅ Rappels d\'entraînement programmés');
+      console.log('✅ Rappels d\'entraînement programmés avec horaires personnalisés');
     } catch (error) {
       console.error('❌ Erreur programmation rappels entraînement:', error);
     }
@@ -401,6 +403,24 @@ export class NotificationService {
       console.log('✅ Notifications mises à jour');
     } catch (error) {
       console.error('❌ Erreur mise à jour notifications:', error);
+    }
+  }
+
+  // Reprogrammer les notifications avec de nouveaux horaires
+  static async updateScheduledNotifications(userId: string, schedule: any): Promise<void> {
+    try {
+      console.log('🔔 Reprogrammation notifications avec nouveaux horaires:', schedule);
+
+      // Annuler les notifications existantes
+      await this.cancelAllNotifications();
+
+      // Reprogrammer avec les nouveaux horaires
+      await this.scheduleNutritionReminders(userId);
+      await this.scheduleWorkoutReminders(userId);
+
+      console.log('✅ Notifications reprogrammées avec nouveaux horaires');
+    } catch (error) {
+      console.error('❌ Erreur reprogrammation notifications:', error);
     }
   }
 }

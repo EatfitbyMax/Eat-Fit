@@ -257,45 +257,15 @@ export default function NotificationsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>⏰ Horaires des notifications</Text>
 
-          <TouchableOpacity style={styles.scheduleItem}>
+          <TouchableOpacity 
+            style={styles.scheduleItem}
+            onPress={() => router.push('/(client)/horaires-notifications')}
+          >
             <View style={styles.scheduleInfo}>
-              <Text style={styles.scheduleIcon}>🌅</Text>
+              <Text style={styles.scheduleIcon}>⏰</Text>
               <View>
-                <Text style={styles.scheduleTitle}>Rappel petit-déjeuner</Text>
-                <Text style={styles.scheduleTime}>08:00</Text>
-              </View>
-            </View>
-            <Text style={styles.scheduleArrow}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.scheduleItem}>
-            <View style={styles.scheduleInfo}>
-              <Text style={styles.scheduleIcon}>☀️</Text>
-              <View>
-                <Text style={styles.scheduleTitle}>Rappel déjeuner</Text>
-                <Text style={styles.scheduleTime}>12:30</Text>
-              </View>
-            </View>
-            <Text style={styles.scheduleArrow}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.scheduleItem}>
-            <View style={styles.scheduleInfo}>
-              <Text style={styles.scheduleIcon}>🌆</Text>
-              <View>
-                <Text style={styles.scheduleTitle}>Rappel dîner</Text>
-                <Text style={styles.scheduleTime}>19:00</Text>
-              </View>
-            </View>
-            <Text style={styles.scheduleArrow}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.scheduleItem}>
-            <View style={styles.scheduleInfo}>
-              <Text style={styles.scheduleIcon}>🏋️‍♂️</Text>
-              <View>
-                <Text style={styles.scheduleTitle}>Rappel entraînement</Text>
-                <Text style={styles.scheduleTime}>18:00</Text>
+                <Text style={styles.scheduleTitle}>Modifier les horaires</Text>
+                <Text style={styles.scheduleDescription}>Personnaliser vos rappels</Text>
               </View>
             </View>
             <Text style={styles.scheduleArrow}>›</Text>
@@ -410,6 +380,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#1F6FEB',
     fontWeight: '500',
+  },
+  scheduleDescription: {
+    fontSize: 14,
+    color: '#8B949E',
   },
   scheduleArrow: {
     fontSize: 18,

@@ -1085,12 +1085,70 @@ app.post('/api/notifications/:userId', async (req, res) => {
     userData.lastUpdated = new Date().toISOString();
 
     await writeUserFile(userId, userData, userType);
-
     console.log(`✅ Paramètres notifications sauvegardés pour ${userId}`);
+
     res.json({ success: true, message: 'Paramètres notifications sauvegardés' });
   } catch (error) {
     console.error('Erreur sauvegarde paramètres notifications:', error);
     res.status(500).json({ error: 'Erreur sauvegarde paramètres notifications' });
+  }
+});
+
+// Routes pour horaires de notifications
+app.get('/api/notifications-schedule/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    let userData = await readUserFile(userId, 'client');
+    if (!userData) userData = await readUserFile(userId, 'coach');
+
+    const defaultSchedule = {
+      petitDejeuner: { hour: 8, minute: 0 },
+      dejeuner: { hour: 12, minute: 30 },
+      diner: { hour: 19, minute: 0 },
+      entrainement: { hour: 18, minute: 0 }
+    };
+
+    const schedule = userData?.notificationSchedule || defaultSchedule;
+    res.json(schedule);
+  } catch (error) {
+    console.error('Erreur récupération horaires notifications:', error);
+    res.json({
+      petitDejeuner: { hour: 8, minute: 0 },
+      dejeuner: { hour: 12, minute: 30 },
+      diner: { hour: 19, minute: 0 },
+      entrainement: { hour: 18, minute: 0 }
+    });
+  }
+});
+
+app.post('/api/notifications-schedule/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const schedule = req.body;
+
+    let userData = await readUserFile(userId, 'client');
+    let userType = 'client';
+
+    if (!userData) {
+      userData = await readUserFile(userId, 'coach');
+      userType = 'coach';
+    }
+
+    if (!userData) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    userData.notificationSchedule = schedule;
+    userData.lastUpdated = new Date().toISOString();
+
+    await writeUserFile(userId, userData, userType);
+    console.log(`✅ Horaires notifications sauvegardés pour ${userId}:`, schedule);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Erreur sauvegarde horaires notifications:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
