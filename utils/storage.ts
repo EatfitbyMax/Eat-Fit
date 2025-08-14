@@ -318,14 +318,24 @@ export class PersistentStorage {
   }
 
   static async saveWaterIntake(userId: string, date: string, amount: number): Promise<void> {
-    const response = await fetch(`${SERVER_URL}/api/water/${userId}/${date}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount })
-    });
+    try {
+      const response = await fetch(`${SERVER_URL}/api/water/${userId}/${date}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount })
+      });
 
-    if (!response.ok) {
-      throw new Error('Erreur sauvegarde hydratation');
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`❌ Erreur HTTP ${response.status}:`, errorText);
+        throw new Error(`Erreur HTTP ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log('✅ Réponse serveur hydratation:', result);
+    } catch (error) {
+      console.error('❌ Erreur complète saveWaterIntake:', error);
+      throw error;
     }
   }
 
