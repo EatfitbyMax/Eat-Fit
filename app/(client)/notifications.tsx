@@ -32,6 +32,8 @@ export default function NotificationsScreen() {
     visible: false,
   });
 
+  const [tempTime, setTempTime] = useState(new Date());
+
   useEffect(() => {
     loadUserData();
   }, []);
@@ -244,20 +246,43 @@ export default function NotificationsScreen() {
   };
 
   const handleTimeChange = (event: any, selectedTime: Date | undefined) => {
-    setShowTimePicker({ type: null, visible: false });
-    
-    if (selectedTime && showTimePicker.type) {
+    if (Platform.OS === 'ios' && selectedTime) {
+      setTempTime(selectedTime);
+    } else {
+      // Pour Android, appliquer directement
+      setShowTimePicker({ type: null, visible: false });
+      
+      if (selectedTime && showTimePicker.type) {
+        const newTimes = {
+          ...notificationTimes,
+          [showTimePicker.type]: selectedTime,
+        };
+        
+        setNotificationTimes(newTimes);
+        saveNotificationTimes(newTimes);
+      }
+    }
+  };
+
+  const confirmTimeChange = () => {
+    if (showTimePicker.type) {
       const newTimes = {
         ...notificationTimes,
-        [showTimePicker.type]: selectedTime,
+        [showTimePicker.type]: tempTime,
       };
       
       setNotificationTimes(newTimes);
       saveNotificationTimes(newTimes);
     }
+    setShowTimePicker({ type: null, visible: false });
+  };
+
+  const cancelTimeChange = () => {
+    setShowTimePicker({ type: null, visible: false });
   };
 
   const openTimePicker = (type: 'breakfast' | 'lunch' | 'dinner' | 'workout') => {
+    setTempTime(notificationTimes[type]);
     setShowTimePicker({ type, visible: true });
   };
 
@@ -404,13 +429,52 @@ export default function NotificationsScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Time Picker */}
-        {showTimePicker.visible && (
+        {/* Time Picker Modal pour iOS */}
+        {Platform.OS === 'ios' && showTimePicker.visible && (
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <View style={styles.modalHeader}>
+                <TouchableOpacity 
+                  style={styles.modalButton}
+                  onPress={cancelTimeChange}
+                >
+                  <Text style={styles.modalButtonCancel}>Annuler</Text>
+                </TouchableOpacity>
+                
+                <Text style={styles.modalTitle}>
+                  {showTimePicker.type === 'breakfast' && 'Petit-déjeuner'}
+                  {showTimePicker.type === 'lunch' && 'Déjeuner'}
+                  {showTimePicker.type === 'dinner' && 'Dîner'}
+                  {showTimePicker.type === 'workout' && 'Entraînement'}
+                </Text>
+                
+                <TouchableOpacity 
+                  style={styles.modalButton}
+                  onPress={confirmTimeChange}
+                >
+                  <Text style={styles.modalButtonConfirm}>OK</Text>
+                </TouchableOpacity>
+              </View>
+              
+              <DateTimePicker
+                value={tempTime}
+                mode="time"
+                is24Hour={true}
+                display="spinner"
+                onChange={handleTimeChange}
+                style={styles.timePicker}
+              />
+            </View>
+          </View>
+        )}
+
+        {/* Time Picker pour Android */}
+        {Platform.OS === 'android' && showTimePicker.visible && (
           <DateTimePicker
             value={notificationTimes[showTimePicker.type!]}
             mode="time"
             is24Hour={true}
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            display="default"
             onChange={handleTimeChange}
           />
         )}
@@ -538,5 +602,50 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#FFFFFF',
     fontWeight: '600',
+  },
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+    zIndex: 1000,
+  },
+  modalContainer: {
+    backgroundColor: '#161B22',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 34, // Pour le safe area iOS
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#21262D',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  modalButton: {
+    padding: 8,
+  },
+  modalButtonCancel: {
+    fontSize: 16,
+    color: '#8B949E',
+  },
+  modalButtonConfirm: {
+    fontSize: 16,
+    color: '#1F6FEB',
+    fontWeight: '600',
+  },
+  timePicker: {
+    backgroundColor: '#161B22',
+    height: 200,
   },
 });
