@@ -1121,6 +1121,61 @@ app.get('/api/notification-times/:userId', async (req, res) => {
   }
 });
 
+// Route GET pour récupérer les horaires de notifications
+app.get('/api/notification-times/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    console.log(`📥 [NOTIFICATION_TIMES_GET] === RÉCUPÉRATION HORAIRES ===`);
+    console.log(`📥 [NOTIFICATION_TIMES_GET] Utilisateur: ${userId}`);
+    
+    // Utiliser la fonction de recherche robuste
+    const userResult = await findUserById(userId);
+
+    if (!userResult) {
+      console.error(`❌ [NOTIFICATION_TIMES_GET] Utilisateur ${userId} non trouvé`);
+      
+      // Retourner les horaires par défaut si l'utilisateur n'est pas trouvé
+      const defaultTimes = {
+        breakfast: { hour: 8, minute: 0 },
+        lunch: { hour: 12, minute: 30 },
+        dinner: { hour: 19, minute: 0 },
+        workout: { hour: 18, minute: 0 },
+      };
+      
+      return res.json(defaultTimes);
+    }
+
+    const { userData, userType } = userResult;
+    console.log(`✅ [NOTIFICATION_TIMES_GET] Utilisateur trouvé: ${userData.name || userData.email} (${userType})`);
+
+    const defaultTimes = {
+      breakfast: { hour: 8, minute: 0 },
+      lunch: { hour: 12, minute: 30 },
+      dinner: { hour: 19, minute: 0 },
+      workout: { hour: 18, minute: 0 },
+    };
+
+    const notificationTimes = userData?.notificationTimes || defaultTimes;
+    
+    console.log(`✅ [NOTIFICATION_TIMES_GET] Horaires récupérés:`, notificationTimes);
+    res.json(notificationTimes);
+    
+  } catch (error) {
+    console.error(`❌ [NOTIFICATION_TIMES_GET] Erreur complète:`, error);
+    
+    // En cas d'erreur, retourner les horaires par défaut
+    const defaultTimes = {
+      breakfast: { hour: 8, minute: 0 },
+      lunch: { hour: 12, minute: 30 },
+      dinner: { hour: 19, minute: 0 },
+      workout: { hour: 18, minute: 0 },
+    };
+    
+    res.json(defaultTimes);
+  }
+});
+
 // Route POST pour sauvegarder les horaires de notifications
 app.post('/api/notification-times/:userId', async (req, res) => {
   try {
