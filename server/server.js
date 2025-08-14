@@ -31,7 +31,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use((req, res, next) => {
   const timestamp = new Date().toISOString();
   console.log(`📡 [${timestamp}] ${req.method} ${req.path}`);
-  
+
   // Log spécial pour les routes d'hydratation
   if (req.path.includes('/api/water/')) {
     console.log(`💧 [WATER_REQUEST] Route hydratation détectée:`);
@@ -43,7 +43,7 @@ app.use((req, res, next) => {
       console.log(`   - Body: ${JSON.stringify(req.body)}`);
     }
   }
-  
+
   next();
 });
 
@@ -1104,7 +1104,7 @@ app.post('/api/water/:userId/:date', async (req, res) => {
   }
 
   try {
-    const filePath = path.join(DATA_DIR, 'water', `${userId}.json`);
+    const filePath = path.join(DATA_DIR, 'hydratation', `${userId}.json`);
 
     // Charger l'historique existant
     let waterData = {};
@@ -1134,7 +1134,7 @@ app.get('/api/water/:userId/:date', async (req, res) => {
   const { userId, date } = req.params;
 
   try {
-    const filePath = path.join(DATA_DIR, 'water', `${userId}.json`);
+    const filePath = path.join(DATA_DIR, 'hydratation', `${userId}.json`);
     const existing = await fs.readFile(filePath, 'utf8');
     const waterData = JSON.parse(existing);
     res.json(waterData[date] || 0);
@@ -2292,7 +2292,7 @@ async function startServer() {
       console.log(`🔧 Configuration Strava - Client ID: ${STRAVA_CLIENT_ID}`);
       console.log(`✅ Nouvelle structure: Client/ et Coach/ avec fichiers unifiés`);
       console.log(`💧 Routes hydratation configurées: GET/POST /api/water/:userId/:date`);
-      
+
       // Test des routes importantes
       console.log(`📋 Routes configurées:`);
       console.log(`  - GET /api/water/:userId/:date (hydratation)`);
