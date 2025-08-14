@@ -1094,12 +1094,33 @@ app.post('/api/notifications/:userId', async (req, res) => {
   }
 });
 
-// Notification times
+// Routes pour les horaires de notifications
 app.get('/api/notification-times/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    let userData = await readUserFile(userId, 'client');
-    if (!userData) userData = await readUserFile(userId, 'coach');
+
+    console.log(`📥 [NOTIFICATION_TIMES_GET] === RÉCUPÉRATION HORAIRES ===`);
+    console.log(`📥 [NOTIFICATION_TIMES_GET] Utilisateur: ${userId}`);
+
+    // Utiliser la fonction de recherche robuste
+    const userResult = await findUserById(userId);
+
+    if (!userResult) {
+      console.error(`❌ [NOTIFICATION_TIMES_GET] Utilisateur ${userId} non trouvé`);
+
+      // Retourner les horaires par défaut si l'utilisateur n'est pas trouvé
+      const defaultTimes = {
+        breakfast: { hour: 8, minute: 0 },
+        lunch: { hour: 12, minute: 30 },
+        dinner: { hour: 19, minute: 0 },
+        workout: { hour: 18, minute: 0 },
+      };
+
+      return res.json(defaultTimes);
+    }
+
+    const { userData, userType } = userResult;
+    console.log(`✅ [NOTIFICATION_TIMES_GET] Utilisateur trouvé: ${userData.name || userData.email} (${userType})`);
 
     const defaultTimes = {
       breakfast: { hour: 8, minute: 0 },
@@ -1109,22 +1130,29 @@ app.get('/api/notification-times/:userId', async (req, res) => {
     };
 
     const notificationTimes = userData?.notificationTimes || defaultTimes;
+
+    console.log(`✅ [NOTIFICATION_TIMES_GET] Horaires récupérés:`, notificationTimes);
     res.json(notificationTimes);
+
   } catch (error) {
-    console.error(`Erreur lecture horaires notifications utilisateur ${req.params.userId}:`, error);
-    res.json({
+    console.error(`❌ [NOTIFICATION_TIMES_GET] Erreur complète:`, error);
+
+    // En cas d'erreur, retourner les horaires par défaut
+    const defaultTimes = {
       breakfast: { hour: 8, minute: 0 },
       lunch: { hour: 12, minute: 30 },
       dinner: { hour: 19, minute: 0 },
       workout: { hour: 18, minute: 0 },
-    });
+    };
+
+    res.json(defaultTimes);
   }
 });
 
 app.post('/api/notification-times/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    
+
     console.log(`📥 [NOTIFICATION_TIMES] Réception horaires pour utilisateur: ${userId}`);
     console.log(`📥 [NOTIFICATION_TIMES] Données reçues:`, req.body);
     console.log(`📥 [NOTIFICATION_TIMES] Headers:`, req.headers);
@@ -1144,21 +1172,16 @@ app.post('/api/notification-times/:userId', async (req, res) => {
     }
 
     console.log(`🔍 [NOTIFICATION_TIMES] Recherche utilisateur: ${userId}`);
-    
-    let userData = await readUserFile(userId, 'client');
-    let userType = 'client';
 
-    if (!userData) {
-      console.log(`🔍 [NOTIFICATION_TIMES] Utilisateur non trouvé dans Client/, recherche dans Coach/`);
-      userData = await readUserFile(userId, 'coach');
-      userType = 'coach';
-    }
+    // Utiliser la fonction de recherche robuste
+    const userResult = await findUserById(userId);
 
-    if (!userData) {
+    if (!userResult) {
       console.error(`❌ [NOTIFICATION_TIMES] Utilisateur ${userId} non trouvé`);
       return res.status(404).json({ error: 'Utilisateur non trouvé' });
     }
 
+    const { userData, userType } = userResult;
     console.log(`✅ [NOTIFICATION_TIMES] Utilisateur trouvé: ${userData.name || userData.email} (${userType})`);
 
     // Sauvegarder les nouveaux horaires
@@ -1166,9 +1189,9 @@ app.post('/api/notification-times/:userId', async (req, res) => {
     userData.lastUpdated = new Date().toISOString();
 
     console.log(`💾 [NOTIFICATION_TIMES] Sauvegarde en cours pour ${userId}...`);
-    
+
     const saveSuccess = await writeUserFile(userId, userData, userType);
-    
+
     if (saveSuccess) {
       console.log(`✅ [NOTIFICATION_TIMES] Horaires sauvegardés avec succès pour ${userId}:`, req.body);
       res.json({ 
@@ -1442,7 +1465,7 @@ app.post('/api/strava/exchange-token', async (req, res) => {
 
     // Vérifier la correspondance exacte avec la config Strava
     const expectedClientId = '159394';
-    const expectedClientSecret = '0a8889616f64a229949082240702228cba150700';
+    const expectedClientSecret = '0a888961cf64a2294908224b07b222ccba150700';
 
     console.log('🔍 [STRAVA_EXCHANGE] Vérification configuration:');
     console.log('   - Client ID correspond:', STRAVA_CLIENT_ID === expectedClientId);
@@ -2375,7 +2398,7 @@ app.get('/coach-signup', (req, res) => {
         <head><title>Erreur</title></head>
         <body style="font-family: Arial; text-align: center; padding: 50px;">
           <h2>Erreur temporaire</h2>
-          <p>La page d'inscription coach n'est pas disponible actuellement.</p>
+          <p>La page d\'inscription coach n\'est pas disponible actuellement.</p>
         </body>
       </html>
     `);
