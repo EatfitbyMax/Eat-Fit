@@ -1095,44 +1095,56 @@ app.post('/api/notifications/:userId', async (req, res) => {
 });
 
 // Notification times
-app.get('/api/notification-times/:userId', (req, res) => {
-  const { userId } = req.params;
-  const filePath = `./data/notification-times/${userId}.json`;
-
+app.get('/api/notification-times/:userId', async (req, res) => {
   try {
-    if (fs.existsSync(filePath)) {
-      const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-      res.json(data);
-    } else {
-      res.json({
-        breakfast: { hour: 8, minute: 0 },
-        lunch: { hour: 12, minute: 30 },
-        dinner: { hour: 19, minute: 0 },
-        workout: { hour: 18, minute: 0 },
-      });
-    }
+    const { userId } = req.params;
+    let userData = await readUserFile(userId, 'client');
+    if (!userData) userData = await readUserFile(userId, 'coach');
+
+    const defaultTimes = {
+      breakfast: { hour: 8, minute: 0 },
+      lunch: { hour: 12, minute: 30 },
+      dinner: { hour: 19, minute: 0 },
+      workout: { hour: 18, minute: 0 },
+    };
+
+    const notificationTimes = userData?.notificationTimes || defaultTimes;
+    res.json(notificationTimes);
   } catch (error) {
-    console.error('Erreur récupération horaires notifications:', error);
-    res.status(500).json({ error: 'Erreur serveur' });
+    console.error(`Erreur lecture horaires notifications utilisateur ${req.params.userId}:`, error);
+    res.json({
+      breakfast: { hour: 8, minute: 0 },
+      lunch: { hour: 12, minute: 30 },
+      dinner: { hour: 19, minute: 0 },
+      workout: { hour: 18, minute: 0 },
+    });
   }
 });
 
-app.post('/api/notification-times/:userId', (req, res) => {
-  const { userId } = req.params;
-  const filePath = `./data/notification-times/${userId}.json`;
-
+app.post('/api/notification-times/:userId', async (req, res) => {
   try {
-    const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+    const { userId } = req.params;
+    let userData = await readUserFile(userId, 'client');
+    let userType = 'client';
+
+    if (!userData) {
+      userData = await readUserFile(userId, 'coach');
+      userType = 'coach';
     }
 
-    fs.writeFileSync(filePath, JSON.stringify(req.body, null, 2));
+    if (!userData) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    userData.notificationTimes = req.body;
+    userData.lastUpdated = new Date().toISOString();
+
+    await writeUserFile(userId, userData, userType);
     console.log(`✅ Horaires notifications sauvegardés pour ${userId}:`, req.body);
     res.json({ success: true });
   } catch (error) {
-    console.error('Erreur sauvegarde horaires notifications:', error);
-    res.status(500).json({ error: 'Erreur serveur' });
+    console.error(`Erreur sauvegarde horaires notifications utilisateur ${userId}:`, error);
+    res.status(500).json({ error: 'Erreur sauvegarde horaires notifications' });
   }
 });
 

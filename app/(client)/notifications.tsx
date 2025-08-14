@@ -269,16 +269,12 @@ export default function NotificationsScreen() {
     });
   };
 
-  const saveNotificationSettings = async (settings: NotificationSettings) => {
+  const saveNotificationSettings = async (settings: any) => {
     try {
-      const currentUser = await PersistentStorage.getCurrentUser();
-      if (currentUser) {
+      const currentUser = await getCurrentUser();
+      if (currentUser?.id) {
         // Sauvegarder les paramètres sur le serveur VPS
         await PersistentStorage.saveNotificationSettings(currentUser.id, settings);
-
-        // Mettre à jour l'utilisateur local
-        const updatedUser = { ...currentUser, notificationSettings: settings };
-        await PersistentStorage.setCurrentUser(updatedUser);
         console.log('Paramètres de notifications sauvegardés');
       }
     } catch (error) {
