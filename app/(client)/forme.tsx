@@ -90,7 +90,7 @@ export default function FormeScreen() {
     stress: { level: 5, factors: [], notes: '' },
     heartRate: { resting: 0, variability: 0 },
     rpe: { value: 5, notes: '' },
-    cycle: userData?.gender === 'Femme' ? { phase: 'Menstruel', dayOfCycle: 1, symptoms: [], notes: '' } : undefined,
+    cycle: undefined, // Sera initialisé après le chargement des données utilisateur
     date: new Date().toISOString().split('T')[0]
   });
   const [weeklyData, setWeeklyData] = useState<FormeData[]>([]);
@@ -125,6 +125,13 @@ export default function FormeScreen() {
 
   useEffect(() => {
     if (userData) {
+      // Initialiser le cycle pour les femmes si ce n'est pas déjà fait
+      if (userData.gender === 'Femme' && !formeData.cycle) {
+        setFormeData(prevData => ({
+          ...prevData,
+          cycle: { phase: 'Menstruel', dayOfCycle: 1, symptoms: [], notes: '' }
+        }));
+      }
       loadFormeData();
     }
   }, [userData]);
@@ -1705,10 +1712,10 @@ export default function FormeScreen() {
               style={styles.metricCard}
               onPress={() => {
                 setTempSleep({
-                  hours: formeData.sleep.hours.toString(),
-                  quality: formeData.sleep.quality,
-                  bedTime: formeData.sleep.bedTime,
-                  wakeTime: formeData.sleep.wakeTime
+                  hours: (formeData.sleep?.hours || 0).toString(),
+                  quality: formeData.sleep?.quality || 'Moyen',
+                  bedTime: formeData.sleep?.bedTime || '',
+                  wakeTime: formeData.sleep?.wakeTime || ''
                 });
                 setShowSleepModal(true);
               }}
@@ -1719,10 +1726,10 @@ export default function FormeScreen() {
               <View style={styles.metricInfo}>
                 <Text style={styles.metricLabel}>Sommeil</Text>
                 <Text style={styles.metricValue}>
-                  {formatSleepHours(formeData.sleep.hours)}
+                  {formatSleepHours(formeData.sleep?.hours || 0)}
                 </Text>
                 <Text style={styles.metricDetail}>
-                  {formeData.sleep.quality}
+                  {formeData.sleep?.quality || 'Non renseigné'}
                 </Text>
               </View>
               <Text style={styles.updateHint}>Appuyez pour modifier</Text>
@@ -1733,9 +1740,9 @@ export default function FormeScreen() {
               style={styles.metricCard}
               onPress={() => {
                 setTempStress({
-                  level: formeData.stress.level,
-                  factors: formeData.stress.factors,
-                  notes: formeData.stress.notes
+                  level: formeData.stress?.level || 5,
+                  factors: formeData.stress?.factors || [],
+                  notes: formeData.stress?.notes || ''
                 });
                 setShowStressModal(true);
               }}
@@ -1745,10 +1752,10 @@ export default function FormeScreen() {
               </View>
               <View style={styles.metricInfo}>
                 <Text style={styles.metricLabel}>Niveau de stress</Text>
-                <Text style={styles.metricValue}>{formeData.stress.level}/10</Text>
+                <Text style={styles.metricValue}>{formeData.stress?.level || 5}/10</Text>
                 <Text style={styles.metricDetail}>
-                  {formeData.stress.level <= 3 ? 'Faible' : 
-                   formeData.stress.level <= 6 ? 'Modéré' : 'Élevé'}
+                  {(formeData.stress?.level || 5) <= 3 ? 'Faible' : 
+                   (formeData.stress?.level || 5) <= 6 ? 'Modéré' : 'Élevé'}
                 </Text>
               </View>
               <Text style={styles.updateHint}>Appuyez pour modifier</Text>
