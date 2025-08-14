@@ -720,7 +720,12 @@ function NutritionScreen() {
       const newWaterIntake = waterIntake + amount;
       const dateKey = selectedDate.toISOString().split('T')[0];
       
-      console.log(`📡 Tentative sauvegarde hydratation: ${user.id}, ${dateKey}, ${newWaterIntake}ml`);
+      console.log(`📡 Tentative sauvegarde hydratation:`, {
+        userId: user.id,
+        date: dateKey,
+        amount: newWaterIntake,
+        userEmail: user.email
+      });
       
       // Sauvegarder sur le serveur avec une gestion d'erreur plus robuste
       try {
@@ -731,26 +736,47 @@ function NutritionScreen() {
         setWaterIntake(newWaterIntake);
         console.log(`✅ Hydratation mise à jour localement: ${newWaterIntake}ml`);
         
+        // Afficher un feedback positif à l'utilisateur
+        Alert.alert('✅ Hydratation', `+${amount}ml ajoutés avec succès !`, [{ text: 'OK' }]);
+        
       } catch (serverError) {
         console.error('❌ Erreur sauvegarde serveur hydratation:', serverError);
-        console.error('❌ Détails erreur:', {
+        console.error('❌ Détails erreur complète:', {
           message: serverError.message,
           name: serverError.name,
+          stack: serverError.stack,
           userId: user.id,
           date: dateKey,
-          amount: newWaterIntake
+          amount: newWaterIntake,
+          userEmail: user.email
         });
         
-        throw new Error(`Erreur serveur: ${serverError.message}`);
+        // Essayer de déterminer la cause spécifique de l'erreur
+        let errorMessage = 'Erreur de connexion au serveur';
+        if (serverError.message.includes('404')) {
+          errorMessage = 'Utilisateur non trouvé sur le serveur';
+        } else if (serverError.message.includes('400')) {
+          errorMessage = 'Données invalides envoyées au serveur';
+        } else if (serverError.message.includes('500')) {
+          errorMessage = 'Erreur interne du serveur';
+        } else if (serverError.message.includes('network')) {
+          errorMessage = 'Problème de connexion réseau';
+        }
+        
+        throw new Error(errorMessage);
       }
       
     } catch (error) {
       console.error('❌ Erreur complète ajout eau:', error);
-      // Afficher une alerte plus détaillée à l'utilisateur
+      
+      // Afficher une alerte détaillée à l'utilisateur
       Alert.alert(
         'Erreur d\'hydratation',
-        `Impossible de sauvegarder votre consommation d'eau. ${error.message || 'Vérifiez votre connexion internet.'}`,
-        [{ text: 'OK' }]
+        `Impossible de sauvegarder votre consommation d'eau.\n\n${error.message || 'Vérifiez votre connexion internet et réessayez.'}`,
+        [
+          { text: 'Réessayer', onPress: () => addWater(amount) },
+          { text: 'Annuler', style: 'cancel' }
+        ]
       );
     }
   };
