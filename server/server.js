@@ -1124,27 +1124,74 @@ app.get('/api/notification-times/:userId', async (req, res) => {
 app.post('/api/notification-times/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
+    
+    console.log(`📥 [NOTIFICATION_TIMES] Réception horaires pour utilisateur: ${userId}`);
+    console.log(`📥 [NOTIFICATION_TIMES] Données reçues:`, req.body);
+    console.log(`📥 [NOTIFICATION_TIMES] Headers:`, req.headers);
+
+    // Validation des données reçues
+    if (!req.body || typeof req.body !== 'object') {
+      console.error(`❌ [NOTIFICATION_TIMES] Données invalides:`, req.body);
+      return res.status(400).json({ error: 'Données horaires invalides' });
+    }
+
+    const requiredFields = ['breakfast', 'lunch', 'dinner', 'workout'];
+    for (const field of requiredFields) {
+      if (!req.body[field] || typeof req.body[field].hour !== 'number' || typeof req.body[field].minute !== 'number') {
+        console.error(`❌ [NOTIFICATION_TIMES] Champ manquant ou invalide: ${field}`, req.body[field]);
+        return res.status(400).json({ error: `Champ ${field} manquant ou invalide` });
+      }
+    }
+
+    console.log(`🔍 [NOTIFICATION_TIMES] Recherche utilisateur: ${userId}`);
+    
     let userData = await readUserFile(userId, 'client');
     let userType = 'client';
 
     if (!userData) {
+      console.log(`🔍 [NOTIFICATION_TIMES] Utilisateur non trouvé dans Client/, recherche dans Coach/`);
       userData = await readUserFile(userId, 'coach');
       userType = 'coach';
     }
 
     if (!userData) {
+      console.error(`❌ [NOTIFICATION_TIMES] Utilisateur ${userId} non trouvé`);
       return res.status(404).json({ error: 'Utilisateur non trouvé' });
     }
 
+    console.log(`✅ [NOTIFICATION_TIMES] Utilisateur trouvé: ${userData.name || userData.email} (${userType})`);
+
+    // Sauvegarder les nouveaux horaires
     userData.notificationTimes = req.body;
     userData.lastUpdated = new Date().toISOString();
 
-    await writeUserFile(userId, userData, userType);
-    console.log(`✅ Horaires notifications sauvegardés pour ${userId}:`, req.body);
-    res.json({ success: true });
+    console.log(`💾 [NOTIFICATION_TIMES] Sauvegarde en cours pour ${userId}...`);
+    
+    const saveSuccess = await writeUserFile(userId, userData, userType);
+    
+    if (saveSuccess) {
+      console.log(`✅ [NOTIFICATION_TIMES] Horaires sauvegardés avec succès pour ${userId}:`, req.body);
+      res.json({ 
+        success: true, 
+        message: 'Horaires notifications sauvegardés',
+        userId: userId,
+        userType: userType,
+        savedTimes: req.body
+      });
+    } else {
+      console.error(`❌ [NOTIFICATION_TIMES] Échec sauvegarde fichier pour ${userId}`);
+      res.status(500).json({ error: 'Échec sauvegarde fichier utilisateur' });
+    }
   } catch (error) {
-    console.error(`Erreur sauvegarde horaires notifications utilisateur ${userId}:`, error);
-    res.status(500).json({ error: 'Erreur sauvegarde horaires notifications' });
+    console.error(`❌ [NOTIFICATION_TIMES] Erreur complète pour ${req.params.userId}:`, {
+      message: error.message,
+      stack: error.stack,
+      userData: req.body
+    });
+    res.status(500).json({ 
+      error: 'Erreur sauvegarde horaires notifications',
+      details: error.message 
+    });
   }
 });
 

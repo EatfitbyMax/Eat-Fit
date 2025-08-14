@@ -232,16 +232,33 @@ export default function NotificationsScreen() {
           workout: { hour: times.workout.getHours(), minute: times.workout.getMinutes() },
         };
         
-        await PersistentStorage.saveNotificationTimes(currentUser.id, timesToSave);
+        console.log('🔔 Tentative sauvegarde horaires pour utilisateur:', currentUser.id);
+        console.log('🔔 Horaires à sauvegarder:', timesToSave);
+        
+        try {
+          await PersistentStorage.saveNotificationTimes(currentUser.id, timesToSave);
+          console.log('✅ Sauvegarde horaires réussie sur le serveur');
+        } catch (storageError) {
+          console.error('❌ Erreur sauvegarde storage:', storageError);
+          // Continuer même si la sauvegarde serveur échoue
+        }
         
         // Reprogrammer les notifications avec les nouveaux horaires
-        await NotificationService.updateNotifications(currentUser.id);
+        try {
+          await NotificationService.updateNotifications(currentUser.id);
+          console.log('✅ Notifications reprogrammées avec succès');
+        } catch (notificationError) {
+          console.error('❌ Erreur reprogrammation notifications:', notificationError);
+        }
         
-        console.log('✅ Horaires de notifications sauvegardés:', timesToSave);
+        console.log('✅ Horaires de notifications mis à jour:', timesToSave);
+      } else {
+        console.error('❌ Aucun utilisateur connecté pour sauvegarder les horaires');
+        throw new Error('Utilisateur non connecté');
       }
     } catch (error) {
       console.error('❌ Erreur sauvegarde horaires notifications:', error);
-      Alert.alert('Erreur', 'Impossible de sauvegarder les horaires');
+      Alert.alert('Erreur', 'Impossible de sauvegarder les horaires. Les notifications locales seront mises à jour mais la synchronisation serveur a échoué.');
     }
   };
 
