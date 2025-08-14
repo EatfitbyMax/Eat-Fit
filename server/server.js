@@ -40,7 +40,8 @@ async function ensureDataDirs() {
     await fs.mkdir(CLIENT_DIR, { recursive: true });
     await fs.mkdir(COACH_DIR, { recursive: true });
     await fs.mkdir(STRAVA_DIR, { recursive: true });
-    console.log('📁 Répertoires data/Client, data/Coach et data/Strava vérifiés');
+    await ensureHydratationDir();
+    console.log('📁 Répertoires data/Client, data/Coach, data/Strava et data/hydratation vérifiés');
   } catch (error) {
     console.error('Erreur création répertoires:', error);
   }
@@ -1080,6 +1081,47 @@ app.post('/api/notifications/:userId', async (req, res) => {
   }
 });
 
+// Fonctions pour la gestion de l'hydratation
+const HYDRATATION_DIR = path.join(DATA_DIR, 'hydratation');
+
+async function ensureHydratationDir() {
+  try {
+    await fs.mkdir(HYDRATATION_DIR, { recursive: true });
+    console.log('📁 Répertoire hydratation vérifié');
+  } catch (error) {
+    console.error('Erreur création répertoire hydratation:', error);
+  }
+}
+
+async function readHydratationFile(userId) {
+  try {
+    const filePath = path.join(HYDRATATION_DIR, `${userId}.json`);
+    const data = await fs.readFile(filePath, 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      return {}; // Fichier hydratation non trouvé, retourner objet vide
+    }
+    throw error;
+  }
+}
+
+async function writeHydratationFile(userId, hydratationData) {
+  try {
+    const filePath = path.join(HYDRATATION_DIR, `${userId}.json`);
+    const dataToSave = {
+      userId: userId,
+      lastUpdated: new Date().toISOString(),
+      waterIntake: hydratationData
+    };
+    await fs.writeFile(filePath, JSON.stringify(dataToSave, null, 2));
+    return true;
+  } catch (error) {
+    console.error(`Erreur écriture fichier hydratation ${userId}:`, error);
+    throw error;
+  }
+}
+
 // Routes pour l'hydratation
 app.get('/api/water/:userId/:date', async (req, res) => {
   try {
@@ -1087,34 +1129,16 @@ app.get('/api/water/:userId/:date', async (req, res) => {
     
     console.log(`💧 [WATER_GET] Récupération hydratation pour ${userId}/${date}`);
     
-    // Recherche exhaustive de l'utilisateur
-    let userData = null;
-    let userType = null;
-
-    // Essayer Client/ puis Coach/ puis recherche exhaustive
-    try {
-      userData = await readUserFile(userId, 'client');
-      if (userData) userType = 'client';
-    } catch (error) {
-      try {
-        userData = await readUserFile(userId, 'coach');
-        if (userData) userType = 'coach';
-      } catch (error2) {
-        const userResult = await findUserById(userId);
-        if (userResult) {
-          userData = userResult.userData;
-          userType = userResult.userType;
-        }
-      }
-    }
-
-    if (!userData) {
+    // Vérifier que l'utilisateur existe
+    const userResult = await findUserById(userId);
+    if (!userResult) {
       console.log(`⚠️ [WATER_GET] Utilisateur ${userId} non trouvé, retour 0`);
       return res.json(0);
     }
 
-    const waterData = userData.waterIntake || {};
-    const amount = waterData[date] || 0;
+    // Lire le fichier d'hydratation dédié
+    const hydratationData = await readHydratationFile(userId);
+    const amount = hydratationData.waterIntake?.[date] || 0;
 
     console.log(`✅ [WATER_GET] Hydratation trouvée: ${amount}ml pour ${date}`);
     res.json(amount);
@@ -1135,9 +1159,7 @@ app.post('/api/water/:userId/:date', async (req, res) => {
       userId,
       date,
       amount,
-      amountType: typeof amount,
-      bodyComplet: req.body,
-      headers: req.headers['content-type']
+      amountType: typeof amount
     });
 
     // Validation stricte des paramètres
@@ -1167,117 +1189,47 @@ app.post('/api/water/:userId/:date', async (req, res) => {
       return res.status(400).json({ error: 'Amount ne peut pas être négatif' });
     }
 
-    console.log(`🔍 [WATER_SAVE] === RECHERCHE UTILISATEUR ===`);
-    console.log(`🔍 [WATER_SAVE] ID recherché: ${userId} (type: ${typeof userId})`);
-
-    // Recherche exhaustive de l'utilisateur
-    let userData = null;
-    let userType = null;
-
-    // 1. Essayer direct dans Client/
-    try {
-      userData = await readUserFile(userId, 'client');
-      if (userData) {
-        userType = 'client';
-        console.log(`✅ [WATER_SAVE] Utilisateur trouvé dans Client/ directement`);
-      }
-    } catch (error) {
-      console.log(`⚠️ [WATER_SAVE] Pas trouvé directement dans Client/:`, error.message);
-    }
-
-    // 2. Si pas trouvé, essayer dans Coach/
-    if (!userData) {
-      try {
-        userData = await readUserFile(userId, 'coach');
-        if (userData) {
-          userType = 'coach';
-          console.log(`✅ [WATER_SAVE] Utilisateur trouvé dans Coach/ directement`);
-        }
-      } catch (error) {
-        console.log(`⚠️ [WATER_SAVE] Pas trouvé directement dans Coach/:`, error.message);
-      }
-    }
-
-    // 3. Si toujours pas trouvé, recherche exhaustive avec findUserById
-    if (!userData) {
-      console.log(`🔍 [WATER_SAVE] Recherche exhaustive avec findUserById...`);
-      const userResult = await findUserById(userId);
-      
-      if (userResult) {
-        userData = userResult.userData;
-        userType = userResult.userType;
-        console.log(`✅ [WATER_SAVE] Utilisateur trouvé par recherche exhaustive dans ${userType}/`);
-      }
-    }
-
-    // 4. Vérification finale
-    if (!userData || !userType) {
-      console.error(`❌ [WATER_SAVE] UTILISATEUR NON TROUVÉ NULLE PART`);
-      console.error(`❌ [WATER_SAVE] ID cherché: ${userId}`);
-      console.error(`❌ [WATER_SAVE] Vérification des fichiers existants...`);
-      
-      // Lister les fichiers disponibles pour debug
-      try {
-        const clientFiles = await fs.readdir(CLIENT_DIR);
-        const coachFiles = await fs.readdir(COACH_DIR);
-        console.error(`❌ [WATER_SAVE] Fichiers Client disponibles (${clientFiles.length}):`, clientFiles.slice(0, 10));
-        console.error(`❌ [WATER_SAVE] Fichiers Coach disponibles (${coachFiles.length}):`, coachFiles.slice(0, 10));
-      } catch (dirError) {
-        console.error(`❌ [WATER_SAVE] Erreur lecture dossiers:`, dirError.message);
-      }
-      
+    console.log(`🔍 [WATER_SAVE] === VÉRIFICATION UTILISATEUR ===`);
+    
+    // Vérifier que l'utilisateur existe
+    const userResult = await findUserById(userId);
+    if (!userResult) {
+      console.error(`❌ [WATER_SAVE] Utilisateur ${userId} non trouvé`);
       return res.status(404).json({ 
         error: 'Utilisateur non trouvé',
-        details: `Aucun utilisateur avec l'ID ${userId} trouvé dans Client/ ou Coach/`,
-        userId: userId,
-        searchedIn: ['Client/', 'Coach/', 'findUserById()']
+        details: `Aucun utilisateur avec l'ID ${userId} trouvé`,
+        userId: userId
       });
     }
 
-    console.log(`✅ [WATER_SAVE] === UTILISATEUR TROUVÉ ===`);
-    console.log(`✅ [WATER_SAVE] Nom: ${userData.name || userData.firstName + ' ' + userData.lastName}`);
-    console.log(`✅ [WATER_SAVE] Email: ${userData.email}`);
-    console.log(`✅ [WATER_SAVE] Type: ${userType}`);
-    console.log(`✅ [WATER_SAVE] ID: ${userData.id}`);
+    const { userData, userType } = userResult;
+    console.log(`✅ [WATER_SAVE] Utilisateur trouvé: ${userData.name || userData.firstName + ' ' + userData.lastName} (${userType})`);
 
-    // Initialiser waterIntake si nécessaire
-    if (!userData.waterIntake) {
-      userData.waterIntake = {};
-      console.log(`🔧 [WATER_SAVE] Initialisation waterIntake pour ${userId}`);
-    }
-
-    // Sauvegarder la donnée d'hydratation
-    const previousAmount = userData.waterIntake[date] || 0;
-    userData.waterIntake[date] = validAmount;
-    userData.lastUpdated = new Date().toISOString();
+    // Lire les données d'hydratation existantes
+    const existingHydratationData = await readHydratationFile(userId);
+    const waterIntake = existingHydratationData.waterIntake || {};
+    
+    const previousAmount = waterIntake[date] || 0;
+    waterIntake[date] = validAmount;
 
     console.log(`💾 [WATER_SAVE] === SAUVEGARDE ===`);
     console.log(`💾 [WATER_SAVE] Date: ${date}`);
     console.log(`💾 [WATER_SAVE] Quantité précédente: ${previousAmount}ml`);
     console.log(`💾 [WATER_SAVE] Nouvelle quantité: ${validAmount}ml`);
-    console.log(`💾 [WATER_SAVE] Structure waterIntake: ${Object.keys(userData.waterIntake).length} entrées`);
 
-    // Écrire le fichier
-    try {
-      await writeUserFile(userId, userData, userType);
-      console.log(`✅ [WATER_SAVE] Fichier ${userType}/${userId}.json écrit avec succès`);
-    } catch (writeError) {
-      console.error(`❌ [WATER_SAVE] Erreur écriture fichier:`, writeError);
-      throw new Error(`Impossible d'écrire le fichier utilisateur: ${writeError.message}`);
-    }
+    // Sauvegarder dans le fichier d'hydratation dédié
+    await writeHydratationFile(userId, waterIntake);
+    console.log(`✅ [WATER_SAVE] Fichier hydratation/${userId}.json écrit avec succès`);
 
-    // Vérification immédiate de la sauvegarde
+    // Vérification immédiate
     try {
-      const verifyData = await readUserFile(userId, userType);
-      if (verifyData && verifyData.waterIntake && verifyData.waterIntake[date] === validAmount) {
-        console.log(`✅ [WATER_VERIFY] Données confirmées après sauvegarde`);
-        console.log(`✅ [WATER_VERIFY] Valeur lue: ${verifyData.waterIntake[date]}ml`);
+      const verifyData = await readHydratationFile(userId);
+      if (verifyData.waterIntake && verifyData.waterIntake[date] === validAmount) {
+        console.log(`✅ [WATER_VERIFY] Données confirmées après sauvegarde: ${verifyData.waterIntake[date]}ml`);
       } else {
         console.error(`❌ [WATER_VERIFY] ÉCHEC VÉRIFICATION:`, {
           expected: validAmount,
-          found: verifyData?.waterIntake?.[date],
-          waterIntakeExists: !!verifyData?.waterIntake,
-          allDates: verifyData?.waterIntake ? Object.keys(verifyData.waterIntake) : 'N/A'
+          found: verifyData.waterIntake?.[date]
         });
       }
     } catch (verifyError) {
@@ -1299,11 +1251,6 @@ app.post('/api/water/:userId/:date', async (req, res) => {
     console.error(`❌ [WATER_SAVE] === ERREUR GLOBALE ===`);
     console.error(`❌ [WATER_SAVE] Message:`, error.message);
     console.error(`❌ [WATER_SAVE] Stack:`, error.stack);
-    console.error(`❌ [WATER_SAVE] Paramètres:`, {
-      userId: req.params?.userId,
-      date: req.params?.date,
-      body: req.body
-    });
     
     res.status(500).json({ 
       error: 'Erreur interne du serveur',
