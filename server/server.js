@@ -1,3 +1,4 @@
+
 // Charger les variables d'environnement en premier
 require('dotenv').config();
 
@@ -60,6 +61,10 @@ async function ensureDataDirs() {
   }
 }
 
+// ============================================================================
+// 🚀 PRIORITÉ 1 - ROUTES DE SANTÉ ET MONITORING (pour vérifications VPS)
+// ============================================================================
+
 // Route de santé principale - optimisée pour les health checks
 app.get('/', (req, res) => {
   res.status(200).json({ status: 'OK' });
@@ -92,6 +97,143 @@ app.get('/api/health-check', (req, res) => {
     port: PORT
   });
 });
+
+// ============================================================================
+// 👥 PRIORITÉ 2 - ROUTES UTILISATEURS (authentification et gestion des comptes)
+// ============================================================================
+
+// Routes pour les utilisateurs (clients)
+app.get('/api/users', async (req, res) => {
+  try {
+    const clients = await getAllUsers('client');
+    console.log(`📊 Récupération clients: ${clients.length} clients trouvés`);
+    res.json(clients);
+  } catch (error) {
+    console.error('Erreur lecture clients:', error);
+    res.json([]);
+  }
+});
+
+app.post('/api/users', async (req, res) => {
+  try {
+    const clients = Array.isArray(req.body) ? req.body : [req.body];
+
+    for (const client of clients) {
+      if (client.id && (client.userType === 'client' || !client.userType)) {
+        // Créer la structure de dossiers lors de la création
+        await createUserDirectoryStructure(client.id, client, 'client');
+      }
+    }
+
+    console.log('💾 Sauvegarde clients:', clients.length);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Erreur sauvegarde clients:', error);
+    res.status(500).json({ error: 'Erreur sauvegarde clients' });
+  }
+});
+
+// Routes pour les coaches
+app.get('/api/coaches', async (req, res) => {
+  try {
+    const coaches = await getAllUsers('coach');
+    console.log(`👨‍💼 Récupération coaches: ${coaches.length} coaches trouvés`);
+    res.json(coaches);
+  } catch (error) {
+    console.error('Erreur lecture coaches:', error);
+    res.json([]);
+  }
+});
+
+app.post('/api/coaches', async (req, res) => {
+  try {
+    const coaches = Array.isArray(req.body) ? req.body : [req.body];
+
+    for (const coach of coaches) {
+      if (coach.id) {
+        // Créer la structure de dossiers lors de la création
+        await createUserDirectoryStructure(coach.id, coach, 'coach');
+      }
+    }
+
+    console.log('💾 Sauvegarde coaches:', coaches.length);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Erreur sauvegarde coaches:', error);
+    res.status(500).json({ error: 'Erreur sauvegarde coaches' });
+  }
+});
+
+// Route universelle pour récupérer les données d'un utilisateur
+app.get('/api/user-data/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const userResult = await findUserById(userId);
+
+    if (!userResult) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    const { userData, userType } = userResult;
+    console.log(`📊 Données utilisateur récupérées: ${userId} (${userType})`);
+    res.json(userData);
+  } catch (error) {
+    console.error(`Erreur récupération utilisateur ${req.params.userId}:`, error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Route universelle pour sauvegarder les données d'un utilisateur
+app.post('/api/user-data/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const userData = req.body;
+
+    // Déterminer le type d'utilisateur
+    const userType = userData.userType === 'coach' ? 'coach' : 'client';
+
+    // S'assurer que l'ID correspond
+    userData.id = userId;
+    userData.lastUpdated = new Date().toISOString();
+
+    await writeUserFile(userId, userData, userType);
+
+    console.log(`💾 Données utilisateur sauvegardées: ${userId} (${userType})`);
+    res.json({ success: true });
+  } catch (error) {
+    console.error(`Erreur sauvegarde utilisateur ${userId}:`, error);
+    res.status(500).json({ error: 'Erreur sauvegarde données utilisateur' });
+  }
+});
+
+// Route pour créer la structure de dossiers d'un utilisateur
+app.post('/api/create-user-structure', async (req, res) => {
+  try {
+    const { userId, userData, userType } = req.body;
+
+    if (!userId || !userData) {
+      return res.status(400).json({ error: 'userId et userData requis' });
+    }
+
+    const result = await createUserDirectoryStructure(userId, userData, userType || 'client');
+
+    console.log(`✅ Structure créée via API pour: ${result.folderName}`);
+    res.json({ 
+      success: true, 
+      folderName: result.folderName, 
+      message: 'Structure de dossiers créée avec succès' 
+    });
+
+  } catch (error) {
+    console.error('❌ Erreur création structure via API:', error);
+    res.status(500).json({ error: 'Erreur création structure utilisateur' });
+  }
+});
+
+// ============================================================================
+// 🔧 FONCTIONS UTILITAIRES (ordre logique après les routes)
+// ============================================================================
 
 // Fonction pour lire le fichier utilisateur dans la nouvelle structure (dossiers nom_prénom)
 async function readUserFile(userId, userType = 'client') {
@@ -333,134 +475,9 @@ async function getAllUsers(userType = 'client') {
   }
 }
 
-// Routes pour les utilisateurs (clients)
-app.get('/api/users', async (req, res) => {
-  try {
-    const clients = await getAllUsers('client');
-    console.log(`📊 Récupération clients: ${clients.length} clients trouvés`);
-    res.json(clients);
-  } catch (error) {
-    console.error('Erreur lecture clients:', error);
-    res.json([]);
-  }
-});
-
-app.post('/api/users', async (req, res) => {
-  try {
-    const clients = Array.isArray(req.body) ? req.body : [req.body];
-
-    for (const client of clients) {
-      if (client.id && (client.userType === 'client' || !client.userType)) {
-        // Créer la structure de dossiers lors de la création
-        await createUserDirectoryStructure(client.id, client, 'client');
-      }
-    }
-
-    console.log('💾 Sauvegarde clients:', clients.length);
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Erreur sauvegarde clients:', error);
-    res.status(500).json({ error: 'Erreur sauvegarde clients' });
-  }
-});
-
-// Routes pour les coaches
-app.get('/api/coaches', async (req, res) => {
-  try {
-    const coaches = await getAllUsers('coach');
-    console.log(`👨‍💼 Récupération coaches: ${coaches.length} coaches trouvés`);
-    res.json(coaches);
-  } catch (error) {
-    console.error('Erreur lecture coaches:', error);
-    res.json([]);
-  }
-});
-
-app.post('/api/coaches', async (req, res) => {
-  try {
-    const coaches = Array.isArray(req.body) ? req.body : [req.body];
-
-    for (const coach of coaches) {
-      if (coach.id) {
-        // Créer la structure de dossiers lors de la création
-        await createUserDirectoryStructure(coach.id, coach, 'coach');
-      }
-    }
-
-    console.log('💾 Sauvegarde coaches:', coaches.length);
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Erreur sauvegarde coaches:', error);
-    res.status(500).json({ error: 'Erreur sauvegarde coaches' });
-  }
-});
-
-// Route universelle pour récupérer les données d'un utilisateur
-app.get('/api/user-data/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-
-    const userResult = await findUserById(userId);
-
-    if (!userResult) {
-      return res.status(404).json({ error: 'Utilisateur non trouvé' });
-    }
-
-    const { userData, userType } = userResult;
-    console.log(`📊 Données utilisateur récupérées: ${userId} (${userType})`);
-    res.json(userData);
-  } catch (error) {
-    console.error(`Erreur récupération utilisateur ${req.params.userId}:`, error);
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
-
-// Route universelle pour sauvegarder les données d'un utilisateur
-app.post('/api/user-data/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const userData = req.body;
-
-    // Déterminer le type d'utilisateur
-    const userType = userData.userType === 'coach' ? 'coach' : 'client';
-
-    // S'assurer que l'ID correspond
-    userData.id = userId;
-    userData.lastUpdated = new Date().toISOString();
-
-    await writeUserFile(userId, userData, userType);
-
-    console.log(`💾 Données utilisateur sauvegardées: ${userId} (${userType})`);
-    res.json({ success: true });
-  } catch (error) {
-    console.error(`Erreur sauvegarde utilisateur ${userId}:`, error);
-    res.status(500).json({ error: 'Erreur sauvegarde données utilisateur' });
-  }
-});
-
-// Route pour créer la structure de dossiers d'un utilisateur
-app.post('/api/create-user-structure', async (req, res) => {
-  try {
-    const { userId, userData, userType } = req.body;
-
-    if (!userId || !userData) {
-      return res.status(400).json({ error: 'userId et userData requis' });
-    }
-
-    const result = await createUserDirectoryStructure(userId, userData, userType || 'client');
-
-    console.log(`✅ Structure créée via API pour: ${result.folderName}`);
-    res.json({ 
-      success: true, 
-      folderName: result.folderName, 
-      message: 'Structure de dossiers créée avec succès' 
-    });
-
-  } catch (error) {
-    console.error('❌ Erreur création structure via API:', error);
-    res.status(500).json({ error: 'Erreur création structure utilisateur' });
-  }
-});
+// ============================================================================
+// 🚀 DÉMARRAGE DU SERVEUR
+// ============================================================================
 
 // Démarrage du serveur
 async function startServer() {
