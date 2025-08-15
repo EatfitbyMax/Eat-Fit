@@ -36,7 +36,6 @@ export default function ProfilScreen() {
   const [showComingSoonModal, setShowComingSoonModal] = useState(false);
   const [showPremiumComingSoonModal, setShowPremiumComingSoonModal] = useState(false);
   const [stravaConnecting, setStravaConnecting] = useState(false); // Ajout pour gérer l'état de connexion Strava
-  const [showAppleHealthComingSoon, setShowAppleHealthComingSoon] = useState(false);
 
   const availableGoals = [
     'Perdre du poids',
@@ -479,20 +478,6 @@ export default function ProfilScreen() {
     setShowComingSoonModal(true);
   };
 
-  // Remplacer le comportement de handleAppleHealthComingSoon pour activer la connexion
-  const handleAppleHealthComingSoon = async () => {
-    // Si Apple Health est déjà connecté, on ne fait rien ou on gère la déconnexion via handleAppleHealthToggle
-    // Si Apple Health est déconnecté, on appelle handleAppleHealthToggle pour initier la connexion
-    if (!integrationStatus.appleHealth.connected) {
-      await handleAppleHealthToggle();
-    } else {
-      // Si déjà connecté, on pourrait montrer un message ou permettre la déconnexion
-      Alert.alert('Apple Health', 'Votre compte Apple Health est déjà connecté.');
-      // Ou appeler handleAppleHealthToggle pour confirmer la déconnexion si c'est le comportement souhaité
-      // await handleAppleHealthToggle();
-    }
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
@@ -901,13 +886,7 @@ export default function ProfilScreen() {
         </View>
       </ScrollView>
 
-      {/* Modal Bientôt disponible Apple Health - désormais géré par le toggle */}
-      {/* <ComingSoonModal
-        visible={showAppleHealthComingSoon}
-        onClose={() => setShowAppleHealthComingSoon(false)}
-        feature="Apple Health"
-        description="L'intégration avec Apple Health permettra de synchroniser automatiquement vos données de santé et fitness (pas, fréquence cardiaque, calories brûlées, etc.) pour un suivi personnalisé et précis de votre progression."
-      /> */}
+      
 
       <ComingSoonModal
         visible={showPremiumComingSoonModal}
