@@ -753,9 +753,6 @@ function NutritionScreen() {
         setWaterIntake(newWaterIntake);
         console.log(`✅ Hydratation mise à jour localement: ${newWaterIntake}ml`);
 
-        // Afficher un feedback positif à l'utilisateur
-        Alert.alert('✅ Hydratation', `+${amount}ml ajoutés avec succès !`, [{ text: 'OK' }]);
-
       } catch (serverError) {
         console.error('❌ Erreur sauvegarde serveur hydratation:', serverError);
         console.error('❌ Détails erreur complète:', {
