@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,6 @@ import {
   Dimensions,
   Alert,
   Image,
-  Platform,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import Animated, {
@@ -26,7 +25,6 @@ import { syncWithExternalApps, IntegrationsManager } from '@/utils/integrations'
 import { PersistentStorage } from '@/utils/storage';
 import { checkSubscriptionStatus } from '@/utils/subscription';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import HealthKitService, { HealthData } from '@/utils/healthKit';
 
 
 const { width, height } = Dimensions.get('window');
@@ -73,30 +71,6 @@ export default function HomeScreen() {
     targetWeight: 0,
   });
 
-  const [hydratationData, setHydratationData] = useState({
-    today: 0,
-    goal: 2000,
-    history: [] as Array<{date: string, amount: number}>
-  });
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [comingSoonVisible, setComingSoonVisible] = useState(false);
-  const [userName, setUserName] = useState<string>('');
-  const [weeklyProgression, setWeeklyProgression] = useState<any[]>([]);
-
-  // État pour la gestion de cache et performance
-  const [lastUpdateTime, setLastUpdateTime] = useState<number>(0);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  // État HealthKit
-  const [healthKitConnected, setHealthKitConnected] = useState(false);
-  const [healthData, setHealthData] = useState<HealthData>({
-    steps: 0,
-    heartRate: 0,
-    calories: 0,
-    distance: 0
-  });
-
-
   // Animation values
   const headerOpacity = useSharedValue(0);
   const cardsScale = useSharedValue(0.8);
@@ -117,48 +91,10 @@ export default function HomeScreen() {
   ];
 
   useEffect(() => {
-    initializeData();
+    loadUserData();
+    startAnimations();
+    generateRandomTip();
   }, []);
-
-  const initializeData = async () => {
-    try {
-      setIsRefreshing(true);
-
-      // Chargement parallèle des données
-      await Promise.all([
-        loadUserData(),
-        loadHydratationData(),
-        loadWeeklyProgression(),
-        checkHealthKitAndLoadData()
-      ]);
-
-      console.log('✅ Toutes les données chargées');
-    } catch (error) {
-      console.error('❌ Erreur initialisation données:', error);
-    } finally {
-      setIsRefreshing(false);
-      setLastUpdateTime(Date.now());
-    }
-  };
-
-  const checkHealthKitAndLoadData = async () => {
-    try {
-      const connected = await AsyncStorage.getItem('appleHealthConnected');
-      const isConnected = connected === 'true';
-      setHealthKitConnected(isConnected);
-
-      if (isConnected && Platform.OS === 'ios') {
-        console.log('🍎 Chargement données HealthKit...');
-        const todayData = await HealthKitService.getHealthData(new Date());
-        setHealthData(todayData);
-        console.log('✅ Données HealthKit chargées:', todayData);
-      } else {
-        console.log('ℹ️ HealthKit non connecté ou plateforme non supportée');
-      }
-    } catch (error) {
-      console.error('❌ Erreur chargement HealthKit:', error);
-    }
-  };
 
   // Rechargement automatique quand l'écran est focalisé
   useFocusEffect(
@@ -170,7 +106,6 @@ export default function HomeScreen() {
           await loadFormeScore();
           await loadWeightData();
           await calculateWeeklyWorkouts();
-          await checkHealthKitAndLoadData(); // Recharger les données HealthKit aussi
           setConnectionError(null);
         } catch (error: any) {
           console.error('Erreur chargement données:', error);
@@ -194,11 +129,11 @@ export default function HomeScreen() {
   const getCalorieGoalsFromNutrition = async (user: any) => {
     try {
       console.log('📋 RÉCUPÉRATION OBJECTIFS DEPUIS NUTRITION - ACCUEIL');
-
+      
       // Récupérer les objectifs sauvegardés depuis AsyncStorage (utilisés par nutrition.tsx)
       const savedGoalsKey = `calorieGoals_${user.id}`;
       const savedGoals = await AsyncStorage.getItem(savedGoalsKey);
-
+      
       if (savedGoals) {
         const parsedGoals = JSON.parse(savedGoals);
         console.log('✅ Objectifs récupérés depuis nutrition:', parsedGoals);
@@ -330,19 +265,16 @@ export default function HomeScreen() {
         totalWorkouts = 0;
       }
 
-      // 3. Récupérer les pas depuis HealthKit (si connecté)
+      // 3. Récupérer les pas depuis Apple Health (optionnel)
       let totalSteps = 0;
-      if (healthKitConnected && Platform.OS === 'ios') {
-        try {
-          const healthData = await HealthKitService.getHealthData(new Date());
-          totalSteps = healthData.steps || 0;
-          console.log('👟 Pas récupérés via HealthKit:', totalSteps);
-        } catch (error) {
-          console.error('❌ Erreur récupération pas via HealthKit:', error);
-          totalSteps = 0;
+      try {
+        const healthData = await IntegrationsManager.getHealthData(currentUser.id);
+        const todayHealthData = healthData.find((data: any) => data.date === today);
+        if (todayHealthData) {
+          totalSteps = todayHealthData.steps || 0;
         }
-      } else {
-        console.log('ℹ️ HealthKit non activé ou pas sur iOS pour les pas.');
+      } catch (error) {
+        console.log('⚠️ Pas de données Apple Health disponibles');
         totalSteps = 0;
       }
 
@@ -476,7 +408,7 @@ export default function HomeScreen() {
                 await loadTodayStats();
               } catch (error: any) {
                 setConnectionError(error.message || 'Erreur de synchronisation');
-                Alert.alert('Erreur', error.message || 'Impossible de synchroniser les données');
+                Alert.Alert('Erreur', error.message || 'Impossible de synchroniser les données');
               }
             }
           }
@@ -570,16 +502,6 @@ export default function HomeScreen() {
     start.setDate(diff);
     start.setHours(0, 0, 0, 0);
     return start;
-  };
-
-  // Placeholder for rendering weekly progression data
-  const renderWeeklyProgression = () => {
-    // Replace with actual rendering logic based on `weeklyProgression` state
-    return (
-      <View style={styles.placeholder}>
-        <Text style={styles.placeholderText}>Progression à afficher</Text>
-      </View>
-    );
   };
 
   if (loading) {
@@ -833,43 +755,6 @@ export default function HomeScreen() {
               <Text style={styles.goalSubtext}>Progression constante vers votre objectif</Text>
             </View>
           )}
-        </View>
-
-        {/* Section HealthKit */}
-        {healthKitConnected && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🏥 Données Apple Health</Text>
-            <View style={styles.healthKitGrid}>
-              <View style={styles.healthKitCard}>
-                <Text style={styles.healthKitTitle}>👟 Pas</Text>
-                <Text style={styles.healthKitValue}>{healthData.steps?.toLocaleString() || '0'}</Text>
-                <Text style={styles.healthKitSubtext}>aujourd'hui</Text>
-              </View>
-              <View style={styles.healthKitCard}>
-                <Text style={styles.healthKitTitle}>🔥 Calories</Text>
-                <Text style={styles.healthKitValue}>{Math.round(healthData.calories || 0)}</Text>
-                <Text style={styles.healthKitSubtext}>brûlées</Text>
-              </View>
-              <View style={styles.healthKitCard}>
-                <Text style={styles.healthKitTitle}>❤️ Rythme</Text>
-                <Text style={styles.healthKitValue}>{Math.round(healthData.heartRate || 0)}</Text>
-                <Text style={styles.healthKitSubtext}>bpm</Text>
-              </View>
-              <View style={styles.healthKitCard}>
-                <Text style={styles.healthKitTitle}>📏 Distance</Text>
-                <Text style={styles.healthKitValue}>{(healthData.distance || 0).toFixed(1)}</Text>
-                <Text style={styles.healthKitSubtext}>km</Text>
-              </View>
-            </View>
-          </View>
-        )}
-
-        {/* Progression de la semaine */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📈 Votre progression cette semaine</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
-            {renderWeeklyProgression()}
-          </ScrollView>
         </View>
       </Animated.ScrollView>
     </SafeAreaView>
@@ -1161,52 +1046,5 @@ const styles = StyleSheet.create({
     color: '#8B949E',
     marginTop: 8,
     textAlign: 'center',
-  },
-  section: {
-    marginBottom: 30,
-  },
-  horizontalScroll: {
-    marginTop: 10,
-  },
-  healthKitGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    paddingHorizontal: 20,
-  },
-  healthKitCard: {
-    flex: 1,
-    minWidth: '45%',
-    backgroundColor: '#161B22',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#21262D',
-  },
-  healthKitTitle: {
-    fontSize: 14,
-    color: '#8B949E',
-    marginBottom: 8,
-    fontWeight: '500',
-  },
-  healthKitValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#F5A623',
-    marginBottom: 4,
-  },
-  healthKitSubtext: {
-    fontSize: 12,
-    color: '#6A737D',
-  },
-  placeholder: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  placeholderText: {
-    color: '#8B949E',
-    fontSize: 14,
   },
 });

@@ -20,24 +20,13 @@ import { checkSubscriptionStatus } from '@/utils/subscription';
 import { InAppPurchaseService } from '@/utils/inAppPurchases';
 import { allSports } from '@/utils/sportPrograms';
 import ComingSoonModal from '@/components/ComingSoonModal';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { connectToAppleHealth } from '@/utils/healthKit';
-
-// Définition des types si nécessaire (assurez-vous qu'ils existent ou définissez-les)
-interface CoachInfo {
-  prenom: string;
-  nom: string;
-  email: string;
-  specialite: string;
-  disponibilites: string;
-}
 
 export default function ProfilScreen() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [integrationStatus, setIntegrationStatus] = useState({
-    appleHealth: { connected: false, lastSync: null, permissions: [] },
+    appleHealth: { connected: false, lastSync: null },
     strava: { connected: false, lastSync: null, athleteId: null },
   });
   const [editingObjectifs, setEditingObjectifs] = useState(false);
@@ -48,18 +37,6 @@ export default function ProfilScreen() {
   const [showPremiumComingSoonModal, setShowPremiumComingSoonModal] = useState(false);
   const [stravaConnecting, setStravaConnecting] = useState(false); // Ajout pour gérer l'état de connexion Strava
   const [showAppleHealthComingSoon, setShowAppleHealthComingSoon] = useState(false);
-  const [isEditing, setIsEditing] = useState(false); // Pour la section informations personnelles
-  const [appleHealthConnected, setAppleHealthConnected] = useState(false); // State pour HealthKit
-
-  // État pour les informations du coach (exemple)
-  const [coachInfo, setCoachInfo] = useState<CoachInfo>({
-    prenom: 'Maxime',
-    nom: 'Renard',
-    email: 'eatfitbymax@gmail.com',
-    specialite: 'Coach Nutrition & Fitness',
-    disponibilites: 'Lun-Ven, 8h-18h'
-  });
-
 
   const availableGoals = [
     'Perdre du poids',
@@ -77,7 +54,6 @@ export default function ProfilScreen() {
     loadUserData();
     loadIntegrationStatus();
     loadSubscriptionStatus();
-    checkAppleHealthConnection(); // Charger l'état de HealthKit au montage
   }, []);
 
   useEffect(() => {
@@ -92,7 +68,6 @@ export default function ProfilScreen() {
       loadUserData();
       loadIntegrationStatus();
       loadSubscriptionStatus();
-      checkAppleHealthConnection(); // Vérifier l'état de HealthKit à chaque focus
     }, [])
   );
 
@@ -509,69 +484,6 @@ export default function ProfilScreen() {
     setShowAppleHealthComingSoon(true);
   };
 
-  // Fonctions pour HealthKit
-  const checkAppleHealthConnection = async () => {
-    try {
-      const connected = await AsyncStorage.getItem('appleHealthConnected');
-      setAppleHealthConnected(connected === 'true');
-    } catch (error) {
-      console.log('Erreur vérification connexion Apple Health:', error);
-    }
-  };
-
-  const handleConnectAppleHealth = async () => {
-    try {
-      console.log('🍎 Tentative de connexion HealthKit depuis profil...');
-      const success = await connectToAppleHealth();
-
-      if (success) {
-        setAppleHealthConnected(true);
-        Alert.alert(
-          'HealthKit connecté',
-          'Vos données de santé sont maintenant synchronisées avec l\'application.'
-        );
-      } else {
-        Alert.alert(
-          'Connexion échouée',
-          'Impossible de connecter HealthKit. Vérifiez vos permissions dans les réglages.'
-        );
-      }
-    } catch (error) {
-      console.error('Erreur connexion HealthKit:', error);
-      Alert.alert(
-        'Erreur',
-        'Une erreur est survenue lors de la connexion à HealthKit.'
-      );
-    }
-  };
-
-  const handleDisconnectAppleHealth = async () => {
-    Alert.alert(
-      'Déconnecter HealthKit',
-      'Êtes-vous sûr de vouloir déconnecter HealthKit ? Vos données ne seront plus synchronisées.',
-      [
-        {
-          text: 'Annuler',
-          style: 'cancel',
-        },
-        {
-          text: 'Déconnecter',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await AsyncStorage.removeItem('appleHealthConnected');
-              setAppleHealthConnected(false);
-              Alert.alert('HealthKit déconnecté', 'La synchronisation a été désactivée.');
-            } catch (error) {
-              console.error('Erreur déconnexion HealthKit:', error);
-            }
-          },
-        },
-      ]
-    );
-  };
-
-
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
@@ -599,58 +511,51 @@ export default function ProfilScreen() {
           </Text>
         </View>
 
-        {/* Section HealthKit */}
+        {/* Personal Information */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🏥 HealthKit (Apple Health)</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Informations personnelles</Text>
+            <TouchableOpacity
+              onPress={() => router.push('/informations-personnelles')}
+              style={styles.modifyButton}
+            >
+              <Text style={styles.modifyText}>Modifier</Text>
+            </TouchableOpacity>
+          </View>
 
-          <TouchableOpacity
-            style={[styles.menuItem, appleHealthConnected && styles.connectedItem]}
-            onPress={handleConnectAppleHealth}
-          >
-            <View style={styles.menuItemContent}>
-              <Text style={styles.menuItemText}>
-                {appleHealthConnected ? 'HealthKit connecté' : 'Connecter HealthKit'}
+          {/* Informations de base */}
+          <View style={styles.infoCard}>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>👤 Sexe:</Text>
+              <Text style={styles.infoValue}>{user?.gender || 'Non renseigné'}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>📅 Âge:</Text>
+              <Text style={styles.infoValue}>{user?.age ? `${user.age} ans` : 'Non renseigné'}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>📏 Taille:</Text>
+              <Text style={styles.infoValue}>{user?.height ? `${user.height} cm` : 'Non renseignée'}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>⚖️ Poids:</Text>
+              <Text style={styles.infoValue}>{user?.weight ? `${user.weight} kg` : 'Non renseigné'}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>
+                {getSportDisplay().emoji} Sport favori:
               </Text>
-              <Text style={styles.menuItemSubtext}>
-                {appleHealthConnected
-                  ? 'Synchronisation active des données de santé'
-                  : 'Synchroniser vos données de santé et fitness'
-                }
+              <Text style={styles.infoValue}>
+                {getSportDisplay().name}
               </Text>
             </View>
-            <Text style={[styles.menuItemArrow, appleHealthConnected && styles.connectedArrow]}>
-              {appleHealthConnected ? '✓' : '›'}
-            </Text>
-          </TouchableOpacity>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>📊 Activité:</Text>
+              <Text style={styles.infoValue}>{user?.activityLevel || 'Non renseigné'}</Text>
+            </View>
+          </View>
 
-          {appleHealthConnected && (
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={handleDisconnectAppleHealth}
-            >
-              <Text style={[styles.menuItemText, styles.disconnectText]}>Déconnecter HealthKit</Text>
-              <Text style={styles.menuItemArrow}>›</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Informations personnelles */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📋 Informations personnelles</Text>
-
-          <TouchableOpacity
-            style={styles.menuItem}
-            onPress={() => setIsEditing(!isEditing)}
-          >
-            <Text style={styles.menuItemText}>Informations personnelles</Text>
-            <Text style={styles.menuItemArrow}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuItemText}>Notifications</Text>
-            <Text style={styles.menuItemArrow}>›</Text>
-          </TouchableOpacity>
-        </View>
+          </View>
 
         {/* Objectifs */}
         <View style={[styles.section, {marginTop: 20}]}>
@@ -956,7 +861,7 @@ export default function ProfilScreen() {
             style={styles.menuItem}
             onPress={() => router.push('/(client)/parametres-application')}
           >
-            <Text style={styles.menuItemText}>⚙️ Paramètres de l\'application</Text>
+            <Text style={styles.menuItemText}>⚙️ Paramètres de l'application</Text>
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
 
@@ -1776,24 +1681,4 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
 
-  // Styles spécifiques HealthKit
-  connectedItem: {
-    backgroundColor: '#0D4F0C',
-    borderColor: '#28A745',
-  },
-  connectedArrow: {
-    color: '#28A745',
-    fontSize: 18,
-  },
-  menuItemContent: {
-    flex: 1,
-  },
-  menuItemSubtext: {
-    fontSize: 12,
-    color: '#8B949E',
-    marginTop: 2,
-  },
-  disconnectText: {
-    color: '#FF6B6B',
-  },
 });
