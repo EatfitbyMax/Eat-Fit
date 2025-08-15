@@ -359,13 +359,30 @@ export default function FoodSearchModal({ visible, onClose, onAddFood, mealType 
             }}
           />
           <View style={styles.scannerOverlay}>
-            <Text style={styles.scannerText}>Scannez le code-barres du produit</Text>
-            <TouchableOpacity
-              style={styles.cancelScanButton}
-              onPress={() => setShowScanner(false)}
-            >
-              <Text style={styles.cancelScanText}>Annuler</Text>
-            </TouchableOpacity>
+            <View style={styles.scannerTopSection}>
+              <Text style={styles.scannerText}>Scannez le code-barres du produit</Text>
+              <Text style={styles.scannerSubtext}>Placez le code-barres dans le cadre</Text>
+            </View>
+            
+            {/* Cadre de guidage */}
+            <View style={styles.scannerFrame}>
+              <View style={styles.scannerFrameCorner} style={[styles.scannerFrameCorner, styles.topLeft]} />
+              <View style={styles.scannerFrameCorner} style={[styles.scannerFrameCorner, styles.topRight]} />
+              <View style={styles.scannerFrameCorner} style={[styles.scannerFrameCorner, styles.bottomLeft]} />
+              <View style={styles.scannerFrameCorner} style={[styles.scannerFrameCorner, styles.bottomRight]} />
+              
+              {/* Ligne de scan animée */}
+              <View style={styles.scannerLine} />
+            </View>
+            
+            <View style={styles.scannerBottomSection}>
+              <TouchableOpacity
+                style={styles.cancelScanButton}
+                onPress={() => setShowScanner(false)}
+              >
+                <Text style={styles.cancelScanText}>Annuler</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -704,15 +721,75 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    paddingVertical: 60,
+  },
+  scannerTopSection: {
+    alignItems: 'center',
+    paddingHorizontal: 20,
   },
   scannerText: {
     color: '#FFFFFF',
-    fontSize: 18,
-    marginBottom: 20,
+    fontSize: 20,
+    fontWeight: '600',
     textAlign: 'center',
+    marginBottom: 8,
+  },
+  scannerSubtext: {
+    color: '#CCCCCC',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  scannerFrame: {
+    width: 280,
+    height: 180,
+    position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scannerFrameCorner: {
+    position: 'absolute',
+    width: 30,
+    height: 30,
+    borderColor: '#FFA500',
+    borderWidth: 4,
+  },
+  topLeft: {
+    top: 0,
+    left: 0,
+    borderRightWidth: 0,
+    borderBottomWidth: 0,
+  },
+  topRight: {
+    top: 0,
+    right: 0,
+    borderLeftWidth: 0,
+    borderBottomWidth: 0,
+  },
+  bottomLeft: {
+    bottom: 0,
+    left: 0,
+    borderRightWidth: 0,
+    borderTopWidth: 0,
+  },
+  bottomRight: {
+    bottom: 0,
+    right: 0,
+    borderLeftWidth: 0,
+    borderTopWidth: 0,
+  },
+  scannerLine: {
+    position: 'absolute',
+    width: '90%',
+    height: 2,
+    backgroundColor: '#FFA500',
+    opacity: 0.8,
+  },
+  scannerBottomSection: {
+    alignItems: 'center',
+    paddingHorizontal: 20,
   },
   cancelScanButton: {
     backgroundColor: '#FF6B6B',
