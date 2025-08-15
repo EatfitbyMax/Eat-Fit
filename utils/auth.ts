@@ -597,8 +597,22 @@ export async function register(userData: Omit<User, 'id'> & { password: string }
     // Ajouter à la liste des utilisateurs
     users.push(newUser);
 
-    // Sauvegarder sur le serveur
+    // Sauvegarder sur le serveur avec création de la structure
     await PersistentStorage.saveUsers(users);
+    
+    // Déclencher la création de la structure de dossiers
+    try {
+      const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://eatfitbymax.cloud';
+      await fetch(`${API_URL}/api/create-user-structure`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: newUser.id, userData: newUser, userType: 'client' })
+      });
+      console.log('✅ Structure de dossiers créée pour le nouvel utilisateur');
+    } catch (structureError) {
+      console.warn('⚠️ Erreur création structure (non critique):', structureError);
+    }
+    
     console.log('✅ Utilisateurs sauvegardés sur le serveur');
 
     // Créer l'objet de retour sans les mots de passe

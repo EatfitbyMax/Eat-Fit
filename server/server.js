@@ -173,6 +173,30 @@ async function deleteJsonFile(fileName) {
 async function readUserFile(userId, userType = 'client') {
   try {
     const userDir = userType === 'coach' ? COACH_DIR : CLIENT_DIR;
+
+    // D'abord, essayer de trouver dans la nouvelle structure (dossiers nom_prénom)
+    try {
+      const files = await fs.readdir(userDir);
+      for (const folder of files) {
+        if (!folder.includes('_')) continue; // Ignorer les fichiers qui ne sont pas des dossiers nom_prénom
+        
+        const profilPath = path.join(userDir, folder, 'Info', 'profil.json');
+        try {
+          const data = await fs.readFile(profilPath, 'utf8');
+          const userData = JSON.parse(data);
+          if (userData.id === userId) {
+            console.log(`📁 Utilisateur trouvé dans la nouvelle structure: ${folder}`);
+            return userData;
+          }
+        } catch (e) {
+          // Ignorer les erreurs de lecture de fichiers individuels
+        }
+      }
+    } catch (e) {
+      // Si erreur lecture dossier, continuer avec ancien système
+    }
+
+    // Fallback: essayer l'ancien système (fichier unique)
     const filePath = path.join(userDir, `${userId}.json`);
     const data = await fs.readFile(filePath, 'utf8');
     return JSON.parse(data);
@@ -244,13 +268,212 @@ async function findUserById(userId) {
   return null;
 }
 
-// Fonction pour écrire le fichier utilisateur
-async function writeUserFile(userId, userData, userType = 'client') {
+// Fonction pour créer la structure de dossiers d'un utilisateur
+async function createUserDirectoryStructure(userId, userData, userType = 'client') {
   try {
     const userDir = userType === 'coach' ? COACH_DIR : CLIENT_DIR;
-    const filePath = path.join(userDir, `${userId}.json`);
-    await fs.writeFile(filePath, JSON.stringify(userData, null, 2));
-    return true;
+    
+    // Créer le nom du dossier : nom_prénom
+    const folderName = `${userData.lastName || 'inconnu'}_${userData.firstName || 'inconnu'}`.replace(/[^a-zA-Z0-9_-]/g, '');
+    const userFolderPath = path.join(userDir, folderName);
+
+    console.log(`📁 Création structure dossiers pour: ${folderName}`);
+
+    // Créer tous les dossiers nécessaires
+    const foldersToCreate = [
+      userFolderPath,
+      path.join(userFolderPath, 'Info'),
+      path.join(userFolderPath, 'Strava'),
+      path.join(userFolderPath, 'Health'),
+      path.join(userFolderPath, 'Nutrition'),
+      path.join(userFolderPath, 'Nutrition', 'hydratation'),
+      path.join(userFolderPath, 'Entrainements'),
+      path.join(userFolderPath, 'Progrès'),
+      path.join(userFolderPath, 'Forme')
+    ];
+
+    for (const folder of foldersToCreate) {
+      await fs.mkdir(folder, { recursive: true });
+    }
+
+    // Créer les fichiers initiaux avec données par défaut
+    const initialFiles = [
+      // Info/
+      {
+        path: path.join(userFolderPath, 'Info', 'profil.json'),
+        data: userData
+      },
+      {
+        path: path.join(userFolderPath, 'Info', 'preferences-app.json'),
+        data: {
+          theme: 'system',
+          language: 'fr',
+          units: 'metric',
+          notifications: true
+        }
+      },
+      {
+        path: path.join(userFolderPath, 'Info', 'integrations.json'),
+        data: {
+          appleHealth: { connected: false, permissions: [], lastSync: null },
+          strava: { connected: false, lastSync: null, athleteId: null }
+        }
+      },
+      {
+        path: path.join(userFolderPath, 'Info', 'messages.json'),
+        data: []
+      },
+      {
+        path: path.join(userFolderPath, 'Info', 'notifications.json'),
+        data: {
+          pushNotifications: true,
+          mealReminders: true,
+          workoutReminders: true,
+          progressUpdates: true,
+          coachMessages: true,
+          weeklyReports: true,
+          soundEnabled: true,
+          vibrationEnabled: true
+        }
+      },
+      {
+        path: path.join(userFolderPath, 'Info', 'notification-times.json'),
+        data: {
+          breakfast: { hour: 8, minute: 0 },
+          lunch: { hour: 12, minute: 30 },
+          dinner: { hour: 19, minute: 0 },
+          workout: { hour: 18, minute: 0 }
+        }
+      },
+      {
+        path: path.join(userFolderPath, 'Info', 'sports-recents.json'),
+        data: []
+      },
+      {
+        path: path.join(userFolderPath, 'Info', 'debug.json'),
+        data: { created: new Date().toISOString(), logs: [] }
+      },
+      // Strava/
+      {
+        path: path.join(userFolderPath, 'Strava', 'compte.json'),
+        data: { connected: false }
+      },
+      {
+        path: path.join(userFolderPath, 'Strava', 'statut.json'),
+        data: { connected: false }
+      },
+      {
+        path: path.join(userFolderPath, 'Strava', 'activites.json'),
+        data: []
+      },
+      {
+        path: path.join(userFolderPath, 'Strava', 'config.json'),
+        data: { settings: {} }
+      },
+      // Health/
+      {
+        path: path.join(userFolderPath, 'Health', 'main.json'),
+        data: { initialized: new Date().toISOString() }
+      },
+      {
+        path: path.join(userFolderPath, 'Health', 'health.json'),
+        data: []
+      },
+      {
+        path: path.join(userFolderPath, 'Health', 'health-check.json'),
+        data: { lastCheck: new Date().toISOString() }
+      },
+      // Nutrition/
+      {
+        path: path.join(userFolderPath, 'Nutrition', 'aliments.json'),
+        data: []
+      },
+      {
+        path: path.join(userFolderPath, 'Nutrition', 'nutrition-progres.json'),
+        data: { history: [] }
+      },
+      // Entrainements/
+      {
+        path: path.join(userFolderPath, 'Entrainements', 'programmes.json'),
+        data: []
+      },
+      {
+        path: path.join(userFolderPath, 'Entrainements', 'entrainements.json'),
+        data: []
+      },
+      {
+        path: path.join(userFolderPath, 'Entrainements', 'notes-rpe.json'),
+        data: {}
+      },
+      {
+        path: path.join(userFolderPath, 'Entrainements', 'strava-sync.json'),
+        data: []
+      },
+      // Progrès/
+      {
+        path: path.join(userFolderPath, 'Progrès', 'poids.json'),
+        data: {
+          startWeight: userData.weight || 0,
+          currentWeight: userData.weight || 0,
+          targetWeight: 0,
+          lastWeightUpdate: null,
+          targetAsked: false,
+          weightHistory: []
+        }
+      },
+      {
+        path: path.join(userFolderPath, 'Progrès', 'mensurations.json'),
+        data: {}
+      },
+      {
+        path: path.join(userFolderPath, 'Progrès', 'nutrition.json'),
+        data: { progress: [] }
+      },
+      {
+        path: path.join(userFolderPath, 'Progrès', 'entrainement.json'),
+        data: { progress: [] }
+      },
+      // Forme/
+      {
+        path: path.join(userFolderPath, 'Forme', 'sommeil-fatigue.json'),
+        data: { globalData: {} }
+      }
+    ];
+
+    // Écrire tous les fichiers initiaux
+    for (const file of initialFiles) {
+      await fs.writeFile(file.path, JSON.stringify(file.data, null, 2));
+    }
+
+    console.log(`✅ Structure créée avec succès: ${folderName}`);
+    return { folderName, userFolderPath };
+  } catch (error) {
+    console.error(`❌ Erreur création structure utilisateur ${userId}:`, error);
+    throw error;
+  }
+}
+
+// Fonction pour écrire le fichier utilisateur (mise à jour)
+async function writeUserFile(userId, userData, userType = 'client') {
+  try {
+    // Vérifier si l'utilisateur a déjà une structure de dossiers
+    const userDir = userType === 'coach' ? COACH_DIR : CLIENT_DIR;
+    const folderName = `${userData.lastName || 'inconnu'}_${userData.firstName || 'inconnu'}`.replace(/[^a-zA-Z0-9_-]/g, '');
+    const userFolderPath = path.join(userDir, folderName);
+    const profilPath = path.join(userFolderPath, 'Info', 'profil.json');
+
+    // Si la structure existe, mettre à jour le profil
+    try {
+      await fs.access(profilPath);
+      await fs.writeFile(profilPath, JSON.stringify(userData, null, 2));
+      console.log(`📁 Profil mis à jour dans la structure: ${folderName}`);
+      return true;
+    } catch (error) {
+      // Si la structure n'existe pas, utiliser l'ancien système pour la compatibilité
+      const filePath = path.join(userDir, `${userId}.json`);
+      await fs.writeFile(filePath, JSON.stringify(userData, null, 2));
+      return true;
+    }
   } catch (error) {
     console.error(`Erreur écriture utilisateur ${userId}:`, error);
     throw error;
@@ -1757,6 +1980,30 @@ app.get('/api/strava/status/:userId', async (req, res) => {
   }
 });
 
+// Route pour créer la structure de dossiers d'un utilisateur
+app.post('/api/create-user-structure', async (req, res) => {
+  try {
+    const { userId, userData, userType } = req.body;
+
+    if (!userId || !userData) {
+      return res.status(400).json({ error: 'userId et userData requis' });
+    }
+
+    const result = await createUserDirectoryStructure(userId, userData, userType || 'client');
+    
+    console.log(`✅ Structure créée via API pour: ${result.folderName}`);
+    res.json({ 
+      success: true, 
+      folderName: result.folderName, 
+      message: 'Structure de dossiers créée avec succès' 
+    });
+
+  } catch (error) {
+    console.error('❌ Erreur création structure via API:', error);
+    res.status(500).json({ error: 'Erreur création structure utilisateur' });
+  }
+});
+
 // Route de diagnostic pour analyser les données utilisateur
 app.get('/api/debug/user/:userId', async (req, res) => {
   try {
@@ -2365,7 +2612,8 @@ app.post('/api/coach-register', async (req, res) => {
       }
     };
 
-    await writeUserFile(newCoach.id, newCoach, 'coach');
+    // Créer la structure de dossiers pour le nouveau coach
+    await createUserDirectoryStructure(newCoach.id, newCoach, 'coach');
 
     console.log('✅ Coach inscrit avec succès:', email);
     res.json({
