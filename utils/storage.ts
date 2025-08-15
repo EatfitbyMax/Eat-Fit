@@ -100,6 +100,181 @@ export class PersistentStorage {
   }
 
   static async saveNutrition(userId: string, nutritionData: any[]): Promise<void> {
+    const response = await fetch(`${SERVER_URL}/api/user-data/${userId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'nutrition', data: nutritionData })
+    });
+
+    if (!response.ok) {
+      throw new Error('Erreur sauvegarde données nutrition');
+    }
+  }
+
+  // Health data
+  static async getHealthData(userId: string): Promise<any[]> {
+    const response = await fetch(`${SERVER_URL}/api/user-data/${userId}?type=health`);
+    return response.ok ? await response.json() : [];
+  }
+
+  static async saveHealthData(userId: string, healthData: any[]): Promise<void> {
+    const response = await fetch(`${SERVER_URL}/api/user-data/${userId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'health', data: healthData })
+    });
+
+    if (!response.ok) {
+      throw new Error('Erreur sauvegarde données santé');
+    }
+  }
+
+  // Workouts data
+  static async getWorkouts(userId: string): Promise<any[]> {
+    const response = await fetch(`${SERVER_URL}/api/user-data/${userId}?type=workouts`);
+    return response.ok ? await response.json() : [];
+  }
+
+  static async saveWorkouts(userId: string, workoutsData: any[]): Promise<void> {
+    const response = await fetch(`${SERVER_URL}/api/user-data/${userId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'workouts', data: workoutsData })
+    });
+
+    if (!response.ok) {
+      throw new Error('Erreur sauvegarde entraînements');
+    }
+  }
+
+  // Messages data
+  static async getMessages(userId: string): Promise<any[]> {
+    const response = await fetch(`${SERVER_URL}/api/user-data/${userId}?type=messages`);
+    return response.ok ? await response.json() : [];
+  }
+
+  static async saveMessages(userId: string, messagesData: any[]): Promise<void> {
+    const response = await fetch(`${SERVER_URL}/api/user-data/${userId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'messages', data: messagesData })
+    });
+
+    if (!response.ok) {
+      throw new Error('Erreur sauvegarde messages');
+    }
+  }
+
+  // Strava data
+  static async getStravaData(userId: string): Promise<any[]> {
+    const response = await fetch(`${SERVER_URL}/api/user-data/${userId}?type=strava`);
+    return response.ok ? await response.json() : [];
+  }
+
+  static async saveStravaData(userId: string, stravaData: any[]): Promise<void> {
+    const response = await fetch(`${SERVER_URL}/api/user-data/${userId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'strava', data: stravaData })
+    });
+
+    if (!response.ok) {
+      throw new Error('Erreur sauvegarde données Strava');
+    }
+  }
+
+  // Strava account
+  static async getStravaAccount(userId: string): Promise<any> {
+    const response = await fetch(`${SERVER_URL}/api/user-data/${userId}?type=strava-account`);
+    return response.ok ? await response.json() : { connected: false };
+  }
+
+  static async saveStravaAccount(userId: string, accountData: any): Promise<void> {
+    const response = await fetch(`${SERVER_URL}/api/user-data/${userId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'strava-account', data: accountData })
+    });
+
+    if (!response.ok) {
+      throw new Error('Erreur sauvegarde compte Strava');
+    }
+  }
+
+  // Notifications
+  static async getNotificationSettings(userId: string): Promise<any> {
+    const response = await fetch(`${SERVER_URL}/api/user-data/${userId}?type=notifications`);
+    return response.ok ? await response.json() : {
+      pushNotifications: true,
+      mealReminders: true,
+      workoutReminders: true,
+      progressUpdates: true,
+      coachMessages: true,
+      weeklyReports: true,
+      soundEnabled: true,
+      vibrationEnabled: true
+    };
+  }
+
+  static async saveNotificationSettings(userId: string, settings: any): Promise<void> {
+    const response = await fetch(`${SERVER_URL}/api/user-data/${userId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'notifications', data: settings })
+    });
+
+    if (!response.ok) {
+      throw new Error('Erreur sauvegarde paramètres notifications');
+    }
+  }
+
+  // Notification times
+  static async getNotificationTimes(userId: string): Promise<any> {
+    const response = await fetch(`${SERVER_URL}/api/user-data/${userId}?type=notification-times`);
+    return response.ok ? await response.json() : {
+      breakfast: { hour: 8, minute: 0 },
+      lunch: { hour: 12, minute: 30 },
+      dinner: { hour: 19, minute: 0 },
+      workout: { hour: 18, minute: 0 }
+    };
+  }
+
+  static async saveNotificationTimes(userId: string, times: any): Promise<void> {
+    const response = await fetch(`${SERVER_URL}/api/user-data/${userId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'notification-times', data: times })
+    });
+
+    if (!response.ok) {
+      throw new Error('Erreur sauvegarde horaires notifications');
+    }
+  }
+
+  // App preferences
+  static async getAppPreferences(userId: string): Promise<any> {
+    const response = await fetch(`${SERVER_URL}/api/user-data/${userId}?type=preferences`);
+    return response.ok ? await response.json() : {
+      theme: 'system',
+      language: 'fr',
+      units: 'metric',
+      notifications: true
+    };
+  }
+
+  static async saveAppPreferences(userId: string, preferences: any): Promise<void> {
+    const response = await fetch(`${SERVER_URL}/api/user-data/${userId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'preferences', data: preferences })
+    });
+
+    if (!response.ok) {
+      throw new Error('Erreur sauvegarde préférences app');
+    };
+  }
+
+  static async saveNutrition(userId: string, nutritionData: any[]): Promise<void> {
     const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

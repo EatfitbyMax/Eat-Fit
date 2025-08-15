@@ -168,6 +168,7 @@ app.post('/api/coaches', async (req, res) => {
 app.get('/api/user-data/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
+    const { type } = req.query;
 
     const userResult = await findUserById(userId);
 
@@ -176,6 +177,14 @@ app.get('/api/user-data/:userId', async (req, res) => {
     }
 
     const { userData, userType } = userResult;
+
+    // Si un type spécifique est demandé, récupérer les données correspondantes
+    if (type) {
+      const specificData = await getSpecificUserData(userId, type, userType);
+      console.log(`📊 Données spécifiques récupérées: ${userId} (${type})`);
+      return res.json(specificData);
+    }
+
     console.log(`📊 Données utilisateur récupérées: ${userId} (${userType})`);
     res.json(userData);
   } catch (error) {
@@ -188,12 +197,19 @@ app.get('/api/user-data/:userId', async (req, res) => {
 app.post('/api/user-data/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const userData = req.body;
+    const requestData = req.body;
 
-    // Déterminer le type d'utilisateur
+    // Vérifier si c'est une sauvegarde de données spécifiques
+    if (requestData.type && requestData.data !== undefined) {
+      await saveSpecificUserData(userId, requestData.type, requestData.data);
+      console.log(`💾 Données spécifiques sauvegardées: ${userId} (${requestData.type})`);
+      return res.json({ success: true });
+    }
+
+    // Sinon, c'est une sauvegarde de profil utilisateur
+    const userData = requestData;
     const userType = userData.userType === 'coach' ? 'coach' : 'client';
 
-    // S'assurer que l'ID correspond
     userData.id = userId;
     userData.lastUpdated = new Date().toISOString();
 
@@ -446,6 +462,168 @@ async function writeUserFile(userId, userData, userType = 'client') {
     console.error(`Erreur écriture utilisateur ${userId}:`, error);
     throw error;
   }
+}
+
+// Fonction pour récupérer des données spécifiques d'un utilisateur
+async function getSpecificUserData(userId, type, userType = 'client') {
+  try {
+    const userDir = userType === 'coach' ? COACH_DIR : CLIENT_DIR;
+    const folders = await fs.readdir(userDir);
+
+    for (const folder of folders) {
+      if (!folder.includes('_')) continue;
+
+      const profilPath = path.join(userDir, folder, 'Info', 'profil.json');
+      try {
+        const profilData = await fs.readFile(profilPath, 'utf8');
+        const userData = JSON.parse(profilData);
+        
+        if (userData.id === userId) {
+          // Mapper les types aux fichiers correspondants
+          const fileMapping = {
+            'weight': path.join(userDir, folder, 'Progrès', 'poids.json'),
+            'nutrition': path.join(userDir, folder, 'Nutrition', 'aliments.json'),
+            'water': path.join(userDir, folder, 'Health', 'health.json'),
+            'workouts': path.join(userDir, folder, 'Entrainements', 'entrainements.json'),
+            'health': path.join(userDir, folder, 'Health', 'health.json'),
+            'messages': path.join(userDir, folder, 'Info', 'messages.json'),
+            'strava': path.join(userDir, folder, 'Strava', 'activites.json'),
+            'strava-account': path.join(userDir, folder, 'Strava', 'compte.json'),
+            'activity-ratings': path.join(userDir, folder, 'Forme', 'sommeil-fatigue.json'),
+            'mensurations': path.join(userDir, folder, 'Progrès', 'mensurations.json'),
+            'notifications': path.join(userDir, folder, 'Info', 'notifications.json'),
+            'notification-times': path.join(userDir, folder, 'Info', 'notification-times.json'),
+            'preferences': path.join(userDir, folder, 'Info', 'preferences-app.json')
+          };
+
+          const filePath = fileMapping[type];
+          if (!filePath) {
+            return null;
+          }
+
+          try {
+            const fileData = await fs.readFile(filePath, 'utf8');
+            return JSON.parse(fileData);
+          } catch (e) {
+            // Retourner des données par défaut selon le type
+            return getDefaultDataForType(type);
+          }
+        }
+      } catch (e) {
+        continue;
+      }
+    }
+
+    return getDefaultDataForType(type);
+  } catch (error) {
+    console.error(`Erreur récupération données ${type} pour ${userId}:`, error);
+    return getDefaultDataForType(type);
+  }
+}
+
+// Fonction pour sauvegarder des données spécifiques
+async function saveSpecificUserData(userId, type, data) {
+  try {
+    const userResult = await findUserById(userId);
+    if (!userResult) {
+      throw new Error('Utilisateur non trouvé');
+    }
+
+    const { userType } = userResult;
+    const userDir = userType === 'coach' ? COACH_DIR : CLIENT_DIR;
+    const folders = await fs.readdir(userDir);
+
+    for (const folder of folders) {
+      if (!folder.includes('_')) continue;
+
+      const profilPath = path.join(userDir, folder, 'Info', 'profil.json');
+      try {
+        const profilData = await fs.readFile(profilPath, 'utf8');
+        const userData = JSON.parse(profilData);
+        
+        if (userData.id === userId) {
+          const fileMapping = {
+            'weight': path.join(userDir, folder, 'Progrès', 'poids.json'),
+            'nutrition': path.join(userDir, folder, 'Nutrition', 'aliments.json'),
+            'water': path.join(userDir, folder, 'Health', 'health.json'),
+            'workouts': path.join(userDir, folder, 'Entrainements', 'entrainements.json'),
+            'health': path.join(userDir, folder, 'Health', 'health.json'),
+            'messages': path.join(userDir, folder, 'Info', 'messages.json'),
+            'strava': path.join(userDir, folder, 'Strava', 'activites.json'),
+            'strava-account': path.join(userDir, folder, 'Strava', 'compte.json'),
+            'activity-ratings': path.join(userDir, folder, 'Forme', 'sommeil-fatigue.json'),
+            'mensurations': path.join(userDir, folder, 'Progrès', 'mensurations.json'),
+            'notifications': path.join(userDir, folder, 'Info', 'notifications.json'),
+            'notification-times': path.join(userDir, folder, 'Info', 'notification-times.json'),
+            'preferences': path.join(userDir, folder, 'Info', 'preferences-app.json')
+          };
+
+          const filePath = fileMapping[type];
+          if (!filePath) {
+            throw new Error(`Type de données non supporté: ${type}`);
+          }
+
+          await fs.writeFile(filePath, JSON.stringify(data, null, 2));
+          console.log(`✅ Données ${type} sauvegardées pour ${userId}`);
+          return true;
+        }
+      } catch (e) {
+        continue;
+      }
+    }
+
+    throw new Error('Utilisateur non trouvé lors de la sauvegarde');
+  } catch (error) {
+    console.error(`Erreur sauvegarde données ${type} pour ${userId}:`, error);
+    throw error;
+  }
+}
+
+// Fonction pour retourner des données par défaut selon le type
+function getDefaultDataForType(type) {
+  const defaults = {
+    'weight': {
+      startWeight: 0,
+      currentWeight: 0,
+      targetWeight: 0,
+      lastWeightUpdate: null,
+      targetAsked: false,
+      weightHistory: []
+    },
+    'nutrition': [],
+    'water': { globalData: {} },
+    'workouts': [],
+    'health': [],
+    'messages': [],
+    'strava': [],
+    'strava-account': { connected: false },
+    'activity-ratings': { globalData: {} },
+    'mensurations': {},
+    'notifications': {
+      pushNotifications: true,
+      mealReminders: true,
+      workoutReminders: true,
+      progressUpdates: true,
+      coachMessages: true,
+      weeklyReports: true,
+      soundEnabled: true,
+      vibrationEnabled: true
+    },
+    'notification-times': {
+      breakfast: { hour: 8, minute: 0 },
+      lunch: { hour: 12, minute: 30 },
+      dinner: { hour: 19, minute: 0 },
+      workout: { hour: 18, minute: 0 }
+    },
+    'preferences': {
+      theme: 'system',
+      language: 'fr',
+      units: 'metric',
+      notifications: true
+    }
+  };
+
+  return defaults[type] || {};
 }
 
 // Fonction pour lister tous les utilisateurs d'un type
