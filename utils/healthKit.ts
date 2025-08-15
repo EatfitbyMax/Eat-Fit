@@ -444,74 +444,32 @@ export const connectToAppleHealth = async (): Promise<boolean> => {
       return false;
     }
 
-    // Vérifier la disponibilité avec une gestion d'erreur améliorée
+    // Vérifier d'abord si le module rn-apple-healthkit est disponible
+    let AppleHealthKit;
     try {
-      console.log('🔍 Vérification de la disponibilité d\'Apple Health...');
-      const isAvailable = await HealthKitService.isAvailable();
+      AppleHealthKit = require('rn-apple-healthkit').default || require('rn-apple-healthkit');
       
-      if (!isAvailable) {
-        console.log('❌ Apple Health non disponible sur cet appareil');
-        
-        // Message différent selon l'environnement
-        if (__DEV__) {
-          Alert.alert(
-            'Apple Health (Mode Dev)',
-            'HealthKit non disponible en développement. Voulez-vous continuer avec une simulation ?',
-            [
-              { 
-                text: 'Annuler', 
-                style: 'cancel'
-              },
-              { 
-                text: 'Simuler', 
-                onPress: async () => {
-                  try {
-                    await AsyncStorage.setItem('appleHealthConnected', 'true');
-                    console.log('✅ Apple Health connecté (simulé)');
-                  } catch (error) {
-                    console.error('Erreur sauvegarde simulation:', error);
-                  }
-                }
-              }
-            ]
-          );
-          return true; // En mode dev, on considère que la simulation réussit
-        } else {
-          Alert.alert(
-            'Apple Health non disponible',
-            'Apple Health n\'est pas disponible sur cet appareil. Assurez-vous que l\'application Santé est installée et que votre appareil supporte HealthKit.'
-          );
-          return false;
-        }
-      }
-
-      console.log('✅ Apple Health disponible, demande des permissions...');
-      const hasPermissions = await HealthKitService.requestPermissions();
-      
-      if (hasPermissions) {
-        await AsyncStorage.setItem('appleHealthConnected', 'true');
-        console.log('✅ Apple Health connecté avec succès');
-        return true;
-      } else {
-        console.log('❌ Permissions Apple Health refusées');
-        Alert.alert(
-          'Permissions requises',
-          'L\'accès à Apple Health est nécessaire pour synchroniser vos données de santé. Veuillez autoriser l\'accès dans les réglages.'
-        );
-        return false;
+      if (!AppleHealthKit) {
+        throw new Error('Module rn-apple-healthkit non trouvé');
       }
       
-    } catch (healthKitError) {
-      console.error('❌ Erreur HealthKit:', healthKitError);
+      // Vérifier les méthodes essentielles
+      if (!AppleHealthKit.isAvailable || !AppleHealthKit.initHealthKit) {
+        throw new Error('Méthodes HealthKit manquantes');
+      }
       
-      // En développement, proposer une simulation
+      console.log('✅ Module rn-apple-healthkit chargé avec succès');
+      
+    } catch (moduleError) {
+      console.error('❌ Erreur chargement module HealthKit:', moduleError);
+      
       if (__DEV__) {
-        console.log('📱 Mode développement - Proposer simulation après erreur');
+        console.log('📱 Mode développement - Module HealthKit non disponible');
         
         return new Promise((resolve) => {
           Alert.alert(
-            'Erreur HealthKit (Mode Dev)',
-            `Erreur: ${healthKitError.message}\n\nVoulez-vous utiliser la simulation ?`,
+            'Module HealthKit (Dev)',
+            'Le module rn-apple-healthkit n\'est pas disponible en développement.\n\nVoulez-vous simuler la connexion ?',
             [
               { 
                 text: 'Annuler', 
@@ -523,10 +481,10 @@ export const connectToAppleHealth = async (): Promise<boolean> => {
                 onPress: async () => {
                   try {
                     await AsyncStorage.setItem('appleHealthConnected', 'true');
-                    console.log('✅ Apple Health connecté (simulé après erreur)');
+                    console.log('✅ Apple Health connecté (simulé en dev)');
                     resolve(true);
-                  } catch (storageError) {
-                    console.error('Erreur sauvegarde:', storageError);
+                  } catch (error) {
+                    console.error('Erreur sauvegarde simulation:', error);
                     resolve(false);
                   }
                 }
@@ -535,14 +493,98 @@ export const connectToAppleHealth = async (): Promise<boolean> => {
           );
         });
       } else {
-        // En production, afficher l'erreur spécifique
-        const errorMessage = healthKitError.message || 'Erreur inconnue';
         Alert.alert(
-          'Erreur de connexion',
-          `Impossible de connecter Apple Health: ${errorMessage}`
+          'Module non disponible',
+          'Le module Apple Health n\'est pas disponible. L\'application doit être construite avec EAS Build pour accéder à HealthKit.'
         );
         return false;
       }
+    }
+
+    // Vérifier la disponibilité sur l'appareil
+    try {
+      console.log('🔍 Vérification disponibilité HealthKit sur l\'appareil...');
+      
+      const deviceSupported = AppleHealthKit.isAvailable();
+      if (!deviceSupported) {
+        console.log('❌ HealthKit non supporté sur cet appareil');
+        Alert.alert(
+          'HealthKit non supporté',
+          'Apple Health n\'est pas disponible sur cet appareil. Assurez-vous que l\'application Santé est installée.'
+        );
+        return false;
+      }
+      
+      console.log('✅ HealthKit disponible sur l\'appareil');
+      
+    } catch (availabilityError) {
+      console.error('❌ Erreur vérification disponibilité:', availabilityError);
+      Alert.alert(
+        'Erreur de vérification',
+        'Impossible de vérifier la disponibilité d\'Apple Health sur cet appareil.'
+      );
+      return false;
+    }
+
+    // Demander les permissions
+    try {
+      console.log('🔐 Demande des permissions HealthKit...');
+      
+      const permissions = {
+        permissions: {
+          read: [
+            AppleHealthKit.Constants.Permissions.Steps,
+            AppleHealthKit.Constants.Permissions.ActiveEnergyBurned,
+            AppleHealthKit.Constants.Permissions.HeartRate,
+            AppleHealthKit.Constants.Permissions.Weight,
+            AppleHealthKit.Constants.Permissions.DistanceWalkingRunning,
+          ],
+          write: [
+            AppleHealthKit.Constants.Permissions.Weight,
+            AppleHealthKit.Constants.Permissions.ActiveEnergyBurned,
+          ],
+        },
+      };
+
+      const hasPermissions = await new Promise<boolean>((resolve) => {
+        AppleHealthKit.initHealthKit(permissions, (error: any) => {
+          if (error) {
+            console.error('❌ Erreur permissions HealthKit:', error);
+            
+            if (error.message && error.message.includes('denied')) {
+              Alert.alert(
+                'Permissions refusées',
+                'L\'accès à Apple Health a été refusé. Veuillez autoriser l\'accès dans Réglages > Confidentialité > Santé.'
+              );
+            } else {
+              Alert.alert(
+                'Erreur de permissions',
+                'Impossible d\'obtenir les permissions pour Apple Health. Veuillez réessayer.'
+              );
+            }
+            resolve(false);
+          } else {
+            console.log('✅ Permissions HealthKit accordées');
+            resolve(true);
+          }
+        });
+      });
+      
+      if (hasPermissions) {
+        await AsyncStorage.setItem('appleHealthConnected', 'true');
+        console.log('✅ Apple Health connecté avec succès');
+        return true;
+      } else {
+        return false;
+      }
+      
+    } catch (permissionError) {
+      console.error('❌ Erreur demande permissions:', permissionError);
+      Alert.alert(
+        'Erreur de permissions',
+        'Une erreur s\'est produite lors de la demande des permissions Apple Health.'
+      );
+      return false;
     }
     
   } catch (generalError) {
