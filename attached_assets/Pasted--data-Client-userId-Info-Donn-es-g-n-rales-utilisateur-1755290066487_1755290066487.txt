@@ -1,0 +1,45 @@
+/data/Client/{userId}/
+│
+├── Info/                                   # Données générales utilisateur
+│   ├── profil.json                         # POST /api/users ou /api/user-data
+│   ├── preferences-app.json                # POST /api/app-preferences
+│   ├── integrations.json                   # POST /api/integrations
+│   ├── messages.json                       # POST /api/messages
+│   ├── notifications.json                  # POST /api/notifications
+│   ├── notification-times.json              # POST /api/notification-times
+│   ├── sports-recents.json                  # POST /api/recent-sports
+│   └── debug.json                           # GET /api/debug/user
+│
+├── Strava/                                 # Données liées à Strava
+│   ├── compte.json                         # POST /api/strava/exchange-token
+│   ├── statut.json                         # GET /api/strava/status
+│   ├── activites.json                      # POST /api/strava /api/strava/sync
+│   └── config.json                         # POST /api/strava/disconnect
+
+├── Health/                                 # Données liées à Strava
+│   ├── compte.json                         # POST /api/strava/exchange-token
+│   ├── statut.json                         # GET /api/strava/status
+│   ├── activites.json                      # POST /api/strava /api/strava/sync
+│   └── config.json                         # POST /api/strava/disconnect
+│
+├── Nutrition/                              # Données nutritionnelles
+│   ├── aliments.json                       # POST /api/nutrition
+│   ├── hydratation/                        # /api/water/:date
+│   │    ├── {YYYY-MM-DD}.json
+│   └── nutrition-progres.json               # Historique nutrition dans /api/weight et /api/nutrition
+│
+├── Entrainements/                          # Données liées aux entraînements
+│   ├── programmes.json                     # POST /api/programmes
+│   ├── entrainements.json                   # POST /api/workouts
+│   ├── notes-rpe.json                       # POST /api/activity-ratings
+│   └── strava-sync.json                     # Activités Strava intégrées
+│
+├── Progrès/                                # Suivi de la progression
+│   ├── poids.json                           # POST /api/weight
+│   ├── mensurations.json                    # POST /api/mensurations
+│   ├── nutrition.json                       # Suivi nutritionnel global
+│   └── entrainement.json                    # Progression en entraînement
+│
+└── Forme/                                  # Bien-être et forme
+    ├── {YYYY-MM-DD}.json                    # POST /api/forme/:date
+    └── sommeil-fatigue.json                 # Données globales de forme

@@ -1,0 +1,47 @@
+Routes données spécifiques
+GET /api/nutrition/:userId - Récupérer données nutrition
+POST /api/nutrition/:userId - Sauvegarder données nutrition
+GET /api/weight/:userId - Récupérer données poids
+POST /api/weight/:userId - Sauvegarder données poids
+GET /api/workouts/:userId - Récupérer entraînements
+POST /api/workouts/:userId - Sauvegarder entraînements
+GET /api/health/:userId - Récupérer données santé
+POST /api/health/:userId - Sauvegarder données santé
+GET /api/messages/:userId - Récupérer messages
+POST /api/messages/:userId - Sauvegarder messages
+Routes Strava
+GET /api/strava/:userId - Récupérer activités Strava
+POST /api/strava/:userId - Sauvegarder activités Strava
+POST /api/strava/exchange-token - Échanger code OAuth
+GET /api/strava/status/:userId - Vérifier statut connexion Strava
+POST /api/strava/sync/:userId - Synchronisation manuelle Strava
+POST /api/strava/disconnect/:userId - Déconnecter Strava
+GET /strava-callback - Callback OAuth Strava
+Routes notes et évaluations
+GET /api/activity-ratings/:userId - Récupérer notes RPE activités
+POST /api/activity-ratings/:userId - Sauvegarder notes RPE
+Routes notifications
+GET /api/notifications/:userId - Récupérer paramètres notifications
+POST /api/notifications/:userId - Sauvegarder paramètres notifications
+GET /api/notification-times/:userId - Récupérer horaires notifications
+POST /api/notification-times/:userId - Sauvegarder horaires notifications
+Routes hydratation
+POST /api/water/:userId/:date - Sauvegarder apport eau
+GET /api/water/:userId/:date - Récupérer apport eau
+Routes mensurations
+GET /api/mensurations/:userId - Récupérer mensurations
+POST /api/mensurations/:userId - Sauvegarder mensurations
+Routes forme
+GET /api/forme/:userId/:date - Récupérer données forme
+POST /api/forme/:userId/:date - Sauvegarder données forme
+Routes sports récents
+GET /api/recent-sports/:userId - Récupérer sports récents
+POST /api/recent-sports/:userId - Sauvegarder sports récents
+Routes programmes
+GET /api/programmes - Récupérer programmes
+POST /api/programmes - Sauvegarder programmes
+Routes inscription coach
+POST /api/coach-register - Inscription coach
+GET /coach-signup - Page inscription coach
+Route de diagnostic
+GET /api/debug/user/:userId - Diagnostic utilisateur
