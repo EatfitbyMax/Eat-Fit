@@ -479,9 +479,18 @@ export default function ProfilScreen() {
     setShowComingSoonModal(true);
   };
 
-  // Synchronisation supprimée - gestion simple uniquement
-  const handleAppleHealthComingSoon = () => {
-    setShowAppleHealthComingSoon(true);
+  // Remplacer le comportement de handleAppleHealthComingSoon pour activer la connexion
+  const handleAppleHealthComingSoon = async () => {
+    // Si Apple Health est déjà connecté, on ne fait rien ou on gère la déconnexion via handleAppleHealthToggle
+    // Si Apple Health est déconnecté, on appelle handleAppleHealthToggle pour initier la connexion
+    if (!integrationStatus.appleHealth.connected) {
+      await handleAppleHealthToggle();
+    } else {
+      // Si déjà connecté, on pourrait montrer un message ou permettre la déconnexion
+      Alert.alert('Apple Health', 'Votre compte Apple Health est déjà connecté.');
+      // Ou appeler handleAppleHealthToggle pour confirmer la déconnexion si c'est le comportement souhaité
+      // await handleAppleHealthToggle();
+    }
   };
 
   return (
@@ -736,11 +745,12 @@ export default function ProfilScreen() {
             </View>
             <View style={styles.integrationActions}>
               <TouchableOpacity
-                style={[styles.connectButton, { backgroundColor: '#F5A623' }]}
-                onPress={handleAppleHealthComingSoon}
+                style={[styles.connectButton, { backgroundColor: integrationStatus.appleHealth.connected ? '#DC3545' : '#28A745' }]}
+                onPress={handleAppleHealthToggle} // Utiliser la fonction de toggle
+                disabled={isLoading}
               >
-                <Text style={[styles.connectButtonText, { color: '#000000' }]}>
-                  Bientôt disponible
+                <Text style={styles.connectButtonText}>
+                  {integrationStatus.appleHealth.connected ? 'Déconnecter' : 'Connecter'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -861,7 +871,7 @@ export default function ProfilScreen() {
             style={styles.menuItem}
             onPress={() => router.push('/(client)/parametres-application')}
           >
-            <Text style={styles.menuItemText}>⚙️ Paramètres de l'application</Text>
+            <Text style={styles.menuItemText}>⚙️ Paramètres de l\'application</Text>
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
 
@@ -891,13 +901,13 @@ export default function ProfilScreen() {
         </View>
       </ScrollView>
 
-      {/* Modal Bientôt disponible Apple Health */}
-      <ComingSoonModal
+      {/* Modal Bientôt disponible Apple Health - désormais géré par le toggle */}
+      {/* <ComingSoonModal
         visible={showAppleHealthComingSoon}
         onClose={() => setShowAppleHealthComingSoon(false)}
         feature="Apple Health"
         description="L'intégration avec Apple Health permettra de synchroniser automatiquement vos données de santé et fitness (pas, fréquence cardiaque, calories brûlées, etc.) pour un suivi personnalisé et précis de votre progression."
-      />
+      /> */}
 
       <ComingSoonModal
         visible={showPremiumComingSoonModal}
