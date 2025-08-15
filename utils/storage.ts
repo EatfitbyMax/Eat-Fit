@@ -65,7 +65,7 @@ export class PersistentStorage {
 
   // Weight data
   static async getWeightData(userId: string): Promise<any> {
-    const response = await fetch(`${SERVER_URL}/api/weight/${userId}`);
+    const response = await fetch(`${SERVER_URL}/api/user-data/${userId}?type=weight`);
 
     if (!response.ok) {
       return {
@@ -82,10 +82,10 @@ export class PersistentStorage {
   }
 
   static async saveWeightData(userId: string, weightData: any): Promise<void> {
-    const response = await fetch(`${SERVER_URL}/api/weight/${userId}`, {
+    const response = await fetch(`${SERVER_URL}/api/user-data/${userId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(weightData)
+      body: JSON.stringify({ type: 'weight', data: weightData })
     });
 
     if (!response.ok) {
@@ -95,7 +95,7 @@ export class PersistentStorage {
 
   // Nutrition data
   static async getNutrition(userId: string): Promise<any[]> {
-    const response = await fetch(`${SERVER_URL}/api/nutrition/${userId}`);
+    const response = await fetch(`${SERVER_URL}/api/user-data/${userId}?type=nutrition`);
     return response.ok ? await response.json() : [];
   }
 
@@ -183,15 +183,15 @@ export class PersistentStorage {
 
   // Strava data
   static async getStravaData(userId: string): Promise<any[]> {
-    const response = await fetch(`${SERVER_URL}/api/strava/${userId}`);
+    const response = await fetch(`${SERVER_URL}/api/user-data/${userId}?type=strava`);
     return response.ok ? await response.json() : [];
   }
 
   static async saveStravaData(userId: string, stravaData: any[]): Promise<void> {
-    const response = await fetch(`${SERVER_URL}/api/strava/${userId}`, {
+    const response = await fetch(`${SERVER_URL}/api/user-data/${userId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(stravaData)
+      body: JSON.stringify({ type: 'strava', data: stravaData })
     });
 
     if (!response.ok) {
@@ -201,15 +201,15 @@ export class PersistentStorage {
 
   // Messages
   static async getMessages(userId: string): Promise<any[]> {
-    const response = await fetch(`${SERVER_URL}/api/messages/${userId}`);
+    const response = await fetch(`${SERVER_URL}/api/user-data/${userId}?type=messages`);
     return response.ok ? await response.json() : [];
   }
 
   static async saveMessages(userId: string, messages: any[]): Promise<void> {
-    const response = await fetch(`${SERVER_URL}/api/messages/${userId}`, {
+    const response = await fetch(`${SERVER_URL}/api/user-data/${userId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(messages)
+      body: JSON.stringify({ type: 'messages', data: messages })
     });
 
     if (!response.ok) {
@@ -401,15 +401,15 @@ export class PersistentStorage {
 
   // Mensuration data
   static async getMensurationData(userId: string): Promise<any> {
-    const response = await fetch(`${SERVER_URL}/api/mensurations/${userId}`);
+    const response = await fetch(`${SERVER_URL}/api/user-data/${userId}?type=mensurations`);
     return response.ok ? await response.json() : null;
   }
 
   static async saveMensurationData(userId: string, data: any): Promise<void> {
-    const response = await fetch(`${SERVER_URL}/api/mensurations/${userId}`, {
+    const response = await fetch(`${SERVER_URL}/api/user-data/${userId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      body: JSON.stringify({ type: 'mensurations', data })
     });
 
     if (!response.ok) {
@@ -419,15 +419,15 @@ export class PersistentStorage {
 
   // Activity ratings  
   static async getActivityRatings(userId: string): Promise<any> {
-    const response = await fetch(`${SERVER_URL}/api/activity-ratings/${userId}`);
+    const response = await fetch(`${SERVER_URL}/api/user-data/${userId}?type=activity-ratings`);
     return response.ok ? await response.json() : {};
   }
 
   static async saveActivityRatings(userId: string, ratings: any): Promise<void> {
-    const response = await fetch(`${SERVER_URL}/api/activity-ratings/${userId}`, {
+    const response = await fetch(`${SERVER_URL}/api/user-data/${userId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(ratings)
+      body: JSON.stringify({ type: 'activity-ratings', data: ratings })
     });
 
     if (!response.ok) {
