@@ -104,6 +104,8 @@ class HealthKitService {
       }
       
       console.log('✅ HealthKit disponible et prêt');
+      console.log('📱 Plateforme:', Platform.OS);
+      console.log('🔧 Mode développement:', __DEV__);
       return true;
       
     } catch (error) {
