@@ -26,12 +26,9 @@
         "NSPhotoLibraryUsageDescription": "EatFitBy Max accède à votre galerie photo pour vous permettre de sélectionner des images de vos repas.",
         "NSMotionUsageDescription": "EatFitBy Max utilise les capteurs de mouvement pour suivre votre activité physique.",
         "NSLocationWhenInUseUsageDescription": "EatFitBy Max utilise votre localisation pour trouver des salles de sport et des restaurants sains près de chez vous.",
-        "NSHealthShareUsageDescription": "EatFitBy Max utilise Apple Health pour synchroniser vos données de santé et fitness afin de vous fournir un suivi personnalisé de votre progression.",
-        "NSHealthUpdateUsageDescription": "EatFitBy Max peut écrire des données dans Apple Health pour garder vos informations de santé à jour.",
+        
         "ITSAppUsesNonExemptEncryption": false,
-        "UIRequiredDeviceCapabilities": [
-          "healthkit"
-        ]
+        
       }
     },
     "extra": {
@@ -71,7 +68,7 @@
       [
         "expo-build-properties"
       ],
-      "./plugins/withHealthKit.js"
+      
     ],
     "experiments": {
       "typedRoutes": true

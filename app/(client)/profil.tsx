@@ -26,7 +26,6 @@ export default function ProfilScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [integrationStatus, setIntegrationStatus] = useState({
-    appleHealth: { connected: false, lastSync: null },
     strava: { connected: false, lastSync: null, athleteId: null },
   });
   const [editingObjectifs, setEditingObjectifs] = useState(false);
@@ -100,7 +99,6 @@ export default function ProfilScreen() {
       console.error('Erreur chargement statut intégrations depuis serveur:', error);
       // Statut par défaut en cas d'erreur
       setIntegrationStatus({
-        appleHealth: { connected: false, lastSync: null, permissions: [] },
         strava: { connected: false, lastSync: null, athleteId: null },
       });
     }
@@ -149,81 +147,7 @@ export default function ProfilScreen() {
     return sport ? { emoji: sport.emoji, name: sport.name } : { emoji: '🏃', name: 'Non renseigné' };
   };
 
-  const handleAppleHealthToggle = async () => {
-    try {
-      setIsLoading(true);
-
-      const currentUser = await getCurrentUser();
-      if (!currentUser) {
-        Alert.alert("Erreur", "Utilisateur non connecté");
-        return;
-      }
-
-      if (integrationStatus.appleHealth.connected) {
-        // Déconnexion
-        Alert.alert(
-          'Déconnecter Apple Health',
-          'Êtes-vous sûr de vouloir déconnecter Apple Health ? Vos données de santé ne seront plus synchronisées.',
-          [
-            { text: 'Annuler', style: 'cancel' },
-            {
-              text: 'Déconnecter',
-              style: 'destructive',
-              onPress: async () => {
-                try {
-                  await IntegrationsManager.disconnectAppleHealth(currentUser.id);
-                  await loadIntegrationStatus();
-                  Alert.alert('✅ Déconnecté', 'Apple Health a été déconnecté avec succès.');
-                } catch (error) {
-                  console.error('❌ Erreur déconnexion Apple Health:', error);
-                  Alert.alert('Erreur', 'Impossible de déconnecter Apple Health.');
-                }
-              }
-            }
-          ]
-        );
-      } else {
-        // Connexion
-        try {
-          const success = await IntegrationsManager.connectAppleHealth(currentUser.id);
-          if (success) {
-            await loadIntegrationStatus();
-            Alert.alert(
-              '🎉 Apple Health connecté !',
-              'Vos données de santé seront maintenant synchronisées.',
-              [{ text: 'OK', style: 'default' }]
-            );
-          } else {
-            Alert.alert(
-              '❌ Connexion échouée',
-              'Impossible de connecter Apple Health. Vérifiez les permissions dans les réglages.',
-              [{ text: 'OK', style: 'default' }]
-            );
-          }
-        } catch (error) {
-          console.error('❌ Erreur connexion Apple Health:', error);
-          if (error.message.includes('iOS')) {
-            Alert.alert(
-              '📱 iOS uniquement',
-              'Apple Health est uniquement disponible sur iPhone et iPad.',
-              [{ text: 'OK', style: 'default' }]
-            );
-          } else {
-            Alert.alert(
-              '❌ Erreur',
-              'Une erreur s\'est produite lors de la connexion à Apple Health.',
-              [{ text: 'OK', style: 'default' }]
-            );
-          }
-        }
-      }
-    } catch (error) {
-      console.error('❌ Erreur toggle Apple Health:', error);
-      Alert.alert('Erreur', 'Une erreur s\'est produite.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  
 
   /**
    * Gestion du toggle connexion/déconnexion Strava
@@ -713,33 +637,7 @@ export default function ProfilScreen() {
         <View style={[styles.section, {marginTop: 20}]}>
           <Text style={[styles.sectionTitle, {marginBottom: 16}]}>Mes Intégrations</Text>
 
-          <View style={styles.integrationItem}>
-            <View style={styles.integrationInfo}>
-              <Text style={styles.integrationName}>🍎 Apple Health</Text>
-              <Text style={styles.integrationDescription}>
-                {integrationStatus.appleHealth.connected ?
-                  'Données de santé synchronisées avec EatFitByMax' :
-                  'Synchronisez vos données de santé et fitness avec EatFitByMax'
-                }
-              </Text>
-              {integrationStatus.appleHealth.connected && integrationStatus.appleHealth.lastSync && (
-                <Text style={styles.integrationLastSync}>
-                  Dernière sync : {new Date(integrationStatus.appleHealth.lastSync).toLocaleDateString('fr-FR')}
-                </Text>
-              )}
-            </View>
-            <View style={styles.integrationActions}>
-              <TouchableOpacity
-                style={[styles.connectButton, { backgroundColor: integrationStatus.appleHealth.connected ? '#DC3545' : '#28A745' }]}
-                onPress={handleAppleHealthToggle} // Utiliser la fonction de toggle
-                disabled={isLoading}
-              >
-                <Text style={styles.connectButtonText}>
-                  {integrationStatus.appleHealth.connected ? 'Déconnecter' : 'Connecter'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+          
 
           <View style={styles.integrationItem}>
             <View style={styles.integrationInfo}>
@@ -834,18 +732,7 @@ export default function ProfilScreen() {
             </View>
           )}
 
-          {/* Informations de statut Apple Health */}
-          {integrationStatus.appleHealth.connected && (
-            <View style={styles.statusCard}>
-              <Text style={styles.statusTitle}>📱 Apple Health</Text>
-              <Text style={styles.statusDescription}>
-                Dernière synchronisation : {integrationStatus.appleHealth.lastSync ?
-                  new Date(integrationStatus.appleHealth.lastSync).toLocaleDateString('fr-FR') :
-                  'Jamais'
-                }
-              </Text>
-            </View>
-          )}
+          
         </View>
 
         {/* Settings */}

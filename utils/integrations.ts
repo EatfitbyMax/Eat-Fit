@@ -10,11 +10,6 @@ const STRAVA_CLIENT_SECRET = process.env.EXPO_PUBLIC_STRAVA_CLIENT_SECRET;
 const SERVER_URL = process.env.EXPO_PUBLIC_VPS_URL || 'https://eatfitbymax.cloud';
 
 export interface IntegrationConfig {
-  appleHealth: {
-    connected: boolean;
-    permissions: string[];
-    lastSync?: string;
-  };
   strava: {
     connected: boolean;
     athlete?: any;
@@ -168,28 +163,7 @@ export class IntegrationsManager {
         }
       }
 
-      // Récupérer le statut Apple Health depuis AsyncStorage (local uniquement)
-      let appleHealthStatus = { connected: false, permissions: [], lastSync: null };
-      
-      try {
-        const appleHealthConnected = await AsyncStorage.getItem('appleHealthConnected');
-        const appleHealthPermissions = await AsyncStorage.getItem('appleHealthPermissions');
-        const appleHealthLastSync = await AsyncStorage.getItem('appleHealthLastSync');
-        
-        if (appleHealthConnected === 'true') {
-          appleHealthStatus = {
-            connected: true,
-            permissions: appleHealthPermissions ? JSON.parse(appleHealthPermissions) : ['Steps', 'ActiveEnergyBurned', 'HeartRate', 'Weight', 'DistanceWalkingRunning'],
-            lastSync: appleHealthLastSync || new Date().toISOString()
-          };
-          console.log('✅ [APPLE HEALTH] Statut récupéré depuis AsyncStorage:', appleHealthStatus);
-        }
-      } catch (storageError) {
-        console.log('⚠️ [APPLE HEALTH] Erreur lecture AsyncStorage:', storageError);
-      }
-
       return {
-        appleHealth: appleHealthStatus,
         strava: stravaStatus
       };
     } catch (error) {
@@ -252,71 +226,7 @@ export class IntegrationsManager {
     }
   }
 
-  // ========================================
-  // 🍎 APPLE HEALTH (inchangé)
-  // ========================================
-
-  static async connectAppleHealth(userId: string, permissions?: string[]): Promise<boolean> {
-    try {
-      if (Platform.OS !== 'ios') {
-        throw new Error('Apple Health est uniquement disponible sur iOS');
-      }
-
-      console.log('🔄 [APPLE HEALTH] Tentative de connexion pour:', userId);
-
-      const HealthKitService = require('../utils/healthKit').default;
-      const isAvailable = await HealthKitService.isAvailable();
-      if (!isAvailable) {
-        console.log('❌ [APPLE HEALTH] Non disponible sur cet appareil');
-        throw new Error('Apple Health n\'est pas disponible sur cet appareil');
-      }
-
-      console.log('✅ [APPLE HEALTH] Disponible - demande de permissions...');
-      const granted = await HealthKitService.requestPermissions();
-      
-      if (granted) {
-        console.log('✅ [APPLE HEALTH] Permissions accordées');
-        
-        const permissionsList = permissions || ['Steps', 'ActiveEnergyBurned', 'HeartRate', 'Weight', 'DistanceWalkingRunning'];
-        const currentTime = new Date().toISOString();
-        
-        // Sauvegarder dans AsyncStorage
-        await AsyncStorage.setItem('appleHealthConnected', 'true');
-        await AsyncStorage.setItem('appleHealthPermissions', JSON.stringify(permissionsList));
-        await AsyncStorage.setItem('appleHealthLastSync', currentTime);
-        
-        console.log('💾 [APPLE HEALTH] État sauvegardé localement:', {
-          connected: true,
-          permissions: permissionsList,
-          lastSync: currentTime
-        });
-        
-        return true;
-      } else {
-        console.log('❌ [APPLE HEALTH] Permissions refusées');
-        return false;
-      }
-    } catch (error) {
-      console.error('❌ [APPLE HEALTH] Erreur connexion:', error);
-      throw error;
-    }
-  }
-
-  static async disconnectAppleHealth(userId: string): Promise<void> {
-    try {
-      console.log('🔄 [APPLE HEALTH] Déconnexion pour:', userId);
-      
-      // Nettoyer AsyncStorage
-      await AsyncStorage.removeItem('appleHealthConnected');
-      await AsyncStorage.removeItem('appleHealthPermissions');
-      await AsyncStorage.removeItem('appleHealthLastSync');
-      
-      console.log('✅ [APPLE HEALTH] Déconnexion locale terminée');
-    } catch (error) {
-      console.error('❌ [APPLE HEALTH] Erreur déconnexion:', error);
-      throw error;
-    }
-  }
+  
 
   // ========================================
   // 🔧 UTILITAIRES - VERSION SERVEUR
@@ -332,7 +242,6 @@ export class IntegrationsManager {
     } catch (error) {
       console.error('❌ [INTEGRATIONS] Erreur récupération statut:', error);
       return {
-        appleHealth: { connected: false, permissions: [] },
         strava: { connected: false, athlete: null, lastSync: null, athleteId: null }
       };
     }
