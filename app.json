@@ -26,9 +26,12 @@
         "NSPhotoLibraryUsageDescription": "EatFitBy Max accède à votre galerie photo pour vous permettre de sélectionner des images de vos repas.",
         "NSMotionUsageDescription": "EatFitBy Max utilise les capteurs de mouvement pour suivre votre activité physique.",
         "NSLocationWhenInUseUsageDescription": "EatFitBy Max utilise votre localisation pour trouver des salles de sport et des restaurants sains près de chez vous.",
-        
-        "ITSAppUsesNonExemptEncryption": false,
-        
+
+        "NSHealthShareUsageDescription": "EatFitBy Max accède à vos données Apple Health (pas, fréquence cardiaque, poids, calories brûlées, distance parcourue, analyse du sommeil) pour vous fournir un suivi personnalisé de votre progression fitness et nutritionnelle.",
+        "NSHealthUpdateUsageDescription": "EatFitBy Max écrit des données dans Apple Health (poids, calories brûlées) pour synchroniser vos progrès avec vos activités et objectifs nutritionnels.",
+        "NSMicrophoneUsageDescription": "EatFitBy Max utilise le microphone uniquement si vous enregistrez une note vocale pour vos repas ou entraînements.",
+
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "extra": {
@@ -67,8 +70,7 @@
       ],
       [
         "expo-build-properties"
-      ],
-      
+      ]
     ],
     "experiments": {
       "typedRoutes": true
