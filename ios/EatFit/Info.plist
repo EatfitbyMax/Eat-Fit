@@ -39,10 +39,6 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>eatfitbymax</string>
-        </array>
-        <key>CFBundleURLTypes</key>
-        <array>
-          <string>strava-callback</string>
           <string>auth</string>
         </array>
       </dict>
@@ -71,7 +67,7 @@
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>EatFitBy Max utilise votre localisation pour trouver des salles de sport et des restaurants sains près de chez vous.</string>
     <key>NSMicrophoneUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your microphone</string>
+    <string>EatFitBy Max utilise le microphone pour enregistrer des sons ou commandes vocales liées à l’application.</string>
     <key>NSMotionUsageDescription</key>
     <string>EatFitBy Max utilise les capteurs de mouvement pour suivre votre activité physique.</string>
     <key>NSPhotoLibraryUsageDescription</key>
