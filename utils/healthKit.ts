@@ -75,23 +75,29 @@ class HealthKitService {
     }
 
     if (!this.healthKit) {
-      console.log('❌ Module HealthKit natif non disponible');
+      console.log('❌ Module HealthKit natif non disponible - Vérifiez que le module est correctement lié');
+      console.log('Modules disponibles:', Object.keys(NativeModules));
       return false;
     }
 
     try {
+      console.log('🔍 Vérification de la disponibilité de HealthKit...');
       const isHealthKitAvailable = await this.healthKit.isAvailable();
       
+      console.log('📱 HealthKit disponible:', isHealthKitAvailable);
+      
       if (!isHealthKitAvailable) {
-        console.log('❌ HealthKit non disponible sur cet appareil');
+        console.log('❌ HealthKit non disponible - Vérifiez les entitlements et capabilities');
         return false;
       }
 
       this.isAvailable = true;
-      console.log('✅ HealthKit initialisé');
+      console.log('✅ HealthKit initialisé avec succès');
       return true;
     } catch (error) {
       console.error('❌ Erreur initialisation HealthKit:', error);
+      console.error('Type d\'erreur:', typeof error);
+      console.error('Message:', error?.message || 'Erreur inconnue');
       return false;
     }
   }

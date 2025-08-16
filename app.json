@@ -67,7 +67,8 @@
       ],
       [
         "expo-build-properties"
-      ]
+      ],
+      "./plugins/withHealthKit"
     ],
     "experiments": {
       "typedRoutes": true
