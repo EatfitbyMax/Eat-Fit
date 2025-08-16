@@ -12,10 +12,10 @@ module.exports = function withHealthKit(config) {
   // Ajouter les descriptions d'usage dans Info.plist
   config = withInfoPlist(config, (config) => {
     config.modResults.NSHealthShareUsageDescription = 
-      'EatFitByMax utilise Apple Health pour synchroniser vos données de santé et fitness afin de vous fournir un suivi personnalisé de votre progression.';
+      'EatFitBy Max accède à vos données Apple Health (pas, fréquence cardiaque, poids, calories brûlées, distance parcourue, analyse du sommeil) pour vous fournir un suivi personnalisé de votre progression fitness et nutritionnelle. Ces données sont utilisées localement pour calculer vos objectifs et suivre vos progrès.';
     
     config.modResults.NSHealthUpdateUsageDescription = 
-      'EatFitByMax peut écrire des données dans Apple Health pour garder vos informations de santé à jour.';
+      'EatFitBy Max écrit des données dans Apple Health (poids, calories brûlées) pour maintenir vos informations de santé synchronisées avec vos activités et objectifs nutritionnels enregistrés dans l\'application.';
     
     return config;
   });
