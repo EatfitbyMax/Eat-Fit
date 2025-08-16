@@ -1,7 +1,20 @@
 
-import { Platform } from 'react-native';
+import { Platform, NativeModules } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Health from 'expo-health';
+
+// Interface pour le module HealthKit natif
+interface HealthKitModule {
+  isAvailable(): Promise<boolean>;
+  requestPermissions(options: HealthKitPermissions): Promise<{ granted: boolean }>;
+  getPermissions(options: HealthKitPermissions): Promise<{ granted: boolean }>;
+  readSteps(startDate: string, endDate: string): Promise<number>;
+  readHeartRate(startDate: string, endDate: string): Promise<number>;
+  readWeight(startDate: string, endDate: string): Promise<number | null>;
+  readActiveCalories(startDate: string, endDate: string): Promise<number>;
+  readDistance(startDate: string, endDate: string): Promise<number>;
+  readSleepAnalysis(startDate: string, endDate: string): Promise<number>;
+  writeWeight(weight: number): Promise<boolean>;
+}
 
 // Types pour les données HealthKit
 export interface HealthKitData {
@@ -20,31 +33,38 @@ export interface HealthKitData {
 }
 
 export interface HealthKitPermissions {
-  read: Health.HealthDataType[];
-  write: Health.HealthDataType[];
+  read: string[];
+  write: string[];
 }
 
 class HealthKitService {
   private isAvailable = false;
+  private healthKit: HealthKitModule | null = null;
   private permissions: HealthKitPermissions = {
     read: [
-      Health.HealthDataType.Steps,
-      Health.HealthDataType.HeartRate,
-      Health.HealthDataType.Weight,
-      Health.HealthDataType.Height,
-      Health.HealthDataType.BodyMassIndex,
-      Health.HealthDataType.ActiveEnergyBurned,
-      Health.HealthDataType.DistanceWalkingRunning,
-      Health.HealthDataType.SleepAnalysis,
-      Health.HealthDataType.RestingHeartRate,
-      Health.HealthDataType.BloodPressureSystolic,
-      Health.HealthDataType.BloodPressureDiastolic
+      'HKQuantityTypeIdentifierStepCount',
+      'HKQuantityTypeIdentifierHeartRate',
+      'HKQuantityTypeIdentifierBodyMass',
+      'HKQuantityTypeIdentifierHeight',
+      'HKQuantityTypeIdentifierBodyMassIndex',
+      'HKQuantityTypeIdentifierActiveEnergyBurned',
+      'HKQuantityTypeIdentifierDistanceWalkingRunning',
+      'HKCategoryTypeIdentifierSleepAnalysis',
+      'HKQuantityTypeIdentifierRestingHeartRate',
+      'HKQuantityTypeIdentifierBloodPressureSystolic',
+      'HKQuantityTypeIdentifierBloodPressureDiastolic'
     ],
     write: [
-      Health.HealthDataType.Weight,
-      Health.HealthDataType.ActiveEnergyBurned
+      'HKQuantityTypeIdentifierBodyMass',
+      'HKQuantityTypeIdentifierActiveEnergyBurned'
     ]
   };
+
+  constructor() {
+    if (Platform.OS === 'ios') {
+      this.healthKit = NativeModules.HealthKitManager;
+    }
+  }
 
   async initialize(): Promise<boolean> {
     console.log('🍎 Initialisation HealthKit...');
@@ -54,9 +74,13 @@ class HealthKitService {
       return false;
     }
 
+    if (!this.healthKit) {
+      console.log('❌ Module HealthKit natif non disponible');
+      return false;
+    }
+
     try {
-      // Vérifier la disponibilité de HealthKit
-      const isHealthKitAvailable = await Health.isAvailableAsync();
+      const isHealthKitAvailable = await this.healthKit.isAvailable();
       
       if (!isHealthKitAvailable) {
         console.log('❌ HealthKit non disponible sur cet appareil');
@@ -79,16 +103,12 @@ class HealthKitService {
       await this.initialize();
     }
 
-    if (!this.isAvailable) {
+    if (!this.isAvailable || !this.healthKit) {
       return false;
     }
 
     try {
-      // Demander les permissions pour lire les données
-      const readPermissions = await Health.requestPermissionsAsync({
-        read: this.permissions.read,
-        write: this.permissions.write
-      });
+      const readPermissions = await this.healthKit.requestPermissions(this.permissions);
       
       if (readPermissions.granted) {
         await AsyncStorage.setItem('healthkit_permissions_granted', 'true');
@@ -106,15 +126,11 @@ class HealthKitService {
 
   async hasPermissions(): Promise<boolean> {
     try {
-      if (!this.isAvailable) {
+      if (!this.isAvailable || !this.healthKit) {
         return false;
       }
       
-      const permissions = await Health.getPermissionsAsync({
-        read: this.permissions.read,
-        write: this.permissions.write
-      });
-      
+      const permissions = await this.healthKit.getPermissions(this.permissions);
       return permissions.granted;
     } catch (error) {
       console.error('Erreur vérification permissions:', error);
@@ -124,23 +140,17 @@ class HealthKitService {
 
   async readStepsData(startDate: Date, endDate: Date): Promise<number> {
     try {
-      if (!await this.hasPermissions()) {
+      if (!await this.hasPermissions() || !this.healthKit) {
         throw new Error('Permissions HealthKit requises');
       }
 
-      const stepsData = await Health.getHealthRecordsAsync({
-        dataType: Health.HealthDataType.Steps,
-        startDate,
-        endDate
-      });
-
-      // Calculer le total des pas pour la période
-      const totalSteps = stepsData.reduce((total, record) => {
-        return total + (record.value || 0);
-      }, 0);
+      const totalSteps = await this.healthKit.readSteps(
+        startDate.toISOString(),
+        endDate.toISOString()
+      );
       
       console.log('📊 Pas lus depuis HealthKit:', totalSteps);
-      return totalSteps;
+      return totalSteps || 0;
     } catch (error) {
       console.error('Erreur lecture pas HealthKit:', error);
       return 0;
@@ -149,26 +159,17 @@ class HealthKitService {
 
   async readHeartRateData(startDate: Date, endDate: Date): Promise<number> {
     try {
-      if (!await this.hasPermissions()) {
+      if (!await this.hasPermissions() || !this.healthKit) {
         throw new Error('Permissions HealthKit requises');
       }
 
-      const heartRateData = await Health.getHealthRecordsAsync({
-        dataType: Health.HealthDataType.HeartRate,
-        startDate,
-        endDate
-      });
-
-      if (heartRateData.length === 0) {
-        return 0;
-      }
-
-      // Prendre la valeur la plus récente
-      const latestHeartRate = heartRateData[heartRateData.length - 1];
-      const heartRate = latestHeartRate.value || 0;
+      const heartRate = await this.healthKit.readHeartRate(
+        startDate.toISOString(),
+        endDate.toISOString()
+      );
       
       console.log('❤️ FC lue depuis HealthKit:', heartRate);
-      return heartRate;
+      return heartRate || 0;
     } catch (error) {
       console.error('Erreur lecture FC HealthKit:', error);
       return 0;
@@ -177,26 +178,17 @@ class HealthKitService {
 
   async readWeightData(): Promise<number | null> {
     try {
-      if (!await this.hasPermissions()) {
+      if (!await this.hasPermissions() || !this.healthKit) {
         throw new Error('Permissions HealthKit requises');
       }
 
       const now = new Date();
       const lastMonth = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-      const weightData = await Health.getHealthRecordsAsync({
-        dataType: Health.HealthDataType.Weight,
-        startDate: lastMonth,
-        endDate: now
-      });
-
-      if (weightData.length === 0) {
-        return null;
-      }
-
-      // Prendre la valeur la plus récente
-      const latestWeight = weightData[weightData.length - 1];
-      const weight = latestWeight.value || 0;
+      const weight = await this.healthKit.readWeight(
+        lastMonth.toISOString(),
+        now.toISOString()
+      );
       
       console.log('⚖️ Poids lu depuis HealthKit:', weight);
       return weight;
@@ -208,18 +200,14 @@ class HealthKitService {
 
   async writeWeightData(weight: number): Promise<boolean> {
     try {
-      if (!await this.hasPermissions()) {
+      if (!await this.hasPermissions() || !this.healthKit) {
         throw new Error('Permissions HealthKit requises');
       }
 
-      await Health.writeHealthRecordAsync({
-        dataType: Health.HealthDataType.Weight,
-        value: weight,
-        date: new Date()
-      });
+      const success = await this.healthKit.writeWeight(weight);
       
       console.log('✍️ Poids écrit dans HealthKit:', weight);
-      return true;
+      return success;
     } catch (error) {
       console.error('Erreur écriture poids HealthKit:', error);
       return false;
@@ -228,22 +216,17 @@ class HealthKitService {
 
   async readActiveEnergyData(startDate: Date, endDate: Date): Promise<number> {
     try {
-      if (!await this.hasPermissions()) {
+      if (!await this.hasPermissions() || !this.healthKit) {
         throw new Error('Permissions HealthKit requises');
       }
 
-      const energyData = await Health.getHealthRecordsAsync({
-        dataType: Health.HealthDataType.ActiveEnergyBurned,
-        startDate,
-        endDate
-      });
-
-      const totalEnergy = energyData.reduce((total, record) => {
-        return total + (record.value || 0);
-      }, 0);
+      const totalEnergy = await this.healthKit.readActiveCalories(
+        startDate.toISOString(),
+        endDate.toISOString()
+      );
       
       console.log('🔥 Calories actives lues depuis HealthKit:', totalEnergy);
-      return totalEnergy;
+      return totalEnergy || 0;
     } catch (error) {
       console.error('Erreur lecture calories actives HealthKit:', error);
       return 0;
@@ -252,22 +235,17 @@ class HealthKitService {
 
   async readDistanceData(startDate: Date, endDate: Date): Promise<number> {
     try {
-      if (!await this.hasPermissions()) {
+      if (!await this.hasPermissions() || !this.healthKit) {
         throw new Error('Permissions HealthKit requises');
       }
 
-      const distanceData = await Health.getHealthRecordsAsync({
-        dataType: Health.HealthDataType.DistanceWalkingRunning,
-        startDate,
-        endDate
-      });
-
-      const totalDistance = distanceData.reduce((total, record) => {
-        return total + (record.value || 0);
-      }, 0);
+      const totalDistance = await this.healthKit.readDistance(
+        startDate.toISOString(),
+        endDate.toISOString()
+      );
       
       // Convertir de mètres en kilomètres
-      const distanceInKm = totalDistance / 1000;
+      const distanceInKm = (totalDistance || 0) / 1000;
       
       console.log('🚶 Distance lue depuis HealthKit:', distanceInKm, 'km');
       return distanceInKm;
@@ -279,25 +257,17 @@ class HealthKitService {
 
   async readSleepData(startDate: Date, endDate: Date): Promise<number> {
     try {
-      if (!await this.hasPermissions()) {
+      if (!await this.hasPermissions() || !this.healthKit) {
         throw new Error('Permissions HealthKit requises');
       }
 
-      const sleepData = await Health.getHealthRecordsAsync({
-        dataType: Health.HealthDataType.SleepAnalysis,
-        startDate,
-        endDate
-      });
-
-      // Calculer les heures de sommeil (en supposant que les valeurs sont en minutes)
-      const totalSleepMinutes = sleepData.reduce((total, record) => {
-        return total + (record.value || 0);
-      }, 0);
-      
-      const sleepHours = totalSleepMinutes / 60;
+      const sleepHours = await this.healthKit.readSleepAnalysis(
+        startDate.toISOString(),
+        endDate.toISOString()
+      );
       
       console.log('😴 Heures de sommeil lues depuis HealthKit:', sleepHours);
-      return sleepHours;
+      return sleepHours || 0;
     } catch (error) {
       console.error('Erreur lecture sommeil HealthKit:', error);
       return 0;
