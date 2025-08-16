@@ -70,6 +70,13 @@
       ],
       [
         "expo-build-properties"
+      ],
+      [
+        "expo-health",
+        {
+          "healthSharePermission": "EatFitBy Max accède à vos données Apple Health (pas, fréquence cardiaque, poids, calories brûlées, distance parcourue, analyse du sommeil) pour vous fournir un suivi personnalisé de votre progression fitness et nutritionnelle. Ces données sont utilisées localement pour calculer vos objectifs et suivre vos progrès.",
+          "healthUpdatePermission": "EatFitBy Max écrit des données dans Apple Health (poids, calories brûlées) pour maintenir vos informations de santé synchronisées avec vos activités et objectifs nutritionnels enregistrés dans l'application."
+        }
       ]
     ],
     "experiments": {
