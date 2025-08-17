@@ -44,16 +44,31 @@ const useHealthData = (date: Date = new Date()) => {
       return;
     }
 
-    AppleHealthKit.initHealthKit(permissions, (err) => {
-      if (err) {
-        console.log('🚫 Erreur lors de l\'obtention des permissions HealthKit:', err);
+    // Délai pour éviter le crash au montage du composant
+    const initHealthKit = async () => {
+      try {
+        // Petite pause pour laisser le composant se monter
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        AppleHealthKit.initHealthKit(permissions, (err) => {
+          if (err) {
+            console.log('🚫 Erreur lors de l\'obtention des permissions HealthKit:', err);
+            setHasPermission(false);
+            setIsLoading(false);
+            return;
+          }
+          console.log('✅ Permissions HealthKit accordées');
+          setHasPermission(true);
+          setIsLoading(false);
+        });
+      } catch (error) {
+        console.log('🚫 Erreur d\'initialisation HealthKit:', error);
+        setHasPermission(false);
         setIsLoading(false);
-        return;
       }
-      console.log('✅ Permissions HealthKit accordées');
-      setHasPermission(true);
-      setIsLoading(false);
-    });
+    };
+
+    initHealthKit();
   }, []);
 
   useEffect(() => {

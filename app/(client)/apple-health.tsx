@@ -32,6 +32,7 @@ interface HealthMetric {
 export default function AppleHealthScreen() {
   const { theme } = useTheme();
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [isMounted, setIsMounted] = useState(false);
   const { 
     steps, 
     flights, 
@@ -45,6 +46,15 @@ export default function AppleHealthScreen() {
   } = useHealthData(currentDate);
 
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  useEffect(() => {
+    // Marquer le composant comme monté après un délai
+    const timer = setTimeout(() => {
+      setIsMounted(true);
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const onRefresh = async () => {
     setIsRefreshing(true);
@@ -199,6 +209,20 @@ export default function AppleHealthScreen() {
       </View>
     </TouchableOpacity>
   );
+
+  // Attendre que le composant soit complètement monté
+  if (!isMounted) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={[styles.loadingText, { color: theme.text }]}>
+            Chargement...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (Platform.OS !== 'ios') {
     return (
