@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -10,13 +9,14 @@ import {
   Alert,
   ActivityIndicator,
   RefreshControl,
-  Dimensions
+  Dimensions,
+  Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/context/ThemeContext';
 import { getCurrentUser } from '@/utils/auth';
-import HealthKitService, { HealthKitData } from '@/utils/healthKit';
-import Svg, { Circle, Path } from 'react-native-svg';
+import useHealthData from '@/hooks/useHealthData';
+import Svg, { Circle } from 'react-native-svg';
 
 const { width } = Dimensions.get('window');
 
@@ -31,132 +31,101 @@ interface HealthMetric {
 
 export default function AppleHealthScreen() {
   const { theme } = useTheme();
-  const [isLoading, setIsLoading] = useState(true);
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const { 
+    steps, 
+    flights, 
+    distance, 
+    heartRate, 
+    weight, 
+    activeEnergy,
+    hasPermissions, 
+    isLoading,
+    writeWeight 
+  } = useHealthData(currentDate);
+
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [hasPermissions, setHasPermissions] = useState(false);
-  const [healthData, setHealthData] = useState<HealthKitData[]>([]);
-  const [todayData, setTodayData] = useState<HealthKitData | null>(null);
-
-  useEffect(() => {
-    initializeHealthKit();
-  }, []);
-
-  const initializeHealthKit = async () => {
-    setIsLoading(true);
-    try {
-      const initialized = await HealthKitService.initialize();
-      
-      if (initialized) {
-        const permissions = await HealthKitService.hasPermissions();
-        setHasPermissions(permissions);
-        
-        if (permissions) {
-          await loadHealthData();
-        }
-      } else {
-        Alert.alert(
-          'HealthKit non disponible',
-          'HealthKit n\'est pas disponible sur cet appareil ou cette version iOS.'
-        );
-      }
-    } catch (error) {
-      console.error('Erreur initialisation HealthKit:', error);
-      Alert.alert('Erreur', 'Impossible d\'initialiser HealthKit');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const requestPermissions = async () => {
-    try {
-      const granted = await HealthKitService.requestPermissions();
-      
-      if (granted) {
-        setHasPermissions(true);
-        await loadHealthData();
-        Alert.alert('Succès', 'Permissions HealthKit accordées');
-      } else {
-        Alert.alert(
-          'Permissions refusées',
-          'Pour utiliser cette fonctionnalité, veuillez autoriser l\'accès à HealthKit dans les Réglages.'
-        );
-      }
-    } catch (error) {
-      console.error('Erreur demande permissions:', error);
-      Alert.alert('Erreur', 'Impossible de demander les permissions HealthKit');
-    }
-  };
-
-  const loadHealthData = async () => {
-    try {
-      const data = await HealthKitService.getAllHealthData(7);
-      setHealthData(data);
-      
-      if (data.length > 0) {
-        setTodayData(data[0]); // Données du jour le plus récent
-      }
-
-      // Synchroniser avec le serveur
-      const user = await getCurrentUser();
-      if (user && data.length > 0) {
-        await HealthKitService.syncWithServer(user.id, data);
-      }
-    } catch (error) {
-      console.error('Erreur chargement données HealthKit:', error);
-    }
-  };
 
   const onRefresh = async () => {
     setIsRefreshing(true);
-    await loadHealthData();
-    setIsRefreshing(false);
+    // Force un nouveau rendu en changeant la date puis en la remettant
+    const temp = new Date();
+    setCurrentDate(new Date(temp.getTime() + 1));
+    setTimeout(() => {
+      setCurrentDate(temp);
+      setIsRefreshing(false);
+    }, 1000);
+  };
+
+  const handleWeightUpdate = () => {
+    Alert.prompt(
+      'Mettre à jour le poids',
+      'Entrez votre poids en kg:',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'OK',
+          onPress: async (text) => {
+            const weightValue = parseFloat(text || '0');
+            if (weightValue > 0) {
+              const success = await writeWeight(weightValue);
+              if (success) {
+                Alert.alert('Succès', 'Poids mis à jour dans HealthKit');
+              } else {
+                Alert.alert('Erreur', 'Impossible de mettre à jour le poids');
+              }
+            }
+          }
+        }
+      ],
+      'plain-text',
+      weight?.toString() || ''
+    );
   };
 
   const getHealthMetrics = (): HealthMetric[] => {
-    if (!todayData) return [];
-
     return [
       {
         title: 'Pas',
-        value: todayData.steps?.toLocaleString() || '0',
+        value: steps.toLocaleString(),
         unit: 'pas',
         icon: 'footsteps',
         color: '#007AFF',
-        progress: todayData.steps ? Math.min((todayData.steps / 10000) * 100, 100) : 0
+        progress: steps ? Math.min((steps / 10000) * 100, 100) : 0
       },
       {
         title: 'Fréquence cardiaque',
-        value: todayData.heartRate?.toString() || '0',
+        value: heartRate.toString(),
         unit: 'bpm',
         icon: 'heart',
         color: '#FF3B30'
       },
       {
         title: 'Poids',
-        value: todayData.weight?.toFixed(1) || '0',
+        value: weight?.toFixed(1) || '0',
         unit: 'kg',
         icon: 'barbell',
         color: '#34C759'
       },
       {
         title: 'Calories brûlées',
-        value: todayData.activeEnergyBurned?.toString() || '0',
+        value: Math.round(activeEnergy).toString(),
         unit: 'kcal',
         icon: 'flame',
         color: '#FF9500'
       },
       {
         title: 'Distance',
-        value: todayData.distanceWalkingRunning?.toFixed(1) || '0',
+        value: (distance / 1000).toFixed(1),
         unit: 'km',
         icon: 'walk',
         color: '#5856D6'
       },
       {
-        title: 'Sommeil',
-        value: todayData.sleepHours?.toFixed(1) || '0',
-        unit: 'h',
-        icon: 'moon',
+        title: 'Étages montés',
+        value: flights.toString(),
+        unit: 'étages',
+        icon: 'trending-up',
         color: '#AF52DE'
       }
     ];
@@ -202,18 +171,24 @@ export default function AppleHealthScreen() {
   };
 
   const HealthMetricCard = ({ metric }: { metric: HealthMetric }) => (
-    <View style={[styles.metricCard, { backgroundColor: theme.cardBackground }]}>
+    <TouchableOpacity 
+      style={[styles.metricCard, { backgroundColor: theme.cardBackground }]}
+      onPress={metric.title === 'Poids' ? handleWeightUpdate : undefined}
+    >
       <View style={styles.metricHeader}>
         <Ionicons name={metric.icon as any} size={24} color={metric.color} />
         <Text style={[styles.metricTitle, { color: theme.text }]}>{metric.title}</Text>
+        {metric.title === 'Poids' && (
+          <Ionicons name="create-outline" size={16} color={theme.secondaryText} style={{ marginLeft: 'auto' }} />
+        )}
       </View>
-      
+
       <View style={styles.metricContent}>
         <View style={styles.metricValue}>
           <Text style={[styles.value, { color: theme.text }]}>{metric.value}</Text>
           <Text style={[styles.unit, { color: theme.secondaryText }]}>{metric.unit}</Text>
         </View>
-        
+
         {metric.progress !== undefined && (
           <CircularProgress 
             progress={metric.progress} 
@@ -222,38 +197,24 @@ export default function AppleHealthScreen() {
           />
         )}
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
-  const WeeklyChart = () => (
-    <View style={[styles.chartContainer, { backgroundColor: theme.cardBackground }]}>
-      <Text style={[styles.chartTitle, { color: theme.text }]}>Activité de la semaine</Text>
-      
-      <View style={styles.chartContent}>
-        {healthData.slice(0, 7).reverse().map((day, index) => {
-          const dayName = new Date(day.timestamp).toLocaleDateString('fr-FR', { weekday: 'short' });
-          const stepsHeight = day.steps ? Math.min((day.steps / 15000) * 80, 80) : 0;
-          
-          return (
-            <View key={index} style={styles.chartBar}>
-              <View 
-                style={[
-                  styles.bar, 
-                  { 
-                    height: stepsHeight,
-                    backgroundColor: '#007AFF'
-                  }
-                ]} 
-              />
-              <Text style={[styles.chartLabel, { color: theme.secondaryText }]}>
-                {dayName}
-              </Text>
-            </View>
-          );
-        })}
-      </View>
-    </View>
-  );
+  if (Platform.OS !== 'ios') {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+        <View style={styles.permissionContainer}>
+          <Ionicons name="phone-portrait" size={80} color="#FF9500" />
+          <Text style={[styles.permissionTitle, { color: theme.text }]}>
+            iOS uniquement
+          </Text>
+          <Text style={[styles.permissionText, { color: theme.secondaryText }]}>
+            Apple Health n'est disponible que sur les appareils iOS
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -277,14 +238,22 @@ export default function AppleHealthScreen() {
             Apple Health
           </Text>
           <Text style={[styles.permissionText, { color: theme.secondaryText }]}>
-            Connectez Apple Health pour synchroniser vos données de santé et fitness
+            Pour utiliser cette fonctionnalité, veuillez autoriser l'accès à HealthKit dans l'application Santé d'Apple.
+            {'\n\n'}
+            Fermez l'application et relancez-la pour voir la demande de permissions.
           </Text>
-          
+
           <TouchableOpacity 
             style={styles.permissionButton}
-            onPress={requestPermissions}
+            onPress={() => {
+              Alert.alert(
+                'Instructions',
+                'Fermez l\'application complètement et relancez-la. La demande de permissions HealthKit apparaîtra automatiquement.',
+                [{ text: 'OK' }]
+              );
+            }}
           >
-            <Text style={styles.permissionButtonText}>Connecter HealthKit</Text>
+            <Text style={styles.permissionButtonText}>Instructions</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -312,16 +281,14 @@ export default function AppleHealthScreen() {
           ))}
         </View>
 
-        {healthData.length > 0 && <WeeklyChart />}
-
         <View style={[styles.infoCard, { backgroundColor: theme.cardBackground }]}>
           <Ionicons name="information-circle" size={24} color="#007AFF" />
           <View style={styles.infoContent}>
             <Text style={[styles.infoTitle, { color: theme.text }]}>
-              Synchronisation automatique
+              Synchronisation en temps réel
             </Text>
             <Text style={[styles.infoText, { color: theme.secondaryText }]}>
-              Vos données sont automatiquement synchronisées depuis Apple Health
+              Vos données sont récupérées directement depuis Apple Health. Tirez vers le bas pour actualiser.
             </Text>
           </View>
         </View>
@@ -427,39 +394,6 @@ const styles = StyleSheet.create({
   unit: {
     fontSize: 14,
     marginTop: 2,
-  },
-  chartContainer: {
-    margin: 16,
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  chartTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 16,
-  },
-  chartContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    height: 120,
-  },
-  chartBar: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  bar: {
-    width: 20,
-    borderRadius: 10,
-    marginBottom: 8,
-  },
-  chartLabel: {
-    fontSize: 12,
   },
   infoCard: {
     margin: 16,
