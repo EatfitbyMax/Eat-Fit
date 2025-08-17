@@ -277,9 +277,21 @@ export default function AppleHealthScreen() {
           </Text>
           
           {error ? (
-            <Text style={[styles.permissionText, { color: '#FF3B30' }]}>
-              Erreur: {error}
-            </Text>
+            <>
+              <Text style={[styles.permissionText, { color: '#FF3B30', fontWeight: '600' }]}>
+                Erreur: {error}
+              </Text>
+              
+              <Text style={[styles.permissionText, { color: theme.secondaryText, marginTop: 16, fontSize: 14 }]}>
+                🔧 Solutions possibles:
+                {'\n\n'}
+                • Si "non disponible sur cet appareil" : l'app doit être installée via TestFlight ou App Store avec un provisioning profile incluant HealthKit
+                {'\n\n'}
+                • Si "entitlements manquants" : le build EAS doit être refait avec la bonne configuration
+                {'\n\n'}
+                • Si "accès refusé" : allez dans Réglages iOS > Confidentialité > Santé > EatFit
+              </Text>
+            </>
           ) : (
             <Text style={[styles.permissionText, { color: theme.secondaryText }]}>
               Pour utiliser cette fonctionnalité, vous devez autoriser l'accès à HealthKit.
@@ -287,13 +299,15 @@ export default function AppleHealthScreen() {
           )}
 
           <Text style={[styles.permissionText, { color: theme.secondaryText, marginTop: 16 }]}>
-            Instructions:
+            📋 Instructions:
             {'\n\n'}
-            1. Autoriser l'accès à HealthKit quand l'application vous le demande
+            1. L'application doit demander automatiquement les permissions HealthKit
             {'\n'}
-            2. Si aucune demande n'apparaît, allez dans Réglages > Confidentialité et sécurité > Santé > EatFit
+            2. Si rien ne s'affiche, allez dans Réglages iOS > Confidentialité et sécurité > Santé > EatFit
             {'\n'}
-            3. Activez les permissions pour les données que vous souhaitez partager
+            3. Activez toutes les permissions pour les données de santé
+            {'\n\n'}
+            ⚠️ Note: HealthKit ne fonctionne que sur un vrai appareil iOS (pas sur simulateur) et avec une app correctement signée.
           </Text>
 
           <TouchableOpacity 

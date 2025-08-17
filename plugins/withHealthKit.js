@@ -1,15 +1,18 @@
 
-const { withEntitlementsPlist, withInfoPlist } = require('@expo/config-plugins');
+const { withEntitlementsPlist, withInfoPlist, withXcodeProject } = require('@expo/config-plugins');
 
 module.exports = function withHealthKit(config) {
   // Ajouter les entitlements HealthKit
   config = withEntitlementsPlist(config, (config) => {
-    // Activer HealthKit de base
+    // Activer HealthKit de base - OBLIGATOIRE
     config.modResults['com.apple.developer.healthkit'] = true;
     
-    // S'assurer que les autres entitlements sont conservés
+    // Entitlement pour accéder aux données cliniques (optionnel mais recommandé)
+    config.modResults['com.apple.developer.healthkit.access'] = [];
+    
+    // S'assurer que l'environnement APS est configuré
     if (!config.modResults['aps-environment']) {
-      config.modResults['aps-environment'] = 'development';
+      config.modResults['aps-environment'] = 'production';
     }
     
     return config;
@@ -17,14 +20,14 @@ module.exports = function withHealthKit(config) {
 
   // Ajouter les descriptions d'usage dans Info.plist
   config = withInfoPlist(config, (config) => {
-    // Descriptions HealthKit détaillées
+    // Descriptions HealthKit OBLIGATOIRES
     config.modResults.NSHealthShareUsageDescription = 
       'EatFitBy Max accède à vos données Apple Health (pas, fréquence cardiaque, poids, calories brûlées, distance parcourue, analyse du sommeil) pour vous fournir un suivi personnalisé de votre progression fitness et nutritionnelle.';
     
     config.modResults.NSHealthUpdateUsageDescription = 
       'EatFitBy Max écrit des données dans Apple Health (poids, calories brûlées) pour synchroniser vos progrès avec vos activités et objectifs nutritionnels.';
     
-    // Ajouter la capacité HealthKit requise
+    // Ajouter la capacité HealthKit OBLIGATOIRE pour App Store
     if (!config.modResults.UIRequiredDeviceCapabilities) {
       config.modResults.UIRequiredDeviceCapabilities = [];
     }
@@ -32,14 +35,19 @@ module.exports = function withHealthKit(config) {
       config.modResults.UIRequiredDeviceCapabilities.push('healthkit');
     }
     
-    // S'assurer que l'application supporte iOS 15.1+
-    if (!config.modResults.MinimumOSVersion || config.modResults.MinimumOSVersion < '15.1') {
-      config.modResults.MinimumOSVersion = '15.1';
-    }
+    // Version iOS minimale pour HealthKit
+    config.modResults.MinimumOSVersion = '15.1';
     
-    // Configurer les capabilities en arrière-plan si nécessaire
-    if (!config.modResults.UIBackgroundModes) {
-      config.modResults.UIBackgroundModes = [];
+    return config;
+  });
+
+  // Modifier le projet Xcode pour s'assurer que HealthKit est bien configuré
+  config = withXcodeProject(config, (config) => {
+    const project = config.modResults;
+    
+    // Ajouter HealthKit.framework si nécessaire
+    if (project.hasFile('HealthKit.framework') === false) {
+      project.addFramework('HealthKit.framework', { weak: true });
     }
     
     return config;
