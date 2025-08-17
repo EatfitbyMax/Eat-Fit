@@ -29,11 +29,25 @@ export default function AppleHealthScreen() {
 
   const checkHealthAvailability = async () => {
     try {
+      console.log('🔍 [HEALTH] Vérification disponibilité HealthKit...');
+      console.log('🔍 [HEALTH] Platform.OS:', Platform.OS);
+      
       const available = await AppleHealthManager.isAvailable();
       setHealthAvailable(available);
+      
       console.log('🏥 [HEALTH] Disponibilité HealthKit:', available);
+      
+      // Test supplémentaire
+      if (!available) {
+        console.log('❌ [HEALTH] HealthKit indisponible - Raisons possibles:');
+        console.log('- Version iOS trop ancienne (< iOS 8)');
+        console.log('- Simulateur iOS (HealthKit ne fonctionne que sur device réel)');
+        console.log('- Entitlements manquants');
+        console.log('- Configuration Apple Developer incorrecte');
+      }
     } catch (error) {
       console.error('❌ [HEALTH] Erreur vérification disponibilité:', error);
+      setHealthAvailable(false);
     }
   };
 

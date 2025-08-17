@@ -2,8 +2,11 @@
 const { withEntitlementsPlist, withInfoPlist } = require("@expo/config-plugins");
 
 module.exports = function withHealthKit(config) {
+  console.log("🔧 [PLUGIN] Configuration HealthKit plugin...");
+  
   // Ajouter l'entitlement HealthKit
   config = withEntitlementsPlist(config, (config) => {
+    console.log("🔧 [PLUGIN] Ajout entitlement HealthKit");
     config.modResults["com.apple.developer.healthkit"] = true;
     return config;
   });

@@ -24,18 +24,29 @@ export class AppleHealthManager {
    * Vérifier si HealthKit est disponible
    */
   static async isAvailable(): Promise<boolean> {
-    if (Platform.OS !== 'ios') return false;
+    if (Platform.OS !== 'ios') {
+      console.log('❌ [HEALTH] Plateforme non iOS');
+      return false;
+    }
 
-    return new Promise((resolve) => {
-      AppleHealthKit.isAvailable((error: string, available: boolean) => {
-        if (error) {
-          console.error('❌ [HEALTH] HealthKit non disponible:', error);
-          resolve(false);
-        } else {
-          resolve(available);
-        }
+    try {
+      return new Promise((resolve) => {
+        AppleHealthKit.isAvailable((error: string, available: boolean) => {
+          console.log('🔍 [HEALTH] Réponse isAvailable - Error:', error, 'Available:', available);
+          
+          if (error) {
+            console.error('❌ [HEALTH] HealthKit non disponible:', error);
+            resolve(false);
+          } else {
+            console.log('✅ [HEALTH] HealthKit disponible:', available);
+            resolve(!!available);
+          }
+        });
       });
-    });
+    } catch (error) {
+      console.error('❌ [HEALTH] Exception lors de la vérification:', error);
+      return false;
+    }
   }
 
   /**
