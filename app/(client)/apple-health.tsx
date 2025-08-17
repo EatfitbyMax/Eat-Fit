@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -31,12 +30,12 @@ export default function AppleHealthScreen() {
     try {
       console.log('🔍 [HEALTH] Vérification disponibilité HealthKit...');
       console.log('🔍 [HEALTH] Platform.OS:', Platform.OS);
-      
+
       const available = await AppleHealthManager.isAvailable();
       setHealthAvailable(available);
-      
+
       console.log('🏥 [HEALTH] Disponibilité HealthKit:', available);
-      
+
       // Test supplémentaire
       if (!available) {
         console.log('❌ [HEALTH] HealthKit indisponible - Raisons possibles:');
@@ -63,12 +62,12 @@ export default function AppleHealthScreen() {
 
   const requestHealthPermissions = async () => {
     if (isLoading) return;
-    
+
     setIsLoading(true);
-    
+
     try {
       console.log('🔄 [HEALTH] Demande de permissions Apple Health...');
-      
+
       if (!healthAvailable) {
         Alert.alert(
           'Apple Health non disponible',
@@ -79,11 +78,11 @@ export default function AppleHealthScreen() {
       }
 
       const granted = await AppleHealthManager.requestPermissions();
-      
+
       if (granted) {
         await loadPermissions();
         await loadHealthData();
-        
+
         Alert.alert(
           '✅ Permissions accordées',
           'Vous pouvez maintenant synchroniser vos données Apple Health.',
@@ -129,7 +128,7 @@ export default function AppleHealthScreen() {
   const loadHealthData = async () => {
     try {
       console.log('🔄 [HEALTH] Chargement données santé...');
-      
+
       const today = new Date();
       const startDate = new Date(today);
       startDate.setDate(today.getDate() - 7); // 7 derniers jours
@@ -183,7 +182,7 @@ export default function AppleHealthScreen() {
                 : 'Apple Health n\'est pas disponible sur cet appareil.'
               }
             </Text>
-            
+
             <TouchableOpacity
               style={styles.diagnosticButton}
               onPress={checkHealthAvailability}
@@ -197,7 +196,7 @@ export default function AppleHealthScreen() {
               {/* Section Permissions */}
               <View style={styles.permissionsCard}>
                 <Text style={styles.cardTitle}>Permissions Apple Health</Text>
-                
+
                 <View style={styles.permissionsList}>
                   <View style={styles.permissionItem}>
                     <Text style={styles.permissionName}>Pas</Text>
@@ -205,21 +204,21 @@ export default function AppleHealthScreen() {
                       {permissions.steps ? '✅ Autorisé' : '❌ Non autorisé'}
                     </Text>
                   </View>
-                  
+
                   <View style={styles.permissionItem}>
                     <Text style={styles.permissionName}>Fréquence cardiaque</Text>
                     <Text style={[styles.permissionStatus, permissions.heartRate && styles.permissionGranted]}>
                       {permissions.heartRate ? '✅ Autorisé' : '❌ Non autorisé'}
                     </Text>
                   </View>
-                  
+
                   <View style={styles.permissionItem}>
                     <Text style={styles.permissionName}>Énergie active</Text>
                     <Text style={[styles.permissionStatus, permissions.activeEnergy && styles.permissionGranted]}>
                       {permissions.activeEnergy ? '✅ Autorisé' : '❌ Non autorisé'}
                     </Text>
                   </View>
-                  
+
                   <View style={styles.permissionItem}>
                     <Text style={styles.permissionName}>Séances d'entraînement</Text>
                     <Text style={[styles.permissionStatus, permissions.workouts && styles.permissionGranted]}>
@@ -243,18 +242,18 @@ export default function AppleHealthScreen() {
               {hasAnyPermission && (
                 <View style={styles.dataCard}>
                   <Text style={styles.cardTitle}>Vos données (7 derniers jours)</Text>
-                  
+
                   <View style={styles.dataGrid}>
                     <View style={styles.dataItem}>
                       <Text style={styles.dataLabel}>Pas</Text>
                       <Text style={styles.dataValue}>{healthData.steps.toLocaleString()}</Text>
                     </View>
-                    
+
                     <View style={styles.dataItem}>
                       <Text style={styles.dataLabel}>Mesures FC</Text>
                       <Text style={styles.dataValue}>{healthData.heartRate.length}</Text>
                     </View>
-                    
+
                     <View style={styles.dataItem}>
                       <Text style={styles.dataLabel}>Séances</Text>
                       <Text style={styles.dataValue}>{healthData.workouts.length}</Text>
