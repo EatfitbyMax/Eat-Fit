@@ -5,10 +5,12 @@ module.exports = function withHealthKit(config) {
   // Ajouter les entitlements HealthKit
   config = withEntitlementsPlist(config, (config) => {
     config.modResults['com.apple.developer.healthkit'] = true;
-    // Ne pas spécifier d'accès restrictif pour permettre toutes les données
+    
+    // Supprimer l'accès restrictif aux health-records
     if (config.modResults['com.apple.developer.healthkit.access']) {
       delete config.modResults['com.apple.developer.healthkit.access'];
     }
+    
     return config;
   });
 
