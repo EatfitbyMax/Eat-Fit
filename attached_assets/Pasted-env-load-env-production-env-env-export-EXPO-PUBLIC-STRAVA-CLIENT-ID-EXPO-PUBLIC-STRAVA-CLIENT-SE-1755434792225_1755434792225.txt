@@ -1,0 +1,83 @@
+env: load .env.production .env
+env: export EXPO_PUBLIC_STRAVA_CLIENT_ID EXPO_PUBLIC_STRAVA_CLIENT_SECRET EXPO_PUBLIC_VPS_URL EXPO_PUBLIC_API_URL EXPO_PUBLIC_APP_STORE_URL EXPO_PUBLIC_SUPPORT_EMAIL EXPO_PUBLIC_CLARIFAI_API_KEY EXPO_PUBLIC_GOOGLE_VISION_API_KEY EXPO_PUBLIC_EMAILJS_SERVICE_ID EXPO_PUBLIC_EMAILJS_TEMPLATE_ID EXPO_PUBLIC_EMAILJS_PUBLIC_KEY
+Starting Metro Bundler
+iOS node_modules/expo-router/entry.js ▓▓▓▓▓▓▓░░░░░░░░░ 43.8% (416/632)
+iOS node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 84.8% (1307/1419)
+iOS Bundling failed 6246ms node_modules/expo-router/entry.js (1643 modules)
+SyntaxError: /Users/expo/workingdir/build/app/(client)/forme.tsx: Unexpected token, expected "," (1245:26)
+
+[0m [90m 1243 |[39m           { text[33m:[39m [32m'OK'[39m[33m,[39m style[33m:[39m [32m'default'[39m }
+ [90m 1244 |[39m         ]
+[31m[1m>[22m[39m[90m 1245 |[39m                           [36mconst[39m success [33m=[39m [36mawait[39m [33mIntegrationsManager[39m[33m.[39mconnectAppleHealth(userData[33m.[39mid)[33m;[39m
+ [90m      |[39m                           [31m[1m^[22m[39m
+ [90m 1246 |[39m                           [36mif[39m (success) {
+ [90m 1247 |[39m                             [36mawait[39m syncHeartRateData()[33m;[39m
+ [90m 1248 |[39m                           }[0m
+SyntaxError: SyntaxError: /Users/expo/workingdir/build/app/(client)/forme.tsx: Unexpected token, expected "," (1245:26)
+
+[0m [90m 1243 |[39m           { text[33m:[39m [32m'OK'[39m[33m,[39m style[33m:[39m [32m'default'[39m }
+ [90m 1244 |[39m         ]
+[31m[1m>[22m[39m[90m 1245 |[39m                           [36mconst[39m success [33m=[39m [36mawait[39m [33mIntegrationsManager[39m[33m.[39mconnectAppleHealth(userData[33m.[39mid)[33m;[39m
+ [90m      |[39m                           [31m[1m^[22m[39m
+ [90m 1246 |[39m                           [36mif[39m (success) {
+ [90m 1247 |[39m                             [36mawait[39m syncHeartRateData()[33m;[39m
+ [90m 1248 |[39m                           }[0m
+SyntaxError: /Users/expo/workingdir/build/app/(client)/forme.tsx: Unexpected token, expected "," (1245:26)
+
+[0m [90m 1243 |[39m           { text[33m:[39m [32m'OK'[39m[33m,[39m style[33m:[39m [32m'default'[39m }
+ [90m 1244 |[39m         ]
+[31m[1m>[22m[39m[90m 1245 |[39m                           [36mconst[39m success [33m=[39m [36mawait[39m [33mIntegrationsManager[39m[33m.[39mconnectAppleHealth(userData[33m.[39mid)[33m;[39m
+ [90m      |[39m                           [31m[1m^[22m[39m
+ [90m 1246 |[39m                           [36mif[39m (success) {
+ [90m 1247 |[39m                             [36mawait[39m syncHeartRateData()[33m;[39m
+ [90m 1248 |[39m                           }[0m
+    at constructor (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:367:19)
+    at TypeScriptParserMixin.raise (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:6627:19)
+    at TypeScriptParserMixin.unexpected (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:6647:16)
+    at TypeScriptParserMixin.expect (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:6927:12)
+    at TypeScriptParserMixin.parseCallExpressionArguments (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:11238:14)
+    at TypeScriptParserMixin.parseCoverCallAndAsyncArrowHead (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:11181:29)
+    at TypeScriptParserMixin.parseSubscript (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:11115:19)
+    at TypeScriptParserMixin.parseSubscript (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:9353:18)
+    at TypeScriptParserMixin.parseSubscripts (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:11089:19)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:11080:17)
+    at TypeScriptParserMixin.parseUpdate (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:11061:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:11041:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:9852:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:10894:61)
+    at TypeScriptParserMixin.parseExprOps (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:10899:23)
+    at TypeScriptParserMixin.parseMaybeConditional (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:10876:23)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:10826:21)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:9801:20)
+    at TypeScriptParserMixin.parseExpressionBase (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:10779:23)
+    at /Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:10775:39
+    at TypeScriptParserMixin.allowInAnd (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:12422:16)
+    at TypeScriptParserMixin.parseExpression (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:10775:17)
+    at TypeScriptParserMixin.parseStatementContent (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:12895:23)
+    at TypeScriptParserMixin.parseStatementContent (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:9527:18)
+    at TypeScriptParserMixin.parseStatementLike (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:12767:17)
+    at TypeScriptParserMixin.parseStatementListItem (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:12747:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:13316:61)
+    at TypeScriptParserMixin.parseBlockBody (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:13309:10)
+    at TypeScriptParserMixin.parseBlock (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:13297:10)
+    at TypeScriptParserMixin.parseTryStatement (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:13205:23)
+    at TypeScriptParserMixin.parseStatementContent (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:12804:21)
+    at TypeScriptParserMixin.parseStatementContent (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:9527:18)
+    at TypeScriptParserMixin.parseStatementLike (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:12767:17)
+    at TypeScriptParserMixin.parseStatementListItem (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:12747:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:13316:61)
+    at TypeScriptParserMixin.parseBlockBody (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:13309:10)
+    at TypeScriptParserMixin.parseBlock (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:13297:10)
+    at TypeScriptParserMixin.parseFunctionBody (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:12101:24)
+    at TypeScriptParserMixin.parseArrowExpression (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:12076:10)
+    at TypeScriptParserMixin.parseAsyncArrowFromCallExpression (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:11259:10)
+    at TypeScriptParserMixin.parseAsyncArrowFromCallExpression (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:9781:18)
+    at TypeScriptParserMixin.parseCoverCallAndAsyncArrowHead (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:11189:27)
+    at TypeScriptParserMixin.parseSubscript (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:11115:19)
+    at TypeScriptParserMixin.parseSubscript (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:9353:18)
+    at TypeScriptParserMixin.parseSubscripts (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:11089:19)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:11080:17)
+    at TypeScriptParserMixin.parseUpdate (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:11061:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:11041:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:9852:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/expo/workingdir/build/node_modules/@babel/parser/lib/index.js:10894:61)
