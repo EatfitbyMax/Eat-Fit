@@ -1,241 +1,268 @@
 
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  RefreshControl,
-  Alert,
-  SafeAreaView,
-  Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
+import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '@/context/ThemeContext';
-import useHealthData from '@/hooks/useHealthData';
+import { AppleHealthManager, HealthPermissions } from '../../utils/appleHealth';
+import { getCurrentUser } from '../../utils/auth';
 
 export default function AppleHealthScreen() {
-  const { theme } = useTheme();
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [refreshing, setRefreshing] = useState(false);
-  
-  const {
-    steps,
-    flights,
-    distance,
-    heartRate,
-    weight,
-    activeEnergy,
-    sleepHours,
-    hasPermissions,
-    isLoading,
-    error,
-    writeWeight
-  } = useHealthData(selectedDate);
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [healthAvailable, setHealthAvailable] = useState(false);
+  const [permissions, setPermissions] = useState<HealthPermissions>({
+    steps: false,
+    heartRate: false,
+    activeEnergy: false,
+    workouts: false
+  });
+  const [healthData, setHealthData] = useState({
+    steps: 0,
+    heartRate: [],
+    workouts: []
+  });
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    // Force refresh by changing date slightly
-    setSelectedDate(new Date(selectedDate.getTime() + 1));
-    setTimeout(() => {
-      setSelectedDate(new Date(selectedDate.getTime() - 1));
-      setRefreshing(false);
-    }, 1000);
+  useEffect(() => {
+    checkHealthAvailability();
+    loadPermissions();
+  }, []);
+
+  const checkHealthAvailability = async () => {
+    try {
+      const available = await AppleHealthManager.isAvailable();
+      setHealthAvailable(available);
+      console.log('🏥 [HEALTH] Disponibilité HealthKit:', available);
+    } catch (error) {
+      console.error('❌ [HEALTH] Erreur vérification disponibilité:', error);
+    }
   };
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('fr-FR', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+  const loadPermissions = async () => {
+    try {
+      const currentPermissions = await AppleHealthManager.checkPermissions();
+      setPermissions(currentPermissions);
+      console.log('🔍 [HEALTH] Permissions actuelles:', currentPermissions);
+    } catch (error) {
+      console.error('❌ [HEALTH] Erreur chargement permissions:', error);
+    }
   };
 
-  const navigateDate = (direction: 'prev' | 'next') => {
-    const newDate = new Date(selectedDate);
-    newDate.setDate(newDate.getDate() + (direction === 'next' ? 1 : -1));
-    setSelectedDate(newDate);
+  const requestHealthPermissions = async () => {
+    if (isLoading) return;
+    
+    setIsLoading(true);
+    
+    try {
+      console.log('🔄 [HEALTH] Demande de permissions Apple Health...');
+      
+      if (!healthAvailable) {
+        Alert.alert(
+          'Apple Health non disponible',
+          'Apple Health n\'est pas disponible sur cet appareil.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      const granted = await AppleHealthManager.requestPermissions();
+      
+      if (granted) {
+        await loadPermissions();
+        await loadHealthData();
+        
+        Alert.alert(
+          '✅ Permissions accordées',
+          'Vous pouvez maintenant synchroniser vos données Apple Health.',
+          [
+            {
+              text: 'Voir mes données',
+              onPress: () => loadHealthData()
+            },
+            { text: 'OK', style: 'default' }
+          ]
+        );
+      } else {
+        Alert.alert(
+          'Permissions refusées',
+          'Pour utiliser cette fonctionnalité, vous devez autoriser l\'accès à Apple Health dans les Réglages > Confidentialité et sécurité > Santé.',
+          [
+            {
+              text: 'Ouvrir Réglages',
+              onPress: () => {
+                // On peut pas ouvrir directement les réglages, mais on peut donner des instructions
+                Alert.alert(
+                  'Instructions',
+                  'Allez dans Réglages iOS > Confidentialité et sécurité > Santé > EatFit pour autoriser l\'accès aux données.'
+                );
+              }
+            },
+            { text: 'Annuler', style: 'cancel' }
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('❌ [HEALTH] Erreur demande permissions:', error);
+      Alert.alert(
+        'Erreur',
+        'Une erreur s\'est produite lors de la demande de permissions.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const HealthMetricCard = ({ 
-    icon, 
-    title, 
-    value, 
-    unit, 
-    color,
-    onPress 
-  }: {
-    icon: string;
-    title: string;
-    value: string | number;
-    unit: string;
-    color: string;
-    onPress?: () => void;
-  }) => (
-    <TouchableOpacity 
-      style={[styles.metricCard, { backgroundColor: theme.card, borderColor: theme.border }]}
-      onPress={onPress}
-      disabled={!onPress}
-    >
-      <View style={styles.metricHeader}>
-        <Ionicons name={icon as any} size={24} color={color} />
-        <Text style={[styles.metricTitle, { color: theme.text }]}>{title}</Text>
-      </View>
-      <Text style={[styles.metricValue, { color: theme.text }]}>{value}</Text>
-      <Text style={[styles.metricUnit, { color: theme.secondaryText }]}>{unit}</Text>
-    </TouchableOpacity>
-  );
+  const loadHealthData = async () => {
+    try {
+      console.log('🔄 [HEALTH] Chargement données santé...');
+      
+      const today = new Date();
+      const startDate = new Date(today);
+      startDate.setDate(today.getDate() - 7); // 7 derniers jours
 
-  if (Platform.OS !== 'ios') {
-    return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-        <View style={styles.messageContainer}>
-          <Ionicons name="phone-portrait-outline" size={80} color="#FF9500" />
-          <Text style={[styles.title, { color: theme.text }]}>
-            iOS uniquement
-          </Text>
-          <Text style={[styles.message, { color: theme.secondaryText }]}>
-            Apple Health est disponible uniquement sur les appareils iOS.
-          </Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
+      const [steps, heartRate, workouts] = await Promise.all([
+        AppleHealthManager.getStepsData(startDate, today),
+        AppleHealthManager.getHeartRateData(startDate, today),
+        AppleHealthManager.getWorkouts(startDate, today)
+      ]);
 
-  if (!hasPermissions && !isLoading) {
-    return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-        <View style={styles.messageContainer}>
-          <Ionicons name="shield-outline" size={80} color="#FF9500" />
-          <Text style={[styles.title, { color: theme.text }]}>
-            Permissions requises
-          </Text>
-          <Text style={[styles.message, { color: theme.secondaryText }]}>
-            Veuillez autoriser l'accès à Apple Health dans les réglages de votre iPhone.
-          </Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
+      setHealthData({
+        steps,
+        heartRate,
+        workouts
+      });
 
-  if (error) {
-    return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-        <View style={styles.messageContainer}>
-          <Ionicons name="alert-circle-outline" size={80} color="#FF3B30" />
-          <Text style={[styles.title, { color: theme.text }]}>
-            Erreur
-          </Text>
-          <Text style={[styles.message, { color: theme.secondaryText }]}>
-            {error}
-          </Text>
-          <TouchableOpacity 
-            style={[styles.retryButton, { backgroundColor: theme.primary }]}
-            onPress={onRefresh}
-          >
-            <Text style={styles.retryButtonText}>Réessayer</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
+      console.log('✅ [HEALTH] Données chargées:', { steps, heartRateCount: heartRate.length, workoutsCount: workouts.length });
+    } catch (error) {
+      console.error('❌ [HEALTH] Erreur chargement données:', error);
+    }
+  };
+
+  const hasAnyPermission = Object.values(permissions).some(permission => permission);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={[theme.primary + '20', 'transparent']}
-        style={styles.headerGradient}
+        colors={['#0A0A0A', '#1a1a1a']}
+        style={styles.gradient}
       >
-        <View style={styles.header}>
-          <Text style={[styles.headerTitle, { color: theme.text }]}>Apple Health</Text>
-          <View style={styles.dateNavigation}>
-            <TouchableOpacity onPress={() => navigateDate('prev')}>
-              <Ionicons name="chevron-back" size={24} color={theme.text} />
-            </TouchableOpacity>
-            <Text style={[styles.dateText, { color: theme.text }]}>
-              {formatDate(selectedDate)}
-            </Text>
-            <TouchableOpacity 
-              onPress={() => navigateDate('next')}
-              disabled={selectedDate.toDateString() === new Date().toDateString()}
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
             >
-              <Ionicons 
-                name="chevron-forward" 
-                size={24} 
-                color={selectedDate.toDateString() === new Date().toDateString() ? theme.border : theme.text} 
-              />
+              <Text style={styles.backButtonText}>← Retour</Text>
             </TouchableOpacity>
+            <Text style={styles.title}>Apple Health</Text>
           </View>
-        </View>
-      </LinearGradient>
 
-      <ScrollView
-        style={styles.content}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        <View style={styles.metricsGrid}>
-          <HealthMetricCard
-            icon="walk"
-            title="Pas"
-            value={steps.toLocaleString()}
-            unit="pas"
-            color="#00C896"
-          />
-          
-          <HealthMetricCard
-            icon="trending-up"
-            title="Étages"
-            value={flights}
-            unit="étages"
-            color="#FF6B35"
-          />
-          
-          <HealthMetricCard
-            icon="location"
-            title="Distance"
-            value={(distance / 1000).toFixed(2)}
-            unit="km"
-            color="#007AFF"
-          />
-          
-          <HealthMetricCard
-            icon="heart"
-            title="Fréquence cardiaque"
-            value={heartRate || '--'}
-            unit="bpm"
-            color="#FF3B30"
-          />
-          
-          <HealthMetricCard
-            icon="scale"
-            title="Poids"
-            value={weight ? weight.toFixed(1) : '--'}
-            unit="kg"
-            color="#8E8E93"
-          />
-          
-          <HealthMetricCard
-            icon="flame"
-            title="Calories actives"
-            value={Math.round(activeEnergy)}
-            unit="cal"
-            color="#FF9500"
-          />
-          
-          <HealthMetricCard
-            icon="moon"
-            title="Sommeil"
-            value={sleepHours || '--'}
-            unit="heures"
-            color="#5856D6"
-          />
-        </View>
-      </ScrollView>
+          {/* Statut de disponibilité */}
+          <View style={styles.statusCard}>
+            <Text style={styles.statusTitle}>
+              {healthAvailable ? '✅ Apple Health disponible' : '❌ Apple Health non disponible'}
+            </Text>
+            <Text style={styles.statusDescription}>
+              {healthAvailable 
+                ? 'Vous pouvez synchroniser vos données de santé avec EatFit.'
+                : 'Apple Health n\'est pas disponible sur cet appareil.'
+              }
+            </Text>
+          </View>
+
+          {healthAvailable && (
+            <>
+              {/* Section Permissions */}
+              <View style={styles.permissionsCard}>
+                <Text style={styles.cardTitle}>Permissions Apple Health</Text>
+                
+                <View style={styles.permissionsList}>
+                  <View style={styles.permissionItem}>
+                    <Text style={styles.permissionName}>Pas</Text>
+                    <Text style={[styles.permissionStatus, permissions.steps && styles.permissionGranted]}>
+                      {permissions.steps ? '✅ Autorisé' : '❌ Non autorisé'}
+                    </Text>
+                  </View>
+                  
+                  <View style={styles.permissionItem}>
+                    <Text style={styles.permissionName}>Fréquence cardiaque</Text>
+                    <Text style={[styles.permissionStatus, permissions.heartRate && styles.permissionGranted]}>
+                      {permissions.heartRate ? '✅ Autorisé' : '❌ Non autorisé'}
+                    </Text>
+                  </View>
+                  
+                  <View style={styles.permissionItem}>
+                    <Text style={styles.permissionName}>Énergie active</Text>
+                    <Text style={[styles.permissionStatus, permissions.activeEnergy && styles.permissionGranted]}>
+                      {permissions.activeEnergy ? '✅ Autorisé' : '❌ Non autorisé'}
+                    </Text>
+                  </View>
+                  
+                  <View style={styles.permissionItem}>
+                    <Text style={styles.permissionName}>Séances d'entraînement</Text>
+                    <Text style={[styles.permissionStatus, permissions.workouts && styles.permissionGranted]}>
+                      {permissions.workouts ? '✅ Autorisé' : '❌ Non autorisé'}
+                    </Text>
+                  </View>
+                </View>
+
+                <TouchableOpacity
+                  style={[styles.actionButton, hasAnyPermission && styles.actionButtonSecondary]}
+                  onPress={requestHealthPermissions}
+                  disabled={isLoading}
+                >
+                  <Text style={[styles.actionButtonText, hasAnyPermission && styles.actionButtonTextSecondary]}>
+                    {isLoading ? 'Chargement...' : hasAnyPermission ? 'Mettre à jour les permissions' : 'Demander les permissions'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Données de santé */}
+              {hasAnyPermission && (
+                <View style={styles.dataCard}>
+                  <Text style={styles.cardTitle}>Vos données (7 derniers jours)</Text>
+                  
+                  <View style={styles.dataGrid}>
+                    <View style={styles.dataItem}>
+                      <Text style={styles.dataLabel}>Pas</Text>
+                      <Text style={styles.dataValue}>{healthData.steps.toLocaleString()}</Text>
+                    </View>
+                    
+                    <View style={styles.dataItem}>
+                      <Text style={styles.dataLabel}>Mesures FC</Text>
+                      <Text style={styles.dataValue}>{healthData.heartRate.length}</Text>
+                    </View>
+                    
+                    <View style={styles.dataItem}>
+                      <Text style={styles.dataLabel}>Séances</Text>
+                      <Text style={styles.dataValue}>{healthData.workouts.length}</Text>
+                    </View>
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.refreshButton}
+                    onPress={loadHealthData}
+                  >
+                    <Text style={styles.refreshButtonText}>🔄 Actualiser les données</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </>
+          )}
+
+          {/* Informations */}
+          <View style={styles.infoCard}>
+            <Text style={styles.infoTitle}>À propos de l'intégration Apple Health</Text>
+            <Text style={styles.infoText}>
+              • EatFit peut lire vos données de pas, fréquence cardiaque et séances d'entraînement{'\n'}
+              • EatFit peut écrire vos séances créées dans l'app{'\n'}
+              • Vos données restent privées et chiffrées{'\n'}
+              • Vous pouvez révoquer les permissions à tout moment dans les Réglages iOS
+            </Text>
+          </View>
+        </ScrollView>
+      </LinearGradient>
     </SafeAreaView>
   );
 }
@@ -243,91 +270,162 @@ export default function AppleHealthScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#0A0A0A',
   },
-  headerGradient: {
-    paddingTop: 20,
-  },
-  header: {
-    padding: 20,
-    paddingBottom: 10,
-  },
-  headerTitle: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  dateNavigation: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  dateText: {
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
+  gradient: {
     flex: 1,
   },
   content: {
     flex: 1,
-    padding: 20,
+    paddingHorizontal: 20,
   },
-  metricsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  metricCard: {
-    width: '48%',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-    borderWidth: 1,
-  },
-  metricHeader: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    paddingTop: 20,
+    paddingBottom: 30,
   },
-  metricTitle: {
-    fontSize: 14,
+  backButton: {
+    marginRight: 15,
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: '#28A745',
     fontWeight: '600',
-    marginLeft: 8,
-  },
-  metricValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  metricUnit: {
-    fontSize: 12,
-  },
-  messageContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
-    marginTop: 24,
-    marginBottom: 16,
-    textAlign: 'center',
+    color: '#FFFFFF',
   },
-  message: {
-    fontSize: 16,
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 24,
+  statusCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
   },
-  retryButton: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    color: 'white',
+  statusTitle: {
     fontSize: 16,
     fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  statusDescription: {
+    fontSize: 14,
+    color: '#8B949E',
+    lineHeight: 20,
+  },
+  permissionsCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 16,
+  },
+  permissionsList: {
+    gap: 12,
+    marginBottom: 20,
+  },
+  permissionItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  permissionName: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '500',
+  },
+  permissionStatus: {
+    fontSize: 12,
+    color: '#F85149',
+    fontWeight: '600',
+  },
+  permissionGranted: {
+    color: '#28A745',
+  },
+  actionButton: {
+    backgroundColor: '#28A745',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  actionButtonSecondary: {
+    backgroundColor: '#21262D',
+  },
+  actionButtonText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  actionButtonTextSecondary: {
+    color: '#8B949E',
+  },
+  dataCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  dataGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  dataItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  dataLabel: {
+    fontSize: 12,
+    color: '#8B949E',
+    marginBottom: 4,
+  },
+  dataValue: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  refreshButton: {
+    backgroundColor: '#3498db',
+    paddingVertical: 10,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  refreshButtonText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '500',
+  },
+  infoCard: {
+    backgroundColor: '#161B22',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 30,
+    borderWidth: 1,
+    borderColor: '#21262D',
+  },
+  infoTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 12,
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#8B949E',
+    lineHeight: 20,
   },
 });
