@@ -35,7 +35,7 @@ const useHealthData = (date: Date = new Date()) => {
   const [weight, setWeight] = useState<number | null>(null);
   const [activeEnergy, setActiveEnergy] = useState(0);
   const [sleepHours, setSleepHours] = useState(0);
-  const [hasPermissions, setHasPermission] = useState(false);
+  const [hasPermissions, setHasPermissions] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -53,17 +53,17 @@ const useHealthData = (date: Date = new Date()) => {
         AppleHealthKit.initHealthKit(permissions, (err) => {
           if (err) {
             console.log('🚫 Erreur lors de l\'obtention des permissions HealthKit:', err);
-            setHasPermission(false);
+            setHasPermissions(false);
             setIsLoading(false);
             return;
           }
           console.log('✅ Permissions HealthKit accordées');
-          setHasPermission(true);
+          setHasPermissions(true);
           setIsLoading(false);
         });
       } catch (error) {
         console.log('🚫 Erreur d\'initialisation HealthKit:', error);
-        setHasPermission(false);
+        setHasPermissions(false);
         setIsLoading(false);
       }
     };
