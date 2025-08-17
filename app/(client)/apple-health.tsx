@@ -15,7 +15,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/context/ThemeContext';
 import { getCurrentUser } from '@/utils/auth';
-import * as HealthKitService from '@/utils/HealthKitService';
+import HealthKitService, { HealthKitData } from '@/utils/healthKit';
 import Svg, { Circle, Path } from 'react-native-svg';
 
 const { width } = Dimensions.get('window');
@@ -44,20 +44,20 @@ export default function AppleHealthScreen() {
   const initializeHealthKit = async () => {
     setIsLoading(true);
     try {
-      if (!HealthKitService.isHealthKitAvailable()) {
+      const initialized = await HealthKitService.initialize();
+      
+      if (initialized) {
+        const permissions = await HealthKitService.hasPermissions();
+        setHasPermissions(permissions);
+        
+        if (permissions) {
+          await loadHealthData();
+        }
+      } else {
         Alert.alert(
           'HealthKit non disponible',
           'HealthKit n\'est pas disponible sur cet appareil ou cette version iOS.'
         );
-        setIsLoading(false);
-        return;
-      }
-
-      const initialized = await HealthKitService.initHealthKit();
-      
-      if (initialized) {
-        setHasPermissions(true);
-        await loadHealthData();
       }
     } catch (error) {
       console.error('Erreur initialisation HealthKit:', error);
@@ -69,9 +69,9 @@ export default function AppleHealthScreen() {
 
   const requestPermissions = async () => {
     try {
-      const initialized = await HealthKitService.initHealthKit();
+      const granted = await HealthKitService.requestPermissions();
       
-      if (initialized) {
+      if (granted) {
         setHasPermissions(true);
         await loadHealthData();
         Alert.alert('Succès', 'Permissions HealthKit accordées');
