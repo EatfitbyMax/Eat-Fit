@@ -5,7 +5,7 @@ module.exports = function withHealthKit(config) {
   // Ajouter l'entitlement HealthKit
   config = withEntitlementsPlist(config, (config) => {
     config.modResults["com.apple.developer.healthkit"] = true;
-    config.modResults["com.apple.developer.healthkit.access"] = ["health-kit-access"];
+    config.modResults["com.apple.developer.healthkit.access"] = true;
     return config;
   });
 
