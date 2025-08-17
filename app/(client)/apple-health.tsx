@@ -183,6 +183,13 @@ export default function AppleHealthScreen() {
                 : 'Apple Health n\'est pas disponible sur cet appareil.'
               }
             </Text>
+            
+            <TouchableOpacity
+              style={styles.diagnosticButton}
+              onPress={checkHealthAvailability}
+            >
+              <Text style={styles.diagnosticButtonText}>🔄 Revérifier la disponibilité</Text>
+            </TouchableOpacity>
           </View>
 
           {healthAvailable && (
@@ -441,5 +448,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#8B949E',
     lineHeight: 20,
+  },
+  diagnosticButton: {
+    backgroundColor: '#3498db',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  diagnosticButtonText: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: '500',
   },
 });
