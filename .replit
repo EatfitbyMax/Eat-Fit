@@ -18,7 +18,7 @@ localPort = 8082
 externalPort = 3000
 
 [workflows]
-runButton = "Test flight"
+runButton = "Dev Server"
 
 [[workflows.workflow]]
 name = "Dev Server"
