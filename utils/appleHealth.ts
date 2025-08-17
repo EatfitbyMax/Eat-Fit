@@ -1,5 +1,10 @@
+
 import { Platform } from 'react-native';
-import { AppleHealthKit, HealthValue, HealthKitPermissions } from 'react-native-health';
+import AppleHealthKit, { 
+  HealthValue, 
+  HealthKitPermissions,
+  HealthInputOptions 
+} from 'react-native-health';
 
 export interface HealthPermissions {
   steps: boolean;
@@ -18,11 +23,16 @@ export class AppleHealthManager {
     }
 
     try {
-      // react-native-health does not have a direct isAvailableAsync method.
-      // We can infer availability from the initHealthKit callback, but for simplicity,
-      // we'll assume it's available if the platform is iOS and initialization doesn't fail.
-      // A more robust check might involve attempting a read operation.
-      return true;
+      return new Promise((resolve) => {
+        AppleHealthKit.isAvailable((error: string, available: boolean) => {
+          if (error) {
+            console.error('❌ [HEALTH] Erreur vérification disponibilité:', error);
+            resolve(false);
+          } else {
+            resolve(available);
+          }
+        });
+      });
     } catch (error) {
       console.error('❌ [HEALTH] Erreur vérification disponibilité:', error);
       return false;
@@ -50,12 +60,12 @@ export class AppleHealthManager {
             AppleHealthKit.Constants.Permissions.DistanceWalkingRunning,
             AppleHealthKit.Constants.Permissions.Weight,
             AppleHealthKit.Constants.Permissions.SleepAnalysis,
-            AppleHealthKit.Constants.Permissions.Workouts
+            AppleHealthKit.Constants.Permissions.Workout
           ],
           write: [
             AppleHealthKit.Constants.Permissions.Weight,
             AppleHealthKit.Constants.Permissions.ActiveEnergyBurned,
-            AppleHealthKit.Constants.Permissions.Workouts
+            AppleHealthKit.Constants.Permissions.Workout
           ],
         },
       };
@@ -66,7 +76,7 @@ export class AppleHealthManager {
             console.error('❌ [HEALTH] Erreur lors de l\'initialisation de HealthKit:', error);
             resolve(false);
           } else {
-            console.log('✅ [HEALTH] Permissions accordées: true');
+            console.log('✅ [HEALTH] Permissions accordées');
             resolve(true);
           }
         });
@@ -91,23 +101,36 @@ export class AppleHealthManager {
         };
       }
 
-      // react-native-health does not provide a direct way to check permissions for specific types.
-      // We rely on the initHealthKit callback to indicate if permissions were granted.
-      // A more granular check would require attempting to read data and handling potential errors.
-      // For now, we'll return true if initialization was successful, assuming granted permissions.
-      // This is a simplification due to the library's API.
-      const isInitialized = await new Promise<boolean>((resolve) => {
-        AppleHealthKit.initHealthKit({ permissions: { read: [], write: [] } }, (error: string) => {
-          resolve(!error);
-        });
+      return new Promise((resolve) => {
+        AppleHealthKit.getAuthStatus(
+          {
+            read: [
+              AppleHealthKit.Constants.Permissions.Steps,
+              AppleHealthKit.Constants.Permissions.HeartRate,
+              AppleHealthKit.Constants.Permissions.ActiveEnergyBurned,
+              AppleHealthKit.Constants.Permissions.Workout
+            ]
+          },
+          (error: string, results: any) => {
+            if (error) {
+              console.error('❌ [HEALTH] Erreur vérification permissions:', error);
+              resolve({
+                steps: false,
+                heartRate: false,
+                activeEnergy: false,
+                workouts: false
+              });
+            } else {
+              resolve({
+                steps: results[AppleHealthKit.Constants.Permissions.Steps] === 2,
+                heartRate: results[AppleHealthKit.Constants.Permissions.HeartRate] === 2,
+                activeEnergy: results[AppleHealthKit.Constants.Permissions.ActiveEnergyBurned] === 2,
+                workouts: results[AppleHealthKit.Constants.Permissions.Workout] === 2
+              });
+            }
+          }
+        );
       });
-
-      return {
-        steps: isInitialized,
-        heartRate: isInitialized,
-        activeEnergy: isInitialized,
-        workouts: isInitialized
-      };
     } catch (error) {
       console.error('❌ [HEALTH] Erreur vérification permissions:', error);
       return {
@@ -134,16 +157,12 @@ export class AppleHealthManager {
       };
 
       return new Promise((resolve) => {
-        AppleHealthKit.getStepCount(options, (callbackError: string, results: HealthValue[]) => {
+        AppleHealthKit.getStepCount(options, (callbackError: string, results: HealthValue) => {
           if (callbackError) {
             console.error('❌ [HEALTH] Erreur récupération pas:', callbackError);
             resolve(0);
           } else {
-            // The getStepCount returns a single value for the total steps in the period.
-            // If results is an array, it might be from a different method or an older version.
-            // Assuming results is the total step count.
-            const totalSteps = Array.isArray(results) ? results.reduce((sum, item) => sum + (item.value as number), 0) : (results as unknown as number);
-            resolve(totalSteps || 0);
+            resolve(results.value || 0);
           }
         });
       });
@@ -173,7 +192,7 @@ export class AppleHealthManager {
             console.error('❌ [HEALTH] Erreur récupération fréquence cardiaque:', callbackError);
             resolve([]);
           } else {
-            const formattedResults = results.map((item) => item.value as number);
+            const formattedResults = results.map((item) => item.value);
             resolve(formattedResults);
           }
         });
@@ -199,14 +218,21 @@ export class AppleHealthManager {
       };
 
       return new Promise((resolve) => {
-        AppleHealthKit.getWorkouts(options, (callbackError: string, results: any[]) => {
-          if (callbackError) {
-            console.error('❌ [HEALTH] Erreur récupération workouts:', callbackError);
-            resolve([]);
-          } else {
-            resolve(results);
+        AppleHealthKit.getSamples(
+          { 
+            startDate: startDate.toISOString(),
+            endDate: endDate.toISOString(),
+            type: 'Workout'
+          } as any,
+          (callbackError: string, results: any[]) => {
+            if (callbackError) {
+              console.error('❌ [HEALTH] Erreur récupération workouts:', callbackError);
+              resolve([]);
+            } else {
+              resolve(results);
+            }
           }
-        });
+        );
       });
     } catch (error) {
       console.error('❌ [HEALTH] Erreur récupération workouts:', error);
