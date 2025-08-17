@@ -45,26 +45,38 @@ module.exports = function withHealthKit(config) {
   config = withXcodeProject(config, (config) => {
     const project = config.modResults;
     
-    // Ajouter HealthKit.framework si nécessaire
-    if (project.hasFile('HealthKit.framework') === false) {
-      project.addFramework('HealthKit.framework', { weak: false });
+    // Vérifier que l'objet project est bien initialisé
+    if (!project || !project.pbxProject) {
+      console.warn('HealthKit plugin: Xcode project not properly initialized, skipping Xcode modifications');
+      return config;
     }
     
-    // S'assurer que les capabilities HealthKit sont dans le projet
-    const healthKitCapability = 'com.apple.HealthKit';
-    const capabilities = project.pbxProject.objects.PBXProject;
-    for (const key in capabilities) {
-      if (capabilities[key].attributes && capabilities[key].attributes.TargetAttributes) {
-        for (const targetKey in capabilities[key].attributes.TargetAttributes) {
-          const target = capabilities[key].attributes.TargetAttributes[targetKey];
-          if (!target.SystemCapabilities) {
-            target.SystemCapabilities = {};
-          }
-          if (!target.SystemCapabilities[healthKitCapability]) {
-            target.SystemCapabilities[healthKitCapability] = { enabled: 1 };
+    try {
+      // Ajouter HealthKit.framework si nécessaire
+      if (typeof project.hasFile === 'function' && project.hasFile('HealthKit.framework') === false) {
+        project.addFramework('HealthKit.framework', { weak: false });
+      }
+      
+      // S'assurer que les capabilities HealthKit sont dans le projet
+      if (project.pbxProject && project.pbxProject.objects && project.pbxProject.objects.PBXProject) {
+        const healthKitCapability = 'com.apple.HealthKit';
+        const capabilities = project.pbxProject.objects.PBXProject;
+        for (const key in capabilities) {
+          if (capabilities[key].attributes && capabilities[key].attributes.TargetAttributes) {
+            for (const targetKey in capabilities[key].attributes.TargetAttributes) {
+              const target = capabilities[key].attributes.TargetAttributes[targetKey];
+              if (!target.SystemCapabilities) {
+                target.SystemCapabilities = {};
+              }
+              if (!target.SystemCapabilities[healthKitCapability]) {
+                target.SystemCapabilities[healthKitCapability] = { enabled: 1 };
+              }
+            }
           }
         }
       }
+    } catch (error) {
+      console.warn('HealthKit plugin: Error modifying Xcode project:', error.message);
     }
     
     return config;
