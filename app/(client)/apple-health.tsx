@@ -289,7 +289,9 @@ export default function AppleHealthScreen() {
                 {'\n\n'}
                 • Si "entitlements manquants" : le build EAS doit être refait avec la bonne configuration
                 {'\n\n'}
-                • Si "accès refusé" : allez dans Réglages iOS > Confidentialité > Santé > EatFit
+                • Si "accès refusé" : allez dans Réglages iOS > Confidentialité et sécurité > Santé > EatFit
+                {'\n\n'}
+                • Si "undefined is not a function" : problème de version du module react-native-health
               </Text>
             </>
           ) : (

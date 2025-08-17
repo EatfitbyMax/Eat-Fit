@@ -28,67 +28,19 @@ const useHealthData = (date: Date = new Date()) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fonction pour vérifier si HealthKit est disponible
-  const checkHealthKitAvailability = useCallback((): Promise<boolean> => {
+  // Fonction pour initialiser HealthKit directement
+  const initializeHealthKit = useCallback((): Promise<boolean> => {
     return new Promise((resolve) => {
       if (Platform.OS !== 'ios') {
         console.log('📱 Plateforme non-iOS détectée');
+        setError('Apple Health n\'est disponible que sur iOS');
         resolve(false);
         return;
       }
 
-      if (!AppleHealthKit) {
-        console.log('❌ AppleHealthKit non importé');
-        setError('Module HealthKit non trouvé. Assurez-vous que react-native-health est installé.');
-        resolve(false);
-        return;
-      }
-
-      // Vérification critique - cette méthode doit retourner true sur un vrai appareil iOS avec HealthKit activé
-      try {
-        AppleHealthKit.isAvailable((error: any, available: boolean) => {
-          console.log('🔍 Vérification HealthKit disponibilité...');
-          console.log('  - Erreur:', error);
-          console.log('  - Disponible:', available);
-          
-          if (error) {
-            console.log('❌ HealthKit erreur de disponibilité:', error);
-            // Erreurs communes et leurs solutions
-            if (error.message?.includes('not available')) {
-              setError('HealthKit non disponible: App non signée correctement ou simulateur utilisé');
-            } else if (error.message?.includes('entitlements')) {
-              setError('HealthKit non disponible: Entitlements manquants dans le provisioning profile');
-            } else {
-              setError(`HealthKit non disponible: ${error.message || 'Erreur inconnue'}`);
-            }
-            resolve(false);
-            return;
-          }
-          
-          if (!available) {
-            console.log('❌ HealthKit rapporte non disponible');
-            setError('HealthKit non disponible sur cet appareil. Vérifiez que l\'app est signée avec le bon provisioning profile incluant HealthKit.');
-            resolve(false);
-            return;
-          }
-          
-          console.log('✅ HealthKit disponible');
-          resolve(true);
-        });
-      } catch (err) {
-        console.log('❌ Exception lors de la vérification HealthKit:', err);
-        setError(`Exception HealthKit: ${err}. Vérifiez la configuration du projet.`);
-        resolve(false);
-      }
-    });
-  }, []);
-
-  // Fonction pour initialiser HealthKit avec permissions
-  const initializeHealthKit = useCallback((): Promise<boolean> => {
-    return new Promise((resolve) => {
       if (!AppleHealthKit || !Permissions) {
         console.log('❌ AppleHealthKit ou Permissions non disponibles');
-        setError('Configuration HealthKit invalide');
+        setError('Module HealthKit non trouvé. L\'app doit être installée via TestFlight ou App Store.');
         resolve(false);
         return;
       }
@@ -111,7 +63,7 @@ const useHealthData = (date: Date = new Date()) => {
         },
       };
 
-      console.log('🚀 Initialisation HealthKit avec permissions...');
+      console.log('🚀 Initialisation HealthKit...');
       console.log('📋 Permissions demandées:', permissions);
       
       try {
@@ -123,13 +75,17 @@ const useHealthData = (date: Date = new Date()) => {
           if (err) {
             console.log('❌ Erreur initHealthKit:', err);
             
-            // Messages d'erreur spécifiques
-            if (err.message?.includes('User denied access')) {
-              setError('Accès refusé par l\'utilisateur. Allez dans Réglages > Confidentialité > Santé > EatFit pour activer les permissions.');
-            } else if (err.message?.includes('not available')) {
+            // Messages d'erreur spécifiques selon le code d'erreur
+            const errorMessage = err.message || err.toString();
+            
+            if (errorMessage.includes('not available') || errorMessage.includes('HealthKit is not available')) {
+              setError('HealthKit non disponible sur cet appareil. L\'app doit être installée via TestFlight ou App Store avec un provisioning profile incluant HealthKit.');
+            } else if (errorMessage.includes('User denied access') || errorMessage.includes('authorization denied')) {
+              setError('Accès refusé par l\'utilisateur. Allez dans Réglages > Confidentialité et sécurité > Santé > EatFit pour activer les permissions.');
+            } else if (errorMessage.includes('entitlements') || errorMessage.includes('not entitled')) {
               setError('HealthKit non configuré correctement. Vérifiez les entitlements et le provisioning profile.');
             } else {
-              setError(`Erreur HealthKit: ${err.message || 'Inconnue'}`);
+              setError(`Erreur HealthKit: ${errorMessage}`);
             }
             resolve(false);
             return;
@@ -141,7 +97,7 @@ const useHealthData = (date: Date = new Date()) => {
         });
       } catch (error) {
         console.log('❌ Exception lors de l\'initialisation:', error);
-        setError(`Exception HealthKit: ${error}. Vérifiez la configuration du build.`);
+        setError(`Exception lors de l'initialisation HealthKit: ${error}. Vérifiez que l'app est correctement signée et installée via TestFlight.`);
         resolve(false);
       }
     });
@@ -158,31 +114,30 @@ const useHealthData = (date: Date = new Date()) => {
 
         console.log('🔄 Début initialisation HealthKit...');
 
-        // Étape 1: Vérifier la plateforme
+        // Vérifier la plateforme
         if (Platform.OS !== 'ios') {
           console.log('📱 Plateforme non-iOS, arrêt de l\'initialisation');
           if (isMounted) {
+            setError('Apple Health n\'est disponible que sur iOS');
             setIsLoading(false);
             setHasPermissions(false);
           }
           return;
         }
 
-        // Étape 2: Vérifier la disponibilité
-        console.log('🔍 Vérification disponibilité HealthKit...');
-        const isAvailable = await checkHealthKitAvailability();
-        
-        if (!isAvailable) {
-          console.log('❌ HealthKit non disponible');
+        // Vérifier que les modules sont disponibles
+        if (!AppleHealthKit || !Permissions) {
+          console.log('❌ Modules HealthKit non disponibles');
           if (isMounted) {
+            setError('Module HealthKit non trouvé. Assurez-vous que l\'app est installée via TestFlight ou App Store.');
             setIsLoading(false);
             setHasPermissions(false);
           }
           return;
         }
 
-        // Étape 3: Initialiser avec permissions
-        console.log('🔑 Demande de permissions HealthKit...');
+        // Initialiser directement HealthKit
+        console.log('🔑 Initialisation HealthKit...');
         const hasPerms = await initializeHealthKit();
         
         if (isMounted) {
@@ -211,7 +166,7 @@ const useHealthData = (date: Date = new Date()) => {
       isMounted = false;
       clearTimeout(timer);
     };
-  }, [checkHealthKitAvailability, initializeHealthKit]);
+  }, [initializeHealthKit]);
 
   // Effet pour récupérer les données quand les permissions sont accordées
   useEffect(() => {
@@ -232,6 +187,8 @@ const useHealthData = (date: Date = new Date()) => {
           if (!err && results?.value) {
             console.log('👟 Pas récupérés:', results.value);
             setSteps(results.value);
+          } else if (err) {
+            console.log('⚠️ Erreur récupération pas:', err);
           }
         });
 
@@ -240,6 +197,8 @@ const useHealthData = (date: Date = new Date()) => {
           if (!err && results?.value) {
             console.log('🏢 Étages montés:', results.value);
             setFlights(results.value);
+          } else if (err) {
+            console.log('⚠️ Erreur récupération étages:', err);
           }
         });
 
@@ -248,6 +207,8 @@ const useHealthData = (date: Date = new Date()) => {
           if (!err && results?.value) {
             console.log('🚶 Distance parcourue:', results.value);
             setDistance(results.value);
+          } else if (err) {
+            console.log('⚠️ Erreur récupération distance:', err);
           }
         });
 
@@ -256,6 +217,8 @@ const useHealthData = (date: Date = new Date()) => {
           if (!err && results?.value) {
             console.log('🔥 Calories actives:', results.value);
             setActiveEnergy(results.value);
+          } else if (err) {
+            console.log('⚠️ Erreur récupération calories:', err);
           }
         });
 
@@ -272,6 +235,8 @@ const useHealthData = (date: Date = new Date()) => {
           if (!err && results && results.length > 0) {
             console.log('❤️ Fréquence cardiaque:', results[0].value);
             setHeartRate(results[0].value);
+          } else if (err) {
+            console.log('⚠️ Erreur récupération fréquence cardiaque:', err);
           }
         });
 
@@ -289,6 +254,8 @@ const useHealthData = (date: Date = new Date()) => {
             const weightInKg = results[0].value / 1000;
             console.log('⚖️ Poids:', weightInKg);
             setWeight(weightInKg);
+          } else if (err) {
+            console.log('⚠️ Erreur récupération poids:', err);
           }
         });
 

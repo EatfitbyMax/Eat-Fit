@@ -47,7 +47,24 @@ module.exports = function withHealthKit(config) {
     
     // Ajouter HealthKit.framework si nécessaire
     if (project.hasFile('HealthKit.framework') === false) {
-      project.addFramework('HealthKit.framework', { weak: true });
+      project.addFramework('HealthKit.framework', { weak: false });
+    }
+    
+    // S'assurer que les capabilities HealthKit sont dans le projet
+    const healthKitCapability = 'com.apple.HealthKit';
+    const capabilities = project.pbxProject.objects.PBXProject;
+    for (const key in capabilities) {
+      if (capabilities[key].attributes && capabilities[key].attributes.TargetAttributes) {
+        for (const targetKey in capabilities[key].attributes.TargetAttributes) {
+          const target = capabilities[key].attributes.TargetAttributes[targetKey];
+          if (!target.SystemCapabilities) {
+            target.SystemCapabilities = {};
+          }
+          if (!target.SystemCapabilities[healthKitCapability]) {
+            target.SystemCapabilities[healthKitCapability] = { enabled: 1 };
+          }
+        }
+      }
     }
     
     return config;
