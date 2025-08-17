@@ -1247,8 +1247,6 @@ export default function FormeScreen() {
       console.error('Erreur gestion sync FC:', error);
       Alert.alert('Erreur', 'Impossible de synchroniser les données de fréquence cardiaque');
     }
-  };', 'Une erreur est survenue');
-    }
   };
 
   const syncHeartRateData = async () => {
