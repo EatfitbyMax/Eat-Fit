@@ -5,5 +5,11 @@
 <dict>
   <key>aps-environment</key>
   <string>production</string>
+  <key>com.apple.developer.healthkit</key>
+  <true/>
+  <key>com.apple.developer.healthkit.access</key>
+  <array>
+    <string>health-kit-access</string>
+  </array>
 </dict>
 </plist>

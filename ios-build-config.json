@@ -12,7 +12,8 @@
   "capabilities": [
     "Camera",
     "PhotoLibrary",
-    "Motion"
+    "Motion",
+    "HealthKit"
   ],
   "entitlements": {},
   "infoPlistAdditions": {
