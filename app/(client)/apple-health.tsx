@@ -262,22 +262,36 @@ export default function AppleHealthScreen() {
             Apple Health
           </Text>
           <Text style={[styles.permissionText, { color: theme.secondaryText }]}>
-            Pour utiliser cette fonctionnalité, veuillez autoriser l'accès à HealthKit dans l'application Santé d'Apple.
+            Pour utiliser cette fonctionnalité, vous devez :
             {'\n\n'}
-            Fermez l'application et relancez-la pour voir la demande de permissions.
+            1. Autoriser l'accès à HealthKit quand l'application vous le demande
+            {'\n'}
+            2. Si aucune demande n'apparaît, allez dans Réglages > Confidentialité et sécurité > Santé > EatFit
+            {'\n'}
+            3. Activez les permissions pour les données que vous souhaitez partager
           </Text>
 
           <TouchableOpacity 
             style={styles.permissionButton}
             onPress={() => {
+              // Réessayer l'initialisation
+              window.location.reload();
+            }}
+          >
+            <Text style={styles.permissionButtonText}>Réessayer</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.permissionButton, { backgroundColor: '#34C759', marginTop: 16 }]}
+            onPress={() => {
               Alert.alert(
-                'Instructions',
-                'Fermez l\'application complètement et relancez-la. La demande de permissions HealthKit apparaîtra automatiquement.',
+                'Configuration manuelle',
+                'Si la demande automatique ne fonctionne pas :\n\n1. Allez dans Réglages iOS\n2. Confidentialité et sécurité\n3. Santé\n4. Données et accès\n5. EatFit\n6. Activez toutes les permissions',
                 [{ text: 'OK' }]
               );
             }}
           >
-            <Text style={styles.permissionButtonText}>Instructions</Text>
+            <Text style={styles.permissionButtonText}>Configuration manuelle</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

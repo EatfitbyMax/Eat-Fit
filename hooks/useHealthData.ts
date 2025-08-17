@@ -44,12 +44,30 @@ const useHealthData = (date: Date = new Date()) => {
       return;
     }
 
-    // Délai pour éviter le crash au montage du composant
     const initHealthKit = async () => {
       try {
-        // Petite pause pour laisser le composant se monter
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Vérifier si HealthKit est disponible sur l'appareil
+        const isAvailable = await new Promise((resolve) => {
+          AppleHealthKit.isAvailable((error, available) => {
+            if (error) {
+              console.log('❌ HealthKit non disponible:', error);
+              resolve(false);
+              return;
+            }
+            resolve(available);
+          });
+        });
+
+        if (!isAvailable) {
+          console.log('❌ HealthKit n\'est pas disponible sur cet appareil');
+          setHasPermissions(false);
+          setIsLoading(false);
+          return;
+        }
+
+        console.log('✅ HealthKit est disponible, demande des permissions...');
         
+        // Initialiser HealthKit avec les permissions
         AppleHealthKit.initHealthKit(permissions, (err) => {
           if (err) {
             console.log('🚫 Erreur lors de l\'obtention des permissions HealthKit:', err);
@@ -68,7 +86,9 @@ const useHealthData = (date: Date = new Date()) => {
       }
     };
 
-    initHealthKit();
+    // Délai pour laisser l'app se charger complètement
+    const timer = setTimeout(initHealthKit, 500);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
