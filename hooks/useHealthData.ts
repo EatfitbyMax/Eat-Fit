@@ -146,6 +146,30 @@ const useHealthData = (date: Date = new Date()) => {
       setActiveEnergy(results.value);
     });
 
+    // Récupérer le sommeil
+    const sleepOptions = {
+      startDate: new Date(date.getTime() - 24 * 60 * 60 * 1000).toISOString(),
+      endDate: date.toISOString(),
+    };
+
+    AppleHealthKit.getSleepSamples(sleepOptions, (err, results) => {
+      if (err) {
+        console.log('❌ Erreur lors de la récupération du sommeil:', err);
+        return;
+      }
+      if (results && results.length > 0) {
+        let totalSleepHours = 0;
+        results.forEach(sample => {
+          if (sample.value === AppleHealthKit.Constants.SleepValue.ASLEEP) {
+            const duration = new Date(sample.endDate).getTime() - new Date(sample.startDate).getTime();
+            totalSleepHours += duration / (1000 * 60 * 60); // Convertir en heures
+          }
+        });
+        console.log('😴 Heures de sommeil:', totalSleepHours);
+        setSleepHours(totalSleepHours);
+      }
+    });
+
   }, [hasPermissions, date]);
 
   const writeWeight = (weightInKg: number): Promise<boolean> => {
