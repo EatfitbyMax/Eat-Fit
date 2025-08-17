@@ -46,6 +46,8 @@ const useHealthData = (date: Date = new Date()) => {
 
     const initHealthKit = async () => {
       try {
+        console.log('🔍 Vérification de la disponibilité HealthKit...');
+        
         // Vérifier si HealthKit est disponible sur l'appareil
         const isAvailable = await new Promise((resolve) => {
           AppleHealthKit.isAvailable((error, available) => {
@@ -54,6 +56,7 @@ const useHealthData = (date: Date = new Date()) => {
               resolve(false);
               return;
             }
+            console.log('✅ HealthKit disponible:', available);
             resolve(available);
           });
         });
@@ -65,17 +68,27 @@ const useHealthData = (date: Date = new Date()) => {
           return;
         }
 
-        console.log('✅ HealthKit est disponible, demande des permissions...');
+        console.log('🚀 Initialisation HealthKit avec les permissions...');
+        console.log('📋 Permissions demandées:', permissions);
         
-        // Initialiser HealthKit avec les permissions
-        AppleHealthKit.initHealthKit(permissions, (err) => {
+        // Forcer l'initialisation avec un callback plus robuste
+        AppleHealthKit.initHealthKit(permissions, (err, results) => {
+          console.log('📱 Callback initHealthKit appelé');
+          console.log('❌ Erreur:', err);
+          console.log('✅ Résultats:', results);
+          
           if (err) {
             console.log('🚫 Erreur lors de l\'obtention des permissions HealthKit:', err);
+            // Même en cas d'erreur, on peut avoir des permissions partielles
+            if (err.message && err.message.includes('User denied')) {
+              console.log('👤 Utilisateur a refusé les permissions');
+            }
             setHasPermissions(false);
             setIsLoading(false);
             return;
           }
-          console.log('✅ Permissions HealthKit accordées');
+          
+          console.log('✅ Permissions HealthKit accordées avec succès');
           setHasPermissions(true);
           setIsLoading(false);
         });
@@ -86,8 +99,8 @@ const useHealthData = (date: Date = new Date()) => {
       }
     };
 
-    // Délai pour laisser l'app se charger complètement
-    const timer = setTimeout(initHealthKit, 500);
+    // Délai plus court pour que l'utilisateur voit la demande rapidement
+    const timer = setTimeout(initHealthKit, 100);
     return () => clearTimeout(timer);
   }, []);
 

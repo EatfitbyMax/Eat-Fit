@@ -274,8 +274,11 @@ export default function AppleHealthScreen() {
           <TouchableOpacity 
             style={styles.permissionButton}
             onPress={() => {
-              // Réessayer l'initialisation
-              window.location.reload();
+              // Forcer une nouvelle demande de permissions
+              setIsMounted(false);
+              setTimeout(() => {
+                setIsMounted(true);
+              }, 100);
             }}
           >
             <Text style={styles.permissionButtonText}>Réessayer</Text>
