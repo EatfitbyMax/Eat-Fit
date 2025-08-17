@@ -73,14 +73,7 @@
           }
         }
       ],
-      "./plugins/withHealthKit",
-      [
-        "react-native-health",
-        {
-          "enableBackgroundDelivery": false,
-          "enablePromptWhenInUse": true
-        }
-      ]
+      "./plugins/withHealthKit"
     ],
     "experiments": {
       "typedRoutes": true

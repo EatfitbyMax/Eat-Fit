@@ -26,10 +26,17 @@ export class AppleHealthManager {
   static async isAvailable(): Promise<boolean> {
     console.log('🔍 [HEALTH] Début vérification disponibilité HealthKit...');
     console.log('🔍 [HEALTH] Platform.OS:', Platform.OS);
-    console.log('🔍 [HEALTH] AppleHealthKit object:', typeof AppleHealthKit);
     
     if (Platform.OS !== 'ios') {
       console.log('❌ [HEALTH] Plateforme non iOS');
+      return false;
+    }
+
+    // Vérifier si le module est chargé
+    if (!AppleHealthKit || typeof AppleHealthKit.isAvailable !== 'function') {
+      console.error('❌ [HEALTH] Module react-native-health non disponible ou mal installé');
+      console.log('🔍 [HEALTH] AppleHealthKit:', AppleHealthKit);
+      console.log('🔍 [HEALTH] AppleHealthKit.isAvailable:', typeof AppleHealthKit?.isAvailable);
       return false;
     }
 
@@ -39,12 +46,9 @@ export class AppleHealthManager {
       return new Promise((resolve) => {
         AppleHealthKit.isAvailable((error: string, available: boolean) => {
           console.log('🔍 [HEALTH] Réponse isAvailable - Error:', error, 'Available:', available);
-          console.log('🔍 [HEALTH] Type error:', typeof error);
-          console.log('🔍 [HEALTH] Type available:', typeof available);
           
           if (error) {
             console.error('❌ [HEALTH] HealthKit non disponible:', error);
-            console.log('❌ [HEALTH] Détails erreur:', JSON.stringify(error));
             resolve(false);
           } else {
             console.log('✅ [HEALTH] HealthKit disponible:', available);
@@ -54,7 +58,6 @@ export class AppleHealthManager {
       });
     } catch (error) {
       console.error('❌ [HEALTH] Exception lors de la vérification:', error);
-      console.log('❌ [HEALTH] Stack trace:', error);
       return false;
     }
   }
