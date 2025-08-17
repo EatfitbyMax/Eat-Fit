@@ -1242,29 +1242,12 @@ export default function FormeScreen() {
         [
           { text: 'OK', style: 'default' }
         ]
-                          const success = await IntegrationsManager.connectAppleHealth(userData.id);
-                          if (success) {
-                            await syncHeartRateData();
-                          }
-                        }
-                      }
-                    ]
-                  );
-                  return;
-                }
-
-                await syncHeartRateData();
-              } catch (error) {
-                console.error('Erreur synchronisation FC:', error);
-                Alert.alert('Erreur', 'Impossible de synchroniser les données de fréquence cardiaque');
-              }
-            }
-          }
-        ]
       );
     } catch (error) {
       console.error('Erreur gestion sync FC:', error);
-      Alert.alert('Erreur', 'Une erreur est survenue');
+      Alert.alert('Erreur', 'Impossible de synchroniser les données de fréquence cardiaque');
+    }
+  };', 'Une erreur est survenue');
     }
   };
 
