@@ -73,7 +73,8 @@
           }
         }
       ],
-      "./plugins/withHealthKit"
+      "./plugins/withHealthKit",
+      "react-native-health"
     ],
     "experiments": {
       "typedRoutes": true
