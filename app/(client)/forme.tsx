@@ -1237,26 +1237,11 @@ export default function FormeScreen() {
 
     try {
       Alert.alert(
-        'Synchronisation FC',
-        'Synchroniser les données de fréquence cardiaque depuis Apple Health, votre montre connectée ou d\'autres capteurs ?',
+        'Fonctionnalité supprimée',
+        'L\'intégration Apple Health a été supprimée de cette application.',
         [
-          { text: 'Annuler', style: 'cancel' },
-          { 
-            text: 'Synchroniser', 
-            onPress: async () => {
-              try {
-                // Vérifier le statut de l'intégration Apple Health
-                const integrationStatus = await IntegrationsManager.getIntegrationStatus(userData.id);
-
-                if (!integrationStatus.appleHealth.connected) {
-                  Alert.alert(
-                    'Apple Health requis',
-                    'Pour synchroniser vos données de fréquence cardiaque, vous devez d\'abord connecter Apple Health dans votre profil.',
-                    [
-                      { text: 'OK', style: 'default' },
-                      { 
-                        text: 'Connecter maintenant', 
-                        onPress: async () => {
+          { text: 'OK', style: 'default' }
+        ]
                           const success = await IntegrationsManager.connectAppleHealth(userData.id);
                           if (success) {
                             await syncHeartRateData();
