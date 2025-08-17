@@ -1,31 +1,19 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Platform } from 'react-native';
-import AppleHealthKit, {
-  HealthInputOptions,
-  HealthKitPermissions,
-  HealthUnit,
-} from 'react-native-health';
 
-const { Permissions } = AppleHealthKit.Constants;
+// Import conditionnel pour éviter les crashes sur Android/Web
+let AppleHealthKit: any = null;
+let Permissions: any = null;
 
-const permissions: HealthKitPermissions = {
-  permissions: {
-    read: [
-      Permissions.Steps,
-      Permissions.FlightsClimbed,
-      Permissions.DistanceWalkingRunning,
-      Permissions.HeartRate,
-      Permissions.Weight,
-      Permissions.ActiveEnergyBurned,
-      Permissions.SleepAnalysis,
-    ],
-    write: [
-      Permissions.Weight,
-      Permissions.ActiveEnergyBurned,
-    ],
-  },
-};
+try {
+  if (Platform.OS === 'ios') {
+    AppleHealthKit = require('react-native-health').default;
+    Permissions = AppleHealthKit?.Constants?.Permissions;
+  }
+} catch (error) {
+  console.log('⚠️ react-native-health non disponible:', error);
+}
 
 const useHealthData = (date: Date = new Date()) => {
   const [steps, setSteps] = useState(0);
@@ -37,192 +25,240 @@ const useHealthData = (date: Date = new Date()) => {
   const [sleepHours, setSleepHours] = useState(0);
   const [hasPermissions, setHasPermissions] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (Platform.OS !== 'ios') {
-      setIsLoading(false);
-      return;
-    }
+  // Fonction pour vérifier si HealthKit est disponible
+  const checkHealthKitAvailability = useCallback((): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if (Platform.OS !== 'ios') {
+        console.log('📱 Plateforme non-iOS détectée');
+        resolve(false);
+        return;
+      }
 
-    const initHealthKit = async () => {
+      if (!AppleHealthKit) {
+        console.log('❌ AppleHealthKit non importé');
+        resolve(false);
+        return;
+      }
+
       try {
-        console.log('🔍 Vérification de la disponibilité HealthKit...');
-        
-        // Vérifier si HealthKit est disponible sur l'appareil
-        const isAvailable = await new Promise((resolve) => {
-          AppleHealthKit.isAvailable((error, available) => {
-            if (error) {
-              console.log('❌ HealthKit non disponible:', error);
-              resolve(false);
-              return;
-            }
-            console.log('✅ HealthKit disponible:', available);
-            resolve(available);
-          });
+        AppleHealthKit.isAvailable((error: any, available: boolean) => {
+          if (error) {
+            console.log('❌ HealthKit non disponible:', error);
+            resolve(false);
+            return;
+          }
+          console.log('✅ HealthKit disponible:', available);
+          resolve(available || false);
         });
+      } catch (err) {
+        console.log('❌ Erreur lors de la vérification HealthKit:', err);
+        resolve(false);
+      }
+    });
+  }, []);
 
-        if (!isAvailable) {
-          console.log('❌ HealthKit n\'est pas disponible sur cet appareil');
-          setHasPermissions(false);
-          setIsLoading(false);
-          return;
-        }
+  // Fonction pour initialiser HealthKit avec permissions
+  const initializeHealthKit = useCallback((): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if (!AppleHealthKit || !Permissions) {
+        console.log('❌ AppleHealthKit ou Permissions non disponibles');
+        resolve(false);
+        return;
+      }
 
-        console.log('🚀 Initialisation HealthKit avec les permissions...');
-        console.log('📋 Permissions demandées:', permissions);
-        
-        // Forcer l'initialisation avec un callback plus robuste
-        AppleHealthKit.initHealthKit(permissions, (err, results) => {
-          console.log('📱 Callback initHealthKit appelé');
-          console.log('❌ Erreur:', err);
-          console.log('✅ Résultats:', results);
+      const permissions = {
+        permissions: {
+          read: [
+            Permissions.Steps,
+            Permissions.FlightsClimbed,
+            Permissions.DistanceWalkingRunning,
+            Permissions.HeartRate,
+            Permissions.Weight,
+            Permissions.ActiveEnergyBurned,
+            Permissions.SleepAnalysis,
+          ],
+          write: [
+            Permissions.Weight,
+            Permissions.ActiveEnergyBurned,
+          ],
+        },
+      };
+
+      console.log('🚀 Initialisation HealthKit...');
+      
+      try {
+        AppleHealthKit.initHealthKit(permissions, (err: any, results: any) => {
+          console.log('📞 Callback initHealthKit reçu');
           
           if (err) {
-            console.log('🚫 Erreur lors de l\'obtention des permissions HealthKit:', err);
-            // Même en cas d'erreur, on peut avoir des permissions partielles
-            if (err.message && err.message.includes('User denied')) {
-              console.log('👤 Utilisateur a refusé les permissions');
-            }
-            setHasPermissions(false);
-            setIsLoading(false);
+            console.log('❌ Erreur initHealthKit:', err);
+            setError(`Erreur HealthKit: ${err.message || 'Inconnue'}`);
+            resolve(false);
             return;
           }
           
-          console.log('✅ Permissions HealthKit accordées avec succès');
-          setHasPermissions(true);
-          setIsLoading(false);
+          console.log('✅ HealthKit initialisé avec succès:', results);
+          resolve(true);
         });
       } catch (error) {
-        console.log('🚫 Erreur d\'initialisation HealthKit:', error);
-        setHasPermissions(false);
-        setIsLoading(false);
+        console.log('❌ Exception lors de l\'initialisation:', error);
+        setError(`Exception HealthKit: ${error}`);
+        resolve(false);
+      }
+    });
+  }, []);
+
+  // Effet principal d'initialisation
+  useEffect(() => {
+    let isMounted = true;
+
+    const initHealthData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Étape 1: Vérifier la plateforme
+        if (Platform.OS !== 'ios') {
+          console.log('📱 Plateforme non-iOS, arrêt de l\'initialisation');
+          if (isMounted) {
+            setIsLoading(false);
+            setHasPermissions(false);
+          }
+          return;
+        }
+
+        // Étape 2: Vérifier la disponibilité
+        const isAvailable = await checkHealthKitAvailability();
+        if (!isAvailable) {
+          console.log('❌ HealthKit non disponible sur cet appareil');
+          if (isMounted) {
+            setError('HealthKit non disponible sur cet appareil');
+            setIsLoading(false);
+            setHasPermissions(false);
+          }
+          return;
+        }
+
+        // Étape 3: Initialiser avec permissions
+        const hasPerms = await initializeHealthKit();
+        if (isMounted) {
+          setHasPermissions(hasPerms);
+          setIsLoading(false);
+          
+          if (!hasPerms) {
+            setError('Permissions HealthKit refusées ou non disponibles');
+          }
+        }
+
+      } catch (error) {
+        console.log('❌ Erreur générale d\'initialisation:', error);
+        if (isMounted) {
+          setError(`Erreur d'initialisation: ${error}`);
+          setIsLoading(false);
+          setHasPermissions(false);
+        }
       }
     };
 
-    // Délai plus court pour que l'utilisateur voit la demande rapidement
-    const timer = setTimeout(initHealthKit, 100);
-    return () => clearTimeout(timer);
-  }, []);
+    // Délai pour permettre au composant de se monter complètement
+    const timer = setTimeout(initHealthData, 500);
 
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [checkHealthKitAvailability, initializeHealthKit]);
+
+  // Effet pour récupérer les données quand les permissions sont accordées
   useEffect(() => {
-    if (!hasPermissions || Platform.OS !== 'ios') {
+    if (!hasPermissions || Platform.OS !== 'ios' || !AppleHealthKit) {
       return;
     }
 
-    const options: HealthInputOptions = {
-      date: date.toISOString(),
-    };
+    const fetchHealthData = async () => {
+      try {
+        const options = {
+          date: date.toISOString(),
+        };
 
-    // Récupérer les pas
-    AppleHealthKit.getStepCount(options, (err, results) => {
-      if (err) {
-        console.log('❌ Erreur lors de la récupération des pas:', err);
-        return;
-      }
-      console.log('👟 Pas récupérés:', results.value);
-      setSteps(results.value);
-    });
-
-    // Récupérer les étages montés
-    AppleHealthKit.getFlightsClimbed(options, (err, results) => {
-      if (err) {
-        console.log('❌ Erreur lors de la récupération des étages:', err);
-        return;
-      }
-      console.log('🏢 Étages montés:', results.value);
-      setFlights(results.value);
-    });
-
-    // Récupérer la distance
-    AppleHealthKit.getDistanceWalkingRunning(options, (err, results) => {
-      if (err) {
-        console.log('❌ Erreur lors de la récupération de la distance:', err);
-        return;
-      }
-      console.log('🚶 Distance parcourue:', results.value);
-      setDistance(results.value);
-    });
-
-    // Récupérer la fréquence cardiaque
-    const heartRateOptions = {
-      unit: HealthUnit.bpm,
-      startDate: new Date(date.getTime() - 24 * 60 * 60 * 1000).toISOString(),
-      endDate: date.toISOString(),
-      ascending: false,
-      limit: 1,
-    };
-
-    AppleHealthKit.getHeartRateSamples(heartRateOptions, (err, results) => {
-      if (err) {
-        console.log('❌ Erreur lors de la récupération de la FC:', err);
-        return;
-      }
-      if (results && results.length > 0) {
-        console.log('❤️ Fréquence cardiaque:', results[0].value);
-        setHeartRate(results[0].value);
-      }
-    });
-
-    // Récupérer le poids
-    const weightOptions = {
-      unit: HealthUnit.gram,
-      startDate: new Date(date.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      endDate: date.toISOString(),
-      ascending: false,
-      limit: 1,
-    };
-
-    AppleHealthKit.getWeightSamples(weightOptions, (err, results) => {
-      if (err) {
-        console.log('❌ Erreur lors de la récupération du poids:', err);
-        return;
-      }
-      if (results && results.length > 0) {
-        const weightInKg = results[0].value / 1000; // Convertir de grammes en kg
-        console.log('⚖️ Poids:', weightInKg);
-        setWeight(weightInKg);
-      }
-    });
-
-    // Récupérer les calories actives
-    AppleHealthKit.getActiveEnergyBurned(options, (err, results) => {
-      if (err) {
-        console.log('❌ Erreur lors de la récupération des calories:', err);
-        return;
-      }
-      console.log('🔥 Calories actives:', results.value);
-      setActiveEnergy(results.value);
-    });
-
-    // Récupérer le sommeil
-    const sleepOptions = {
-      startDate: new Date(date.getTime() - 24 * 60 * 60 * 1000).toISOString(),
-      endDate: date.toISOString(),
-    };
-
-    AppleHealthKit.getSleepSamples(sleepOptions, (err, results) => {
-      if (err) {
-        console.log('❌ Erreur lors de la récupération du sommeil:', err);
-        return;
-      }
-      if (results && results.length > 0) {
-        let totalSleepHours = 0;
-        results.forEach(sample => {
-          if (sample.value === AppleHealthKit.Constants.SleepValue.ASLEEP) {
-            const duration = new Date(sample.endDate).getTime() - new Date(sample.startDate).getTime();
-            totalSleepHours += duration / (1000 * 60 * 60); // Convertir en heures
+        // Récupérer les pas de manière sécurisée
+        AppleHealthKit.getStepCount(options, (err: any, results: any) => {
+          if (!err && results?.value) {
+            console.log('👟 Pas récupérés:', results.value);
+            setSteps(results.value);
           }
         });
-        console.log('😴 Heures de sommeil:', totalSleepHours);
-        setSleepHours(totalSleepHours);
-      }
-    });
 
+        // Récupérer les étages montés
+        AppleHealthKit.getFlightsClimbed(options, (err: any, results: any) => {
+          if (!err && results?.value) {
+            console.log('🏢 Étages montés:', results.value);
+            setFlights(results.value);
+          }
+        });
+
+        // Récupérer la distance
+        AppleHealthKit.getDistanceWalkingRunning(options, (err: any, results: any) => {
+          if (!err && results?.value) {
+            console.log('🚶 Distance parcourue:', results.value);
+            setDistance(results.value);
+          }
+        });
+
+        // Récupérer les calories actives
+        AppleHealthKit.getActiveEnergyBurned(options, (err: any, results: any) => {
+          if (!err && results?.value) {
+            console.log('🔥 Calories actives:', results.value);
+            setActiveEnergy(results.value);
+          }
+        });
+
+        // Récupérer la fréquence cardiaque (dernière valeur)
+        const heartRateOptions = {
+          unit: 'bpm',
+          startDate: new Date(date.getTime() - 24 * 60 * 60 * 1000).toISOString(),
+          endDate: date.toISOString(),
+          ascending: false,
+          limit: 1,
+        };
+
+        AppleHealthKit.getHeartRateSamples(heartRateOptions, (err: any, results: any) => {
+          if (!err && results && results.length > 0) {
+            console.log('❤️ Fréquence cardiaque:', results[0].value);
+            setHeartRate(results[0].value);
+          }
+        });
+
+        // Récupérer le poids (dernière valeur)
+        const weightOptions = {
+          unit: 'gram',
+          startDate: new Date(date.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+          endDate: date.toISOString(),
+          ascending: false,
+          limit: 1,
+        };
+
+        AppleHealthKit.getWeightSamples(weightOptions, (err: any, results: any) => {
+          if (!err && results && results.length > 0) {
+            const weightInKg = results[0].value / 1000;
+            console.log('⚖️ Poids:', weightInKg);
+            setWeight(weightInKg);
+          }
+        });
+
+      } catch (error) {
+        console.log('❌ Erreur lors de la récupération des données:', error);
+      }
+    };
+
+    fetchHealthData();
   }, [hasPermissions, date]);
 
-  const writeWeight = (weightInKg: number): Promise<boolean> => {
+  const writeWeight = useCallback((weightInKg: number): Promise<boolean> => {
     return new Promise((resolve) => {
-      if (Platform.OS !== 'ios' || !hasPermissions) {
+      if (Platform.OS !== 'ios' || !hasPermissions || !AppleHealthKit) {
         resolve(false);
         return;
       }
@@ -232,7 +268,7 @@ const useHealthData = (date: Date = new Date()) => {
         date: new Date().toISOString(),
       };
 
-      AppleHealthKit.saveWeight(options, (err, results) => {
+      AppleHealthKit.saveWeight(options, (err: any, results: any) => {
         if (err) {
           console.log('❌ Erreur lors de l\'écriture du poids:', err);
           resolve(false);
@@ -243,7 +279,7 @@ const useHealthData = (date: Date = new Date()) => {
         resolve(true);
       });
     });
-  };
+  }, [hasPermissions]);
 
   return {
     steps,
@@ -255,6 +291,7 @@ const useHealthData = (date: Date = new Date()) => {
     sleepHours,
     hasPermissions,
     isLoading,
+    error,
     writeWeight,
   };
 };

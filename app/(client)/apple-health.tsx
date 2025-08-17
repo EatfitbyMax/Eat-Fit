@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -14,7 +15,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/context/ThemeContext';
-import { getCurrentUser } from '@/utils/auth';
 import useHealthData from '@/hooks/useHealthData';
 import Svg, { Circle } from 'react-native-svg';
 
@@ -42,16 +42,17 @@ export default function AppleHealthScreen() {
     activeEnergy,
     hasPermissions, 
     isLoading,
+    error,
     writeWeight 
   } = useHealthData(currentDate);
 
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    // Marquer le composant comme monté après un délai
+    // Délai plus long pour s'assurer que tout est initialisé
     const timer = setTimeout(() => {
       setIsMounted(true);
-    }, 200);
+    }, 1000);
 
     return () => clearTimeout(timer);
   }, []);
@@ -64,10 +65,15 @@ export default function AppleHealthScreen() {
     setTimeout(() => {
       setCurrentDate(temp);
       setIsRefreshing(false);
-    }, 1000);
+    }, 1500);
   };
 
   const handleWeightUpdate = () => {
+    if (!hasPermissions) {
+      Alert.alert('Permissions requises', 'Vous devez d\'abord autoriser l\'accès à Apple Health.');
+      return;
+    }
+
     Alert.prompt(
       'Mettre à jour le poids',
       'Entrez votre poids en kg:',
@@ -77,13 +83,15 @@ export default function AppleHealthScreen() {
           text: 'OK',
           onPress: async (text) => {
             const weightValue = parseFloat(text || '0');
-            if (weightValue > 0) {
+            if (weightValue > 0 && weightValue < 300) {
               const success = await writeWeight(weightValue);
               if (success) {
                 Alert.alert('Succès', 'Poids mis à jour dans HealthKit');
               } else {
                 Alert.alert('Erreur', 'Impossible de mettre à jour le poids');
               }
+            } else {
+              Alert.alert('Erreur', 'Veuillez entrer un poids valide');
             }
           }
         }
@@ -105,35 +113,35 @@ export default function AppleHealthScreen() {
       },
       {
         title: 'Fréquence cardiaque',
-        value: heartRate.toString(),
+        value: heartRate > 0 ? heartRate.toString() : '--',
         unit: 'bpm',
         icon: 'heart',
         color: '#FF3B30'
       },
       {
         title: 'Poids',
-        value: weight?.toFixed(1) || '0',
+        value: weight ? weight.toFixed(1) : '--',
         unit: 'kg',
         icon: 'barbell',
         color: '#34C759'
       },
       {
         title: 'Calories brûlées',
-        value: Math.round(activeEnergy).toString(),
+        value: activeEnergy > 0 ? Math.round(activeEnergy).toString() : '--',
         unit: 'kcal',
         icon: 'flame',
         color: '#FF9500'
       },
       {
         title: 'Distance',
-        value: (distance / 1000).toFixed(1),
+        value: distance > 0 ? (distance / 1000).toFixed(1) : '--',
         unit: 'km',
         icon: 'walk',
         color: '#5856D6'
       },
       {
         title: 'Étages montés',
-        value: flights.toString(),
+        value: flights > 0 ? flights.toString() : '--',
         unit: 'étages',
         icon: 'trending-up',
         color: '#AF52DE'
@@ -184,11 +192,12 @@ export default function AppleHealthScreen() {
     <TouchableOpacity 
       style={[styles.metricCard, { backgroundColor: theme.cardBackground }]}
       onPress={metric.title === 'Poids' ? handleWeightUpdate : undefined}
+      disabled={!hasPermissions}
     >
       <View style={styles.metricHeader}>
         <Ionicons name={metric.icon as any} size={24} color={metric.color} />
         <Text style={[styles.metricTitle, { color: theme.text }]}>{metric.title}</Text>
-        {metric.title === 'Poids' && (
+        {metric.title === 'Poids' && hasPermissions && (
           <Ionicons name="create-outline" size={16} color={theme.secondaryText} style={{ marginLeft: 'auto' }} />
         )}
       </View>
@@ -217,7 +226,7 @@ export default function AppleHealthScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#007AFF" />
           <Text style={[styles.loadingText, { color: theme.text }]}>
-            Chargement...
+            Préparation d'Apple Health...
           </Text>
         </View>
       </SafeAreaView>
@@ -248,12 +257,17 @@ export default function AppleHealthScreen() {
           <Text style={[styles.loadingText, { color: theme.text }]}>
             Initialisation HealthKit...
           </Text>
+          {error && (
+            <Text style={[styles.errorText, { color: '#FF3B30', marginTop: 16 }]}>
+              {error}
+            </Text>
+          )}
         </View>
       </SafeAreaView>
     );
   }
 
-  if (!hasPermissions) {
+  if (!hasPermissions || error) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={styles.permissionContainer}>
@@ -261,8 +275,19 @@ export default function AppleHealthScreen() {
           <Text style={[styles.permissionTitle, { color: theme.text }]}>
             Apple Health
           </Text>
-          <Text style={[styles.permissionText, { color: theme.secondaryText }]}>
-            Pour utiliser cette fonctionnalité, vous devez :
+          
+          {error ? (
+            <Text style={[styles.permissionText, { color: '#FF3B30' }]}>
+              Erreur: {error}
+            </Text>
+          ) : (
+            <Text style={[styles.permissionText, { color: theme.secondaryText }]}>
+              Pour utiliser cette fonctionnalité, vous devez autoriser l'accès à HealthKit.
+            </Text>
+          )}
+
+          <Text style={[styles.permissionText, { color: theme.secondaryText, marginTop: 16 }]}>
+            Instructions:
             {'\n\n'}
             1. Autoriser l'accès à HealthKit quand l'application vous le demande
             {'\n'}
@@ -274,7 +299,7 @@ export default function AppleHealthScreen() {
           <TouchableOpacity 
             style={styles.permissionButton}
             onPress={() => {
-              // Forcer une nouvelle demande de permissions
+              // Forcer une nouvelle initialisation
               setIsMounted(false);
               setTimeout(() => {
                 setIsMounted(true);
@@ -294,7 +319,7 @@ export default function AppleHealthScreen() {
               );
             }}
           >
-            <Text style={styles.permissionButtonText}>Configuration manuelle</Text>
+            <Text style={styles.permissionButtonText}>Guide configuration</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -346,10 +371,17 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 32,
   },
   loadingText: {
     marginTop: 16,
     fontSize: 16,
+    textAlign: 'center',
+  },
+  errorText: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 8,
   },
   permissionContainer: {
     flex: 1,
@@ -368,13 +400,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     lineHeight: 24,
-    marginBottom: 32,
+    marginBottom: 16,
   },
   permissionButton: {
     backgroundColor: '#007AFF',
     paddingHorizontal: 32,
     paddingVertical: 16,
     borderRadius: 25,
+    marginTop: 16,
   },
   permissionButtonText: {
     color: 'white',
