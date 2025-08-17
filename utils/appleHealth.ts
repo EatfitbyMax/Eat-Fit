@@ -1,8 +1,9 @@
+
 import { Platform, Alert } from 'react-native';
 import AppleHealthKit, {
   HealthValue,
   HealthKitPermissions,
-} from 'react-native-health';
+} from 'rn-apple-healthkit';
 
 export interface HealthPermissions {
   steps: boolean;
@@ -34,7 +35,7 @@ export class AppleHealthManager {
 
     // Vérifier si le module est chargé
     if (!AppleHealthKit || typeof AppleHealthKit.isAvailable !== 'function') {
-      console.error('❌ [HEALTH] Module react-native-health non disponible ou mal installé');
+      console.error('❌ [HEALTH] Module rn-apple-healthkit non disponible ou mal installé');
       console.log('🔍 [HEALTH] AppleHealthKit:', AppleHealthKit);
       console.log('🔍 [HEALTH] AppleHealthKit.isAvailable:', typeof AppleHealthKit?.isAvailable);
       return false;
@@ -97,7 +98,7 @@ export class AppleHealthManager {
             AppleHealthKit.Constants.Permissions.Weight,
             AppleHealthKit.Constants.Permissions.SleepAnalysis,
             AppleHealthKit.Constants.Permissions.Workout,
-            AppleHealthKit.Constants.Permissions.DietaryEnergyConsumed,
+            AppleHealthKit.Constants.Permissions.EnergyConsumed,
           ],
           write: [
             AppleHealthKit.Constants.Permissions.Weight,
@@ -148,7 +149,7 @@ export class AppleHealthManager {
             AppleHealthKit.Constants.Permissions.ActiveEnergyBurned,
             AppleHealthKit.Constants.Permissions.Workout,
             AppleHealthKit.Constants.Permissions.SleepAnalysis,
-            AppleHealthKit.Constants.Permissions.DietaryEnergyConsumed,
+            AppleHealthKit.Constants.Permissions.EnergyConsumed,
           ],
         },
         (error: string, results: any) => {
@@ -169,7 +170,7 @@ export class AppleHealthManager {
               activeEnergy: results[AppleHealthKit.Constants.Permissions.ActiveEnergyBurned] === 2,
               workouts: results[AppleHealthKit.Constants.Permissions.Workout] === 2,
               sleep: results[AppleHealthKit.Constants.Permissions.SleepAnalysis] === 2,
-              caloriesConsumed: results[AppleHealthKit.Constants.Permissions.DietaryEnergyConsumed] === 2,
+              caloriesConsumed: results[AppleHealthKit.Constants.Permissions.EnergyConsumed] === 2,
             });
           }
         }
@@ -240,7 +241,7 @@ export class AppleHealthManager {
     if (!await this.isAvailable()) return [];
 
     return new Promise((resolve) => {
-      AppleHealthKit.getDietaryEnergyConsumed(
+      AppleHealthKit.getEnergyConsumedSamples(
         {
           startDate: startDate.toISOString(),
           endDate: endDate.toISOString(),
