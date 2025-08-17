@@ -3,7 +3,7 @@ modules = ["nodejs-18"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["gnupatch", "openssh"]
+packages = ["gnupatch", "openssh", "rubyPackages.cocoapods"]
 
 [[ports]]
 localPort = 5000
